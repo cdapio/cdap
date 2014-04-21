@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.deploy.Manager;
@@ -35,6 +35,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
@@ -744,8 +745,148 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deploys an application.
+   * Returns next scheduled runtime of a workflow.
    */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
+  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("workflow-id") final String workflowId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, workflowId);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, Type.WORKFLOW);
+
+      JsonArray array = new JsonArray();
+      for (ScheduledRuntime runtime : runtimes) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", runtime.getScheduleId());
+        object.addProperty("time", runtime.getTime());
+        array.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns the schedule ids for a given workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
+  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, workflowId);
+      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, Type.WORKFLOW));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Get schedule state.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  public void getScheuleState(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("workflow-id") final String workflowId,
+                              @PathParam("schedule-id") final String scheduleId) {
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Suspend a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId,
+                                      @PathParam("schedule-id") final String scheduleId) {
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          scheduler.suspendSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+        case SUSPENDED:
+          responder.sendJson(HttpResponseStatus.OK, "Schedule already suspended");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Resume a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId,
+                                     @PathParam("schedule-id") final String scheduleId) {
+
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          responder.sendJson(HttpResponseStatus.OK, "Already resumed");
+          break;
+        case SUSPENDED:
+          scheduler.resumeSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+     * Deploys an application.
+     */
   private void deployApp(HttpRequest request, HttpResponder responder, final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
