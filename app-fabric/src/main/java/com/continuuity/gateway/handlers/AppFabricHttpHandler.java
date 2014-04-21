@@ -25,7 +25,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -227,8 +226,6 @@ public class  AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.scheduler = service;
     this.txClient = txClient;
     this.txStateStorage = txStateStorage;
-    // todo find where the stopAndWait method should be
-    this.txStateStorage.startAndWait();
   }
 
   @Path("/transactions/snapshot")
