@@ -15,10 +15,10 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Represents a {@link ProcessMethod} that invocation is done through reflection.

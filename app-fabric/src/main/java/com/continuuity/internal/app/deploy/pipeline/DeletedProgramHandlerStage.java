@@ -11,12 +11,12 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.pipeline.AbstractStage;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
                                                                                     appSpec.getSpecification());
 
     List<String> deletedFlows = Lists.newArrayList();
-    for (ProgramSpecification spec : deletedSpecs){
+    for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       Type type = Type.typeOfSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());

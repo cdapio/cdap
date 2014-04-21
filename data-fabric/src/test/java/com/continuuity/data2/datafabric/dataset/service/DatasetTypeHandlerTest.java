@@ -228,7 +228,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name){
+  private static DatasetDefinition createDefinition(String name) {
     return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {

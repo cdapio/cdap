@@ -1,4 +1,4 @@
-package com.continuuity.gateway.apps.wordcount;
+package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An Application with schedule
+ * Application with workflow scheduling.
  */
 public class AppWithSchedule implements Application {
 
@@ -51,7 +51,7 @@ public class AppWithSchedule implements Application {
         .startWith(new DummyAction())
         .last(new DummyAction())
         .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
-                                         Schedule.Action.START))
+                                  Schedule.Action.START))
         .build();
     }
   }

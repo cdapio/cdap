@@ -7,13 +7,13 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.DeployStatus;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Objects;
+import org.apache.twill.filesystem.Location;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Session information associated with uploading of an archive.

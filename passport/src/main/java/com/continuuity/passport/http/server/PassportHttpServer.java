@@ -20,8 +20,8 @@ import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
+import javax.management.MBeanServer;
 
 /**
  * Jetty based Http Server.

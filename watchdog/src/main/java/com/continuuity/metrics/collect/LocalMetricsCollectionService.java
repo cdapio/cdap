@@ -11,10 +11,10 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.process.MetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
-import org.apache.twill.common.Threads;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
