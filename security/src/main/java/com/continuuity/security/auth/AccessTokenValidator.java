@@ -42,9 +42,8 @@ public class AccessTokenValidator implements TokenValidator {
       accessToken = accessTokenCodec.decode(decodedToken);
       tokenManager.validateSecret(accessToken);
     } catch (IOException ioe) {
-      state = State.TOKEN_BROKEN;
-      LOG.debug(state.getMsg());
-      return State.TOKEN_INVALID;
+      state = State.TOKEN_INVALID;
+      LOG.debug("Unknown Schema version for Access Token.");
     } catch (InvalidTokenException ite) {
         InvalidTokenException.Reason reason = ite.getReason();
         switch(reason) {

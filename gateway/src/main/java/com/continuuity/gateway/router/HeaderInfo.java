@@ -45,9 +45,7 @@ public  class HeaderInfo {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     HeaderInfo that = (HeaderInfo) o;
-
     return Objects.equal(host, that.host) && Objects.equal(path, that.path);
 
   }

@@ -9,7 +9,6 @@ public interface TokenValidator {
    */
   enum State {
     TOKEN_MISSING("Token is missing."),
-    TOKEN_BROKEN("Unknown Schema version for Access Token."),
     TOKEN_INVALID("Invalid token signature."),
     TOKEN_EXPIRED("Expired token."),
     TOKEN_INTERNAL("Invalid key for token."),
@@ -32,5 +31,4 @@ public interface TokenValidator {
    * @return The state after validation.
    */
   State validate(String token);
-
 }

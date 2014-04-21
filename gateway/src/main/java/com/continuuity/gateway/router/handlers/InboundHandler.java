@@ -87,7 +87,6 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
         case TOKEN_INVALID:
         case TOKEN_EXPIRED:
         case TOKEN_INTERNAL:
-        case TOKEN_BROKEN:
           httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"" +
             "  error=\"invalid_token\"" +
             "  error_description=\"" + tokenState.getMsg() + "\"");
