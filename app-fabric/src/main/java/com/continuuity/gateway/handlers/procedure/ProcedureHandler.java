@@ -159,7 +159,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       InetSocketAddress endpoint = discoverable.getSocketAddress();
 
       String virtualHost = String.format("%s:%d", endpoint.getHostName(), endpoint.getPort());
-      final String relayUri = String.format("http://%s/apps/%s/procedures/%s/%s",
+      final String relayUri = String.format("http://%s/apps/%s/procedures/%s/methods/%s",
                                             virtualHost, appId, procedureName, methodName);
 
       LOG.debug("Relaying request to " + relayUri);

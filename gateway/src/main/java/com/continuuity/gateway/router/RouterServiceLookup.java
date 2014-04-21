@@ -34,11 +34,12 @@ public class RouterServiceLookup {
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
+  private final RouterPathLookup routerPathLookup;
 
   @Inject
-  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup) {
     this.discoveryServiceClient = discoveryServiceClient;
-
+    this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<CacheKey, EndpointStrategy>() {
@@ -90,7 +91,9 @@ public class RouterServiceLookup {
     try {
       String path = headerInfo.getPath();
       String method = headerInfo.getMethod();
-      String destService = RouterPathLookup.getRoutingPath(path, method);
+      String apiKey = headerInfo.getAPIKey();
+      String httpVersion = headerInfo.getVersion();
+      String destService = routerPathLookup.getRoutingPath(path, method, apiKey, httpVersion);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);

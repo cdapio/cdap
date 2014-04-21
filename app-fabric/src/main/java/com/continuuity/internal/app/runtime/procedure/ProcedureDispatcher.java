@@ -4,10 +4,12 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -23,11 +25,17 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,8 +49,19 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureDispatcher.class);
   private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/(.+)$");
+  private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/methods/(.+)$");
   private static final Gson GSON = new Gson();
+  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
+    new Maps.EntryTransformer<String, List<String>, String>() {
+      @Override
+      public String transformEntry(@Nullable String key, @Nullable List<String> value) {
+        if (value == null || value.isEmpty()) {
+          return null;
+        }
+        return value.get(0);
+      }
+    };
 
   private final MetricsCollector metrics;
   private final ThreadLocal<HandlerMethod> handlerMethod;
@@ -88,8 +107,8 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   }
 
   private void handleRequest(HttpRequest httpRequest, Channel channel) {
-    if (!HttpMethod.POST.equals(httpRequest.getMethod())) {
-      errorResponse(HttpResponseStatus.METHOD_NOT_ALLOWED, channel, "Only POST method is supported.");
+    if (!(HttpMethod.POST.equals(httpRequest.getMethod()) || (HttpMethod.GET.equals(httpRequest.getMethod())))) {
+      errorResponse(HttpResponseStatus.METHOD_NOT_ALLOWED, channel, "Only GET and POST methods are supported.");
       return;
     }
 
@@ -120,7 +139,19 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   private ProcedureRequest createProcedureRequest(HttpRequest request, Channel channel, String requestMethod) {
     try {
       Map<String, String> args;
-      ChannelBuffer content = request.getContent();
+      ChannelBuffer content;
+      if (HttpMethod.POST.equals(request.getMethod())) {
+        content = request.getContent();
+      } else {
+        //GET method - Get key/value pairs from the URI
+        Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+        content = ChannelBuffers.EMPTY_BUFFER;
+
+        if (!queryParams.isEmpty()) {
+          content = jsonEncode(Maps.transformEntries(queryParams, MULTIMAP_TO_MAP_FUNCTION), QUERY_PARAMS_TYPE,
+                               ChannelBuffers.dynamicBuffer(request.getUri().length()));
+        }
+      }
 
       if (content == null || !content.readable()) {
         args = ImmutableMap.of();
@@ -136,4 +167,15 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
     }
     return null;
   }
+
+  private <T> ChannelBuffer jsonEncode(T obj, Type type, ChannelBuffer buffer) throws IOException {
+    Writer writer = new OutputStreamWriter(new ChannelBufferOutputStream(buffer), Charsets.UTF_8);
+    try {
+      GSON.toJson(obj, type, writer);
+    } finally {
+      writer.close();
+    }
+    return buffer;
+  }
+
 }

@@ -35,14 +35,15 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 import static com.continuuity.gateway.GatewayFastTestsSuite.doGet;
 import static com.continuuity.gateway.GatewayFastTestsSuite.doPost;
@@ -342,7 +343,8 @@ public class ProcedureHandlerTest  {
    */
   public static class TestHandler extends AbstractHttpHandler {
     @POST
-    @Path("/apps/{appId}/procedures/{procedureName}/{methodName}")
+    @GET
+    @Path("/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
     public void handle(HttpRequest request, final HttpResponder responder,
                        @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
                        @PathParam("methodName") String methodName) {
@@ -385,7 +387,7 @@ public class ProcedureHandlerTest  {
 
   private static void testTestServer() throws Exception {
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpPost request = new HttpPost(String.format("http://%s:%d/apps/testApp1/procedures/testProc1/testMethod1",
+    HttpPost request = new HttpPost(String.format("http://%s:%d/apps/testApp1/procedures/testProc1/methods/testMethod1",
                                                 hostname, port));
     HttpResponse response = httpclient.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());

@@ -10,8 +10,8 @@ import org.junit.Test;
 /**
  * Test {@link com.continuuity.metrics.runtime.MetricsTwillRunnable}.
  */
-public class MetricsTwillRunnableTest {
 
+public class MetricsTwillRunnableTest {
   @Test
   public void testInjection() throws Exception {
     Injector injector = MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create());
