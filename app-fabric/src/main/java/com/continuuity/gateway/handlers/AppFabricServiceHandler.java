@@ -848,66 +848,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-   * Returns specification of a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}")
-  public void flowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}")
-  public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}")
-  public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("workflow-id") final String workflowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a mapreduce.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
-  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("mapreduce-id") final String mapreduceId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    getProgramById(request, responder, id);
-  }
-
   private void getProgramById(HttpRequest request, HttpResponder responder, ProgramId id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
