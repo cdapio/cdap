@@ -883,6 +883,24 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
+  @SuppressWarnings("unused")
+  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("procedure-id") final String procedureId) {
+    getLiveInfo(request, responder, appId, procedureId, Type.PROCEDURE);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/live-info")
+  @SuppressWarnings("unused")
+  public void flowLiveInfo(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("flow-id") final String flowId) {
+    getLiveInfo(request, responder, appId, flowId, Type.FLOW);
+  }
+
 
   /**
      * Deploys an application.
@@ -1282,6 +1300,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
     }
     return null;
+  }
+
+  private void getLiveInfo(HttpRequest request, HttpResponder responder,
+                           final String appId, final String programId, Type type) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    programId),
+                                                    type));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
    /* -----------------  helpers to return Json consistently -------------- */
