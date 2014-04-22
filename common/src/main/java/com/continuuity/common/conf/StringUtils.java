@@ -21,7 +21,7 @@ public class StringUtils {
    * @param str the comma seperated string values
    * @return the arraylist of the comma seperated string values
    */
-  public static String[] getStrings(String str){
+  public static String[] getStrings(String str) {
     Collection<String> values = getStringCollection(str);
     if (values.isEmpty()) {
       return null;
@@ -34,7 +34,7 @@ public class StringUtils {
    * @param str comma seperated string values
    * @return an <code>ArrayList</code> of string values
    */
-  public static Collection<String> getStringCollection(String str){
+  public static Collection<String> getStringCollection(String str) {
     List<String> values = new ArrayList<String>();
     if (str == null) {
       return values;
@@ -52,7 +52,7 @@ public class StringUtils {
    * @param str a comma separated <String> with values
    * @return a <code>Collection</code> of <code>String</code> values
    */
-  public static Collection<String> getTrimmedStringCollection(String str){
+  public static Collection<String> getTrimmedStringCollection(String str) {
     return new ArrayList<String>(
                                   Arrays.asList(getTrimmedStrings(str)));
   }
@@ -62,7 +62,7 @@ public class StringUtils {
    * @param str a comma separated <String> with values
    * @return an array of <code>String</code> values
    */
-  public static String[] getTrimmedStrings(String str){
+  public static String[] getTrimmedStrings(String str) {
     if (null == str || "".equals(str.trim())) {
       return EMPTY_STRING_ARRAY;
     }

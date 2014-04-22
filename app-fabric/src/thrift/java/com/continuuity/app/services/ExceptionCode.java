@@ -7,10 +7,6 @@
 package com.continuuity.app.services;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 public enum ExceptionCode implements org.apache.thrift.TEnum {
   ERROR(0),
   NOT_FOUND(1),

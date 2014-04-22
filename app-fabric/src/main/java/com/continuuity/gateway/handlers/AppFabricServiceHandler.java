@@ -15,8 +15,6 @@ import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.app.services.ScheduleId;
-import com.continuuity.app.services.ScheduleRunTime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -30,15 +28,12 @@ import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -801,7 +796,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(token, id);
-      if (status.getStatus().equals("NOT_FOUND")){
+      if (status.getStatus().equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject o = new JsonObject();
@@ -851,218 +846,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         client.getOutputProtocol().getTransport().close();
       }
     }
-  }
-
-  /**
-   * Returns next scheduled runtime of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
-  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("workflow-id") final String workflowId) {
-
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    String accountId = getAuthenticatedAccountId(request);
-    id.setAccountId(accountId);
-
-    try {
-
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-
-      List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
-      JsonArray array = new JsonArray();
-      for (ScheduleRunTime runtime : runtimes){
-        JsonObject object = new JsonObject();
-        object.addProperty("id", runtime.getId().getId());
-        object.addProperty("time", runtime.getTime());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Get list of schedules for a given workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void workflowSchedules(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId) {
-
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    String accountId = getAuthenticatedAccountId(request);
-    id.setAccountId(accountId);
-
-    try {
-
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-
-      List<ScheduleId> scheduleIds = client.getSchedules(token, id);
-      List<String> schedules =  Lists.newArrayList(Lists.transform(scheduleIds,
-                                                                   new Function<ScheduleId, String>() {
-                                                                     @Override
-                                                                     public String apply(ScheduleId id) {
-                                                                       return id.getId();
-                                                                     }
-                                                                   }));
-      responder.sendJson(HttpResponseStatus.OK, schedules);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Get schedule state.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
-  public void getScheuleState(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId,
-                                @PathParam("schedule-id") final String scheduleId) {
-    try {
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      String schedule = client.getScheduleState(new ScheduleId(scheduleId));
-      JsonObject json = new JsonObject();
-      json.addProperty("status", schedule);
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Suspend a workflow schedule.
-   */
-  @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
-  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId,
-                                @PathParam("schedule-id") final String scheduleId) {
-    try {
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-
-      client.suspendSchedule(token, new ScheduleId(scheduleId));
-      responder.sendJson(HttpResponseStatus.OK, "OK");
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Resume a workflow schedule.
-   */
-  @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
-  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("workflow-id") final String workflowId,
-                                      @PathParam("schedule-id") final String scheduleId) {
-
-    try {
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-
-      client.resumeSchedule(token, new ScheduleId(scheduleId));
-      responder.sendJson(HttpResponseStatus.OK, "OK");
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-
-  /**
-   * Returns specification of a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}")
-  public void flowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}")
-  public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}")
-  public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("workflow-id") final String workflowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    getProgramById(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a mapreduce.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
-  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("mapreduce-id") final String mapreduceId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    getProgramById(request, responder, id);
   }
 
   private void getProgramById(HttpRequest request, HttpResponder responder, ProgramId id) {
@@ -1418,54 +1201,4 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
     }
   }
-
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
-  @SuppressWarnings("unused")
-  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("procedure-id") final String procedureId) {
-    getLiveInfo(request, responder, appId, procedureId, EntityType.PROCEDURE);
-  }
-
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}/live-info")
-  @SuppressWarnings("unused")
-  public void flowLiveInfo(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") final String appId,
-                           @PathParam("flow-id") final String flowId) {
-    getLiveInfo(request, responder, appId, flowId, EntityType.FLOW);
-  }
-
-  private void getLiveInfo(HttpRequest request, HttpResponder responder,
-                          final String appId, final String programId, EntityType type) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        ProgramId id = new ProgramId(accountId, appId, programId);
-        id.setType(type);
-        String info = client.getLiveInfo(id);
-        // hack to send it with content type json... app fabric returns this as a string (thrift cannot do json)
-        // and the responder has no way to send a string with a specific content type. So, parse json, send send
-        // as Json and pass in a pretty-printing gson (this will be consumed by humans).
-        JsonElement json = new Gson().fromJson(info, JsonElement.class);
-        responder.sendJson(HttpResponseStatus.OK, json);
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
-        }
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
 }

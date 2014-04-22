@@ -8,8 +8,8 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metadata.MetaDataTable;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  *

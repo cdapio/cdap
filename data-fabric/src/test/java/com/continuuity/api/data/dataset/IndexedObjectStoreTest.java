@@ -29,7 +29,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
 
 
   @Test
-  public void testLookupByIndex() throws Exception{
+  public void testLookupByIndex() throws Exception {
 
     indexedFeed = instantiator.getDataSet("index");
     TransactionContext txContext = newTransaction();
@@ -95,7 +95,7 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testIndexPruning() throws Exception{
+  public void testIndexPruning() throws Exception {
 
     indexedFeed = instantiator.getDataSet("index");
     TransactionContext txContext = newTransaction();
@@ -168,9 +168,9 @@ public class IndexedObjectStoreTest extends DataSetTestBase {
   }
 
 
-  private byte[][] getCategories(List<String> categories){
+  private byte[][] getCategories(List<String> categories) {
     byte[][] byteCategories = new byte[categories.size()][];
-    for (int i = 0; i < categories.size(); i++){
+    for (int i = 0; i < categories.size(); i++) {
       byteCategories[i] = Bytes.toBytes(categories.get(i));
     }
     return byteCategories;

@@ -183,13 +183,13 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       }
       String key = getJobKey(program, programType);
       scheduler.deleteJob(new JobKey(key));
-    } catch (SchedulerException e){
+    } catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public ScheduleState scheduleState (String scheduleId){
+  public ScheduleState scheduleState (String scheduleId) {
     try {
       Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(scheduleId));
       // Map trigger state to schedule state.
@@ -219,7 +219,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     if (parts.length == 5) {
       //cron entry format
       StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-      if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*'){
+      if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*') {
         cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
       }
       return cronStringBuilder.toString();

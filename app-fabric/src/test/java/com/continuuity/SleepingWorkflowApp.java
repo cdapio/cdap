@@ -1,18 +1,15 @@
 package com.continuuity;
 
+import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Property;
-import com.continuuity.api.Application;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 
 /**
  *  Simple workflow, that sleeps inside a CustomAction, This class is used for testing the workflow status.

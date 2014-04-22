@@ -79,7 +79,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public void removeVPC(String vpcName) throws VPCNotFoundException{
+  public void removeVPC(String vpcName) throws VPCNotFoundException {
     Connection connection = null;
     PreparedStatement ps = null;
     String sql = String.format("DELETE FROM %s where %s = ?", DBUtils.VPC.TABLE_NAME, DBUtils.VPC.NAME_COLUMN);
@@ -88,10 +88,10 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps = connection.prepareStatement(sql);
       ps.setString(1, vpcName);
       int count = ps.executeUpdate();
-      if (count == 0){
+      if (count == 0) {
         throw new VPCNotFoundException("VPC not found");
       }
-    } catch (SQLException e){
+    } catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection, ps);
@@ -339,7 +339,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
   }
 
   @Override
-  public RolesAccounts getRolesAccounts(String vpcName){
+  public RolesAccounts getRolesAccounts(String vpcName) {
 
     Connection connection = null;
     PreparedStatement ps = null;
@@ -371,7 +371,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
       ps.setString(1, vpcName);
       rs = ps.executeQuery();
 
-      while (rs.next()){
+      while (rs.next()) {
         Account account = new Account(rs.getString(DBUtils.AccountTable.FIRST_NAME_COLUMN),
                                       rs.getString(DBUtils.AccountTable.LAST_NAME_COLUMN),
                                       rs.getString(DBUtils.AccountTable.COMPANY_COLUMN),

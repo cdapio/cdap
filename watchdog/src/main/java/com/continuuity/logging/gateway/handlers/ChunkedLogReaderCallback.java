@@ -1,10 +1,10 @@
 package com.continuuity.logging.gateway.handlers;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.PatternLayout;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import com.google.common.collect.ImmutableMultimap;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.jboss.netty.buffer.ChannelBuffers;

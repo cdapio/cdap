@@ -703,8 +703,27 @@
 
     <property>
         <name>security.server.token.expiration.ms</name>
-        <description>AccessToken expiration time in milliseconds</description>
-        <value>10000</value>
+        <value>86400000</value>
+        <description>AccessToken expiration time in milliseconds equivalent to a day</description>
+    </property>
+
+    <!--
+        Security Enabled setting
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>false</value>
+        <description> If false the router will not go validating the Accesstoken</description>
+    </property>
+
+
+    <!--
+        Security Realm
+    -->
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
     </property>
 
     <property>

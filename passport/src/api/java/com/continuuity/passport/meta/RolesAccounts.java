@@ -23,7 +23,7 @@ public final class RolesAccounts {
    * @param role Role
    * @param account Account
    */
-  public void addAccountRole(String role, Account account){
+  public void addAccountRole(String role, Account account) {
     accountsRoles.put(role, account);
   }
 
@@ -40,7 +40,7 @@ public final class RolesAccounts {
    * @param role Role
    * @return List of {@code Account}s
    */
-  public Collection<Account> getAccounts(String role){
+  public Collection<Account> getAccounts(String role) {
     return Collections.unmodifiableCollection(accountsRoles.get(role));
   }
 }

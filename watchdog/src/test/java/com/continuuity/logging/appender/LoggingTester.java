@@ -176,7 +176,7 @@ public class LoggingTester {
       latch.countDown();
     }
 
-    public List<LogEvent> getEvents() throws Exception{
+    public List<LogEvent> getEvents() throws Exception {
       latch.await();
       return events;
     }

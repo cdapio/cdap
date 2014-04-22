@@ -18,7 +18,7 @@ public class HBaseScanner implements Scanner {
   private final ResultScanner scanner;
   private final Transaction tx;
 
-  public HBaseScanner(ResultScanner scanner, Transaction tx){
+  public HBaseScanner(ResultScanner scanner, Transaction tx) {
     this.scanner = scanner;
     this.tx = tx;
   }
