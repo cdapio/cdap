@@ -27,7 +27,7 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -301,6 +301,6 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
-      new InMemorySecurityModule());
+      new SecurityModules().getSingleNodeModules());
   }
 }
