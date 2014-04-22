@@ -19,6 +19,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
+import java.io.InputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.thrift.TException;
@@ -364,16 +365,15 @@ public class TransactionServiceClient implements TransactionSystemClient {
   }
 
   @Override
-  public void takeSnapshot() throws TransactionCouldNotTakeSnapshotException {
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     try {
-      this.execute(
-          new Operation<Boolean>("takeSnapshot") {
+      return this.execute(
+          new Operation<InputStream>("takeSnapshot") {
             @Override
-            public Boolean execute(TransactionServiceThriftClient client)
+            public InputStream execute(TransactionServiceThriftClient client)
                 throws Exception {
               try {
-                client.takeSnapshot();
-                return true;
+                return client.getSnapshotStream();
               } catch (TTransactionCouldNotTakeSnapshotException e) {
                 throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
               }

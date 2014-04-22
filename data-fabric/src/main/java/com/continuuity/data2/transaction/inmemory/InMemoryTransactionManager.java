@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -295,7 +296,34 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public void doSnapshot(boolean closing) throws IOException {
+  public TransactionSnapshot getSnapshot() throws IOException {
+    long snapshotTime = 0L;
+    TransactionSnapshot snapshot = null;
+    this.logWriteLock.lock();
+    try {
+      if (!isRunning()) {
+        return null;
+      }
+
+      long now = System.currentTimeMillis();
+      // avoid duplicate snapshots at same timestamp
+      if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(1);
+        } catch (InterruptedException ie) { }
+      }
+      // copy in memory state
+      snapshot = getCurrentState();
+      snapshotTime = snapshot.getTimestamp();
+      LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
+      LOG.info("Returning snapshot of state: " + snapshot);
+      return snapshot;
+    } finally {
+      this.logWriteLock.unlock();
+    }
+  }
+
+  private void doSnapshot(boolean closing) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
     TransactionLog oldLog = null;

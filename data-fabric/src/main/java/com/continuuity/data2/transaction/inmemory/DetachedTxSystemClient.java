@@ -4,6 +4,7 @@ import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotExceptio
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
 
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -74,7 +75,7 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void takeSnapshot() throws TransactionCouldNotTakeSnapshotException {
-    // do nothing
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
+    throw new TransactionCouldNotTakeSnapshotException("Cannot take snapshot.");
   }
 }

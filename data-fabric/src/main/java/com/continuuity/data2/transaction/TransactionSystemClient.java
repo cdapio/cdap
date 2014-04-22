@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction;
 
+import java.io.InputStream;
 import java.util.Collection;
 
 /**
@@ -75,7 +76,7 @@ public interface TransactionSystemClient {
   void invalidate(Transaction tx);
 
   /**
-   * Forces the transaction manager to take a snapshot of its state.
+   * Retrieve the state of the transaction manager and send it as a stream. The snapshot will not be persisted.
    */
-  void takeSnapshot() throws TransactionCouldNotTakeSnapshotException;
+  InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException;
 }

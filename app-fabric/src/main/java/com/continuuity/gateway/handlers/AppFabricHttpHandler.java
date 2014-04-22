@@ -25,9 +25,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
-import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -57,6 +54,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -81,7 +79,6 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -89,10 +86,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
-
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -130,11 +123,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Client talking to transaction system.
    */
   private TransactionSystemClient txClient;
-
-  /**
-   * Transaction state storage manager.
-   */
-  private TransactionStateStorage txStateStorage;
 
   /**
    * App fabric output directory.
@@ -217,8 +205,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService,
                               WorkflowClient workflowClient, Scheduler service,
-                              TransactionSystemClient txClient,
-                              TransactionStateStorage txStateStorage) {
+                              TransactionSystemClient txClient) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -231,7 +218,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.workflowClient = workflowClient;
     this.scheduler = service;
     this.txClient = txClient;
-    this.txStateStorage = txStateStorage;
   }
 
   @Path("/transactions/snapshot")
@@ -239,19 +225,18 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
       LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      txClient.takeSnapshot();
-
-      TransactionSnapshot snapshot = txStateStorage.getLatestSnapshot();
-      if (snapshot == null) {
-        LOG.warn("Snapshot could not be retrieved, transaction state storage " +
-            "implementation is NoOp or error happened.");
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      } else {
-        LOG.trace("Retrieved transaction manager snapshot with timestamp {}", snapshot.getTimestamp());
-        SnapshotCodecV2 codec = new SnapshotCodecV2();
+      InputStream in = txClient.getSnapshotInputStream();
+      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
+      try {
+        byte[] readBytes = new byte[4096];
+        int res = 0;
         responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
-        responder.sendChunk(ChannelBuffers.wrappedBuffer(codec.encodeState(snapshot)));
+        while ((res = in.read(readBytes, 0, 4096)) != -1) {
+          responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+        }
         responder.sendChunkEnd();
+      } finally {
+        in.close();
       }
     } catch (Exception e) {
       LOG.error("Could not take transaction manager snapshot", e);

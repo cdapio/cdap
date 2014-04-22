@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.persist;
 import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**

@@ -7,6 +7,7 @@ import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,7 +40,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   @Before
   public void before() {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
-    txStateStorage = new InMemoryTransactionStateStorage();
+    // todo should create two sets of tests, one with LocalFileTxStateStorage and one with InMemoryTxStateStorage
+    txStateStorage = new LocalFileTransactionStateStorage(conf);
     txManager = new InMemoryTransactionManager(conf, txStateStorage);
     txManager.startAndWait();
   }

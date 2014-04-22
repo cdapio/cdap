@@ -7,7 +7,6 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
@@ -40,7 +39,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
-  private final TransactionStateStorage txStateStorage;
 
   private TThreadedSelectorServer server;
   private NettyHttpService httpService;
@@ -56,8 +54,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
                          CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named("appfabric.http.handler") HttpHandler handler,
-                         TransactionStateStorage txStateStorage) {
+                         @Named("appfabric.http.handler") HttpHandler handler) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -65,7 +62,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handler = handler;
     this.configuration = configuration;
-    this.txStateStorage = txStateStorage;
   }
 
   /**
@@ -76,7 +72,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
-    txStateStorage.startAndWait();
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
     InetAddress address = socketAddress.getAddress();
@@ -154,7 +149,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   protected void triggerShutdown() {
     schedulerService.stopAndWait();
-    txStateStorage.stopAndWait();
     executor.shutdownNow();
     server.stop();
     httpService.stopAndWait();

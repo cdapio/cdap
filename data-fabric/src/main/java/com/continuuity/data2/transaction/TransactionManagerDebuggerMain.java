@@ -1,14 +1,20 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.Decoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
@@ -142,9 +148,9 @@ public class TransactionManagerDebuggerMain {
     try {
       System.out.println("Retrieving snapshot from file " + filename);
       File snapshotFile = new File(filename);
-      byte[] encodedSnapshot = Files.toByteArray(snapshotFile);
+      FileInputStream fis = new FileInputStream(snapshotFile);
       SnapshotCodecV2 codec = new SnapshotCodecV2();
-      TransactionSnapshot snapshot = codec.decodeState(encodedSnapshot);
+      TransactionSnapshot snapshot = codec.decodeState(fis);
       System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
       return snapshot;
     } catch (IOException e) {
@@ -172,17 +178,24 @@ public class TransactionManagerDebuggerMain {
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         // Retrieve and deserialize the snapshot
-        byte[] encodedSnapshot = ByteStreams.toByteArray(connection.getInputStream());
-
         SnapshotCodecV2 codec = new SnapshotCodecV2();
-        TransactionSnapshot snapshot = codec.decodeState(encodedSnapshot);
+
+        TransactionSnapshot snapshot = codec.decodeState(connection.getInputStream());
         System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is " +
             snapshot.getTimestamp() + " ms");
 
         if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
-          File snapshotTmpFile = new File(persistingFilename);
-          Files.write(encodedSnapshot, snapshotTmpFile);
+          FileOutputStream fos = null;
+          try {
+            // todo use pipes here to avoid having everyhting in memory twice
+            fos = new FileOutputStream(persistingFilename);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            codec.encodeState(baos, snapshot);
+            baos.writeTo(fos);
+          } finally {
+            fos.close();
+          }
           System.out.println("Snapshot persisted on your disk as " + persistingFilename + " for future queries.");
         } else {
           System.out.println("Persist option not activated - Snapshot won't be persisted on your disk.");
@@ -344,7 +357,8 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Oldest short transaction" +
             "\tWritePtr " + txIdToString(oldestShort.getKey()) +
             "\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())));
-        System.out.println("\tVisibility upper bound: " + txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
+        System.out.println("\tVisibility upper bound: " +
+            txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
       }
     }
   }

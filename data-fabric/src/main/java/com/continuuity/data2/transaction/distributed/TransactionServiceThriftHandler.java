@@ -8,6 +8,8 @@ import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNot
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import org.apache.thrift.TException;
@@ -101,9 +103,16 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
   }
 
   @Override
-  public void takeSnapshot() throws TTransactionCouldNotTakeSnapshotException, TException {
+  public ByteBuffer getSnapshot() throws TTransactionCouldNotTakeSnapshotException, TException {
     try {
-      txManager.doSnapshot(false);
+      TransactionSnapshot snapshot = txManager.getSnapshot();
+      if (snapshot == null) {
+        throw new TTransactionCouldNotTakeSnapshotException("Transaction manager could not get a snapshot.");
+      }
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      // todo find a way to encode directly to the stream, without having the snapshot in memory twice
+      byte[] encoded = codec.encodeState(snapshot);
+      return ByteBuffer.wrap(encoded);
     } catch (IOException e) {
       throw new TTransactionCouldNotTakeSnapshotException(e.getMessage());
     }

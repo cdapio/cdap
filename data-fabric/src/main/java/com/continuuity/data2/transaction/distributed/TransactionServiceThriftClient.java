@@ -3,9 +3,11 @@ package com.continuuity.data2.transaction.distributed;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import java.io.InputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -94,8 +96,9 @@ public class TransactionServiceThriftClient {
       client.invalidateTx(ConverterUtils.wrap(tx));
   }
 
-  public void takeSnapshot() throws TTransactionCouldNotTakeSnapshotException, TException {
-    client.takeSnapshot();
+  public InputStream getSnapshotStream() throws TTransactionCouldNotTakeSnapshotException, TException {
+    ByteBuffer buffer = client.getSnapshot();
+    return new ByteBufferInputStream(buffer);
   }
 
 }

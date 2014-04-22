@@ -30,5 +30,5 @@ service TTransactionServer {
   TBoolean commitTx(1: TTransaction tx) throws (1:TTransactionNotInProgressException e),
   void abortTx(1: TTransaction tx),
   void invalidateTx(1: TTransaction tx),
-  void takeSnapshot() throws (1:TTransactionCouldNotTakeSnapshotException e),
+  binary getSnapshot() throws (1:TTransactionCouldNotTakeSnapshotException e),
 }
