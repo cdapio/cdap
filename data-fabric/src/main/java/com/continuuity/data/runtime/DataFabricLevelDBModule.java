@@ -18,7 +18,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;

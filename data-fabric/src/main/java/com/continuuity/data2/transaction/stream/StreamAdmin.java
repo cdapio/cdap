@@ -1,7 +1,8 @@
-package com.continuuity.data2.transaction.queue;
+package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import org.apache.twill.filesystem.Location;
 
 import java.util.Map;
 
@@ -35,4 +36,11 @@ public interface StreamAdmin extends DataSetManager {
    * Performs upgrade action for all streams.
    */
   void upgrade() throws Exception;
+
+  /**
+   * Returns the location that points to the direct
+   * @param streamName
+   * @return
+   */
+  Location getStreamLocation(String streamName) throws Exception;
 }

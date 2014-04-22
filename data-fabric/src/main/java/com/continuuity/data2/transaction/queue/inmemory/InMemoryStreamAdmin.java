@@ -1,6 +1,6 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
