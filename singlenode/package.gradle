@@ -36,7 +36,9 @@ task stageExeSingleNode (type: Copy) {
     group 'Deployment'
     description "Copies winutils.exe and curl.exe to \$buildDir/libexec/bin for singlenode"
     from "$rootProject.projectDir/unit-test/src/main/resources"
+    from "$rootProject.projectDir/singlenode/libexec/bin"
     include "winutils.exe"
+    include "curl.exe"
     into "${buildDir}/libexec/bin"
 }
 
