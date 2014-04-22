@@ -58,17 +58,15 @@ public class NettyRouter extends AbstractIdleService {
   private final InetAddress hostname;
   private final Set<String> forwards; // format port:service
 
-
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
 
-  private boolean securityEnabled;
+  private final boolean securityEnabled;
+  private final TokenValidator tokenValidator;
+  private final String realm;
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
-  private TokenValidator tokenValidator;
-  private String realm;
-
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,

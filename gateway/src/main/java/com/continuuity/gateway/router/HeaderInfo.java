@@ -6,7 +6,7 @@ import com.google.common.base.Objects;
 /**
  * Decoded header information.
  */
-public  class HeaderInfo {
+public class HeaderInfo {
   private final String path;
   private final String host;
   private final String method;

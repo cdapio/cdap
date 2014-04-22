@@ -67,9 +67,9 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     String accessToken = null;
 
     if (auth != null) {
-      String[] fragments = auth.split("\\s+");
-      if (fragments.length > 1) {
-        accessToken = fragments[1];
+      int spIndex = auth.trim().indexOf(' ') + 1;
+      if (spIndex != -1) {
+        accessToken = auth.substring(spIndex).trim();
       }
     }
     //Decoding the header
