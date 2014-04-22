@@ -18,6 +18,7 @@ import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
+import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterPathTest;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
@@ -27,12 +28,16 @@ import com.continuuity.logging.read.LogReader;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -50,9 +55,12 @@ import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -69,20 +77,21 @@ public class GatewayFastTestsSuite {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static Gateway gateway;
+  private static final String WEBAPPSERVICE = "$HOST";
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
-
+  private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
-
+      Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
       conf.setInt(Constants.Gateway.PORT, 0);
       conf.set(Constants.Gateway.ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
@@ -91,7 +100,8 @@ public class GatewayFastTestsSuite {
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
-
+      conf.set(Constants.Router.ADDRESS, hostname);
+      conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       injector = startGateway(conf);
     }
 
@@ -117,6 +127,13 @@ public class GatewayFastTestsSuite {
               }
             });
           }
+
+          @Provides
+          @Named(Constants.Router.ADDRESS)
+          public final InetAddress providesHostname(CConfiguration cConf) {
+            return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
+                                    new InetSocketAddress("localhost", 0).getAddress());
+          }
         },
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
@@ -131,6 +148,7 @@ public class GatewayFastTestsSuite {
                  MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
                  bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
                  bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+
                }
              }
       ));
@@ -145,7 +163,13 @@ public class GatewayFastTestsSuite {
     gateway.stopAndWait();
     gateway = injector.getInstance(Gateway.class);
     gateway.startAndWait();
-    port = gateway.getBindAddress().getPort();
+    router = injector.getInstance(NettyRouter.class);
+    router.startAndWait();
+    Map<String, Integer> serviceMap = Maps.newHashMap();
+    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
+      serviceMap.put(entry.getValue(), entry.getKey());
+    }
+    port = serviceMap.get(Constants.Service.GATEWAY);
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

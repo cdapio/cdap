@@ -50,6 +50,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureDispatcher.class);
   private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/methods/(.+)$");
+  private static final Pattern METHOD_GET_PATTERN = Pattern.compile("^(.*?)[?]");
   private static final Gson GSON = new Gson();
   private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
@@ -158,6 +159,12 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
       } else {
         args = GSON.fromJson(new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8),
                              REQUEST_TYPE);
+      }
+
+      //Extract the GET method name
+      Matcher methodMatcher = METHOD_GET_PATTERN.matcher(requestMethod);
+      if (methodMatcher.find()) {
+        requestMethod = methodMatcher.group(1);
       }
 
       return new DefaultProcedureRequest(requestMethod, args);

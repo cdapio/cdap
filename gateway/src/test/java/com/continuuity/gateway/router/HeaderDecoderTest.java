@@ -1,7 +1,6 @@
 package com.continuuity.gateway.router;
 
 import com.google.common.base.Charsets;
-import com.sun.research.ws.wadl.HTTPMethods;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +29,9 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("GET", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
+    Assert.assertEquals("", headerInfo.getAPIKey());
   }
 
   @Test
@@ -51,6 +53,8 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("GET", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
   }
 
   @Test
@@ -72,6 +76,8 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("GET", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
   }
 
   @Test
@@ -91,6 +97,8 @@ public class HeaderDecoderTest {
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertNull(headerInfo);
+    Assert.assertEquals("GET", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
   }
 
   @Test
@@ -111,6 +119,8 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("GET", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
   }
 
   @Test
@@ -130,5 +140,6 @@ public class HeaderDecoderTest {
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("DELETE", headerInfo.getMethod());
+    Assert.assertEquals("HTTP/1.1", headerInfo.getVersion());
   }
 }
