@@ -53,6 +53,6 @@ public class MinimalTxSystemClient implements TransactionSystemClient {
 
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
-    return null;
+    throw new TransactionCouldNotTakeSnapshotException("Not snapshot to take.");
   }
 }

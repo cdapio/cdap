@@ -9,6 +9,8 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -18,6 +20,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.sun.source.tree.AssertTree;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
@@ -470,9 +473,15 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testTxManagerSnapshot() throws Exception {
+    Long currentTs = System.currentTimeMillis();
+
     HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/snapshot");
-    // 500 because TxStateStorage impl is NoOp in the context of these tests
-    Assert.assertEquals(500, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    InputStream in = response.getEntity().getContent();
+    SnapshotCodecV2 codec = new SnapshotCodecV2();
+    TransactionSnapshot snapshot = codec.decodeState(in);
+    Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
   }
 
   /**
