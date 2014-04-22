@@ -17,10 +17,10 @@ public interface TokenValidator {
 
     private final String msg;
 
-    State(String msg){
+    State(String msg) {
       this.msg = msg;
     }
-    public String getMsg(){
+    public String getMsg() {
       return msg;
     }
   }

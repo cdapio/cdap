@@ -17,15 +17,15 @@ public  class HeaderInfo {
     this.method = method;
   }
 
-  public String getPath(){
+  public String getPath() {
     return path;
   }
 
-  public String getHost(){
+  public String getHost() {
     return host;
   }
 
-  public String getMethod(){
+  public String getMethod() {
     return method;
   }
 
