@@ -56,7 +56,8 @@ public class GatewayTwillApplication implements TwillApplication {
           .add("cConf.xml", cConfFile.toURI())
           .add("hConf.xml", hConfFile.toURI())
         .apply()
-      .anyOrder()
+      .withOrder()
+      .begin("streamHandler").nextWhenStarted("gateway")
       .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
   }
 }

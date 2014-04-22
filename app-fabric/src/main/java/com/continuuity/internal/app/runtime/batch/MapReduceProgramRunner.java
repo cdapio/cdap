@@ -25,7 +25,6 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.stream.StreamManager;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -33,6 +32,7 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
@@ -79,7 +79,7 @@ import javax.annotation.Nullable;
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
 
-  private final StreamManager streamManager;
+  private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
@@ -94,14 +94,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
-                                StreamManager streamManager,
+                                StreamAdmin streamAdmin,
                                 DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
-    this.streamManager = streamManager;
+    this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.dataSetAccessor = dataSetAccessor;
     this.txSystemClient = txSystemClient;
@@ -478,7 +478,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws IOException {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws Exception {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     BatchReadable batchReadable = mapReduceContext.getInputDataset();
@@ -508,7 +508,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     } else if (batchReadable instanceof StreamBatchReadable) {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
-      Location streamPath = streamManager.getStreamLocation(stream.getStreamName());
+      Location streamPath = streamAdmin.getConfig(stream.getStreamName()).getLocation();
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
       TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());

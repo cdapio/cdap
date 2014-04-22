@@ -5,6 +5,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -43,5 +44,10 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   public boolean doTruncateTable(QueueName queueName) {
     // separate table for each stream, ok to truncate
     return true;
+  }
+
+  @Override
+  public StreamConfig getConfig(String streamName) throws Exception {
+    return null;
   }
 }

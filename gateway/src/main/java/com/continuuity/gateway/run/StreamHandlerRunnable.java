@@ -11,11 +11,12 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.file.FileWriter;
-import com.continuuity.data.stream.StreamConfig;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.StreamHandler;
-import com.continuuity.data.stream.StreamManager;
 import com.continuuity.data.stream.TimePartitionedStreamFileWriter;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -79,7 +80,8 @@ public class StreamHandlerRunnable extends AbstractTwillRunnable {
       Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                                new ZKClientModule(),
                                                new DiscoveryRuntimeModule().getDistributedModules(),
-                                               new LocationRuntimeModule().getDistributedModules());
+                                               new LocationRuntimeModule().getDistributedModules(),
+                                               new DataFabricModules(cConf, hConf).getDistributedModules());
 
       zkClientService = injector.getInstance(ZKClientService.class);
       LOG.info("Starting ZKClient");
@@ -88,14 +90,14 @@ public class StreamHandlerRunnable extends AbstractTwillRunnable {
 
       DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
-      StreamManager streamManager = injector.getInstance(StreamManager.class);
+      StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
 
       String filePrefix = "file." + context.getInstanceId();
-      StreamFileWriterFactory writerFactory = new FileWriterFactory(streamManager, filePrefix);
+      StreamFileWriterFactory writerFactory = new FileWriterFactory(streamAdmin, filePrefix);
       int workerThreads = Runtime.getRuntime().availableProcessors() * 2;
 
       httpService = NettyHttpService.builder()
-        .addHttpHandlers(ImmutableList.of(new StreamHandler(streamManager, writerFactory, workerThreads)))
+        .addHttpHandlers(ImmutableList.of(new StreamHandler(streamAdmin, writerFactory, workerThreads)))
         .setHost(InetAddress.getLocalHost().getHostName())
         .setWorkerThreadPoolSize(workerThreads)
         .setExecThreadPoolSize(0)
@@ -152,19 +154,26 @@ public class StreamHandlerRunnable extends AbstractTwillRunnable {
 
   private static final class FileWriterFactory implements StreamFileWriterFactory {
 
-    private final StreamManager manager;
+    private final StreamAdmin streamAdmin;
     private final String filePrefix;
 
-    private FileWriterFactory(StreamManager manager, String filePrefix) {
-      this.manager = manager;
+    private FileWriterFactory(StreamAdmin streamAdmin, String filePrefix) {
+      this.streamAdmin = streamAdmin;
       this.filePrefix = filePrefix;
     }
 
     @Override
     public FileWriter<StreamEvent> create(String streamName) throws IOException {
-      StreamConfig config = manager.getConfig(streamName);
-      return new TimePartitionedStreamFileWriter(manager.getStreamLocation(streamName),
-                                                 config.getPartitionDuration(), filePrefix, config.getIndexInterval());
+      try {
+        StreamConfig config = streamAdmin.getConfig(streamName);
+        return new TimePartitionedStreamFileWriter(config.getLocation(),
+                                                   config.getPartitionDuration(), filePrefix,
+                                                   config.getIndexInterval());
+
+      } catch (Exception e) {
+        Throwables.propagateIfPossible(e, IOException.class);
+        throw new IOException(e);
+      }
     }
   }
 }

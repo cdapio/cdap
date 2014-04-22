@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  *
  * TODO: Usage of this class needs to be refactor, as some methods are temporary (e.g. encodeMap/decodeMap).
  */
-final class StreamUtils {
+public final class StreamUtils {
 
   /**
    * Decode a map.
@@ -39,10 +39,6 @@ final class StreamUtils {
       len = decoder.readInt();
     }
     return map.build();
-  }
-
-  static Location getStreamBaseLocation(LocationFactory locationFactory, CConfiguration cConf) {
-    return locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
   }
 
   /**
@@ -67,7 +63,7 @@ final class StreamUtils {
    * @param uri Location to the event file.
    * @return The partition name.
    */
-  static String getPartitionName(URI uri) {
+  public static String getPartitionName(URI uri) {
     String path = uri.getPath();
     int idx = path.lastIndexOf('/');
     Preconditions.checkArgument(idx >= 0, "Invalid event file location %s.", uri);
@@ -83,7 +79,7 @@ final class StreamUtils {
    *
    * @param name Name of the file.
    */
-  static String getBucketName(String name) {
+  public static String getBucketName(String name) {
     int idx = name.lastIndexOf('.');
     return (idx >= 0) ? name.substring(0, idx) : name;
   }
@@ -95,7 +91,7 @@ final class StreamUtils {
    *
    * @see StreamInputFormat for the naming convention.
    */
-  static long getPartitionStartTime(String partitionName) {
+  public static long getPartitionStartTime(String partitionName) {
     int idx = partitionName.indexOf('.');
     Preconditions.checkArgument(idx >= 0,
                                 "Invalid partition name %s. Partition name should be of format %s",
@@ -110,7 +106,7 @@ final class StreamUtils {
    *
    * @see StreamInputFormat for the naming convention.
    */
-  static long getPartitionEndTime(String partitionName) {
+  public static long getPartitionEndTime(String partitionName) {
     int idx = partitionName.indexOf('.');
     Preconditions.checkArgument(idx >= 0,
                                 "Invalid partition name %s. Partition name should be of format %s",

@@ -18,10 +18,10 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBFileStreamAdmin;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
@@ -78,7 +78,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);
-    bind(StreamAdmin.class).to(LevelDBStreamAdmin.class).in(Singleton.class);
+    bind(StreamAdmin.class).to(LevelDBFileStreamAdmin.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

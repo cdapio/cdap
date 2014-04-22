@@ -8,6 +8,7 @@ import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.stream.DefaultStreamEventData;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
@@ -65,12 +66,12 @@ public final class StreamHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
 
-  private final StreamManager streamManager;
+  private final StreamAdmin streamAdmin;
   private final StreamFileWriterFactory writerFactory;
   private final ConcurrentMap<String, EventQueue> eventQueues;
 
-  public StreamHandler(StreamManager manager, StreamFileWriterFactory writerFactory, int threads) {
-    this.streamManager = manager;
+  public StreamHandler(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory, int threads) {
+    this.streamAdmin = streamAdmin;
     this.writerFactory = writerFactory;
     this.eventQueues = new MapMaker().concurrencyLevel(threads).makeMap();
   }
@@ -89,9 +90,9 @@ public final class StreamHandler extends AbstractHttpHandler {
   @GET
   @Path("/{stream}/info")
   public void info(HttpRequest request, HttpResponder responder,
-                   @PathParam("stream") String stream) throws IOException {
-    if (streamManager.exists(stream)) {
-      responder.sendJson(HttpResponseStatus.OK, streamManager.getConfig(stream));
+                   @PathParam("stream") String stream) throws Exception {
+    if (streamAdmin.exists(stream)) {
+      responder.sendStatus(HttpResponseStatus.OK);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -100,10 +101,10 @@ public final class StreamHandler extends AbstractHttpHandler {
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
-                     @PathParam("stream") String stream) throws IOException {
+                     @PathParam("stream") String stream) throws Exception {
 
     // TODO: Modify the REST API to support custom configurations.
-    streamManager.create(stream).apply();
+    streamAdmin.create(stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -146,14 +147,14 @@ public final class StreamHandler extends AbstractHttpHandler {
   @POST
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
-                       @PathParam("stream") String stream) throws IOException {
+                       @PathParam("stream") String stream) throws Exception {
     // TODO: This is not thread and multi-instances safe yet
     // Need to communicates with other instances with a barrier for closing current file for the given stream
     getEventQueue(stream).close();
     eventQueues.remove(stream);
 
-    if (streamManager.exists(stream)) {
-      streamManager.deletePartitions(stream, 0, Long.MAX_VALUE);
+    if (streamAdmin.exists(stream)) {
+      streamAdmin.truncate(stream);
       responder.sendStatus(HttpResponseStatus.OK);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
