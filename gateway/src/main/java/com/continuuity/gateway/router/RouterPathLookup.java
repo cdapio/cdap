@@ -36,6 +36,13 @@ public final class RouterPathLookup {
     "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
     "(schedules|nextruntime)";
 
+  private static final String LIVEINFO_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures)/([A-Za-z0-9_]+)/live-info";
+
+  //TODO: Consolidate this!!!
+  private static final String SPEC_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
+
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
                                                                                      "POST", HttpMethod.POST);
@@ -56,6 +63,12 @@ public final class RouterPathLookup {
                                                         Constants.Service.APP_FABRIC_HTTP)
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
                                                         Pattern.compile(FLOWLET_INSTANCE_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                        Pattern.compile(SPEC_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                        Pattern.compile(LIVEINFO_PATH)),
                                                         Constants.Service.APP_FABRIC_HTTP)
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(
                                                         HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST),
