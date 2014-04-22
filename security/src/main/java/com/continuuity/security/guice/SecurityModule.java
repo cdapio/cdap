@@ -4,7 +4,7 @@ import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.AccessTokenIdentifierCodec;
-import com.continuuity.security.auth.Codec;
+import com.continuuity.security.io.Codec;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;

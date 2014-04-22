@@ -2,6 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.security.io.Codec;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 
@@ -13,7 +14,6 @@ import java.io.IOException;
  * Writes and loads a serialized secret key from file.
  */
 public class FileBasedKeyManager extends AbstractKeyManager {
-  private static final int KEY_VERSION = KeyIdentifier.Schemas.getVersion();
   private final String keyFilePath;
 
   private final Codec<KeyIdentifier> keyIdentifierCodec;
@@ -48,7 +48,8 @@ public class FileBasedKeyManager extends AbstractKeyManager {
     if (keyFile.exists()) {
       KeyIdentifier storedKey = keyIdentifierCodec.decode(Files.toByteArray(keyFile));
       this.currentKey = storedKey;
-      allKeys.put(storedKey.getKeyId(), storedKey.getKey());
+      // the file-based key is considered valid forever
+      allKeys.put(Integer.toString(storedKey.getKeyId()), storedKey);
     } else {
       Preconditions.checkState(keyFileDir.canWrite(),
                                "Configured keyFile directory " + keyFileDirectory + " exists but is not writable!");

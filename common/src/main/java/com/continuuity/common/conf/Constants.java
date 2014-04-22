@@ -441,6 +441,9 @@ public final class Constants {
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
     public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
+    /** Time duration in milliseconds after which an active secret key should be retired. */
+    public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
+    public static final long DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION = 60 * 60 * 1000;
 
     /** Configuration for External Authentication Server */
     public static final String AUTH_SERVER_PORT = "security.server.port";

@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.FileBasedSecurityModule;
+import com.continuuity.security.io.Codec;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -42,7 +43,7 @@ public class TestKeyIdentifierCodec {
   public void testKeyIdentifierSerialization() throws Exception {
     SecretKey nextKey = keyGenerator.generateKey();
     Random random = new Random();
-    KeyIdentifier keyIdentifier = new KeyIdentifier(nextKey, random.nextInt());
+    KeyIdentifier keyIdentifier = new KeyIdentifier(nextKey, random.nextInt(), Long.MAX_VALUE);
 
     byte[] encoded = keyIdentifierCodec.encode(keyIdentifier);
     KeyIdentifier decodedKeyIdentifier = keyIdentifierCodec.decode(encoded);

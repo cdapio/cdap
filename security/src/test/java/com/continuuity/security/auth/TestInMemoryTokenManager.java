@@ -4,6 +4,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.io.Codec;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
