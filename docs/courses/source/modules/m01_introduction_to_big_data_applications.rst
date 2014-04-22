@@ -2,6 +2,10 @@
 Introduction to Big Data Applications
 ============================================
 
+.. reST Editor: .. section-numbering::
+
+.. reST Editor: .. contents::
+
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----

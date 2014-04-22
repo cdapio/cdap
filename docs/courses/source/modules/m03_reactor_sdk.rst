@@ -2,6 +2,10 @@
 Continuuity Reactor SDK
 =======================
 
+.. reST Editor: .. section-numbering::
+
+.. reST Editor: .. contents::
+
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----
@@ -50,7 +54,7 @@ Download the Software Development Kit
 ----
 
 Exploring the Contents of SDK
-============================
+=============================
 
 - Local Continuuity Reactor Application
 
@@ -114,19 +118,10 @@ Javadocs
 ::
 
 	allclasses-frame.html
-	allclasses-noframe.html
-	com/
-	constant-values.html
-	deprecated-list.html
-	help-doc.html
+	...
 	index-all.html
 	index.html
-	overview-frame.html
-	overview-summary.html
-	overview-tree.html
-	package-list
-	resources/
-	serialized-form.html
+	...
 	stylesheet.css
 
 - Javadocs for Java portion of API
@@ -139,10 +134,12 @@ Javadocs
 REST API Guide
 ==============
 
-- Local copy of REST API located in ``docs/``::
+.. |br_m03| raw:: html
 
-	REST-API-Reference-v<version>.pdf
-
+   <br />
+   
+- Local copy of REST API located in ``docs/``:|br_m03|
+  ``REST-API-Reference-v<version>.pdf``
 - All other docs online
 - ``http://www.continuuity.com/developers/``
 

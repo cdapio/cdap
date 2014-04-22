@@ -86,10 +86,13 @@ Upon completion of this course you should be able to:
 
 .. landslide: COURSE MODULES START HERE
 
+.. .. landslide: CUT START
+
 .. landslide: section: Introduction
+.. --------------------------------
 
 .. landslide: chapter: What Can Reactor Do For You?
-
+.. ................................................
 
 .. landslide: module: Introduction to Big Data Applications
 .. include:: ../modules/m01_introduction_to_big_data_applications.rst
@@ -100,10 +103,13 @@ Upon completion of this course you should be able to:
 .. landslide: module: Reactor SDK
 .. include:: ../modules/m03_reactor_sdk.rst
 
+.. .. landslide: CUT STOP
 
 .. landslide: section: Reactor Building Blocks
+.. -------------------------------------------
 
 .. landslide: chapter: Reactor Application
+.. ................................................
 
 .. landslide: module: Exploring Reactor Applications via Dashboard
 .. include:: ../modules/m04_exploring_reactor_via_dashboard.rst
@@ -112,15 +118,25 @@ Upon completion of this course you should be able to:
 .. include:: ../modules/m05_exploring_reactor_via_rest.rst
 
 .. landslide: module: Application Lifecycle management
+.. include:: ../modules/m06_application_lifecyle_management.rst
+
 
 .. landslide: chapter: Ingesting Data
-.. landslide: module: Streams REST API
-.. landslide: module: Creating Streams
-.. landslide: module: Sending Data to Streams
+.. ................................................
 
-.. .. landslide: CUT START
+.. landslide: module: Streams REST API
+.. include:: ../modules/m07_streams_rest_api.rst
+
+.. landslide: module: Creating Streams
+.. include:: ../modules/m08_creating_streams.rst
+
+.. landslide: module: Sending Data to Streams
+.. include:: ../modules/m09_sending_data_to_streams.rst
+
+.. landslide: CUT START
 
 .. landslide: chapter: Real-time Processing Using Flows
+.. ................................................
 .. landslide: module: Flows versus Flowlets
 .. landslide: module: Flow Programming API
 .. landslide: module: Flow Partitioning
@@ -128,6 +144,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Type Projection
 
 .. landslide: chapter: Storing Data Using DataSets
+.. ................................................
 .. landslide: module: DataSet Types
 .. landslide: module: DataSet Lifecycle
 .. landslide: module: Programming API
@@ -141,9 +158,12 @@ Upon completion of this course you should be able to:
 .. landslide: module: Transactions and MapReduce
 .. landslide: module: REST APIs
 
+
 .. landslide: section: Integrating Reactor Into Application Development Workflow
+.. -------------------------------------------
 
 .. landslide: chapter: Reactor In Your Continuous Integration Environment
+.. ................................................
 .. landslide: module: Introduction to Types of Reactors
 .. landslide: module: Integrating Reactor in CI
 
@@ -154,9 +174,12 @@ Upon completion of this course you should be able to:
 .. landslide: chapter: Debugging Applications With Reactor
 .. landslide: module: Debugging Strategies
 
+
 .. landslide: section: Reactor In Production
+.. -------------------------------------------
 
 .. landslide: chapter: Operational Considerations For Reactor
+.. ................................................
 .. landslide: module: Instrumenting Application Health via Metrics
 .. landslide: module: Monitoring Application Health 
 .. landslide: module: Collecting Critical Application Information via Logs
@@ -164,11 +187,13 @@ Upon completion of this course you should be able to:
 .. landslide: module: Scaling Instances
 
 .. landslide: chapter: Controlling Application Lifecycle using REST APIs
+.. ................................................
 .. landslide: module: Application Management APIs
 .. landslide: module: Flow Management APIs
 .. landslide: module: Procedure Management APIs
 
 .. landslide: chapter: Collecting Data From External Sources
+.. ................................................
 .. landslide: module: Getting Data from Twitter API
 .. landslide: module: Getting Data from Kafka 
 .. landslide: module: Getting Data from Flume
@@ -213,9 +238,9 @@ You should now be able to:
 Congratulations!
 ================
 
-- You have completed the **Getting Started With Continuuity Reactor** course.
+- You have completed the **Getting Started With Continuuity Reactor** course
 
-- Please be sure to complete the course evaluation.
+- Please be sure to complete the course evaluation
 
 - Thank you for your time and attention!
 
@@ -225,8 +250,6 @@ Thank you!
 ==========
 
 Please complete the Evaluation Forms and return them to the instructor.
-
------
 
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 

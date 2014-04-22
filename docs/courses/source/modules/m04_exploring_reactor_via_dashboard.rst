@@ -2,6 +2,10 @@
 Exploring Reactor Applications via Dashboard
 ============================================
 
+.. reST Editor: .. section-numbering::
+
+.. reST Editor: .. contents::
+
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----
@@ -46,18 +50,10 @@ What is a Reactor Application?
 - MapReduce Jobs
 - Workflows
 
-
-
 ----
 
-Overview
-========
-.fx: center_title_slide
-
-----
-
-Dashboard
-=========
+Dashboard: Overview
+===================
 
 The **Continuuity Reactor Dashboard** is available for deploying, querying and 
 managing the Continuuity Reactor.
@@ -65,7 +61,7 @@ managing the Continuuity Reactor.
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
    :width: 600px
 
-Here is a screen-capture of the Dashboard running on an Enterprise Continuuity Reactor.
+*Dashboard running on an Enterprise Continuuity Reactor*
 
 .. class:: notes
 
@@ -119,12 +115,12 @@ Collect
 Streams
 =======
 
-**Streams** are the primary means for bringing data
-from external systems into the Reactor in realtime.
+**Streams**: primary means for bringing data
+from external systems into the Reactor in realtime
 
-The **Collect** pane of the **Dashboard** shows all the Streams collecting data and their 
+**Dashboard Collect** pane shows all the Streams collecting data and their 
 details: name, storage, number of events and the arrival rate, with a graph showing 
-arrivals based on the sampling rate menu setting.
+arrivals based on the sampling rate menu setting
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_03_collect.png
    :width: 600px
@@ -134,16 +130,13 @@ arrivals based on the sampling rate menu setting.
 Streams
 =======
 
-Clicking on a Stream's name will take you to the Stream's pane:
+Clicking on a Stream's name takes you to the Stream's pane, showing:
 
-The Stream pane shows:
+- Number of events per second currently in the Stream
+- Storage and a graph of events over the last sampling period
+- List of all the Flows attached to the Stream with processing rate and busyness for each
 
-- the details of the number of events per second currently in the Stream,
-- the storage and a graph of events over the last sampling period, and 
-- a list of all the Flows
-  that are attached to the Stream, with processing rate and busyness for each Flow.
-
-Clicking on a Flow name will take you to that Flow's pane.
+Clicking on a Flow name will take you to that Flow's pane:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_21_stream.png
    :width: 600px
@@ -160,7 +153,7 @@ Process
 =======
 The **Process** pane shows all the
 Flows,
-MapReduce and Workflows in the Reactor.
+MapReduce Jobs and Workflows in the Reactor
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_04_process.png
    :width: 600px
@@ -179,8 +172,8 @@ For MapReduce, it shows the mapping status and the reducing status.
 MapReduce Jobs
 ==============
 
-For a MapReduce, the Mapping and Reducing activity is shown, along with status and 
-management controls for starting, stopping and configuration.
+For a MapReduce Job, the Mapping and Reducing activity is shown, along with status and 
+management controls for starting, stopping and configuration
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_26_mapreduce.png
    :width: 600px
@@ -191,7 +184,7 @@ Workflows
 =========
 
 For a Workflow, the time until the next scheduled run is shown, along with status and 
-management controls for starting, stopping and configuration.
+management controls for starting, stopping and configuration
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_25_workflow.png
    :width: 600px
@@ -202,39 +195,35 @@ management controls for starting, stopping and configuration.
 Flows
 =====
 
-Each Flow has a management pane, which shows the status, log and history of a Flow.
-It that shows all the Streams, and Flowlets, connections, and icons arranged in a 
-directed acyclic graph or DAG.
-Across the top are two realtime graphs of processing rate and busyness with current 
-Flow status and management controls.
+- Each Flow has a management pane, with status, log and history
+- Shows all Streams, Flowlets, connections, and icons arranged in a 
+  directed acyclic graph or DAG
+- Two realtime graphs of processing rate and busyness with current 
+  Flow status and management controls
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_07_app_crawler_flow_rss.png
    :width: 600px
 
 ----
 
-Flows
-=====
+Flows: Management Cluster
+=========================
 
-The upper-right portion has a cluster of buttons:
+The upper-right management cluster:
 
-- Status, Log and History buttons that switch you between the panes of the Flow presentation;
-
-- Sampling menu;
-
-- Current status (*Running* or *Paused*);
-
-- Gear icon for runtime configuration settings; and
-
-- Start and stop buttons for the Flow.
+- Status, Log and History buttons that switch you between the panes of the Flow presentation
+- Sampling menu
+- Current status (*Running* or *Paused*)
+- Gear icon for runtime configuration settings
+- Start and stop buttons for the Flow
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_11_app_crawler_detail.png
    :width: 200px
 
 ----
 
-Flows
-=====
+Flows: Configuration Parameters
+===============================
 
 The gear icon brings up a dialog for setting the runtime configuration parameters
 that have been built into the Flow:
@@ -258,8 +247,10 @@ The directed acyclic graph (DAG) shows all the Streams and Flowlets:
 Flows: Directed Acyclic Graph
 =============================
 
-A Stream icon shows the name of the Stream and the number of events processed in the 
-current sampling period:
+A Stream icon shows:
+
+- Stream name
+- Number of events processed in the current sampling period
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_12_stream_icon.png
    :width: 200px
@@ -270,9 +261,11 @@ current sampling period:
 Flows: Directed Acyclic Graph
 =============================
 
-A Flowlet icon shows the name of the Flowlet, the number of events processed
-in the current sampling period,
-and—in a small circle in the upper right of the icon—the number of instances of that Flowlet:
+A Flowlet icon shows:
+
+- Flowlet name
+- Number of events processed in the current sampling period
+- Number of instances of that Flowlet (small circle, upper right of the icon)
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_13_flowlet_icon.png
    :width: 200px
@@ -288,10 +281,11 @@ Store
 DataSets
 ========
 
-For a DataSet, write rate (in both bytes and operations per second), 
-read rate and total storage is shown,
-along with a list of Flows attached to the
-DataSet and their processing rate and busyness.
+For a DataSet, **Dashboard** shows:
+
+- Write rate (in both bytes and operations per second) 
+- Read rate and total storage
+- List of Flows attached to the DataSet with their processing rate and busyness
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_15_dataset.png
    :width: 600px
@@ -307,18 +301,21 @@ Query
 Procedures
 ==========
 
-For a Procedure, request statistics are shown, along with status and management controls 
-for starting, stopping and configuration. The dialog box shown allows for the generation 
-of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when 
-calling its methods.
+For a Procedure, **Dashboard** shows:
+
+- Request statistics
+- Status and management controls for starting, stopping and configuration
+ 
+The dialog box shown allows for the generation of 'ad-hoc' requests, 
+where JSON string parameters are passed to the Procedure when calling its methods:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_17_procedure_ranker.png
    :width: 600px
 
 ----
 
-Module Objectives Review
-========================
+Module Summary
+==============
 
 In this module, you have seen the basic elements of Continuuity Reactor and its Dashboard:
 
@@ -330,8 +327,8 @@ In this module, you have seen the basic elements of Continuuity Reactor and its 
 
 ----
 
-Module Objectives (continued)
-=============================
+Module Summary (continued)
+==========================
 
 You have seen how these elements are displayed in the Dashboard:
 

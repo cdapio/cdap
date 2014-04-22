@@ -1,4 +1,4 @@
-/* Version 2 */
+/* Version 2.1 */
 
 /* Start: mavenPro.css @import url(mavenPro.css); */
 @font-face {
@@ -521,10 +521,12 @@ pre, code, tt {
 }
 
 pre, .gist .gist-file .gist-data {
-  font-size: 0.8em;
+/*  font-size: 0.8em; */
   color:#28B2E7; /* Sean bright blue */
   font-weight:100;
-  line-height:1.6em;
+/*  line-height:1.6em; */
+  font-size: 1.5em;
+  line-height:1.8em;
 /* 
   font-size: 18px;
  */
