@@ -63,6 +63,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -364,6 +365,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            @PathParam("runnable-id") final String runnableId) {
     if (!("flows".equals(runnableType) || "procedures".equals(runnableType))) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
     }
     startStopProgram(request, responder, appId, runnableType, runnableId, "debug");
   }
@@ -392,6 +394,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
@@ -417,6 +420,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     String accountId = getAuthenticatedAccountId(request);
@@ -443,6 +447,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     String accountId = getAuthenticatedAccountId(request);
@@ -724,7 +729,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (runtimeInfo == null) {
         if (type != Type.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = getSpecification(id, type);
+          String spec = getProgramSpecification(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
@@ -917,6 +922,57 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
+  @SuppressWarnings("unused")
+  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("procedure-id") final String procedureId) {
+    getLiveInfo(request, responder, appId, procedureId, Type.PROCEDURE);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/live-info")
+  @SuppressWarnings("unused")
+  public void flowLiveInfo(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("flow-id") final String flowId) {
+    getLiveInfo(request, responder, appId, flowId, Type.FLOW);
+  }
+
+  /**
+   * Returns specification of a runnable - flow, procedure, mapreduce, workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}")
+  public void runnableSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("runnable-type") final String runnableType,
+                                @PathParam("runnable-id") final String runnableId) {
+
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      String specification = getProgramSpecification(id, type);
+      if (specification == null || specification.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   /**
      * Deploys an application.
@@ -1239,7 +1295,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return state.toString();
   }
 
-  private String getSpecification(Id.Program id, Type type)
+  private String getProgramSpecification(Id.Program id, Type type)
     throws Exception {
 
     ApplicationSpecification appSpec;
@@ -1248,7 +1304,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (appSpec == null) {
         return "";
       }
-
       String runnableId = id.getId();
       if (type == Type.FLOW && appSpec.getFlows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getFlows().get(id.getId()));
@@ -1258,14 +1313,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
-        // TODO should figure out a way to integrate that when more endpoints go through this code
-        //} else if (type == EntityType.APP) {
-        //  return GSON.toJson(makeAppRecord(appSpec));
       }
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve application spec for " +
-                            id.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
@@ -1316,6 +1364,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
     }
     return null;
+  }
+
+  private void getLiveInfo(HttpRequest request, HttpResponder responder,
+                           final String appId, final String programId, Type type) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    programId),
+                                                    type));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
    /* -----------------  helpers to return Json consistently -------------- */

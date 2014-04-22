@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.services.http.handlers;
 
 import com.continuuity.AppWithSchedule;
+import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
@@ -277,6 +278,51 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
   }
 
+
+  /**
+   * Metadata tests through appfabric apis.
+   */
+  @Test
+  public void testGetMetadata() throws Exception {
+    try {
+      HttpResponse response = deploy(WordCountApp.class);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+      response = deploy(AppWithWorkflow.class);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      String result = EntityUtils.toString(response.getEntity());
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.contains("WordCountFlow"));
+
+      // verify procedure
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      result = EntityUtils.toString(response.getEntity());
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.contains("WordFrequency"));
+
+      //verify mapreduce
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/mapreduce/VoidMapReduceJob");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      result = EntityUtils.toString(response.getEntity());
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.contains("VoidMapReduceJob"));
+
+      // verify single workflow
+      response = AppFabricTestsSuite.doGet("/v2/apps/AppWithWorkflow/workflows/SampleWorkflow");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      result = EntityUtils.toString(response.getEntity());
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.contains("SampleWorkflow"));
+
+    } finally {
+     // TODO: Uncomment after Delete end-point is ported over
+     // Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    }
+  }
 
   @Test
   public void testStatus() throws Exception {
