@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -41,40 +40,17 @@ public class HeaderDecoder {
         return null;
       }
 
-      int thirdSpace = buffer.indexOf(secondSpace + 1, endIndex, HttpConstants.SP);
-      if (thirdSpace == -1) {
-        LOG.debug("No third space found");
-        return null;
-      }
-
       int firstCR = buffer.indexOf(buffer.readerIndex(), endIndex, HttpConstants.CR);
       if (firstCR == -1) {
         LOG.debug("No first carriage return found");
         return null;
       }
 
-      int secondCR = buffer.indexOf(firstCR + 1, endIndex, HttpConstants.CR);
-      if (secondCR == -1) {
-        LOG.debug("No second carriage return found");
-        return null;
-      }
-
-      byte colon = 58;
-      int firstColon = buffer.indexOf(firstCR + 1, endIndex, colon);
-      if (firstColon == -1) {
-        LOG.debug("No first colon found");
-        return null;
-      }
-
       String version = buffer.slice(secondSpace + 1, firstCR - secondSpace - 1).toString(Charsets.UTF_8);
       String method = buffer.slice(0, firstSpace).toString(Charsets.UTF_8);
       String path =  buffer.slice(firstSpace + 1, secondSpace - firstSpace - 1).toString(Charsets.UTF_8);
-      String apiPre = buffer.slice(firstCR + 1, firstColon - firstCR - 1).toString(Charsets.UTF_8);
+      //TODO: Need to extract the API KEY from the request
       String apiKey = "";
-      Matcher matchAPIPre = API_KEY_PRECURSOR.matcher(apiPre);
-      if (matchAPIPre.find()) {
-        apiKey = buffer.slice(thirdSpace + 1, secondCR - thirdSpace - 1).toString(Charsets.UTF_8);
-      }
 
       if (path.contains("://")) {
         path = new URI(path).getRawPath();
