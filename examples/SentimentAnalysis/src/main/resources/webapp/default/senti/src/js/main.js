@@ -41,6 +41,15 @@ Homepage.prototype.enableIntervals = function () {
       cache: false,
       dataType: 'json',
       success: function(data) {
+        if (!data.positive) {
+            data.positive = 0;
+        }
+        if (!data.negative) {
+            data.negative= 0;
+        }
+        if (!data.neutral) {
+            data.neutral= 0;
+        }
         $("#positive-sentences-processed").text(data.positive);
         $("#neutral-sentences-processed").text(data.neutral);
         $("#negative-sentences-processed").text(data.negative);
