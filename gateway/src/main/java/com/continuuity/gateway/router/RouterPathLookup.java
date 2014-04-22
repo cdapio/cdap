@@ -7,9 +7,8 @@ import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -82,7 +81,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
                                                         Constants.Service.PROCEDURES)
       .build();
 
-  public String getRoutingPath(String requestPath, String method, String apiKey, String httpVersion) {
+  public String getRoutingPath(String requestPath, HttpRequest httpRequest) {
+    String method = httpRequest.getMethod().getName();
     if (!ALLOWED_METHODS_MAP.containsKey(method)) {
       return null;
     }
@@ -91,10 +91,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       Matcher match = uriPattern.getKey().getSecond().matcher(requestPath);
       if (match.find()) {
         if (uriPattern.getKey().getFirst().contains(ALLOWED_METHODS_MAP.get(method))) {
-          if (Constants.Service.PROCEDURES == uriPattern.getValue()) {
-            DefaultHttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(httpVersion),
-                                                                    new HttpMethod(method), requestPath);
-            httpRequest.addHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
+          if (uriPattern.getValue() == Constants.Service.PROCEDURES) {
             String accId = getAuthenticatedAccountId(httpRequest);
             //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
             String serviceName = String.format("procedure.%s.%s.%s", accId, match.group(1), match.group(2));

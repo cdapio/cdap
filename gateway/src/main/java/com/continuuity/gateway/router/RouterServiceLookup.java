@@ -5,7 +5,6 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -13,6 +12,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,13 +69,13 @@ public class RouterServiceLookup {
   }
 
   /**
-   * Returns the discoverable mapped to the given port.
-   *
-   * @param port port to lookup.
-   * @param hostHeaderSupplier supplies the header information for the lookup.
-   * @return discoverable based on port and host header.
-   */
-  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
+     * Returns the discoverable mapped to the given port.
+     *
+     * @param port port to lookup.
+     * @param httpRequest supplies the header information for the lookup.
+     * @return discoverable based on port and host header.
+     */
+  public Discoverable getDiscoverable(int port, HttpRequest httpRequest)
     throws Exception {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
@@ -82,18 +83,20 @@ public class RouterServiceLookup {
       return null;
     }
 
-    HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+    //Decoding the header
+    String path = httpRequest.getUri();
+    String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
+    String httpMethod = httpRequest.getMethod().getName();
+
+    final HeaderInfo headerInfo = new HeaderInfo(path, host, httpMethod);
+
     if (headerInfo == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
     }
 
     try {
-      String path = headerInfo.getPath();
-      String method = headerInfo.getMethod();
-      String apiKey = headerInfo.getAPIKey();
-      String httpVersion = headerInfo.getVersion();
-      String destService = routerPathLookup.getRoutingPath(path, method, apiKey, httpVersion);
+      String destService = routerPathLookup.getRoutingPath(path, httpRequest);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
@@ -189,7 +192,7 @@ public class RouterServiceLookup {
     private final String hostHeaader;
     private final String firstPathPart;
 
-    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
+    private CacheKey(String service, HeaderInfo headerInfo) {
       this.service = service;
       this.hostHeaader = headerInfo.getHost();
 

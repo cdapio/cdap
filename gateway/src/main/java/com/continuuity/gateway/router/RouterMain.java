@@ -4,10 +4,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -92,7 +94,8 @@ public class RouterMain extends DaemonMain {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new RouterModules().getDistributedModules(),
-      new AuthModule()
+      new InMemorySecurityModule(),
+      new IOModule()
     );
   }
 }

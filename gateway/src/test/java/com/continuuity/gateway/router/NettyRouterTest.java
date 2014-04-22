@@ -7,6 +7,13 @@ import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
+import com.continuuity.security.auth.TokenValidator;
+import com.google.inject.Injector;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -28,11 +35,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -381,6 +383,7 @@ public class NettyRouterTest {
     private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
+    private static Injector injector;
 
     private RouterResource(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
       this.hostname = hostname;
@@ -396,7 +399,13 @@ public class NettyRouterTest {
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup(new NoAuthenticator())));
+                                                new RouterPathLookup(new NoAuthenticator())),
+                        new TokenValidator() {
+                          @Override
+                          public State validate(String token) {
+                            return State.TOKEN_VALID;
+                          }
+                        });
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
@@ -534,7 +543,6 @@ public class NettyRouterTest {
         while ((readableBytes = content.readableBytes()) > 0) {
           int read = Math.min(readableBytes, chunkSize);
           responder.sendChunk(content.readSlice(read));
-          //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
         }
         responder.sendChunkEnd();
       }
