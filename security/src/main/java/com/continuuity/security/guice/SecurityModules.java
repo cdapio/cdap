@@ -8,7 +8,6 @@ import com.google.inject.Module;
  */
 //TODO: we need to have seperate implementations for inMemoryModule and singleNodeModule
 public class SecurityModules extends RuntimeModule {
-
   @Override
   public Module getInMemoryModules() {
     return new InMemorySecurityModule();
