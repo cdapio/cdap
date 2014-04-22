@@ -20,6 +20,6 @@ public class SecurityModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return new FileBasedSecurityModule();
+    return new InMemorySecurityModule();
   }
 }

@@ -93,7 +93,7 @@ public class RouterMain extends DaemonMain {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new RouterModules().getDistributedModules(),
-      new SecurityModules().getInMemoryModules(),
+      new SecurityModules().getDistributedModules(),
       new IOModule()
     );
   }
