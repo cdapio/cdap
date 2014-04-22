@@ -4,21 +4,21 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * Class for handling requests for a single metric in a context.

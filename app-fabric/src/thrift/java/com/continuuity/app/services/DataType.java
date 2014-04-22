@@ -7,10 +7,6 @@
 package com.continuuity.app.services;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 /**
  * Specifies the type of a data resource.
  */

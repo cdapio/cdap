@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
@@ -14,6 +13,7 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
@@ -98,7 +98,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,6 +116,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -1223,7 +1223,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       //Delete the schedules
       ApplicationSpecification spec = store.getApplication(appId);
-      for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()){
+      for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
         Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
         List<String> schedules = scheduler.getScheduleIds(workflowProgramId, Type.WORKFLOW);
         if (!schedules.isEmpty()) {
@@ -1282,7 +1282,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                                    specification.getProcedures().values(),
                                                                    specification.getWorkflows().values());
 
-    for (ProgramSpecification spec : programSpecs){
+    for (ProgramSpecification spec : programSpecs) {
       Type type = Type.typeOfSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
       Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
@@ -1459,7 +1459,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
 
     for (MetricsScope scope : MetricsScope.values()) {
-      for (ApplicationSpecification application : applications){
+      for (ApplicationSpecification application : applications) {
         String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
@@ -1583,11 +1583,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
-    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
       //Delete the existing schedules and add new ones.
-      if (!existingSchedules.isEmpty()){
+      if (!existingSchedules.isEmpty()) {
         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
       }
       // Add new schedules.

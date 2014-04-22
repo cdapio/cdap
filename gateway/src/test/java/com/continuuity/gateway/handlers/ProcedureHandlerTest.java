@@ -359,7 +359,7 @@ public class ProcedureHandlerTest  {
     public ApplicationSpecification configure() {
       return ApplicationSpecification.Builder.with()
         .setName("ProcedureTestApp")
-        .setDescription("App to test ProcedureHandler")
+        .setDescription("App to test Procedure API Handling")
         .noStream()
         .noDataSet()
         .noFlow()

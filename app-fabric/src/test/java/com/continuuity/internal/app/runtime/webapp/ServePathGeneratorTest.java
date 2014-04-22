@@ -1,14 +1,14 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.conf.Constants;
-import org.apache.twill.filesystem.LocalLocationFactory;
+import com.continuuity.common.lang.jar.JarResources;
 import com.google.common.base.Predicate;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Tests ServePathGenerator.
