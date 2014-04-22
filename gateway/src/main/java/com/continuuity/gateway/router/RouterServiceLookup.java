@@ -15,7 +15,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -67,13 +66,13 @@ public class RouterServiceLookup {
   }
 
   /**
-   * Returns the discoverable mapped to the given port.
-   *
-   * @param port port to lookup.
-   * @param hostHeaderSupplier supplies the header information for the lookup.
-   * @return discoverable based on port and host header.
-   */
-  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
+     * Returns the discoverable mapped to the given port.
+     *
+     * @param port port to lookup.
+     * @param hostHeaderSupplier supplies the header information for the lookup.
+     * @return discoverable based on port and host header.
+     */
+  public Discoverable getDiscoverable(int port, Supplier<HeaderInfo> hostHeaderSupplier)
     throws Exception {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
@@ -81,7 +80,7 @@ public class RouterServiceLookup {
       return null;
     }
 
-    HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+    HeaderInfo headerInfo = hostHeaderSupplier.get();
     if (headerInfo == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
@@ -186,7 +185,7 @@ public class RouterServiceLookup {
     private final String hostHeaader;
     private final String firstPathPart;
 
-    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
+    private CacheKey(String service, HeaderInfo headerInfo) {
       this.service = service;
       this.hostHeaader = headerInfo.getHost();
 
