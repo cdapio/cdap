@@ -50,7 +50,7 @@ public class RouterPathTest {
   @Test
   public void testRouterDeployPathLookUp() throws Exception {
     String procPath = "/v2//apps/";
-    HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), procPath);
+    HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("PUT"), procPath);
     String result = pathLookup.getRoutingPath(procPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
@@ -58,7 +58,7 @@ public class RouterPathTest {
   @Test
   public void testRouterFlowletInstancesLookUp() throws Exception {
     String procPath = "/v2//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
-    HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), procPath);
+    HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("PUT"), procPath);
     String result = pathLookup.getRoutingPath(procPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }

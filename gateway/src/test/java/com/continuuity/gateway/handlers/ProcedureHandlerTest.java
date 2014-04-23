@@ -33,17 +33,18 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import static com.continuuity.gateway.GatewayFastTestsSuite.doGet;
 import static com.continuuity.gateway.GatewayFastTestsSuite.doPost;
@@ -144,6 +145,19 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals("", responseStr);
   }
 
+  //TODO: Ignoring this test; This test expects 404 when a procedure is not found;
+  //Currently connection is closed instead;
+  @Ignore
+  @Test
+  public void testPostNoProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    HttpResponse response =
+      GatewayFastTestsSuite.doPost("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1",
+                                   GSON.toJson(content, new TypeToken<Map<String, String>>() {
+                                   }.getType()));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+  }
+
   /**
    * Test big content in Post request is not chunked. The content length is char[1423].
    */
@@ -233,6 +247,18 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals("", responseStr);
   }
 
+  //TODO: Ignoring this test; This test expects 404 when a procedure is not found;
+  //Currently connection is closed instead;
+  @Ignore
+  @Test
+  public void testGetNoProcedureCall() throws Exception {
+    Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
+    HttpResponse response =
+      GatewayFastTestsSuite.doGet("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1&" + getQueryParams
+        (content));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+  }
+
   @Test
   public void testGetChunkedProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key5", "val5");
@@ -260,8 +286,25 @@ public class ProcedureHandlerTest  {
   public void testRealProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
 
-    // Deploy procedure
+    //TODO: 404 won't be returned until Router refactoring
+    //Second assertion won't be valid even after refactoring
+    // Make procedure call without deploying ProcedureTestApp
+    //HttpResponse response =
+    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+    //                                getQueryParams(content));
+    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    //Assert.assertEquals("Procedure not deployed", EntityUtils.toString(response.getEntity()));
+
+    // Deploy procedure, but do not start it.
     AppFabricServiceHandlerTest.deploy(ProcedureTestApp.class);
+
+    //TODO: 404 won't be returned until Router refactoring
+    //Second assertion won't be valid even after refactoring
+    //response =
+    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+    //                                getQueryParams(content));
+    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    //Assert.assertEquals("Procedure not running", EntityUtils.toString(response.getEntity()));
 
     // Start procedure
     HttpResponse response =
@@ -281,10 +324,26 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doPost("/v2/apps/ProcedureTestApp/procedures/TestProcedure/stop", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
+    //TODO: 404 won't be returned until Router refactoring
+    //Second assertion won't be valid even after refactoring
+    //response =
+    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+    //                                getQueryParams(content));
+    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    //Assert.assertEquals("Procedure not running", EntityUtils.toString(response.getEntity()));
+
+
     // Delete app
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         GatewayFastTestsSuite.doDelete("/v2/apps/ProcedureTestApp").getStatusLine().getStatusCode());
 
+    //TODO: 404 won't be returned until Router refactoring
+    //Second assertion won't be valid even after refactoring
+    //response =
+    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+    //                                getQueryParams(content));
+    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    //Assert.assertEquals("Procedure not deployed", EntityUtils.toString(response.getEntity()));
   }
 
   /**
