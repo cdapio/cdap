@@ -10,7 +10,7 @@ import java.io.IOException;
 public class InMemoryOrderedTableAdmin implements DatasetAdmin {
   private final String name;
 
-  public InMemoryOrderedTableAdmin(String name) throws Exception {
+  public InMemoryOrderedTableAdmin(String name) {
     this.name = name;
   }
 
@@ -32,6 +32,11 @@ public class InMemoryOrderedTableAdmin implements DatasetAdmin {
   @Override
   public void drop() {
     InMemoryOrderedTableService.drop(name);
+  }
+
+  @Override
+  public void upgrade() {
+    // no-op
   }
 
   @Override
