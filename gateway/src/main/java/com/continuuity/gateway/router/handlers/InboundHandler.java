@@ -3,8 +3,8 @@ package com.continuuity.gateway.router.handlers;
 import com.continuuity.gateway.router.HeaderInfo;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.continuuity.security.auth.TokenValidator;
-import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
+import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -25,6 +25,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 
 
@@ -37,7 +38,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
 
-  private volatile Channel outboundChannel;
+  private volatile ChannelFuture outboundFuture;
   private TokenValidator tokenValidator;
   private boolean securityEnabled;
   private String realm;
@@ -119,19 +120,19 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     LOG.trace("Opening connection from {} to {} for {}",
               inboundChannel.getLocalAddress(), address, inboundChannel.getRemoteAddress());
     ChannelFuture outFuture = clientBootstrap.connect(address);
+    this.outboundFuture = outFuture;
 
-    outboundChannel = outFuture.getChannel();
+    Channel outboundChannel = outFuture.getChannel();
+    outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
+    // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
+    outboundChannel.getPipeline().addLast("HttpRequestEncoder", new HttpRequestEncoder());
+
     outFuture.addListener(new ChannelFutureListener() {
       public void operationComplete(ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
 
-          outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
-
-          // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
-          outboundChannel.getPipeline().addLast("HttpRequestEncoder", new HttpRequestEncoder());
-
           // Write the message to outBoundChannel.
-          outboundChannel.write(msg);
+          future.getChannel().write(msg);
 
           // Begin to accept incoming traffic.
           inboundChannel.setReadable(true);
@@ -148,29 +149,39 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    if (outboundChannel == null) {
+  public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
+    if (outboundFuture == null) {
       openOutboundAndWrite(e);
-      return;
+    } else if (outboundFuture.isSuccess()) {
+      outboundFuture.getChannel().write(e.getMessage());
+    } else {
+      outboundFuture.addListener(new ChannelFutureListener() {
+        @Override
+        public void operationComplete(ChannelFuture future) throws Exception {
+          if (future.isSuccess()) {
+            outboundFuture.getChannel().write(e.getMessage());
+          }
+        }
+      });
     }
-    outboundChannel.write(e.getMessage());
   }
 
   @Override
   public void channelInterestChanged(ChannelHandlerContext ctx, final ChannelStateEvent e) throws Exception {
-    if (outboundChannel != null) {
-      outboundChannel.getPipeline().execute(new Runnable() {
+    if (outboundFuture != null) {
+      final Channel channel = outboundFuture.getChannel();
+      channel.getPipeline().execute(new Runnable() {
         @Override
         public void run() {
           // If inboundChannel is not saturated anymore, continue accepting
           // the incoming traffic from the outboundChannel.
           if (e.getChannel().isWritable()) {
             LOG.trace("Setting outboundChannel readable.");
-            outboundChannel.setReadable(true);
+            channel.setReadable(true);
           } else {
             // If inboundChannel is saturated, do not read from outboundChannel
             LOG.trace("Setting outboundChannel non-readable.");
-            outboundChannel.setReadable(false);
+            channel.setReadable(false);
           }
         }
       });
@@ -179,8 +190,8 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    if (outboundChannel != null) {
-      closeOnFlush(outboundChannel);
+    if (outboundFuture != null) {
+      closeOnFlush(outboundFuture.getChannel());
     }
   }
 
