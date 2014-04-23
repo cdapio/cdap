@@ -2,12 +2,17 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.datafabric.DatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
+import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -22,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,20 +44,31 @@ public class DatasetManagerService extends AbstractIdleService {
   private final DatasetInstanceManager instanceManager;
   private final DatasetTypeManager typeManager;
 
+  private final DatasetManager mdsDatasetManager;
+  private final NavigableMap<String, Class<? extends DatasetModule>> mdsDatasetManagerModules;
+
   @Inject
   public DatasetManagerService(CConfiguration cConf,
                                LocationFactory locationFactory,
                                @Named(Constants.Dataset.Manager.ADDRESS) InetAddress hostname,
                                DiscoveryService discoveryService,
                                @Nullable MetricsCollectionService metricsCollectionService,
-                               @Named("datasetMDS") DatasetManager datasetManager,
-                               TransactionSystemClient txSystemClient) throws Exception {
+                               @Named("datasetMDS") DatasetManager mdsDatasetManager,
+                               @Named("defaultDatasetModules")
+                               NavigableMap<String, Class<? extends DatasetModule>> mdsDatasetManagerModules,
+                               TransactionSystemClient txSystemClient
+  ) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
+    this.mdsDatasetManager =
+      new NamespacedDatasetManager(mdsDatasetManager,
+                                   new DatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM).namespace(""));
+    this.mdsDatasetManagerModules = mdsDatasetManagerModules;
+
     // todo: to be injected?
-    this.typeManager = new DatasetTypeManager(datasetManager, txSystemClient, locationFactory);
-    this.instanceManager = new DatasetInstanceManager(datasetManager, txSystemClient);
+    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory);
+    this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager)));
@@ -77,10 +95,26 @@ public class DatasetManagerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetManagerService...");
 
+    // adding default modules to init dataset manager used by mds (directly)
+    for (Map.Entry<String, Class<? extends DatasetModule>> module : mdsDatasetManagerModules.entrySet()) {
+      mdsDatasetManager.register(module.getKey(), module.getValue());
+    }
+
     typeManager.startAndWait();
     instanceManager.startAndWait();
 
     httpService.startAndWait();
+
+    // adding default modules to be available in dataset manager service
+    for (Map.Entry<String, Class<? extends DatasetModule>> module : mdsDatasetManagerModules.entrySet()) {
+      try {
+        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
+        typeManager.addModule(module.getKey(), module.getValue().getName(), null);
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add default modules only the very first time service is started
+        LOG.info("Not adding " + module.getKey() + " module: it already exists");
+      }
+    }
 
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {

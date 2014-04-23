@@ -126,11 +126,11 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   private OrderedTable getMDSTable(DatasetManager datasetManager, String mdsTable) {
     try {
-      DatasetAdmin admin = datasetManager.getAdmin(mdsTable);
+      DatasetAdmin admin = datasetManager.getAdmin(mdsTable, null);
       try {
         if (admin == null) {
           datasetManager.addInstance("orderedTable", mdsTable, DatasetInstanceProperties.EMPTY);
-          admin = datasetManager.getAdmin(mdsTable);
+          admin = datasetManager.getAdmin(mdsTable, null);
           if (admin == null) {
             throw new RuntimeException("Cannot add instance of a table " + mdsTable);
           }
@@ -140,7 +140,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
           admin.create();
         }
 
-        return (OrderedTable) datasetManager.getDataset(mdsTable);
+        return (OrderedTable) datasetManager.getDataset(mdsTable, null);
       } finally {
         if (admin != null) {
           admin.close();

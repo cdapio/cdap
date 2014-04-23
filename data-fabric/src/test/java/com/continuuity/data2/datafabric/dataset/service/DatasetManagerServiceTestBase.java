@@ -2,13 +2,13 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -50,10 +50,6 @@ public abstract class DatasetManagerServiceTestBase {
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
-    // DatasetManager for datasets MDS
-    DatasetManager datasetManager = new InMemoryDatasetManager();
-    datasetManager.register("memoryTable", InMemoryTableModule.class);
-
     // Tx Manager to support working with datasets
     txManager = new InMemoryTransactionManager();
     txManager.startAndWait();
@@ -64,7 +60,9 @@ public abstract class DatasetManagerServiceTestBase {
                                         InetAddress.getByName("localhost"),
                                         discoveryService,
                                         null,
-                                        datasetManager,
+                                        new InMemoryDatasetManager(),
+                                        ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
+                                          "memoryTable", InMemoryTableModule.class),
                                         txSystemClient);
     service.startAndWait();
   }

@@ -26,14 +26,19 @@ public class DatasetDefinitionLoader {
     this.locationFactory = locationFactory;
   }
 
-  public <T extends DatasetDefinition> T load(DatasetTypeMeta meta)
+  public <T extends DatasetDefinition> T load(DatasetTypeMeta meta) throws IOException {
+    return load(meta, new InMemoryDatasetDefinitionRegistry());
+  }
+
+  public <T extends DatasetDefinition> T load(DatasetTypeMeta meta, DatasetDefinitionRegistry registry)
     throws IOException {
 
     ClassLoader classLoader = DatasetDefinitionLoader.class.getClassLoader();
-    DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
     List<DatasetModuleMeta> modulesToLoad = meta.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+      if (moduleMeta.getJarLocation() != null) {
+        classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+      }
       DatasetModule module;
       try {
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
