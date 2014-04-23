@@ -229,11 +229,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       InputStream in = txClient.getSnapshotInputStream();
       LOG.trace("Took and retrieved transaction manager snapshot successfully.");
       try {
-        byte[] readBytes = new byte[4096];
         int res = 0;
+        byte[] readBytes = new byte[4096];
         responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
         while ((res = in.read(readBytes, 0, 4096)) != -1) {
           responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
+          readBytes = new byte[4096];
         }
         responder.sendChunkEnd();
       } finally {

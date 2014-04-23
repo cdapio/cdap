@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
@@ -13,15 +14,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -37,73 +41,100 @@ public class TransactionManagerDebuggerMain {
 
   private static final SimpleDateFormat formatter
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
+  private static final String TOOL_NAME = "transactions-debugger";
 
-  public static void main(String[] args) {
+  private String hostname;            // hostname to take a snapshot from
+  private String existingFilename;    // filename where a snapshot has been persisted
+  private Long txIdToSearch;          // transaction ID to look for in the snapshot
+  private Integer portNumber;         // port number of the router to reach
+  private String persistingFilename;  // filename where the snapshot - downloaded from a hostname -
+                                      // is to be persisted on the disk
+  private boolean showTxids;          // show all the transaction IDs present in the snapshot
+
+  private TransactionManagerDebuggerMain () {
+  }
+
+  /**
+   * Parse the arguments from the command line.
+   * @param args command line arguments
+   * @param conf default configuration
+   * @return True if the arguments where parsed successfully and comply with the expected usage
+   */
+  private boolean parseArguments(String[] args, CConfiguration conf) {
     CommandLineParser parser = new GnuParser();
     Options options = new Options();
-    options.addOption("h", "hostname", true, "Hostname");
-    options.addOption("f", "filename", true, "Existing snapshot");
-    options.addOption("p", "persist", true, "Persist the snapshot on disk");
-    options.addOption("ids", "txIds", false, "Show transaction IDs");
-    options.addOption("t", "transaction", true, "Look for a transaction given a transaction ID");
-    options.addOption("p", "port", true, "Port number");
+    options.addOption(null, "host", true, "To specify the hostname of the router");
+    options.addOption(null, "filename", true, "To specify a file to load where a snapshot is saved");
+    options.addOption(null, "save", true, "To specify where the snapshot downloaded on " +
+                                          "hostname --host should be persisted on your disk");
+    options.addOption(null, "ids", false, "To view all the transaction IDs contained in the snapshot");
+    options.addOption(null, "transaction", true, "To specify a transaction ID to look for");
+    options.addOption(null, "port", true, "To specify the port to use. The default value is --port " +
+                                          conf.get("gateway.server.port"));
+    options.addOption(null, "help", false, "To print this message");
 
-    String hostname;
-    String existingFilename;
-    Long txIdToSearch;
-    Integer portNumber;
-    String persistingFilename;
-    boolean showTxids;
-
-    // Check all the options of command line
+    // Check all the options of the command line
     try {
       CommandLine line = parser.parse(options, args);
-      if ((!line.hasOption("hostname") || !line.hasOption("port")) && !line.hasOption("filename")) {
-        System.out.println("Either specify a hostname and a port to download a new snapshot, " +
-            "or a filename of an existing snapshot.");
-        return;
+      if (line.hasOption("help")) {
+        printUsage(options, false);
+        return true;
+      }
+      if (!line.hasOption("host") && !line.hasOption("filename")) {
+        usage(options, "Either specify a hostname to download a new snapshot, " +
+                       "or a filename of an existing snapshot.");
+        return false;
       }
 
-      hostname = line.getOptionValue("hostname");
+      hostname = line.getOptionValue("host");
       existingFilename = line.getOptionValue("filename");
-      persistingFilename = line.hasOption("persist") ? line.getOptionValue("persist") : null;
-      showTxids = line.hasOption("txIds") ? true : false;
-      portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) : null;
+      persistingFilename = line.hasOption("save") ? line.getOptionValue("save") : null;
+      showTxids = line.hasOption("ids") ? true : false;
+      portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) :
+                   Integer.valueOf(conf.get("gateway.server.port"));
       txIdToSearch = line.hasOption("transaction") ? Long.valueOf(line.getOptionValue("transaction")) : null;
     } catch (ParseException e) {
-      HelpFormatter formatter = new HelpFormatter();
-      formatter.printHelp("SandboxJVM", options);
-      return;
+      printUsage(options, true);
+      return false;
     }
+    return true;
+  }
 
-    TransactionSnapshot snapshot = null;
-    if (hostname != null && portNumber != null) {
-      // Take new snapshot and download it
-      snapshot = takeSnapshot(hostname, portNumber, persistingFilename);
-    } else if (existingFilename != null) {
-      // Retrieve saved snapshot
-      snapshot = retrieveSnapshot(existingFilename);
+  /**
+   * Print an error message followed by the usage statement.
+   *
+   * @param options the options to show
+   * @param errorMessage the error message
+   */
+  private static void usage(Options options, String errorMessage) {
+    if (errorMessage != null) {
+      System.err.println("Error: " + errorMessage);
     }
+    printUsage(options, true);
+  }
 
-    if (snapshot != null) {
-      if (txIdToSearch != null) {
-        // Look for a particular tx id
-        searchTransactionID(snapshot, txIdToSearch);
-      } else {
-        printSnapshotInfo(snapshot);
-        if (showTxids) {
-          printTxIds(snapshot);
-        }
-      }
+  private static void printUsage(Options options, boolean error) {
+    PrintWriter pw;
+    if (error) {
+      pw = new PrintWriter(System.err);
+    } else {
+      pw = new PrintWriter(System.out);
     }
+    pw.println("Usage:" +
+        "\n\t " + TOOL_NAME + " --host <name> [ <option> ... ]" +
+        "\n\t " + TOOL_NAME + " --filename <filename> [ <option> ... ]");
+    pw.println("\nOptions:\n");
+    HelpFormatter formatter = new HelpFormatter();
+    formatter.printOptions(pw, 100, options, 0, 10);
+    pw.flush();
+    pw.close();
   }
 
   /**
    * Look for a transaction ID in a snapshot of the transaction manager, and give all the information possible.
    * @param snapshot snapshot of the transaction manager
-   * @param txIdToSearch transaction ID to look for in the snapshot
    */
-  private static void searchTransactionID(TransactionSnapshot snapshot, Long txIdToSearch) {
+  private void searchTransactionID(TransactionSnapshot snapshot) {
     System.out.println("Looking for transaction ID " + txIdToSearch);
 
     InMemoryTransactionManager.InProgressTx txInfo = snapshot.getInProgress().get(txIdToSearch);
@@ -141,20 +172,19 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Retrieve a persisted snapshot taken in the past.
-   * @param filename path to the snapshot file
    * @return the decoded transaction manager snapshot
    */
-  private static TransactionSnapshot retrieveSnapshot(String filename) {
+  private TransactionSnapshot retrieveSnapshot() {
     try {
-      System.out.println("Retrieving snapshot from file " + filename);
-      File snapshotFile = new File(filename);
+      System.out.println("Retrieving snapshot from file " + existingFilename);
+      File snapshotFile = new File(existingFilename);
       FileInputStream fis = new FileInputStream(snapshotFile);
       SnapshotCodecV2 codec = new SnapshotCodecV2();
       TransactionSnapshot snapshot = codec.decodeState(fis);
       System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
       return snapshot;
     } catch (IOException e) {
-      System.out.println("File " + filename + " could not be read.");
+      System.out.println("File " + existingFilename + " could not be read.");
       e.printStackTrace();
       return null;
     }
@@ -162,11 +192,9 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Take a snapshot from the transaction manager of a reactor and retrieve it.
-   * @param hostname hostname of the targeted reactor
-   * @param persistingFilename Filename where to persist the snapshot. If it is null, snapshot won't be persisted
    * @return the transaction manager snapshot just taken
    */
-  private static TransactionSnapshot takeSnapshot(String hostname, int portNumber, String persistingFilename) {
+  private TransactionSnapshot takeSnapshot() {
     URL url;
     HttpURLConnection connection = null;
     try {
@@ -219,7 +247,7 @@ public class TransactionManagerDebuggerMain {
    * Print basic information and statistics about a transaction manager snapshot.
    * @param snapshot transaction manager snapshot
    */
-  private static void printSnapshotInfo(TransactionSnapshot snapshot) {
+  private void printSnapshotInfo(TransactionSnapshot snapshot) {
     System.out.println("==============================");
     System.out.println("= Snapshot basic information =");
     System.out.println("Snapshot timestamp is " + formatter.format(new Date(snapshot.getTimestamp())));
@@ -236,7 +264,7 @@ public class TransactionManagerDebuggerMain {
    * Print basic information and statistics about invalid transactions.
    * @param invalids collection of invalid transaction IDs
    */
-  private static void printInvalidInfo(Collection<Long> invalids) {
+  private void printInvalidInfo(Collection<Long> invalids) {
     System.out.println("==============================");
     System.out.println("==== Invalid transactions ====");
     System.out.println("Number of invalid transactions: " + invalids.size());
@@ -264,7 +292,7 @@ public class TransactionManagerDebuggerMain {
    * @param changeSets transaction IDs associated to their changes
    * @param committed true if committed change sets, false if committing change sets
    */
-  private static void printChangeSetsInfo(Map<Long, Set<ChangeId>> changeSets, boolean committed) {
+  private void printChangeSetsInfo(Map<Long, Set<ChangeId>> changeSets, boolean committed) {
     String term = committed ? "committed" : "committing";
 
     System.out.println("==============================");
@@ -314,7 +342,7 @@ public class TransactionManagerDebuggerMain {
    * Print basic information and statistics about in-progress transactions.
    * @param inProgress in progress transaction IDs mapped to information about those
    */
-  private static void printInProgressInfo(Map<Long, InMemoryTransactionManager.InProgressTx> inProgress) {
+  private void printInProgressInfo(Map<Long, InMemoryTransactionManager.InProgressTx> inProgress) {
     System.out.println("==============================");
     System.out.println("== In progress transactions ==");
     System.out.println("Number of in-progress transactions: " + inProgress.size());
@@ -367,7 +395,7 @@ public class TransactionManagerDebuggerMain {
    * Print all the transaction IDs found in the transaction manager snapshot.
    * @param snapshot transaction manager snapshot
    */
-  private static void printTxIds(TransactionSnapshot snapshot) {
+  private void printTxIds(TransactionSnapshot snapshot) {
     System.out.println("\n======================================");
     System.out.println("======== All transaction Ids =========");
 
@@ -398,9 +426,46 @@ public class TransactionManagerDebuggerMain {
    * @param id transaction ID to convert.
    * @return string representation of a transaction ID.
    */
-  private static String txIdToString(long id) {
+  private String txIdToString(long id) {
     Date date = new Date(id / TxConstants.MAX_TX_PER_MS);
     return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
   }
 
+  private boolean execute(String[] args, CConfiguration conf) {
+    boolean success = parseArguments(args, conf);
+    if (!success) {
+      return false;
+    }
+    TransactionSnapshot snapshot = null;
+    if (hostname != null && portNumber != null) {
+      // Take new snapshot and download it
+      snapshot = takeSnapshot();
+    } else if (existingFilename != null) {
+      // Retrieve saved snapshot
+      snapshot = retrieveSnapshot();
+    }
+
+    if (snapshot != null) {
+      if (txIdToSearch != null) {
+        // Look for a particular tx id
+        searchTransactionID(snapshot);
+      } else {
+        printSnapshotInfo(snapshot);
+        if (showTxids) {
+          printTxIds(snapshot);
+        }
+      }
+    }
+    return true;
+  }
+
+  public static void main(String[] args) {
+    // create a config and load the gateway properties
+    CConfiguration config = CConfiguration.create();
+    TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain();
+    boolean success = instance.execute(args, config);
+    if (!success) {
+      System.exit(1);
+    }
+  }
 }

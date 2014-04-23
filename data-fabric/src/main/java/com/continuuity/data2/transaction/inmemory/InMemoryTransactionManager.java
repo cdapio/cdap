@@ -323,8 +323,8 @@ public class InMemoryTransactionManager extends AbstractService {
     try {
       this.logWriteLock.lock();
       try {
-        snapshot = getSnapshot();
         synchronized (this) {
+          snapshot = getSnapshot();
           if (snapshot == null && !closing) {
             return;
           }
