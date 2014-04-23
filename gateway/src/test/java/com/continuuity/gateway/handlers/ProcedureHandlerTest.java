@@ -253,7 +253,7 @@ public class ProcedureHandlerTest  {
     HttpResponse response =
       GatewayFastTestsSuite.doGet("/v2/apps/testApp2/procedures/testProc2/methods/testExceptionMethod?" +
                                     getQueryParams(content));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -336,8 +336,8 @@ public class ProcedureHandlerTest  {
 
   private static void testTestServer() throws Exception {
     DefaultHttpClient httpclient = new DefaultHttpClient();
-    HttpPost request = new HttpPost(String.format("http://%s:%d/v2/apps/testApp1/procedures/testProc1/methods/testMethod1",
-                                                hostname, port));
+    HttpPost request = new HttpPost(String.format(
+      "http://%s:%d/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", hostname, port));
     HttpResponse response = httpclient.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }

@@ -40,20 +40,20 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   private static final String LOGHANDLER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_-]+)/logs";
   private static final String PROCEDURE_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_-]+)/procedures/([A-Za-z0-9_-]+)/methods/([A-Za-z0-9_-]+)";
+    "/?/apps/([A-Za-z0-9_-]+)/procedures/([A-Za-z0-9_-]+)/methods/(.+)";
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/flows/([A-Za-z0-9_-]+)/flowlets/([A-Za-z0-9_-]+)/instances";
 
   private static final String SCHEDULER_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
+    "/?/apps/([A-Za-z0-9_-]+)/workflows/([A-Za-z0-9_-]+)/" +
     "(schedules|nextruntime)";
 
   private static final String LIVEINFO_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures)/([A-Za-z0-9_]+)/live-info";
+    "/?/apps/([A-Za-z0-9_-]+)/(flows|procedures)/([A-Za-z0-9_-]+)/live-info";
 
   //TODO: Consolidate this!!!
   private static final String SPEC_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
+    "/?/apps/([A-Za-z0-9_-]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_-]+)/?$";
 
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
