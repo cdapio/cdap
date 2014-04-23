@@ -76,6 +76,7 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
 
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
-    throw new TransactionCouldNotTakeSnapshotException("Cannot take snapshot.");
+    throw new TransactionCouldNotTakeSnapshotException(
+        "Snapshot not implemented in detached transaction system client");
   }
 }

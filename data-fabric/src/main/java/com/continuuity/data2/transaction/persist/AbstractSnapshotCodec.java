@@ -96,7 +96,16 @@ public abstract class AbstractSnapshotCodec {
    */
   public TransactionSnapshot decodeState(byte[] bytes) {
     ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-    return decodeState(bis);
+    try {
+      return decodeState(bis);
+    } finally {
+      try {
+        bis.close();
+      } catch (IOException e) {
+        LOG.error("Unable to close input stream properly: ", e);
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
   /**
@@ -114,23 +123,11 @@ public abstract class AbstractSnapshotCodec {
         throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Expected " +
             "version is " + getVersion());
       }
-      long timestamp = decoder.readLong();
-      long readPointer = decoder.readLong();
-      long writePointer = decoder.readLong();
-      // some attributes where removed during format change, luckily those stored at the end, so we just give a chance
-      // to skip them
-      readAbsoleteAttributes(decoder);
-      Collection<Long> invalid = decodeInvalid(decoder);
-      NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
-      NavigableMap<Long, Set<ChangeId>> committing = decodeChangeSets(decoder);
-      NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
-
-      return new TransactionSnapshot(timestamp, readPointer, writePointer, invalid, inProgress,
-          committing, committed);
     } catch (IOException e) {
       LOG.error("Unable to deserialize transaction state: ", e);
       throw Throwables.propagate(e);
     }
+    return decodePartialState(is);
   }
 
   /**
@@ -156,7 +153,7 @@ public abstract class AbstractSnapshotCodec {
       NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
 
       return new TransactionSnapshot(timestamp, readPointer, writePointer, invalid, inProgress,
-          committing, committed);
+                                     committing, committed);
     } catch (IOException e) {
       LOG.error("Unable to deserialize transaction state: ", e);
       throw Throwables.propagate(e);

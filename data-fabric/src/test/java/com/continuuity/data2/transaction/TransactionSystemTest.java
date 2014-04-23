@@ -180,7 +180,6 @@ public abstract class TransactionSystemTest {
 
   @Test
   public void testGetSnapshot() throws Exception {
-    // TODO refactor, should test the last snapshot is still the one before calling the method
     TransactionSystemClient client = getClient();
     TransactionStateStorage stateStorage = getSateStorage();
 

@@ -478,9 +478,13 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     InputStream in = response.getEntity().getContent();
-    SnapshotCodecV2 codec = new SnapshotCodecV2();
-    TransactionSnapshot snapshot = codec.decodeState(in);
-    Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    try {
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      TransactionSnapshot snapshot = codec.decodeState(in);
+      Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    } finally {
+      in.close();
+    }
   }
 
   /**
