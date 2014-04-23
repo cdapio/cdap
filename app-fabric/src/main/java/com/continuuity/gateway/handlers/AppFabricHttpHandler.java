@@ -74,7 +74,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -320,6 +319,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
+    LOG.info("starting a program at appfabrichttphandler");
     startStopProgram(request, responder, appId, runnableType, runnableId, "start");
   }
 
@@ -741,7 +741,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
     LOG.info("deploying");
     try {
-      return (BodyConsumer) deployAppWithoutSessions(request, responder, appId);
+      return (BodyConsumer) deployAppStream(request, responder, appId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
       return null;
@@ -758,7 +758,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     // null means use name provided by app spec
     LOG.info("deploying");
     try {
-      return (BodyConsumer) deployAppWithoutSessions(request, responder, null);
+      return (BodyConsumer) deployAppStream(request, responder, null);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
       return null;
@@ -998,8 +998,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private BodyConsumer deployAppWithoutSessions(final HttpRequest request,
-                                                HttpResponder responder, final String appId) throws IOException {
+  private BodyConsumer deployAppStream (final HttpRequest request,
+                                        HttpResponder responder, final String appId) throws IOException {
     final int FILE_SIZE = 20 * 1024 * 1024;
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
@@ -1012,7 +1012,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     final OutputStream os = tempFile.getOutputStream();
 
     return new BodyConsumer() {
-
       @Override
       public void chunk(ChannelBuffer request, HttpResponder responder) {
         try {
@@ -1021,7 +1020,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           e.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         }
-//        offBuffer.put(request.array());
       }
 
       @Override
@@ -1037,8 +1035,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
-          LOG.info("Deployed app" + archiveName + " : at: " + archive.getName());
-          return;
+          LOG.info ("Deployed app" + archiveName + " : at: " + tempFile.getName());
         } catch (Exception ex) {
           ex.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
