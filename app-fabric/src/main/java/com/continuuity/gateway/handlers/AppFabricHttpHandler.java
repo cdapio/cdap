@@ -680,6 +680,36 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+
+
+  /**
+   * Increases number of instance for a flowlet within a flow.
+   */
+  @GET
+  @Path("/apps/command")
+  public void sendCommand(HttpRequest request, HttpResponder responder) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(new RunId() {
+        @Override
+        public String getId() {
+          return "appworker";
+        }
+      });
+        if (runtimeInfo != null) {
+          responder.sendString(HttpResponseStatus.OK, "runtime found");
+          runtimeInfo.getController().command("Test", "value");
+        }
+      responder.sendString(HttpResponseStatus.OK, "runtime not found");
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
     String instanceCount = "";
     Map<String, String> arguments = decodeArguments(request);
@@ -1000,7 +1030,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private BodyConsumer deployAppStream (final HttpRequest request,
                                         HttpResponder responder, final String appId) throws IOException {
-    final int FILE_SIZE = 20 * 1024 * 1024;
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
     final Location archive = locationFactory.create(archiveDir + "/" + accountId + "/" + archiveName);
@@ -1028,7 +1057,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           os.close();
           ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
           rInfo.setApplicationId(appId);
-          ArchiveId rIdentifier = new ArchiveId(rInfo.getAccountId(), "appId", "resourceId");
+          ArchiveId rIdentifier = new ArchiveId(rInfo.getAccountId(), appId , "resourceId");
           SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.REGISTERED);
           sessions.put(rInfo.getAccountId(), sessionInfo);
           deploy(rIdentifier, tempFile);
