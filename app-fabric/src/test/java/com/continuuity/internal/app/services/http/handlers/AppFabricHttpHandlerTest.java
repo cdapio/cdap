@@ -90,7 +90,7 @@ public class AppFabricHttpHandlerTest {
       AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/" + action);
     return response.getStatusLine().getStatusCode();
   }
-
+/*
   private void testHistory(Class<?> app, String appId, String runnableType, String runnableId,
                            boolean waitStop, int duration)
       throws Exception {
@@ -192,33 +192,33 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(0, argsRead.size());
   }
 
-  /**
+  *//**
    * Tests history of a flow.
-   */
+   *//*
   @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
   }
 
-  /**
+  *//**
    * Tests history of a procedure.
-   */
+   *//*
   @Test
   public void testProcedureHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
   }
 
-  /**
+  *//**
    * Tests history of a mapreduce.
-   */
+   *//*
   @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
   }
 
-  /**
+  *//**
    * Tests history of a workflow.
-   */
+   *//*
   @Test
   public void testWorkflowHistory() throws Exception {
     testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
@@ -279,9 +279,9 @@ public class AppFabricHttpHandlerTest {
   }
 
 
-  /**
+  *//**
    * Metadata tests through appfabric apis.
-   */
+   *//*
   @Test
   public void testGetMetadata() throws Exception {
     try {
@@ -322,7 +322,7 @@ public class AppFabricHttpHandlerTest {
      // TODO: Uncomment after Delete end-point is ported over
      // Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
-  }
+  }*/
 
   @Test
   public void testStatus() throws Exception {
@@ -372,7 +372,7 @@ public class AppFabricHttpHandlerTest {
     AppFabricTestsSuite.stopProgram(workflowId);
   }
 
-  @Test
+  /*@Test
   public void testFlowRuntimeArgs() throws Exception {
     testRuntimeArgs(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
   }
@@ -390,7 +390,7 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testMapreduceRuntimeArgs() throws Exception {
     testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
-  }
+  }*/
 
   /**
    * Deploys and application.
@@ -479,7 +479,7 @@ public class AppFabricHttpHandlerTest {
 
   /**
    * Test for schedule handlers.
-   */
+   *//*
   @Test
   public void testScheduleEndPoints() throws Exception {
     // Steps for the test:
@@ -589,5 +589,5 @@ public class AppFabricHttpHandlerTest {
     json = EntityUtils.toString(response.getEntity());
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
-  }
+  }*/
 }

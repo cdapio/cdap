@@ -22,6 +22,7 @@ import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -34,6 +35,7 @@ import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -226,5 +228,11 @@ public class NettyRouter extends AbstractIdleService {
     );
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+  }
+
+  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+    e.getCause().printStackTrace();
+    LOG.error("Exception caught at Netty Router:", e.getCause().getMessage());
+    ctx.getChannel().close();
   }
 }

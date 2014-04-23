@@ -26,6 +26,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.http.BodyConsumer;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
@@ -73,6 +74,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -218,7 +220,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Path("/ping")
   @GET
   public void Get(HttpRequest request, HttpResponder response) {
-    response.sendString(HttpResponseStatus.OK, "OK");
+    response.sendString(HttpResponseStatus.OK, "TEST");
   }
 
 
@@ -736,8 +738,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}")
-  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    deployApp(request, responder, appId);
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    LOG.info("deploying");
+    try {
+      return (BodyConsumer) deployAppWithoutSessions(request, responder, appId);
+    } catch (Exception ex) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
+      return null;
+    }
+
   }
 
   /**
@@ -745,9 +754,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @POST
   @Path("/apps")
-  public void deploy(HttpRequest request, HttpResponder responder) {
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
-    deployApp(request, responder, null);
+    LOG.info("deploying");
+    try {
+      return (BodyConsumer) deployAppWithoutSessions(request, responder, null);
+    } catch (Exception ex) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
+      return null;
+    }
   }
 
   /**
@@ -982,6 +997,81 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
+
+  private BodyConsumer deployAppWithoutSessions(final HttpRequest request,
+                                                HttpResponder responder, final String appId) throws IOException {
+    final int FILE_SIZE = 20 * 1024 * 1024;
+    final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
+    final String accountId = getAuthenticatedAccountId(request);
+    final Location archive = locationFactory.create(archiveDir + "/" + accountId + "/" + archiveName);
+    LOG.info("Deploying using BodyConsumer");
+    if (archiveName == null || archiveName.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
+    }
+    final Location tempFile = archive.getTempFile(null);
+    final OutputStream os = tempFile.getOutputStream();
+
+    return new BodyConsumer() {
+
+      @Override
+      public void chunk(ChannelBuffer request, HttpResponder responder) {
+        try {
+          request.readBytes(os, request.readableBytes());
+        } catch (IOException e) {
+          e.printStackTrace();
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        }
+//        offBuffer.put(request.array());
+      }
+
+      @Override
+      public void finished(HttpResponder responder) {
+        try {
+          os.close();
+          ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+          rInfo.setApplicationId(appId);
+          ArchiveId rIdentifier = new ArchiveId(rInfo.getAccountId(), "appId", "resourceId");
+          SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.REGISTERED);
+          sessions.put(rInfo.getAccountId(), sessionInfo);
+          deploy(rIdentifier, tempFile);
+
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+          sessionInfo.setStatus(DeployStatus.DEPLOYED);
+          LOG.info("Deployed app" + archiveName + " : at: " + archive.getName());
+          return;
+        } catch (Exception ex) {
+          ex.printStackTrace();
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
+        }
+      }
+    };
+
+  }
+
+  // deploy helper
+  private void deploy(final ArchiveId resource, Location archive) throws Exception {
+
+    try {
+      Id.Account id = Id.Account.from(resource.getAccountId());
+      Location archiveLocation = archive;
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
+          deleteHandler(programId, type);
+        }
+      });
+
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, resource.getApplicationId(), archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
+      setupSchedules(resource.getAccountId(), specification);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception(e.getMessage());
+    }
+  }
+
+
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
