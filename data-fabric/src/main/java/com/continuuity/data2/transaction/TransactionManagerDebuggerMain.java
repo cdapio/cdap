@@ -215,16 +215,19 @@ public class TransactionManagerDebuggerMain {
         if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
           FileOutputStream fos = null;
+          File outputFile = null;
           try {
             // todo use pipes here to avoid having everyhting in memory twice
-            fos = new FileOutputStream(persistingFilename);
+            outputFile = new File(persistingFilename);
+            fos = new FileOutputStream(outputFile);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             codec.encodeState(baos, snapshot);
             baos.writeTo(fos);
           } finally {
             fos.close();
           }
-          System.out.println("Snapshot persisted on your disk as " + persistingFilename + " for future queries.");
+          System.out.println("Snapshot persisted on your disk as " + outputFile.getAbsolutePath() +
+                             " for future queries.");
         } else {
           System.out.println("Persist option not activated - Snapshot won't be persisted on your disk.");
         }
