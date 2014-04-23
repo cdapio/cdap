@@ -12,7 +12,6 @@ import com.continuuity.internal.data.dataset.lib.table.Increment;
 import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.lib.table.TableSplit;
@@ -34,7 +33,7 @@ class TableDataset extends AbstractDataset implements Table {
 
   private final OrderedTable table;
 
-  public TableDataset(String instanceName, OrderedTable table) {
+  TableDataset(String instanceName, OrderedTable table) {
     super(instanceName, table);
     this.table = table;
   }
@@ -185,7 +184,7 @@ class TableDataset extends AbstractDataset implements Table {
       LOG.debug("increment failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("increment failed", e);
     }
-    // todo: try to avoid copying maps
+    // todo: define IncrementResult to make it more efficient
     return new Result(row, Maps.transformValues(incResult, new Function<Long, byte[]>() {
       @Nullable
       @Override
@@ -238,7 +237,7 @@ class TableDataset extends AbstractDataset implements Table {
     try {
       return table.getSplits(numSplits, start, stop);
     } catch (Exception e) {
-      LOG.debug("getSplits failed for table: " + getName(), e);
+      LOG.error("getSplits failed for table: " + getName(), e);
       throw new DataSetException("getSplits failed", e);
     }
   }
@@ -280,14 +279,14 @@ class TableDataset extends AbstractDataset implements Table {
     @Override
     public boolean nextKeyValue() throws InterruptedException {
       // call the underlying scanner, and depending on whether there it returns something, set current key and row.
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = this.scanner.next();
+      Row next = this.scanner.next();
       if (next == null) {
         this.key = null;
         this.row = null;
         return false;
       } else {
-        this.key = next.getFirst();
-        this.row = next.getSecond();
+        this.key = next.getRow();
+        this.row = next.getColumns();
         return true;
       }
     }

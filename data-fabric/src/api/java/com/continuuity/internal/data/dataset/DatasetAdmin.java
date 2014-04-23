@@ -13,9 +13,33 @@ import java.io.IOException;
  *       administration design and better guide the design of new datasets.
  */
 public interface DatasetAdmin extends Closeable {
+  /**
+   * @return true if dataset exists
+   * @throws IOException
+   */
   boolean exists() throws IOException;
+
+  /**
+   * Creates dataset
+   * @throws IOException
+   */
   void create() throws IOException;
+
+  /**
+   * Drops dataset
+   * @throws IOException
+   */
   void drop() throws IOException;
+
+  /**
+   * Deletes all data of the dataset
+   * @throws IOException
+   */
   void truncate() throws IOException;
+
+  /**
+   * Upgrades dataset.
+   * @throws IOException
+   */
   void upgrade() throws IOException;
 }

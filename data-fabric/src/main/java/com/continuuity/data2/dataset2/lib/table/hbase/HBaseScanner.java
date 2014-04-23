@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
-import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Throwables;
@@ -18,13 +18,13 @@ class HBaseScanner implements Scanner {
   private final ResultScanner scanner;
   private final Transaction tx;
 
-  public HBaseScanner(ResultScanner scanner, Transaction tx){
+  public HBaseScanner(ResultScanner scanner, Transaction tx) {
     this.scanner = scanner;
     this.tx = tx;
   }
 
   @Override
-  public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+  public Row next() {
     if (scanner == null) {
       return null;
     }
@@ -40,7 +40,7 @@ class HBaseScanner implements Scanner {
 
         Map<byte[], byte[]> rowMap = HBaseOrderedTable.getRowMap(result, tx);
         if (rowMap.size() > 0) {
-          return new ImmutablePair<byte[], Map<byte[], byte[]>>(result.getRow(), rowMap);
+          return new com.continuuity.data2.dataset2.lib.table.Result(result.getRow(), rowMap);
         }
       }
 

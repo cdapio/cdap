@@ -34,7 +34,7 @@ public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrder
   private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
 
   @BeforeClass
-  public static void beforeClass() throws Exception{
+  public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
   }

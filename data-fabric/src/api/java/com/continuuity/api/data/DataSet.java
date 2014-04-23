@@ -76,6 +76,7 @@ public abstract class DataSet implements Closeable {
    * After this is called, it is guaranteed that this instance of the dataset will not be used any more.
    * The base implementation is to do nothing.
    */
+  @Override
   public void close() {
   }
 
