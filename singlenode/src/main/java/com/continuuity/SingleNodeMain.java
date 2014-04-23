@@ -79,9 +79,7 @@ public class SingleNodeMain {
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {

@@ -39,7 +39,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
   @Override
   public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
-    throws IOException, ServletException {
+    throws IOException, ServletException, NumberFormatException {
 
     String[] roles = Constants.Security.BASIC_USER_ROLES;
     String username = request.getUserPrincipal().getName();
@@ -50,8 +50,8 @@ public class GrantAccessTokenHandler extends AbstractHandler {
       }
     }
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
-                                       Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    long tokenValidity = Long.parseLong(cConf.get(Constants.Security.TOKEN_EXPIRATION));
+
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
@@ -66,6 +66,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     // Set response body
     JsonObject json = new JsonObject();
     byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
+
     json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
                      new String(encodedIdentifier, Charsets.UTF_8));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
