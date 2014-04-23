@@ -1,20 +1,20 @@
 .. :Author: John Jackson
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
-===================================================
-Continuuity Reactor Tools and Debugging Guide
-===================================================
+===============================================
+Continuuity Reactor Testing and Debugging Guide
+===============================================
 
--------------------------------------------------------------------------
-Introduction to Trouble-Shooting Applications for the Continuuity Reactor
--------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+Introduction to Testing and Trouble-Shooting Applications for the Continuuity Reactor
+-------------------------------------------------------------------------------------
 
 .. reST Editor: section-numbering::
 
 .. reST Editor: contents::
 
-Testing and Debugging
-=====================
+Testing Reactor Applications
+============================
 
 Strategies in Testing Applications
 ----------------------------------
@@ -160,6 +160,9 @@ the counts::
 
 The assertion will verify that the correct result was received.
 
+Debugging Reactor Applications
+==============================
+
 Debugging an Application in Local Reactor
 -----------------------------------------
 Any Continuuity Reactor Application can be debugged in the Local Reactor
@@ -192,19 +195,20 @@ flowlet of a flow and each instances of a procedure. In order to debug a contain
 need to start the program with debugging enabled, by making an HTTP request to the
 program’s URL, for example, the following will start a flow for debugging::
 
-	POST /v2/apps/WordCount/flows/WordCounter/debug
+	POST <base-url>/apps/WordCount/flows/WordCounter/debug
 
 Note that this URL differs from the URL for starting the flow only by the last path
-component (``debug`` instead of ``start``), and you can pass in runtime arguments in the
-exact same way as if you normally start a flow. Once the flow is running, each flowlet
+component (``debug`` instead of ``start``,
+see `Reactor Client HTTP API <developer/rest#reactor-client-http-api>`_),
+and you can pass in runtime arguments in the exact same way as if you normally start a flow.
+Once the flow is running, each flowlet
 will detect an available port in its container and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
 the reactor for the flow’s live info via HTTP::
 
-	GET /v2/apps/WordCount/flows/WordCounter/live-info
+	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-Pipe the response through your favorite JSON formatting tool, and you will see something
-similar to this::
+The response is formatted in JSON and - pretty-printed - looks similar to this::
 
   {
     "app": "WordCount",
@@ -244,8 +248,8 @@ attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
 The corresponding HTTP requests for the RetrieveCounts procedure of this application are::
 
-	POST /v2/apps/WordCount/procedures/RetrieveCounts/debug
-	GET /v2/apps/WordCount/procedures/RetrieveCounts/live-info
+	POST <base-url>/apps/WordCount/procedures/RetrieveCounts/debug
+	GET <base-url>/apps/WordCount/procedures/RetrieveCounts/live-info
 
 Attaching a Debugger
 --------------------
@@ -304,8 +308,7 @@ Debugging with Eclipse
 
 Where to Go Next
 ================
-Now that you've had an introduction to programming applications
-for the Continuuity Reactor, take a look at:
+Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
-  with details of the Flow, DataSet and Transaction systems.
+- `Operating a Continuuity Reactor <operations>`__,
+  which covers putting Continuuity Reactor into production.
