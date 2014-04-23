@@ -39,7 +39,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
   public DefaultWorkflowSpecification(String className, String name, String description,
                                       List<WorkflowActionSpecification> actions,
                                       Map<String, MapReduceSpecification> mapReduces,
-                                      List<Schedule> schedules){
+                                      List<Schedule> schedules) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -74,7 +74,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
   }
 
   @Override
-  public List<Schedule> getSchedules(){
+  public List<Schedule> getSchedules() {
     return schedules;
   }
 

@@ -4,11 +4,11 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.common.service.ServerException;
-import com.continuuity.data2.OperationException;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Charsets;
@@ -25,13 +25,13 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.util.List;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
  * Class for handling batch requests for metrics data.

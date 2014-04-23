@@ -14,7 +14,7 @@ public class StringUtils {
    * @param str a comma separated <String> with values
    * @return a <code>Collection</code> of <code>String</code> values
    */
-  public static Collection<String> getTrimmedStringCollection(String str){
+  public static Collection<String> getTrimmedStringCollection(String str) {
     return Arrays.asList(getTrimmedStrings(str));
   }
 
@@ -23,7 +23,7 @@ public class StringUtils {
    * @param str a comma separated <String> with values
    * @return an array of <code>String</code> values
    */
-  public static String[] getTrimmedStrings(String str){
+  public static String[] getTrimmedStrings(String str) {
     if (null == str || "".equals(str.trim())) {
       return emptyStringArray;
     }

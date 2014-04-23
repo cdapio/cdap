@@ -65,7 +65,7 @@ public class TransactionStateCache extends AbstractIdleService {
 
   /**
    * Try to initialize the CConfiguration and TransactionStateStorage instances.  Obtaining the CConfiguration may
-   * fail until OpexServiceMain has been started.
+   * fail until ReactorServiceMain has been started.
    */
   private void tryInit() {
     try {

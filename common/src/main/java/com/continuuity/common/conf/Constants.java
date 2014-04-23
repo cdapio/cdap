@@ -58,11 +58,11 @@ public final class Constants {
     /**
      * Default constants for common.
      */
-    public static final int DEFAULT_SERVER_PORT = 45005;
-    //TODO: THis temp
-    public static final int DEFAULT_THRIFT_PORT = 45004;
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
+    public static final int DEFAULT_SERVER_PORT = 45005;
+
+    //TODO: THis temp
+    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.
@@ -137,6 +137,16 @@ public final class Constants {
       public static final String CFG_TX_SNAPSHOT_RETAIN = "data.tx.snapshot.retain";
       /** Default value for number of most recent snapshots to retain. */
       public static final int DEFAULT_TX_SNAPSHOT_RETAIN = 10;
+    }
+
+    /**
+     * Twill Runnable configuration.
+     */
+    public static final class Container {
+      public static final String ADDRESS = "data.tx.bind.address";
+      public static final String NUM_INSTANCES = "data.tx.num.instances";
+      public static final String NUM_CORES = "data.tx.num.cores";
+      public static final String MEMORY_MB = "data.tx.memory.mb";
     }
 
     /**
@@ -412,10 +422,13 @@ public final class Constants {
     public static final String ADDRESS = "metrics.bind.address";
     public static final String CLUSTER_NAME = "metrics.cluster.name";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
-    public static final String BACKLOG_CONNECTIONS = "http.service.connection.backlog";
-    public static final String EXEC_THREADS = "http.service.exec.threads";
-    public static final String BOSS_THREADS = "http.service.boss.threads";
-    public static final String WORKER_THREADS = "http.service.worker.threads";
+    public static final String BACKLOG_CONNECTIONS = "metrics.connection.backlog";
+    public static final String EXEC_THREADS = "metrics.exec.threads";
+    public static final String BOSS_THREADS = "metrics.boss.threads";
+    public static final String WORKER_THREADS = "metrics.worker.threads";
+    public static final String NUM_INSTANCES = "metrics.num.instances";
+    public static final String NUM_CORES = "metrics.num.cores";
+    public static final String MEMORY_MB = "metrics.memory.mb";
   }
 
   /**
@@ -434,9 +447,18 @@ public final class Constants {
     public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
     public static final String MAX_THREADS = "security.server.maxthreads";
     public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
+
+    /** Configuration for enabling the security */
+    public static final String SECURITY_ENABLED = "security.enabled";
+
+    /**
+     * Configuration for security realm
+     */
+    public static final String CFG_REALM = "security.realm";
+
+    public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
@@ -524,4 +546,6 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
+
+
 }

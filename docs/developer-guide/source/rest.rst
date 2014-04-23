@@ -1142,7 +1142,7 @@ Downloading Logs
 You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
 To do that, send an HTTP GET request::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&end=<ts>
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -1157,7 +1157,7 @@ To do that, send an HTTP GET request::
    * - ``<element-id>``
      - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
    * - ``<ts>``
-     - *Start* and *end* time, given as seconds since the start of the Epoch.
+     - *Start* and *stop* time, given as seconds since the start of the Epoch.
 
 Example
 .......
@@ -1167,7 +1167,7 @@ Example
 
    * - HTTP Method
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
-       ``logs?start=1382576400&end=1382576700``
+       ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and

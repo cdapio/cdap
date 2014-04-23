@@ -27,6 +27,7 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -78,9 +79,7 @@ public class SingleNodeMain {
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -301,6 +300,7 @@ public class SingleNodeMain {
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
-      new RouterModules().getSingleNodeModules());
+      new RouterModules().getSingleNodeModules(),
+      new SecurityModules().getSingleNodeModules());
   }
 }

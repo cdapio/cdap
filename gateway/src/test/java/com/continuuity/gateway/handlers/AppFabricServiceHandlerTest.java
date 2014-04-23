@@ -8,7 +8,6 @@ import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
 import com.continuuity.gateway.apps.wordcount.AppWithWorkflow;
 import com.continuuity.gateway.apps.wordcount.AssociationTable;
 import com.continuuity.gateway.apps.wordcount.UniqueCountTable;
@@ -19,7 +18,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -32,6 +30,7 @@ import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -40,12 +39,10 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import javax.annotation.Nullable;
 
 /**
  * Testing of App Fabric REST Endpoints.
@@ -396,23 +393,6 @@ public class AppFabricServiceHandlerTest {
 
   }
 
-  /**
-   * Tests specification API for a flow.
-   */
-  @Test
-  public void testRunnableSpecification() throws Exception {
-    try {
-      HttpResponse response = deploy(WordCount.class);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      String s = EntityUtils.toString(response.getEntity());
-      Assert.assertNotNull(s);
-    } finally {
-      Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
-    }
-  }
-
   @Test
   public void testGetMetadata() throws Exception {
     HttpResponse response = deploy(WordCount.class);
@@ -475,12 +455,6 @@ public class AppFabricServiceHandlerTest {
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
 
-    // verify single flow
-    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/flows/WordCounter");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
-    Assert.assertTrue(s.contains("WordCounter"));
 
     // verify procedures
     response = GatewayFastTestsSuite.doGet("/v2/procedures");
@@ -506,14 +480,6 @@ public class AppFabricServiceHandlerTest {
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCount", "id", "RetrieveCounts",
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
 
-
-    // verify single procedure
-    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/procedures/RCounts");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
-    Assert.assertTrue(s.contains("RCounts"));
-
     // verify mapreduces
     response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -524,22 +490,6 @@ public class AppFabricServiceHandlerTest {
                                                  "name", "ClassicWordCount",
                                                  "description", "WordCount job from Hadoop examples")));
 
-    // verify mapreduces by app
-    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/mapreduce");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, o.size());
-    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Mapreduce", "app", "WCount", "id", "ClassicWordCount",
-                                                 "name", "ClassicWordCount",
-                                                 "description", "WordCount job from Hadoop examples")));
-
-    // verify single mapreduce
-    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/mapreduce/ClassicWordCount");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
-    Assert.assertTrue(s.contains("ClassicWordCount"));
 
     // verify workflows
     response = GatewayFastTestsSuite.doGet("/v2/workflows");
@@ -551,22 +501,6 @@ public class AppFabricServiceHandlerTest {
       "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
       "name", "SampleWorkflow", "description",  "SampleWorkflow description")));
 
-    // verify workflows by app
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/workflows");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, o.size());
-    Assert.assertTrue(o.contains(ImmutableMap.of(
-      "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
-      "name", "SampleWorkflow", "description",  "SampleWorkflow description")));
-
-    // verify single workflow
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/workflows/SampleWorkflow");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    s = EntityUtils.toString(response.getEntity());
-    Assert.assertNotNull(s);
-    Assert.assertTrue(s.contains("SampleWorkflow"));
 
     // verify programs by non-existent app
     response = GatewayFastTestsSuite.doGet("/v2/apps/NonExistenyApp/flows");
@@ -756,119 +690,5 @@ public class AppFabricServiceHandlerTest {
     }
     // make sure that after reset (no apps), list apps returns empty, and not 404
     Assert.assertEquals(200, GatewayFastTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
-  }
-
-  /**
-   * Test for schedule handlers.
-   */
-  @Test
-  public void testScheduleEndPoints() throws Exception {
-    // Steps for the test:
-    // 1. Deploy the app
-    // 2. Verify the schedules
-    // 3. Verify the history after waiting a while
-    // 4. Suspend the schedule
-    // 5. Verify there are no runs after the suspend by looking at the history
-    // 6. Resume the schedule
-    // 7. Verify there are runs after the resume by looking at the history
-    HttpResponse response = deploy(AppWithSchedule.class);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String json = EntityUtils.toString(response.getEntity());
-    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(1, schedules.size());
-    String scheduleId = schedules.get(0);
-    Assert.assertNotNull(scheduleId);
-    Assert.assertFalse(scheduleId.isEmpty());
-
-    TimeUnit.SECONDS.sleep(5);
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
-                                                            LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRuns = history.size();
-    Assert.assertTrue(workflowRuns >= 1);
-
-    //Check suspend status
-    String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
-                                          scheduleId);
-    response = GatewayFastTestsSuite.doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    Map<String, String> output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
-
-    String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
-                                           scheduleId);
-
-    response = GatewayFastTestsSuite.doPost(scheduleSuspend, "");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    //check paused state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = GatewayFastTestsSuite.doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SUSPENDED", output.get("status"));
-
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
-
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
-    workflowRuns = history.size();
-
-    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
-
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
-    int workflowRunsAfterSuspend = history.size();
-    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
-
-    String scheduleResume = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/resume",
-                                          scheduleId);
-
-    response = GatewayFastTestsSuite.doPost(scheduleResume, "");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    //Sleep for some time and verify there are no more scheduled jobs after the pause.
-    TimeUnit.SECONDS.sleep(3);
-    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
-
-    int workflowRunsAfterResume = history.size();
-    //Verify there is atleast one run after the pause
-    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
-
-    //check scheduled state
-    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
-    response = GatewayFastTestsSuite.doGet(scheduleStatus);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("SCHEDULED", output.get("status"));
-
-    //Check status of a non existing schedule
-    String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
-                                           "invalidId");
-
-    response = GatewayFastTestsSuite.doGet(notFoundSchedule);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
 }

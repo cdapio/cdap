@@ -330,13 +330,13 @@ public class TestAccountHandler {
     result = TestPassportServer.request(post);
   }
 
-  private String getAccountJson(String emailId){
+  private String getAccountJson(String emailId) {
     JsonObject object = new JsonObject();
     object.addProperty("email_id", emailId);
     return object.toString();
   }
 
-  private String getAccountJson(String emailId, String firstName, String lastName){
+  private String getAccountJson(String emailId, String firstName, String lastName) {
     JsonObject object = new JsonObject();
     object.addProperty("email_id", emailId);
     object.addProperty("first_name", firstName);
@@ -347,7 +347,7 @@ public class TestAccountHandler {
   }
 
 
-  private String getVPCJson(String vpcName, String vpcLabel){
+  private String getVPCJson(String vpcName, String vpcLabel) {
     JsonObject object = new JsonObject();
     object.addProperty("vpc_name", vpcName);
     object.addProperty("vpc_label", vpcLabel);

@@ -10,7 +10,7 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Overrides the bindings for {@code OpexServiceMain} to use.  This is needed so we can provide a new
+ * Overrides the bindings for {@code ReactorServiceMain} to use.  This is needed so we can provide a new
  * {@link InMemoryTransactionManager} instance each time the
  * {@link com.continuuity.data2.transaction.distributed.TransactionService} starts a new RPC server.
  */

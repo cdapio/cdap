@@ -1,11 +1,11 @@
 package com.continuuity.gateway.router.handlers;
 
-import com.continuuity.gateway.router.HeaderDecoder;
+import com.continuuity.gateway.router.HeaderInfo;
 import com.continuuity.gateway.router.RouterServiceLookup;
+import com.continuuity.security.auth.TokenValidator;
 import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -15,10 +15,18 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
+
 
 /**
  * Proxies incoming requests to a discoverable endpoint.
@@ -30,26 +38,74 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final RouterServiceLookup serviceLookup;
 
   private volatile Channel outboundChannel;
+  private TokenValidator tokenValidator;
+  private boolean securityEnabled;
+  private String realm;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup) {
+  public InboundHandler(String realm, ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup,
+                        TokenValidator tokenValidator, boolean securityEnabled) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
+    this.tokenValidator = tokenValidator;
+    this.securityEnabled = securityEnabled;
+    this.realm = realm;
+
   }
 
+
   private void openOutboundAndWrite(MessageEvent e) throws Exception {
-    final ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-    msg.markReaderIndex();
+    final HttpRequest msg = (HttpRequest) e.getMessage();
 
     // Suspend incoming traffic until connected to the outbound service.
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
+    String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
+    String path = msg.getUri();
+    String host = msg.getHeader(HttpHeaders.Names.HOST);
+    String httpMethod = msg.getMethod().getName();
+    String accessToken = null;
+
+    if (auth != null) {
+      int spIndex = auth.trim().indexOf(' ') + 1;
+      if (spIndex != -1) {
+        accessToken = auth.substring(spIndex).trim();
+      }
+    }
+    //Decoding the header
+    final HeaderInfo headerInfo = new HeaderInfo(path, host, httpMethod);
+
+    if (securityEnabled) {
+      TokenValidator.State tokenState = tokenValidator.validate(accessToken);
+      HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+      switch (tokenState) {
+        case TOKEN_MISSING:
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"");
+          httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+          break;
+
+        case TOKEN_INVALID:
+        case TOKEN_EXPIRED:
+        case TOKEN_INTERNAL:
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"" +
+            "  error=\"invalid_token\"" +
+            "  error_description=\"" + tokenState.getMsg() + "\"");
+          httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+          break;
+      }
+      if (tokenState != TokenValidator.State.TOKEN_VALID) {
+        inboundChannel.getPipeline().addLast("encoder", new HttpResponseEncoder());
+        e.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
+        return;
+      }
+    }
+
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
-    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderDecoder.HeaderInfo>() {
+    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderInfo>() {
       @Override
-      public HeaderDecoder.HeaderInfo get() {
-        return HeaderDecoder.decodeHeader(msg);
+      public HeaderInfo get() {
+        return headerInfo;
       }
     });
 
@@ -68,12 +124,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     outFuture.addListener(new ChannelFutureListener() {
       public void operationComplete(ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
+
           outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
 
-          // Connection attempt succeeded.
+          // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
+          outboundChannel.getPipeline().addLast("HttpRequestEncoder", new HttpRequestEncoder());
 
           // Write the message to outBoundChannel.
-          msg.resetReaderIndex();
           outboundChannel.write(msg);
 
           // Begin to accept incoming traffic.
@@ -96,9 +153,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       openOutboundAndWrite(e);
       return;
     }
-
-    ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-    outboundChannel.write(msg);
+    outboundChannel.write(e.getMessage());
   }
 
   @Override

@@ -7,7 +7,6 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
@@ -43,7 +42,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
   private TThreadedSelectorServer server;
   private NettyHttpService httpService;
-  private final int httpPort;
   private ExecutorService executor;
   private HttpHandler handler;
   private CConfiguration configuration;
@@ -61,8 +59,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
-    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_THRIFT_PORT);
-    this.httpPort = this.port + 1; // temporary code, this will replace thrift port
+    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handler = handler;
     this.configuration = configuration;
   }
@@ -95,24 +92,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       }
     });
 
-    //Register netty-http with discovery service
-    InetAddress httpAddress = socketAddress.getAddress();
-    if (httpAddress.isAnyLocalAddress()) {
-      httpAddress = InetAddress.getLocalHost();
-    }
-    final InetSocketAddress finalHttpSocketAddress = new InetSocketAddress(httpAddress, httpPort);
-
-    discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.APP_FABRIC_HTTP;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalHttpSocketAddress;
-      }
-    });
 
     TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(socketAddress))
       .executorService(executor)
@@ -124,7 +103,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
-      .setPort(httpPort)
       .addHttpHandlers(ImmutableList.of(handler))
       .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                                  Constants.Gateway.DEFAULT_BACKLOG))
@@ -147,6 +125,22 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     httpService.startAndWait();
+    final int httpPort = httpService.getBindAddress().getPort();
+    final InetSocketAddress socketAddress = new InetSocketAddress(hostname, httpPort);
+    final InetAddress httpAddress = socketAddress.getAddress();
+    discoveryService.register(new Discoverable() {
+      final InetSocketAddress finalHttpSocketAddress = new InetSocketAddress(httpAddress, httpPort);
+
+      @Override
+      public String getName() {
+        return Constants.Service.APP_FABRIC_HTTP;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return finalHttpSocketAddress;
+      }
+    });
     server.serve();
   }
 

@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.deploy.Manager;
@@ -35,11 +35,13 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -57,18 +59,13 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -81,6 +78,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 
 /**
@@ -214,7 +217,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @Path("/ping")
   @GET
-  public void Get(HttpRequest request, HttpResponder response){
+  public void Get(HttpRequest request, HttpResponder response) {
     response.sendString(HttpResponseStatus.OK, "OK");
   }
 
@@ -227,7 +230,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void getStatus(final HttpRequest request, final HttpResponder responder,
                         @PathParam("app-id") final String appId,
                         @PathParam("runnable-type") final String runnableType,
-                        @PathParam("runnable-id") final String runnableId){
+                        @PathParam("runnable-id") final String runnableId) {
 
     LOG.trace("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
 
@@ -258,7 +261,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           //mapreduce is not part of a workflow
           runnableStatus(responder, id, type);
         }
-      } else if (type == null){
+      } else if (type == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         runnableStatus(responder, id, type);
@@ -290,7 +293,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private void runnableStatus(HttpResponder responder, Id.Program id, Type type) {
     try {
       ProgramStatus status = getProgramStatus(id, type);
-      if (status.getStatus().equals("NOT_FOUND")){
+      if (status.getStatus().equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject reply = new JsonObject();
@@ -329,6 +332,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            @PathParam("runnable-id") final String runnableId) {
     if (!("flows".equals(runnableType) || "procedures".equals(runnableType))) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
     }
     startStopProgram(request, responder, appId, runnableType, runnableId, "debug");
   }
@@ -341,7 +345,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void stopProgram(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId){
+                          @PathParam("runnable-id") final String runnableId) {
     startStopProgram(request, responder, appId, runnableType, runnableId, "stop");
   }
 
@@ -357,6 +361,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
@@ -382,6 +387,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     String accountId = getAuthenticatedAccountId(request);
@@ -408,6 +414,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     String accountId = getAuthenticatedAccountId(request);
@@ -689,7 +696,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (runtimeInfo == null) {
         if (type != Type.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = getSpecification(id, type);
+          String spec = getProgramSpecification(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
@@ -744,8 +751,199 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deploys an application.
+   * Returns next scheduled runtime of a workflow.
    */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
+  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("workflow-id") final String workflowId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, workflowId);
+      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, Type.WORKFLOW);
+
+      JsonArray array = new JsonArray();
+      for (ScheduledRuntime runtime : runtimes) {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", runtime.getScheduleId());
+        object.addProperty("time", runtime.getTime());
+        array.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Returns the schedule ids for a given workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
+  public void workflowSchedules(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, workflowId);
+      responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, Type.WORKFLOW));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Get schedule state.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  public void getScheuleState(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("workflow-id") final String workflowId,
+                              @PathParam("schedule-id") final String scheduleId) {
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Suspend a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
+  public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId,
+                                      @PathParam("schedule-id") final String scheduleId) {
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          scheduler.suspendSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+        case SUSPENDED:
+          responder.sendJson(HttpResponseStatus.OK, "Schedule already suspended");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Resume a workflow schedule.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
+  public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId,
+                                     @PathParam("schedule-id") final String scheduleId) {
+
+    try {
+      // get the accountId to catch if there is a security exception
+      String accountId = getAuthenticatedAccountId(request);
+      Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
+      switch (state) {
+        case NOT_FOUND:
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          break;
+        case SCHEDULED:
+          responder.sendJson(HttpResponseStatus.OK, "Already resumed");
+          break;
+        case SUSPENDED:
+          scheduler.resumeSchedule(scheduleId);
+          responder.sendJson(HttpResponseStatus.OK, "OK");
+          break;
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
+  @SuppressWarnings("unused")
+  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("procedure-id") final String procedureId) {
+    getLiveInfo(request, responder, appId, procedureId, Type.PROCEDURE);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/live-info")
+  @SuppressWarnings("unused")
+  public void flowLiveInfo(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("flow-id") final String flowId) {
+    getLiveInfo(request, responder, appId, flowId, Type.FLOW);
+  }
+
+  /**
+   * Returns specification of a runnable - flow, procedure, mapreduce, workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}")
+  public void runnableSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("runnable-type") final String runnableType,
+                                @PathParam("runnable-id") final String runnableId) {
+
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      String specification = getProgramSpecification(id, type);
+      if (specification == null || specification.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+     * Deploys an application.
+     */
   private void deployApp(HttpRequest request, HttpResponder responder, final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -787,11 +985,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
-    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
       //Delete the existing schedules and add new ones.
-      if (!existingSchedules.isEmpty()){
+      if (!existingSchedules.isEmpty()) {
         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
       }
       // Add new schedules.
@@ -1064,7 +1262,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return state.toString();
   }
 
-  private String getSpecification(Id.Program id, Type type)
+  private String getProgramSpecification(Id.Program id, Type type)
     throws Exception {
 
     ApplicationSpecification appSpec;
@@ -1073,7 +1271,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (appSpec == null) {
         return "";
       }
-
       String runnableId = id.getId();
       if (type == Type.FLOW && appSpec.getFlows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getFlows().get(id.getId()));
@@ -1083,14 +1280,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
-        // TODO should figure out a way to integrate that when more endpoints go through this code
-        //} else if (type == EntityType.APP) {
-        //  return GSON.toJson(makeAppRecord(appSpec));
       }
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve application spec for " +
-                            id.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
@@ -1141,6 +1331,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
     }
     return null;
+  }
+
+  private void getLiveInfo(HttpRequest request, HttpResponder responder,
+                           final String appId, final String programId, Type type) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    programId),
+                                                    type));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
    /* -----------------  helpers to return Json consistently -------------- */

@@ -2,8 +2,8 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
@@ -16,9 +16,9 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Metrics implemented using the common http netty framework.
@@ -35,19 +35,33 @@ public class MetricsQueryService extends AbstractIdleService {
                              DiscoveryService discoveryService,
                              @Nullable MetricsCollectionService metricsCollectionService) {
 
+    // netty http server config
+    String address = cConf.get(Constants.Metrics.ADDRESS);
+    int backlogcnxs = cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000);
+    int execthreads = cConf.getInt(Constants.Metrics.EXEC_THREADS, 20);
+    int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
+    int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
+
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
 
-    builder.setHost(cConf.get(Constants.Metrics.ADDRESS));
+    builder.setHost(address);
 
-    builder.setConnectionBacklog(cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000));
-    builder.setExecThreadPoolSize(cConf.getInt(Constants.Metrics.EXEC_THREADS, 20));
-    builder.setBossThreadPoolSize(cConf.getInt(Constants.Metrics.BOSS_THREADS, 1));
-    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Metrics.WORKER_THREADS, 10));
+    builder.setConnectionBacklog(backlogcnxs);
+    builder.setExecThreadPoolSize(execthreads);
+    builder.setBossThreadPoolSize(bossthreads);
+    builder.setWorkerThreadPoolSize(workerthreads);
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
+
+    LOG.info("Configuring MetricsService " +
+               ", address: " + address +
+               ", backlog connections: " + backlogcnxs +
+               ", execthreads: " + execthreads +
+               ", bossthreads: " + bossthreads +
+               ", workerthreads: " + workerthreads);
   }
 
   @Override

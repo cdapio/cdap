@@ -1293,7 +1293,7 @@ public class Bytes {
     if (amount == 0) {
       return val;
     }
-    if (val[0] < 0){
+    if (val[0] < 0) {
       return binaryIncrementNeg(val, amount);
     }
     return binaryIncrementPos(val, amount);
