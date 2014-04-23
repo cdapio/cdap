@@ -9,7 +9,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -94,7 +94,7 @@ public class RouterMain extends DaemonMain {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new RouterModules().getDistributedModules(),
-      new InMemorySecurityModule(),
+      new SecurityModules().getDistributedModules(),
       new AuthModule(),
       new IOModule()
     );
