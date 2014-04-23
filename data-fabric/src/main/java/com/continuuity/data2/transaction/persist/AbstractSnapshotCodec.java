@@ -121,7 +121,7 @@ public abstract class AbstractSnapshotCodec {
       int persistedVersion = decoder.readInt();
       if (persistedVersion != getVersion()) {
         throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Expected " +
-            "version is " + getVersion());
+                                   "version is " + getVersion());
       }
     } catch (IOException e) {
       LOG.error("Unable to deserialize transaction state: ", e);
