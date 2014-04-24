@@ -9,6 +9,8 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -465,6 +467,25 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  /**
+   * Tests taking a snapshot of the transaction manager
+   */
+  @Test
+  public void testTxManagerSnapshot() throws Exception {
+    Long currentTs = System.currentTimeMillis();
+
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/snapshot");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    InputStream in = response.getEntity().getContent();
+    try {
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      TransactionSnapshot snapshot = codec.decodeState(in);
+      Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    } finally {
+      in.close();
+    }
+  }
 
   /**
    * Tests deploying an application.

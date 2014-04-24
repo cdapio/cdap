@@ -3,7 +3,6 @@ package com.continuuity.gateway.router;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.router.handlers.InboundHandler;
-import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -32,7 +31,6 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorker;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
-import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,16 +61,12 @@ public class NettyRouter extends AbstractIdleService {
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
 
-  private final boolean securityEnabled;
-  private final TokenValidator tokenValidator;
-  private final String realm;
-
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     RouterServiceLookup serviceLookup, TokenValidator tokenValidator) {
+                     RouterServiceLookup serviceLookup) {
 
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
@@ -85,11 +79,8 @@ public class NettyRouter extends AbstractIdleService {
                                                  Constants.Router.DEFAULT_CLIENT_BOSS_THREADS);
     this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
-    this.securityEnabled = cConf.getBoolean(Constants.Security.SECURITY_ENABLED, false);
 
-    this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.hostname = hostname;
-    this.tokenValidator = tokenValidator;
     this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
     Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
     LOG.info("Forwards - {}", this.forwards);
@@ -169,9 +160,8 @@ public class NettyRouter extends AbstractIdleService {
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("HttpDecode", new HttpRequestDecoder());
           pipeline.addLast("inbound-handler",
-                           new InboundHandler(realm, clientBootstrap, serviceLookup, tokenValidator, securityEnabled));
+                           new InboundHandler(clientBootstrap, serviceLookup));
           return pipeline;
         }
       }

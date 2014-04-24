@@ -325,7 +325,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        job.beforeSubmit(context);
+        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+        try {
+          job.beforeSubmit(context);
+        } finally {
+          Thread.currentThread().setContextClassLoader(oldClassLoader);
+        }
       }
     });
   }

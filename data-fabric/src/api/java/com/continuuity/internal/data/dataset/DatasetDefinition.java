@@ -1,5 +1,7 @@
 package com.continuuity.internal.data.dataset;
 
+import java.io.IOException;
+
 /**
  * The instance of the class that implements this interface defines concrete named dataset type implementation.
  *
@@ -44,16 +46,16 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * {@link DatasetInstanceSpec}.
    * @param spec specification of the dataset instance.
    * @return dataset admin to perform administrative operations
-   * @throws Exception
+   * @throws IOException
    */
-  A getAdmin(DatasetInstanceSpec spec) throws Exception;
+  A getAdmin(DatasetInstanceSpec spec) throws IOException;
 
   /**
    * Provides dataset to be used to perform data operations on the dataset instance data defined by passed
    * {@link DatasetInstanceSpec}.
    * @param spec specification of the dataset instance.
    * @return dataset to perform object operations
-   * @throws Exception
+   * @throws IOException
    */
-  D getDataset(DatasetInstanceSpec spec) throws Exception;
+  D getDataset(DatasetInstanceSpec spec) throws IOException;
 }

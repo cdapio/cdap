@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -295,6 +296,26 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
+  public synchronized TransactionSnapshot getSnapshot() throws IOException {
+    TransactionSnapshot snapshot = null;
+    if (!isRunning()) {
+      return null;
+    }
+
+    long now = System.currentTimeMillis();
+    // avoid duplicate snapshots at same timestamp
+    if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(1);
+      } catch (InterruptedException ie) { }
+    }
+    // copy in memory state
+    snapshot = getCurrentState();
+    LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
+    LOG.info("Returning snapshot of state: " + snapshot);
+    return snapshot;
+  }
+
   private void doSnapshot(boolean closing) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
@@ -303,28 +324,18 @@ public class InMemoryTransactionManager extends AbstractService {
       this.logWriteLock.lock();
       try {
         synchronized (this) {
-          if (!isRunning() && !closing) {
+          snapshot = getSnapshot();
+          if (snapshot == null && !closing) {
             return;
           }
-
-          long now = System.currentTimeMillis();
-          // avoid duplicate snapshots at same timestamp
-          // this should be safe because doSnapshot is only called from a single thread
-          if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
-            try {
-              TimeUnit.MILLISECONDS.sleep(1);
-            } catch (InterruptedException ie) { }
+          if (snapshot != null) {
+            snapshotTime = snapshot.getTimestamp();
           }
-          // copy in memory state
-          snapshot = getCurrentState();
-          snapshotTime = snapshot.getTimestamp();
-          LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
-          LOG.info("Saving snapshot of state: " + snapshot);
 
           // roll WAL
           oldLog = currentLog;
           if (!closing) {
-            currentLog = persistor.createLog(snapshotTime);
+            currentLog = persistor.createLog(snapshot.getTimestamp());
           }
         }
         // there may not be an existing log on startup

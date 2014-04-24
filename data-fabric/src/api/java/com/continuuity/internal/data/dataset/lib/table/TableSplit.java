@@ -15,11 +15,11 @@ public class TableSplit extends Split {
     this.stop = stop;
   }
 
-  byte[] getStart() {
+  public byte[] getStart() {
     return start;
   }
 
-  byte[] getStop() {
+  public byte[] getStop() {
     return stop;
   }
 

@@ -32,6 +32,9 @@ public final class RouterPathLookup {
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
+  private static final String TRANSACTIONS_PATH = VERSION +
+    "/transactions/snapshot";
+
   private static final String SCHEDULER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
     "(schedules|nextruntime)";
@@ -77,6 +80,10 @@ public final class RouterPathLookup {
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(LOGHANDLER_PATH)),
                                                         Constants.Service.METRICS)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(TRANSACTIONS_PATH)),
+                                                        // todo change to Constants.Service.DATASET_MANAGER
+                                                        Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {

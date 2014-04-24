@@ -100,8 +100,8 @@ public class TestExternalAuthenticationServer {
 
     assertTrue(tokenType.equals(String.format("\"%s\"", ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY)));
 
-    long expectedExpiration = Long.parseLong(configuration.get(Constants.Security.TOKEN_EXPIRATION));
-
+    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION,
+                                                    Constants.Security.DEFAULT_TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertTrue(expiration == expectedExpiration / 1000);
 
