@@ -9,7 +9,7 @@ import com.continuuity.data2.dataset2.manager.DatasetNamespace;
  */
 public class ReactorDatasetNamespace implements DatasetNamespace {
   private final String namespacePrefix;
-  com.continuuity.data.DataSetAccessor.Namespace namespace;
+  private final DataSetAccessor.Namespace namespace;
 
   public ReactorDatasetNamespace(CConfiguration conf, DataSetAccessor.Namespace namespace) {
     String reactorNameSpace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);

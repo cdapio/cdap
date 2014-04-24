@@ -20,7 +20,7 @@ public class NamespacedDatasetManager implements DatasetManager {
   }
 
   @Override
-  public synchronized void register(String moduleName, Class<? extends DatasetModule> moduleClass)
+  public void register(String moduleName, Class<? extends DatasetModule> moduleClass)
     throws ModuleConflictException, IOException {
 
     delegate.register(moduleName, moduleClass);
@@ -32,7 +32,7 @@ public class NamespacedDatasetManager implements DatasetManager {
   }
 
   @Override
-  public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
+  public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
     throws InstanceConflictException, IOException {
 
     delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
@@ -44,14 +44,14 @@ public class NamespacedDatasetManager implements DatasetManager {
   }
 
   @Override
-  public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
     throws IOException {
 
     return delegate.getAdmin(namespace(datasetInstanceName), classLoader);
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
+  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
     throws IOException {
 
     return delegate.getDataset(namespace(datasetInstanceName), ignored);
