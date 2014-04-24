@@ -29,8 +29,8 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -64,8 +64,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -84,6 +82,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -93,6 +92,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -1162,7 +1162,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                         @PathParam("app-id") final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       Id.Program id = Id.Program.from(accountId, appId, "");
       AppFabricServiceStatus appStatus = removeApplication(id);
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
@@ -1183,7 +1182,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       Id.Account id = Id.Account.from(accountId);
       AppFabricServiceStatus status = removeAll(id);
       LOG.trace("Delete All call at AppFabricHttpHandler");
@@ -1207,7 +1205,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
     Id.Program programId = Id.Program.from(accountId, appId, flowId);
     try {
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(programId, Type.FLOW);
       if (status.getStatus().equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -1262,19 +1259,17 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
       store.getAllApplications(identifier));
 
-    //We won't delete any app until all apps are in STOPPED state
-    for (ApplicationSpecification appSpec : allSpecs) {
-      final Id.Application appId = Id.Application.from(identifier.getId(), appSpec.getName());
-      boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
-        @Override
-        public boolean apply(Id.Program programId) {
-          return programId.getApplication().equals(appId);
-        }
-      }, Type.values());
-
-      if (appRunning) {
-        return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    //Check if any App associated with this account is running
+    final Id.Account accId = Id.Account.from(identifier.getId());
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().getAccount().equals(accId);
       }
+    }, Type.values());
+
+    if (appRunning) {
+      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
     }
 
     //All Apps are STOPPED, delete them
@@ -1314,6 +1309,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         scheduler.deleteSchedules(workflowProgramId, Type.WORKFLOW, schedules);
       }
     }
+
+    deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
     deleteProgramLocations(appId);
 
     // also delete all queue state of each flow
@@ -1324,7 +1321,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
     appArchive.delete();
-    deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
     store.removeApplication(appId);
     return AppFabricServiceStatus.OK;
   }
@@ -1336,7 +1332,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
+      throw new IOException("Can't find Metrics endpoint");
     }
 
     LOG.debug("Deleting metrics for application {}", application);
@@ -1359,7 +1355,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
+      throw new IOException("Can't find Metrics endpoint");
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
