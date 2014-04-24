@@ -47,7 +47,6 @@ public class Table extends DataSet implements
    * @param ttl time to live for data written into a table, in ms. Negative means unlimited
    */
   public Table(String name, int ttl) {
-    // todo: we want limit ttl value... may be use int?
     this(name, ConflictDetection.ROW, ttl);
   }
 
@@ -193,7 +192,7 @@ public class Table extends DataSet implements
    */
   public void put(Put put) {
      delegate.get().put(put);
-   }
+  }
 
   /**
    * Deletes all columns of the specified row.
