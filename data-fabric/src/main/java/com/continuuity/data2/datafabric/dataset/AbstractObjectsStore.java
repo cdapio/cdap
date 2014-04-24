@@ -1,8 +1,8 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -58,11 +58,11 @@ public abstract class AbstractObjectsStore implements Closeable {
     try {
       Map<String, T> map = Maps.newHashMap();
       Scanner scan = table.scan(prefix, stopKey);
-      ImmutablePair<byte[], Map<byte[], byte[]>> next;
+      Row next;
       while ((next = scan.next()) != null) {
-        byte[] columnValue = next.getSecond().get(COLUMN);
+        byte[] columnValue = next.get(COLUMN);
         T value = GSON.fromJson(new String(columnValue, Charsets.UTF_8), classOfT);
-        String key = new String(next.getFirst(), prefix.length, next.getFirst().length - prefix.length, Charsets.UTF_8);
+        String key = new String(next.getRow(), prefix.length, next.getRow().length - prefix.length, Charsets.UTF_8);
         map.put(key, value);
       }
       return map;
