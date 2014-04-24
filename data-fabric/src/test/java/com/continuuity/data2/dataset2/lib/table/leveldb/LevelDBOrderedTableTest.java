@@ -2,11 +2,7 @@ package com.continuuity.data2.dataset2.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
-import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
@@ -14,8 +10,6 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,28 +45,22 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
   }
 
   @Test
-  public void testListTablesAcrossRestart() throws Exception {
+  public void testTablesSurviveAcrossRestart() throws Exception {
     // todo make this test run for hbase, too - requires refactoring of their injection
     // test on ASCII table name but also on some non-ASCII ones
     final String[] tableNames = { "table", "t able", "t\u00C3ble", "100%" };
 
-    DataSetAccessor accessor = injector.getInstance(DataSetAccessor.class);
-    DataSetManager manager = accessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
-      manager.create(tableName);
-      Assert.assertTrue(accessor.list(DataSetAccessor.Namespace.USER).containsKey(tableName));
+      LevelDBOrderedTableAdmin admin = getTableAdmin(tableName);
+      admin.create();
+      Assert.assertTrue(admin.exists());
     }
 
-    // create an new instance of the table service
-    LevelDBOcTableService newService = new LevelDBOcTableService();
-    newService.setConfiguration(injector.getInstance(Key.get(
-      CConfiguration.class, Names.named("LevelDBConfiguration"))));
-    newService.clearTables();
-    LocalDataSetAccessor newAccessor = new LocalDataSetAccessor(injector.getInstance(
-      Key.get(CConfiguration.class, Names.named("DataSetAccessorConfig"))), newService);
+    // clearing in-mem cache - mimicing JVM restart
+    service.clearTables();
     for (String tableName : tableNames) {
-      Assert.assertTrue(newAccessor.list(DataSetAccessor.Namespace.USER).containsKey(tableName));
+      service.list().contains(tableName);
     }
   }
 

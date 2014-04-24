@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link com.continuuity.api.data.dataset.table.Row}
  */
-class Result implements Row {
+public class Result implements Row {
   private final byte[] row;
   private final Map<byte[], byte[]> columns;
 

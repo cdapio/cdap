@@ -13,10 +13,9 @@ import com.continuuity.internal.data.dataset.module.DatasetModule;
 import java.io.IOException;
 
 /**
- *
+ * Defines Table data set
  */
-public class TableDefinition
-  extends AbstractDatasetDefinition<Table, DatasetAdmin> {
+public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdmin> {
 
   private final DatasetDefinition<? extends OrderedTable, ?> tableDef;
 

@@ -3,8 +3,8 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -1217,9 +1217,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
   void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
-      ImmutablePair<byte[], Map<byte[], byte[]>> next = scan.next();
-      Assert.assertArrayEquals(expectedRows[i], next.getFirst());
-      verify(expectedRowMaps[i], next.getSecond());
+      Row next = scan.next();
+      Assert.assertArrayEquals(expectedRows[i], next.getRow());
+      verify(expectedRowMaps[i], next.getColumns());
     }
 
     // nothing is left in scan
