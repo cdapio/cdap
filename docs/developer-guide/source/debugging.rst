@@ -306,6 +306,26 @@ Debugging with Eclipse
 .. Local Continuuity Reactor [rev 2]
 .. -------------------------
 
+Debugging the Transaction Manager (Advanced Use)
+................................................
+Internally, Reactor uses transactions to control the way DataSets persist information, 
+and to prevent multiple tasks from writing at the exact same place in a DataSet at the same time.
+
+Reactor comes bundled with a script that allows you to dump the state of the internal
+transaction manager into a local file, to allow further investigation. It comes in handy
+when you find that your MapReduce jobs become slower and slower, or on other occasions
+when your Reactor becomes slow over time.
+
+Simply run this command::
+
+	$ transactions-debugger --host <name> --save <filename>
+
+It will take a snapshot of the state of the transaction manager for the Reactor
+instance with the specified host name, and save it in a file at a location of your choice.
+
+This file can be useful to our support team if you are experiencing any unusual latencies.
+
+
 Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
