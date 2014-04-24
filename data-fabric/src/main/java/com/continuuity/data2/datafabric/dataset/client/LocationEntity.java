@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- *
+ * A self contained, repeatable entity that obtains its content from a given {@link Location}.
  */
 public class LocationEntity extends AbstractHttpEntity {
 
@@ -18,7 +18,7 @@ public class LocationEntity extends AbstractHttpEntity {
   public LocationEntity(final Location location, final String contentType) {
     super();
     if (location == null) {
-      throw new IllegalArgumentException("Lcoation may not be null");
+      throw new IllegalArgumentException("Location may not be null");
     }
     this.location = location;
     setContentType(contentType);
@@ -32,7 +32,6 @@ public class LocationEntity extends AbstractHttpEntity {
     try {
       return location.length();
     } catch (IOException e) {
-      // todo
       throw Throwables.propagate(e);
     }
   }

@@ -33,16 +33,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.
+ * Just a java wrapper for accessing service's REST API.
  */
-// to be used by instantiator/accessor
-public class DatasetManagerClient {
+public class DatasetManagerServiceClient {
   private static final Gson GSON = new Gson();
 
   private EndpointStrategy endpointStrategy;
 
   @Inject
-  public DatasetManagerClient(DiscoveryServiceClient discoveryClient) {
+  public DatasetManagerServiceClient(DiscoveryServiceClient discoveryClient) {
 
     this.endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
@@ -75,10 +75,10 @@ public class DatasetManagerClient {
                                    ImmutableMap.of("type-name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getStatusLine().getStatusCode()) {
       throw new InstanceConflictException("Failed to add instance " + datasetInstanceName +
-                                            ", reason: " + bodyAsString(response));
+                                            ", reason: " + getDetails(response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getStatusLine().getStatusCode()) {
-      throw new IOException("Failed to add instance " + datasetInstanceName + ", reason: " + bodyAsString(response));
+      throw new IOException("Failed to add instance " + datasetInstanceName + ", reason: " + getDetails(response));
     }
   }
 
@@ -86,10 +86,10 @@ public class DatasetManagerClient {
     HttpResponse response = doDelete("/instances/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getStatusLine().getStatusCode()) {
       throw new InstanceConflictException("Failed to delete instance " + datasetInstanceName +
-                                            ", reason: " + bodyAsString(response));
+                                            ", reason: " + getDetails(response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getStatusLine().getStatusCode()) {
-      throw new IOException("Failed to delete instance " + datasetInstanceName + ", reason: " + bodyAsString(response));
+      throw new IOException("Failed to delete instance " + datasetInstanceName + ", reason: " + getDetails(response));
     }
   }
 
@@ -100,10 +100,10 @@ public class DatasetManagerClient {
                                    ImmutableMap.of("class-name", className));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getStatusLine().getStatusCode()) {
-      throw new ModuleConflictException("Failed to add module " + moduleName + ", reason: " + bodyAsString(response));
+      throw new ModuleConflictException("Failed to add module " + moduleName + ", reason: " + getDetails(response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getStatusLine().getStatusCode()) {
-      throw new IOException("Failed to add module " + moduleName + ", reason: " + bodyAsString(response));
+      throw new IOException("Failed to add module " + moduleName + ", reason: " + getDetails(response));
     }
   }
 
@@ -113,10 +113,10 @@ public class DatasetManagerClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getStatusLine().getStatusCode()) {
       throw new ModuleConflictException("Failed to delete module " + moduleName +
-                                          ", reason: " + bodyAsString(response));
+                                          ", reason: " + getDetails(response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getStatusLine().getStatusCode()) {
-      throw new IOException("Failed to delete module " + moduleName + ", reason: " + bodyAsString(response));
+      throw new IOException("Failed to delete module " + moduleName + ", reason: " + getDetails(response));
     }
   }
 
@@ -176,8 +176,10 @@ public class DatasetManagerClient {
     return client.execute(delete);
   }
 
-  private String bodyAsString(HttpResponse response) throws IOException {
-    return Bytes.toString(ByteStreams.toByteArray(response.getEntity().getContent()));
+  private String getDetails(HttpResponse response) throws IOException {
+    return response.getStatusLine().getStatusCode() + ", " + response.getStatusLine().getReasonPhrase() +
+      ", " + Bytes.toString(ByteStreams.toByteArray(response.getEntity().getContent()));
+
   }
 
   private String resolve(String resource) {

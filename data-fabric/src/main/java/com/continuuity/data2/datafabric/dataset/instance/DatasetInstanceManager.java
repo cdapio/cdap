@@ -1,7 +1,11 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -42,15 +46,18 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @param mdsDatasetManager dataset manager to be used to access the metadata store
    * @param txSystemClient tx client to be used to operate on the metadata store
    */
-  public DatasetInstanceManager(DatasetManager mdsDatasetManager, TransactionSystemClient txSystemClient) {
-    this.mdsDatasetManager = mdsDatasetManager;
+  public DatasetInstanceManager(DatasetManager mdsDatasetManager,
+                                TransactionSystemClient txSystemClient,
+                                CConfiguration conf) {
+    this.mdsDatasetManager =
+      new NamespacedDatasetManager(mdsDatasetManager,
+                                   new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
     this.txClient = txSystemClient;
   }
 
   @Override
   protected void startUp() throws Exception {
-    // todo: once namespacing is implemented in new datasets "continuuity.system" should go away from here
-    OrderedTable table = getMDSTable(mdsDatasetManager, "continuuity.system.datasets.instance");
+    OrderedTable table = getMDSTable(mdsDatasetManager, "datasets.instance");
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetInstanceMDS(table);
   }
@@ -126,10 +133,12 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   private OrderedTable getMDSTable(DatasetManager datasetManager, String mdsTable) {
     try {
+      // "null" for class being in system classpath, for mds it is always true
       DatasetAdmin admin = datasetManager.getAdmin(mdsTable, null);
       try {
         if (admin == null) {
           datasetManager.addInstance("orderedTable", mdsTable, DatasetInstanceProperties.EMPTY);
+          // "null" for class being in system classpath, for mds it is always true
           admin = datasetManager.getAdmin(mdsTable, null);
           if (admin == null) {
             throw new RuntimeException("Cannot add instance of a table " + mdsTable);
@@ -140,6 +149,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
           admin.create();
         }
 
+        // "null" for class being in system classpath, for mds it is always true
         return (OrderedTable) datasetManager.getDataset(mdsTable, null);
       } finally {
         if (admin != null) {

@@ -11,10 +11,10 @@ import java.io.IOException;
  * Wrapper for {@link DatasetManager} that namespaces dataset instances names.
  */
 public class NamespacedDatasetManager implements DatasetManager {
-  private final String namespace;
+  private final DatasetNamespace namespace;
   private final DatasetManager delegate;
 
-  public NamespacedDatasetManager(DatasetManager delegate, String namespace) {
+  public NamespacedDatasetManager(DatasetManager delegate, DatasetNamespace namespace) {
     this.delegate = delegate;
     this.namespace = namespace;
   }
@@ -58,6 +58,6 @@ public class NamespacedDatasetManager implements DatasetManager {
   }
 
   private String namespace(String datasetInstanceName) {
-    return namespace + datasetInstanceName;
+    return namespace.namespace(datasetInstanceName);
   }
 }

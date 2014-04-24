@@ -27,7 +27,7 @@ public class DatasetModuleMeta {
    * @param name name of the dataset module
    * @param className class name of the dataset module
    * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
-   *                    always present in classpath
+   *                    always present in classpath. This helps to minimize redundant copying of jars.
    * @param types list of types announced by this module in the order they are announced
    * @param usesModules list of modules that this module depends on, ordered in a way they must be
    *                    loaded and initialized
@@ -58,7 +58,7 @@ public class DatasetModuleMeta {
 
   /**
    * @return location of the dataset module jar, {@code null} means this is "system module" which classes always present
-   *         in classpath
+   *         in classpath. This helps to minimize redundant copying of jars
    */
   @Nullable
   public URI getJarLocation() {

@@ -2,15 +2,16 @@ package com.continuuity.data2.datafabric;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.dataset2.manager.DatasetNamespace;
 
 /**
- * todo: This is for backwards-compatibility: migrate namespacing logic when after removing DataSetAccessor
+ * Reactor's dataset namespace.
  */
-public class DatasetNamespace {
+public class ReactorDatasetNamespace implements DatasetNamespace {
   private final String namespacePrefix;
   com.continuuity.data.DataSetAccessor.Namespace namespace;
 
-  public DatasetNamespace(CConfiguration conf, DataSetAccessor.Namespace namespace) {
+  public ReactorDatasetNamespace(CConfiguration conf, DataSetAccessor.Namespace namespace) {
     String reactorNameSpace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
     this.namespacePrefix = reactorNameSpace + ".";
     this.namespace = namespace;

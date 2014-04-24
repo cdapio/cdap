@@ -2,7 +2,7 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.AbstractDatasetManagerTest;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
@@ -52,14 +52,13 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
                                                new LocalLocationFactory(),
                                                InetAddress.getByName("localhost"),
                                                discoveryService,
-                                               null,
                                                new InMemoryDatasetManager(),
                                                ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                                  "memoryTable", InMemoryTableModule.class),
                                                txSystemClient);
     datasetManager.startAndWait();
 
-    DatasetManagerClient dsManagerClient = new DatasetManagerClient(discoveryService);
+    DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);
     manager = new DataFabricDatasetManager(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
                                            new InMemoryDatasetDefinitionRegistry());

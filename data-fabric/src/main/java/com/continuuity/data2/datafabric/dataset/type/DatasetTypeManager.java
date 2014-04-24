@@ -1,6 +1,10 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -55,16 +59,18 @@ public class DatasetTypeManager extends AbstractIdleService {
    */
   public DatasetTypeManager(DatasetManager mdsDatasetManager,
                             TransactionSystemClient txSystemClient,
-                            LocationFactory locationFactory) {
-    this.mdsDatasetManager = mdsDatasetManager;
+                            LocationFactory locationFactory,
+                            CConfiguration conf) {
+    this.mdsDatasetManager =
+      new NamespacedDatasetManager(mdsDatasetManager,
+                                   new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
   }
 
   @Override
   protected void startUp() throws Exception {
-    // todo: once namespacing is implemented in new datasets "continuuity.system" should go away from here
-    OrderedTable table = getMDSTable(mdsDatasetManager, "continuuity.system.datasets.type");
+    OrderedTable table = getMDSTable(mdsDatasetManager, "datasets.type");
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);
   }
@@ -84,7 +90,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     throws DatasetModuleConflictException {
 
     LOG.info("adding module, name: {}, className: {}, jarLocation: {}",
-             name, className, jarLocation == null ? "[system]" : jarLocation.toURI());
+             name, className, jarLocation == null ? "[local]" : jarLocation.toURI());
 
     try {
       getTxExecutor().execute(new TransactionExecutor.Subroutine() {
@@ -280,10 +286,12 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   private OrderedTable getMDSTable(DatasetManager datasetManager, String mdsTable) {
     try {
+      // "null" for class being in system classpath, for mds it is always true
       DatasetAdmin admin = datasetManager.getAdmin(mdsTable, null);
       try {
         if (admin == null) {
           datasetManager.addInstance("orderedTable", mdsTable, DatasetInstanceProperties.EMPTY);
+          // "null" for class being in system classpath, for mds it is always true
           admin = datasetManager.getAdmin(mdsTable, null);
           if (admin == null) {
             throw new RuntimeException("Cannot add instance of a table " + mdsTable);
@@ -294,6 +302,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           admin.create();
         }
 
+        // "null" for class being in system classpath, for mds it is always true
         return (OrderedTable) datasetManager.getDataset(mdsTable, null);
       } finally {
         if (admin != null) {

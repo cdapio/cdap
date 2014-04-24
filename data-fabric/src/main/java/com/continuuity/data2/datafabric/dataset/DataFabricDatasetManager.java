@@ -1,8 +1,10 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.datafabric.DatasetNamespace;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
+import com.continuuity.data2.dataset2.manager.DatasetNamespace;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
 import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
@@ -11,7 +13,6 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerClient;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
@@ -35,23 +36,23 @@ import java.util.Map;
  */
 public class DataFabricDatasetManager implements DatasetManager {
 
-  private final DatasetManagerClient client;
-  private final Map<String, DatasetModule> modules;
+  private final DatasetManagerServiceClient client;
+  private final Map<String, DatasetModule> modulesCache;
   private final DatasetDefinitionRegistry registry;
   private final LocationFactory locationFactory;
   private final DatasetNamespace namespace;
 
   @Inject
-  public DataFabricDatasetManager(DatasetManagerClient client,
+  public DataFabricDatasetManager(DatasetManagerServiceClient client,
                                   CConfiguration conf,
                                   LocationFactory locationFactory,
                                   DatasetDefinitionRegistry registry) {
 
     this.client = client;
-    this.modules = Maps.newHashMap();
+    this.modulesCache = Maps.newHashMap();
     this.locationFactory = locationFactory;
     this.registry = registry;
-    this.namespace = new DatasetNamespace(conf, DataSetAccessor.Namespace.USER);
+    this.namespace = new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER);
   }
 
   @Override
@@ -118,7 +119,7 @@ public class DataFabricDatasetManager implements DatasetManager {
 
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      if (!modules.containsKey(moduleMeta.getName())) {
+      if (!modulesCache.containsKey(moduleMeta.getName())) {
         if (moduleMeta.getJarLocation() != null) {
           // adding dataset module jar to classloader
           classLoader = classLoader == null ?
@@ -132,7 +133,7 @@ public class DataFabricDatasetManager implements DatasetManager {
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
-        modules.put(moduleMeta.getName(), module);
+        modulesCache.put(moduleMeta.getName(), module);
         module.register(registry);
       }
     }

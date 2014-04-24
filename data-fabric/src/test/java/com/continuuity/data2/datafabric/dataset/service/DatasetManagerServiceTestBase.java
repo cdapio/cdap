@@ -59,7 +59,6 @@ public abstract class DatasetManagerServiceTestBase {
                                         new LocalLocationFactory(),
                                         InetAddress.getByName("localhost"),
                                         discoveryService,
-                                        null,
                                         new InMemoryDatasetManager(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                           "memoryTable", InMemoryTableModule.class),

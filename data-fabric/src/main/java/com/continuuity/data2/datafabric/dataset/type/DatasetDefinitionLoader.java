@@ -36,6 +36,7 @@ public class DatasetDefinitionLoader {
     ClassLoader classLoader = DatasetDefinitionLoader.class.getClassLoader();
     List<DatasetModuleMeta> modulesToLoad = meta.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
+      // for default "system" modules it can be null, see getJarLocation() javadoc
       if (moduleMeta.getJarLocation() != null) {
         classLoader = new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
       }
