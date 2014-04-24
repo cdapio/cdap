@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
@@ -70,7 +71,7 @@ public class TransactionManagerDebuggerMain {
     options.addOption(null, "ids", false, "To view all the transaction IDs contained in the snapshot");
     options.addOption(null, "transaction", true, "To specify a transaction ID to look for");
     options.addOption(null, "port", true, "To specify the port to use. The default value is --port " +
-                                          conf.get("gateway.server.port"));
+                                          Constants.Gateway.DEFAULT_PORT);
     options.addOption(null, "help", false, "To print this message");
 
     // Check all the options of the command line
@@ -91,7 +92,7 @@ public class TransactionManagerDebuggerMain {
       persistingFilename = line.hasOption("save") ? line.getOptionValue("save") : null;
       showTxids = line.hasOption("ids") ? true : false;
       portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) :
-                   Integer.valueOf(conf.get("gateway.server.port"));
+                   conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
       txIdToSearch = line.hasOption("transaction") ? Long.valueOf(line.getOptionValue("transaction")) : null;
     } catch (ParseException e) {
       printUsage(options, true);
