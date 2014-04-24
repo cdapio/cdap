@@ -388,7 +388,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    LOG.info("starting a program at appfabrichttphandler");
     startStopProgram(request, responder, appId, runnableType, runnableId, "start");
   }
 
@@ -838,7 +837,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    LOG.info("deploying");
     try {
       return (BodyConsumer) deployAppStream(request, responder, appId);
     } catch (Exception ex) {
@@ -855,7 +853,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
-    LOG.info("deploying");
     try {
       return (BodyConsumer) deployAppStream(request, responder, null);
     } catch (Exception ex) {
@@ -1094,7 +1091,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           deploy(rIdentifier, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-          LOG.info ("Deployed app" + archiveName + " : at: " + archive.getName());
         } catch (Exception ex) {
           sessionInfo.setStatus(DeployStatus.FAILED);
           ex.printStackTrace();
