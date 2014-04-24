@@ -26,8 +26,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.http.BodyConsumer;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
@@ -55,8 +55,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -71,8 +69,15 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -81,13 +86,8 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -810,7 +810,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       return (BodyConsumer) deployAppStream(request, responder, appId);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
     }
 
@@ -827,7 +827,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       return (BodyConsumer) deployAppStream(request, responder, null);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
     }
   }
@@ -1027,18 +1027,19 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                         HttpResponder responder, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
-    final Location archive = locationFactory.create(archiveDir + "/" + accountId);
-    LOG.info("Deploying using BodyConsumer");
+    final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
+    final Location archive = uploadDir.append(archiveName);
+    final OutputStream os = archive.getOutputStream();
+
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
     }
-    final Location tempFile = archive.getTempFile(null);
-    final OutputStream os = tempFile.getOutputStream();
 
-    ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+
+    final ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
     rInfo.setApplicationId(appId);
     final ArchiveId rIdentifier = new ArchiveId(accountId, appId , archiveName);
-    final SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, tempFile, DeployStatus.UPLOADING);
+    final SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.UPLOADING);
     sessions.put(accountId, sessionInfo);
 
     return new BodyConsumer() {
@@ -1058,14 +1059,17 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         try {
           os.close();
           sessionInfo.setStatus(DeployStatus.VERIFYING);
-          deploy(rIdentifier, tempFile);
+          deploy(rIdentifier, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-          LOG.info ("Deployed app" + archiveName + " : at: " + tempFile.getName());
+          LOG.info ("Deployed app" + archiveName + " : at: " + archive.getName());
         } catch (Exception ex) {
           sessionInfo.setStatus(DeployStatus.FAILED);
           ex.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
+        } finally {
+          save(sessionInfo.setStatus(sessionInfo.getStatus()));
+          sessions.remove(accountId);
         }
       }
     };
@@ -1113,57 +1117,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  // deploy helper
-  private void deploy(final ArchiveId resource) throws Exception {
-    LOG.debug("Finishing deploy of application " + resource.toString());
-    if (!sessions.containsKey(resource.getAccountId())) {
-      throw new Exception("No information about archive being uploaded is available.");
-    }
-
-    final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
-    DeployStatus status = sessionInfo.getStatus();
-    try {
-      Id.Account id = Id.Account.from(resource.getAccountId());
-      Location archiveLocation = sessionInfo.getArchiveLocation();
-      sessionInfo.getOutputStream().close();
-      sessionInfo.setStatus(DeployStatus.VERIFYING);
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
-          deleteHandler(programId, type);
-        }
-      });
-
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, sessionInfo.getApplicationId(), archiveLocation).get();
-      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
-
-      setupSchedules(resource.getAccountId(), specification);
-      status = DeployStatus.DEPLOYED;
-
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-
-      status = DeployStatus.FAILED;
-      if (e instanceof ExecutionException) {
-        Throwable cause = e.getCause();
-
-        if (cause instanceof ClassNotFoundException) {
-          status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), cause.getMessage()));
-        } else if (cause instanceof IllegalArgumentException) {
-          status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), cause.getMessage()));
-        } else {
-          status.setMessage(cause.getMessage());
-        }
-      }
-
-      status.setMessage(e.getMessage());
-      throw new Exception(e.getMessage());
-    } finally {
-      save(sessionInfo.setStatus(status));
-      sessions.remove(resource.getAccountId());
-    }
-  }
 
   /**
    * Defines the class for sending deploy status to client.
