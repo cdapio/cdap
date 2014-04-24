@@ -1023,48 +1023,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-     * Deploys an application.
-     */
-  private void deployApp(HttpRequest request, HttpResponder responder, final String appId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
-      if (archiveName == null || archiveName.isEmpty()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
-        return;
-      }
-      ChannelBuffer content = request.getContent();
-      if (content == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
-        return;
-      }
-
-      try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
-        rInfo.setApplicationId(appId);
-        ArchiveId rIdentifier = init(rInfo);
-        SessionInfo info = sessions.get(rIdentifier.getAccountId()).setStatus(DeployStatus.UPLOADING);
-        OutputStream stream = info.getOutputStream();
-        int length = content.readableBytes();
-        byte[] archive = new byte[length];
-        content.readSlice(length).toByteBuffer().get(archive);
-        stream.write(archive);
-        deploy(rIdentifier);
-        responder.sendStatus(HttpResponseStatus.OK);
-
-      } catch (Throwable throwable) {
-        LOG.warn(throwable.getMessage(), throwable);
-        throw new Exception("Failed to write channel buffer content.");
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
-  }
-
   private BodyConsumer deployAppStream (final HttpRequest request,
                                         HttpResponder responder, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -1094,9 +1052,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           os.close();
           ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
           rInfo.setApplicationId(appId);
-          ArchiveId rIdentifier = new ArchiveId(rInfo.getAccountId(), appId , "resourceId");
+          ArchiveId rIdentifier = new ArchiveId(accountId, appId , archiveName);
           SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.REGISTERED);
-          sessions.put(rInfo.getAccountId(), sessionInfo);
+          sessions.put(accountId, sessionInfo);
           deploy(rIdentifier, tempFile);
 
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
