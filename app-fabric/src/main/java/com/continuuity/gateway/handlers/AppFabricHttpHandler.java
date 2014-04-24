@@ -394,9 +394,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
+                              @PathParam("app-id") final String appId,
+                              @PathParam("runnable-type") final String runnableType,
+                              @PathParam("runnable-id") final String runnableId) {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -498,7 +498,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, history);
       } catch (OperationException e) {
         LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
-            programId.toString(), e.getMessage()), e);
+                               programId.toString(), e.getMessage()), e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (SecurityException e) {
@@ -734,10 +734,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           return "appworker";
         }
       });
-        if (runtimeInfo != null) {
-          responder.sendString(HttpResponseStatus.OK, "runtime found");
-          runtimeInfo.getController().command("Test", "value");
-        }
+      if (runtimeInfo != null) {
+        responder.sendString(HttpResponseStatus.OK, "runtime found");
+        runtimeInfo.getController().command("Test", "value");
+      }
       responder.sendString(HttpResponseStatus.OK, "runtime not found");
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -995,9 +995,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}")
   public void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("runnable-type") final String runnableType,
-                                @PathParam("runnable-id") final String runnableId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("runnable-type") final String runnableType,
+                                    @PathParam("runnable-id") final String runnableId) {
 
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
@@ -1027,7 +1027,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                         HttpResponder responder, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
-    final Location archive = locationFactory.create(archiveDir + "/" + accountId + "/" + archiveName);
+    final Location archive = locationFactory.create(archiveDir + "/" + accountId);
     LOG.info("Deploying using BodyConsumer");
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
@@ -1035,12 +1035,19 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     final Location tempFile = archive.getTempFile(null);
     final OutputStream os = tempFile.getOutputStream();
 
+    ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+    rInfo.setApplicationId(appId);
+    final ArchiveId rIdentifier = new ArchiveId(accountId, appId , archiveName);
+    final SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, tempFile, DeployStatus.UPLOADING);
+    sessions.put(accountId, sessionInfo);
+
     return new BodyConsumer() {
       @Override
       public void chunk(ChannelBuffer request, HttpResponder responder) {
         try {
           request.readBytes(os, request.readableBytes());
         } catch (IOException e) {
+          sessionInfo.setStatus(DeployStatus.FAILED);
           e.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         }
@@ -1050,17 +1057,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       public void finished(HttpResponder responder) {
         try {
           os.close();
-          ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
-          rInfo.setApplicationId(appId);
-          ArchiveId rIdentifier = new ArchiveId(accountId, appId , archiveName);
-          SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.REGISTERED);
-          sessions.put(accountId, sessionInfo);
+          sessionInfo.setStatus(DeployStatus.VERIFYING);
           deploy(rIdentifier, tempFile);
-
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
           LOG.info ("Deployed app" + archiveName + " : at: " + tempFile.getName());
         } catch (Exception ex) {
+          sessionInfo.setStatus(DeployStatus.FAILED);
           ex.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
         }
