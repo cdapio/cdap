@@ -21,7 +21,6 @@ import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -97,16 +96,7 @@ public class NettyRouter extends AbstractIdleService {
         channelGroup.add(e.getChannel());
         super.handleUpstream(ctx, e);
       }
-
-      @Override
-      public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        e.getCause().printStackTrace();
-        LOG.error("Exception caught at Netty Router:", e.getCause().getMessage());
-        ctx.getChannel().close();
-      }
     };
-
-
 
     bootstrapClient(connectionTracker);
 
@@ -228,5 +218,4 @@ public class NettyRouter extends AbstractIdleService {
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
   }
-
 }

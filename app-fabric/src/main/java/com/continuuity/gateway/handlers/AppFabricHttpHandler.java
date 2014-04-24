@@ -767,7 +767,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       });
       if (runtimeInfo != null) {
         responder.sendString(HttpResponseStatus.OK, "runtime found");
-        runtimeInfo.getController().command("Test", "value");
+        runtimeInfo.getController().command("OK", "value");
       }
       responder.sendString(HttpResponseStatus.OK, "runtime not found");
     } catch (SecurityException e) {

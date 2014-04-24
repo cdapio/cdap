@@ -4,9 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
-import com.continuuity.app.AppWorkerTwillRunnable;
-
-import com.sun.jersey.core.impl.provider.entity.XMLJAXBElementProvider;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -38,9 +35,7 @@ public class ReactorTwillApplication implements TwillApplication {
     TwillSpecification.Builder.MoreRunnable serviceRunnables = TwillSpecification.Builder.with()
                                                               .setName(NAME).withRunnable();
     addMetricsService(serviceRunnables);
-    addAppWorkerService(serviceRunnables);
     TwillSpecification.Builder.RunnableSetter runnableSetter = addTransactionService(serviceRunnables);
-
 
     return runnableSetter.anyOrder()
       .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
@@ -67,28 +62,6 @@ public class ReactorTwillApplication implements TwillApplication {
       .apply();
 
   }
-
-  private TwillSpecification.Builder.RunnableSetter addAppWorkerService(TwillSpecification.Builder.MoreRunnable
-                                                                        builder) {
-    int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
-    int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB, 2048);
-    int metricsInstances = cConf.getInt(Constants.Metrics.NUM_INSTANCES, 1);
-
-    ResourceSpecification metricsSpec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(metricsNumCores)
-      .setMemory(metricsMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(metricsInstances)
-      .build();
-
-    return builder.add(new AppWorkerTwillRunnable("appworker", "cConf.xml", "hConf.xml"), metricsSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
-
-  }
-
 
   private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable
                                                                             builder) {
