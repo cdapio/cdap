@@ -5,9 +5,12 @@ import com.continuuity.common.conf.Constants;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +99,18 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
 
   @Override
   public TransactionSnapshot getLatestSnapshot() throws IOException {
+    InputStream is = getLatestSnapshotInputStream();
+    if (is == null) {
+      return null;
+    }
+    try {
+      return readSnapshotFile(is);
+    } finally {
+      is.close();
+    }
+  }
+
+  private InputStream getLatestSnapshotInputStream() throws IOException {
     File[] snapshotFiles = snapshotDir.listFiles(SNAPSHOT_FILE_FILTER);
     TimestampedFilename mostRecent = null;
     for (File file : snapshotFiles) {
@@ -110,11 +125,11 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
       return null;
     }
 
-    return readSnapshotFile(mostRecent.getFile());
+    return new FileInputStream(mostRecent.getFile());
   }
 
-  private TransactionSnapshot readSnapshotFile(File file) throws IOException {
-    byte[] serializedSnapshot = Files.toByteArray(file);
+  private TransactionSnapshot readSnapshotFile(InputStream is) throws IOException {
+    byte[] serializedSnapshot = ByteStreams.toByteArray(is);
     return decode(serializedSnapshot);
   }
 

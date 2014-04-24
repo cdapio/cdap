@@ -30,6 +30,7 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -63,6 +64,8 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import java.io.InputStream;
+import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -71,6 +74,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -89,7 +93,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -98,7 +101,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -130,6 +132,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Runtime program service for running and managing programs.
    */
   private final ProgramRuntimeService runtimeService;
+
+
+  /**
+   * Client talking to transaction system.
+   */
+  private TransactionSystemClient txClient;
 
   /**
    * App fabric output directory.
@@ -224,10 +232,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               LocationFactory locationFactory, ManagerFactory managerFactory,
-                              StoreFactory storeFactory,
-                              ProgramRuntimeService runtimeService,
+                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient) {
+                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -241,6 +248,35 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.scheduler = service;
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.txClient = txClient;
+  }
+
+  @Path("/transactions/snapshot")
+  @GET
+  public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
+    try {
+      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
+      InputStream in = txClient.getSnapshotInputStream();
+      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
+      try {
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        while (true) {
+          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
+          byte[] readBytes = new byte[4096];
+          int res = in.read(readBytes, 0, 4096);
+          if (res == -1) {
+            break;
+          }
+          responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+        }
+        responder.sendChunkEnd();
+      } finally {
+        in.close();
+      }
+    } catch (Exception e) {
+      LOG.error("Could not take transaction manager snapshot", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**

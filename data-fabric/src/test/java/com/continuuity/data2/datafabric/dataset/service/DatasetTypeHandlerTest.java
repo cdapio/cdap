@@ -40,6 +40,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
+    cleanModules();
 
     // nothing has been deployed, modules and types list is empty
     List<DatasetModuleMeta> modules = getModules().value;
@@ -135,6 +136,13 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
 
     Assert.assertEquals(0, getModules().value.size());
     Assert.assertEquals(0, getTypes().value.size());
+  }
+
+  private void cleanModules() throws Exception {
+    List<DatasetModuleMeta> modules = getModules().value;
+    for (DatasetModuleMeta moduleMeta : modules) {
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule(moduleMeta.getName()));
+    }
   }
 
   private void verify(DatasetTypeMeta typeMeta, String typeName, List<String> modules) {
@@ -236,12 +244,12 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws Exception {
+      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetInstanceSpec spec) throws Exception {
+      public Dataset getDataset(DatasetInstanceSpec spec) {
         return null;
       }
     };
