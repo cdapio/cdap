@@ -1311,12 +1311,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
-    deleteProgramLocations(appId);
 
     // also delete all queue state of each flow
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
+    deleteProgramLocations(appId);
 
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
