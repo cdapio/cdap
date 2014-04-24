@@ -288,7 +288,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Path("/ping")
   @GET
   public void Get(HttpRequest request, HttpResponder response) {
-    response.sendString(HttpResponseStatus.OK, "TEST");
+    response.sendString(HttpResponseStatus.OK, "OK");
   }
 
 
@@ -748,35 +748,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-  /**
-   * Increases number of instance for a flowlet within a flow.
-   */
-  @GET
-  @Path("/apps/command")
-  public void sendCommand(HttpRequest request, HttpResponder responder) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(new RunId() {
-        @Override
-        public String getId() {
-          return "appworker";
-        }
-      });
-      if (runtimeInfo != null) {
-        responder.sendString(HttpResponseStatus.OK, "runtime found");
-        runtimeInfo.getController().command("OK", "value");
-      }
-      responder.sendString(HttpResponseStatus.OK, "runtime not found");
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
 
   private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
     String instanceCount = "";

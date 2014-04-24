@@ -120,7 +120,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     TwillController controller = null;
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       for (TwillController c : liveInfo.getControllers()) {
-        LOG.info("Run id in DistributedProgramRuntimeService : " + c.getRunId().getId());
         if (c.getRunId().equals(runId)) {
           appName = liveInfo.getApplicationName();
           controller = c;
