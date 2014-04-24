@@ -1364,43 +1364,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Returns a list of procedure associated with account & application.
    */
   @GET
-  @Path("/apps/{app-id}/flows")
+  @Path("/apps/{app-id}/{runnable-type}")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId) {
-    programList(request, responder, EntityType.FLOW, appId);
+                            @PathParam("app-id") final String appId,
+                            @PathParam("runnable-type") final String runnableType) {
+    programList(request, responder, runnableTypeMap.get(runnableType), appId);
   }
 
-  /**
-   * Returns a list of procedure associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures")
-  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, EntityType.PROCEDURE, appId);
-  }
 
-  /**
-   * Returns a list of procedure associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce")
-  public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId) {
-    programList(request, responder, EntityType.MAPREDUCE, appId);
-  }
-
-  /**
-   * Returns a list of procedure associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows")
-  public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, EntityType.WORKFLOW, appId);
-  }
-
-  private void programList(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
+  private void programList(HttpRequest request, HttpResponder responder, Type type, String appid) {
 
       if (appid != null && appid.isEmpty()) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
@@ -1424,7 +1396,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  public String listProgramsByApp(Id.Program id, EntityType type) throws AppFabricServiceException, TException {
+  public String listProgramsByApp(Id.Program id, Type type) throws AppFabricServiceException {
 
     ApplicationSpecification appSpec;
     try {
@@ -1444,7 +1416,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  public String listPrograms(Id.Program id, EntityType type) throws AppFabricServiceException {
+  public String listPrograms(Id.Program id, Type type) throws AppFabricServiceException {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
       if (appSpecs == null) {
@@ -1462,28 +1434,28 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private String listPrograms(Collection<ApplicationSpecification> appSpecs, EntityType type)
+  private String listPrograms(Collection<ApplicationSpecification> appSpecs, Type type)
     throws AppFabricServiceException {
 
     List<Map<String, String>> result = Lists.newArrayList();
     for (ApplicationSpecification appSpec : appSpecs) {
-      if (type == EntityType.FLOW) {
+      if (type == Type.FLOW) {
         for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
           result.add(makeFlowRecord(appSpec.getName(), flowSpec));
         }
-      } else if (type == EntityType.PROCEDURE) {
+      } else if (type == Type.PROCEDURE) {
         for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
           result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
         }
-      } else if (type == EntityType.MAPREDUCE) {
+      } else if (type == Type.MAPREDUCE) {
         for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
           result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
         }
-      } else if (type == EntityType.WORKFLOW) {
+      } else if (type == Type.WORKFLOW) {
         for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
           result.add(makeWorkflowRecord(appSpec.getName(), wfSpec));
         }
-      } else if (type == EntityType.APP) {
+      } else if (type == Type.WEBAPP) {
         result.add(makeAppRecord(appSpec));
       } else {
         throw new AppFabricServiceException("Unknown program type: " + type.name());
