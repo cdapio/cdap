@@ -497,7 +497,7 @@ public class AppFabricHttpHandlerTest {
   }
 
   /**
-   * Tests deleteing an application.
+   * Tests deleting an application.
    */
   @Test
   public void testDelete() throws Exception {
