@@ -23,6 +23,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -184,5 +185,12 @@ public class AppFabricTestsSuite {
     }
     put.setHeader(AUTH_HEADER);
     return client.execute(put);
+  }
+
+  public static HttpResponse doDelete(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
+    delete.setHeader(AUTH_HEADER);
+    return client.execute(delete);
   }
 }
