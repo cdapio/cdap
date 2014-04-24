@@ -1,5 +1,6 @@
 package com.continuuity.internal.data.dataset.lib.table;
 
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.internal.data.dataset.Dataset;
 
 import java.util.List;
@@ -146,5 +147,5 @@ public interface OrderedTable extends Dataset {
    * @param stopRow stop row of the range, exclusive
    * @return list of {@link com.continuuity.api.data.batch.Split}s
    */
-  List<TableSplit> getSplits(int numSplits, byte[] startRow, byte[] stopRow) throws Exception;
+  List<Split> getSplits(int numSplits, byte[] startRow, byte[] stopRow) throws Exception;
 }

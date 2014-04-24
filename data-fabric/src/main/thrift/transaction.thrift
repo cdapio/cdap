@@ -12,6 +12,10 @@ exception TTransactionNotInProgressException {
   1: string message
 }
 
+exception TTransactionCouldNotTakeSnapshotException {
+  1: string message
+}
+
 # workaround for THRIFT-1474
 struct TBoolean {
   1: bool value
@@ -26,4 +30,5 @@ service TTransactionServer {
   TBoolean commitTx(1: TTransaction tx) throws (1:TTransactionNotInProgressException e),
   void abortTx(1: TTransaction tx),
   void invalidateTx(1: TTransaction tx),
+  binary getSnapshot() throws (1:TTransactionCouldNotTakeSnapshotException e),
 }

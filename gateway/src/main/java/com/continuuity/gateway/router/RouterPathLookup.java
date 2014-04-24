@@ -20,6 +20,8 @@ public final class RouterPathLookup {
   private static final String COMMON_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/" +
     "(start|debug|stop|status|history|runtimeargs)";
+  private static final String DELETE_PATH = VERSION +
+    "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
   private static final String DEPLOY_STATUS_PATH = VERSION +
@@ -31,6 +33,9 @@ public final class RouterPathLookup {
 
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
+
+  private static final String TRANSACTIONS_PATH = VERSION +
+    "/transactions/snapshot";
 
   private static final String SCHEDULER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
@@ -45,7 +50,8 @@ public final class RouterPathLookup {
 
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
-                                                                                     "POST", HttpMethod.POST);
+                                                                                     "POST", HttpMethod.POST,
+                                                                                     "DELETE", HttpMethod.DELETE);
 
   private static final ImmutableMap<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP =
     ImmutableMap.<ImmutablePair<List<HttpMethod>, Pattern>, String>builder()
@@ -77,6 +83,13 @@ public final class RouterPathLookup {
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(LOGHANDLER_PATH)),
                                                         Constants.Service.METRICS)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.DELETE),
+                                                        Pattern.compile(DELETE_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(TRANSACTIONS_PATH)),
+                                                        // todo change to Constants.Service.DATASET_MANAGER
+                                                        Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {

@@ -2,6 +2,8 @@ package com.continuuity.api.data;
 
 import com.google.common.base.Preconditions;
 
+import java.io.Closeable;
+
 /**
  * This is the abstract base class for all datasets. A dataset is an
  * implementation of a data pattern that can be reused across programs and
@@ -21,7 +23,7 @@ import com.google.common.base.Preconditions;
  * <li>Hence every DataSet must implement a configure() method and a
  *   constructor from DataSetSpecification.</li>
  */
-public abstract class DataSet {
+public abstract class DataSet implements Closeable {
 
   // the name of the data set (instance)
   private String name;
@@ -74,6 +76,7 @@ public abstract class DataSet {
    * After this is called, it is guaranteed that this instance of the dataset will not be used any more.
    * The base implementation is to do nothing.
    */
+  @Override
   public void close() {
   }
 

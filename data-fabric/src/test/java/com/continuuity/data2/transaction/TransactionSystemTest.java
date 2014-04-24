@@ -1,6 +1,10 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,6 +22,8 @@ public abstract class TransactionSystemTest {
   public static final byte[] C4 = Bytes.toBytes("change4");
 
   protected abstract TransactionSystemClient getClient() throws Exception;
+
+  protected abstract TransactionStateStorage getSateStorage() throws Exception;
 
   @Test
   public void testCommitRaceHandling() throws Exception {
@@ -170,6 +176,32 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client.commit(tx));
     // abort of not active tx has no affect
     client.abort(tx);
+  }
+
+  @Test
+  public void testGetSnapshot() throws Exception {
+    TransactionSystemClient client = getClient();
+    TransactionStateStorage stateStorage = getSateStorage();
+
+    TransactionSnapshot snapshotBefore = stateStorage.getLatestSnapshot();
+
+    Transaction tx1 = client.startShort();
+    long currentTime = System.currentTimeMillis();
+
+    InputStream in = client.getSnapshotInputStream();
+    SnapshotCodecV2 codec = new SnapshotCodecV2();
+    TransactionSnapshot snapshot = codec.decodeState(in);
+
+    Assert.assertTrue(snapshot.getTimestamp() >= currentTime);
+    Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
+
+    // Ensures that getSnapshot didn't persist a snapshot
+    TransactionSnapshot snapshotAfter = stateStorage.getLatestSnapshot();
+    Assert.assertEquals(snapshotAfter.getTimestamp(), snapshotBefore.getTimestamp());
+    Assert.assertEquals(snapshotAfter.getWritePointer(), snapshotBefore.getWritePointer());
+    Assert.assertEquals(snapshotAfter.getReadPointer(), snapshotBefore.getReadPointer());
+    Assert.assertEquals(snapshotAfter.getInvalid(), snapshotBefore.getInvalid());
+    Assert.assertEquals(snapshotAfter.getVisibilityUpperBound(), snapshotBefore.getVisibilityUpperBound());
   }
 
   private Collection<byte[]> $(byte[]... val) {

@@ -9,6 +9,8 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -137,8 +139,7 @@ public class AppFabricHttpHandlerTest {
         Assert.assertEquals(4, m.size());
       }
     } finally {
-      // TODO find a way to delete deployed apps. Once all the endpoints are moved, it should be easier
-//      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
   }
 
@@ -319,8 +320,7 @@ public class AppFabricHttpHandlerTest {
       Assert.assertTrue(result.contains("SampleWorkflow"));
 
     } finally {
-     // TODO: Uncomment after Delete end-point is ported over
-     // Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
   }
 
@@ -465,6 +465,25 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  /**
+   * Tests taking a snapshot of the transaction manager
+   */
+  @Test
+  public void testTxManagerSnapshot() throws Exception {
+    Long currentTs = System.currentTimeMillis();
+
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/snapshot");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    InputStream in = response.getEntity().getContent();
+    try {
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      TransactionSnapshot snapshot = codec.decodeState(in);
+      Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    } finally {
+      in.close();
+    }
+  }
 
   /**
    * Tests deploying an application.
@@ -475,6 +494,27 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
+  }
+
+  /**
+   * Tests deleting an application.
+   */
+  @Test
+  public void testDelete() throws Exception {
+    //Delete an invalid app
+    HttpResponse response = AppFabricTestsSuite.doDelete("/v2/apps/XYZ");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class);
+    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
+    //Try to delete an App while its flow is running
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
+    //Delete the App after stopping the flow
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
   /**

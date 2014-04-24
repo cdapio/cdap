@@ -1,16 +1,27 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.inject.Inject;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class InMemoryTxSystemClient implements TransactionSystemClient {
+
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryTxSystemClient.class);
 
   InMemoryTransactionManager txManager;
 
@@ -52,5 +63,22 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   @Override
   public void invalidate(Transaction tx) {
     txManager.invalidate(tx);
+  }
+
+  @Override
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
+    try {
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      TransactionSnapshot snapshot = txManager.getSnapshot();
+      if (snapshot == null) {
+        throw new TransactionCouldNotTakeSnapshotException("Transaction manager could not get a snapshot.");
+      }
+      // todo find a way to encode directly to the stream, without having the snapshot in memory twice
+      byte[] encoded = codec.encodeState(snapshot);
+      return new ByteArrayInputStream(encoded);
+    } catch (IOException e) {
+      LOG.error("Snapshot could not be taken", e);
+      throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
+    }
   }
 }

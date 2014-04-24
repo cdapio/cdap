@@ -11,6 +11,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
