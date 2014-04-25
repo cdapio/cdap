@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.transaction.stream;
 
+import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -51,5 +52,15 @@ public final class StreamConfig {
   @Nullable
   public Location getLocation() {
     return location;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("duration", partitionDuration)
+      .add("indexInterval", indexInterval)
+      .add("location", location)
+      .toString();
   }
 }

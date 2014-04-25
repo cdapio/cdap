@@ -36,8 +36,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, 
   private final Set<StreamEventSource> allSources;
   private final Iterable<StreamFileOffset> offsetsView;
 
-  public MultiLiveStreamFileReader(StreamConfig streamConfig, Collection<? extends StreamFileOffset> offsets) {
-    this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(offsets.size());
+  public MultiLiveStreamFileReader(StreamConfig streamConfig, Iterable<? extends StreamFileOffset> offsets) {
     this.allSources = Sets.newTreeSet();
 
     for (StreamFileOffset source : offsets) {
@@ -45,6 +44,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, 
       allSources.add(eventSource);
     }
 
+    this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(allSources.size());
     this.emptySources = Sets.newHashSet(allSources);
     this.offsetsView = Iterables.transform(allSources, new Function<StreamEventSource, StreamFileOffset>() {
       @Override
