@@ -150,7 +150,5 @@ public class TestExternalAuthenticationServer {
     Iterator<Discoverable> discoverableIterator = discoverables.iterator();
     assertTrue(discoverableIterator.hasNext());
     server.stopAndWait();
-
-
   }
 }
