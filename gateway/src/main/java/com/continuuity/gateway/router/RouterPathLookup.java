@@ -24,6 +24,10 @@ public final class RouterPathLookup {
     "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
+
+  private static final String WEBAPP_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/webapp/(status|start|stop)";
+
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
   private static final String METRICS_PATH = "^" + VERSION +
@@ -89,6 +93,9 @@ public final class RouterPathLookup {
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(TRANSACTIONS_PATH)),
                                                         // todo change to Constants.Service.DATASET_MANAGER
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.POST),
+                                                        Pattern.compile(WEBAPP_PATH)),
                                                         Constants.Service.APP_FABRIC_HTTP)
       .build();
 
