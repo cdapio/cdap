@@ -21,6 +21,7 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -64,6 +65,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetricsClientRuntimeModule().getNoopModules());
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new LoggingModules().getInMemoryModules());
+    install(new MetricsHandlerModule());
   }
 
   private Scheduler createNoopScheduler() {
