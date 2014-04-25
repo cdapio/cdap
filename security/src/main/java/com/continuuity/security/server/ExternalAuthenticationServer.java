@@ -83,7 +83,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   @Override
-  protected void startUp() throws Exception{
+  protected void startUp() {
     try {
       server = new Server();
 
