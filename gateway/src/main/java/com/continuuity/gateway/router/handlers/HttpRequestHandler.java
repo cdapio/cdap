@@ -1,20 +1,30 @@
 package com.continuuity.gateway.router.handlers;
 
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Maps;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,76 +33,196 @@ import java.util.Map;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
- * performed using Discovery service
+ * performed using Discovery service for forwarding.
  */
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
+
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
-  private final Map<Discoverable, ChannelFuture> channelFutureMap;
+  // DiscoveryTable is used to make sure there is only one discoverable used for a service in a given channel
+  // incase there are more that would mean the previously cached (stored) discovery service is un-registered
+  // and this information is used to close the ChannelFuture.
+  private final Table<String, WrappedDiscoverable, ChannelFuture> discoveryTable;
+  private ChannelFuture channelFutureForChunkRequest;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             final RouterServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
-    this.channelFutureMap = Maps.newHashMap();
+    this.discoveryTable = HashBasedTable.create();
+    channelFutureForChunkRequest = null;
   }
 
   @Override
   public void messageReceived(final ChannelHandlerContext ctx,
-                              final MessageEvent e) throws Exception {
-    final HttpRequest msg = (HttpRequest) e.getMessage();
+                              final MessageEvent event) throws Exception {
 
-    // Suspend incoming traffic until connected to the outbound service.
-    final Channel inboundChannel = e.getChannel();
-    inboundChannel.setReadable(false);
+    final Channel inboundChannel = event.getChannel();
 
-    String path = msg.getUri();
-    String host = msg.getHeader(HttpHeaders.Names.HOST);
-    String httpMethod = msg.getMethod().getName();
+    if (event.getMessage() instanceof HttpChunk) {
+      sendChunk((HttpChunk) event.getMessage());
+    } else {
+      // Discover and forward event.
+      final HttpRequest request = (HttpRequest) event.getMessage();
+      final HeaderDecoder.HeaderInfo headInfo = new HeaderDecoder.HeaderInfo(request.getUri(),
+                                                                             request.getHeader(HttpHeaders.Names.HOST),
+                                                                             request.getMethod().getName());
+      // Suspend incoming traffic until connected to the outbound service.
+      inboundChannel.setReadable(false);
+      int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
 
-    final HeaderDecoder.HeaderInfo headerInfo = new HeaderDecoder.HeaderInfo(path, host, httpMethod);
-    int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
-    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderDecoder.HeaderInfo>() {
-      @Override
-      public HeaderDecoder.HeaderInfo get() {
-        return headerInfo;
+      EndpointStrategy strategy = serviceLookup.getDiscoverable(inboundPort,
+                                                                new Supplier<HeaderDecoder.HeaderInfo>() {
+                                                                  @Override
+                                                                  public HeaderDecoder.HeaderInfo get() {
+                                                                    return headInfo;
+                                                                  }
+                                                                });
+
+      raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
+                           "Router cannot forward this request to any service");
+      Discoverable discoverable = strategy.pick();
+      raiseExceptionIfNull(discoverable, HttpResponseStatus.SERVICE_UNAVAILABLE,
+                           "Router cannot forward this request to any service");
+
+      ChannelFuture future = null;
+
+      // We use sticky endpoint strategy for picking up discoverable. So if there is a service name and
+      // if the discoverable doesn't exist which means that the ChannelFuture(s) for the service and discoverable
+      // should be closed.
+      if (discoveryTable.containsRow(discoverable.getName()) &&
+        !discoveryTable.contains(discoverable.getName(), new WrappedDiscoverable(discoverable))) {
+        // close the ChannelFuture
+        for (Map.Entry<WrappedDiscoverable, ChannelFuture> entry :
+          discoveryTable.row(discoverable.getName()).entrySet()) {
+          entry.getValue().addListener(ChannelFutureListener.CLOSE);
+        }
+        // clear the row.
+        discoveryTable.row(discoverable.getName()).clear();
+      } else {
+        future = discoveryTable.get(discoverable.getName(), new WrappedDiscoverable(discoverable));
       }
-    });
-    if (discoverable == null) {
-      inboundChannel.close();
+
+      if (future != null) {
+        inboundChannel.setReadable(true);
+        if (future.isSuccess()) {
+          future.getChannel().write(request);
+        } else {
+          future.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+              if (future.isSuccess()) {
+                future.getChannel().write(request);
+              } else {
+                // Close the connection if the connection attempt has failed.
+                inboundChannel.close();
+                LOG.trace("Failed to open connection from {} for {}",
+                          inboundChannel.getLocalAddress(), inboundChannel.getRemoteAddress(), future.getCause());
+              }
+            }
+          });
+        }
+      } else {
+        final InetSocketAddress address = discoverable.getSocketAddress();
+
+        ChannelFuture outFuture = clientBootstrap.connect(address);
+        Channel outboundChannel = outFuture.getChannel();
+
+        outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
+        // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
+        outboundChannel.getPipeline().addLast("request-encoder", new HttpRequestEncoder());
+
+        outFuture.addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            if (future.isSuccess()) {
+              inboundChannel.setReadable(true);
+              future.getChannel().write(request);
+            } else {
+              // Close the connection if the connection attempt has failed.
+              inboundChannel.close();
+              LOG.trace("Failed to open connection from {} for {}",
+                        inboundChannel.getLocalAddress(), inboundChannel.getRemoteAddress(), future.getCause());
+            }
+          }
+        });
+
+        discoveryTable.put(discoverable.getName(),
+                           new WrappedDiscoverable(discoverable),
+                           outFuture);
+        //Save the channelFuture for subsequent chunks
+        if (request.isChunked()) {
+          channelFutureForChunkRequest = outFuture;
+        }
+      }
+    }
+  }
+
+  @Override
+  public void channelClosed(ChannelHandlerContext ctx,
+                            ChannelStateEvent e) throws Exception {
+    discoveryTable.clear();
+  }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+    LOG.error("Exception caught in channel processing.", e.getCause());
+    Throwable cause = e.getCause();
+    if (cause instanceof HandlerException) {
+      ctx.getChannel().write(((HandlerException) cause).createFailureResponse())
+        .addListener(ChannelFutureListener.CLOSE);
+    } else {
+      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
+                                                      HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+    }
+  }
+
+  /**
+   * Closes the specified channel after all queued write requests are flushed.
+   */
+  static void closeOnFlush(Channel ch) {
+    if (ch.isConnected()) {
+      ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+    }
+  }
+
+  //send the chunk to the ChannelFuture cached already in the first call.
+  private void sendChunk(final HttpChunk chunk) {
+    if (chunk.getContent().readableBytes() == 0) {
+      //lastChunk nothing much to do
+      channelFutureForChunkRequest = null;
       return;
     }
 
-    if (channelFutureMap.containsKey(discoverable)) {
-      ChannelFuture future = channelFutureMap.get(discoverable);
-      future.addListener(new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-          if (future.isSuccess()) {
-            inboundChannel.setReadable(true);
-            future.getChannel().write(e.getMessage());
+    if (channelFutureForChunkRequest != null) {
+      if (channelFutureForChunkRequest.isSuccess()) {
+        channelFutureForChunkRequest.getChannel().write(chunk);
+      } else {
+        channelFutureForChunkRequest.addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            if (future.isSuccess()) {
+              future.getChannel().write(chunk);
+            } else {
+              // Close the connection if the connection attempt has failed.
+              future.getChannel().close();
+              LOG.trace("Failed while processing chunk request", future.getCause());
+            }
           }
-         }
         });
+      }
     } else {
-      final InetSocketAddress address = discoverable.getSocketAddress();
-      ChannelFuture outFuture = clientBootstrap.connect(address);
-      Channel outboundChannel = outFuture.getChannel();
-      outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
-      // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
-      outboundChannel.getPipeline().addLast("HttpRequestEncoder", new HttpRequestEncoder());
-      outFuture.addListener(new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-          if (future.isSuccess()) {
-            inboundChannel.setReadable(true);
-
-            future.getChannel().write(e.getMessage());
-          }
-        }
-      });
-      channelFutureMap.put(discoverable, outFuture);
+      //Chunk as the first event. This can never happen!
     }
+
   }
- }
+
+  private  static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
+    if (reference == null) {
+      throw new HandlerException(status, message);
+    }
+    return reference;
+  }
+}

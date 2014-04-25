@@ -31,6 +31,7 @@ import org.jboss.netty.channel.socket.nio.NioWorker;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,6 +155,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           pipeline.addLast("http-request-handler",
                            new HttpRequestHandler(clientBootstrap, serviceLookup));
+          pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           return pipeline;
         }
       }
