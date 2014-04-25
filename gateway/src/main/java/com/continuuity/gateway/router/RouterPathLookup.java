@@ -32,8 +32,11 @@ public final class RouterPathLookup {
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
-  private static final String TRANSACTIONS_PATH = VERSION +
-    "/transactions/snapshot";
+  private static final String TRANSACTIONS_STATE_PATH = VERSION +
+    "/transactions/state";
+
+  private static final String TRANSACTION_ID_PATH = VERSION +
+    "/transactions/([A-Za-z0-9_]+)/invalidate";
 
   private static final String SCHEDULER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
@@ -80,8 +83,12 @@ public final class RouterPathLookup {
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(LOGHANDLER_PATH)),
                                                         Constants.Service.METRICS)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(TRANSACTIONS_PATH)),
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.POST),
+                                                        Pattern.compile(TRANSACTIONS_STATE_PATH)),
+                                                        // todo change to Constants.Service.DATASET_MANAGER
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.PUT),
+                                                        Pattern.compile(TRANSACTION_ID_PATH)),
                                                         // todo change to Constants.Service.DATASET_MANAGER
                                                         Constants.Service.APP_FABRIC_HTTP)
       .build();

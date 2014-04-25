@@ -405,6 +405,29 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   /**
+   * Resets the state of the transaction manager.
+   */
+  public void resetState() {
+    this.logWriteLock.lock();
+    try {
+      // Take a snapshot before resetting the state, for debugging purposes
+      doSnapshot(false);
+      // Clear the state
+      clear();
+      // Take another snapshot: if no snapshot is taken after clearing the state
+      // and the manager is restarted, we will recover from the snapshot taken
+      // before resetting the state, which would be really bad
+      // This call will also init a new WAL
+      doSnapshot(false);
+    } catch (IOException e) {
+      LOG.error("Snapshot failed when resetting state!", e);
+      e.printStackTrace();
+    } finally {
+      this.logWriteLock.unlock();
+    }
+  }
+
+  /**
    * Replay all logged edits from the given transaction logs.
    */
   private void replayLogs(Collection<TransactionLog> logs) {
@@ -746,34 +769,44 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public void invalidate(Transaction tx) {
+  public boolean invalidate(long tx) {
     // guard against changes to the transaction log while processing
     this.logReadLock.lock();
     try {
+      boolean success;
       synchronized (this) {
         ensureAvailable();
-        doInvalidate(tx.getWritePointer());
+        success = doInvalidate(tx);
       }
-      appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
+      appendToLog(TransactionEdit.createInvalid(tx));
+      return success;
     } finally {
       this.logReadLock.unlock();
     }
   }
 
-  public void doInvalidate(long writePointer) {
-    committingChangeSets.remove(writePointer);
-    // add tx to invalids
-    invalid.add(writePointer);
-    LOG.info("Tx invalid list: added tx {} because of invalidate", writePointer);
-    // todo: find a more efficient way to keep this sorted. Could it just be an array?
-    Collections.sort(invalid);
-    invalidArray = invalid.toLongArray();
+  public boolean doInvalidate(long writePointer) {
+    Set<ChangeId> previousChangeSet = committingChangeSets.remove(writePointer);
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
-    if (previous != null && !previous.isLongRunning()) {
-      // tx was short-running: must move read pointer
-      moveReadPointerIfNeeded(writePointer);
+    // This check is to prevent from invalidating committed transactions
+    if (previous != null || previousChangeSet != null) {
+      if (previous == null) {
+        LOG.debug("Invalidating tx {} in committing change sets but not in-progress", writePointer);
+      }
+      // add tx to invalids
+      invalid.add(writePointer);
+      LOG.info("Tx invalid list: added tx {} because of invalidate", writePointer);
+      // todo: find a more efficient way to keep this sorted. Could it just be an array?
+      Collections.sort(invalid);
+      invalidArray = invalid.toLongArray();
+      if (!previous.isLongRunning()) {
+        // tx was short-running: must move read pointer
+        moveReadPointerIfNeeded(writePointer);
+      }
+      return true;
     }
+    return false;
   }
 
   // hack for exposing important metric

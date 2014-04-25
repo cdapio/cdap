@@ -485,9 +485,9 @@ public class TransactionExecutorTest {
     }
 
     @Override
-    public void invalidate(Transaction tx) {
+    public boolean invalidate(long tx) {
       state = CommitState.Invalidated;
-      super.invalidate(tx);
+      return super.invalidate(tx);
     }
   }
 }
