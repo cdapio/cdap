@@ -77,9 +77,13 @@ public interface TransactionSystemClient {
   boolean invalidate(long tx);
 
   /**
-   * Retrieve the state of the transaction manager and send it as a stream. The snapshot will not be persisted.
+   * Retrieves the state of the transaction manager and send it as a stream. The snapshot will not be persisted.
+   * @return an input stream containing an encoded snapshot of the transaction manager
    */
   InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException;
 
+  /**
+   * Resets the state of the transaction manager.
+   */
   void resetState();
 }

@@ -39,6 +39,14 @@ public class TransactionManagerDebuggerMain {
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
   private static final String TOOL_NAME = "tx-debugger";
 
+  private static final String HOST_OPTION = "host";
+  private static final String PORT_OPTION = "port";
+  private static final String FILENAME_OPTION = "filename";
+  private static final String SAVE_OPTION = "save";
+  private static final String IDS_OPTION = "ids";
+  private static final String TRANSACTION_OPTION = "transaction";
+  private static final String HELP_OPTION = "help";
+
   private enum DebuggerMode {
     VIEW,
     INVALIDATE,
@@ -46,11 +54,11 @@ public class TransactionManagerDebuggerMain {
     INVALID;
 
     private static DebuggerMode fromString(String str) {
-      if ("view".equals(str)) {
+      if (str.equals("view")) {
         return VIEW;
-      } else if ("invalidate".equals(str)) {
+      } else if (str.equals("invalidate")) {
         return INVALIDATE;
-      } else if ("reset".equals(str)) {
+      } else if (str.equals("reset")) {
         return RESET;
       } else {
         return INVALID;
@@ -75,69 +83,72 @@ public class TransactionManagerDebuggerMain {
 
   private void buildOptions() {
     options = new Options();
-    options.addOption(null, "host", true, "To specify the hostname of the router");
-    options.addOption(null, "filename", true, "To specify a file to load where a snapshot is saved");
-    options.addOption(null, "save", true, "To specify where the snapshot downloaded on " +
-                                          "hostname --host should be persisted on your disk");
-    options.addOption(null, "ids", false, "To view all the transaction IDs contained in the snapshot");
-    options.addOption(null, "transaction", true, "To specify a transaction ID to look for");
-    options.addOption(null, "port", true, "To specify the port to use. The default value is --port " +
-                                          Constants.Gateway.DEFAULT_PORT);
-    options.addOption(null, "help", false, "To print this message");
+    options.addOption(null, HOST_OPTION, true, "To specify the hostname of the router");
+    options.addOption(null, FILENAME_OPTION, true, "To specify a file to load a snapshot from in view mode. " +
+                                                   "If the host option is specified, filename will be ignored");
+    options.addOption(null, SAVE_OPTION, true, "To specify where the snapshot downloaded on hostname --host " +
+                                               "should be persisted on your disk when using the view mode");
+    options.addOption(null, IDS_OPTION, false, "To view all the transaction IDs contained in the " +
+                                               "snapshot when using the view mode");
+    options.addOption(null, TRANSACTION_OPTION, true, "To specify a transaction ID. Mandatory in invalidate mode, " +
+                                                      "optional in view mode");
+    options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port " +
+                                               Constants.Gateway.DEFAULT_PORT);
+    options.addOption(null, HELP_OPTION, false, "To print this message");
   }
 
   /**
    * Parse the arguments from the command line and execute the different modes.
    * @param args command line arguments
    * @param conf default configuration
-   * @return True if the arguments where parsed successfully and comply with the expected usage
+   * @return true if the arguments were parsed successfully and comply with the expected usage
    */
   private boolean parseArgsAndExecMode(String[] args, CConfiguration conf) {
     CommandLineParser parser = new GnuParser();
     // Check all the options of the command line
     try {
       CommandLine line = parser.parse(options, args);
-      if (line.hasOption("help")) {
+      if (line.hasOption(HELP_OPTION)) {
         printUsage(false);
         return true;
       }
 
       switch (this.mode) {
         case VIEW:
-          if (!line.hasOption("host") && !line.hasOption("filename")) {
+          if (!line.hasOption(HOST_OPTION) && !line.hasOption(FILENAME_OPTION)) {
             usage("Either specify a hostname to download a new snapshot, " +
                   "or a filename of an existing snapshot.");
             return false;
           }
-          hostname = line.getOptionValue("host");
-          existingFilename = line.getOptionValue("filename");
-          persistingFilename = line.hasOption("save") ? line.getOptionValue("save") : null;
-          showTxids = line.hasOption("ids") ? true : false;
-          txId = line.hasOption("transaction") ? Long.valueOf(line.getOptionValue("transaction")) : null;
-          portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) :
+          hostname = line.getOptionValue(HOST_OPTION);
+          existingFilename = line.getOptionValue(FILENAME_OPTION);
+          persistingFilename = line.hasOption(SAVE_OPTION) ? line.getOptionValue(SAVE_OPTION) : null;
+          showTxids = line.hasOption(IDS_OPTION) ? true : false;
+          txId = line.hasOption(TRANSACTION_OPTION) ? Long.valueOf(line.getOptionValue(TRANSACTION_OPTION)) : null;
+          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
                        conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
           // Execute mode
           executeViewMode();
           break;
         case INVALIDATE:
-          if (!line.hasOption("host") || !line.hasOption("transaction")) {
+          if (!line.hasOption(HOST_OPTION) || !line.hasOption(TRANSACTION_OPTION)) {
             usage("Specify a host name and a transaction id.");
             return false;
           }
-          hostname = line.getOptionValue("host");
-          portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) :
+          hostname = line.getOptionValue(HOST_OPTION);
+          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
                        conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
-          txId = Long.valueOf(line.getOptionValue("transaction"));
+          txId = Long.valueOf(line.getOptionValue(TRANSACTION_OPTION));
           // Execute mode
           executeInvalidateMode();
           break;
         case RESET:
-          if (!line.hasOption("host")) {
+          if (!line.hasOption(HOST_OPTION)) {
             usage("Specify a host name.");
             return false;
           }
-          hostname = line.getOptionValue("host");
-          portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) :
+          hostname = line.getOptionValue(HOST_OPTION);
+          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
                        conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
           // Execute mode
           executeResetMode();
