@@ -2,6 +2,7 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -54,7 +55,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.discoveryService = discoveryService;
   }
 
-  protected InetSocketAddress getSocketAddress() {
+  /**
+   * Get the InetSocketAddress of the server.
+   * @return InetSocketAddress of server.
+   */
+  public InetSocketAddress getSocketAddress() {
     return this.socketAddress;
   }
 
@@ -73,7 +78,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
           address = InetAddress.getByName(server.getConnectors()[0].getHost());
         } catch (UnknownHostException e) {
           LOG.error("Error finding host to connect to.", e);
-          throw new RuntimeException(e);
+          throw Throwables.propagate(e);
         }
         socketAddress = new InetSocketAddress(address, port);
         return socketAddress;
