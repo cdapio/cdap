@@ -23,20 +23,17 @@
     -->
 
      <!--Supressing some chatty loggers -->
-    <logger name="org.apache.hadoop" level="INFO"/>
-    <logger name="org.mortbay.log" level="INFO"/>
-
+    <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.mortbay.log" level="WARN"/>
+    <logger name="com.continuuity" level="DEBUG" />
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
     </appender>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="Console"/>
     </root>
 

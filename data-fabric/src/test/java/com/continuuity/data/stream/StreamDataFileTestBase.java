@@ -4,37 +4,57 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
+import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.FileWriter;
+import com.continuuity.data2.transaction.stream.AbstractFileStreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test cases for StreamDataFileReader/Writer.
  */
 public abstract class StreamDataFileTestBase {
 
+  private static final Logger LOG = LoggerFactory.getLogger(StreamDataFileTestBase.class);
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
+
+  protected StreamAdmin getStreamAdmin() {
+    return new AbstractFileStreamAdmin(getLocationFactory(), CConfiguration.create()) { };
+  }
 
   /**
    * Test for basic read write to verify data encode/decode correctly.
@@ -432,5 +452,132 @@ public abstract class StreamDataFileTestBase {
       eventFile.length() + 100);
 
     Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
+  }
+
+  /**
+   * Test live stream reader with new partitions and/or sequence file being created over time.
+   */
+  @Test
+  public void testLiveStream() throws Exception {
+    String streamName = "live";
+    final String filePrefix = "prefix";
+    StreamAdmin streamAdmin = getStreamAdmin();
+    long partitionDuration = 5000;    // 5 seconds
+
+    // Create a stream with 5 seconds partition.
+    Properties properties = new Properties();
+    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(partitionDuration));
+    streamAdmin.create(streamName, properties);
+    final StreamConfig config = streamAdmin.getConfig(streamName);
+
+    // Create a thread that will write 10 event per second
+    final AtomicInteger eventsWritten = new AtomicInteger();
+    final List<Closeable> closeables = Lists.newArrayList();
+    Thread writerThread = new Thread() {
+      @Override
+      public void run() {
+        try {
+          while (!interrupted()) {
+            FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, filePrefix);
+            closeables.add(writer);
+            for (int i = 0; i < 10; i++) {
+              long ts = System.currentTimeMillis();
+              writer.append(StreamFileTestUtils.createEvent(ts, "Testing"));
+              eventsWritten.getAndIncrement();
+            }
+            writer.flush();
+            TimeUnit.SECONDS.sleep(1);
+          }
+        } catch (IOException e) {
+          LOG.error(e.getMessage(), e);
+          throw Throwables.propagate(e);
+        } catch (InterruptedException e) {
+          // No-op
+        }
+      }
+    };
+
+    // Create a live reader start with one partition earlier than current time.
+    long partitionStart = StreamUtils.getPartitionStartTime(System.currentTimeMillis() - config.getPartitionDuration(),
+                                                            config.getPartitionDuration());
+    Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(),
+                                                                     partitionStart, config.getPartitionDuration());
+    Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, filePrefix, 0, StreamFileType.EVENT);
+    Location indexLocation = StreamUtils.createStreamLocation(partitionLocation, filePrefix, 0, StreamFileType.INDEX);
+
+    // Creates a live stream reader that check for sequence file ever 100 millis.
+    FileReader<StreamEvent, StreamFileOffset> reader
+      = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation, indexLocation), 100);
+
+    List<StreamEvent> events = Lists.newArrayList();
+    // Try to read, since the writer thread is not started, it should get nothing
+    Assert.assertEquals(0, reader.read(events, 1, 2, TimeUnit.SECONDS));
+
+    // Start the writer thread.
+    writerThread.start();
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.start();
+    while (stopwatch.elapsedTime(TimeUnit.SECONDS) < 10 && reader.read(events, 1, 1, TimeUnit.SECONDS) == 0) {
+      // Empty
+    }
+    stopwatch.stop();
+
+    // Should be able to read a event
+    Assert.assertEquals(1, events.size());
+
+    TimeUnit.MILLISECONDS.sleep(partitionDuration * 2);
+    writerThread.interrupt();
+    writerThread.join();
+
+    LOG.info("Writer stopped with {} events written.", eventsWritten.get());
+
+    stopwatch.reset();
+    while (stopwatch.elapsedTime(TimeUnit.SECONDS) < 10 && events.size() != eventsWritten.get()) {
+      reader.read(events, eventsWritten.get(), 0, TimeUnit.SECONDS);
+    }
+
+    // Should see all events written
+    Assert.assertEquals(eventsWritten.get(), events.size());
+
+    // Take a snapshot of the offset.
+    StreamFileOffset offset = new StreamFileOffset(reader.getPosition());
+
+    reader.close();
+    for (Closeable c : closeables) {
+      Closeables.closeQuietly(c);
+    }
+
+    // Now creates a new writer to write 10 more events across two partitions with a skip one partition.
+    FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, filePrefix);
+    try {
+      for (int i = 0; i < 5; i++) {
+        long ts = System.currentTimeMillis();
+        writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + ts));
+      }
+      TimeUnit.MILLISECONDS.sleep(partitionDuration * 3 / 2);
+      for (int i = 0; i < 5; i++) {
+        long ts = System.currentTimeMillis();
+        writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + ts));
+      }
+    } finally {
+      writer.close();
+    }
+
+    // Create a new reader with the previous offset
+    reader = new LiveStreamFileReader(config, offset, 100);
+    events.clear();
+    stopwatch.reset();
+    while (stopwatch.elapsedTime(TimeUnit.SECONDS) < 10 && events.size() != 10) {
+      reader.read(events, 10, 0, TimeUnit.SECONDS);
+    }
+    Assert.assertEquals(10, events.size());
+
+    // Try to read more, should got nothing
+    reader.read(events, 10, 2, TimeUnit.SECONDS);
+    reader.close();
+
+    for (Closeable c : closeables) {
+      c.close();
+    }
   }
 }

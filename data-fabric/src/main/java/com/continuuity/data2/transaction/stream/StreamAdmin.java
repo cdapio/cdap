@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.stream;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.dataset.api.DataSetManager;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -42,5 +43,5 @@ public interface StreamAdmin extends DataSetManager {
    * @return A {@link StreamConfig} instance.
    * @throws Exception If the stream doesn't exists.
    */
-  StreamConfig getConfig(String streamName) throws Exception;
+  StreamConfig getConfig(String streamName) throws IOException;
 }

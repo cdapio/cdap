@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  *
  */
-public class LocalMultiStreamFileReaderTest extends MultiStreamFileReaderTestBase {
+public class LocalLiveMultiStreamFileReaderTest extends LiveMultiStreamFileReaderTestBase {
 
   private static LocationFactory locationFactory;
 

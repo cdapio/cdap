@@ -10,7 +10,10 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
@@ -70,8 +73,8 @@ public class StreamTailer {
 
     System.out.println(streamFiles);
 
-    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(streamFiles.values(),
-                                                                     new StreamFileReaderFactory());
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamAdmin.getConfig(streamName),
+      ImmutableList.copyOf(Iterables.transform(streamFiles.values(), createOffsetConverter())));
     List<StreamEvent> events = Lists.newArrayList();
     while (reader.read(events, 10, 100, TimeUnit.MILLISECONDS) >= 0) {
       for (StreamEvent event : events) {
@@ -83,16 +86,11 @@ public class StreamTailer {
     reader.close();
   }
 
-  private static final class StreamFile extends StreamFileOffset {
+  private static final class StreamFile {
 
     private Location eventLocation;
     private Location indexLocation;
 
-    public StreamFile() {
-      super(null, null);
-    }
-
-    @Override
     public Location getEventLocation() {
       return eventLocation;
     }
@@ -101,7 +99,6 @@ public class StreamTailer {
       this.eventLocation = eventLocation;
     }
 
-    @Override
     public Location getIndexLocation() {
       return indexLocation;
     }
@@ -117,5 +114,14 @@ public class StreamTailer {
         .add("index", indexLocation.toURI())
         .toString();
     }
+  }
+
+  private static Function<StreamFile, StreamFileOffset> createOffsetConverter() {
+    return new Function<StreamFile, StreamFileOffset>() {
+      @Override
+      public StreamFileOffset apply(StreamFile input) {
+        return new StreamFileOffset(input.getEventLocation(), input.getIndexLocation());
+      }
+    };
   }
 }

@@ -44,10 +44,9 @@ import java.util.Map;
  * <br/><br/>
  * The {@code bucketName} is formatted as
  * <pre>
- *   "bucket".[bucketId].[seqNo]
+ *   [prefix].[seqNo]
  * </pre>
- * where the {@code bucketId} is an integer. The {@code seqNo} is a strictly increasing integer for the same
- * {@code bucketId}.
+ * The {@code seqNo} is a strictly increasing integer for the same prefix starting with 0.
  *
  * @param <K> Key type of input
  * @param <V> Value type of input

@@ -166,9 +166,7 @@ public class StreamHandlerRunnable extends AbstractTwillRunnable {
     public FileWriter<StreamEvent> create(String streamName) throws IOException {
       try {
         StreamConfig config = streamAdmin.getConfig(streamName);
-        return new TimePartitionedStreamFileWriter(config.getLocation(),
-                                                   config.getPartitionDuration(), filePrefix,
-                                                   config.getIndexInterval());
+        return new TimePartitionedStreamFileWriter(config, filePrefix);
 
       } catch (Exception e) {
         Throwables.propagateIfPossible(e, IOException.class);

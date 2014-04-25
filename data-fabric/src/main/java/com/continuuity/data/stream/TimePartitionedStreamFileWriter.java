@@ -7,6 +7,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.file.PartitionedFileWriter;
 import com.continuuity.data.stream.TimePartitionedStreamFileWriter.TimePartition;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -59,9 +59,13 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
     this.partitionDuration = partitionDuration;
   }
 
+  public TimePartitionedStreamFileWriter(StreamConfig config, String fileNamePrefix) {
+    this(config.getLocation(), config.getPartitionDuration(), fileNamePrefix, config.getIndexInterval());
+  }
+
   @Override
   protected TimePartition getPartition(StreamEvent event) {
-    long eventPartitionStart = event.getTimestamp() / partitionDuration * partitionDuration;
+    long eventPartitionStart = StreamUtils.getPartitionStartTime(event.getTimestamp(), partitionDuration);
     if (eventPartitionStart != timePartition.getStartTimestamp()) {
       timePartition = new TimePartition(eventPartitionStart);
     }
@@ -130,12 +134,8 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
         throw new IOException("Stream " + streamLocation.getName() + " not exist in " + streamLocation.toURI());
       }
 
-      String path = String.format("%010d.%05d",
-                                  TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
-                                  TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
-
-      Location partitionDirectory = streamLocation.append(path);
-
+      Location partitionDirectory = StreamUtils.createPartitionLocation(streamLocation,
+                                                                        partitionStart, partitionDuration);
       // Always try to create the directory
       partitionDirectory.mkdirs();
 
@@ -144,6 +144,8 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
       for (Location location : partitionDirectory.list()) {
         String fileName = location.getName();
         if (fileName.startsWith(fileNamePrefix)) {
+          StreamUtils.getSequenceId(fileName);
+
           int idx = fileName.lastIndexOf('.');
           if (idx < fileNamePrefix.length()) {
             LOG.warn("Ignore file with invalid stream file name {}", location.toURI());
@@ -152,7 +154,7 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
 
           try {
             // File name format is [prefix].[sequenceId].[dat|idx]
-            int seq = Integer.parseInt(fileName.substring(fileNamePrefix.length() + 1, idx));
+            int seq = StreamUtils.getSequenceId(fileName);
             if (seq > maxSequence) {
               maxSequence = seq;
             }
@@ -164,15 +166,16 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
 
       // Create the event and index file with the max sequence + 1
       int fileSequence = maxSequence + 1;
-      Location eventFile = partitionDirectory.append(String.format("%s.%06d.%s", fileNamePrefix, fileSequence,
-                                                                   StreamFileType.EVENT.getSuffix()));
-      Location indexFile = partitionDirectory.append(String.format("%s.%06d.%s", fileNamePrefix, fileSequence,
-                                                                   StreamFileType.INDEX.getSuffix()));
+      Location eventFile = StreamUtils.createStreamLocation(partitionDirectory, fileNamePrefix,
+                                                            fileSequence, StreamFileType.EVENT);
+      Location indexFile = StreamUtils.createStreamLocation(partitionDirectory, fileNamePrefix,
+                                                            fileSequence, StreamFileType.INDEX);
       // The creation should succeed, as it's expected to only have one process running per fileNamePrefix.
       if (!eventFile.createNew() || !indexFile.createNew()) {
         throw new IOException("Failed to create new file at " + eventFile.toURI() + " and " + indexFile.toURI());
       }
 
+      LOG.debug("New stream file created at {}", eventFile.toURI());
       return new StreamDataFileWriter(createOutputSupplier(eventFile), createOutputSupplier(indexFile), indexInterval);
     }
 

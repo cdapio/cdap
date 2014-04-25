@@ -4,8 +4,16 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.Locations;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.data.file.FileWriter;
+import com.continuuity.data2.transaction.stream.AbstractFileStreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -14,33 +22,41 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public abstract class MultiStreamFileReaderTestBase {
+public abstract class LiveMultiStreamFileReaderTestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected abstract LocationFactory getLocationFactory();
 
+  protected StreamAdmin getStreamAdmin() {
+    return new AbstractFileStreamAdmin(getLocationFactory(), CConfiguration.create()) { };
+  }
+
   @Test
-  public void testMultiFileReader() throws IOException, InterruptedException {
-    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+  public void testMultiFileReader() throws Exception {
+    String streamName = "multiReader";
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create a stream with 1 partition.
+    Properties properties = new Properties();
+    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(Long.MAX_VALUE));
+    streamAdmin.create(streamName, properties);
+
+    StreamConfig config = streamAdmin.getConfig(streamName);
 
     // Write out 200 events in 5 files, with interleaving timestamps
-    List<StreamDataFileWriter> writers = Lists.newArrayList();
+    List<FileWriter<StreamEvent>> writers = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
-      Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
-      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
+      FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, "bucket" + i);
 
-      StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
-                                                             Locations.newOutputSupplier(indexFile),
-                                                             100L);
       writers.add(writer);
       for (int j = 0; j < 200; j++) {
         long timestamp = j * 5 + i;
@@ -49,21 +65,22 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Flush all writers.
-    for (StreamDataFileWriter writer : writers) {
+    for (FileWriter<StreamEvent> writer : writers) {
       writer.flush();
     }
 
     // Create a multi stream file reader
     List<StreamFileOffset> sources = Lists.newArrayList();
+    Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
-      Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
-      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
+      Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
+      Location indexFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.INDEX);
 
       sources.add(new StreamFileOffset(eventFile, indexFile));
     }
 
     // Reads all events written so far.
-    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(config, sources);
     List<StreamEvent> events = Lists.newArrayList();
     long expectedTimestamp = 0L;
     for (int i = 0; i < 10; i++) {
@@ -82,7 +99,7 @@ public abstract class MultiStreamFileReaderTestBase {
 
     // Writes some more events to the first three writers.
     for (int i = 0; i < 3; i++) {
-      StreamDataFileWriter writer = writers.get(i);
+      FileWriter<StreamEvent> writer = writers.get(i);
       for (int j = 0; j < 10; j++) {
         long timestamp = 1000 + j * 3 + i;
         writer.append(StreamFileTestUtils.createEvent(timestamp, "Testing " + timestamp));
@@ -90,7 +107,7 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Close all writers
-    for (StreamDataFileWriter writer : writers) {
+    for (FileWriter<StreamEvent> writer : writers) {
       writer.close();
     }
 
@@ -103,22 +120,26 @@ public abstract class MultiStreamFileReaderTestBase {
       expectedTimestamp++;
     }
 
-    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+    // Should get no more events.
+    Assert.assertEquals(0, reader.read(events, 1, 1, TimeUnit.SECONDS));
     reader.close();
   }
 
   @Test
-  public void testOffsets() throws IOException, InterruptedException {
-    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+  public void testOffsets() throws Exception {
+    String streamName = "offsets";
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create a stream with 1 partition.
+    Properties properties = new Properties();
+    properties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(Long.MAX_VALUE));
+    streamAdmin.create(streamName, properties);
+
+    StreamConfig config = streamAdmin.getConfig(streamName);
 
     // Write out 200 events in 5 files, with interleaving timestamps
     for (int i = 0; i < 5; i++) {
-      Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
-      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
-
-      StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
-                                                             Locations.newOutputSupplier(indexFile),
-                                                             100L);
+      FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, "bucket" + i);
       for (int j = 0; j < 200; j++) {
         long timestamp = j * 5 + i;
         writer.append(StreamFileTestUtils.createEvent(timestamp, "Testing " + timestamp));
@@ -128,15 +149,16 @@ public abstract class MultiStreamFileReaderTestBase {
 
     // Create a multi reader
     List<StreamFileOffset> sources = Lists.newArrayList();
+    Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
-      Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
-      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
+      Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
+      Location indexFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.INDEX);
 
       sources.add(new StreamFileOffset(eventFile, indexFile));
     }
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(config, sources);
 
     // Reads some events
-    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
     List<StreamEvent> events = Lists.newArrayList();
     long expectedTimestamp = 0L;
 
@@ -151,7 +173,15 @@ public abstract class MultiStreamFileReaderTestBase {
       }
       events.clear();
     }
-    Iterable<StreamFileOffset> offsets = reader.getPosition();
+
+    // Capture the offsets
+    Iterable<StreamFileOffset> offsets = ImmutableList.copyOf(
+      Iterables.transform(reader.getPosition(), new Function<StreamFileOffset, StreamFileOffset>() {
+      @Override
+      public StreamFileOffset apply(StreamFileOffset input) {
+        return new StreamFileOffset(input);
+      }
+    }));
     reader.close();
 
     // Create another multi reader with the offsets
@@ -161,7 +191,7 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Read 750 events, in batch size of 10.
-    reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
+    reader = new MultiLiveStreamFileReader(config, sources);
     for (int i = 0; i < 75; i++) {
       Assert.assertEquals(10, reader.read(events, 10, 0, TimeUnit.SECONDS));
       Assert.assertEquals(10, events.size());
@@ -173,7 +203,7 @@ public abstract class MultiStreamFileReaderTestBase {
       events.clear();
     }
 
-    Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(0, reader.read(events, 10, 2, TimeUnit.SECONDS));
 
     reader.close();
   }

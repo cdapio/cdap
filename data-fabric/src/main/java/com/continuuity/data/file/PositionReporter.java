@@ -10,5 +10,10 @@ package com.continuuity.data.file;
  */
 public interface PositionReporter<P> {
 
+  /**
+   * Returns the position information.
+   *
+   * @return An instance of type {@code <P>}
+   */
   P getPosition();
 }

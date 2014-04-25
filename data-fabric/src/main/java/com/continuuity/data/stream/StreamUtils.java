@@ -3,14 +3,11 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -65,13 +62,15 @@ public final class StreamUtils {
    */
   public static String getPartitionName(URI uri) {
     String path = uri.getPath();
-    int idx = path.lastIndexOf('/');
-    Preconditions.checkArgument(idx >= 0, "Invalid event file location %s.", uri);
+    int endIdx = path.lastIndexOf('/');
+    Preconditions.checkArgument(endIdx >= 0,
+                                "Invalid event path %s. Partition is missing.", uri);
 
-    String partitionPath = path.substring(0, idx);
-    idx = partitionPath.lastIndexOf('/');
-    Preconditions.checkArgument(idx >= 0, "Invalid event file location %s. Failed to determine partition.", uri);
-    return partitionPath.substring(idx + 1);
+    int startIdx = path.lastIndexOf('/', endIdx - 1);
+    Preconditions.checkArgument(startIdx < endIdx,
+                                "Invalid event path %s. Partition is missing.", uri);
+
+    return path.substring(startIdx + 1, endIdx);
   }
 
   /**
@@ -82,6 +81,33 @@ public final class StreamUtils {
   public static String getBucketName(String name) {
     int idx = name.lastIndexOf('.');
     return (idx >= 0) ? name.substring(0, idx) : name;
+  }
+
+  /**
+   * Returns the file prefix based on the given file name.
+   *
+   * @param name Name of the file.
+   * @return The prefix part of the stream file.
+   */
+  public static String getNamePrefix(String name) {
+    String bucketName = getBucketName(name);
+    int idx = bucketName.lastIndexOf('.');
+    Preconditions.checkArgument(idx >= 0, "Invalid name %s. Name is expected in [prefix].[seqId] format", bucketName);
+    return bucketName.substring(0, idx);
+  }
+
+  /**
+   * Returns the sequence number of the given file name.
+   *
+   * @param name Name of the file.
+   * @return The sequence number of the stream file.
+   */
+  public static int getSequenceId(String name) {
+    String bucketName = getBucketName(name);
+    int idx = bucketName.lastIndexOf('.');
+    Preconditions.checkArgument(idx >= 0 && (idx + 1) < bucketName.length(),
+                                "Invalid name %s. Name is expected in [prefix].[seqId] format", bucketName);
+    return Integer.parseInt(bucketName.substring(idx + 1));
   }
 
   /**
@@ -114,6 +140,50 @@ public final class StreamUtils {
     long startTime = Long.parseLong(partitionName.substring(0, idx));
     long duration = Long.parseLong(partitionName.substring(idx + 1));
     return TimeUnit.MILLISECONDS.convert(startTime + duration, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Creates the location for the partition directory.
+   *
+   * @param baseLocation Base location for partition directory.
+   * @param partitionStart Partition start timestamp in milliseconds.
+   * @param partitionDuration Partition duration in milliseconds.
+   * @return The location for the partition directory.
+   */
+  public static Location createPartitionLocation(Location baseLocation,
+                                                 long partitionStart, long partitionDuration) throws IOException {
+    String path = String.format("%010d.%05d",
+                                TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
+                                TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
+
+    return baseLocation.append(path);
+  }
+
+  /**
+   * Creates location for stream file.
+   *
+   * @param partitionLocation The partition directory location.
+   * @param prefix File prefix.
+   * @param seqId Sequence number of the file.
+   * @param type Type of the stream file.
+   * @return The location of the stream file.
+   *
+   * @see StreamInputFormat for naming convention.
+   */
+  public static Location createStreamLocation(Location partitionLocation, String prefix,
+                                              int seqId, StreamFileType type) throws IOException {
+    return partitionLocation.append(String.format("%s.%06d.%s", prefix, seqId, type.getSuffix()));
+  }
+
+  /**
+   * Returns the aligned partition start time.
+   *
+   * @param timestamp Timestamp in milliseconds.
+   * @param partitionDuration Partition duration in milliseconds.
+   * @return The partition start time of the given timestamp.
+   */
+  public static long getPartitionStartTime(long timestamp, long partitionDuration) {
+    return timestamp / partitionDuration * partitionDuration;
   }
 
   private StreamUtils() {

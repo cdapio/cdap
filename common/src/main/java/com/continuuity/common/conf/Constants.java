@@ -1,5 +1,7 @@
 package com.continuuity.common.conf;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Constants used by different systems are all defined here.
  */
@@ -313,6 +315,9 @@ public final class Constants {
     public static final String BASE_DIR = "stream.base.dir";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
+
+    /** How often to check for new file when reading from stream in milliseconds. **/
+    public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
   }
 
   /**

@@ -11,6 +11,8 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /**
  * admin for streams in leveldb.
  */
@@ -47,7 +49,7 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws Exception {
+  public StreamConfig getConfig(String streamName) throws IOException {
     return null;
   }
 }

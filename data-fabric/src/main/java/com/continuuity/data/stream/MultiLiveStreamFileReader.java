@@ -4,55 +4,54 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.Locations;
-import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.PositionReporter;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.InputSupplier;
 import com.google.common.primitives.Longs;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
-import org.apache.twill.filesystem.Location;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A {@link FileReader} that combines multiple event stream into single event stream.
  */
 @NotThreadSafe
-public final class MultiStreamDataFileReader implements FileReader<StreamEvent, Iterable<StreamFileOffset>> {
+public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, Iterable<StreamFileOffset>> {
 
   private final PriorityQueue<StreamEventSource> eventSources;
   private final Set<StreamEventSource> emptySources;
   private final Set<StreamEventSource> allSources;
   private final Iterable<StreamFileOffset> offsetsView;
 
-  public MultiStreamDataFileReader(Collection<? extends StreamFileOffset> sources,
-                                   Function<StreamFileOffset, FileReader<StreamEvent, Long>> readerFactory) {
-    this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(sources.size());
-    this.allSources = Sets.newHashSet();
-    List<StreamFileOffset> offsets = Lists.newArrayListWithCapacity(sources.size());
-    this.offsetsView = Collections.unmodifiableCollection(offsets);
+  public MultiLiveStreamFileReader(StreamConfig streamConfig, Collection<? extends StreamFileOffset> offsets) {
+    this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(offsets.size());
+    this.allSources = Sets.newTreeSet();
 
-    for (StreamFileOffset source : sources) {
-      StreamEventSource eventSource = new StreamEventSource(source, readerFactory);
+    for (StreamFileOffset source : offsets) {
+      StreamEventSource eventSource = new StreamEventSource(streamConfig, source);
       allSources.add(eventSource);
-      offsets.add(new DefaultStreamFileOffset(eventSource));
     }
 
     this.emptySources = Sets.newHashSet(allSources);
+    this.offsetsView = Iterables.transform(allSources, new Function<StreamEventSource, StreamFileOffset>() {
+      @Override
+      public StreamFileOffset apply(StreamEventSource input) {
+        return input.getPosition();
+      }
+    });
   }
 
   @Override
@@ -132,57 +131,29 @@ public final class MultiStreamDataFileReader implements FileReader<StreamEvent, 
     eventSources.clear();
   }
 
-  private static final class DefaultStreamFileOffset extends StreamFileOffset {
+  private static final class StreamEventSource implements Comparable<StreamEventSource>,
+                                                          Closeable, PositionReporter<StreamFileOffset> {
 
-    private final StreamEventSource eventSource;
-
-    private DefaultStreamFileOffset(StreamEventSource eventSource) {
-      super(eventSource.getEventLocation(), eventSource.getIndexLocation());
-      this.eventSource = eventSource;
-    }
-
-    @Override
-    public long getOffset() {
-      return eventSource.getOffset();
-    }
-  }
-
-
-  private static final class StreamEventSource implements Comparable<StreamEventSource>, Closeable {
-
-    private final Location eventLocation;
-    private final Location indexLocation;
-    private final String bucketName;
-    private final FileReader<StreamEvent, Long> reader;
+    private final FileReader<StreamEvent, StreamFileOffset> reader;
     private final List<StreamEvent> events;
-    private long currentOffset;
-    private long nextOffset;
+    private StreamFileOffset currentOffset;
+    private StreamFileOffset nextOffset;
 
-    private StreamEventSource(StreamFileOffset startOffset,
-                              Function<StreamFileOffset, FileReader<StreamEvent, Long>> readerFactory) {
-      this.eventLocation = startOffset.getEventLocation();
-      this.indexLocation = startOffset.getIndexLocation();
-      this.bucketName = StreamUtils.getBucketName(eventLocation.getName());
-      this.reader = readerFactory.apply(startOffset);
+    private StreamEventSource(StreamConfig streamConfig, StreamFileOffset beginOffset) {
+      this.reader = new LiveStreamFileReader(streamConfig, beginOffset);
       this.events = Lists.newArrayListWithCapacity(1);
+      this.currentOffset = new StreamFileOffset(beginOffset);
+      this.nextOffset = beginOffset;
     }
 
     void read(Collection<? super StreamEvent> result) throws IOException, InterruptedException {
       result.add(events.get(0));
       events.clear();
-      currentOffset = nextOffset;
-    }
-
-    long getOffset() {
-      return currentOffset;
-    }
-
-    Location getEventLocation() {
-      return eventLocation;
-    }
-
-    Location getIndexLocation() {
-      return indexLocation;
+      if (!currentOffset.getEventLocation().equals(nextOffset.getEventLocation())) {
+        currentOffset = new StreamFileOffset(nextOffset);
+      } else {
+        currentOffset.setOffset(nextOffset.getOffset());
+      }
     }
 
     /**
@@ -197,16 +168,11 @@ public final class MultiStreamDataFileReader implements FileReader<StreamEvent, 
     int prepare() throws IOException, InterruptedException {
       if (events.isEmpty()) {
         int res = reader.read(events, 1, 0L, TimeUnit.MILLISECONDS);
-        this.nextOffset = reader.getPosition();
+        nextOffset = reader.getPosition();
         return res;
       }
       return 1;
     }
-
-    private InputSupplier<? extends SeekableInputStream> createInputSupplier(@Nullable Location location) {
-      return location == null ? null : Locations.newInputSupplier(location);
-    }
-
 
     @Override
     public int compareTo(StreamEventSource other) {
@@ -224,13 +190,18 @@ public final class MultiStreamDataFileReader implements FileReader<StreamEvent, 
         return cmp;
       }
 
-      // Compare by bucketId
-      return bucketName.compareTo(other.bucketName);
+      // Tie break by file path
+      return getPosition().getEventLocation().toURI().compareTo(other.getPosition().getEventLocation().toURI());
     }
 
     @Override
     public void close() throws IOException {
       reader.close();
+    }
+
+    @Override
+    public StreamFileOffset getPosition() {
+      return currentOffset;
     }
   }
 }

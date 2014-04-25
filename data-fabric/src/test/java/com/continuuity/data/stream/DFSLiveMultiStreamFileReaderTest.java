@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  *
  */
-public class DFSMultiStreamFileReaderTest extends MultiStreamFileReaderTestBase {
+public class DFSLiveMultiStreamFileReaderTest extends LiveMultiStreamFileReaderTestBase {
 
   private static LocationFactory locationFactory;
   private static MiniDFSCluster dfsCluster;
