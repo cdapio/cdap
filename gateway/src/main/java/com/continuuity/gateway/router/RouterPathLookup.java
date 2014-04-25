@@ -20,6 +20,12 @@ public final class RouterPathLookup {
   private static final String COMMON_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/" +
     "(start|debug|stop|status|history|runtimeargs)";
+  private static final String PROGRAMINFO_PATH = VERSION +
+    "/?/(flows|procedures|mapreduce|workflows)/?$";
+  private static final String ALLAPPINFO_PATH = VERSION +
+    "/?/apps/?$";
+  private static final String APPINFO_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/?(flows|procedures|mapreduce|workflows)?/?$";
   private static final String DELETE_PATH = VERSION +
     "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
@@ -89,6 +95,15 @@ public final class RouterPathLookup {
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(TRANSACTIONS_PATH)),
                                                         // todo change to Constants.Service.DATASET_MANAGER
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(PROGRAMINFO_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(ALLAPPINFO_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(APPINFO_PATH)),
                                                         Constants.Service.APP_FABRIC_HTTP)
       .build();
 
