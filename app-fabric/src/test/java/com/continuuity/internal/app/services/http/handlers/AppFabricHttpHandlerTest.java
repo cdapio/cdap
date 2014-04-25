@@ -141,7 +141,7 @@ public class AppFabricHttpHandlerTest {
         Assert.assertEquals(4, m.size());
       }
     } finally {
-      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
   }
 
@@ -322,7 +322,9 @@ public class AppFabricHttpHandlerTest {
       Assert.assertTrue(result.contains("SampleWorkflow"));
 
     } finally {
-      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete(
+        "/v2/apps/AppWithWorkflow").getStatusLine().getStatusCode());
     }
   }
 

@@ -16,6 +16,7 @@ import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
@@ -62,6 +63,7 @@ public class AppFabricTestsSuite {
 
   private static EndpointStrategy endpointStrategy;
   private static AppFabricService.Iface app;
+  private static MetricsQueryService metrics;
 
   private static TransactionSystemClient txClient;
 
@@ -91,6 +93,8 @@ public class AppFabricTestsSuite {
       port = endpointStrategy.pick().getSocketAddress().getPort();
       app =  appFabricServer.getService();
       txClient = injector.getInstance(TransactionSystemClient.class);
+      metrics = injector.getInstance(MetricsQueryService.class);
+      metrics.startAndWait();
     }
 
     @Override
@@ -123,6 +127,7 @@ public class AppFabricTestsSuite {
 
   public static void stopAppFabricServer(CConfiguration conf) {
     appFabricServer.stopAndWait();
+    metrics.stopAndWait();
     conf.clear();
   }
 

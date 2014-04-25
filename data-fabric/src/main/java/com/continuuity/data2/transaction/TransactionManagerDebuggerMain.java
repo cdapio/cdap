@@ -113,6 +113,14 @@ public class TransactionManagerDebuggerMain {
         return true;
       }
 
+      hostname = line.getOptionValue(HOST_OPTION);
+      existingFilename = line.getOptionValue(FILENAME_OPTION);
+      persistingFilename = line.hasOption(SAVE_OPTION) ? line.getOptionValue(SAVE_OPTION) : null;
+      showTxids = line.hasOption(IDS_OPTION) ? true : false;
+      txId = line.hasOption(TRANSACTION_OPTION) ? Long.valueOf(line.getOptionValue(TRANSACTION_OPTION)) : null;
+      portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
+                   conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
+      
       switch (this.mode) {
         case VIEW:
           if (!line.hasOption(HOST_OPTION) && !line.hasOption(FILENAME_OPTION)) {
@@ -120,13 +128,6 @@ public class TransactionManagerDebuggerMain {
                   "or a filename of an existing snapshot.");
             return false;
           }
-          hostname = line.getOptionValue(HOST_OPTION);
-          existingFilename = line.getOptionValue(FILENAME_OPTION);
-          persistingFilename = line.hasOption(SAVE_OPTION) ? line.getOptionValue(SAVE_OPTION) : null;
-          showTxids = line.hasOption(IDS_OPTION) ? true : false;
-          txId = line.hasOption(TRANSACTION_OPTION) ? Long.valueOf(line.getOptionValue(TRANSACTION_OPTION)) : null;
-          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                       conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
           // Execute mode
           executeViewMode();
           break;
@@ -135,10 +136,6 @@ public class TransactionManagerDebuggerMain {
             usage("Specify a host name and a transaction id.");
             return false;
           }
-          hostname = line.getOptionValue(HOST_OPTION);
-          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                       conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
-          txId = Long.valueOf(line.getOptionValue(TRANSACTION_OPTION));
           // Execute mode
           executeInvalidateMode();
           break;
@@ -147,9 +144,6 @@ public class TransactionManagerDebuggerMain {
             usage("Specify a host name.");
             return false;
           }
-          hostname = line.getOptionValue(HOST_OPTION);
-          portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                       conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
           // Execute mode
           executeResetMode();
           break;
