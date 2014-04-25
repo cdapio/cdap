@@ -48,21 +48,13 @@ public class TestExternalAuthenticationServer {
 
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(), new DiscoveryRuntimeModule().getInMemoryModules());
+    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     configuration = injector.getInstance(CConfiguration.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
-  }
-
-  @Test
-  public void testServiceRegistration() throws Exception {
-    server.startAndWait();
-//    TimeUnit.SECONDS.sleep(5);
-    Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-    Iterator<Discoverable> discoverableIterator = discoverables.iterator();
-    assertTrue(discoverableIterator.hasNext());
   }
 
   /**
@@ -144,6 +136,20 @@ public class TestExternalAuthenticationServer {
     // Request is Unauthorized
     assertTrue(response.getStatusLine().getStatusCode() == 401);
 
+    server.stopAndWait();
+  }
+
+  /**
+   * Test that the service is discoverable.
+   * @throws Exception
+   */
+  @Test
+  public void testServiceRegistration() throws Exception {
+    server.startAndWait();
+    TimeUnit.SECONDS.sleep(2);
+    Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    Iterator<Discoverable> discoverableIterator = discoverables.iterator();
+    assertTrue(discoverableIterator.hasNext());
     server.stopAndWait();
   }
 }

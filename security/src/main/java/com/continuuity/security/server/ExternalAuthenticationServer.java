@@ -67,7 +67,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         try {
           address = InetAddress.getByName(server.getConnectors()[0].getHost());
         } catch (UnknownHostException e) {
-          e.printStackTrace();
+          LOG.error("Error finding host to connect to.");
+          LOG.error(e.getMessage());
         }
         return new InetSocketAddress(address, port);
       }
