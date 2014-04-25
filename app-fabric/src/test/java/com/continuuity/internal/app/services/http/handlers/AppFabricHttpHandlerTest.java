@@ -276,6 +276,9 @@ public class AppFabricHttpHandlerTest {
     //deploy and check status of a workflow
     deploy(SleepingWorkflowApp.class);
     Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
+      TimeUnit.MILLISECONDS.sleep(10);
+    }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
   }
 
