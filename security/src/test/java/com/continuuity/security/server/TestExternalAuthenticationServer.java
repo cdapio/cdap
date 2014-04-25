@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -148,7 +149,11 @@ public class TestExternalAuthenticationServer {
     server.startAndWait();
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     Iterator<Discoverable> discoverableIterator = discoverables.iterator();
+
     assertTrue(discoverableIterator.hasNext());
+    Discoverable discoverable = discoverableIterator.next();
+    assertEquals(discoverable.getSocketAddress(), server.getSocketAddress());
+
     server.stopAndWait();
   }
 }
