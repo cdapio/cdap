@@ -149,12 +149,12 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws Exception {
+      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetInstanceSpec spec) throws Exception {
+      public Dataset getDataset(DatasetInstanceSpec spec) {
         return null;
       }
     };
