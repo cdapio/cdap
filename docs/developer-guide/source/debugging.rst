@@ -417,7 +417,7 @@ with this command::
 
 where `filename` specifies the location where the snapshot has been saved.
 
-Here are some options that you can use with those two commands:
+Here are two options that you can use with the ``tx-debugger view`` commands:
 
 - Use the ``--ids`` option to print all the transaction ``write pointers``
   that are stored in the different structures.
@@ -433,7 +433,7 @@ they were started with the activity of your Reactor to track potential
 issues.
 
 If you really know what you are doing and you spot a transaction in the
-``in-progress set``that it should be in the ``invalid set``, you can
+``in-progress set`` that should be in the ``invalid set``, you can
 use this command to invalidate it::
 
   $ tx-debugger invalidate --host <name> --transaction <writePtr>
