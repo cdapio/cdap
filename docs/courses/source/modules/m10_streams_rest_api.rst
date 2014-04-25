@@ -3,8 +3,11 @@ Streams REST API
 ================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -100,7 +103,9 @@ Status Code
    ``200 OK``
 Description
    The event was successfully received
+
 ..
+
 Status Code
    ``404 Not Found``
 Description
@@ -158,7 +163,9 @@ Status Code
   ``200 OK``
 Description
   The event was successfully received and a new ``consumer-id`` was returned
+  
 ..
+
 Status Code
   ``404 Not Found``
 Description
@@ -219,13 +226,17 @@ Status Code
   ``200 OK``
 Description
   The event was successfully received and the result of the read was returned
+  
 ..
+
 Status Code
   ``204 No Content``
 Description
   The Stream exists but it is either empty or the given ``Consumer-ID``
   has read all the events in the Stream
+  
 ..
+
 Status Code
   ``404 Not Found``
 Description
@@ -286,3 +297,9 @@ You should now be able to:
 - Read Events from a Stream
 - Read Multiple Events from a Stream [tbc]
 
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m10>`__

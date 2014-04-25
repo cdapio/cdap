@@ -3,10 +3,17 @@ Continuuity Reactor SDK
 =======================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
+
 .. include:: ../_slide-fragments/continuuity_logo.rst
+
+.. |br_m04| raw:: html
+
+   <br />
 
 ----
 
@@ -17,9 +24,8 @@ In this module, you will look at:
 
 - What is the Continuuity Reactor SDK?
 - Downloading the Continuuity Reactor SDK
+- Installing the SDK
 - Exploring the contents of the SDK
-- Additional materials
-
 
 ----
 
@@ -58,7 +64,7 @@ Exploring the Contents of SDK
 
 - Local Continuuity Reactor Application
 
-  - Scripts for starting, stopping, status of Reactor
+  - Scripts for starting, stopping, restarting, status of Reactor
   - Includes Continuuity Reactor Dashboard Web Application
   
 - Examples
@@ -70,15 +76,17 @@ Exploring the Contents of SDK
 
 ----
 
-Local Continuuity Reactor Application
-=====================================
+Local Continuuity Reactor Application Scripts
+=============================================
 
-- Reactor starting, stopping, status
+Utility programs located in ``bin/`` for:
+
+- Reactor starting, stopping, restarting status
 
   - ``reactor.sh`` for \*nix systems
   - ``reactor.bat`` for Windows
 
-- Located in ``bin/``
+- Running examples
 
 ----
 
@@ -87,42 +95,22 @@ Continuuity Reactor Dashboard
 
 - Viewed by starting local Reactor and then
   connecting to ``http://localhost:9999``
-- Covered in other modules
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
    :width: 600px
 
 ----
 
-Scripts
-=======
-
-- Utility programs for:
-
-  - Local Reactor starting, stopping, status
-  - Running examples
-
-----
-
 Examples
 =============
 
-- 15 examples
+- Located in both ``examples/`` and online
 - ``README.rst`` includes descriptions
-- Located in ``examples/``
 
 ----
 
 Javadocs
 =============
-::
-
-	allclasses-frame.html
-	...
-	index-all.html
-	index.html
-	...
-	stylesheet.css
 
 - Javadocs for Java portion of API
 - Located in ``javadocs/``
@@ -133,12 +121,8 @@ Javadocs
 
 REST API Guide
 ==============
-
-.. |br_m03| raw:: html
-
-   <br />
    
-- Local copy of REST API located in ``docs/``:|br_m03|
+- Local copy of REST API located in ``docs/``:|br_m04|
   ``REST-API-Reference-v<version>.pdf``
 - All other docs online
 - ``http://www.continuuity.com/developers/``
@@ -165,11 +149,17 @@ At ``http://www.continuuity.com/developers/``
 Module Summary
 ==============
 
-You have looked at:
+You should now be able to:
 
-- The Continuuity Reactor SDK
-- Explored the contents of the SDK
-- Looked at what to do with the SDK
-- Sources for additional help and materials
+- Download the Continuuity Reactor SDK
+- Install the SDK
+- Find the start scripts for Local Reactor
+- Start Local Reactor 
+- Start Dashboard webapp and take the Quickstart tour
 
+----
 
+Module Completed
+================
+
+`Chapter Index <return.html#m04>`__

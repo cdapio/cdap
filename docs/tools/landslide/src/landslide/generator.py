@@ -568,8 +568,6 @@ class Generator(object):
                         #Missing image file, etc...
                         self.log(u"Failed to embed theme image %s" % img_url)
 
-
-
         return html
 
     def write(self):

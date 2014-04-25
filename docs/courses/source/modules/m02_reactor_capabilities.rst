@@ -3,8 +3,11 @@ Continuuity Reactor Capabilities
 ============================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -13,14 +16,11 @@ Continuuity Reactor Capabilities
 Module Objectives
 =================
 
-In this module, you will look at:
+In this module, you will learn about:
 
 - Continuuity Reactor APIs
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
-
-.. - Transaction support in Reactor
-.. - Idempotency of data objects
 
 ----
 
@@ -33,8 +33,7 @@ Continuuity Reactor APIs
   - REST API
 
 - Aim is to reduce the time to create and implement applications
-- Makes available scalable, highly-available system architecture
-
+- Provides a scalable, highly-available system architecture
 - Hides the complexity of distributed technologies
 - Hides low-level Hadoop and HBase APIs
 
@@ -45,7 +44,7 @@ Reactor as an Integrated Platform
 
 Without a Big Data middleware layer, a developer has to piece together
 multiple open source frameworks and runtimes to assemble a complete 
-Big Data infrastructure stack.
+Big Data infrastructure stack
 
 - Reactor eases creation of these elements of Big Data applications:
 
@@ -65,26 +64,14 @@ Reactor's Application Lifecycle Support
 
 Reactor supports developers through the entire application development lifecycle: 
 
-- Development
-- Debugging
-- Testing
-- Continuous integration
-- Production
-
-- Eclipse and IntelliJ support
-
-----
-
-Reactor's Application Lifecycle Support
-=======================================
-
-- Build, test and debug applications on a laptop with a Local Reactor
-- Utilize the application unit test framework for continuous integration
-- Deploy the application to either:
+- **Development:** Maven archetype, Java API, REST API
+- **Debugging:** local Reactor running on a laptop
+- **Testing:** Application unit test framework
+- **Continuous integration:** 
+- **Production deployment:**
 
   - Development cloud (Sandbox Reactor)
   - Production cloud (Enterprise Reactor)
-
 
 ----
 
@@ -96,5 +83,10 @@ You have looked at:
 - Continuuity Reactor's simple APIs
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
-- Transaction support in Reactor
-- Idempotency of data objects
+
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m02>`__

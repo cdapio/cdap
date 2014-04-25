@@ -1,10 +1,13 @@
 ============================================
-Exploring Reactor Applications via Dashboard
+Exploring an Example Reactor Application
 ============================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -13,7 +16,19 @@ Exploring Reactor Applications via Dashboard
 Module Objectives
 =================
 
-In this module, you will look at the basic elements of Continuuity Reactor and its Dashboard.
+In this module, you will see the basic elements of a
+Continuuity Reactor Application through its Dashboard
+
+You'll also learn about the components of the Dashboard
+and its operation
+
+----
+
+Continuuity Reactor Dashboard
+=============================
+
+The **Continuuity Reactor Dashboard** is for deploying applications, querying and 
+managing the Continuuity Reactor
 
 The Dashboard is composed of five sections:
 
@@ -25,38 +40,8 @@ The Dashboard is composed of five sections:
 
 ----
 
-Module Objectives (continued)
-=============================
-
-You will see how these elements are displayed in the Dashboard:
-
-- Streams
-- Flows
-- DataSets
-- Procedures
-- MapReduce Jobs
-- Workflows
-
-----
-
-What is a Reactor Application?
-==============================
-
-- Application
-- Streams
-- Flows
-- DataSets
-- Procedures
-- MapReduce Jobs
-- Workflows
-
-----
-
 Dashboard: Overview
 ===================
-
-The **Continuuity Reactor Dashboard** is available for deploying, querying and 
-managing the Continuuity Reactor.
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
    :width: 600px
@@ -91,34 +76,30 @@ and what is happening with each:
 
 ----
 
-Application
-===========
+Components of a Reactor Application
+====================================
 
-An Application is a collection of:
-
+- Application
 - Streams
-- DataSets
 - Flows
-- Procedures
+- Flowlets
 - MapReduce Jobs
 - Workflows
+- DataSets
+- Procedures
 
-
-----
-
-Collect
-=======
-.fx: center_title_slide
+Elements of applications are located in the different
+sections of the Dashboard based on their function
 
 ----
 
-Streams
-=======
+**Collect:** Streams
+====================
 
 **Streams**: primary means for bringing data
 from external systems into the Reactor in realtime
 
-**Dashboard Collect** pane shows all the Streams collecting data and their 
+Dashboard **Collect** pane shows all the Streams collecting data and their 
 details: name, storage, number of events and the arrival rate, with a graph showing 
 arrivals based on the sampling rate menu setting
 
@@ -127,30 +108,23 @@ arrivals based on the sampling rate menu setting
 
 ----
 
-Streams
-=======
+**Collect:** Streams
+====================
 
 Clicking on a Stream's name takes you to the Stream's pane, showing:
 
 - Number of events per second currently in the Stream
 - Storage and a graph of events over the last sampling period
 - List of all the Flows attached to the Stream with processing rate and busyness for each
-
-Clicking on a Flow name will take you to that Flow's pane:
+- Clicking on a Flow name will take you to that Flow's pane
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_21_stream.png
    :width: 600px
 
 ----
 
-Process
-=======
-.fx: center_title_slide
-
-----
-
-Process
-=======
+**Process**
+===========
 The **Process** pane shows all the
 Flows,
 MapReduce Jobs and Workflows in the Reactor
@@ -158,42 +132,24 @@ MapReduce Jobs and Workflows in the Reactor
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_04_process.png
    :width: 600px
 
-Presenter Notes
----------------
-With their name and status (either *Running* or *Stopped*).
-Each name links to the individual elements detail pane.
-Graphs show statistics based on the sampling rate menu setting.
-
-In the case of Flows, it shows the processing rate in events per second and busyness.
-For MapReduce, it shows the mapping status and the reducing status.
-
 ----
 
-MapReduce Jobs
-==============
+**Process**
+===========
 
-For a MapReduce Job, the Mapping and Reducing activity is shown, along with status and 
-management controls for starting, stopping and configuration
+- Each name links to the individual elements detail pane
+- Each element is shown with name and status (either *Running* or *Stopped*)
+- Graphs show statistics based on the sampling rate menu setting
+- For Flows, shows the processing rate in events per second and busyness
+- For MapReduce Jobs, shows the mapping status and the reducing status
 
-.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_26_mapreduce.png
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_04_process.png
    :width: 600px
 
 ----
 
-Workflows
-=========
-
-For a Workflow, the time until the next scheduled run is shown, along with status and 
-management controls for starting, stopping and configuration
-
-.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_25_workflow.png
-   :width: 600px
-
-
-----
-
-Flows
-=====
+**Process:** Flows
+==================
 
 - Each Flow has a management pane, with status, log and history
 - Shows all Streams, Flowlets, connections, and icons arranged in a 
@@ -206,8 +162,8 @@ Flows
 
 ----
 
-Flows: Management Cluster
-=========================
+**Flows:** Management Cluster
+=============================
 
 The upper-right management cluster:
 
@@ -222,8 +178,8 @@ The upper-right management cluster:
 
 ----
 
-Flows: Configuration Parameters
-===============================
+**Flows:** Configuration Parameters
+===================================
 
 The gear icon brings up a dialog for setting the runtime configuration parameters
 that have been built into the Flow:
@@ -233,19 +189,18 @@ that have been built into the Flow:
 
 ----
 
-Flows: Directed Acyclic Graph
-=============================
+**Flows:** Directed Acyclic Graph
+=================================
 
 The directed acyclic graph (DAG) shows all the Streams and Flowlets:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_24_app_crawler_detail_dag.png
    :width: 600px
 
-
 ----
 
-Flows: Directed Acyclic Graph
-=============================
+**Flows:** Directed Acyclic Graph
+=================================
 
 A Stream icon shows:
 
@@ -255,11 +210,10 @@ A Stream icon shows:
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_12_stream_icon.png
    :width: 200px
 
-
 ----
 
-Flows: Directed Acyclic Graph
-=============================
+**Flows:** Directed Acyclic Graph
+=================================
 
 A Flowlet icon shows:
 
@@ -272,16 +226,30 @@ A Flowlet icon shows:
 
 ----
 
-Store
-=====
-.fx: center_title_slide
+**Process:** MapReduce Jobs
+===========================
+
+Mapping and Reducing activity is shown, along with status and 
+management controls for starting, stopping and configuration
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_26_mapreduce.png
+   :width: 600px
 
 ----
 
-DataSets
-========
+**Process:** Workflows
+======================
 
-For a DataSet, **Dashboard** shows:
+Time until the next scheduled run is shown, along with status and 
+management controls for starting, stopping and configuration
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_25_workflow.png
+   :width: 600px
+
+----
+
+**Store:** DataSets
+===================
 
 - Write rate (in both bytes and operations per second) 
 - Read rate and total storage
@@ -292,16 +260,8 @@ For a DataSet, **Dashboard** shows:
 
 ----
 
-Query
-=====
-.fx: center_title_slide
-
-----
-
-Procedures
-==========
-
-For a Procedure, **Dashboard** shows:
+**Query:** Procedures
+=====================
 
 - Request statistics
 - Status and management controls for starting, stopping and configuration
@@ -317,24 +277,15 @@ where JSON string parameters are passed to the Procedure when calling its method
 Module Summary
 ==============
 
-In this module, you have seen the basic elements of Continuuity Reactor and its Dashboard:
+In this module, you now know:
 
-- Overview
-- Collect
-- Process
-- Store
-- Query
+- The basic elements of a Continuuity Reactor Application
+- Location of these basic elements in the Continuuity Reactor Dashboard
+- Functional areas of the Dashboard
 
 ----
 
-Module Summary (continued)
-==========================
+Module Completed
+================
 
-You have seen how these elements are displayed in the Dashboard:
-
-- Streams
-- Flows
-- DataSets
-- Procedures
-- MapReduce Jobs
-- Workflows
+`Chapter Index <return.html#m05>`__

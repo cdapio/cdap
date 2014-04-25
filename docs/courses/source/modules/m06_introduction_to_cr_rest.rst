@@ -1,10 +1,13 @@
-============================================
-Exploring Reactor Applications via REST
-============================================
+================================================
+Introduction to the Continuuity Reactor REST API
+================================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -30,17 +33,17 @@ Continuuity Reactor through its REST API:
 Continuuity REST API
 ====================
 
-The Continuuity Reactor has an HTTP interface for a multitude of purposes:
+The Continuuity Reactor has an HTTP interface for:
 
-- **Streams**: sending data events to a Stream, or to inspect the contents of a Stream
-- **Flows**: query and setting number of instances
-- **DataSets**: interacting with DataSets (currently limited to Tables)
-- **Procedures**: sending queries to a Procedure
-- **Reactor**: deploying and managing Applications
-- **Logs**: retrieving Application logs
-- **Metrics**: retrieving metrics for system and user Applications (user-defined metrics)
+- **Streams:** sending data events to a Stream, or to inspect the contents of a Stream
+- **Flows:** query and setting number of instances
+- **DataSets:** interacting with DataSets (currently limited to Tables)
+- **Procedures:** sending queries to a Procedure
+- **Reactor:** deploying and managing Applications
+- **Logs:** retrieving Application logs
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
 
-Note: The HTTP interface binds to port ``10000``. This port is fixed and cannot be changed.
+Note: The HTTP interface binds to port ``10000``
 
 ----
 
@@ -175,3 +178,9 @@ You should now be familiar with:
 - Logs
 - Metrics
 
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m06>`__

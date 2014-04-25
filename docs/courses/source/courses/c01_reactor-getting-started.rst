@@ -2,21 +2,14 @@
    :Description: Getting Started With Continuuity Reactor
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
-
 .. Slide Presentation HTML Generation
-
 .. landslide: theme ../_theme/slides-generation/
-
 .. landslide: build ../../html/
 
-
 .. Presentation PDF Generation
-
 .. rst2pdf: config ../_theme/pdf-generation/pdf_config
-
 .. rst2pdf: stylesheets ../_theme/pdf-generation/pdf_stylesheet
 
 ========================================
@@ -27,19 +20,19 @@ Getting Started With Continuuity Reactor
 
 ----
 
-Overview: Agenda
-================
+Getting Started With Continuuity Reactor
+========================================
 
 **Introduction**
 
-- Chapter 1: What Can Reactor Do For You?
+- Chapter 1: What Does Continuuity Reactor Do?
 
 .. *10 Minute Break*
 
 **Reactor Building Blocks** 
 
-- Chapter 2: Reactor Application
-- Chapter 3: Ingesting Data
+- Chapter 2: Continuuity Reactor Applications
+- Chapter 3: Ingesting Data into Continuuity Reactor
 - Chapter 4: Real-time Processing Using Flows
 - Chapter 5: Storing Data Using DataSets
 - Chapter 6: Batch Processing Using MapReduce
@@ -48,8 +41,8 @@ Overview: Agenda
 
 ----
 
-Overview: Agenda (continued)
-============================
+Getting Started With Continuuity Reactor
+========================================
 
 **Integrating Reactor Into Application Development Workflow**
 
@@ -77,71 +70,78 @@ Upon completion of this course you should be able to:
 - Describe Continuuity Reactor capabilities
 - Explain Reactor programming paradigms
 - Understand real-time processing using Flows
-- Perform batch processing using MapReduce
+- Perform batch processing using MapReduce jobs
 - Serve data using Procedures
-- Build a Reactor application
-- Understand Reactor application testing strategies
-
-----
+- Build basic Reactor applications
+- Understand Reactor application debugging and testing strategies
+- Complete common operations tasks and procedures
 
 .. landslide: COURSE MODULES START HERE
 
-.. .. landslide: CUT START
 
 .. landslide: section: Introduction
 .. --------------------------------
 
-.. landslide: chapter: What Can Reactor Do For You?
-.. ................................................
 
-.. landslide: module: Introduction to Big Data Applications
-.. include:: ../modules/m01_introduction_to_big_data_applications.rst
+.. landslide: chapter: What Does Continuuity Reactor Do?
+.. .....................................................
 
-.. landslide: module: Reactor Capabilities
-.. include:: ../modules/m02_reactor_capabilities.rst
+.. landslide: module: Developing a Big Data Application with Reactor
+.. landslide: module link: ../modules/m01_developing_a_big_data_application.rst
+.. landslide: module: Continuuity Reactor Capabilities
+.. landslide: module link: ../modules/m02_reactor_capabilities.rst
+.. landslide: module: Continuuity Reactor Overview
+.. landslide: module link: ../modules/m03_reactor_overview.rst
+.. landslide: module: Continuuity Reactor SDK
+.. landslide: module link: ../modules/m04_reactor_sdk.rst
+.. landslide: exercise: Download Continuuity Reactor SDK, install and run Quickstart
+.. landslide: exercise link: ../exercises/e01_reactor_sdk.rst
 
-.. landslide: module: Reactor SDK
-.. include:: ../modules/m03_reactor_sdk.rst
-
-.. .. landslide: CUT STOP
 
 .. landslide: section: Reactor Building Blocks
 .. -------------------------------------------
 
-.. landslide: chapter: Reactor Application
-.. ................................................
 
-.. landslide: module: Exploring Reactor Applications via Dashboard
-.. include:: ../modules/m04_exploring_reactor_via_dashboard.rst
+.. landslide: chapter: Continuuity Reactor Applications
+.. ....................................................
 
-.. landslide: module: Exploring Reactor Applications via REST
-.. include:: ../modules/m05_exploring_reactor_via_rest.rst
+.. landslide: module: Exploring an Example Reactor Application
+.. landslide: module link: ../modules/m05_exploring_a_reactor_application.rst
+.. landslide: exercise: Continuuity Reactor Purchase Example with Dashboard
+.. landslide: exercise link: ../exercises/e02_purchase_example_dashboard.rst
+.. landslide: module: Introduction to the Continuuity Reactor REST API
+.. landslide: module link: ../modules/m06_introduction_to_cr_rest.rst
+.. landslide: module: Building Your First Continuuity Reactor Application
+.. landslide: module link: ../modules/m07_building_a_cr_application.rst
 
-.. landslide: module: Application Lifecycle management
-.. include:: ../modules/m06_application_lifecyle_management.rst
 
+.. landslide: chapter: Ingesting Data into Continuuity Reactor
+.. ...........................................................
 
-.. landslide: chapter: Ingesting Data
-.. ................................................
-
-.. landslide: module: Streams REST API
-.. include:: ../modules/m07_streams_rest_api.rst
-
+.. landslide: module: Methods for Ingesting Data
+.. landslide: module link: ../modules/m08_sending_data_to_streams.rst
 .. landslide: module: Creating Streams
-.. include:: ../modules/m08_creating_streams.rst
-
+.. landslide: module link: ../modules/m09_creating_streams.rst
 .. landslide: module: Sending Data to Streams
-.. include:: ../modules/m09_sending_data_to_streams.rst
+.. landslide: module link: ../modules/m10_streams_rest_api.rst
+.. landslide: exercise: Continuuity Reactor Purchase Example with REST
+.. landslide: exercise link: ../exercises/e03_purchase_example_rest.rst
 
-.. landslide: CUT START
 
 .. landslide: chapter: Real-time Processing Using Flows
 .. ................................................
 .. landslide: module: Flows versus Flowlets
+.. landslide: module link: ../modules/m11_flows_versus_flowlets.rst
 .. landslide: module: Flow Programming API
+.. landslide: module link: ../modules/m12_flow_programming_api.rst
 .. landslide: module: Flow Partitioning
+.. landslide: module link: ../modules/m13_flow_partitioning.rst
 .. landslide: module: Types of Flowlets
+.. landslide: module link: ../modules/m14_types_of_flowlets.rst
 .. landslide: module: Type Projection
+.. landslide: module link: ../modules/m15_type_projection.rst
+
+.. landslide: CUT START
 
 .. landslide: chapter: Storing Data Using DataSets
 .. ................................................
@@ -208,6 +208,8 @@ Upon completion of this course you should be able to:
 Conclusion
 ==========
 
+..
+
 ----
 
 Appendices
@@ -230,7 +232,7 @@ You should now be able to:
 - Understand real-time processing using Flows
 - Perform batch processing using MapReduce
 - Serve data using Procedures
-- Build a Reactor application
+- Build basic Reactor applications
 - Understand Reactor application testing strategies
 
 ----

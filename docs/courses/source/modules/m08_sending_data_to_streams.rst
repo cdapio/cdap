@@ -3,8 +3,11 @@ Sending Data to Streams
 =======================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -50,7 +53,9 @@ Status Code
    ``200 OK``
 Description
    The event was successfully received
+   
 ..
+
 Status Code
    ``404 Not Found``
 Description
@@ -113,3 +118,10 @@ You should be able to:
 
 - Send events to an existing Stream
 - Sending data to an existing Stream using curl
+
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m08>`__

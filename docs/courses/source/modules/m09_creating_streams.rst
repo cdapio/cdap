@@ -3,8 +3,11 @@ Creating Streams
 ================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
@@ -136,3 +139,11 @@ You should be able to find:
 
 - The display of Streams in the Dashboard
 - The display of a particular Stream in the Dashboard
+
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m09>`__
+
