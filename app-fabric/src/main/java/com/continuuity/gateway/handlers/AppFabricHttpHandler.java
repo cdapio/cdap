@@ -548,8 +548,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
-                action, appId, runnableType, runnableId);
+      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}", action, appId, runnableType, runnableId);
       runnableStartStop(request, responder, appId, runnableId, type, action);
     }
   }
@@ -809,7 +808,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
     try {
-      return (BodyConsumer) deployAppStream(request, responder, appId);
+      return deployAppStream(request, responder, appId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -825,7 +824,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
     try {
-      return (BodyConsumer) deployAppStream(request, responder, null);
+      return deployAppStream(request, responder, null);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -1050,7 +1049,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         } catch (IOException e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
           e.printStackTrace();
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
       }
 
