@@ -371,6 +371,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, Type.WEBAPP.prettyName().toLowerCase());
       runnableStatus(responder, id, Type.WEBAPP);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable t) {
       LOG.error("Got exception:", t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);

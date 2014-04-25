@@ -127,7 +127,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     httpService.startAndWait();
     final int httpPort = httpService.getBindAddress().getPort();
-    LOG.info("HTTP appfabric port is: {}", httpPort);
     final InetSocketAddress socketAddress = new InetSocketAddress(hostname, httpPort);
     final InetAddress httpAddress = socketAddress.getAddress();
     discoveryService.register(new Discoverable() {
