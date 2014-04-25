@@ -61,6 +61,9 @@ public interface StreamConsumer extends Closeable, TransactionAware {
     }
   };
 
+  /**
+   * Represents the result of poll.
+   */
   interface Result extends Iterable<StreamEvent> {
 
     /**

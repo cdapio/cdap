@@ -100,7 +100,8 @@ public abstract class AbstractFileStreamAdmin implements StreamAdmin {
 
     Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
     if (!configLocation.createNew()) {
-      throw new IllegalStateException("Failed to create config for stream '" + name + "' at " + configLocation.toURI());
+      // Stream already exists
+      return;
     }
 
     Properties properties = (props == null) ? new Properties() : props;

@@ -312,12 +312,30 @@ public final class Constants {
    * Stream configurations.
    */
   public static final class Stream {
+    /* Begin CConfiguration keys */
     public static final String BASE_DIR = "stream.base.dir";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
 
+    // Stream http service configurations.
+    public static final String ADDRESS = "stream.bind.address";
+    public static final String WORKER_THREADS = "stream.worker.threads";
+
+    // YARN container configurations.
+    public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "stream.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "stream.container.instances";
+    /* End CConfiguration keys */
+
+    /* Begin constants used by stream */
+
     /** How often to check for new file when reading from stream in milliseconds. **/
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
+
+    // Guice annotations
+    public static final String FILE_PREFIX_ANNOTATION = "stream.writer.file.prefix";
+
+    /* End constants used by stream */
   }
 
   /**

@@ -5,11 +5,13 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.stream.DefaultStreamEventData;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
-import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -20,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -60,9 +63,11 @@ import javax.ws.rs.PathParam;
  *
  * The spin lock between step 2 to step 8 is necessary as it guarantees events enqueued by all threads would eventually
  * get written and flushed.
+ *
+ * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
-public final class StreamHandler extends AbstractHttpHandler {
+public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
 
@@ -70,10 +75,15 @@ public final class StreamHandler extends AbstractHttpHandler {
   private final StreamFileWriterFactory writerFactory;
   private final ConcurrentMap<String, EventQueue> eventQueues;
 
-  public StreamHandler(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory, int threads) {
+  @Inject
+  public StreamHandler(Authenticator authenticator, StreamAdmin streamAdmin,
+                       StreamFileWriterFactory writerFactory, CConfiguration cConf) {
+    super(authenticator);
     this.streamAdmin = streamAdmin;
     this.writerFactory = writerFactory;
-    this.eventQueues = new MapMaker().concurrencyLevel(threads).makeMap();
+
+    int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
+    this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
   }
 
   @Override
@@ -91,6 +101,9 @@ public final class StreamHandler extends AbstractHttpHandler {
   @Path("/{stream}/info")
   public void info(HttpRequest request, HttpResponder responder,
                    @PathParam("stream") String stream) throws Exception {
+    // Just call to verify, but not using the accountId returned.
+    getAuthenticatedAccountId(request);
+
     if (streamAdmin.exists(stream)) {
       responder.sendStatus(HttpResponseStatus.OK);
     } else {
@@ -103,6 +116,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream) throws Exception {
 
+    getAuthenticatedAccountId(request);
+
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
 
@@ -114,6 +129,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   @Path("/{stream}")
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
+
+    getAuthenticatedAccountId(request);
 
     EventQueue eventQueue = getEventQueue(stream);
     HandlerStreamEventData event = eventQueue.add(getHeaders(request, stream), request.getContent().toByteBuffer());
@@ -133,6 +150,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   @POST
   @Path("/{stream}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder, @PathParam("stream") String stream) {
+    getAuthenticatedAccountId(request);
+
     // TODO
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -140,6 +159,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   @POST
   @Path("/{stream}/consumer")
   public void newConsumer(HttpRequest request, HttpResponder responder, @PathParam("stream") String stream) {
+    getAuthenticatedAccountId(request);
     // TODO
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -148,6 +168,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws Exception {
+    getAuthenticatedAccountId(request);
+
     // TODO: This is not thread and multi-instances safe yet
     // Need to communicates with other instances with a barrier for closing current file for the given stream
     getEventQueue(stream).close();

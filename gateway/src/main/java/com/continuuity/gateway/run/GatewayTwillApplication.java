@@ -46,18 +46,10 @@ public class GatewayTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(name)
       .withRunnable()
-      .add("gateway", new GatewayTwillRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
-        .withLocalFiles()
-          .add("cConf.xml", cConfFile.toURI())
-          .add("hConf.xml", hConfFile.toURI())
-        .apply()
-      .add("streamHandler", new StreamHandlerRunnable("cConf.xml", "hConf.xml"))
-        .withLocalFiles()
-          .add("cConf.xml", cConfFile.toURI())
-          .add("hConf.xml", hConfFile.toURI())
-        .apply()
-      .withOrder()
-      .begin("streamHandler").nextWhenStarted("gateway")
-      .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
+      .add(new GatewayTwillRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
   }
 }

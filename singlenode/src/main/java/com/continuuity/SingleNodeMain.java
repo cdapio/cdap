@@ -13,9 +13,10 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
@@ -26,6 +27,7 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +61,7 @@ public class SingleNodeMain {
   private final MetricsQueryService metricsQueryService;
   private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
+  private final StreamHttpService streamHttpService;
 
   private final MetricsCollectionService metricsCollectionService;
 
@@ -81,6 +84,7 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    streamHttpService = injector.getInstance(StreamHttpService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -125,6 +129,7 @@ public class SingleNodeMain {
     router.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
+    streamHttpService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
@@ -137,6 +142,7 @@ public class SingleNodeMain {
   public void shutDown() {
     LOG.info("Shutting down reactor...");
 
+    streamHttpService.stopAndWait();
     webCloudAppService.stopAndWait();
     flumeCollector.stopAndWait();
     router.stopAndWait();
@@ -259,7 +265,8 @@ public class SingleNodeMain {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
-      new RouterModules().getInMemoryModules()
+      new RouterModules().getInMemoryModules(),
+      new StreamHttpModule("local")
     );
   }
 
@@ -303,6 +310,7 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
-      new SecurityModules().getSingleNodeModules());
+      new SecurityModules().getSingleNodeModules(),
+      new StreamHttpModule("local"));
   }
 }
