@@ -101,18 +101,25 @@ public class NettyRouterPipelineTests {
     );
     request.flush();
 
-
     InputStream inStream = socket.getInputStream();
-
     int bufSize = socket.getSendBufferSize();
     byte[] buff = new byte[bufSize];
 
     // TODO: Some errors reading the buffer. Need to fix. For now I am able to verify the ordering in the pipeline
     // by seeing the Ping: 5 appear before Ping: 1
     inStream.read(buff);
+
     String line =  new String(buff, Charsets.UTF_8);
     Assert.assertTrue(line.contains("Ping:5"));
     LOG.info(line);
+
+    //Verify gateway got both requests
+    Assert.assertEquals(2, gatewayServer.getNumRequests());
+
+    request.close();
+    inStream.close();
+    socket.close();
+
  }
 
 
@@ -177,6 +184,8 @@ public class NettyRouterPipelineTests {
 
     @Override
     protected void before() throws Throwable {
+      gatewayServer.clearNumRequests();
+
       NettyHttpService.Builder builder = NettyHttpService.builder();
       builder.addHttpHandlers(ImmutableSet.of(new ServerHandler()));
       builder.setHost(hostname);
