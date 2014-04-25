@@ -3,6 +3,7 @@ package com.continuuity.security.auth;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.FileBasedSecurityModule;
 import com.google.inject.Guice;
@@ -10,9 +11,9 @@ import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Random;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,7 +28,8 @@ public class TestKeyIdentifierCodec {
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedSecurityModule());
+    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedSecurityModule(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
     CConfiguration conf = injector.getInstance(CConfiguration.class);
     keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
     keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH,
