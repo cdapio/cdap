@@ -383,7 +383,7 @@ public class AppFabricHttpHandlerTest {
   }
 
   private String getWebappStatus(String appId) throws Exception {
-    HttpResponse response =AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status" );
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
