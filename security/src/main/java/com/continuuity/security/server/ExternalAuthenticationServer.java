@@ -55,25 +55,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Override
   protected void run() throws Exception {
-    serviceCancellable = discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.EXTERNAL_AUTHENTICATION;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        InetAddress address = null;
-        try {
-          address = InetAddress.getByName(server.getConnectors()[0].getHost());
-        } catch (UnknownHostException e) {
-          LOG.error("Error finding host to connect to.");
-          LOG.error(e.getMessage());
-        }
-        return new InetSocketAddress(address, port);
-      }
-    });
-
     server.start();
   }
 
@@ -91,6 +72,25 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server.setConnectors(new Connector[]{connector});
 
       server.setHandler(handlers);
+
+      serviceCancellable = discoveryService.register(new Discoverable() {
+        @Override
+        public String getName() {
+          return Constants.Service.EXTERNAL_AUTHENTICATION;
+        }
+
+        @Override
+        public InetSocketAddress getSocketAddress() {
+          InetAddress address = null;
+          try {
+            address = InetAddress.getByName(server.getConnectors()[0].getHost());
+          } catch (UnknownHostException e) {
+            LOG.error("Error finding host to connect to.");
+            LOG.error(e.getMessage());
+          }
+          return new InetSocketAddress(address, port);
+        }
+      });
     } catch (Exception e) {
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());

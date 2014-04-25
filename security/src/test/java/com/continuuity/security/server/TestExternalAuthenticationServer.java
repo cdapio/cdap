@@ -146,10 +146,11 @@ public class TestExternalAuthenticationServer {
   @Test
   public void testServiceRegistration() throws Exception {
     server.startAndWait();
-    TimeUnit.SECONDS.sleep(2);
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     Iterator<Discoverable> discoverableIterator = discoverables.iterator();
     assertTrue(discoverableIterator.hasNext());
     server.stopAndWait();
+
+
   }
 }
