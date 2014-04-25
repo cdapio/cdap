@@ -7,6 +7,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -17,6 +18,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Before;
@@ -29,12 +31,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +58,8 @@ public class NettyRouterPipelineTests {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.GATEWAY;
   private static final String webappService = "$HOST";
+  private static final int maxUploadBytes = 10 * 1024 * 1024;
+  private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
 
   private static final Supplier<String> gatewayServiceSupplier = new Supplier<String>() {
     @Override
@@ -79,6 +89,40 @@ public class NettyRouterPipelineTests {
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
+  }
+
+  @Test
+  public void testChunkRequest() throws Exception {
+    byte [] data = generatePostData();
+
+    String url = String.format("http://localhost:%d/v1/uplload", router.getServiceMap().get(gatewayService));
+    URL request = new URL (url);
+
+    HttpURLConnection connection = (HttpURLConnection) request.openConnection();
+    connection.setDoInput(true);
+    connection.setDoOutput(true);
+    connection.setRequestMethod("POST");
+    connection.setUseCaches(false);
+    connection.setRequestProperty("Content-Length", "" + data.length);
+    connection.setRequestProperty("charset", "utf-8");
+
+    DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream ());
+    outputStream.write(data);
+    outputStream.flush();
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    String line;
+    while ((line = reader.readLine()) != null) {
+      System.out.println(line);
+    }
+
+
+    outputStream.close();
+    reader.close();
+
+    connection.disconnect();
+
+
   }
 
   @Test
@@ -250,6 +294,30 @@ public class NettyRouterPipelineTests {
          }
       }
 
+      @POST
+      @Path("/v1/upload")
+      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
+        ChannelBuffer content = request.getContent();
+
+        int readableBytes;
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        while ((readableBytes = content.readableBytes()) > 0) {
+          int read = Math.min(readableBytes, chunkSize);
+          responder.sendChunk(content.readSlice(read));
+          //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
+        }
+        responder.sendChunkEnd();
+      }
     }
   }
+    private static byte [] generatePostData() {
+      byte [] bytes = new byte [maxUploadBytes];
+
+      for (int i = 0; i < maxUploadBytes; ++i) {
+        bytes[i] = (byte) i;
+      }
+
+      return bytes;
+    }
+
 }
