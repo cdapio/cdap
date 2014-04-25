@@ -308,23 +308,133 @@ Debugging with Eclipse
 
 Debugging the Transaction Manager (Advanced Use)
 ................................................
-Internally, Reactor uses transactions to control the way DataSets persist information, 
-and to prevent multiple tasks from writing at the exact same place in a DataSet at the same time.
+In this section, we will explain in more depth how transactions work internally.
+Transactions are introduced in the `Advanced Features <advanced>`__ section.
+
+A transaction is defined by an identifier, which contains the timestamp, in milliseconds,
+of its creation. This identifier - also called ``write pointer`` - represents the version
+that this transaction will use for all its writes. It is also used to determine
+an order between transactions. A transaction with a smaller ``write pointer`` than
+another transaction, must have been started before.
+The `Transaction Manager` (TM) uses the ``write pointers``
+to implement the `Optimistic Concurrency Control`,
+by maintaining a state for all transactions that could be facing concurrency issues.
+The `state` of the TM is entirely defined by the structures defined here:
+
+- The ``in-progress set``; which contains all the ``write pointers`` of transactions
+  which have neither committed nor aborted.
+- The ``invalid set``; which contains the ``write pointers`` of the transactions
+  considered invalid, and which will therefore never be committed. A transaction
+  becomes invalid only if it times out; or, for a long-running transaction,
+  when aborting it.
+  A transaction's ``write pointer`` cannot be in the ``in-progress set``
+  and in the ``invalid set`` at the same time.
+  The ``invalid set`` and the ``in-progress set`` together form the ``excluded set``.
+  When a transaction starts, a copy of this set is given to the transaction so that
+  it excludes from its reads any write performed by the transactions in that set.
+- The ``committing change sets``; which maps ``write pointers`` of the transactions
+  which have requested to commit their writes and which have passed a first round of
+  conflict check; to a list of row keys in which they have performed those writes.
+- The ``committed change sets``; which has the same structure as the ``committing change sets``,
+  but where the ``write pointers`` refer to transactions already committed,
+  which have passed a second round of conflict check.
+
+Below, we describe the states a transaction goes through in the course of its life:
+
+- When a transaction starts, the TM creates a new ``write pointer``
+  and saves it in the ``in-progress set``.
+  An ``excluded set`` is given to the transaction, as well as a ``read pointer``. This latter
+  is an upper bound for the version of writes the transaction is allowed to read.
+  It prevents the transaction from reading committed writes performed after the transaction
+  started.
+- The transaction then performs writes to one or more rows, with the version of those writes
+  being the ``write pointer`` of the transaction.
+- When the transaction wants to commit its writes, it passes to the TM all the row keys where
+  those writes took place. If the transaction is not in the ``invalid set``, the
+  TM will use the ``committed change sets`` structure to detect
+  a conflict. A conflict happens in case this transaction tries to modify a
+  row, which has been modified after the start of the transaction, by one
+  of the transactions present in the structure.
+- If there are no conflicts, all the writes of the transaction along with its ``write pointer``
+  are stored in the ``committing change sets`` structure. The client - namely, a DataSet -
+  can then ask the TM to commit the writes. These are retrieved from the
+  ``committing change sets`` structure. Since the ``committed change sets`` structure might
+  have evolved since the last conflict check, another one is performed. If the
+  transaction is in the ``invalid set`` though, the commit will fail regardless
+  of conflicts.
+- If the second conflict check finds no overlapping transactions, the transaction's
+  ``write pointer`` is removed from the ``in-progress set``, and it is placed in
+  the ``committed change sets`` structure, along with the row keys it has
+  written to. The writes of this transaction will now be seen by all new transactions.
+- If something went wrong in one or the other committing step, we distinguish
+  the behavior for normal transactions and long-running ones:
+
+  - For a normal transaction, the cause could be that the transaction
+    was found in the ``invalid set``, or that a conflict was detected.
+    The client ensures to roll back the writes the transaction has made,
+    and it then asks the TM to abort the transaction.
+    This will remove the transaction's ``write pointer`` from the
+    ``in-progress set`` or the ``invalid set``, and optionally from the
+    ``committing change sets`` structure.
+    
+  - For a long-running transaction, the only possible cause is that a conflict
+    was detected. Since it is assumed that the writes will not be rolled back
+    by the client, the TM aborts the transaction by storing its
+    ``write pointer`` into the ``invalid set``. It is the only way to
+    make other transactions exclude the writes performed by this one.
+
+The ``committed change set`` structure determines how fast conflict detections
+are performed. Fortunately, not all the committed writes need to be
+remembered, but only those which may create a conflict with in-progress
+transactions. This is why only the writes committed after the start of the oldest
+in-progress - non long-running - transaction are stored in this structure.
+This is why transactions which participate in conflict detection must remain
+short in time. The older they are, the bigger the ``committed change set``
+structure will be, hence the longer conflict detection will take.
+When conflict detection takes longer, committing a transaction takes longer
+too and it stays longer in the ``in-progress set``. The whole transaction
+system can become slow if such a situation occurs.
 
 Reactor comes bundled with a script that allows you to dump the state of the internal
-transaction manager into a local file, to allow further investigation. It comes in handy
-when you find that your MapReduce jobs become slower and slower, or on other occasions
-when your Reactor becomes slow over time.
+transaction manager into a local file, to allow further investigation. If your reactor
+tends to become slow, you can use this tool to detect the incriminated transactions.
+This script is called ``tx-debugger``.
 
-Simply run this command::
+To download a snapshot of the state of the TM of a Reactor, simply use this command::
 
-	$ transactions-debugger --host <name> --save <filename>
+	$ tx-debugger view --host <name> [--save <filename>]
 
-It will take a snapshot of the state of the transaction manager for the Reactor
-instance with the specified host name, and save it in a file at a location of your choice.
+`name` is the host name of your Reactor instance, and the optional `filename`
+specifies where the snapshot should be saved on your disk. This command will
+print statistics about all the structures that define the state of the TM.
 
-This file can be useful to our support team if you are experiencing any unusual latencies.
+You can also load a snapshot that has already been saved locally
+with this command::
 
+  $ tx-debugger view --filename <filename>
+
+- Use the ``--ids`` option to print all the transaction ``write pointers``
+  that are stored in the different structures of the state.
+- Use the ``--transaction <writePtr>`` option to specify the ``write pointer``
+  of a transaction you want information for. If the transaction is found
+  in the ``committing change sets`` or the ``committed change sets``
+  structures, this will print the row keys where the transaction has
+  performed writes.
+
+While transactions don't inform you about the tasks that launched them -
+whether it was a Flowlet, a MapReduce job, etc - you can match the time
+they were started with the activity of your Reactor to track potential
+issues.
+
+If you really know what you are doing and you spot a transaction in the
+``in-progress set``, when it should be in the ``invalid set``, you can
+use this command to invalidate it::
+
+  $ tx-debugger invalidate --host <name> --transaction <writePtr>
+
+Invalidating a transaction when we know for sure that its writes should
+be invalidated is useful. It will trigger the writes which bear the version
+of the transaction to be removed from the concerned Tables.
 
 Where to Go Next
 ================
