@@ -14,9 +14,6 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.ArchiveInfo;
-import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -1032,10 +1029,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
 
 
-    final ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
-    rInfo.setApplicationId(appId);
-    final ArchiveId rIdentifier = new ArchiveId(accountId, appId , archiveName);
-    final SessionInfo sessionInfo = new SessionInfo(rIdentifier, rInfo, archive, DeployStatus.UPLOADING);
+
+    final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
     sessions.put(accountId, sessionInfo);
 
     return new BodyConsumer() {
@@ -1055,7 +1050,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         try {
           os.close();
           sessionInfo.setStatus(DeployStatus.VERIFYING);
-          deploy(rIdentifier, archive);
+          deploy(accountId, appId, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception ex) {
@@ -1063,7 +1058,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           ex.printStackTrace();
           responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
         } finally {
-          save(sessionInfo.setStatus(sessionInfo.getStatus()));
+          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
       }
@@ -1072,10 +1067,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   // deploy helper
-  private void deploy(final ArchiveId resource, Location archive) throws Exception {
+  private void deploy(final String accountId, final String appId , Location archive) throws Exception {
 
     try {
-      Id.Account id = Id.Account.from(resource.getAccountId());
+      Id.Account id = Id.Account.from(accountId);
       Location archiveLocation = archive;
       Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
@@ -1085,9 +1080,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, resource.getApplicationId(), archiveLocation).get();
+        manager.deploy(id, appId, archiveLocation).get();
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
-      setupSchedules(resource.getAccountId(), specification);
+      setupSchedules(accountId, specification);
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
@@ -1136,8 +1131,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      DeployStatus status  = dstatus(new ArchiveId(accountId, "", ""));
+      DeployStatus status  = dstatus(accountId);
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
       responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
     } catch (SecurityException e) {
@@ -1450,12 +1444,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /*
    * Returns DeploymentStatus
    */
-  private DeployStatus dstatus(ArchiveId resource) {
-    if (!sessions.containsKey(resource.getAccountId())) {
-      SessionInfo info = retrieve(resource.getAccountId());
+  private DeployStatus dstatus(String accountId) {
+    if (!sessions.containsKey(accountId)) {
+      SessionInfo info = retrieve(accountId);
       return info.getStatus();
     } else {
-      SessionInfo info = sessions.get(resource.getAccountId());
+      SessionInfo info = sessions.get(accountId);
       return info.getStatus();
     }
   }
@@ -1503,10 +1497,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * @param info to be saved.
    * @return true if and only if successful; false otherwise.
    */
-  private boolean save(SessionInfo info) {
+  private boolean save(SessionInfo info, String accountId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      String accountId = info.getArchiveId().getAccountId();
       Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
       if (!outputDir.exists()) {
         return false;
