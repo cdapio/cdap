@@ -659,7 +659,9 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
-    if (addToCommitted) {
+    if (addToCommitted && !changes.isEmpty()) {
+      // No need to add empty changes to the committed change sets, they will never trigger any conflict
+
       // Record the committed change set with the nextWritePointer as the commit time.
       // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
       //       stored under one key
@@ -669,11 +671,7 @@ public class InMemoryTransactionManager extends AbstractService {
         // canCommit) use it unguarded
         changes.addAll(changeIds);
       }
-
-      if (!changes.isEmpty()) {
-        // No need to add empty changes to the committed change sets, they will never trigger any conflict
-        committedChangeSets.put(nextWritePointer, changes);
-      }
+      committedChangeSets.put(nextWritePointer, changes);
     }
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
