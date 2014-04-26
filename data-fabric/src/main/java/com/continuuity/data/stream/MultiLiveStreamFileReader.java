@@ -29,7 +29,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * A {@link FileReader} that combines multiple event stream into single event stream.
  */
 @NotThreadSafe
-public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, Iterable<StreamFileOffset>> {
+public final class MultiLiveStreamFileReader implements FileReader<StreamEventOffset, Iterable<StreamFileOffset>> {
 
   private final PriorityQueue<StreamEventSource> eventSources;
   private final Set<StreamEventSource> emptySources;
@@ -55,7 +55,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, 
   }
 
   @Override
-  public int read(Collection<? super StreamEvent> events, int maxEvents,
+  public int read(Collection<? super StreamEventOffset> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
 
     int eventsRead = 0;
@@ -100,7 +100,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, 
     }
   }
 
-  private int read(Collection<? super StreamEvent> events) throws IOException, InterruptedException {
+  private int read(Collection<? super StreamEventOffset> events) throws IOException, InterruptedException {
     if (eventSources.isEmpty()) {
       return 0;
     }
@@ -146,8 +146,8 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEvent, 
       this.nextOffset = beginOffset;
     }
 
-    void read(Collection<? super StreamEvent> result) throws IOException, InterruptedException {
-      result.add(events.get(0));
+    void read(Collection<? super StreamEventOffset> result) throws IOException, InterruptedException {
+      result.add(new StreamEventOffset(events.get(0), new StreamFileOffset(currentOffset)));
       events.clear();
       if (!currentOffset.getEventLocation().equals(nextOffset.getEventLocation())) {
         currentOffset = new StreamFileOffset(nextOffset);

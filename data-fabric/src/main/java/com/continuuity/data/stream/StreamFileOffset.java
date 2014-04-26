@@ -103,14 +103,12 @@ public final class StreamFileOffset {
 
     StreamFileOffset other = (StreamFileOffset) o;
 
-    return (offset == other.offset) &&
-      Objects.equal(eventLocation, other.eventLocation) &&
-      Objects.equal(indexLocation, other.indexLocation);
+    return (offset == other.offset) && Objects.equal(eventLocation, other.eventLocation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(eventLocation, indexLocation, offset);
+    return Objects.hashCode(eventLocation, offset);
   }
 
   /**

@@ -4,7 +4,7 @@
 package com.continuuity.data2.transaction.stream.hbase;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.transaction.stream.AbstractFileStreamAdmin;
+import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -12,10 +12,10 @@ import org.apache.twill.filesystem.LocationFactory;
  * A file based {@link com.continuuity.data2.transaction.stream.StreamAdmin} that uses HBase for maintaining
  * consumer state information.
  */
-public final class HBaseFileStreamAdmin extends AbstractFileStreamAdmin {
+public final class HBaseStreamFileAdmin extends AbstractStreamFileAdmin {
 
   @Inject
-  HBaseFileStreamAdmin(LocationFactory locationFactory, CConfiguration cConf) {
+  HBaseStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf) {
     super(locationFactory, cConf);
   }
 }

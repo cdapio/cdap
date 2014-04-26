@@ -7,7 +7,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.file.FileWriter;
-import com.continuuity.data2.transaction.stream.AbstractFileStreamAdmin;
+import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public abstract class LiveMultiStreamFileReaderTestBase {
+public abstract class MultiLiveStreamFileReaderTestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -37,7 +37,7 @@ public abstract class LiveMultiStreamFileReaderTestBase {
   protected abstract LocationFactory getLocationFactory();
 
   protected StreamAdmin getStreamAdmin() {
-    return new AbstractFileStreamAdmin(getLocationFactory(), CConfiguration.create()) { };
+    return new AbstractStreamFileAdmin(getLocationFactory(), CConfiguration.create()) { };
   }
 
   @Test

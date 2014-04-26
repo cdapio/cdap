@@ -9,7 +9,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.FileWriter;
-import com.continuuity.data2.transaction.stream.AbstractFileStreamAdmin;
+import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
@@ -53,7 +53,7 @@ public abstract class StreamDataFileTestBase {
   protected abstract LocationFactory getLocationFactory();
 
   protected StreamAdmin getStreamAdmin() {
-    return new AbstractFileStreamAdmin(getLocationFactory(), CConfiguration.create()) { };
+    return new AbstractStreamFileAdmin(getLocationFactory(), CConfiguration.create()) { };
   }
 
   /**

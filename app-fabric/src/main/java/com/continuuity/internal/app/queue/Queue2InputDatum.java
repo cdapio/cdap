@@ -31,13 +31,13 @@ final class Queue2InputDatum<T> implements InputDatum<T> {
     }
   };
 
-  private final DequeueResult result;
+  private final DequeueResult<byte[]> result;
   private final AtomicInteger retry;
   private final InputContext inputContext;
   private final QueueName queueName;
   private final Function<ByteBuffer, T> decoder;
 
-  Queue2InputDatum(final QueueName queueName, final DequeueResult result, Function<ByteBuffer, T> decoder) {
+  Queue2InputDatum(final QueueName queueName, DequeueResult<byte[]> result, Function<ByteBuffer, T> decoder) {
     this.result = result;
     this.retry = new AtomicInteger(0);
     this.queueName = queueName;

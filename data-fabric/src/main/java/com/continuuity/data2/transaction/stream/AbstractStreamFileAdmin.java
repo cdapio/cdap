@@ -27,16 +27,16 @@ import javax.annotation.Nullable;
 /**
  * An abstract base {@link StreamAdmin} for File based stream.
  */
-public abstract class AbstractFileStreamAdmin implements StreamAdmin {
+public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractFileStreamAdmin.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileAdmin.class);
   private static final String CONFIG_FILE_NAME = "config.json";
   private static final Gson GSON = new Gson();
 
   private final Location streamBaseLocation;
   private final CConfiguration cConf;
 
-  protected AbstractFileStreamAdmin(LocationFactory locationFactory, CConfiguration cConf) {
+  protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
   }
