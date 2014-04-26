@@ -59,7 +59,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                               final MessageEvent event) throws Exception {
 
     final Channel inboundChannel = event.getChannel();
-
     if (event.getMessage() instanceof HttpChunk) {
       sendChunk((HttpChunk) event.getMessage());
     } else {
@@ -69,7 +68,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                                                              request.getHeader(HttpHeaders.Names.HOST),
                                                                              request.getMethod().getName());
       // Suspend incoming traffic until connected to the outbound service.
-      inboundChannel.setReadable(false);
+      //TODO: Channel interest change
+     //      inboundChannel.setReadable(false);
       int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
 
       EndpointStrategy strategy = serviceLookup.getDiscoverable(inboundPort,
@@ -105,7 +105,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       }
 
       if (future != null) {
-        inboundChannel.setReadable(true);
+ // TODO: Do the channelInterest change
+ //        inboundChannel.setReadable(true);
         if (future.isSuccess()) {
           future.getChannel().write(request);
         } else {
@@ -128,16 +129,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
         ChannelFuture outFuture = clientBootstrap.connect(address);
         Channel outboundChannel = outFuture.getChannel();
-
         outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
-        // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
         outboundChannel.getPipeline().addLast("request-encoder", new HttpRequestEncoder());
-
         outFuture.addListener(new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
-              inboundChannel.setReadable(true);
+  // TODO: Do the channelInterest change
+  //              inboundChannel.setReadable(true);
               future.getChannel().write(request);
             } else {
               // Close the connection if the connection attempt has failed.
@@ -162,6 +161,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void channelClosed(ChannelHandlerContext ctx,
                             ChannelStateEvent e) throws Exception {
+    for (ChannelFuture cf : discoveryTable.values()){
+      cf.getChannel().write(ChannelBuffers.EMPTY_BUFFER)
+                     .addListener(ChannelFutureListener.CLOSE);
+    }
     discoveryTable.clear();
   }
 
@@ -174,7 +177,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         .addListener(ChannelFutureListener.CLOSE);
     } else {
       HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
-                                                      HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                                                     HttpResponseStatus.INTERNAL_SERVER_ERROR);
       ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
     }
   }
@@ -190,33 +193,22 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
   //send the chunk to the ChannelFuture cached already in the first call.
   private void sendChunk(final HttpChunk chunk) {
-    if (chunk.getContent().readableBytes() == 0) {
+    if (channelFutureForChunkRequest != null) {
+      if (!channelFutureForChunkRequest.getChannel().isConnected()) {
+           return; //NOThing to do.
+      }
+      channelFutureForChunkRequest.getChannel().write(chunk);
+    } else {
+      //Chunk as the first event. This can never happen!
+      // THrow an exception
+      throw new HandlerException(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Chunk received and channelfuture is null");
+    }
+
+    if (chunk.isLast()) {
       //lastChunk nothing much to do
       channelFutureForChunkRequest = null;
       return;
     }
-
-    if (channelFutureForChunkRequest != null) {
-      if (channelFutureForChunkRequest.isSuccess()) {
-        channelFutureForChunkRequest.getChannel().write(chunk);
-      } else {
-        channelFutureForChunkRequest.addListener(new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) throws Exception {
-            if (future.isSuccess()) {
-              future.getChannel().write(chunk);
-            } else {
-              // Close the connection if the connection attempt has failed.
-              future.getChannel().close();
-              LOG.trace("Failed while processing chunk request", future.getCause());
-            }
-          }
-        });
-      }
-    } else {
-      //Chunk as the first event. This can never happen!
-    }
-
   }
 
   private  static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
