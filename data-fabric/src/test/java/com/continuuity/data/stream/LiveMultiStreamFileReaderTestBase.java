@@ -74,9 +74,7 @@ public abstract class LiveMultiStreamFileReaderTestBase {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
       Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
-      Location indexFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.INDEX);
-
-      sources.add(new StreamFileOffset(eventFile, indexFile));
+      sources.add(new StreamFileOffset(eventFile));
     }
 
     // Reads all events written so far.
@@ -152,9 +150,7 @@ public abstract class LiveMultiStreamFileReaderTestBase {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
       Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
-      Location indexFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.INDEX);
-
-      sources.add(new StreamFileOffset(eventFile, indexFile));
+      sources.add(new StreamFileOffset(eventFile));
     }
     MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(config, sources);
 

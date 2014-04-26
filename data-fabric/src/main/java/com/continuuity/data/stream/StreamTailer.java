@@ -11,18 +11,15 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.Location;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +43,7 @@ public class StreamTailer {
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     Location streamLocation = streamAdmin.getConfig(streamName).getLocation();
-    Map<String, StreamFile> streamFiles = Maps.newHashMap();
+    List<Location> eventFiles = Lists.newArrayList();
 
     for (Location partition : streamLocation.list()) {
       if (!partition.isDirectory()) {
@@ -54,27 +51,14 @@ public class StreamTailer {
       }
 
       for (Location file : partition.list()) {
-        int idx = file.toURI().toString().lastIndexOf('.');
-        if (idx > 0) {
-          String name = file.toURI().toString().substring(0, idx);
-          StreamFile streamFile = streamFiles.get(name);
-          if (streamFile == null) {
-            streamFile = new StreamFile();
-            streamFiles.put(name, streamFile);
-          }
-          if (file.getName().endsWith(StreamFileType.EVENT.getSuffix())) {
-            streamFile.setEventLocation(file);
-          } else if (file.getName().endsWith(StreamFileType.INDEX.getSuffix())) {
-            streamFile.setIndexLocation(file);
-          }
+        if (StreamFileType.EVENT.isMatched(file.getName())) {
+          eventFiles.add(file);
         }
       }
     }
 
-    System.out.println(streamFiles);
-
     MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamAdmin.getConfig(streamName),
-      ImmutableList.copyOf(Iterables.transform(streamFiles.values(), createOffsetConverter())));
+      ImmutableList.copyOf(Iterables.transform(eventFiles, createOffsetConverter())));
     List<StreamEvent> events = Lists.newArrayList();
     while (reader.read(events, 10, 100, TimeUnit.MILLISECONDS) >= 0) {
       for (StreamEvent event : events) {
@@ -86,41 +70,11 @@ public class StreamTailer {
     reader.close();
   }
 
-  private static final class StreamFile {
-
-    private Location eventLocation;
-    private Location indexLocation;
-
-    public Location getEventLocation() {
-      return eventLocation;
-    }
-
-    public void setEventLocation(Location eventLocation) {
-      this.eventLocation = eventLocation;
-    }
-
-    public Location getIndexLocation() {
-      return indexLocation;
-    }
-
-    public void setIndexLocation(Location indexLocation) {
-      this.indexLocation = indexLocation;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("event", eventLocation.toURI())
-        .add("index", indexLocation.toURI())
-        .toString();
-    }
-  }
-
-  private static Function<StreamFile, StreamFileOffset> createOffsetConverter() {
-    return new Function<StreamFile, StreamFileOffset>() {
+  private static Function<Location, StreamFileOffset> createOffsetConverter() {
+    return new Function<Location, StreamFileOffset>() {
       @Override
-      public StreamFileOffset apply(StreamFile input) {
-        return new StreamFileOffset(input.getEventLocation(), input.getIndexLocation());
+      public StreamFileOffset apply(Location eventLocation) {
+        return new StreamFileOffset(eventLocation);
       }
     };
   }

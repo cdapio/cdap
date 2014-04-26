@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.stream;
 
-import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -11,8 +10,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Helper class for computing {@link InputSplit} for a stream data file.
@@ -28,13 +27,10 @@ import java.util.Map;
  */
 final class StreamDataFileSplitter {
 
-  private final Map<StreamFileType, FileStatus> fileStatusMap = Maps.newHashMap();
+  private final FileStatus eventFileStatus;
 
-  /**
-   * Adds a file status for either an event file or event index file.
-   */
-  void addFileStatus(FileStatus fileStatus) {
-    fileStatusMap.put(StreamFileType.getType(fileStatus.getPath().getName()), fileStatus);
+  StreamDataFileSplitter(FileStatus eventFileStatus) {
+    this.eventFileStatus = eventFileStatus;
   }
 
   /**
@@ -42,17 +38,11 @@ final class StreamDataFileSplitter {
    */
   void computeSplits(FileSystem fs, long minSplitSize, long maxSplitSize,
                      long startTime, long endTime, List<InputSplit> splits) throws IOException {
-    FileStatus eventFileStatus = fileStatusMap.get(StreamFileType.EVENT);
-    FileStatus indexFileStatus = fileStatusMap.get(StreamFileType.INDEX);
-
-    if (eventFileStatus == null) {
-      // Nothing to process.
-      return;
-    }
 
     // Compute the splits based on the min/max size
     Path eventFile = eventFileStatus.getPath();
-    Path indexFile = indexFileStatus == null ? null : indexFileStatus.getPath();
+    Path indexFile = getIndexFile(eventFile);
+
     BlockLocation[] blockLocations = fs.getFileBlockLocations(eventFile, 0, eventFileStatus.getLen());
 
     long length = eventFileStatus.getLen();
@@ -115,5 +105,13 @@ final class StreamDataFileSplitter {
     long blockSize = fileStatus.getBlockSize();
     long splitSize = Math.max(minSplitSize, Math.min(maxSplitSize, blockSize));
     return Math.min(splitSize, fileStatus.getLen() - offset);
+  }
+
+  private Path getIndexFile(Path eventFile) {
+    String eventPath = eventFile.toUri().toString();
+    int extLength = StreamFileType.EVENT.getSuffix().length();
+    return new Path(URI.create(String.format("%s%s",
+                                             eventPath.substring(0, eventPath.length() - extLength),
+                                             StreamFileType.INDEX.getSuffix())));
   }
 }

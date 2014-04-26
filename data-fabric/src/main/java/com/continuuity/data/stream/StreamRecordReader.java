@@ -8,7 +8,6 @@ import com.continuuity.api.stream.StreamEventDecoder;
 import com.continuuity.common.io.Locations;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -108,11 +107,8 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
    * @return A {@link StreamRecordReader} that is ready for reading events as specified by the input split.
    */
   private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) {
-    Path indexPath = inputSplit.getIndexPath();
-
-    return StreamDataFileReader.createWithOffset(
-      Locations.newInputSupplier(fs, inputSplit.getPath()),
-      indexPath == null ? null : Locations.newInputSupplier(fs, indexPath),
-      inputSplit.getStart());
+    return StreamDataFileReader.createWithOffset(Locations.newInputSupplier(fs, inputSplit.getPath()),
+                                                 Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
+                                                 inputSplit.getStart());
   }
 }

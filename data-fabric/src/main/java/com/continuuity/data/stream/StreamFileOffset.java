@@ -4,9 +4,11 @@
 package com.continuuity.data.stream;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
-import javax.annotation.Nullable;
+import java.net.URI;
 
 /**
  *
@@ -26,16 +28,18 @@ public final class StreamFileOffset {
    * @param other The instance to clone from.
    */
   public StreamFileOffset(StreamFileOffset other) {
-    this(other.getEventLocation(), other.getIndexLocation(), other.getOffset());
+    this(other.getEventLocation(), other.getOffset());
   }
 
-  public StreamFileOffset(Location eventLocation, @Nullable Location indexLocation) {
-    this(eventLocation, indexLocation, 0L);
+  public StreamFileOffset(Location eventLocation) {
+    this(eventLocation, 0L);
   }
 
-  public StreamFileOffset(Location eventLocation, @Nullable Location indexLocation, long offset) {
+  public StreamFileOffset(Location eventLocation, long offset) {
+    Preconditions.checkNotNull(eventLocation, "Event file location cannot be null.");
+
     this.eventLocation = eventLocation;
-    this.indexLocation = indexLocation;
+    this.indexLocation = createIndexLocation(eventLocation);
     this.offset = offset;
 
     // See StreamInputFormat for the path format
@@ -86,5 +90,42 @@ public final class StreamFileOffset {
       .add("index", indexLocation == null ? null : indexLocation.toURI())
       .add("offset", getOffset())
       .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StreamFileOffset other = (StreamFileOffset) o;
+
+    return (offset == other.offset) &&
+      Objects.equal(eventLocation, other.eventLocation) &&
+      Objects.equal(indexLocation, other.indexLocation);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(eventLocation, indexLocation, offset);
+  }
+
+  /**
+   * Creates the index file location from the event file location.
+   *
+   * @param eventLocation Location for the event file.
+   * @return Location of the index file.
+   */
+  private Location createIndexLocation(Location eventLocation) {
+    LocationFactory factory = eventLocation.getLocationFactory();
+    String eventPath = eventLocation.toURI().toString();
+    int extLength = StreamFileType.EVENT.getSuffix().length();
+
+    return factory.create(URI.create(String.format("%s%s",
+                                                   eventPath.substring(0, eventPath.length() - extLength),
+                                                   StreamFileType.INDEX.getSuffix())));
   }
 }

@@ -503,11 +503,10 @@ public abstract class StreamDataFileTestBase {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(),
                                                                      partitionStart, config.getPartitionDuration());
     Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, filePrefix, 0, StreamFileType.EVENT);
-    Location indexLocation = StreamUtils.createStreamLocation(partitionLocation, filePrefix, 0, StreamFileType.INDEX);
 
     // Creates a live stream reader that check for sequence file ever 100 millis.
     FileReader<StreamEvent, StreamFileOffset> reader
-      = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation, indexLocation), 100);
+      = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation), 100);
 
     List<StreamEvent> events = Lists.newArrayList();
     // Try to read, since the writer thread is not started, it should get nothing

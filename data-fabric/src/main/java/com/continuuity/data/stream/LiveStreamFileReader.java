@@ -6,11 +6,9 @@ package com.continuuity.data.stream;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
-import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.LiveFileReader;
 import com.continuuity.data2.transaction.stream.StreamConfig;
-import com.google.common.io.InputSupplier;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,9 +109,7 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
       return null;
     }
 
-    Location indexLocation = StreamUtils.createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.INDEX);
-    return new StreamPositionTransformFileReader(streamConfig.getLocation(),
-                                                 new StreamFileOffset(eventLocation, indexLocation));
+    return new StreamPositionTransformFileReader(streamConfig.getLocation(), new StreamFileOffset(eventLocation));
   }
 
   @NotThreadSafe
@@ -124,8 +120,8 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
     private final Location partitionLocation;
 
     private StreamPositionTransformFileReader(Location streamLocation, StreamFileOffset offset) throws IOException {
-      this.reader = StreamDataFileReader.createWithOffset(createInputSupplier(offset.getEventLocation()),
-                                                          createInputSupplier(offset.getIndexLocation()),
+      this.reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(offset.getEventLocation()),
+                                                          Locations.newInputSupplier(offset.getIndexLocation()),
                                                           offset.getOffset());
       this.offset = new StreamFileOffset(offset);
 
@@ -156,10 +152,6 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
 
     Location getPartitionLocation() {
       return partitionLocation;
-    }
-
-    private InputSupplier<? extends SeekableInputStream> createInputSupplier(@Nullable Location location) {
-      return location == null ? null : Locations.newInputSupplier(location);
     }
   }
 }
