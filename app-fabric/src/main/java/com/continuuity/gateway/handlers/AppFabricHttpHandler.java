@@ -1,7 +1,13 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
+import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
@@ -17,6 +23,7 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.Data;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.ProgramId;
@@ -52,7 +59,9 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -92,6 +101,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -1686,6 +1696,302 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Returns a list of streams associated with account.
+   */
+  @GET
+  @Path("/streams")
+  public void getStreams(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, Data.STREAM, null, null);
+  }
+
+  /**
+   * Returns a stream associated with account.
+   */
+  @GET
+  @Path("/streams/{stream-id}")
+  public void getStreamSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("stream-id") final String streamId) {
+    dataList(request, responder, Data.STREAM, streamId, null);
+  }
+
+  /**
+   * Returns a list of streams associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/streams")
+  public void getStreamsByApp(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId) {
+    dataList(request, responder, Data.STREAM, null, appId);
+  }
+
+  /**
+   * Returns a list of dataset associated with account.
+   */
+  @GET
+  @Path("/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, Data.DATASET, null, null);
+  }
+
+  /**
+   * Returns a dataset associated with account.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("dataset-id") final String datasetId) {
+    dataList(request, responder, Data.DATASET, datasetId, null);
+  }
+
+  /**
+   * Returns a list of dataset associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/datasets")
+  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId) {
+    dataList(request, responder, Data.DATASET, null, appId);
+  }
+
+  private void dataList(HttpRequest request, HttpResponder responder, Data type, String name, String appId) {
+    try {
+      if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided");
+        return;
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program program = Id.Program.from(accountId, appId == null ? "" : appId, "");
+      String json = name != null ? getDataEntity(program, type, name) :
+        appId != null ? listDataEntitiesByApp(program, type) : listDataEntities(program, type);
+      if (json.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception : ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
+    try {
+      if (type == Data.DATASET) {
+        DataSetSpecification spec = store.getDataSet(new Id.Account(programId.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      } else if (type == Data.STREAM) {
+        StreamSpecification spec = store.getStream(new Id.Account(programId.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private String listDataEntities(Id.Program programId, Data type) throws Exception {
+    try {
+      if (type == Data.DATASET) {
+        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(programId.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (DataSetSpecification spec : specs) {
+          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      } else if (type == Data.STREAM) {
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (StreamSpecification spec : specs) {
+          result.add(makeStreamRecord(spec.getName(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
+    try {
+      Id.Account account = new Id.Account(programId.getAccountId());
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(
+        account, programId.getApplicationId()));
+      if (type == Data.DATASET) {
+        Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+        for (String dsName : dataSetsUsed) {
+          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
+          if (spec == null) {
+            spec = store.getDataSet(account, dsName);
+          }
+          result.add(makeDataSetRecord(dsName, spec == null ? null : spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == Data.STREAM) {
+        Set<String> streamsUsed = streamsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+        for (String streamName : streamsUsed) {
+          result.add(makeStreamRecord(streamName, null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private static Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      result.addAll(flowlet.getDatasets());
+    }
+    return result;
+  }
+
+  private static Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(dataSetsUsedBy(flowSpec));
+    }
+    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
+      result.addAll(procSpec.getDataSets());
+    }
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+      result.addAll(mrSpec.getDataSets());
+    }
+    result.addAll(appSpec.getDataSets().keySet());
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
+        result.add(con.getSourceName());
+      }
+    }
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(streamsUsedBy(flowSpec));
+    }
+    result.addAll(appSpec.getStreams().keySet());
+    return result;
+  }
+
+  /**
+   * Returns all flows associated with a stream.
+   */
+  @GET
+  @Path("/streams/{stream-id}/flows")
+  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
+                               @PathParam("stream-id") final String streamId) {
+    programListByDataAccess(request, responder, Type.FLOW, Data.STREAM, streamId);
+  }
+
+  /**
+   * Returns all flows associated with a dataset.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                                @PathParam("dataset-id") final String datasetId) {
+    programListByDataAccess(request, responder, Type.FLOW, Data.DATASET, datasetId);
+  }
+
+  private void programListByDataAccess(HttpRequest request, HttpResponder responder,
+                                       Type type, Data data, String name) {
+    try {
+      if (name.isEmpty()) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, data.prettyName().toLowerCase() + " name is empty");
+        return;
+      }
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, "", "");
+      String list = listProgramsByDataAccess(programId, type, data, name);
+      if (list.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String listProgramsByDataAccess(Id.Program programId, Type type, Data data, String name) throws Exception {
+    try {
+      List<Map<String, String>> result = Lists.newArrayList();
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
+        new Id.Account(programId.getAccountId()));
+      if (appSpecs != null) {
+        for (ApplicationSpecification appSpec : appSpecs) {
+          if (type == Type.FLOW) {
+            for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+              if ((data == Data.DATASET && usesDataSet(flowSpec, name))
+                || (data == Data.STREAM && usesStream(flowSpec, name))) {
+                result.add(makeProgramRecord(appSpec.getName(), flowSpec, Type.FLOW));
+              }
+            }
+          } else if (type == Type.PROCEDURE) {
+            for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+              if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
+                result.add(makeProgramRecord(appSpec.getName(), procedureSpec, Type.PROCEDURE));
+              }
+            }
+          } else if (type == Type.MAPREDUCE) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+              if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
+                result.add(makeProgramRecord(appSpec.getName(), mrSpec, Type.MAPREDUCE));
+              }
+            }
+          }
+        }
+      }
+      return new Gson().toJson(result);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve application specs for " +
+                                             programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      if (flowlet.getDatasets().contains(dataset)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
    /* -----------------  helpers to return Json consistently -------------- */
 
   private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
@@ -1695,6 +2001,44 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     builder.put("name", spec.getName());
     if (spec.getDescription() != null) {
       builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeProgramRecord (String appId, ProgramSpecification spec, Type type) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", type.prettyName());
+    builder.put("app", appId);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeDataSetRecord(String name, String classname,
+                                                       DataSetSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Dataset");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (classname != null) {
+      builder.put("classname", classname);
+    }
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Stream");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
     }
     return builder.build();
   }
