@@ -633,7 +633,7 @@ public class InMemoryTransactionManager extends AbstractService {
         // todo: these should be atomic
         // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
         //       be attempted to commit twice
-        changeSet = committingChangeSets.get(tx.getWritePointer());
+        changeSet = committingChangeSets.remove(tx.getWritePointer());
 
         if (changeSet != null) {
           // double-checking if there are conflicts: someone may have committed since canCommit check
@@ -659,10 +659,6 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
-    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
-    //       be attempted to commit twice
-    committingChangeSets.remove(writePointer);
-
     if (addToCommitted) {
       // Record the committed change set with the nextWritePointer as the commit time.
       // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
@@ -674,7 +670,10 @@ public class InMemoryTransactionManager extends AbstractService {
         changes.addAll(changeIds);
       }
 
-      committedChangeSets.put(nextWritePointer, changes);
+      if (!changes.isEmpty()) {
+        // No need to add empty changes to the committed change sets, they will never trigger any conflict
+        committedChangeSets.put(nextWritePointer, changes);
+      }
     }
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
