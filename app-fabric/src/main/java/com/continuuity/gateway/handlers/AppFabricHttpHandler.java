@@ -18,9 +18,6 @@ import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
-import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -1140,9 +1137,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      DeploymentStatus status  = dstatus(new ArchiveId(accountId, "", ""));
+      DeployStatus status  = dstatus(new ArchiveId(accountId, "", ""));
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
+      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1453,55 +1450,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /*
    * Returns DeploymentStatus
    */
-  private DeploymentStatus dstatus(ArchiveId resource) {
+  private DeployStatus dstatus(ArchiveId resource) {
     if (!sessions.containsKey(resource.getAccountId())) {
       SessionInfo info = retrieve(resource.getAccountId());
-      return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
+      return info.getStatus();
     } else {
       SessionInfo info = sessions.get(resource.getAccountId());
-      return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
+      return info.getStatus();
     }
   }
-
-  /*
-   * Initializes deployment of resources from the client.
-   * <p>
-   *   Upon receiving a request to initialize an upload with auth-token and resource information,
-   *   we create a unique identifier for the upload and also create directories needed for storing
-   *   the uploading archive. At this point the upload has not yet begun. The bytes of the archive
-   *   are still on the client machine. An session id is returned back to client - which will use
-   *   the session id provided to upload the chunks.
-   * </p>
-   * <p>
-   *   <i>Note:</i> As the state of upload are transient they are not being persisted on the server.
-   * </p>
-   *
-   * @param info ArchiveInfo
-   * @return ArchiveId instance containing the resource id and
-   * resource version.
-   */
-  private ArchiveId init(ArchiveInfo info) throws Exception {
-    LOG.debug("Init deploying application " + info.toString());
-    ArchiveId identifier = new ArchiveId(info.getAccountId(), "appId", "resourceId");
-
-    try {
-      if (sessions.containsKey(info.getAccountId())) {
-        throw new Exception("An upload is already in progress for this account.");
-      }
-      Location uploadDir = locationFactory.create(archiveDir + "/" + info.getAccountId());
-      if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-        LOG.warn("Unable to create directory '{}'", uploadDir.getName());
-      }
-      Location archive = uploadDir.append(info.getFilename());
-      SessionInfo sessionInfo = new SessionInfo(identifier, info, archive, DeployStatus.REGISTERED);
-      sessions.put(info.getAccountId(), sessionInfo);
-      return identifier;
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
-    }
-  }
-
 
   private void deleteHandler(Id.Program programId, Type type)
     throws ExecutionException {
@@ -1509,18 +1466,20 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       switch (type) {
         case FLOW:
           //Stop the flow if it not running
-          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
-                                                                                        programId.getApplicationId(),
-                                                                                        programId.getId()));
+          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                          programId.getApplicationId(),
+                                                                          programId.getId(),
+                                                                          type);
           if (flowRunInfo != null) {
             doStop(flowRunInfo);
           }
           break;
         case PROCEDURE:
           //Stop the procedure if it not running
-          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(
-            programId.getAccountId(), programId.getApplicationId(),
-            programId.getId()));
+          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                               programId.getApplicationId(),
+                                                                               programId.getId(),
+                                                                               type);
           if (procedureRunInfo != null) {
             doStop(procedureRunInfo);
           }
@@ -1573,13 +1532,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return true;
   }
 
-  private RunIdentifier doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
     throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
     ProgramController controller = runtimeInfo.getController();
-    RunId runId = controller.getRunId();
     controller.stop().get();
-    return new RunIdentifier(runId.getId());
   }
 
   /** NOTE: This was a temporary hack done to map the status to something that is
@@ -1622,26 +1579,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return "";
   }
 
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Type type = Type.valueOf(identifier.getType().name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getAccountId(), identifier.getFlowId());
-
-    Id.Program programId = Id.Program.from(identifier.getAccountId(),
-                                           identifier.getApplicationId(),
-                                           identifier.getFlowId());
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
-  }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, Type type) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getAccountId(), identifier.getApplicationId());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (identifier.equals(info.getProgramId())) {
         return info;
