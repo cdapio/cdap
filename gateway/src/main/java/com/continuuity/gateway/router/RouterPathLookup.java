@@ -82,7 +82,7 @@ public final class RouterPathLookup {
                             Pattern.compile(TRANSACTIONS_STATE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       // todo change to Constants.Service.DATASET_MANAGER
-      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.PUT), Pattern.compile(TRANSACTION_ID_PATH)),
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(TRANSACTION_ID_PATH)),
           Constants.Service.APP_FABRIC_HTTP)
       .build();
 

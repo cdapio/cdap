@@ -288,11 +288,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * @param txId transaction ID.
    */
   @Path("/transactions/{tx-id}/invalidate")
-  @PUT
+  @POST
   public void invalidateTx(HttpRequest request, HttpResponder responder,
                            @PathParam("tx-id") final String txId) {
     try {
-      Long txIdLong = Long.valueOf(txId);
+      long txIdLong = Long.parseLong(txId);
       boolean success = txClient.invalidate(txIdLong);
       if (success) {
         LOG.info("Transaction {} successfully invalidated", txId);

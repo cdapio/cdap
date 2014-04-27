@@ -215,7 +215,7 @@ public class TransactionManagerDebuggerMain {
     try {
       url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/" + txId + "/invalidate");
       connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestMethod("PUT");
+      connection.setRequestMethod("POST");
 
       System.out.println("About to invalidate transaction " +
                          txId + " on Reactor running at " + hostname);
