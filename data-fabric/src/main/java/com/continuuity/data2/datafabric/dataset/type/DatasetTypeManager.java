@@ -108,6 +108,8 @@ public class DatasetTypeManager extends AbstractIdleService {
             Class<DatasetModule> moduleClass = (Class<DatasetModule>) ClassLoaders.loadClass(className, cl, this);
             module = moduleClass.newInstance();
           } catch (Exception e) {
+            LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
+                      className, name, jarLocation);
             throw Throwables.propagate(e);
           }
 
