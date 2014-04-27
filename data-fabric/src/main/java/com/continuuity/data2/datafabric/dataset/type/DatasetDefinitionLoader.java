@@ -26,10 +26,23 @@ public class DatasetDefinitionLoader {
     this.locationFactory = locationFactory;
   }
 
+  /**
+   * Same as {@link #load(DatasetTypeMeta, DatasetDefinitionRegistry)} but uses empty registry to star with`.
+   */
   public <T extends DatasetDefinition> T load(DatasetTypeMeta meta) throws IOException {
     return load(meta, new InMemoryDatasetDefinitionRegistry());
   }
 
+  /**
+   * Loads {@link DatasetDefinition} using {@link DatasetTypeMeta} info. It will use given
+   * {@link DatasetDefinitionRegistry} to load all required modules and types. If registry is missing some of them,
+   * it will load respective jars and add them to the registry (thus, modifying the given registry).
+   * @param meta info of type to load
+   * @param registry registry to use for loading
+   * @param <T> type of the definition
+   * @return instance of {@link DatasetDefinition}
+   * @throws IOException
+   */
   public <T extends DatasetDefinition> T load(DatasetTypeMeta meta, DatasetDefinitionRegistry registry)
     throws IOException {
 

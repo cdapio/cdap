@@ -64,8 +64,8 @@ public class DatasetManagerService extends AbstractIdleService {
                                    new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     this.defaultModules = defaultModules;
 
-    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory, cConf);
-    this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient, cConf);
+    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory);
+    this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager)));

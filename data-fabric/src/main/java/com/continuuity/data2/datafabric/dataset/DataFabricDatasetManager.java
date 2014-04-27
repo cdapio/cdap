@@ -4,9 +4,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
+import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetNamespace;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
@@ -26,6 +25,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.Map;
  * {@link DatasetManager} implementation that talks to DatasetManager Service
  */
 public class DataFabricDatasetManager implements DatasetManager {
+  private static final Logger LOG = LoggerFactory.getLogger(DataFabricDatasetManager.class);
 
   private final DatasetManagerServiceClient client;
   private final Map<String, DatasetModule> modulesCache;
@@ -57,7 +59,7 @@ public class DataFabricDatasetManager implements DatasetManager {
 
   @Override
   public void register(String moduleName, Class<? extends DatasetModule> module)
-    throws ModuleConflictException, IOException {
+    throws DatasetManagementException {
 
     Location tempJarPath;
     if (module.getClassLoader() instanceof JarClassLoader) {
@@ -71,40 +73,44 @@ public class DataFabricDatasetManager implements DatasetManager {
   }
 
   @Override
-  public void deleteModule(String moduleName) throws ModuleConflictException, IOException {
+  public void deleteModule(String moduleName) throws DatasetManagementException {
     client.deleteModule(moduleName);
   }
 
   @Override
   public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
-    throws InstanceConflictException, IOException {
+    throws DatasetManagementException {
 
     client.addInstance(namespace(datasetInstanceName), datasetType, props);
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     client.deleteInstance(namespace(datasetInstanceName));
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader) throws IOException {
+  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
+
     DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetImplementation(instanceInfo.getType(), classLoader);
+    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
     return (T) impl.getAdmin(instanceInfo.getSpec());
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader) throws IOException {
+  public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
+    throws DatasetManagementException, IOException {
+
     DatasetInstanceMeta instanceInfo = client.getInstance(namespace(datasetInstanceName));
     if (instanceInfo == null) {
       return null;
     }
-    DatasetDefinition impl = getDatasetImplementation(instanceInfo.getType(), classLoader);
+    DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
     return (T) impl.getDataset(instanceInfo.getSpec());
   }
@@ -113,24 +119,32 @@ public class DataFabricDatasetManager implements DatasetManager {
     return namespace.namespace(datasetInstanceName);
   }
 
-  private <T extends DatasetDefinition> T getDatasetImplementation(DatasetTypeMeta implementationInfo,
-                                                                   ClassLoader classLoader)
-    throws IOException {
+  private <T extends DatasetDefinition> T getDatasetDefinition(DatasetTypeMeta implementationInfo,
+                                                               ClassLoader classLoader)
+    throws DatasetManagementException {
 
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       if (!modulesCache.containsKey(moduleMeta.getName())) {
         if (moduleMeta.getJarLocation() != null) {
           // adding dataset module jar to classloader
-          classLoader = classLoader == null ?
-          new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
-          new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+          try {
+            classLoader = classLoader == null ?
+            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
+            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+          } catch (IOException e) {
+            LOG.error("Was not able to init classloader for module {} while trying to load type {}",
+                      moduleMeta, implementationInfo, e);
+            throw Throwables.propagate(e);
+          }
         }
         DatasetModule module;
         try {
           Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
           module = (DatasetModule) moduleClass.newInstance();
         } catch (Exception e) {
+          LOG.error("Was not able to load dataset module class {} while trying to load type {}",
+                    moduleMeta.getClassName(), implementationInfo, e);
           throw Throwables.propagate(e);
         }
         modulesCache.put(moduleMeta.getName(), module);

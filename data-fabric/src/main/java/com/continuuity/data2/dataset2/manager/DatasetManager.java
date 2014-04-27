@@ -32,19 +32,19 @@ public interface DatasetManager {
    * @param moduleName dataset module name
    * @param moduleClass dataset module class
    * @throws ModuleConflictException when module with same name is already registered
-   * @throws IOException
+   * @throws DatasetManagementException
    */
   void register(String moduleName, Class<? extends DatasetModule> moduleClass)
-    throws ModuleConflictException, IOException;
+    throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.
    * @param moduleName dataset module name
    * @throws ModuleConflictException when module cannot be deleted because of its dependants
-   * @throws IOException
+   * @throws DatasetManagementException
    */
   void deleteModule(String moduleName)
-    throws ModuleConflictException, IOException;
+    throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -60,10 +60,10 @@ public interface DatasetManager {
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
    * @throws InstanceConflictException if dataset instance with this name already exists
-   * @throws IOException
+   * @throws DatasetManagementException
    */
   void addInstance(String datasetTypeName, String datasetInstanceName, DatasetInstanceProperties props)
-    throws InstanceConflictException, IOException;
+    throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.
@@ -72,9 +72,9 @@ public interface DatasetManager {
    *       dataset admin to perform such administrative operations
    * @param datasetInstanceName dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
-   * @throws IOException
+   * @throws DatasetManagementException
    */
-  void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException;
+  void deleteInstance(String datasetInstanceName) throws DatasetManagementException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.
@@ -82,11 +82,12 @@ public interface DatasetManager {
    * @param <T> dataset admin type
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset admin or {@code null} if dataset instance of this name doesn't exist.
-   * @throws IOException
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link DatasetAdmin}
    */
   @Nullable
   <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, @Nullable ClassLoader classLoader)
-    throws IOException;
+    throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset to be used to perform data operations.
@@ -94,9 +95,10 @@ public interface DatasetManager {
    * @param <T> dataset type to be returned
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
-   * @throws IOException
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link Dataset}
    */
   @Nullable
   <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable ClassLoader classLoader)
-    throws IOException;
+    throws DatasetManagementException, IOException;
 }

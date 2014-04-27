@@ -3,7 +3,7 @@ package com.continuuity.data2.dataset2.manager;
 /**
  * Thrown when operation conflicts with existing dataset instances available in the system.
  */
-public class InstanceConflictException extends Exception {
+public class InstanceConflictException extends DatasetManagementException {
   public InstanceConflictException(String message) {
     super(message);
   }

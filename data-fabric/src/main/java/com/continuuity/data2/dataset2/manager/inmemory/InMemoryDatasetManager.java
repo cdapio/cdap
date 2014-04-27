@@ -50,14 +50,14 @@ public class InMemoryDatasetManager implements DatasetManager {
   }
 
   @Override
-  public void deleteModule(String moduleName) throws ModuleConflictException, IOException {
+  public void deleteModule(String moduleName) throws ModuleConflictException {
     modules.remove(moduleName);
     // todo: remove from registry & check for conflicts. It is fine for now, as we don't use delete with in-mem version
   }
 
   @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
-    throws InstanceConflictException, IOException {
+    throws InstanceConflictException {
     if (instances.get(datasetInstanceName) != null) {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
@@ -67,7 +67,7 @@ public class InMemoryDatasetManager implements DatasetManager {
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
+  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException {
     instances.remove(datasetInstanceName);
   }
 

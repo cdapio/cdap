@@ -21,38 +21,38 @@ public class NamespacedDatasetManager implements DatasetManager {
 
   @Override
   public void register(String moduleName, Class<? extends DatasetModule> moduleClass)
-    throws ModuleConflictException, IOException {
+    throws DatasetManagementException {
 
     delegate.register(moduleName, moduleClass);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws ModuleConflictException, IOException {
+  public void deleteModule(String moduleName) throws DatasetManagementException {
     delegate.deleteModule(moduleName);
   }
 
   @Override
   public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
-    throws InstanceConflictException, IOException {
+    throws DatasetManagementException {
 
     delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     delegate.deleteInstance(namespace(datasetInstanceName));
   }
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
-    throws IOException {
+    throws DatasetManagementException, IOException {
 
     return delegate.getAdmin(namespace(datasetInstanceName), classLoader);
   }
 
   @Override
   public <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
-    throws IOException {
+    throws DatasetManagementException, IOException {
 
     return delegate.getDataset(namespace(datasetInstanceName), ignored);
   }
