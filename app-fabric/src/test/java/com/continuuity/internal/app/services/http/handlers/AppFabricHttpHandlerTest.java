@@ -326,6 +326,40 @@ public class AppFabricHttpHandlerTest {
     }
   }
 
+  /**
+   * Tests procedure instances.
+   */
+  @Test
+  public void testProcedureInstances () throws Exception {
+    HttpResponse response = deploy(WordCountApp.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
+
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", 10);
+
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/procedures/WordFrequency/instances",
+                                           json.toString());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    s = EntityUtils.toString(response.getEntity());
+    result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
+
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+  }
+
   @Test
   public void testStatus() throws Exception {
 

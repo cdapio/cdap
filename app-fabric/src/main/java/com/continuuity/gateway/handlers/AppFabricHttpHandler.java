@@ -689,6 +689,81 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Returns number of instances for a procedure.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      int count = getProgramInstances(Id.Program.from(accountId, appId, procedureId));
+      JsonObject json = new JsonObject();
+      json.addProperty("instances", count);
+
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+   * Sets number of instances for a procedure
+   */
+  @PUT
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void setProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      short instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+
+      setProgramInstances(programId, instances);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void setProgramInstances(Id.Program programId, short instances) throws Exception {
+    try {
+      store.setProcedureInstances(programId, instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, Type.PROCEDURE);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(programId.getId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               programId.getId(), Type.PROCEDURE.prettyName(), throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
+    }
+  }
+
+  private int getProgramInstances(Id.Program programId) throws Exception {
+    try {
+      return store.getProcedureInstances(programId);
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}.{}",
+               programId.getId(), Type.PROCEDURE.prettyName(), throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
+    }
+  }
 
   /**
    * Returns number of instances for a flowlet within a flow.

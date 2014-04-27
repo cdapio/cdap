@@ -34,6 +34,9 @@ public final class RouterPathLookup {
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
+  private static final String PROCEDURE_INSTANCE_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/procedures/(A-Za-z0-9_-]+)/instances/?$";
+
   private static final String TRANSACTIONS_PATH = VERSION +
     "/transactions/snapshot";
 
@@ -43,6 +46,18 @@ public final class RouterPathLookup {
 
   private static final String LIVEINFO_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures)/([A-Za-z0-9_]+)/live-info";
+
+  private static final String ALLDATA_PATH = VERSION +
+    "/(streams|datasets)/?$";
+
+  private static final String DATA_PATH = VERSION +
+    "/(streams|datasets)/([A-Za-z0-9_-]+)/?$";
+
+  private static final String APPDATA_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/(streams|datasets)/?$";
+
+  private static final String FLOWINFO_PATH = VERSION +
+    "/(streams|datasets)/([A-Za-z0-9_-]+)/flows/?$";
 
   //TODO: Consolidate this!!!
   private static final String SPEC_PATH = VERSION +
@@ -64,6 +79,8 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(FLOWLET_INSTANCE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(PROCEDURE_INSTANCE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(SPEC_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(LIVEINFO_PATH)),
@@ -76,6 +93,14 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       // todo change to Constants.Service.DATASET_MANAGER
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(TRANSACTIONS_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(ALLDATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(DATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(APPDATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(FLOWINFO_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .build();
 
