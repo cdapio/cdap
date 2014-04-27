@@ -13,7 +13,7 @@ import java.util.List;
  * <p>
  * NOTE: there's also seem to be a bug: first split should have open start and last one open end... TODO: fix it
  */
-public class SplitsUtil {
+final class SplitsUtil {
   // Simplest stateless getSplits method implementation (doesn't use the actual stored data)
 
   /**

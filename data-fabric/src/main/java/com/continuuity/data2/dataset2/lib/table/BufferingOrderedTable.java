@@ -1,6 +1,7 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.internal.data.dataset.lib.table.TableSplit;
 import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
@@ -411,9 +412,9 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
    * Ideally should be overridden by subclasses
    */
   @Override
-  public List<TableSplit> getSplits(int numSplits, byte[] start, byte[] stop) {
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     List<KeyRange> keyRanges = SplitsUtil.primitiveGetSplits(numSplits, start, stop);
-    return Lists.transform(keyRanges, new Function<KeyRange, TableSplit>() {
+    return Lists.transform(keyRanges, new Function<KeyRange, Split>() {
       @Nullable
       @Override
       public TableSplit apply(@Nullable KeyRange input) {
@@ -445,6 +446,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
       result.putAll(buffCols);
     }
 
+    // todo: noticed in debugging unwrapDeletes is executed twice: investigate
     return unwrapDeletes(result);
   }
 

@@ -15,6 +15,7 @@ import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
@@ -23,6 +24,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -60,6 +62,7 @@ public class AppFabricTestsSuite {
 
   private static EndpointStrategy endpointStrategy;
   private static AppFabricService.Iface app;
+  private static MetricsQueryService metrics;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -86,7 +89,8 @@ public class AppFabricTestsSuite {
       injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       app =  appFabricServer.getService();
-
+      metrics = injector.getInstance(MetricsQueryService.class);
+      metrics.startAndWait();
     }
 
     @Override
@@ -115,6 +119,7 @@ public class AppFabricTestsSuite {
 
   public static void stopAppFabricServer(CConfiguration conf) {
     appFabricServer.stopAndWait();
+    metrics.stopAndWait();
     conf.clear();
   }
 
@@ -184,5 +189,12 @@ public class AppFabricTestsSuite {
     }
     put.setHeader(AUTH_HEADER);
     return client.execute(put);
+  }
+
+  public static HttpResponse doDelete(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
+    delete.setHeader(AUTH_HEADER);
+    return client.execute(delete);
   }
 }

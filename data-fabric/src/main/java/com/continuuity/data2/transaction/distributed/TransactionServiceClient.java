@@ -9,14 +9,17 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
+import java.io.InputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.thrift.TException;
@@ -356,6 +359,28 @@ public class TransactionServiceClient implements TransactionSystemClient {
             return true;
           }
         });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
+    try {
+      return this.execute(
+          new Operation<InputStream>("takeSnapshot") {
+            @Override
+            public InputStream execute(TransactionServiceThriftClient client)
+                throws Exception {
+              try {
+                return client.getSnapshotStream();
+              } catch (TTransactionCouldNotTakeSnapshotException e) {
+                throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
+              }
+            }
+          });
+    } catch (TransactionCouldNotTakeSnapshotException e) {
+      throw e;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

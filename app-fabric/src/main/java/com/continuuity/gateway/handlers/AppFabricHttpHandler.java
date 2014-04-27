@@ -1,5 +1,7 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
@@ -23,7 +25,12 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -40,8 +47,11 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -53,12 +63,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -68,23 +82,25 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -117,6 +133,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final ProgramRuntimeService runtimeService;
 
+
+  /**
+   * Client talking to transaction system.
+   */
+  private TransactionSystemClient txClient;
+
   /**
    * App fabric output directory.
    */
@@ -137,6 +159,20 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   private final WorkflowClient workflowClient;
+
+  private final DiscoveryServiceClient discoveryServiceClient;
+
+  private final QueueAdmin queueAdmin;
+
+  /**
+   * Number of seconds for timing out a service endpoint discovery.
+   */
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
+
+  /**
+   * Timeout to get response from metrics system.
+   */
+  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
 
   /**
@@ -161,6 +197,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private enum AppFabricServiceStatus {
 
     OK(HttpResponseStatus.OK, ""),
+    PROGRAM_STILL_RUNNING(HttpResponseStatus.FORBIDDEN, "Program is still running"),
     PROGRAM_ALREADY_RUNNING(HttpResponseStatus.CONFLICT, "Program is already running"),
     PROGRAM_ALREADY_STOPPED(HttpResponseStatus.CONFLICT, "Program already stopped"),
     RUNTIME_INFO_NOT_FOUND(HttpResponseStatus.CONFLICT,
@@ -195,9 +232,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               LocationFactory locationFactory, ManagerFactory managerFactory,
-                              StoreFactory storeFactory,
-                              ProgramRuntimeService runtimeService,
-                              WorkflowClient workflowClient, Scheduler service) {
+                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
+                              WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
+                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -209,7 +246,37 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.scheduler = service;
+    this.discoveryServiceClient = discoveryServiceClient;
+    this.queueAdmin = queueAdmin;
+    this.txClient = txClient;
+  }
 
+  @Path("/transactions/snapshot")
+  @GET
+  public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
+    try {
+      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
+      InputStream in = txClient.getSnapshotInputStream();
+      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
+      try {
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        while (true) {
+          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
+          byte[] readBytes = new byte[4096];
+          int res = in.read(readBytes, 0, 4096);
+          if (res == -1) {
+            break;
+          }
+          responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+        }
+        responder.sendChunkEnd();
+      } finally {
+        in.close();
+      }
+    } catch (Exception e) {
+      LOG.error("Could not take transaction manager snapshot", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -1065,6 +1132,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       this.message = message;
     }
   }
+
   /**
    * Gets application deployment status.
    */
@@ -1077,6 +1145,77 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       DeploymentStatus status  = dstatus(new ArchiveId(accountId, "", ""));
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
       responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Delete an application specified by appId
+   */
+  @DELETE
+  @Path("/apps/{app-id}")
+  public void deleteApp(HttpRequest request, HttpResponder responder,
+                        @PathParam("app-id") final String appId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, "");
+      AppFabricServiceStatus appStatus = removeApplication(id);
+      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
+      responder.sendString(appStatus.getCode(), appStatus.getMessage());
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes all applications in the reactor.
+   */
+  @DELETE
+  @Path("/apps")
+  public void deleteAllApps(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Account id = Id.Account.from(accountId);
+      AppFabricServiceStatus status = removeAll(id);
+      LOG.trace("Delete All call at AppFabricHttpHandler");
+      responder.sendString(status.getCode(), status.getMessage());
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes queues
+   */
+  @DELETE
+  @Path("/apps/{app-id}/flows/{flow-id}/queues")
+  public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId,
+                               @PathParam("flow-id") final String flowId) {
+    String accountId = getAuthenticatedAccountId(request);
+    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+    try {
+      ProgramStatus status = getProgramStatus(programId, Type.FLOW);
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (status.getStatus().equals("RUNNING")) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
+      } else {
+        queueAdmin.dropAllForFlow(appId, flowId);
+        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+        deleteProcessMetricsForFlow(appId, flowId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1114,6 +1253,203 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.warn("Failed to retrieve session info for account.");
     }
     return null;
+  }
+
+  private AppFabricServiceStatus removeAll(Id.Account identifier) throws Exception {
+    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
+      store.getAllApplications(identifier));
+
+    //Check if any App associated with this account is running
+    final Id.Account accId = Id.Account.from(identifier.getId());
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().getAccount().equals(accId);
+      }
+    }, Type.values());
+
+    if (appRunning) {
+      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    //All Apps are STOPPED, delete them
+    for (ApplicationSpecification appSpec : allSpecs) {
+      Id.Program id = Id.Program.from(identifier.getId(), appSpec.getName() , "");
+      removeApplication(id);
+    }
+    return AppFabricServiceStatus.OK;
+  }
+
+  private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
+    Id.Account accountId = Id.Account.from(identifier.getAccountId());
+    final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
+
+    //Check if all are stopped.
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().equals(appId);
+      }
+    }, Type.values());
+
+    if (appRunning) {
+      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    }
+
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+      List<String> schedules = scheduler.getScheduleIds(workflowProgramId, Type.WORKFLOW);
+      if (!schedules.isEmpty()) {
+        scheduler.deleteSchedules(workflowProgramId, Type.WORKFLOW, schedules);
+      }
+    }
+
+    deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
+
+    // also delete all queue state of each flow
+    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+    }
+    deleteProgramLocations(appId);
+
+    Location appArchive = store.getApplicationArchiveLocation(appId);
+    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
+    appArchive.delete();
+    store.removeApplication(appId);
+    return AppFabricServiceStatus.OK;
+  }
+
+  private void deleteMetrics(String account, String application) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      throw new IOException("Can't find Metrics endpoint");
+    }
+
+    LOG.debug("Deleting metrics for application {}", application);
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.GATEWAY_VERSION,
+                                 scope.name().toLowerCase(),
+                                 application);
+      sendMetricsDelete(url);
+    }
+  }
+
+  // deletes the process metrics for a flow
+  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              3L, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      throw new IOException("Can't find Metrics endpoint");
+    }
+
+    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    String url = String.format("http://%s:%d%s/metrics/reactor/apps/%s/flows/%s?prefixEntity=process",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.GATEWAY_VERSION,
+                               application, flow);
+
+    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) timeout)
+      .build();
+
+    try {
+      client.delete().get(timeout, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
+  }
+
+
+  private void sendMetricsDelete(String url) {
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+      .build();
+
+    try {
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
+  }
+
+  /**
+   * Check if any program that satisfy the given {@link Predicate} is running.
+   *
+   * @param predicate Get call on each running {@link Id.Program}.
+   * @param types Types of program to check
+   * returns True if a program is running as defined by the predicate.
+   */
+  private boolean checkAnyRunning(Predicate<Id.Program> predicate, Type... types) {
+    for (Type type : types) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
+                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Delete the jar location of the program.
+   *
+   * @param appId        applicationId.
+   * @throws IOException if there are errors with location IO
+   */
+  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+    ApplicationSpecification specification = store.getApplication(appId);
+
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
+                                                                   specification.getMapReduce().values(),
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
+
+    for (ProgramSpecification spec : programSpecs) {
+      Type type = Type.typeOfSpecification(spec);
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+      location.delete();
+    }
+
+    // Delete webapp
+    // TODO: this will go away once webapp gets a spec
+    try {
+      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(), Type.WEBAPP.name().toLowerCase());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+      location.delete();
+    } catch (FileNotFoundException e) {
+      // expected exception when webapp is not present.
+    }
   }
 
   /*

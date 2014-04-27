@@ -562,5 +562,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Operating a Continuuity Reactor <operations>`__,
-  which covers putting Continuuity Reactor into production.
+- `Continuuity Reactor Testing and Debugging Guide </developers/debugging>`__,
+  which covers both testing and debugging of Continuuity Reactor applications.

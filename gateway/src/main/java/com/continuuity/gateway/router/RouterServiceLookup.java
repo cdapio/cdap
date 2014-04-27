@@ -75,20 +75,18 @@ public class RouterServiceLookup {
      * @param httpRequest supplies the header information for the lookup.
      * @return discoverable based on port and host header.
      */
-  public Discoverable getDiscoverable(int port, HttpRequest httpRequest)
-    throws Exception {
+  public Discoverable getDiscoverable(int port, HttpRequest httpRequest) throws Exception {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
     }
 
-    //Decoding the header
     String path = httpRequest.getUri();
     String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
     String httpMethod = httpRequest.getMethod().getName();
 
-    final HeaderInfo headerInfo = new HeaderInfo(path, host, httpMethod);
+    final HeaderDecoder.HeaderInfo headerInfo = new HeaderDecoder.HeaderInfo(path, host, httpMethod);
 
     if (headerInfo == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
@@ -192,7 +190,7 @@ public class RouterServiceLookup {
     private final String hostHeaader;
     private final String firstPathPart;
 
-    private CacheKey(String service, HeaderInfo headerInfo) {
+    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
       this.service = service;
       this.hostHeaader = headerInfo.getHost();
 

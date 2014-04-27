@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
@@ -20,6 +21,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,8 +30,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -40,13 +45,16 @@ public class TestExternalAuthenticationServer {
   private static CConfiguration configuration;
   private static int port;
   private static Codec<AccessToken> tokenCodec;
+  private static DiscoveryServiceClient discoveryServiceClient;
 
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
+    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     configuration = injector.getInstance(CConfiguration.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
+    discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
   }
 
@@ -100,8 +108,8 @@ public class TestExternalAuthenticationServer {
 
     assertTrue(tokenType.equals(String.format("\"%s\"", ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY)));
 
-    long expectedExpiration = Long.parseLong(configuration.get(Constants.Security.TOKEN_EXPIRATION));
-
+    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION,
+                                                    Constants.Security.DEFAULT_TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertTrue(expiration == expectedExpiration / 1000);
 
@@ -128,6 +136,23 @@ public class TestExternalAuthenticationServer {
 
     // Request is Unauthorized
     assertTrue(response.getStatusLine().getStatusCode() == 401);
+
+    server.stopAndWait();
+  }
+
+  /**
+   * Test that the service is discoverable.
+   * @throws Exception
+   */
+  @Test
+  public void testServiceRegistration() throws Exception {
+    server.startAndWait();
+    Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    Iterator<Discoverable> discoverableIterator = discoverables.iterator();
+
+    assertTrue(discoverableIterator.hasNext());
+    Discoverable discoverable = discoverableIterator.next();
+    assertEquals(discoverable.getSocketAddress(), server.getSocketAddress());
 
     server.stopAndWait();
   }

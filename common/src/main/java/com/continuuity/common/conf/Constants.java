@@ -17,6 +17,7 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
+    public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }
 
   /**
@@ -448,16 +449,9 @@ public final class Constants {
     public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
     public static final String MAX_THREADS = "security.server.maxthreads";
     public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
+    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
-
-    /** Configuration for enabling the security */
-    public static final String SECURITY_ENABLED = "security.enabled";
-
-    /**
-     * Configuration for security realm
-     */
-    public static final String CFG_REALM = "security.realm";
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
   }
@@ -547,6 +541,4 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
-
-
 }
