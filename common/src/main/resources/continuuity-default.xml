@@ -718,4 +718,10 @@
         <description>Time duration (in milliseconds) after which an active secret key used
         for signing tokens should be retired.</description>
     </property>
+
+    <property>
+        <name>security.token.distributed.parent.znode</name>
+        <value>/${reactor.namespace>/security/keys</value>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
+    </property>
 </configuration>

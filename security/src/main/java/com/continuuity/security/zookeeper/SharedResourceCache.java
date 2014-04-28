@@ -1,6 +1,8 @@
 package com.continuuity.security.zookeeper;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.zookeeper.ZKExtOperations;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
@@ -15,6 +17,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;
@@ -54,9 +57,15 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   private final ZKClient zookeeper;
   private final Codec<T> codec;
   private final String parentZnode;
+  private final List<ResourceListener> listeners = Lists.newArrayList();
   private ZKWatcher watcher;
   private Map<String, T> resources;
   private Lock lock = new ReentrantLock();
+
+  @Inject
+  public SharedResourceCache(CConfiguration cConf, ZKClient zookeeper, Codec<T> codec) {
+    this(zookeeper, codec, cConf.get(Constants.Security.DIST_KEY_PARENT_ZNODE));
+  }
 
   public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode) {
     this.zookeeper = zookeeper;
@@ -68,6 +77,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   protected void startUp() throws Exception {
     this.watcher = new ZKWatcher();
     try {
+      LOG.info("Checking for parent znode {}", parentZnode);
       if (zookeeper.exists(parentZnode).get() == null) {
         zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL).get();
       }
@@ -76,6 +86,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
       throw Throwables.propagate(ee.getCause());
     }
     this.resources = reloadAll();
+    notifyListeners();
   }
 
   @Override
@@ -116,6 +127,16 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
     });
 
     return loaded;
+  }
+
+  public void addListener(ResourceListener listener) {
+    listeners.add(listener);
+  }
+
+  private void notifyListeners() {
+    for (ResourceListener listener : listeners) {
+      listener.onUpdate();
+    }
   }
 
   @Override
@@ -260,6 +281,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
     } finally {
       lock.unlock();
     }
+    notifyListeners();
   }
 
   private void notifyDataChanged(String path) {
@@ -289,8 +311,6 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
     @Override
     public void process(WatchedEvent event) {
       LOG.info("Watcher got event " + event);
-      return;
-      /*
       switch (event.getType()) {
         case None:
           // connection change event
@@ -308,7 +328,6 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
           notifyDataChanged(event.getPath());
           break;
       }
-      */
     }
   }
 }

@@ -3,10 +3,12 @@ package com.continuuity.security.auth;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.io.Codec;
+import com.continuuity.security.zookeeper.ResourceListener;
 import com.continuuity.security.zookeeper.SharedResourceCache;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.zookeeper.ZKClient;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,7 +18,7 @@ import java.util.TimerTask;
 /**
  *
  */
-public class DistributedKeyManager extends AbstractKeyManager {
+public class DistributedKeyManager extends AbstractKeyManager implements ResourceListener {
   /**
    * Default execution frequency for the key update thread.  This is normally set much lower than the key expiration
    * interval to keep rotations happening at approximately the set frequency.
@@ -24,20 +26,32 @@ public class DistributedKeyManager extends AbstractKeyManager {
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private Timer timer;
   private long lastKeyUpdate;
+  private boolean leader;
 
-  @Inject
-  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
+  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zookeeper,
+                               SharedResourceCache<KeyIdentifier> keyCache) {
     super(conf);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION,
                                             Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION);
-    this.allKeys = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "keys");
+    keyCache.addListener(this);
+    this.allKeys = keyCache;
   }
 
   @Override
   protected void doInit() throws IOException {
     ((Service) this.allKeys).startAndWait();
-    rotateKey();
+    if (isLeader()) {
+      rotateKey();
+    }
     startExpirationThread();
+  }
+
+  public boolean isLeader() {
+    return leader;
+  }
+
+  public void setLeader(boolean value) {
+    this.leader = value;
   }
 
   private synchronized void rotateKey() {
@@ -59,11 +73,22 @@ public class DistributedKeyManager extends AbstractKeyManager {
     timer.scheduleAtFixedRate(new TimerTask() {
       @Override
       public void run() {
-        long now = System.currentTimeMillis();
-        if (lastKeyUpdate < (now - keyExpirationPeriod)) {
-          rotateKey();
+        if (leader) {
+          long now = System.currentTimeMillis();
+          if (lastKeyUpdate < (now - keyExpirationPeriod)) {
+            rotateKey();
+          }
         }
       }
     }, 0, Math.min(keyExpirationPeriod, KEY_UPDATE_FREQUENCY));
+  }
+
+  @Override
+  public synchronized void onUpdate() {
+    for (Map.Entry<String, KeyIdentifier> keyEntry : allKeys.entrySet()) {
+      if (currentKey == null || keyEntry.getValue().getExpiration() > currentKey.getExpiration()) {
+        currentKey = keyEntry.getValue();
+      }
+    }
   }
 }
