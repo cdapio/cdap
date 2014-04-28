@@ -111,6 +111,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
               try {
                 T resource = codec.decode(result.getData());
                 loaded.put(nodeName, resource);
+                notifyResourceListeners(resource);
               } catch (IOException ioe) {
                 throw Throwables.propagate(ioe);
               }
@@ -136,6 +137,12 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   private void notifyListeners() {
     for (ResourceListener listener : listeners) {
       listener.onUpdate();
+    }
+  }
+
+  private void notifyResourceListeners(T resource) {
+    for (ResourceListener listener : listeners) {
+      listener.onResourceUpdate(resource);
     }
   }
 

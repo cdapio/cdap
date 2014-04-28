@@ -3,6 +3,7 @@ package com.continuuity.security.auth;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.ImmutablePair;
@@ -10,6 +11,7 @@ import com.continuuity.security.guice.SecurityModule;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.io.Codec;
 import com.continuuity.security.zookeeper.SharedResourceCache;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -50,9 +52,11 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectString);
     injector1 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()), new IOModule(),
-                                     new SecurityModules().getDistributedModules(), new ZKClientModule());
+                                     new SecurityModules().getDistributedModules(), new ZKClientModule(),
+                                     new DiscoveryRuntimeModule().getDistributedModules());
     injector2 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()), new IOModule(),
-                                     new SecurityModules().getDistributedModules(), new ZKClientModule());
+                                     new SecurityModules().getDistributedModules(), new ZKClientModule(),
+                                     new DiscoveryRuntimeModule().getDistributedModules());
   }
 
   @AfterClass
@@ -62,25 +66,8 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   @Test
   public void testKeyDistribution() throws Exception {
-    ZKClientService zk1 = injector1.getInstance(ZKClientService.class);
-    zk1.startAndWait();
-    DistributedKeyManager manager1 =
-      new DistributedKeyManager(injector1.getInstance(CConfiguration.class),
-          injector1.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {})),
-          zk1,
-          injector1.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() {})));
-
-    ZKClientService zk2 = injector2.getInstance(ZKClientService.class);
-    zk2.startAndWait();
-    DistributedKeyManager manager2 =
-      new DistributedKeyManager(injector2.getInstance(CConfiguration.class),
-                                injector2.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {})),
-                                zk2,
-                                injector2.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() {})));
-
-    manager1.setLeader(true);
-    manager1.init();
-    manager2.init();
+    DistributedKeyManager manager1 = getKeyManager(true, injector1);
+    DistributedKeyManager manager2 = getKeyManager(false, injector2);
     TimeUnit.MILLISECONDS.sleep(1000);
 
     TokenManager tokenManager1 = new TokenManager(manager1, injector1.getInstance(AccessTokenIdentifierCodec.class));
@@ -101,7 +88,27 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
-    return new ImmutablePair<TokenManager, Codec<AccessToken>>(injector1.getInstance(TokenManager.class),
-                                                               injector1.getInstance(AccessTokenCodec.class));
+    try {
+      DistributedKeyManager keyManager = getKeyManager(true, injector1);
+      TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
+      return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
+                                                                 injector1.getInstance(AccessTokenCodec.class));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private DistributedKeyManager getKeyManager(boolean leader, Injector injector) throws Exception {
+    ZKClientService zk = injector.getInstance(ZKClientService.class);
+    zk.startAndWait();
+    DistributedKeyManager keyManager =
+      new DistributedKeyManager(injector.getInstance(CConfiguration.class),
+                                injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {})),
+                                zk,
+                                injector.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() {})));
+
+    keyManager.setLeader(leader);
+    keyManager.init();
+    return keyManager;
   }
 }

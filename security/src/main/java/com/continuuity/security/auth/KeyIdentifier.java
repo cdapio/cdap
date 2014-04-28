@@ -82,4 +82,12 @@ public final class KeyIdentifier {
   public int hashCode() {
     return Objects.hashCode(getKey(), getKeyId(), encodedKey, algorithm, expiration);
   }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("keyId", keyId)
+      .add("expiration", expiration)
+      .toString();
+  }
 }

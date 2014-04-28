@@ -9,6 +9,8 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,12 +20,13 @@ import java.util.TimerTask;
 /**
  *
  */
-public class DistributedKeyManager extends AbstractKeyManager implements ResourceListener {
+public class DistributedKeyManager extends AbstractKeyManager implements ResourceListener<KeyIdentifier> {
   /**
    * Default execution frequency for the key update thread.  This is normally set much lower than the key expiration
    * interval to keep rotations happening at approximately the set frequency.
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
   private Timer timer;
   private long lastKeyUpdate;
   private boolean leader;
@@ -85,10 +88,21 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public synchronized void onUpdate() {
+    LOG.info("SharedResourceCache triggered update on key: leader={}", leader);
     for (Map.Entry<String, KeyIdentifier> keyEntry : allKeys.entrySet()) {
       if (currentKey == null || keyEntry.getValue().getExpiration() > currentKey.getExpiration()) {
         currentKey = keyEntry.getValue();
+        LOG.info("Set current key to {}", currentKey);
       }
+    }
+  }
+
+  @Override
+  public synchronized void onResourceUpdate(KeyIdentifier instance) {
+    LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, instance);
+    if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
+      currentKey = instance;
+      LOG.info("Set current key: leader={}, key={}", leader, currentKey);
     }
   }
 }
