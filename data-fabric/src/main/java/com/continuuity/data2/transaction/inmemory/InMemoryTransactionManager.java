@@ -612,7 +612,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
 
     Set<ChangeId> changeSet = null;
-    boolean canCommit = true;
+    boolean addToCommitted = true;
     // guard against changes to the transaction log while processing
     this.logReadLock.lock();
     try {
@@ -633,24 +633,20 @@ public class InMemoryTransactionManager extends AbstractService {
         // todo: these should be atomic
         // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
         //       be attempted to commit twice
-        changeSet = committingChangeSets.get(tx.getWritePointer());
+        changeSet = committingChangeSets.remove(tx.getWritePointer());
 
         if (changeSet != null) {
           // double-checking if there are conflicts: someone may have committed since canCommit check
           if (hasConflicts(tx, changeSet)) {
-            canCommit = false;
-          }
-          if (!canCommit) {
-            // encountered conflicts
             return false;
           }
         } else {
           // no changes
-          canCommit = false;
+          addToCommitted = false;
         }
-        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
+        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted);
       }
-      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
+      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted));
     } finally {
       this.logReadLock.unlock();
     }
@@ -659,11 +655,9 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
-    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
-    //       be attempted to commit twice
-    committingChangeSets.remove(writePointer);
+    if (addToCommitted && !changes.isEmpty()) {
+      // No need to add empty changes to the committed change sets, they will never trigger any conflict
 
-    if (addToCommitted) {
       // Record the committed change set with the nextWritePointer as the commit time.
       // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
       //       stored under one key
@@ -673,7 +667,6 @@ public class InMemoryTransactionManager extends AbstractService {
         // canCommit) use it unguarded
         changes.addAll(changeIds);
       }
-
       committedChangeSets.put(nextWritePointer, changes);
     }
     // remove from in-progress set, so that it does not get excluded in the future
