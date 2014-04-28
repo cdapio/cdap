@@ -10,12 +10,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Maps;
@@ -42,11 +42,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -55,6 +50,11 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
@@ -68,7 +68,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
-  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final long DISCOVERY_TIMEOUT_MILLISECONDS = 1000L;
   private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
@@ -87,7 +87,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   private AsyncHttpClient asyncHttpClient;
 
   @Inject
-  public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
+  public ProcedureHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
   }

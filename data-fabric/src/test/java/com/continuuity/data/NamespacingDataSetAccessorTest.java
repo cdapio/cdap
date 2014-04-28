@@ -18,7 +18,7 @@ public abstract class NamespacingDataSetAccessorTest {
   static CConfiguration conf = CConfiguration.create();
 
   @BeforeClass
-  public static void beforeClass() throws Exception{
+  public static void beforeClass() throws Exception {
     conf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
   }
 

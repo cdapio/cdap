@@ -7,12 +7,13 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.DeployStatus;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Objects;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Session information associated with uploading of an archive.
@@ -33,6 +34,12 @@ public final class SessionInfo {
    * Location of the archive file.
    */
   private Location archive;
+
+  /**
+   * Application id. {@code null} means use app name provided by app spec
+   */
+  @Nullable
+  private String applicationId;
 
   /**
    * Redundant, but useful resource information.
@@ -65,6 +72,7 @@ public final class SessionInfo {
     this.filename = info.getFilename();
     this.archive = archive;
     this.status = status;
+    this.applicationId = info.getApplicationId();
   }
 
   /**
@@ -110,6 +118,13 @@ public final class SessionInfo {
     return archive;
   }
 
+  /**
+   * @return application id, {@code null} means use app name provided by app spec
+   */
+  @Nullable
+  public String getApplicationId() {
+    return applicationId;
+  }
 
   public DeployStatus getStatus() {
     return status;

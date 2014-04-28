@@ -4,7 +4,6 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -14,6 +13,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.SchemaTypeAdapter;
@@ -34,7 +34,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -42,6 +41,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.

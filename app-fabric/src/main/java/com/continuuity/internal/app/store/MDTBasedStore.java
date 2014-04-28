@@ -4,13 +4,13 @@
 
 package com.continuuity.internal.app.store;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
@@ -30,8 +30,6 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.metadata.MetaDataEntry;
 import com.continuuity.metadata.MetaDataTable;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +41,8 @@ import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +107,7 @@ public class MDTBasedStore implements Store {
                                   "Application must be redeployed");
 
       return Programs.create(programLocation);
-    } catch (OperationException e){
+    } catch (OperationException e) {
       throw new IOException(e);
     }
   }
@@ -291,7 +291,7 @@ public class MDTBasedStore implements Store {
     MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), null,
                                                FieldTypes.Application.ENTRY_TYPE, id.getId());
 
-    if (existing != null){
+    if (existing != null) {
       String json = existing.getTextField(FieldTypes.Application.SPEC_JSON);
       Preconditions.checkNotNull(json);
 
@@ -675,7 +675,7 @@ public class MDTBasedStore implements Store {
                                                FieldTypes.ProgramRun.ARGS, id.getId());
     Map<String, String> args = Maps.newHashMap();
     if (existing != null) {
-      java.lang.reflect.Type type = new TypeToken<Map<String, String>>(){}.getType();
+      java.lang.reflect.Type type = new TypeToken<Map<String, String>>() { }.getType();
       args = gson.fromJson(existing.getTextField(FieldTypes.ProgramRun.ENTRY_TYPE), type);
     }
     return args;

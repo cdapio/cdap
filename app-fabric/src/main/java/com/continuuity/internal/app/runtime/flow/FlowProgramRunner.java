@@ -4,10 +4,10 @@
 
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
@@ -19,8 +19,6 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import org.apache.twill.api.RunId;
-import org.apache.twill.internal.RunIds;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -33,6 +31,8 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import org.apache.twill.api.RunId;
+import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

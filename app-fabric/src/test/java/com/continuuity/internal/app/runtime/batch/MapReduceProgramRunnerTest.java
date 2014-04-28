@@ -24,9 +24,9 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -189,6 +189,7 @@ public class MapReduceProgramRunnerTest {
     final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
     final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
     final Table counters = dataSetInstantiator.getDataSet("counters");
+    final Table countersFromContext = dataSetInstantiator.getDataSet("countersFromContext");
 
     // 1) fill test data
     fillTestInputData(txExecutorFactory, dataSetInstantiator, table, false);
@@ -223,6 +224,8 @@ public class MapReduceProgramRunnerTest {
 
           Assert.assertTrue(counters.get(new Get("mapper")).getLong("records", 0) > 0);
           Assert.assertTrue(counters.get(new Get("reducer")).getLong("records", 0) > 0);
+          Assert.assertTrue(countersFromContext.get(new Get("mapper")).getLong("records", 0) > 0);
+          Assert.assertTrue(countersFromContext.get(new Get("reducer")).getLong("records", 0) > 0);
         }
       });
   }
@@ -255,6 +258,7 @@ public class MapReduceProgramRunnerTest {
     final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
     final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
     final Table counters = dataSetInstantiator.getDataSet("counters");
+    final Table countersFromContext = dataSetInstantiator.getDataSet("countersFromContext");
 
     // 1) fill test data
     fillTestInputData(txExecutorFactory, dataSetInstantiator, table, true);
@@ -279,6 +283,8 @@ public class MapReduceProgramRunnerTest {
                                    onFinishTable.read(Bytes.toBytes("onFinish")));
           Assert.assertEquals(0, counters.get(new Get("mapper")).getLong("records", 0));
           Assert.assertEquals(0, counters.get(new Get("reducer")).getLong("records", 0));
+          Assert.assertEquals(0, countersFromContext.get(new Get("mapper")).getLong("records", 0));
+          Assert.assertEquals(0, countersFromContext.get(new Get("reducer")).getLong("records", 0));
         }
     });
   }

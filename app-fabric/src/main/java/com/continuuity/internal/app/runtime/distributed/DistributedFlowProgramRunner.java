@@ -3,10 +3,10 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -22,9 +22,6 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
-import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillRunner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -34,6 +31,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

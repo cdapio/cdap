@@ -101,7 +101,7 @@ public class LevelDBFilterableOVCTableTest {
     for (int i = -2; i < secondsToQuery + 2; i++) {
       records.add(new MetricsRecord(context, "0", "reads", tags, ts + i, i));
     }
-    List<TimeValue > expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(secondsToQuery);
+    List<TimeValue> expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(secondsToQuery);
     for (int i = 0; i < secondsToQuery; i++) {
       expectedFlowlet1Timevalues.add(new TimeValue(ts + i, i));
     }
@@ -125,14 +125,14 @@ public class LevelDBFilterableOVCTableTest {
       .build(ts, ts + secondsToQuery - 1);
     MetricsScanner scanner = tsTable.scan(query);
 
-    Map<String, List<TimeValue >> actualResults = Maps.newHashMap();
+    Map<String, List<TimeValue>> actualResults = Maps.newHashMap();
     while (scanner.hasNext()) {
       MetricsScanResult result = scanner.next();
 
       // check the metric
       Assert.assertTrue(result.getMetric().startsWith("reads"));
 
-      List<TimeValue > metricTimeValues = actualResults.get(result.getContext());
+      List<TimeValue> metricTimeValues = actualResults.get(result.getContext());
       if (metricTimeValues == null) {
         metricTimeValues = Lists.newArrayList();
         actualResults.put(result.getContext(), metricTimeValues);
@@ -147,8 +147,8 @@ public class LevelDBFilterableOVCTableTest {
   private void assertEqualResults(Map<String, List<TimeValue>> expected, Map<String, List<TimeValue>> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (String context : expected.keySet()) {
-      List<TimeValue > expectedValues = expected.get(context);
-      List<TimeValue > actualValues = actual.get(context);
+      List<TimeValue> expectedValues = expected.get(context);
+      List<TimeValue> actualValues = actual.get(context);
       Assert.assertEquals(expectedValues.size(), actualValues.size());
 
       // check all the values seen are expected

@@ -1,8 +1,8 @@
 package com.continuuity.app.runtime;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.Executor;
 

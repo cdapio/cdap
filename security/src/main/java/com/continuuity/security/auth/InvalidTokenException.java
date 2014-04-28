@@ -13,7 +13,7 @@ public class InvalidTokenException extends Exception {
    *   <li>INTERNAL - another error occurred in processing (represented by the exception "cause")</li>
    * </ul>
    */
-  public enum Reason {INVALID, EXPIRED, INTERNAL};
+  public enum Reason { INVALID, EXPIRED, INTERNAL };
 
   private final Reason reason;
 

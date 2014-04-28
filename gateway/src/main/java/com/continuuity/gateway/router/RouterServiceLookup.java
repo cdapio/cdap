@@ -4,8 +4,6 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
@@ -13,6 +11,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,29 +50,29 @@ public class RouterServiceLookup {
   }
 
   /**
-     * Lookup service name given port.
-     *
-     * @param port port to lookup.
-     * @return service name based on port.
-     */
+   * Lookup service name given port.
+   *
+   * @param port port to lookup.
+   * @return service name based on port.
+   */
   public String getService(int port) {
     return serviceMapRef.get().get(port);
   }
 
   /**
-     * @return the port to service name map for all services.
-     */
+   * @return the port to service name map for all services.
+   */
   public Map<Integer, String> getServiceMap() {
     return ImmutableMap.copyOf(serviceMapRef.get());
   }
 
   /**
-     * Returns the discoverable mapped to the given port.
-     *
-     * @param port port to lookup.
-     * @param hostHeaderSupplier supplies the header information for the lookup.
-     * @return discoverable based on port and host header.
-     */
+   * Returns the discoverable mapped to the given port.
+   *
+   * @param port port to lookup.
+   * @param hostHeaderSupplier supplies the header information for the lookup.
+   * @return discoverable based on port and host header.
+   */
   public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
     throws Exception {
     final String service = serviceMapRef.get().get(port);
@@ -88,7 +88,17 @@ public class RouterServiceLookup {
     }
 
     try {
-      CacheKey cacheKey = new CacheKey(service, headerInfo);
+      String path = headerInfo.getPath();
+      String method = headerInfo.getMethod();
+      String destService = RouterPathLookup.getRoutingPath(path, method);
+      CacheKey cacheKey;
+      if (destService != null) {
+        cacheKey = new CacheKey(destService, headerInfo);
+        LOG.trace("Request was routed from {} to: {}", path, destService);
+      } else {
+        cacheKey = new CacheKey(service, headerInfo);
+        LOG.trace("Request was routed from {} to: {}", path, service);
+      }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
         // Looks like the service is no longer running.

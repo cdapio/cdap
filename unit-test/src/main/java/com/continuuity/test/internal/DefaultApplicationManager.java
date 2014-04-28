@@ -1,6 +1,6 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;

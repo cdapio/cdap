@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -295,6 +296,26 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
+  public synchronized TransactionSnapshot getSnapshot() throws IOException {
+    TransactionSnapshot snapshot = null;
+    if (!isRunning()) {
+      return null;
+    }
+
+    long now = System.currentTimeMillis();
+    // avoid duplicate snapshots at same timestamp
+    if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(1);
+      } catch (InterruptedException ie) { }
+    }
+    // copy in memory state
+    snapshot = getCurrentState();
+    LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
+    LOG.info("Returning snapshot of state: " + snapshot);
+    return snapshot;
+  }
+
   private void doSnapshot(boolean closing) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
@@ -303,28 +324,18 @@ public class InMemoryTransactionManager extends AbstractService {
       this.logWriteLock.lock();
       try {
         synchronized (this) {
-          if (!isRunning() && !closing) {
+          snapshot = getSnapshot();
+          if (snapshot == null && !closing) {
             return;
           }
-
-          long now = System.currentTimeMillis();
-          // avoid duplicate snapshots at same timestamp
-          // this should be safe because doSnapshot is only called from a single thread
-          if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
-            try {
-              TimeUnit.MILLISECONDS.sleep(1);
-            } catch (InterruptedException ie) {}
+          if (snapshot != null) {
+            snapshotTime = snapshot.getTimestamp();
           }
-          // copy in memory state
-          snapshot = getCurrentState();
-          snapshotTime = snapshot.getTimestamp();
-          LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
-          LOG.info("Saving snapshot of state: " + snapshot);
 
           // roll WAL
           oldLog = currentLog;
           if (!closing) {
-            currentLog = persistor.createLog(snapshotTime);
+            currentLog = persistor.createLog(snapshot.getTimestamp());
           }
         }
         // there may not be an existing log on startup
@@ -391,6 +402,29 @@ public class InMemoryTransactionManager extends AbstractService {
     inProgress.putAll(snapshot.getInProgress());
     committingChangeSets.putAll(snapshot.getCommittingChangeSets());
     committedChangeSets.putAll(snapshot.getCommittedChangeSets());
+  }
+
+  /**
+   * Resets the state of the transaction manager.
+   */
+  public void resetState() {
+    this.logWriteLock.lock();
+    try {
+      // Take a snapshot before resetting the state, for debugging purposes
+      doSnapshot(false);
+      // Clear the state
+      clear();
+      // Take another snapshot: if no snapshot is taken after clearing the state
+      // and the manager is restarted, we will recover from the snapshot taken
+      // before resetting the state, which would be really bad
+      // This call will also init a new WAL
+      doSnapshot(false);
+    } catch (IOException e) {
+      LOG.error("Snapshot failed when resetting state!", e);
+      e.printStackTrace();
+    } finally {
+      this.logWriteLock.unlock();
+    }
   }
 
   /**
@@ -601,7 +635,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
 
     Set<ChangeId> changeSet = null;
-    boolean canCommit = true;
+    boolean addToCommitted = true;
     // guard against changes to the transaction log while processing
     this.logReadLock.lock();
     try {
@@ -622,24 +656,20 @@ public class InMemoryTransactionManager extends AbstractService {
         // todo: these should be atomic
         // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
         //       be attempted to commit twice
-        changeSet = committingChangeSets.get(tx.getWritePointer());
+        changeSet = committingChangeSets.remove(tx.getWritePointer());
 
         if (changeSet != null) {
           // double-checking if there are conflicts: someone may have committed since canCommit check
           if (hasConflicts(tx, changeSet)) {
-            canCommit = false;
-          }
-          if (!canCommit) {
-            // encountered conflicts
             return false;
           }
         } else {
           // no changes
-          canCommit = false;
+          addToCommitted = false;
         }
-        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
+        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted);
       }
-      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
+      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted));
     } finally {
       this.logReadLock.unlock();
     }
@@ -648,11 +678,9 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
-    // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
-    //       be attempted to commit twice
-    committingChangeSets.remove(writePointer);
+    if (addToCommitted && !changes.isEmpty()) {
+      // No need to add empty changes to the committed change sets, they will never trigger any conflict
 
-    if (addToCommitted) {
       // Record the committed change set with the nextWritePointer as the commit time.
       // NOTE: we use current next writePointer as key for the map, hence we may have multiple txs changesets to be
       //       stored under one key
@@ -662,7 +690,6 @@ public class InMemoryTransactionManager extends AbstractService {
         // canCommit) use it unguarded
         changes.addAll(changeIds);
       }
-
       committedChangeSets.put(nextWritePointer, changes);
     }
     // remove from in-progress set, so that it does not get excluded in the future
@@ -735,34 +762,44 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public void invalidate(Transaction tx) {
+  public boolean invalidate(long tx) {
     // guard against changes to the transaction log while processing
     this.logReadLock.lock();
     try {
+      boolean success;
       synchronized (this) {
         ensureAvailable();
-        doInvalidate(tx.getWritePointer());
+        success = doInvalidate(tx);
       }
-      appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
+      appendToLog(TransactionEdit.createInvalid(tx));
+      return success;
     } finally {
       this.logReadLock.unlock();
     }
   }
 
-  public void doInvalidate(long writePointer) {
-    committingChangeSets.remove(writePointer);
-    // add tx to invalids
-    invalid.add(writePointer);
-    LOG.info("Tx invalid list: added tx {} because of invalidate", writePointer);
-    // todo: find a more efficient way to keep this sorted. Could it just be an array?
-    Collections.sort(invalid);
-    invalidArray = invalid.toLongArray();
+  public boolean doInvalidate(long writePointer) {
+    Set<ChangeId> previousChangeSet = committingChangeSets.remove(writePointer);
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
-    if (previous != null && !previous.isLongRunning()) {
-      // tx was short-running: must move read pointer
-      moveReadPointerIfNeeded(writePointer);
+    // This check is to prevent from invalidating committed transactions
+    if (previous != null || previousChangeSet != null) {
+      if (previous == null) {
+        LOG.debug("Invalidating tx {} in committing change sets but not in-progress", writePointer);
+      }
+      // add tx to invalids
+      invalid.add(writePointer);
+      LOG.info("Tx invalid list: added tx {} because of invalidate", writePointer);
+      // todo: find a more efficient way to keep this sorted. Could it just be an array?
+      Collections.sort(invalid);
+      invalidArray = invalid.toLongArray();
+      if (!previous.isLongRunning()) {
+        // tx was short-running: must move read pointer
+        moveReadPointerIfNeeded(writePointer);
+      }
+      return true;
     }
+    return false;
   }
 
   // hack for exposing important metric

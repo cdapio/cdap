@@ -4,9 +4,9 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncHttpClient;
@@ -34,7 +34,7 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
   private AsyncHttpClient asyncHttpClient;
 
   @Inject
-  public WorkflowHandler(GatewayAuthenticator authenticator, WorkflowClient workflowClient) {
+  public WorkflowHandler(Authenticator authenticator, WorkflowClient workflowClient) {
     super(authenticator);
     this.workflowClient = workflowClient;
   }

@@ -3,8 +3,8 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
@@ -13,12 +13,12 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
-import org.apache.twill.api.RunId;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.internal.RunIds;
 
 import java.net.InetAddress;
 

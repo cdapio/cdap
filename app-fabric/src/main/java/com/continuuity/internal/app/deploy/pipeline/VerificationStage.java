@@ -4,11 +4,11 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;

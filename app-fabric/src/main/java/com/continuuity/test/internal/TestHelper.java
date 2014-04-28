@@ -5,7 +5,7 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -16,20 +16,18 @@ import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -37,6 +35,9 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,7 +126,7 @@ public class TestHelper {
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
     try {
-      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
       return (ApplicationWithPrograms) p.get();
     } finally {
       deployedJar.delete(true);
@@ -139,7 +140,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), DefaultId.ACCOUNT,
-                        DUMMY_AUTH_TOKEN, "", fileName, applicationClz);
+                        DUMMY_AUTH_TOKEN, null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
@@ -151,7 +152,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), account, token,
-                        "", fileName, applicationClz);
+                        null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
@@ -176,10 +177,12 @@ public class TestHelper {
       Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
       Application application = applicationClz.newInstance();
-      ApplicationSpecification appSpec = application.configure();
+      ApplicationSpecification appSpec = Specifications.from(application.configure());
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
-      ArchiveId id = appFabricServer.init(token, new ArchiveInfo(account, applicationId, fileName));
+      ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
+      archiveInfo.setApplicationId(applicationId);
+      ArchiveId id = appFabricServer.init(token, archiveInfo);
 
       // Upload the jar file to remote location.
       BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
@@ -272,7 +275,7 @@ public class TestHelper {
    * @param dir Directory root for creating jar entries.
    * @param manifest The Jar manifest content.
    * @param outputFile Location of the Jar file.
-   * @param appSpec The {@link com.continuuity.api.ApplicationSpecification} of the deploying application.
+   * @param appSpec The {@link com.continuuity.app.ApplicationSpecification} of the deploying application.
    */
   private static File jarDir(File dir, File relativeBase, Manifest manifest,
                              File outputFile, ApplicationSpecification appSpec) throws IOException,

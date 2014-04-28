@@ -59,7 +59,7 @@ final class MetricsEntityCodec {
    * @param entity Value of the entity.
    * @return byte[] representing the given entity.
    */
-  public byte[] encodeWithoutPadding(MetricsEntityType type, String entity){
+  public byte[] encodeWithoutPadding(MetricsEntityType type, String entity) {
     int idSize = entityTable.getIdSize();
     String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity);
     byte[] result = new byte[entityParts.length * idSize];

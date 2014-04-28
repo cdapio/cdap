@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.WordCountApp;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;

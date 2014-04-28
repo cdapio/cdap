@@ -152,7 +152,7 @@ public final class StreamNamerImpl {
           StreamKey fromKey =
               new StreamKey(from.getFlowlet(), from.getStream());
           // First verify the flowlet is defined
-          if (!verifyFlowlet(definition, from.getFlowlet())){
+          if (!verifyFlowlet(definition, from.getFlowlet())) {
             return false;
           }
           // Build the stream URI from flow/flowlet/stream name

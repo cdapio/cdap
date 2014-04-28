@@ -6,12 +6,12 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
+import com.google.common.base.Throwables;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
-import com.google.common.base.Throwables;
 
 import java.io.File;
 

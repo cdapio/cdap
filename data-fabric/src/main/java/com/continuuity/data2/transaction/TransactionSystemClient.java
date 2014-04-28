@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction;
 
+import java.io.InputStream;
 import java.util.Collection;
 
 /**
@@ -70,7 +71,19 @@ public interface TransactionSystemClient {
   /**
    * Makes transaction invalid. You should call it if not all changes of this tx could be undone.
    * NOTE: it will not throw {@link TransactionNotInProgressException} if transaction has timed out.
-   * @param tx transaction to invalidate.
+   * @param tx transaction id to invalidate.
+   * @return true if transaction has been successfully invalidated
    */
-  void invalidate(Transaction tx);
+  boolean invalidate(long tx);
+
+  /**
+   * Retrieves the state of the transaction manager and send it as a stream. The snapshot will not be persisted.
+   * @return an input stream containing an encoded snapshot of the transaction manager
+   */
+  InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException;
+
+  /**
+   * Resets the state of the transaction manager.
+   */
+  void resetState();
 }

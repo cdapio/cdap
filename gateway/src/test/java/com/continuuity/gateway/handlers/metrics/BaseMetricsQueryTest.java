@@ -4,7 +4,7 @@
 package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -14,10 +14,10 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.handlers.log.MockLogReader;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
@@ -64,7 +64,7 @@ public class BaseMetricsQueryTest {
 
     CConfiguration cConf = CConfiguration.create();
 
-    // use this injector instead of the one in GatewayFastTestsSuite because that one uses a
+    // use this injector instead of the one in MetricsServiceTestsSuite because that one uses a
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
@@ -80,10 +80,10 @@ public class BaseMetricsQueryTest {
     collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
 
-    // GatewayFastTestsSuite starts app-fabric and has all its dependencies set up.
-    StoreFactory storeFactory = GatewayFastTestsSuite.getInjector().getInstance(StoreFactory.class);
+    // MetricsTestsSuite starts app-fabric and has all its dependencies set up.
+    StoreFactory storeFactory = MetricsServiceTestsSuite.getInjector().getInstance(StoreFactory.class);
     store = storeFactory.create();
-    locationFactory = GatewayFastTestsSuite.getInjector().getInstance(LocationFactory.class);
+    locationFactory = MetricsServiceTestsSuite.getInjector().getInstance(LocationFactory.class);
 
     setupMeta();
   }
@@ -117,13 +117,13 @@ public class BaseMetricsQueryTest {
 
     // write WordCount application to meta store
     Application app = new WordCount();
-    ApplicationSpecification appSpec = app.configure();
+    ApplicationSpecification appSpec = Specifications.from(app.configure());
     wordCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wordCountAppId, appSpec, appArchiveLocation);
 
     // write WCount application to meta store
     app = new WCount();
-    appSpec = app.configure();
+    appSpec = Specifications.from(app.configure());
     wCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wCountAppId, appSpec, appArchiveLocation);
 

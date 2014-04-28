@@ -1,8 +1,9 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
+import com.continuuity.data2.dataset2.lib.table.Result;
+import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.google.common.collect.Sets;
 
@@ -39,11 +40,11 @@ public class InMemoryScanner implements Scanner {
   }
 
   @Override
-  public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
+  public Row next() {
     Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowEntry = null;
 
-    while (columns.isEmpty() && this.rows.hasNext()){
+    while (columns.isEmpty() && this.rows.hasNext()) {
       rowEntry = this.rows.next();
       if (filter != null) {
         FuzzyRowFilter.ReturnCode code = filter.filterRow(rowEntry.getKey());
@@ -62,7 +63,7 @@ public class InMemoryScanner implements Scanner {
     }
     if (columns.size() > 0) {
       assert rowEntry != null;
-      return new ImmutablePair<byte[], Map<byte[], byte[]>>(rowEntry.getKey(), columns);
+      return new Result(rowEntry.getKey(), columns);
     } else {
       return null;
     }

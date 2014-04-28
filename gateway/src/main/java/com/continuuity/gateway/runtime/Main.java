@@ -12,6 +12,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.logging.guice.LoggingModules;
@@ -62,6 +63,7 @@ public class Main extends DaemonMain {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      new AuthModule(),
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),

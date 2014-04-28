@@ -1,8 +1,6 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -12,6 +10,8 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class WorkflowClient {
 
-  private static Logger LOG = LoggerFactory.getLogger(WorkflowClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowClient.class);
   private final AsyncHttpClient httpClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   @Inject
@@ -79,7 +79,7 @@ public class WorkflowClient {
     /**
      * Status code.
      */
-    public enum Code {NOT_FOUND, OK, ERROR}
+    public enum Code { NOT_FOUND, OK, ERROR }
 
     private final Code code;
 

@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -50,7 +51,8 @@ public class LevelDBOcTableService {
   /**
    * Protect the constructor as this class needs to be singleton, but keep it package visible for testing.
    */
-  LevelDBOcTableService() {
+  @VisibleForTesting
+  public LevelDBOcTableService() {
   }
 
   /**
@@ -151,7 +153,7 @@ public class LevelDBOcTableService {
     tables.put(name, db);
   }
 
-  public void dropTable(String name) throws Exception {
+  public void dropTable(String name) throws IOException {
     DB db = tables.remove(name);
     if (db != null) {
       db.close();

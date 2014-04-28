@@ -28,6 +28,7 @@ import java.util.Map;
  */
 public class WorkflowApp implements Application {
 
+
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()

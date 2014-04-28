@@ -104,7 +104,7 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
   private Response<List<DatasetInstanceSpec>> getInstances() throws IOException {
     HttpGet get = new HttpGet(getUrl("/datasets/instances"));
     DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetInstanceSpec>>() {}.getType());
+    return parseResponse(client.execute(get), new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
   }
 
   private Response<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
@@ -141,7 +141,7 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
     }
   }
 
-  private static DatasetDefinition createDefinition(String name){
+  private static DatasetDefinition createDefinition(String name) {
     return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
@@ -149,12 +149,12 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws Exception {
+      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetInstanceSpec spec) throws Exception {
+      public Dataset getDataset(DatasetInstanceSpec spec) {
         return null;
       }
     };

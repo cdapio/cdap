@@ -1,17 +1,17 @@
 package com.continuuity.internal.app.program;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
+import org.apache.twill.filesystem.Location;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

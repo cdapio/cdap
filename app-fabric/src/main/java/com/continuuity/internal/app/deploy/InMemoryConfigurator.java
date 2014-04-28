@@ -5,19 +5,20 @@
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +119,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       // Now, we call configure, which returns application specification.
-      ApplicationSpecification specification = app.configure();
+      ApplicationSpecification specification = Specifications.from(app.configure());
 
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.

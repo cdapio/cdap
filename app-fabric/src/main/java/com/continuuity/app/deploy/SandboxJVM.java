@@ -5,15 +5,13 @@
 package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
-import org.apache.twill.filesystem.HDFSLocationFactory;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
@@ -23,6 +21,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,7 +126,7 @@ public class SandboxJVM {
       .apply();
 
     // Now, we call configure, which returns application specification.
-    ApplicationSpecification specification = application.configure();
+    ApplicationSpecification specification = Specifications.from(application.configure());
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

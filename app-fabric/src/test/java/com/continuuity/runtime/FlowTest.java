@@ -8,9 +8,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.Queue2Producer;
@@ -25,14 +23,13 @@ import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -45,6 +42,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -73,22 +72,8 @@ public class FlowTest {
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new ProgramOptions() {
-        @Override
-        public String getName() {
-          return program.getName();
-        }
-
-        @Override
-        public Arguments getArguments() {
-          return new BasicArguments();
-        }
-
-        @Override
-        public Arguments getUserArguments() {
-          return new BasicArguments(ImmutableMap.<String, String>of("arg", "test"));
-        }
-      }));
+      controllers.add(runner.run(program, new SimpleProgramOptions(
+        program.getName(), new BasicArguments(), new BasicArguments(ImmutableMap.of("arg", "test")))));
     }
 
     TimeUnit.SECONDS.sleep(1);
@@ -128,22 +113,7 @@ public class FlowTest {
         continue;
       }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new ProgramOptions() {
-        @Override
-        public String getName() {
-          return program.getName();
-        }
-
-        @Override
-        public Arguments getArguments() {
-          return new BasicArguments();
-        }
-
-        @Override
-        public Arguments getUserArguments() {
-          return new BasicArguments();
-        }
-      }));
+      controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
     TimeUnit.SECONDS.sleep(1);
@@ -190,7 +160,7 @@ public class FlowTest {
     HttpResponse response = client.execute(post);
     Map<String, Long> responseContent = gson.fromJson(
       new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8),
-      new TypeToken<Map<String, Long>>(){}.getType());
+      new TypeToken<Map<String, Long>>() { }.getType());
 
     LOG.info("Procedure response: " + responseContent);
     Assert.assertEquals(ImmutableMap.of("text:Testing", 10L), responseContent);
@@ -213,22 +183,7 @@ public class FlowTest {
     for (final Program program : app.getPrograms()) {
       if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
-        controller = runner.run(program, new ProgramOptions() {
-          @Override
-          public String getName() {
-            return program.getName();
-          }
-
-          @Override
-          public Arguments getArguments() {
-            return new BasicArguments();
-          }
-
-          @Override
-          public Arguments getUserArguments() {
-            return new BasicArguments();
-          }
-        });
+        controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }
 
@@ -244,22 +199,7 @@ public class FlowTest {
     for (final Program program : app.getPrograms()) {
       if (program.getType() == Type.FLOW) {
         ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
-        controller = runner.run(program, new ProgramOptions() {
-          @Override
-          public String getName() {
-            return program.getName();
-          }
-
-          @Override
-          public Arguments getArguments() {
-            return new BasicArguments();
-          }
-
-          @Override
-          public Arguments getUserArguments() {
-            return new BasicArguments();
-          }
-        });
+        controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }
 

@@ -58,6 +58,9 @@ page at http://checkstyle.sourceforge.net/config.html -->
     IMPORT CHECKS
 
     -->
+    <module name="AvoidStarImport">
+      <property name="allowClassImports" value="false"/>
+    </module>
 
     <module name="RedundantImport">
       <!-- Checks for redundant import statements. -->
@@ -68,7 +71,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <!-- Checks for out of order import statements. -->
       <property name="severity" value="warning"/>
       <property name="ordered" value="true"/>
-      <property name="groups" value="com,org,junit,net,javax,java"/>
+      <property name="groups" value="com,org,junit,net,/^javax?\./"/>
       <!-- This ensures that static imports go to the end. -->
       <property name="option" value="bottom"/>
       <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
@@ -227,7 +230,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
     <module name="LeftCurly">
       <!-- Checks for placement of the left curly brace ('{'). -->
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="RightCurly">
@@ -248,7 +251,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       </pre>
       -->
       <property name="option" value="same"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <!-- Checks for braces around if and else blocks -->
@@ -294,6 +297,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
     WHITESPACE CHECKS
 
     -->
+    <module name="GenericWhitespace"/>
 
     <module name="WhitespaceAround">
       <!-- Checks that various tokens are surrounded by whitespace.
@@ -302,11 +306,13 @@ page at http://checkstyle.sourceforge.net/config.html -->
       -->
       <property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR,
         BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN,
-        EQUAL, GE, GT, LAND, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE,
+        EQUAL, GE, GT, LAND, LCURLY, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE,
         LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN,
         LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS,
         MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION,
-        SL, SL_ASSIGN, SR_ASSIGN, STAR, STAR_ASSIGN"/>
+        SL, SLIST, SL_ASSIGN, SR_ASSIGN, STAR, STAR_ASSIGN"/>
+      <property name="allowEmptyConstructors" value="true"/>
+      <property name="allowEmptyMethods" value="true"/>
       <property name="severity" value="error"/>
     </module>
 

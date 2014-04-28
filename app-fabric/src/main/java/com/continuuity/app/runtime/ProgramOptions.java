@@ -10,4 +10,6 @@ public interface ProgramOptions {
   Arguments getArguments();
 
   Arguments getUserArguments();
+
+  boolean isDebug();
 }

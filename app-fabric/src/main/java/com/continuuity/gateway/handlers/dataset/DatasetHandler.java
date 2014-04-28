@@ -9,29 +9,29 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
@@ -52,7 +52,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
   private final DiscoveryServiceClient discoveryClient;
 
   @Inject
-  public DatasetHandler(GatewayAuthenticator authenticator,
+  public DatasetHandler(Authenticator authenticator,
                         DataSetInstantiatorFromMetaData datasetInstantiator,
                         DataSetAccessor dataSetAccessor, DiscoveryServiceClient discoveryClient) {
     super(authenticator);

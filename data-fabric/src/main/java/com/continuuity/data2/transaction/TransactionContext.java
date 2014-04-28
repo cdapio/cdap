@@ -95,7 +95,7 @@ public class TransactionContext {
       if (success) {
         txClient.abort(currentTx);
       } else {
-        txClient.invalidate(currentTx);
+        txClient.invalidate(currentTx.getWritePointer());
       }
       if (cause != null) {
         throw cause;

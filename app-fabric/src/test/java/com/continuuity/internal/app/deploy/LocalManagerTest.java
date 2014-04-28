@@ -11,10 +11,10 @@ import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     try {
-      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar).get();
+      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
     } finally {
       deployedJar.delete(true);
     }
@@ -56,7 +56,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
 
-    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);

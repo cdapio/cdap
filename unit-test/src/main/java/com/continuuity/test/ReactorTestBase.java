@@ -1,7 +1,7 @@
 package com.continuuity.test;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
@@ -15,7 +15,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -39,11 +40,8 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -53,8 +51,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -85,10 +81,11 @@ public class ReactorTestBase {
 
     try {
 
-      ApplicationSpecification appSpec = applicationClz.newInstance().configure();
+      ApplicationSpecification appSpec =
+        Specifications.from(applicationClz.newInstance().configure());
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
+                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
                                                           applicationClz);
 
       return
@@ -139,14 +136,14 @@ public class ReactorTestBase {
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
                                     new IOModule(),
+                                    new AuthModule(),
                                     new LocationRuntimeModule().getInMemoryModules(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
-                                    new MetricsQueryModule(),
+                                    new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
-
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {
@@ -222,27 +219,6 @@ public class ReactorTestBase {
     @Override
     protected void configure() {
       bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
-    }
-  }
-
-  /**
-   * Base guice module for binding metrics query service classes.
-   */
-  private static final class MetricsQueryModule extends PrivateModule {
-
-    @Override
-    protected final void configure() {
-      install(new MetricsHandlerModule());
-      install(new GatewayAuthModule());
-      bind(MetricsQueryService.class).in(Scopes.SINGLETON);
-      expose(MetricsQueryService.class);
-    }
-
-    @Provides
-    @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS)
-    public final InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS),
-                              new InetSocketAddress("localhost", 0).getAddress());
     }
   }
 }

@@ -236,10 +236,10 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     col[0] = Bytes.toBytes(key.getName().toString());
     Map<byte[], byte[]> result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
-    if (!result.isEmpty()){
+    if (!result.isEmpty()) {
       bytes = result.get(col[0]);
     }
-    if (bytes != null){
+    if (bytes != null) {
       return (TriggerStatus) SerializationUtils.deserialize(bytes);
     } else {
       return null;
@@ -270,7 +270,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
         public void apply() throws Exception {
           Map<byte[], byte[]> result = table.get(JOB_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.values()){
+            for (byte[] bytes : result.values()) {
               JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
               LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
               jobs.add(jobDetail);
@@ -281,7 +281,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
 
           result = table.get(TRIGGER_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.values()){
+            for (byte[] bytes : result.values()) {
               TriggerStatus trigger = (TriggerStatus) SerializationUtils.deserialize(bytes);
               if (trigger.state.equals(Trigger.TriggerState.NORMAL)) {
                 triggers.add(trigger.trigger);
@@ -301,7 +301,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
       super.storeJob(job, true);
     }
 
-    for (OperableTrigger trigger : triggers){
+    for (OperableTrigger trigger : triggers) {
       super.storeTrigger(trigger, true);
     }
   }

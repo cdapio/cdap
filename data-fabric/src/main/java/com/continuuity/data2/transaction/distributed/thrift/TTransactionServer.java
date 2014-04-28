@@ -43,7 +43,11 @@ public class TTransactionServer {
 
     public void abortTx(TTransaction tx) throws org.apache.thrift.TException;
 
-    public void invalidateTx(TTransaction tx) throws org.apache.thrift.TException;
+    public boolean invalidateTx(long tx) throws org.apache.thrift.TException;
+
+    public ByteBuffer getSnapshot() throws TTransactionCouldNotTakeSnapshotException, org.apache.thrift.TException;
+
+    public void resetState() throws org.apache.thrift.TException;
 
   }
 
@@ -61,7 +65,11 @@ public class TTransactionServer {
 
     public void abortTx(TTransaction tx, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.abortTx_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void invalidateTx(TTransaction tx, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.invalidateTx_call> resultHandler) throws org.apache.thrift.TException;
+    public void invalidateTx(long tx, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.invalidateTx_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getSnapshot(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSnapshot_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void resetState(org.apache.thrift.async.AsyncMethodCallback<AsyncClient.resetState_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -225,23 +233,70 @@ public class TTransactionServer {
       return;
     }
 
-    public void invalidateTx(TTransaction tx) throws org.apache.thrift.TException
+    public boolean invalidateTx(long tx) throws org.apache.thrift.TException
     {
       send_invalidateTx(tx);
-      recv_invalidateTx();
+      return recv_invalidateTx();
     }
 
-    public void send_invalidateTx(TTransaction tx) throws org.apache.thrift.TException
+    public void send_invalidateTx(long tx) throws org.apache.thrift.TException
     {
       invalidateTx_args args = new invalidateTx_args();
       args.setTx(tx);
       sendBase("invalidateTx", args);
     }
 
-    public void recv_invalidateTx() throws org.apache.thrift.TException
+    public boolean recv_invalidateTx() throws org.apache.thrift.TException
     {
       invalidateTx_result result = new invalidateTx_result();
       receiveBase(result, "invalidateTx");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "invalidateTx failed: unknown result");
+    }
+
+    public ByteBuffer getSnapshot() throws TTransactionCouldNotTakeSnapshotException, org.apache.thrift.TException
+    {
+      send_getSnapshot();
+      return recv_getSnapshot();
+    }
+
+    public void send_getSnapshot() throws org.apache.thrift.TException
+    {
+      getSnapshot_args args = new getSnapshot_args();
+      sendBase("getSnapshot", args);
+    }
+
+    public ByteBuffer recv_getSnapshot() throws TTransactionCouldNotTakeSnapshotException, org.apache.thrift.TException
+    {
+      getSnapshot_result result = new getSnapshot_result();
+      receiveBase(result, "getSnapshot");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSnapshot failed: unknown result");
+    }
+
+    public void resetState() throws org.apache.thrift.TException
+    {
+      send_resetState();
+      recv_resetState();
+    }
+
+    public void send_resetState() throws org.apache.thrift.TException
+    {
+      resetState_args args = new resetState_args();
+      sendBase("resetState", args);
+    }
+
+    public void recv_resetState() throws org.apache.thrift.TException
+    {
+      resetState_result result = new resetState_result();
+      receiveBase(result, "resetState");
       return;
     }
 
@@ -452,7 +507,7 @@ public class TTransactionServer {
       }
     }
 
-    public void invalidateTx(TTransaction tx, org.apache.thrift.async.AsyncMethodCallback<invalidateTx_call> resultHandler) throws org.apache.thrift.TException {
+    public void invalidateTx(long tx, org.apache.thrift.async.AsyncMethodCallback<invalidateTx_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       invalidateTx_call method_call = new invalidateTx_call(tx, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -460,8 +515,8 @@ public class TTransactionServer {
     }
 
     public static class invalidateTx_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private TTransaction tx;
-      public invalidateTx_call(TTransaction tx, org.apache.thrift.async.AsyncMethodCallback<invalidateTx_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private long tx;
+      public invalidateTx_call(long tx, org.apache.thrift.async.AsyncMethodCallback<invalidateTx_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.tx = tx;
       }
@@ -474,13 +529,71 @@ public class TTransactionServer {
         prot.writeMessageEnd();
       }
 
+      public boolean getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_invalidateTx();
+      }
+    }
+
+    public void getSnapshot(org.apache.thrift.async.AsyncMethodCallback<getSnapshot_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getSnapshot_call method_call = new getSnapshot_call(resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getSnapshot_call extends org.apache.thrift.async.TAsyncMethodCall {
+      public getSnapshot_call(org.apache.thrift.async.AsyncMethodCallback<getSnapshot_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getSnapshot", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getSnapshot_args args = new getSnapshot_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws TTransactionCouldNotTakeSnapshotException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getSnapshot();
+      }
+    }
+
+    public void resetState(org.apache.thrift.async.AsyncMethodCallback<resetState_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      resetState_call method_call = new resetState_call(resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class resetState_call extends org.apache.thrift.async.TAsyncMethodCall {
+      public resetState_call(org.apache.thrift.async.AsyncMethodCallback<resetState_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("resetState", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        resetState_args args = new resetState_args();
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
       public void getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_invalidateTx();
+        (new Client(prot)).recv_resetState();
       }
     }
 
@@ -504,6 +617,8 @@ public class TTransactionServer {
       processMap.put("commitTx", new commitTx());
       processMap.put("abortTx", new abortTx());
       processMap.put("invalidateTx", new invalidateTx());
+      processMap.put("getSnapshot", new getSnapshot());
+      processMap.put("resetState", new resetState());
       return processMap;
     }
 
@@ -622,7 +737,44 @@ public class TTransactionServer {
 
       protected invalidateTx_result getResult(I iface, invalidateTx_args args) throws org.apache.thrift.TException {
         invalidateTx_result result = new invalidateTx_result();
-        iface.invalidateTx(args.tx);
+        result.success = iface.invalidateTx(args.tx);
+        result.setSuccessIsSet(true);
+        return result;
+      }
+    }
+
+    private static class getSnapshot<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getSnapshot_args> {
+      public getSnapshot() {
+        super("getSnapshot");
+      }
+
+      protected getSnapshot_args getEmptyArgsInstance() {
+        return new getSnapshot_args();
+      }
+
+      protected getSnapshot_result getResult(I iface, getSnapshot_args args) throws org.apache.thrift.TException {
+        getSnapshot_result result = new getSnapshot_result();
+        try {
+          result.success = iface.getSnapshot();
+        } catch (TTransactionCouldNotTakeSnapshotException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class resetState<I extends Iface> extends org.apache.thrift.ProcessFunction<I, resetState_args> {
+      public resetState() {
+        super("resetState");
+      }
+
+      protected resetState_args getEmptyArgsInstance() {
+        return new resetState_args();
+      }
+
+      protected resetState_result getResult(I iface, resetState_args args) throws org.apache.thrift.TException {
+        resetState_result result = new resetState_result();
+        iface.resetState();
         return result;
       }
     }
@@ -4917,7 +5069,7 @@ public class TTransactionServer {
   public static class invalidateTx_args implements org.apache.thrift.TBase<invalidateTx_args, invalidateTx_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("invalidateTx_args");
 
-    private static final org.apache.thrift.protocol.TField TX_FIELD_DESC = new org.apache.thrift.protocol.TField("tx", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField TX_FIELD_DESC = new org.apache.thrift.protocol.TField("tx", org.apache.thrift.protocol.TType.I64, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -4925,7 +5077,7 @@ public class TTransactionServer {
       schemes.put(TupleScheme.class, new invalidateTx_argsTupleSchemeFactory());
     }
 
-    public TTransaction tx; // required
+    public long tx; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4986,11 +5138,13 @@ public class TTransactionServer {
     }
 
     // isset id assignments
+    private static final int __TX_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.TX, new org.apache.thrift.meta_data.FieldMetaData("tx", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TTransaction.class)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(invalidateTx_args.class, metaDataMap);
     }
@@ -4999,19 +5153,20 @@ public class TTransactionServer {
     }
 
     public invalidateTx_args(
-      TTransaction tx)
+      long tx)
     {
       this();
       this.tx = tx;
+      setTxIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public invalidateTx_args(invalidateTx_args other) {
-      if (other.isSetTx()) {
-        this.tx = new TTransaction(other.tx);
-      }
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.tx = other.tx;
     }
 
     public invalidateTx_args deepCopy() {
@@ -5020,31 +5175,31 @@ public class TTransactionServer {
 
     @Override
     public void clear() {
-      this.tx = null;
+      setTxIsSet(false);
+      this.tx = 0;
     }
 
-    public TTransaction getTx() {
+    public long getTx() {
       return this.tx;
     }
 
-    public invalidateTx_args setTx(TTransaction tx) {
+    public invalidateTx_args setTx(long tx) {
       this.tx = tx;
+      setTxIsSet(true);
       return this;
     }
 
     public void unsetTx() {
-      this.tx = null;
+      __isset_bit_vector.clear(__TX_ISSET_ID);
     }
 
     /** Returns true if field tx is set (has been assigned a value) and false otherwise */
     public boolean isSetTx() {
-      return this.tx != null;
+      return __isset_bit_vector.get(__TX_ISSET_ID);
     }
 
     public void setTxIsSet(boolean value) {
-      if (!value) {
-        this.tx = null;
-      }
+      __isset_bit_vector.set(__TX_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -5053,7 +5208,7 @@ public class TTransactionServer {
         if (value == null) {
           unsetTx();
         } else {
-          setTx((TTransaction)value);
+          setTx((Long)value);
         }
         break;
 
@@ -5063,7 +5218,7 @@ public class TTransactionServer {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case TX:
-        return getTx();
+        return Long.valueOf(getTx());
 
       }
       throw new IllegalStateException();
@@ -5095,12 +5250,12 @@ public class TTransactionServer {
       if (that == null)
         return false;
 
-      boolean this_present_tx = true && this.isSetTx();
-      boolean that_present_tx = true && that.isSetTx();
+      boolean this_present_tx = true;
+      boolean that_present_tx = true;
       if (this_present_tx || that_present_tx) {
         if (!(this_present_tx && that_present_tx))
           return false;
-        if (!this.tx.equals(that.tx))
+        if (this.tx != that.tx)
           return false;
       }
 
@@ -5151,11 +5306,7 @@ public class TTransactionServer {
       boolean first = true;
 
       sb.append("tx:");
-      if (this.tx == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.tx);
-      }
+      sb.append(this.tx);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -5175,6 +5326,8 @@ public class TTransactionServer {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -5200,9 +5353,8 @@ public class TTransactionServer {
           }
           switch (schemeField.id) {
             case 1: // TX
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.tx = new TTransaction();
-                struct.tx.read(iprot);
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.tx = iprot.readI64();
                 struct.setTxIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -5223,11 +5375,9 @@ public class TTransactionServer {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.tx != null) {
-          oprot.writeFieldBegin(TX_FIELD_DESC);
-          struct.tx.write(oprot);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(TX_FIELD_DESC);
+        oprot.writeI64(struct.tx);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -5251,7 +5401,7 @@ public class TTransactionServer {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetTx()) {
-          struct.tx.write(oprot);
+          oprot.writeI64(struct.tx);
         }
       }
 
@@ -5260,8 +5410,7 @@ public class TTransactionServer {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.tx = new TTransaction();
-          struct.tx.read(iprot);
+          struct.tx = iprot.readI64();
           struct.setTxIsSet(true);
         }
       }
@@ -5272,11 +5421,361 @@ public class TTransactionServer {
   public static class invalidateTx_result implements org.apache.thrift.TBase<invalidateTx_result, invalidateTx_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("invalidateTx_result");
 
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
       schemes.put(StandardScheme.class, new invalidateTx_resultStandardSchemeFactory());
       schemes.put(TupleScheme.class, new invalidateTx_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(invalidateTx_result.class, metaDataMap);
+    }
+
+    public invalidateTx_result() {
+    }
+
+    public invalidateTx_result(
+      boolean success)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public invalidateTx_result(invalidateTx_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+    }
+
+    public invalidateTx_result deepCopy() {
+      return new invalidateTx_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public invalidateTx_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof invalidateTx_result)
+        return this.equals((invalidateTx_result)that);
+      return false;
+    }
+
+    public boolean equals(invalidateTx_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(invalidateTx_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      invalidateTx_result typedOther = (invalidateTx_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("invalidateTx_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class invalidateTx_resultStandardSchemeFactory implements SchemeFactory {
+      public invalidateTx_resultStandardScheme getScheme() {
+        return new invalidateTx_resultStandardScheme();
+      }
+    }
+
+    private static class invalidateTx_resultStandardScheme extends StandardScheme<invalidateTx_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, invalidateTx_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, invalidateTx_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class invalidateTx_resultTupleSchemeFactory implements SchemeFactory {
+      public invalidateTx_resultTupleScheme getScheme() {
+        return new invalidateTx_resultTupleScheme();
+      }
+    }
+
+    private static class invalidateTx_resultTupleScheme extends TupleScheme<invalidateTx_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, invalidateTx_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, invalidateTx_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getSnapshot_args implements org.apache.thrift.TBase<getSnapshot_args, getSnapshot_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSnapshot_args");
+
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getSnapshot_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getSnapshot_argsTupleSchemeFactory());
     }
 
 
@@ -5339,20 +5838,20 @@ public class TTransactionServer {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(invalidateTx_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSnapshot_args.class, metaDataMap);
     }
 
-    public invalidateTx_result() {
+    public getSnapshot_args() {
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public invalidateTx_result(invalidateTx_result other) {
+    public getSnapshot_args(getSnapshot_args other) {
     }
 
-    public invalidateTx_result deepCopy() {
-      return new invalidateTx_result(this);
+    public getSnapshot_args deepCopy() {
+      return new getSnapshot_args(this);
     }
 
     @Override
@@ -5385,12 +5884,12 @@ public class TTransactionServer {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof invalidateTx_result)
-        return this.equals((invalidateTx_result)that);
+      if (that instanceof getSnapshot_args)
+        return this.equals((getSnapshot_args)that);
       return false;
     }
 
-    public boolean equals(invalidateTx_result that) {
+    public boolean equals(getSnapshot_args that) {
       if (that == null)
         return false;
 
@@ -5402,13 +5901,13 @@ public class TTransactionServer {
       return 0;
     }
 
-    public int compareTo(invalidateTx_result other) {
+    public int compareTo(getSnapshot_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      invalidateTx_result typedOther = (invalidateTx_result)other;
+      getSnapshot_args typedOther = (getSnapshot_args)other;
 
       return 0;
     }
@@ -5423,11 +5922,11 @@ public class TTransactionServer {
 
     public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
+    }
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("invalidateTx_result(");
+      StringBuilder sb = new StringBuilder("getSnapshot_args(");
       boolean first = true;
 
       sb.append(")");
@@ -5454,15 +5953,15 @@ public class TTransactionServer {
       }
     }
 
-    private static class invalidateTx_resultStandardSchemeFactory implements SchemeFactory {
-      public invalidateTx_resultStandardScheme getScheme() {
-        return new invalidateTx_resultStandardScheme();
+    private static class getSnapshot_argsStandardSchemeFactory implements SchemeFactory {
+      public getSnapshot_argsStandardScheme getScheme() {
+        return new getSnapshot_argsStandardScheme();
       }
     }
 
-    private static class invalidateTx_resultStandardScheme extends StandardScheme<invalidateTx_result> {
+    private static class getSnapshot_argsStandardScheme extends StandardScheme<getSnapshot_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, invalidateTx_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getSnapshot_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -5483,7 +5982,7 @@ public class TTransactionServer {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, invalidateTx_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getSnapshot_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -5493,21 +5992,977 @@ public class TTransactionServer {
 
     }
 
-    private static class invalidateTx_resultTupleSchemeFactory implements SchemeFactory {
-      public invalidateTx_resultTupleScheme getScheme() {
-        return new invalidateTx_resultTupleScheme();
+    private static class getSnapshot_argsTupleSchemeFactory implements SchemeFactory {
+      public getSnapshot_argsTupleScheme getScheme() {
+        return new getSnapshot_argsTupleScheme();
       }
     }
 
-    private static class invalidateTx_resultTupleScheme extends TupleScheme<invalidateTx_result> {
+    private static class getSnapshot_argsTupleScheme extends TupleScheme<getSnapshot_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, invalidateTx_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getSnapshot_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, invalidateTx_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getSnapshot_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+      }
+    }
+
+  }
+
+  public static class getSnapshot_result implements org.apache.thrift.TBase<getSnapshot_result, getSnapshot_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSnapshot_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getSnapshot_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getSnapshot_resultTupleSchemeFactory());
+    }
+
+    public ByteBuffer success; // required
+    public TTransactionCouldNotTakeSnapshotException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSnapshot_result.class, metaDataMap);
+    }
+
+    public getSnapshot_result() {
+    }
+
+    public getSnapshot_result(
+      ByteBuffer success,
+      TTransactionCouldNotTakeSnapshotException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getSnapshot_result(getSnapshot_result other) {
+      if (other.isSetSuccess()) {
+        this.success = org.apache.thrift.TBaseHelper.copyBinary(other.success);
+;
+      }
+      if (other.isSetE()) {
+        this.e = new TTransactionCouldNotTakeSnapshotException(other.e);
+      }
+    }
+
+    public getSnapshot_result deepCopy() {
+      return new getSnapshot_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public byte[] getSuccess() {
+      setSuccess(org.apache.thrift.TBaseHelper.rightSize(success));
+      return success == null ? null : success.array();
+    }
+
+    public ByteBuffer bufferForSuccess() {
+      return success;
+    }
+
+    public getSnapshot_result setSuccess(byte[] success) {
+      setSuccess(success == null ? (ByteBuffer)null : ByteBuffer.wrap(success));
+      return this;
+    }
+
+    public getSnapshot_result setSuccess(ByteBuffer success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public TTransactionCouldNotTakeSnapshotException getE() {
+      return this.e;
+    }
+
+    public getSnapshot_result setE(TTransactionCouldNotTakeSnapshotException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((ByteBuffer)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((TTransactionCouldNotTakeSnapshotException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getSnapshot_result)
+        return this.equals((getSnapshot_result)that);
+      return false;
+    }
+
+    public boolean equals(getSnapshot_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getSnapshot_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getSnapshot_result typedOther = (getSnapshot_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getSnapshot_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        org.apache.thrift.TBaseHelper.toString(this.success, sb);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getSnapshot_resultStandardSchemeFactory implements SchemeFactory {
+      public getSnapshot_resultStandardScheme getScheme() {
+        return new getSnapshot_resultStandardScheme();
+      }
+    }
+
+    private static class getSnapshot_resultStandardScheme extends StandardScheme<getSnapshot_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getSnapshot_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.success = iprot.readBinary();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new TTransactionCouldNotTakeSnapshotException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getSnapshot_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          oprot.writeBinary(struct.success);
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getSnapshot_resultTupleSchemeFactory implements SchemeFactory {
+      public getSnapshot_resultTupleScheme getScheme() {
+        return new getSnapshot_resultTupleScheme();
+      }
+    }
+
+    private static class getSnapshot_resultTupleScheme extends TupleScheme<getSnapshot_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getSnapshot_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBinary(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getSnapshot_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBinary();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new TTransactionCouldNotTakeSnapshotException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class resetState_args implements org.apache.thrift.TBase<resetState_args, resetState_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("resetState_args");
+
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new resetState_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new resetState_argsTupleSchemeFactory());
+    }
+
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+;
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(resetState_args.class, metaDataMap);
+    }
+
+    public resetState_args() {
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public resetState_args(resetState_args other) {
+    }
+
+    public resetState_args deepCopy() {
+      return new resetState_args(this);
+    }
+
+    @Override
+    public void clear() {
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof resetState_args)
+        return this.equals((resetState_args)that);
+      return false;
+    }
+
+    public boolean equals(resetState_args that) {
+      if (that == null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(resetState_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      resetState_args typedOther = (resetState_args)other;
+
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("resetState_args(");
+      boolean first = true;
+
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class resetState_argsStandardSchemeFactory implements SchemeFactory {
+      public resetState_argsStandardScheme getScheme() {
+        return new resetState_argsStandardScheme();
+      }
+    }
+
+    private static class resetState_argsStandardScheme extends StandardScheme<resetState_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, resetState_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, resetState_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class resetState_argsTupleSchemeFactory implements SchemeFactory {
+      public resetState_argsTupleScheme getScheme() {
+        return new resetState_argsTupleScheme();
+      }
+    }
+
+    private static class resetState_argsTupleScheme extends TupleScheme<resetState_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, resetState_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, resetState_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+      }
+    }
+
+  }
+
+  public static class resetState_result implements org.apache.thrift.TBase<resetState_result, resetState_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("resetState_result");
+
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new resetState_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new resetState_resultTupleSchemeFactory());
+    }
+
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+;
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(resetState_result.class, metaDataMap);
+    }
+
+    public resetState_result() {
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public resetState_result(resetState_result other) {
+    }
+
+    public resetState_result deepCopy() {
+      return new resetState_result(this);
+    }
+
+    @Override
+    public void clear() {
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof resetState_result)
+        return this.equals((resetState_result)that);
+      return false;
+    }
+
+    public boolean equals(resetState_result that) {
+      if (that == null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(resetState_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      resetState_result typedOther = (resetState_result)other;
+
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("resetState_result(");
+      boolean first = true;
+
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class resetState_resultStandardSchemeFactory implements SchemeFactory {
+      public resetState_resultStandardScheme getScheme() {
+        return new resetState_resultStandardScheme();
+      }
+    }
+
+    private static class resetState_resultStandardScheme extends StandardScheme<resetState_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, resetState_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, resetState_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class resetState_resultTupleSchemeFactory implements SchemeFactory {
+      public resetState_resultTupleScheme getScheme() {
+        return new resetState_resultTupleScheme();
+      }
+    }
+
+    private static class resetState_resultTupleScheme extends TupleScheme<resetState_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, resetState_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, resetState_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
       }
     }

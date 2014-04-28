@@ -1,61 +1,75 @@
-/*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
- */
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.metrics.MetricsConstants;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
- * Entry point for metrics query server.
+ * Metrics implemented using the common http netty framework.
  */
-public final class MetricsQueryService extends AbstractIdleService {
-
+public class MetricsQueryService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsQueryService.class);
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
-
   private Cancellable cancelDiscovery;
 
   @Inject
-  public MetricsQueryService(CConfiguration cConf,
-                             @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS) InetAddress hostname,
+  public MetricsQueryService(CConfiguration cConf, @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
                              DiscoveryService discoveryService,
-                             Set<HttpHandler> handlers) {
-    this.httpService = NettyHttpService.builder()
-                                       .setHost(hostname.getCanonicalHostName())
-                                       .setPort(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0))
-                                       .setExecThreadPoolSize(
-                                         cConf.getInt(MetricsConstants.ConfigKeys.THREAD_POOL_SIZE,
-                                                      MetricsConstants.DEFAULT_THREAD_POOL_SIZE))
-                                       .setExecThreadKeepAliveSeconds(
-                                         cConf.getInt(MetricsConstants.ConfigKeys.KEEP_ALIVE_SECONDS,
-                                                      MetricsConstants.DEFAULT_KEEP_ALIVE_SECONDS))
-                                       .addHttpHandlers(handlers)
-                                       .build();
+                             @Nullable MetricsCollectionService metricsCollectionService) {
+
+    // netty http server config
+    String address = cConf.get(Constants.Metrics.ADDRESS);
+    int backlogcnxs = cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000);
+    int execthreads = cConf.getInt(Constants.Metrics.EXEC_THREADS, 20);
+    int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
+    int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
+
+    NettyHttpService.Builder builder = NettyHttpService.builder();
+    builder.addHttpHandlers(handlers);
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
+
+    builder.setHost(address);
+
+    builder.setConnectionBacklog(backlogcnxs);
+    builder.setExecThreadPoolSize(execthreads);
+    builder.setBossThreadPoolSize(bossthreads);
+    builder.setWorkerThreadPoolSize(workerthreads);
+
+    this.httpService = builder.build();
     this.discoveryService = discoveryService;
+
+    LOG.info("Configuring MetricsService " +
+               ", address: " + address +
+               ", backlog connections: " + backlogcnxs +
+               ", execthreads: " + execthreads +
+               ", bossthreads: " + bossthreads +
+               ", workerthreads: " + workerthreads);
   }
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("Starting Metrics Service...");
     httpService.startAndWait();
-    final InetSocketAddress address = httpService.getBindAddress();
+    LOG.info("Started Metrics HTTP Service...");
+    // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
@@ -64,18 +78,19 @@ public final class MetricsQueryService extends AbstractIdleService {
 
       @Override
       public InetSocketAddress getSocketAddress() {
-        return address;
+        return httpService.getBindAddress();
       }
     });
 
-    LOG.info("Metrics query service started at address {}", address);
+    LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Stopping Metrics Service...");
+
+    // Unregister the service
     cancelDiscovery.cancel();
     httpService.stopAndWait();
-
-    LOG.info("Metrics query service stopped.");
   }
 }

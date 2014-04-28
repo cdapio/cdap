@@ -3,10 +3,10 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.google.common.io.InputSupplier;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import javax.annotation.Nullable;
 
 /**
  * This is implementation of {@link ConfigResponse}.

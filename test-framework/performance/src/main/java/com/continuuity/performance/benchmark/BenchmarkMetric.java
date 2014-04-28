@@ -28,7 +28,7 @@ public class BenchmarkMetric {
     counter.addAndGet(delta);
   }
 
-  public Map<String, Long>list() {
+  public Map<String, Long> list() {
     return list(null);
   }
   public Map<String, Long> list(Set<String> keys) {

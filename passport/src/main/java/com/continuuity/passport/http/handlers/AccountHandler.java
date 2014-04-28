@@ -31,6 +31,9 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -39,9 +42,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Annotations for endpoints, method types and data types for handling Http requests
@@ -82,7 +82,7 @@ public class AccountHandler extends PassportHandler implements HttpHandler {
         LOG.error(String.format("Account not found. Processing endpoint: %s ", "GET /passport/v1/accounts"));
         responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("Account not found"));
       }
-    } catch (Exception e){
+    } catch (Exception e) {
       LOG.error(String.format("Error while processing end point %s. Error %s",
                               "GET /passport/v1/accounts", e.getMessage()));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -209,7 +209,7 @@ public class AccountHandler extends PassportHandler implements HttpHandler {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                              Utils.getJson("FAILED", "Failed to get updated account"));
       }
-    } catch (JsonParseException e){
+    } catch (JsonParseException e) {
       requestFailed();
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            Utils.getJson("FAILED", "Failed to parse Json"));
@@ -411,7 +411,7 @@ public class AccountHandler extends PassportHandler implements HttpHandler {
 
       if ((vpcName != null) && (!vpcName.isEmpty()) && (vpcLabel != null) && (!vpcLabel.isEmpty())) {
         VPC vpc = dataManagementService.addVPC(id, new VPC(vpcName, vpcLabel, vpcType));
-        if (vpc != null){
+        if (vpc != null) {
           requestSuccess();
           responder.sendString(HttpResponseStatus.OK , vpc.toString());
         } else {
@@ -657,7 +657,7 @@ public class AccountHandler extends PassportHandler implements HttpHandler {
   @Path("{accountId}/organizations/{orgId}")
   @PUT
   public void updateOrganization(HttpRequest request, HttpResponder responder,
-                                 @PathParam("orgId") String orgId, @PathParam("accountId") int accountId){
+                                 @PathParam("orgId") String orgId, @PathParam("accountId") int accountId) {
     requestReceived();
     try {
       dataManagementService.updateAccountOrganization(accountId, orgId);
@@ -682,7 +682,7 @@ public class AccountHandler extends PassportHandler implements HttpHandler {
       requestFailed(); //Failed request
       responder.sendString(HttpResponseStatus.CONFLICT,
                            Utils.getJsonError("Organization not found in the system"));
-    } catch (Throwable e){
+    } catch (Throwable e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJsonError("Error while updating the org.", e.getMessage()));
     }

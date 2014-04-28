@@ -1,15 +1,17 @@
 package com.continuuity.data2.dataset2.manager.inmemory;
 
+import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
 
 /**
  *
@@ -33,14 +35,14 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws Exception {
+  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
     return tableDef.getAdmin(spec.getSpecification("table"));
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetInstanceSpec spec) throws Exception {
+  public KeyValueTable getDataset(DatasetInstanceSpec spec) throws IOException {
     OrderedTable table = tableDef.getDataset(spec.getSpecification("table"));
-    return new KeyValueTable(table);
+    return new KeyValueTable(spec.getName(), table);
   }
 
   /**
@@ -51,8 +53,8 @@ public class KeyValueTableDefinition
 
     private final OrderedTable table;
 
-    public KeyValueTable(OrderedTable table) {
-      super(table);
+    public KeyValueTable(String instanceName, OrderedTable table) {
+      super(instanceName, table);
       this.table = table;
     }
 

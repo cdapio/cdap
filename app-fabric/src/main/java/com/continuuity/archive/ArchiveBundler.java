@@ -4,12 +4,12 @@
 
 package com.continuuity.archive;
 
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
+import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;

@@ -50,7 +50,7 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
 
   @GET
   @Produces("text/plain")
-  public void status(HttpRequest request, HttpResponder responder){
+  public void status(HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "OK");
   }
 

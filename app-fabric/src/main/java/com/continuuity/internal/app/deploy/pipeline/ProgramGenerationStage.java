@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
@@ -12,9 +12,6 @@ import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.webapp.WebappSpecification;
 import com.continuuity.pipeline.AbstractStage;
-import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -23,6 +20,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.List;

@@ -17,11 +17,7 @@ import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
-import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.handlers.metrics.MetricsDeleteTest;
-import com.continuuity.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
-import com.continuuity.gateway.handlers.metrics.MetricsQueryTest;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
@@ -43,6 +39,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -61,11 +58,10 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
+@Suite.SuiteClasses(value = {PingHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
-  MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class})
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -108,34 +104,35 @@ public class GatewayFastTestsSuite {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
-    injector = Guice.createInjector(Modules.override(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return new MockedPassportClient(keysAndClusters);
-            }
-          });
-        }
-      },
-      new GatewayModule().getInMemoryModules(),
-      new AppFabricTestModule(conf)
-    ).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-        // AppFabricServiceModule
-        bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-        bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+    injector = Guice.createInjector(
+      Modules.override(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
+              @Override
+              public PassportClient get() {
+                return new MockedPassportClient(keysAndClusters);
+              }
+            });
+          }
+        },
+        new GatewayModule().getInMemoryModules(),
+        new AppFabricTestModule(conf)
+      ).with(new AbstractModule() {
+               @Override
+               protected void configure() {
+                 // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+                 // AppFabricServiceModule
+                 bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+                 bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-        MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-        bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-        bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-      }
-    }
-    ));
+                 MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+                 bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+                 bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+               }
+             }
+      ));
 
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
@@ -191,6 +188,7 @@ public class GatewayFastTestsSuite {
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
+
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);
@@ -219,10 +217,22 @@ public class GatewayFastTestsSuite {
     return client.execute(post);
   }
 
+  public static HttpResponse execute(HttpUriRequest request) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    request.setHeader(AUTH_HEADER);
+    return client.execute(request);
+  }
+
   public static HttpPost getPost(String resource) {
     HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
     post.setHeader(AUTH_HEADER);
     return post;
+  }
+
+  public static HttpPut getPut(String resource) {
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    put.setHeader(AUTH_HEADER);
+    return put;
   }
 
   public static HttpResponse doPost(String resource, String body) throws Exception {

@@ -4,17 +4,17 @@
 
 package com.continuuity.app.store;
 
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data2.OperationException;
-import org.apache.twill.filesystem.Location;
 import com.google.common.collect.Table;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;

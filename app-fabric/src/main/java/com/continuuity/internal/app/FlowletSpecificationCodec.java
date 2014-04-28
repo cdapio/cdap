@@ -35,7 +35,8 @@ final class FlowletSpecificationCodec extends AbstractSpecificationCodec<Flowlet
     jsonObj.add("failurePolicy", new JsonPrimitive(src.getFailurePolicy().name()));
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-    jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
+    jsonObj.add("resources", context.serialize(src.getResources(),
+                                               new TypeToken<ResourceSpecification>() { }.getType()));
 
     return jsonObj;
   }
@@ -52,7 +53,7 @@ final class FlowletSpecificationCodec extends AbstractSpecificationCodec<Flowlet
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     ResourceSpecification resources = context.deserialize(jsonObj.get("resources"),
-                                                          new TypeToken<ResourceSpecification>(){}.getType());
+                                                          new TypeToken<ResourceSpecification>() { }.getType());
 
     return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources);
   }

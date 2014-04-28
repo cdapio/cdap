@@ -14,9 +14,9 @@ import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A helper class for managing queue consumer instances.

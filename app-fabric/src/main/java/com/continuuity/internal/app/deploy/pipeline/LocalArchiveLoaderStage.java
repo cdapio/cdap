@@ -4,18 +4,20 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.deploy.InMemoryConfigurator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.pipeline.AbstractStage;
-import org.apache.twill.filesystem.Location;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.twill.filesystem.Location;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationSpecification}.
@@ -27,13 +29,15 @@ import java.util.concurrent.TimeUnit;
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   private final ApplicationSpecificationAdapter adapter;
   private final Id.Account id;
+  private final String appId;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage(Id.Account id) {
+  public LocalArchiveLoaderStage(Id.Account id, @Nullable String appId) {
     super(TypeToken.of(Location.class));
     this.id = id;
+    this.appId = appId;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }
 
@@ -50,7 +54,15 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
     //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    Id.Application appId = Id.Application.from(id, specification.getName());
-    emit(new ApplicationSpecLocation(appId, specification, archive));
+    if (appId != null) {
+      specification = new ForwardingApplicationSpecification(specification) {
+        @Override
+        public String getName() {
+          return appId;
+        }
+      };
+    }
+    Id.Application applicationId = Id.Application.from(id, specification.getName());
+    emit(new ApplicationSpecLocation(applicationId, specification, archive));
   }
 }

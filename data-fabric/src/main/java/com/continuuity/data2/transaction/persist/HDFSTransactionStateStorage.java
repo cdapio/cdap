@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.io.InputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -20,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,14 +97,13 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
 
   @Override
   public void writeSnapshot(TransactionSnapshot snapshot) throws IOException {
-    // TODO: instead of making an extra in-memory copy, serialize the snapshot directly to the file output stream
-    byte[] serialized = encode(snapshot);
     // create a temporary file, and save the snapshot
     Path snapshotTmpFile = new Path(snapshotDir, TMP_SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
     LOG.info("Writing snapshot to temporary file {}", snapshotTmpFile);
 
     FSDataOutputStream out = fs.create(snapshotTmpFile, false, BUFFER_SIZE);
-    out.write(serialized);
+    // encode the snapshot and stream the serialized version to the file
+    encode(out, snapshot);
     out.close();
 
     // move the temporary file into place with the correct filename
@@ -115,36 +114,40 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
 
   @Override
   public TransactionSnapshot getLatestSnapshot() throws IOException {
+    InputStream in = getLatestSnapshotInputStream();
+    if (in == null) {
+      return null;
+    }
+    try {
+      return readSnapshotInputStream(in);
+    } finally {
+      in.close();
+    }
+  }
+
+  private InputStream getLatestSnapshotInputStream() throws IOException {
     TimestampedFilename[] snapshots = listSnapshotFiles();
     Arrays.sort(snapshots);
     if (snapshots.length > 0) {
       // last is the most recent
-      return readSnapshotFile(snapshots[snapshots.length - 1].getPath());
+      return fs.open(snapshots[snapshots.length - 1].getPath(), BUFFER_SIZE);
     }
 
     LOG.info("No snapshot files found in {}", snapshotDir);
     return null;
   }
 
+  private TransactionSnapshot readSnapshotInputStream(InputStream in) throws IOException {
+    return decode(in);
+  }
+
   private TransactionSnapshot readSnapshotFile(Path filePath) throws IOException {
-    // TODO: deserialize the snapshot from the input stream instead of copying into memory twice
     FSDataInputStream in = fs.open(filePath, BUFFER_SIZE);
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
     try {
-      byte[] chunk = new byte[BUFFER_SIZE];
-      int read = 0;
-      int totalRead = 0;
-      while ((read = in.read(chunk)) != -1) {
-        out.write(chunk, 0, read);
-        totalRead += read;
-      }
-      LOG.info("Read {} bytes from {}", totalRead, filePath);
+      return readSnapshotInputStream(in);
     } finally {
       in.close();
     }
-
-    byte[] bytes = out.toByteArray();
-    return decode(bytes);
   }
 
   private TimestampedFilename[] listSnapshotFiles() throws IOException {
