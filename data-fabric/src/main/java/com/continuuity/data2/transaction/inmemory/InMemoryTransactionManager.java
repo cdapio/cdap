@@ -612,7 +612,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
 
     Set<ChangeId> changeSet = null;
-    boolean canCommit = true;
+    boolean addToCommitted = true;
     // guard against changes to the transaction log while processing
     this.logReadLock.lock();
     try {
@@ -638,19 +638,15 @@ public class InMemoryTransactionManager extends AbstractService {
         if (changeSet != null) {
           // double-checking if there are conflicts: someone may have committed since canCommit check
           if (hasConflicts(tx, changeSet)) {
-            canCommit = false;
-          }
-          if (!canCommit) {
-            // encountered conflicts
             return false;
           }
         } else {
           // no changes
-          canCommit = false;
+          addToCommitted = false;
         }
-        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
+        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted);
       }
-      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
+      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, addToCommitted));
     } finally {
       this.logReadLock.unlock();
     }
