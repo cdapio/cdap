@@ -1139,8 +1139,8 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
-To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
+running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1153,9 +1153,9 @@ To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
    * - ``<ts>``
      - *Start* and *stop* time, given as seconds since the start of the Epoch.
 
