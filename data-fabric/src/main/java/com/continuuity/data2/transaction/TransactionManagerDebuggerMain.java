@@ -508,7 +508,8 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Average age of long transactions: " + formatter.format(new Date(avgLongAge / longTxCount)));
         System.out.println("Oldest long transaction" +
                            "\tWritePtr " + txIdToString(oldestLong.getKey()) +
-                           "\tVisibility upper bound: " + txIdToString(oldestLong.getValue().getVisibilityUpperBound()));
+                           "\tVisibility upper bound: " +
+                           txIdToString(oldestLong.getValue().getVisibilityUpperBound()));
       }
       if (inProgress.size() - longTxCount > 0) {
         // Print some information about short transactions
