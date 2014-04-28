@@ -1028,8 +1028,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
     }
 
-
-
     final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
     sessions.put(accountId, sessionInfo);
 
@@ -1060,6 +1058,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         } finally {
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
+        }
+      }
+      public void handleError(Throwable t) {
+        try {
+          os.close();
+          sessionInfo.setStatus(DeployStatus.FAILED);
+        } catch (IOException e) {
+          e.printStackTrace();
         }
       }
     };
