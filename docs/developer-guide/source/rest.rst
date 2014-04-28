@@ -5,9 +5,9 @@
 Continuuity Reactor HTTP REST API
 =================================
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 
 Introduction
@@ -15,12 +15,12 @@ Introduction
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream**: sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data**: interacting with DataSets (currently limited to Tables).
-- **Procedure**: sending queries to a Procedure.
-- **Reactor**: deploying and managing Applications.
-- **Logs**: retrieving Application logs.
-- **Metrics**: retrieving metrics for system and user Applications (user-defined metrics).
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
+- **Data:** interacting with DataSets (currently limited to Tables).
+- **Procedure:** sending queries to a Procedure.
+- **Reactor:** deploying and managing Applications.
+- **Logs:** retrieving Application logs.
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 

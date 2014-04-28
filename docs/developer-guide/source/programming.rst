@@ -9,9 +9,9 @@ Continuuity Reactor Programming Guide
 Introduction to Programming Applications for the Continuuity Reactor
 -----------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 Introduction
 ============
@@ -196,11 +196,10 @@ which is comprised of a header (a map of strings for metadata) and a
 body (a blob of arbitrary binary data).
 
 Streams are uniquely identified by an ID string (a "name") and are
-explicitly created before being used. They can be created
-programmatically within your application, through the Management
-Dashboard, or by or using a command line tool. Data written to a Stream
-can be consumed by Flows and processed in real-time. Streams are shared
-between applications, so they require a unique name.
+explicitly created before being used. They can be created either
+programmatically within your application or by or using a command line tool.
+Data written to a Stream can be consumed by Flows and processed in real-time.
+Streams are shared between applications, so they require a unique name.
 
 .. _flows:
 

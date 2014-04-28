@@ -6,12 +6,12 @@ Continuuity Reactor Testing and Debugging Guide
 ===============================================
 
 -------------------------------------------------------------------------------------
-Introduction to Testing and Trouble-Shooting Applications for the Continuuity Reactor
+Introduction to Testing and Troubleshooting Applications for the Continuuity Reactor
 -------------------------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 Testing Reactor Applications
 ============================
@@ -20,14 +20,14 @@ Strategies in Testing Applications
 ----------------------------------
 
 The Reactor comes with a convenient way to unit test your Applications.
-The base for these tests is ReactorTestBase, which is packaged
+The base for these tests is ``ReactorTestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 Reactor’s runtime classes. You can include it in your test dependencies
 in one of two ways:
 
-- include all JAR files in the lib directory of the Reactor Development Kit installation,
+- include all JAR files in the ``lib`` directory of the Continuuity Reactor Development Kit installation,
   or
-- include the continuuity-test artifact in your Maven test dependencies
+- include the ``continuuity-test`` artifact in your Maven test dependencies
   (see the ``pom.xml`` file of the *WordCount* example).
 
 Note that for building an application, you only need to include the
@@ -62,7 +62,7 @@ Now that the Flow is running, we can send some events to the Stream::
 	  writer.send("the world says hello");
 
 To wait for all events to be processed, we can get a metrics observer
-for the last Flowlet in the pipeline (the word associator) and wait for
+for the last Flowlet in the pipeline (the "word associator") and wait for
 its processed count to either reach 3 or time out after 5 seconds::
 
 	  // Wait for the events to be processed, or at most 5 seconds
@@ -104,8 +104,8 @@ as a response, and the value types in the top-level map are not uniform::
 	  Assert.assertTrue(assocs.containsKey("hello"));
 	}
 
-Strategies in Testing MapReduce
--------------------------------
+Strategies in Testing MapReduce Jobs
+------------------------------------
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
@@ -174,7 +174,7 @@ debugging:
    The Reactor should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
 
-#. Deploy the *HelloWorld* Application to the Reactor by dragging and dropping the
+#. Deploy (for example) the *HelloWorld* Application to the Reactor by dragging and dropping the
    ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the Reactor
    Dashboard.
 
@@ -188,27 +188,29 @@ Debugging an Application in Distributed Reactor
 -----------------------------------------------
 
 In distributed mode, an application does not run in a single JVM. Instead, its programs
-are dispersed over multiple if not many containers in the Hadoop cluster. Therefore
-there is no single place to debug the entire application. You can, however, debug every
-individual container by attaching a remote debugger to it. This is supported for each
-flowlet of a flow and each instances of a procedure. In order to debug a container, you
-need to start the program with debugging enabled, by making an HTTP request to the
-program’s URL, for example, the following will start a flow for debugging::
+are dispersed over multiple—if not many—containers in the Hadoop cluster. There is no 
+single place to debug the entire application. 
+
+You can, however, debug every individual container by attaching a remote debugger to it. 
+This is supported for each Flowlet of a Flow and each instance of a Procedure. In order
+to debug a container, you need to start the element with debugging enabled by making 
+an HTTP request to the element’s URL. For example, the following will start a Flow for debugging::
 
 	POST <base-url>/apps/WordCount/flows/WordCounter/debug
 
-Note that this URL differs from the URL for starting the flow only by the last path
-component (``debug`` instead of ``start``,
-see `Reactor Client HTTP API <developer/rest#reactor-client-http-api>`_),
-and you can pass in runtime arguments in the exact same way as if you normally start a flow.
-Once the flow is running, each flowlet
-will detect an available port in its container and open that port for attaching a debugger.
+Note that this URL differs from the URL for starting the Flow only by the last path
+component (``debug`` instead of ``start``; see 
+`Reactor Client HTTP API <developer/rest#reactor-client-http-api>`_). You can pass in 
+runtime arguments in the exact same way as you normally would start a Flow.
+
+Once the Flow is running, each Flowlet will detect an available port in its container
+and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the reactor for the flow’s live info via HTTP::
+the Reactor for the Flow’s live info via HTTP::
 
 	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON and - pretty-printed - looks similar to this::
+The response is formatted in JSON and—pretty-printed— would look similar to this::
 
   {
     "app": "WordCount",
@@ -241,15 +243,17 @@ The response is formatted in JSON and - pretty-printed - looks similar to this::
     "yarnAppId": "application_1397069870124_0010"
   }
 
-You see the YARN application id and also the YARN container IDs of each flowlet. More importantly,
-see the host name and debugging port for each flowlet. For example, here the only instance of the
-splitter flowlet run on node-1003.my.cluster.net and the debugging port is 37205. You can now
+You see the YARN application id and the YARN container IDs of each Flowlet. More importantly, you
+can see the host name and debugging port for each Flowlet. For example, the only instance of the
+splitter Flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
 attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
-The corresponding HTTP requests for the RetrieveCounts procedure of this application are::
+The corresponding HTTP requests for the ``RetrieveCounts`` Procedure of this application would be::
 
 	POST <base-url>/apps/WordCount/procedures/RetrieveCounts/debug
 	GET <base-url>/apps/WordCount/procedures/RetrieveCounts/live-info
+
+Analysis of the response would give you the host names and debugging ports for all instances of the Procedure.
 
 Attaching a Debugger
 --------------------
@@ -264,7 +268,7 @@ Debugging with IntelliJ
 
 #. Create a debug configuration by entering a name, for example, ``Continuuity``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
-   in the Port field:
+   in the Port field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
    .. image:: _images/IntelliJ_2.png
@@ -287,7 +291,7 @@ Debugging with Eclipse
 #. Enter a name, for example, ``Continuuity``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Port field:
-#. Enter the debugging port, for example, ``5005`` in the Port field:
+#. Enter the debugging port, for example, ``5005`` in the Port field.
 #. Click ``Debug`` to start the debugger:
 
    .. image:: _images/Eclipse_1.png
@@ -299,12 +303,6 @@ Debugging with Eclipse
 #. Start the Flow in the Dashboard.
 #. Send an event to the Stream.
 #. The control stops at the breakpoint and you can proceed with debugging.
-
-.. Unit testing [rev 2]
-.. ------------
-
-.. Local Continuuity Reactor [rev 2]
-.. -------------------------
 
 Where to Go Next
 ================
