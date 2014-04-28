@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -25,6 +26,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,8 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   private static final int MAX_RETRIES = 3;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCache.class);
 
+  private final List<ACL> znodeACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
+  //private final List<ACL> znodeACL = ZooDefs.Ids.CREATOR_ALL_ACL;
   private final ZKClient zookeeper;
   private final Codec<T> codec;
   private final String parentZnode;
@@ -65,7 +69,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
     this.watcher = new ZKWatcher();
     try {
       if (zookeeper.exists(parentZnode).get() == null) {
-        zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, ZooDefs.Ids.CREATOR_ALL_ACL).get();
+        zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL).get();
       }
     } catch (ExecutionException ee) {
       // recheck if already created
@@ -84,21 +88,29 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
     ZKOperations.watchChildren(zookeeper, parentZnode, new ZKOperations.ChildrenCallback() {
       @Override
       public void updated(NodeChildren nodeChildren) {
+        LOG.info("Listing existing children for node " + parentZnode);
         List<String> children = nodeChildren.getChildren();
-        List<OperationFuture<NodeData>> childFutures = Lists.newArrayListWithCapacity(children.size());
         for (String child : children) {
-          childFutures.add(zookeeper.getData(joinZNode(parentZnode, child)));
-        }
+          OperationFuture<NodeData> dataFuture = zookeeper.getData(joinZNode(parentZnode, child), watcher);
+          final String nodeName = getZNode(dataFuture.getRequestPath());
+          Futures.addCallback(dataFuture, new FutureCallback<NodeData>() {
+            @Override
+            public void onSuccess(NodeData result) {
+              LOG.info("Got data for child " + nodeName);
+              try {
+                T resource = codec.decode(result.getData());
+                loaded.put(nodeName, resource);
+              } catch (IOException ioe) {
+                throw Throwables.propagate(ioe);
+              }
+            }
 
-        // block til all are loaded
-        for (OperationFuture<NodeData> future : childFutures) {
-          NodeData data = Futures.getUnchecked(future);
-          try {
-            T resource = codec.decode(data.getData());
-            loaded.put(getZNode(future.getRequestPath()), resource);
-          } catch (IOException ioe) {
-            throw Throwables.propagate(ioe);
-          }
+            @Override
+            public void onFailure(Throwable t) {
+              LOG.error("Failed to get data for child node " + nodeName, t);
+            }
+          });
+          LOG.info("Added future for " + child);
         }
       }
     });
@@ -122,8 +134,10 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
       byte[] encoded = codec.encode(instance);
       try {
         lock.lock();
-        ListenableFuture<String> future = ZKExtOperations.createOrSet(zookeeper, znode, encoded, znode, MAX_RETRIES);
+        LOG.info("Setting value for node " + znode);
+        OperationFuture<String> future = zookeeper.create(znode, encoded, CreateMode.PERSISTENT);
         Futures.getUnchecked(future);
+        LOG.info("Set value for node " + znode);
         return resources.put(name, instance);
       } finally {
         lock.unlock();
@@ -145,6 +159,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
       lock.lock();
       OperationFuture<String> future = zookeeper.delete(znode);
       Futures.getUnchecked(future);
+      LOG.info("Removed value for node " + znode);
       removedInstance = resources.remove(name);
       return removedInstance;
     } finally {
@@ -211,6 +226,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   }
 
   private void notifyCreated(String path) {
+    LOG.info("Got created event on " + path);
     String name = getZNode(path);
     try {
       lock.lock();
@@ -222,6 +238,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   }
 
   private void notifyDeleted(String path) {
+    LOG.info("Got deleted event on " + path);
     String name = getZNode(path);
     try {
       lock.lock();
@@ -232,6 +249,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   }
 
   private void notifyChildrenChanged(String path) {
+    LOG.info("Got childrenChanged event on " + path);
     if (!path.equals(parentZnode)) {
       LOG.warn("Ignoring children change on znode " + path);
       return;
@@ -245,6 +263,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   }
 
   private void notifyDataChanged(String path) {
+    LOG.info("Got dataChanged event on " + path);
     String name = getZNode(path);
     try {
       lock.lock();
@@ -269,6 +288,9 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
   private class ZKWatcher implements Watcher {
     @Override
     public void process(WatchedEvent event) {
+      LOG.info("Watcher got event " + event);
+      return;
+      /*
       switch (event.getType()) {
         case None:
           // connection change event
@@ -286,6 +308,7 @@ public class SharedResourceCache<T> extends AbstractIdleService implements Map<S
           notifyDataChanged(event.getPath());
           break;
       }
+      */
     }
   }
 }

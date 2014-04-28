@@ -22,7 +22,6 @@ public class DistributedKeyManager extends AbstractKeyManager {
    * interval to keep rotations happening at approximately the set frequency.
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
-  private final Codec<KeyIdentifier> keyCodec;
   private Timer timer;
   private long lastKeyUpdate;
 
@@ -31,7 +30,6 @@ public class DistributedKeyManager extends AbstractKeyManager {
     super(conf);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION,
                                             Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION);
-    this.keyCodec = codec;
     this.allKeys = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "keys");
   }
 
