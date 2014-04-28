@@ -110,29 +110,26 @@ Compatible Conversions 2 of 3
 - Two maps are compatible if their underlying types are compatible
 - Example: ``TreeMap<Integer, Boolean>`` is compatible with ``HashMap<String, String>``
 
+Other Java objects can be compatible if their fields are compatible.
+
 ----
 
 Compatible Conversions 3 of 3
 =============================
 
-- Other Java objects can be compatible if their fields are compatible.
-  For example, in the following class ``Point`` is compatible with ``Coordinate``,
-  because all common fields between the two classes are compatible.
-  When projecting from ``Point`` to ``Coordinate``, the color field is dropped,
-  whereas the projection from ``Coordinate`` to ``Point`` will leave the ``color`` field
-  as ``null``:
+Class ``Point`` is compatible with ``Coordinate``, because all common fields between the two classes are compatible. Projecting from ``Point`` to ``Coordinate``, the color field is dropped;
+projecting from ``Coordinate`` to ``Point`` will leave the ``color`` field
+as ``null``
 
 .. sourcecode:: java
 
 	class Point {
-	  private int x;
-	  private int y;
+	  private int x, y;
 	  private String color;
 	}
 
 	class Coordinates {
-	  int x;
-	  int y;
+	  int x, y;
 	}
 
 ----
@@ -154,7 +151,7 @@ You should now understand:
 
 - The problem of matching argument types
 - How to use type projection to solve this and reduce duplicate methods
-- Compatible conversions and how to use them
+- Compatible conversions and when to make use of them
 
 ----
 

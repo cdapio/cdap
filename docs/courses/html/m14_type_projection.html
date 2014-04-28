@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Flow Partitioning</title>
+    <title>Type Projection</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -789,8 +789,8 @@ pre, .gist .gist-file .gist-data {
   line-height:1.8em;
 /* 
   font-size: 18px;
- */
   max-height: 485px;
+*/
   padding-top: 0.25em !important;
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;
@@ -1718,12 +1718,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Flow Partitioning</h1></header>
+            <header><h1>Type Projection</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1739,17 +1739,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1759,11 +1759,9 @@ function main() {
             
             <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Overview</li>
-<li>Collect</li>
-<li>Process</li>
-<li>Store</li>
-<li>Query</li>
+<li>The problem of mismatching argument types</li>
+<li>Implicit type projections as a solution</li>
+<li>Compatible conversions</li>
 </ul></section>
             
           </div>
@@ -1776,23 +1774,28 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
       <div class="slide-wrapper">
-        <div class="slide center_title_slide">
+        <div class="slide">
           <div class="inner">
             
-            <header><h1>Overview</h1></header>
+            <header><h1>Type Projection by Flowlets</h1></header>
             
+            
+            <section><p>Flowlets perform an implicit projection on the input objects if they do
+not match exactly what the process method accepts as arguments</p>
+<p>This allows you to write a single process method that can accept multiple
+<strong>compatible</strong> types</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1804,17 +1807,286 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Example of a Process Method</h1></header>
+            
+            
+            <section><p>For example, if you have a process method:</p>
+<pre><span class="nd">@ProcessInput</span>
+<span class="n">count</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre>
+<ul class="simple">
+<li>You send data of type <tt class="docutils literal">Long</tt> to this Flowlet</li>
+<li>That type does not exactly match what the process method expects</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>A Solution: Write A Lot of Methods</h1></header>
+            
+            
+            <section><p>You could write another process method for <tt class="docutils literal">Long</tt> numbers:</p>
+<pre><span class="nd">@ProcessInput</span> <span class="n">count</span><span class="o">(</span><span class="n">Long</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
+<span class="n">count</span><span class="o">(</span><span class="n">number</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+<span class="o">}</span>
+</pre>
+<ul class="simple">
+<li>Need to do this for every type that you might possibly want to count</li>
+<li>Tedious and error-prone</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>A Better Solution: Type Projection</h1></header>
+            
+            
+            <section><p>Type projection does this for you automatically</p>
+<ul class="simple">
+<li>If no process method is found that matches the type of an object exactly,
+it picks a method that is compatible with the object</li>
+<li>Because <tt class="docutils literal">Long</tt> can be converted into a <tt class="docutils literal">String</tt>, it is
+compatible with the original process method</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Compatible Conversions 1 of 3</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Every primitive type that can be converted to a <tt class="docutils literal">String</tt> is compatible with
+<tt class="docutils literal">String</tt></li>
+<li>A byte array is compatible with a <tt class="docutils literal">ByteBuffer</tt> and vice-versa</li>
+<li>Any numeric type is compatible with numeric types that can represent it</li>
+</ul>
+<p>For example:</p>
+<ul class="simple">
+<li><tt class="docutils literal">int</tt> is compatible with <tt class="docutils literal">long</tt>, <tt class="docutils literal">float</tt> and <tt class="docutils literal">double</tt></li>
+<li><tt class="docutils literal">long</tt> is compatible with <tt class="docutils literal">float</tt> and <tt class="docutils literal">double</tt></li>
+<li><strong>but</strong> <tt class="docutils literal">long</tt> is not compatible with <tt class="docutils literal">int</tt> because <tt class="docutils literal">int</tt> cannot
+represent every <tt class="docutils literal">long</tt> value</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Compatible Conversions 2 of 3</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>A collection of type A is compatible with a collection of type B,
+if type A is compatible with type B</li>
+<li>A collection can be an array or any Java <tt class="docutils literal">Collection</tt></li>
+<li>Example: <tt class="docutils literal">List&lt;Integer&gt;</tt> is compatible with a <tt class="docutils literal">String[]</tt> array</li>
+<li>Two maps are compatible if their underlying types are compatible</li>
+<li>Example: <tt class="docutils literal">TreeMap&lt;Integer, Boolean&gt;</tt> is compatible with <tt class="docutils literal">HashMap&lt;String, String&gt;</tt></li>
+</ul>
+<p>Other Java objects can be compatible if their fields are compatible.</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Compatible Conversions 3 of 3</h1></header>
+            
+            
+            <section><p>Class <tt class="docutils literal">Point</tt> is compatible with <tt class="docutils literal">Coordinate</tt>, because all common fields between the two classes are compatible. Projecting from <tt class="docutils literal">Point</tt> to <tt class="docutils literal">Coordinate</tt>, the color field is dropped;
+projecting from <tt class="docutils literal">Coordinate</tt> to <tt class="docutils literal">Point</tt> will leave the <tt class="docutils literal">color</tt> field
+as <tt class="docutils literal">null</tt></p>
+<pre><span class="kd">class</span> <span class="nc">Point</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">String</span> <span class="n">color</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">class</span> <span class="nc">Coordinates</span> <span class="o">{</span>
+  <span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Conclusion</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Type projections help you keep your code generic and reusable</li>
+<li>They interact well with inheritance</li>
+<li>If a Flowlet can process a specific object class, then it can also process
+any subclass of that class</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1822,14 +2094,11 @@ function main() {
             <header><h1>Module Summary</h1></header>
             
             
-            <section><p>You should be able describe:</p>
+            <section><p>You should now understand:</p>
 <ul class="simple">
-<li>Streams</li>
-<li>Flows</li>
-<li>DataSets</li>
-<li>Procedures</li>
-<li>MapReduce Jobs</li>
-<li>Workflows</li>
+<li>The problem of matching argument types</li>
+<li>How to use type projection to solve this and reduce duplicate methods</li>
+<li>Compatible conversions and when to make use of them</li>
 </ul></section>
             
           </div>
@@ -1842,17 +2111,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              11/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1860,7 +2129,7 @@ function main() {
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m13">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m15">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1872,11 +2141,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m13_flow_partitioning.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m14_type_projection.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              12/12
             </aside>
           </footer>
         </div>
@@ -1891,7 +2160,7 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Flow Partitioning</a></th>
+        <th><a href="#slide1">Type Projection</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -1903,20 +2172,62 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Overview</a></th>
+        <th><a href="#slide3">Type Projection by Flowlets</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Module Summary</a></th>
+        <th><a href="#slide4">Example of a Process Method</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Module Completed</a></th>
+        <th><a href="#slide5">A Solution: Write A Lot of Methods</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">A Better Solution: Type Projection</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Compatible Conversions 1 of 3</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Compatible Conversions 2 of 3</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Compatible Conversions 3 of 3</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Conclusion</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Module Summary</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12">Module Completed</a></th>
+        <td><a href="#slide12">12</a></td>
       </tr>
       
       

@@ -529,8 +529,8 @@ pre, .gist .gist-file .gist-data {
   line-height:1.8em;
 /* 
   font-size: 18px;
- */
   max-height: 485px;
+*/
   padding-top: 0.25em !important;
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;

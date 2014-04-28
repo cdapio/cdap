@@ -11,6 +11,10 @@ placeholder
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
+.. |br_m00| raw:: html
+
+   <br />
+
 ----
 
 Module Objectives
