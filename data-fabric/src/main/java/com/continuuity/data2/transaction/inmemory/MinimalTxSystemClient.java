@@ -47,12 +47,17 @@ public class MinimalTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(com.continuuity.data2.transaction.Transaction tx) {
-    // do nothing
+  public boolean invalidate(long tx) {
+    return true;
   }
 
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     throw new TransactionCouldNotTakeSnapshotException("Not snapshot to take.");
+  }
+
+  @Override
+  public void resetState() {
+    // do nothing
   }
 }
