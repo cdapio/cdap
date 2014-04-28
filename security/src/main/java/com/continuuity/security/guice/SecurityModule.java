@@ -52,7 +52,7 @@ public abstract class SecurityModule extends PrivateModule {
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
-    expose(new TypeLiteral<Codec<KeyIdentifier>>() {});
+    expose(new TypeLiteral<Codec<KeyIdentifier>>() { });
   }
 
   private static final class HandlerListProvider implements Provider<HandlerList> {

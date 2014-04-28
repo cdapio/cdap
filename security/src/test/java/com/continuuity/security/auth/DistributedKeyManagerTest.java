@@ -106,9 +106,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     zk.startAndWait();
     DistributedKeyManager keyManager =
       new DistributedKeyManager(injector.getInstance(CConfiguration.class),
-                                injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {})),
-                                zk,
-                                injector.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() {})));
+          injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { })),
+          zk,
+          injector.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() { })));
 
     keyManager.init();
     return keyManager;

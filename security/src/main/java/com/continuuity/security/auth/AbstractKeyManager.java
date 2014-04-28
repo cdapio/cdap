@@ -7,6 +7,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -23,6 +25,7 @@ import javax.crypto.SecretKey;
  * generation of keys and MACs, and validation of MACs. Subclasses are expected to override the init method.
  */
 public abstract class AbstractKeyManager implements KeyManager {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractKeyManager.class);
 
   protected ThreadLocal<Mac> threadLocalMac;
   protected KeyGenerator keyGenerator;
@@ -92,6 +95,7 @@ public abstract class AbstractKeyManager implements KeyManager {
       new KeyIdentifier(nextKey, nextId, keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
     allKeys.put(Integer.toString(nextId), keyIdentifier);
     this.currentKey = keyIdentifier;
+    LOG.info("Changed current key to {}", currentKey);
     return keyIdentifier;
   }
 
@@ -124,7 +128,7 @@ public abstract class AbstractKeyManager implements KeyManager {
    * by the internal {@code Mac} implementation.
    */
   protected final byte[] generateMAC(int keyId, byte[] message) throws InvalidKeyException {
-    KeyIdentifier key = allKeys.get(keyId);
+    KeyIdentifier key = allKeys.get(Integer.toString(keyId));
     if (key == null) {
       throw new InvalidKeyException("No key found for ID " + keyId);
     }
