@@ -15,6 +15,7 @@ import java.io.InputStream;
  * JarClassLoader extends {@link com.continuuity.common.lang.MultiClassLoader}
  */
 public class JarClassLoader extends MultiClassLoader {
+  private Location jarLocation;
   private final JarResources jarResources;
 
   /**
@@ -25,6 +26,7 @@ public class JarClassLoader extends MultiClassLoader {
    */
   public JarClassLoader(Location jarLocation) throws IOException {
     this(new JarResources(jarLocation));
+    this.jarLocation = jarLocation;
   }
 
   /**
@@ -46,6 +48,7 @@ public class JarClassLoader extends MultiClassLoader {
    */
   public JarClassLoader(Location jarLocation, ClassLoader parent) throws IOException {
     this(new JarResources(jarLocation), parent);
+    this.jarLocation = jarLocation;
   }
 
   /**
@@ -100,5 +103,10 @@ public class JarClassLoader extends MultiClassLoader {
   @Nullable
   public byte[] loadClassBytes(String className) {
     return jarResources.getResource(formatClassName(className));
+  }
+
+  @Nullable
+  public Location getLocation() {
+    return jarLocation;
   }
 }
