@@ -34,6 +34,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zookeeper,
                                SharedResourceCache<KeyIdentifier> keyCache) {
     super(conf);
+    this.leader = conf.getBoolean(Constants.Security.DIST_KEY_MANAGER_LEADER, false);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION,
                                             Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION);
     keyCache.addListener(this);
@@ -42,6 +43,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   protected void doInit() throws IOException {
+    LOG.info("Starting distributed key manager as " + (leader ? "leader" : "follower"));
     ((Service) this.allKeys).startAndWait();
     if (isLeader()) {
       rotateKey();
@@ -51,10 +53,6 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   public boolean isLeader() {
     return leader;
-  }
-
-  public void setLeader(boolean value) {
-    this.leader = value;
   }
 
   private synchronized void rotateKey() {

@@ -1,6 +1,7 @@
 package com.continuuity.security.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -23,6 +24,8 @@ public class AuthenticationServerMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
+    // TODO: DistributedKeyManager needs real leader election.  For now, just assume this instance is "leader"
+    cConf.setBoolean(Constants.Security.DIST_KEY_MANAGER_LEADER, true);
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf),
                                              new IOModule(),

@@ -447,6 +447,8 @@ public final class Constants {
     public static final long DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION = 60 * 60 * 1000;
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
+    /** Property to override the leader status of DistributedKeyManager. */
+    public static final String DIST_KEY_MANAGER_LEADER = "security.token.distributed.leader";
 
     /** Configuration for External Authentication Server */
     public static final String AUTH_SERVER_PORT = "security.server.port";
