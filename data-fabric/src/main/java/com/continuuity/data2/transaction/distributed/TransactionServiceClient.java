@@ -348,15 +348,14 @@ public class TransactionServiceClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(final Transaction tx) {
+  public boolean invalidate(final long tx) {
     try {
-      this.execute(
+      return this.execute(
         new Operation<Boolean>("invalidate") {
           @Override
           public Boolean execute(TransactionServiceThriftClient client)
             throws TException {
-            client.invalidate(tx);
-            return true;
+            return client.invalidate(tx);
           }
         });
     } catch (Exception e) {
@@ -381,6 +380,23 @@ public class TransactionServiceClient implements TransactionSystemClient {
           });
     } catch (TransactionCouldNotTakeSnapshotException e) {
       throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void resetState() {
+    try {
+      this.execute(
+          new Operation<Boolean>("invalidate") {
+            @Override
+            public Boolean execute(TransactionServiceThriftClient client)
+                throws TException {
+              client.resetState();
+              return true;
+            }
+          });
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

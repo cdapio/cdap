@@ -2,6 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.FileBasedSecurityTestModule;
@@ -27,7 +28,8 @@ public class TestFileBasedTokenManager extends TestTokenManager {
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
-                                             new FileBasedSecurityTestModule(temporaryFolder));
+                                             new FileBasedSecurityTestModule(temporaryFolder),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
@@ -45,7 +47,8 @@ public class TestFileBasedTokenManager extends TestTokenManager {
 
     // Create a new token manager. This should not generate the key, but instead read the key from file.
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
-                                             new FileBasedSecurityTestModule(temporaryFolder));
+                                             new FileBasedSecurityTestModule(temporaryFolder),
+                                             new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);
