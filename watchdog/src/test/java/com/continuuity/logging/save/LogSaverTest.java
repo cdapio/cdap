@@ -28,6 +28,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -53,6 +56,7 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -266,6 +270,10 @@ public class LogSaverTest extends KafkaTestBase {
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
 
+    // For some reason first message publish on Kafka fails transiently. Hence this workaround of publishing some
+    // dummy messages before publishing logs.
+    publishDummyMessages(conf);
+
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1",
@@ -278,6 +286,37 @@ public class LogSaverTest extends KafkaTestBase {
     System.out.println(bos.toString());
 
     appender.stop();
+  }
+
+  private static void publishDummyMessages(CConfiguration configuration) throws Exception {
+    Properties props = new Properties();
+    props.setProperty("metadata.broker.list", configuration.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
+    props.setProperty("serializer.class", "kafka.serializer.DefaultEncoder");
+    props.setProperty("key.serializer.class", "kafka.serializer.StringEncoder");
+    props.setProperty("partitioner.class", "com.continuuity.logging.appender.kafka.StringPartitioner");
+    props.setProperty("request.required.acks", "1");
+    props.setProperty("producer.type", configuration.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
+        LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
+    props.setProperty("queue.buffering.max.ms",
+        configuration.get(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS,
+            Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PROCUDER_BUFFER_MS)));
+    props.setProperty(LoggingConfiguration.NUM_PARTITIONS,
+        configuration.get(LoggingConfiguration.NUM_PARTITIONS,
+            LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+
+    ProducerConfig config = new ProducerConfig(props);
+    Producer<String, byte[]> producer = new Producer<String, byte[]>(config);
+    for (int i = 0; i < 8; ++i) {
+      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>(
+        "dummy_topic_77683", "1", new byte[]{1, 2, 3, 4, 5, 6});
+      try {
+        producer.send(data);
+      } catch (Exception e) {
+        // Ignore the exception since this is a dummy message intended to produce this exception,
+        // so that the real log publishing goes through.
+      }
+    }
+    producer.close();
   }
 
   private static class LogPublisher implements Runnable {

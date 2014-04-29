@@ -178,32 +178,6 @@ public abstract class TransactionSystemTest {
     client.abort(tx);
   }
 
-  @Test
-  public void testGetSnapshot() throws Exception {
-    TransactionSystemClient client = getClient();
-    TransactionStateStorage stateStorage = getSateStorage();
-
-    TransactionSnapshot snapshotBefore = stateStorage.getLatestSnapshot();
-
-    Transaction tx1 = client.startShort();
-    long currentTime = System.currentTimeMillis();
-
-    InputStream in = client.getSnapshotInputStream();
-    SnapshotCodecV2 codec = new SnapshotCodecV2();
-    TransactionSnapshot snapshot = codec.decodeState(in);
-
-    Assert.assertTrue(snapshot.getTimestamp() >= currentTime);
-    Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
-
-    // Ensures that getSnapshot didn't persist a snapshot
-    TransactionSnapshot snapshotAfter = stateStorage.getLatestSnapshot();
-    Assert.assertEquals(snapshotAfter.getTimestamp(), snapshotBefore.getTimestamp());
-    Assert.assertEquals(snapshotAfter.getWritePointer(), snapshotBefore.getWritePointer());
-    Assert.assertEquals(snapshotAfter.getReadPointer(), snapshotBefore.getReadPointer());
-    Assert.assertEquals(snapshotAfter.getInvalid(), snapshotBefore.getInvalid());
-    Assert.assertEquals(snapshotAfter.getVisibilityUpperBound(), snapshotBefore.getVisibilityUpperBound());
-  }
-
   // todo add test invalidate method
   @Test
   public void testInvalidateTx() throws Exception {
