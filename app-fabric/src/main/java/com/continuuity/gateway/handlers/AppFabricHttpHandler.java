@@ -1133,9 +1133,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-
   /**
      * Deploys an application.
      */
@@ -1473,36 +1470,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                  application);
       sendMetricsDelete(url);
     }
-  }
-
-  private void deleteMetrics(String accountId) throws IOException, OperationException {
-    Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
-    }
-
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (ApplicationSpecification application : applications) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
-                                   scope.name().toLowerCase(),
-                                   application.getName());
-        sendMetricsDelete(url);
-      }
-    }
-
-    String url = String.format("http://%s:%d%s/metrics",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION);
-    sendMetricsDelete(url);
   }
 
   // deletes the process metrics for a flow
