@@ -7,12 +7,15 @@ import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.reduce.WrappedReducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -25,16 +28,32 @@ public class ReducerWrapper extends Reducer {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
 
+  private File unpackedJarDir;
+
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    super.cleanup(context);
+
+    if (unpackedJarDir != null) {
+      try {
+        FileUtils.deleteDirectory(unpackedJarDir);
+      } catch (IOException e) {
+        // NO-OP
+      }
+    }
+  }
+
   @Override
   public void run(Context context) throws IOException, InterruptedException {
+    unpackedJarDir = Files.createTempDir();
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
+      Reducer delegate = createReducerInstance(basicMapReduceContext.getProgram().getClassLoader(), userReducer);
 
       // injecting runtime components, like datasets, etc.
       try {

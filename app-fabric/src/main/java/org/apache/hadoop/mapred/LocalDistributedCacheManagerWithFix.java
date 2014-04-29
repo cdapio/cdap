@@ -20,11 +20,14 @@ package org.apache.hadoop.mapred;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.CombineClassLoader;
+import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarResources;
+import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -261,7 +264,8 @@ class LocalDistributedCacheManagerWithFix {
           @Override
           public ClassLoader run() {
             try {
-              return new JarClassLoader(new JarResources(lf.create(uri)), parent);
+              return new ProgramClassLoader(
+                BundleJarUtil.unpackProgramJar(lf.create(uri), Files.createTempDir()), parent);
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }
