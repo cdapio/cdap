@@ -51,6 +51,7 @@ public class MapperWrapper extends Mapper {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
+    context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     // now that the context is created, we need to make sure to properly close all datasets of the context
