@@ -607,7 +607,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}", action, appId, runnableType, runnableId);
+      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
+                action, appId, runnableType, runnableId);
       runnableStartStop(request, responder, appId, runnableId, type, action);
     }
   }
@@ -1253,7 +1254,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       ArchiveId id = new ArchiveId(accountId, appId, "promote-" + System.currentTimeMillis() + ".jar");
 
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(), id.getApplicationId()));
+      final Location appArchive = store.getApplicationArchiveLocation
+        (Id.Application.from(id.getAccountId(), id.getApplicationId()));
       if (appArchive == null || !appArchive.exists()) {
         throw new AppFabricServiceException("Unable to locate the application.");
       }

@@ -307,7 +307,8 @@ public class LogSaverTest extends KafkaTestBase {
     ProducerConfig config = new ProducerConfig(props);
     Producer<String, byte[]> producer = new Producer<String, byte[]>(config);
     for (int i = 0; i < 8; ++i) {
-      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>("dummy_topic_77683", "1", new byte[]{1, 2, 3, 4, 5, 6});
+      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>
+        ("dummy_topic_77683", "1", new byte[]{1, 2, 3, 4, 5, 6});
       try {
         producer.send(data);
       } catch (Exception e) {
