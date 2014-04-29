@@ -95,7 +95,8 @@ public final class RouterPathLookup {
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.DELETE), Pattern.compile(DELETE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       // todo change to Constants.Service.DATASET_MANAGER
-      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(TRANSACTIONS_STATE_PATH)),
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST),
+                            Pattern.compile(TRANSACTIONS_STATE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       // todo change to Constants.Service.DATASET_MANAGER
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(TRANSACTION_ID_PATH)),
