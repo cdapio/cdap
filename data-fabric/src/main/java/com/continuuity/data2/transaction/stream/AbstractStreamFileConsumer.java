@@ -9,7 +9,6 @@ import com.continuuity.data.file.FileReader;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
-import com.continuuity.data.stream.StreamFileType;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -29,11 +28,10 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,6 +73,11 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumer.class);
+
+  // Persist state at most once per second.
+  private static final long STATE_PERSIST_MIN_INTERVAL = TimeUnit.SECONDS.toNanos(1);
+
   private static final DequeueResult<StreamEvent> EMPTY_RESULT = DequeueResult.Empty.result();
   private static final Function<PollStreamEvent, byte[]> EVENT_ROW_KEY = new Function<PollStreamEvent, byte[]>() {
     @Override
@@ -94,6 +97,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
   private final StreamConfig streamConfig;
   private final ConsumerConfig consumerConfig;
+  private final StreamConsumerStateStore consumerStateStore;
   private final FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader;
 
   // Records rows that shouldn't be processed by this consumer.
@@ -102,23 +106,26 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private final SortedSet<byte[]> ignoreRows;
   private final SortedSet<byte[]> initScanned;
 
-  private final List<StreamEventOffset> events;
+  private final StreamConsumerState consumerState;
+  private final List<StreamEventOffset> eventCache;
   private final byte[] stateContent;
   private Transaction transaction;
   private List<PollStreamEvent> polledEvents;
+  private long nextPersistStateTime;
 
   /**
-   *
-   * @param streamConfig Stream configuration.
+   *  @param streamConfig Stream configuration.
    * @param consumerConfig Consumer configuration.
    * @param reader For reading stream events. This class is responsible for closing the reader.
    */
-  public AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
-                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) {
+  protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
+                                       FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                                       StreamConsumerStateStore consumerStateStore) {
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
-    this.events = Lists.newArrayList();
+    this.consumerStateStore = consumerStateStore;
     this.reader = reader;
+
     this.ignoreRows = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
     this.initScanned = Sets.newTreeSet(new Comparator<byte[]>() {
       @Override
@@ -127,6 +134,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         return Bytes.compareTo(bytes1, 0, bytes1.length - Longs.BYTES, bytes2, 0, bytes2.length - Longs.BYTES);
       }
     });
+
+    this.eventCache = Lists.newArrayList();
+    this.consumerState = new StreamConsumerState(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
+
     this.stateContent = new byte[Longs.BYTES + Ints.BYTES + 1];
     this.stateColumnName = QueueEntryRow.STATE_COLUMN_PREFIX;
   }
@@ -164,8 +175,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     int maxRead = maxEvents * consumerConfig.getGroupSize();
 
     // Try to read from cache if any
-    if (!events.isEmpty()) {
-      getEvents(events, polledEvents, maxEvents);
+    if (!eventCache.isEmpty()) {
+      getEvents(eventCache, polledEvents, maxEvents);
     }
 
     long timeoutNano = timeoutUnit.toNanos(timeout);
@@ -173,11 +184,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     stopwatch.start();
 
     while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
-      int readCount = reader.read(events, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
+      int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
       timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
 
       if (readCount > 0) {
-        getEvents(events, polledEvents, polledEvents.size() - maxEvents);
+        getEvents(eventCache, polledEvents, polledEvents.size() - maxEvents);
       }
     }
 
@@ -193,7 +204,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     try {
       doClose();
     } finally {
-      reader.close();
+      try {
+        reader.close();
+      } finally {
+        consumerStateStore.close();
+      }
     }
   }
 
@@ -234,7 +249,17 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
   @Override
   public void postTxCommit() {
-    // TODO: Persist states
+    long currentNano = System.nanoTime();
+    if (currentNano >= nextPersistStateTime) {
+      nextPersistStateTime = currentNano + STATE_PERSIST_MIN_INTERVAL;
+      consumerState.setState(reader.getPosition());
+
+      try {
+        consumerStateStore.save(consumerState);
+      } catch (IOException e) {
+        LOG.info("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamName());
+      }
+    }
   }
 
   @Override
@@ -297,9 +322,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * @return The row key for writing to the state table if successfully claimed or {@code null} if not claimed.
    */
   private byte[] claimEntry(StreamFileOffset offset, byte[] claimedStateContent) throws IOException {
-    // TODO: Pre-split table
     ByteArrayDataOutput out = ByteStreams.newDataOutput(50);
-    encodeOffset(out, offset);
+    StreamUtils.encodeOffset(out, offset);
     byte[] row = out.toByteArray();
 
     initScanIfNeeded(row);
@@ -375,40 +399,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
       ignoreRows.add(row);
     }
-  }
-
-  /**
-   * Encode a {@link com.continuuity.data.stream.StreamFileOffset} instance.
-   *
-   * @param out Output for encoding
-   * @param offset The offset object to encode
-   */
-  private void encodeOffset(DataOutput out, StreamFileOffset offset) throws IOException {
-    out.writeLong(offset.getPartitionStart());
-    out.writeLong(offset.getPartitionEnd());
-    out.writeUTF(offset.getNamePrefix());
-    out.writeInt(offset.getSequenceId());
-    out.writeLong(offset.getOffset());
-  }
-
-  /**
-   * Decode a {@link StreamFileOffset} encoded by the {@link #encodeOffset(DataOutput, StreamFileOffset)}
-   * method.
-   *
-   * @param baseLocation Location of the stream directory.
-   * @param in Input for decoding
-   * @return A new instance of {@link com.continuuity.data.stream.StreamFileOffset}
-   */
-  private StreamFileOffset decodeOffset(Location baseLocation, DataInput in) throws IOException {
-    long partitionStart = in.readLong();
-    long duration = in.readLong() - partitionStart;
-    String prefix = in.readUTF();
-    int seqId = in.readInt();
-    long offset = in.readLong();
-
-    Location partitionLocation = StreamUtils.createPartitionLocation(baseLocation, partitionStart, duration);
-    Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.EVENT);
-    return new StreamFileOffset(eventLocation, offset);
   }
 
   /**

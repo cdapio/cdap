@@ -6,8 +6,12 @@ package com.continuuity.data2.transaction.stream;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamFileOffset;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -20,8 +24,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -35,10 +41,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   private final Location streamBaseLocation;
   private final CConfiguration cConf;
+  private final StreamConsumerStateStoreFactory stateStoreFactory;
 
-  protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf) {
+  protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                                    StreamConsumerStateStoreFactory stateStoreFactory) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.stateStoreFactory = stateStoreFactory;
   }
 
   @Override
@@ -47,13 +56,107 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(QueueName streamName, long groupId, int instances) throws Exception {
-    // TODO:
+  public void configureInstances(QueueName name, long groupId, int instances) throws Exception {
+    Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
+    Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
+
+    StreamConfig config = createIfNotExists(name);
+    StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
+    try {
+      Set<StreamConsumerState> states = Sets.newHashSet();
+      stateStore.getByGroup(groupId, states);
+
+      int oldInstances = states.size();
+
+      // Nothing to do if size doesn't change
+      if (oldInstances == instances) {
+        return;
+      }
+
+      Set<StreamConsumerState> newStates = Sets.newHashSet();
+      Set<StreamConsumerState> removeStates = Sets.newHashSet();
+      mutateStates(groupId, instances, states, newStates, removeStates);
+
+      // Save the states back
+      stateStore.save(newStates);
+      stateStore.remove(removeStates);
+
+    } finally {
+      stateStore.close();
+    }
+
   }
 
   @Override
-  public void configureGroups(QueueName streamName, Map<Long, Integer> groupInfo) throws Exception {
-    // TODO:
+  public void configureGroups(QueueName name, Map<Long, Integer> groupInfo) throws Exception {
+    Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
+    Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
+
+    StreamConfig config = createIfNotExists(name);
+    StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
+    try {
+//      Set<StreamConsumerState> states = Sets.newHashSet();
+//      stateStore.getAll(states);
+//
+//      byte[] rowKey = queueName.toBytes();
+//
+//      // Get the whole row
+//      Result result = hTable.get(new Get(rowKey));
+//
+//      // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
+//      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
+//      if (columns == null) {
+//        columns = ImmutableSortedMap.of();
+//      }
+//      Map<Long, Integer> oldGroupInfo = Maps.newHashMap();
+//      byte[] smallest = decodeGroupInfo(groupInfo, columns, oldGroupInfo);
+//
+//      List<Mutation> mutations = Lists.newArrayList();
+//
+//      // For groups that are removed, simply delete the columns
+//      Sets.SetView<Long> removedGroups = Sets.difference(oldGroupInfo.keySet(), groupInfo.keySet());
+//      if (!removedGroups.isEmpty()) {
+//        Delete delete = new Delete(rowKey);
+//        for (long removeGroupId : removedGroups) {
+//          for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
+//            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
+//                                 getConsumerStateColumn(removeGroupId, i));
+//          }
+//        }
+//        mutations.add(delete);
+//      }
+//
+//      // For each group that changed (either a new group or number of instances change), update the startRow
+//      Put put = new Put(rowKey);
+//      for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
+//        long groupId = entry.getKey();
+//        int instances = entry.getValue();
+//        if (!oldGroupInfo.containsKey(groupId)) {
+//          // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
+//          for (int i = 0; i < instances; i++) {
+//            put.add(QueueEntryRow.COLUMN_FAMILY,
+//                    getConsumerStateColumn(groupId, i),
+//                    smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
+//          }
+//        } else if (oldGroupInfo.get(groupId) != instances) {
+//          // compute the mutations needed using the change instances logic
+//          SortedMap<byte[], byte[]> columnMap =
+//            columns.subMap(getConsumerStateColumn(groupId, 0),
+//                           getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
+//
+//          mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
+//        }
+//      }
+//      mutations.add(put);
+//
+//      // Compute and applies changes
+//      if (!mutations.isEmpty()) {
+//        hTable.batch(mutations);
+//      }
+
+    } finally {
+      stateStore.close();
+    }
   }
 
   @Override
@@ -134,5 +237,53 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
     // No-op
+  }
+
+  private StreamConfig createIfNotExists(QueueName name) throws Exception {
+    String streamName = name.getSimpleName();
+    if (!exists(streamName)) {
+      create(streamName);
+    }
+    return getConfig(streamName);
+  }
+
+  private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
+                            Set<StreamConsumerState> newStates, Set<StreamConsumerState> removeStates) {
+    // Collects smallest offsets across all existing consumers
+    Map<StreamFileOffset, Long> fileOffsets = Maps.newHashMap();
+
+    for (StreamConsumerState state : states) {
+      for (StreamFileOffset fileOffset : state.getState()) {
+        Long offset = fileOffsets.get(fileOffset);
+        if (offset == null || fileOffset.getOffset() < offset) {
+          fileOffsets.put(fileOffset, fileOffset.getOffset());
+        }
+      }
+    }
+
+    // Constructs smallest offsets
+    List<StreamFileOffset> smallestOffsets = Lists.newArrayListWithCapacity(fileOffsets.size());
+    for (Map.Entry<StreamFileOffset, Long> entry : fileOffsets.entrySet()) {
+      StreamFileOffset newOffset = new StreamFileOffset(entry.getKey());
+      newOffset.setOffset(entry.getValue());
+      smallestOffsets.add(newOffset);
+    }
+
+    int oldInstances = states.size();
+
+    // When group size changed, reset all existing instances states to have smallest files offsets constructed above.
+    for (StreamConsumerState state : states) {
+      if (state.getInstanceId() < instances) {
+        // Only keep valid instances
+        newStates.add(new StreamConsumerState(groupId, state.getInstanceId(), smallestOffsets));
+      } else {
+        removeStates.add(state);
+      }
+    }
+
+    // For all new instances, set files offsets to smallest one constructed above.
+    for (int i = oldInstances; i < instances; i++) {
+      newStates.add(new StreamConsumerState(groupId, i, smallestOffsets));
+    }
   }
 }

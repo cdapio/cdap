@@ -42,8 +42,9 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
    */
   public LevelDBStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                                   LevelDBStreamConsumerStateStore stateStore,
                                    LevelDBOcTableCore tableCore, Object dbLock) {
-    super(streamConfig, consumerConfig, reader);
+    super(streamConfig, consumerConfig, reader, stateStore);
     this.tableCore = tableCore;
     this.dbLock = dbLock;
     this.rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);

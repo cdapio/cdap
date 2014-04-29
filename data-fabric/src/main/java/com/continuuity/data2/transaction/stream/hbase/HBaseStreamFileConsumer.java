@@ -26,6 +26,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 /**
  * A {@link StreamConsumer} that uses HTable to store consuming states.
  */
+// TODO: Pre-split table
 @NotThreadSafe
 public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
@@ -40,8 +41,9 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
    * @param reader For reading stream events. This class is responsible for closing the reader.
    */
   public HBaseStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
-                                 FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) {
-    super(streamConfig, consumerConfig, reader);
+                                 FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                                 HBaseStreamConsumerStateStore stateStore) {
+    super(streamConfig, consumerConfig, reader, stateStore);
     this.hTable = hTable;
   }
 

@@ -5,10 +5,13 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
@@ -159,6 +162,10 @@ public final class StreamUtils {
     return baseLocation.append(path);
   }
 
+  public static Location createPartitionLocation(long partitionStart, StreamConfig streamConfig) throws IOException {
+    return createPartitionLocation(streamConfig.getLocation(), partitionStart, streamConfig.getPartitionDuration());
+  }
+
   /**
    * Creates location for stream file.
    *
@@ -184,6 +191,40 @@ public final class StreamUtils {
    */
   public static long getPartitionStartTime(long timestamp, long partitionDuration) {
     return timestamp / partitionDuration * partitionDuration;
+  }
+
+  /**
+   * Encode a {@link StreamFileOffset} instance.
+   *
+   * @param out Output for encoding
+   * @param offset The offset object to encode
+   */
+  public static void encodeOffset(DataOutput out, StreamFileOffset offset) throws IOException {
+    out.writeLong(offset.getPartitionStart());
+    out.writeLong(offset.getPartitionEnd());
+    out.writeUTF(offset.getNamePrefix());
+    out.writeInt(offset.getSequenceId());
+    out.writeLong(offset.getOffset());
+  }
+
+  /**
+   * Decode a {@link StreamFileOffset} encoded by the {@link #encodeOffset(DataOutput, StreamFileOffset)}
+   * method.
+   *
+   * @param baseLocation Location of the stream directory.
+   * @param in Input for decoding
+   * @return A new instance of {@link StreamFileOffset}
+   */
+  public static StreamFileOffset decodeOffset(Location baseLocation, DataInput in) throws IOException {
+    long partitionStart = in.readLong();
+    long duration = in.readLong() - partitionStart;
+    String prefix = in.readUTF();
+    int seqId = in.readInt();
+    long offset = in.readLong();
+
+    Location partitionLocation = createPartitionLocation(baseLocation, partitionStart, duration);
+    Location eventLocation = createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.EVENT);
+    return new StreamFileOffset(eventLocation, offset);
   }
 
   private StreamUtils() {

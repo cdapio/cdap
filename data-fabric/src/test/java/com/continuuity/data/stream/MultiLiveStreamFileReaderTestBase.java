@@ -4,10 +4,8 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.file.FileWriter;
-import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
@@ -36,9 +34,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
   protected abstract LocationFactory getLocationFactory();
 
-  protected StreamAdmin getStreamAdmin() {
-    return new AbstractStreamFileAdmin(getLocationFactory(), CConfiguration.create()) { };
-  }
+  protected abstract StreamAdmin getStreamAdmin();
 
   @Test
   public void testMultiFileReader() throws Exception {
