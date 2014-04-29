@@ -583,7 +583,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}", action, appId, runnableType, runnableId);
+      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
+                action, appId, runnableType, runnableId);
       runnableStartStop(request, responder, appId, runnableId, type, action);
     }
   }
@@ -1058,7 +1059,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   private BodyConsumer deployAppStream (final HttpRequest request,
-                                        HttpResponder responder, final String appId) throws IOException {
+                                        final HttpResponder responder, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
     final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
@@ -1083,7 +1084,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
       }
-
       @Override
       public void finished(HttpResponder responder) {
         try {
@@ -1101,12 +1101,17 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           sessions.remove(accountId);
         }
       }
+      @Override
       public void handleError(Throwable t) {
         try {
           os.close();
           sessionInfo.setStatus(DeployStatus.FAILED);
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
         } catch (IOException e) {
           e.printStackTrace();
+        } finally {
+          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
+          sessions.remove(accountId);
         }
       }
     };
