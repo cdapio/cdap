@@ -4,11 +4,13 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import com.continuuity.api.ProgramLifecycle;
+
 /**
  * Defines the Flowlet interface. A Flowlet should provide the
  * functionality for initializing and configuring itself.
  */
-public interface Flowlet {
+public interface Flowlet extends ProgramLifecycle<FlowletContext> {
   /**
    * Provides an interface to configure a Flowlet.
    * <p>
@@ -35,6 +37,7 @@ public interface Flowlet {
    *  @param context An instance of {@link FlowletContext}
    *  @throws Exception If there is any error during initialization.
    */
+  @Override
   void initialize(FlowletContext context) throws Exception;
 
   /**
@@ -46,5 +49,6 @@ public interface Flowlet {
    *   by the flowlet.
    * </p>
    */
+  @Override
   void destroy();
 }

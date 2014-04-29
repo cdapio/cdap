@@ -112,7 +112,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
                                                   Constants.Gateway.DEFAULT_BOSS_THREADS))
       .setWorkerThreadPoolSize(configuration.getInt(Constants.Gateway.WORKER_THREADS,
                                                     Constants.Gateway.DEFAULT_WORKER_THREADS))
-      .setHttpChunkLimit(5 * 1024 * 1024)
       .build();
 
   }

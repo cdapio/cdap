@@ -9,6 +9,8 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
@@ -140,7 +142,7 @@ public class AppFabricHttpHandlerTest {
         Assert.assertEquals(4, m.size());
       }
     } finally {
-      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
   }
 
@@ -331,7 +333,9 @@ public class AppFabricHttpHandlerTest {
       Assert.assertTrue(result.contains("SampleWorkflow"));
 
     } finally {
-      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete(
+        "/v2/apps/AppWithWorkflow").getStatusLine().getStatusCode());
     }
   }
 
@@ -485,13 +489,13 @@ public class AppFabricHttpHandlerTest {
   }
 
   /**
-   * Tests taking a snapshot of the transaction manager
+   * Tests taking a snapshot of the transaction manager.
    */
   @Ignore
   public void testTxManagerSnapshot() throws Exception {
     Long currentTs = System.currentTimeMillis();
 
-    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/snapshot");
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     InputStream in = response.getEntity().getContent();
@@ -502,6 +506,33 @@ public class AppFabricHttpHandlerTest {
     } finally {
       in.close();
     }
+  }
+
+  /**
+   * Tests invalidating a transaction.
+   * @throws Exception
+   */
+  @Test
+  public void testInvalidateTx() throws Exception {
+    TransactionSystemClient txClient = AppFabricTestsSuite.getTxClient();
+
+    Transaction tx1 = txClient.startShort();
+    HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx1.getWritePointer() + "/invalidate");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Transaction tx2 = txClient.startShort();
+    txClient.commit(tx2);
+    response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx2.getWritePointer() + "/invalidate");
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(400, AppFabricTestsSuite.doPost("/v2/transactions/foobar/invalidate")
+                               .getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testResetTxManagerState() throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/state");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   /**

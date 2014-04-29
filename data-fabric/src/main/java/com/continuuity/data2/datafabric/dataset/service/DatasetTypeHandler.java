@@ -9,6 +9,7 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictExcept
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
@@ -85,6 +86,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                        @PathParam("name") String name) throws IOException {
 
     String className = request.getHeader("class-name");
+    Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}", name, className);
 
     DatasetModuleMeta existing = manager.getModule(name);

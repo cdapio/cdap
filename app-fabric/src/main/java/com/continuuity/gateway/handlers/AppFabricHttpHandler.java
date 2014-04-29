@@ -14,7 +14,6 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
@@ -70,8 +69,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -88,6 +85,13 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,13 +107,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -268,7 +265,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.txClient = txClient;
   }
 
-  @Path("/transactions/snapshot")
+  /**
+   * Retrieve the state of the transaction manager.
+   */
+  @Path("/transactions/state")
   @GET
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
@@ -294,6 +294,40 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Could not take transaction manager snapshot", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Invalidate a transaction.
+   * @param txId transaction ID.
+   */
+  @Path("/transactions/{tx-id}/invalidate")
+  @POST
+  public void invalidateTx(HttpRequest request, HttpResponder responder,
+                           @PathParam("tx-id") final String txId) {
+    try {
+      long txIdLong = Long.parseLong(txId);
+      boolean success = txClient.invalidate(txIdLong);
+      if (success) {
+        LOG.info("Transaction {} successfully invalidated", txId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        LOG.info("Transaction {} could not be invalidated: not in progress.", txId);
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
+      }
+    } catch (NumberFormatException e) {
+      LOG.info("Could not invalidate transaction: {} is not a valid tx id", txId);
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * Reset the state of the transaction manager.
+   */
+  @Path("/transactions/state")
+  @POST
+  public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
+    txClient.resetState();
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
