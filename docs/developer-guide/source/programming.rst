@@ -721,11 +721,7 @@ by using one Table for the data to index and a second Table for the
 index itself.
 
 You can implement your own data patterns as custom DataSets on top of
-Tables. Because a number of useful datasets, including key/value tables,
-indexed tables and time series are already included with the Reactor, we
-call them system datasets.
-
-A number of useful DataSets—we refer to them as system DataSets—are
+Tables. A number of useful DataSets—we refer to them as system DataSets—are
 included with Reactor, including key/value tables, indexed tables and
 time series.
 
@@ -835,5 +831,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
+- `Advanced Continuuity Reactor Features <advanced>`__,
   with details of the Flow, DataSet and Transaction systems.
