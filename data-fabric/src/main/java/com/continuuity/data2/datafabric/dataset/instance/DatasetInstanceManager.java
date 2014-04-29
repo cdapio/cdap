@@ -1,20 +1,16 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -25,12 +21,9 @@ import java.util.concurrent.Callable;
 // todo: there's ugly work with Datasets & Transactions (incl. exceptions inside txnl code) which will be revised as
 //       part of open-sourcing Datasets effort
 public class DatasetInstanceManager extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
   private final TransactionSystemClient txClient;
   private final DatasetManager mdsDatasetManager;
-  /** guards {@link #mds} */
-  private final Object mdsGuard = new Object();
 
   /** dataset types metadata store */
   private DatasetInstanceMDS mds;
@@ -42,15 +35,18 @@ public class DatasetInstanceManager extends AbstractIdleService {
    * @param mdsDatasetManager dataset manager to be used to access the metadata store
    * @param txSystemClient tx client to be used to operate on the metadata store
    */
-  public DatasetInstanceManager(DatasetManager mdsDatasetManager, TransactionSystemClient txSystemClient) {
+  public DatasetInstanceManager(DatasetManager mdsDatasetManager,
+                                TransactionSystemClient txSystemClient) {
     this.mdsDatasetManager = mdsDatasetManager;
     this.txClient = txSystemClient;
   }
 
   @Override
   protected void startUp() throws Exception {
-    // todo: once namespacing is implemented in new datasets "continuuity.system" should go away from here
-    OrderedTable table = getMDSTable(mdsDatasetManager, "continuuity.system.datasets.instance");
+    // "null" for class being in system classpath, for mds it is always true
+    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetManager, "datasets.instance", "orderedTable",
+                                                         DatasetInstanceProperties.EMPTY, null);
+
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetInstanceMDS(table);
   }
@@ -68,9 +64,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
     getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        synchronized (mdsGuard) {
-          mds.write(spec);
-        }
+        mds.write(spec);
       }
     });
   }
@@ -83,9 +77,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<DatasetInstanceSpec>() {
       @Override
       public DatasetInstanceSpec call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.get(instanceName);
-        }
+        return mds.get(instanceName);
       }
     });
   }
@@ -97,9 +89,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetInstanceSpec>>() {
       @Override
       public Collection<DatasetInstanceSpec> call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.getAll();
-        }
+        return mds.getAll();
       }
     });
   }
@@ -113,42 +103,12 @@ public class DatasetInstanceManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.delete(instanceName);
-        }
+        return mds.delete(instanceName);
       }
     });
   }
 
   private TransactionExecutor getTxExecutor() {
     return new DefaultTransactionExecutor(txClient, ImmutableList.of(txAware));
-  }
-
-  private OrderedTable getMDSTable(DatasetManager datasetManager, String mdsTable) {
-    try {
-      DatasetAdmin admin = datasetManager.getAdmin(mdsTable);
-      try {
-        if (admin == null) {
-          datasetManager.addInstance("orderedTable", mdsTable, DatasetInstanceProperties.EMPTY);
-          admin = datasetManager.getAdmin(mdsTable);
-          if (admin == null) {
-            throw new RuntimeException("Cannot add instance of a table " + mdsTable);
-          }
-        }
-
-        if (!admin.exists()) {
-          admin.create();
-        }
-
-        return (OrderedTable) datasetManager.getDataset(mdsTable);
-      } finally {
-        if (admin != null) {
-          admin.close();
-        }
-      }
-    } catch (Exception e) {
-      LOG.error("Could not get access to MDS table", e);
-      throw Throwables.propagate(e);
-    }
   }
 }

@@ -231,7 +231,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
   public static class TestModule2 implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.get("datasetType1");
+      Assert.assertNotNull(registry.get("datasetType1"));
       registry.add(createDefinition("datasetType2"));
     }
   }
