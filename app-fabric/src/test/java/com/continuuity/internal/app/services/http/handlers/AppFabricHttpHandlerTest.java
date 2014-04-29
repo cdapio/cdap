@@ -635,4 +635,22 @@ public class AppFabricHttpHandlerTest {
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableReset() throws Exception {
+    try {
+      HttpResponse response = deploy(WordCountApp.class);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    } finally {
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    }
+    // make sure that after reset (no apps), list apps returns empty, and not 404
+    Assert.assertEquals(200, AppFabricTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
+  }
+
 }

@@ -29,9 +29,11 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -46,6 +48,8 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -54,6 +58,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -106,6 +111,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -193,6 +199,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
+  private final StreamAdmin streamAdmin;
+
+  private final DataSetAccessor dataSetAccessor;
+
   private final QueueAdmin queueAdmin;
 
   /**
@@ -242,8 +252,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              LocationFactory locationFactory, ManagerFactory managerFactory,
-                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
+                              DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
+                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(authenticator);
@@ -260,6 +271,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
+    this.streamAdmin = streamAdmin;
+    this.dataSetAccessor = dataSetAccessor;
   }
 
   @Path("/transactions/snapshot")
@@ -1503,6 +1516,36 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private void deleteMetrics(String accountId) throws IOException, OperationException {
+    Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      return;
+    }
+
+    for (MetricsScope scope : MetricsScope.values()) {
+      for (ApplicationSpecification application : applications) {
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.GATEWAY_VERSION,
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
+    }
+
+    String url = String.format("http://%s:%d%s/metrics",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.GATEWAY_VERSION);
+    sendMetricsDelete(url);
+  }
+
   // deletes the process metrics for a flow
   private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
@@ -1854,5 +1897,66 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
     return builder.build();
   }
+  /**
+   * *DO NOT DOCUMENT THIS API*
+   */
+  @POST
+  @Path("/unrecoverable/reset")
+  public void resetReactor(HttpRequest request, HttpResponder responder) {
+    try {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+        responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+        return;
+      }
+      try {
+        String account = getAuthenticatedAccountId(request);
+        Preconditions.checkNotNull(account);
+        final Id.Account accountId = Id.Account.from(account);
 
+        // Check if any program is still running
+        checkAnyRunning(new Predicate<Id.Program>() {
+          @Override
+          public boolean apply(Id.Program programId) {
+            return programId.getAccountId().equals(accountId.getId());
+          }
+        }, Type.values());
+
+        deleteMetrics(account);
+        // delete all meta data
+        store.removeAll(accountId);
+        // delete queues and streams data
+        queueAdmin.dropAll();
+        streamAdmin.dropAll();
+
+        LOG.info("Deleting all data for account '" + account + "'.");
+        dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+        // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
+        // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
+        Set<String> datasetsToKeep = Sets.newHashSet();
+        for (MetricsScope scope : MetricsScope.values()) {
+          datasetsToKeep.add(scope.name().toLowerCase() + "." +
+                               configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                                 MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
+        }
+
+        // Don't truncate log table too - we would like to retain logs across resets.
+        datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+
+        // NOTE: there could be services running at the moment that rely on the system datasets to be available.
+        dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
+
+        LOG.info("All data for account '" + account + "' deleted.");
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (Throwable throwable) {
+        LOG.warn(throwable.getMessage(), throwable);
+        throw new Exception(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), throwable.getMessage()));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+  }
 }
