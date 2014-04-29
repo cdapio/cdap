@@ -1,7 +1,7 @@
 package com.continuuity.app.services;
 
 /**
- *
+ * Defines types of data supported by the system.
  */
 public enum Data {
   STREAM(1, "Stream"),
