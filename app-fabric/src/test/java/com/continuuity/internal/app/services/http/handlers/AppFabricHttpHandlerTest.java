@@ -199,7 +199,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a flow.
    */
-  @Ignore
+  @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
   }
@@ -207,7 +207,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a procedure.
    */
-  @Ignore
+  @Test
   public void testProcedureHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
   }
@@ -215,7 +215,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a mapreduce.
    */
-  @Ignore
+  @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
   }
@@ -223,12 +223,12 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a workflow.
    */
-  @Ignore
+  @Test
   public void testWorkflowHistory() throws Exception {
     testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
   }
 
-  @Ignore
+  @Test
   public void testGetSetFlowletInstances() throws Exception {
     //deploy, check the status and start a flow. Also check the status
     deploy(WordCountApp.class);
@@ -249,7 +249,7 @@ public class AppFabricHttpHandlerTest {
   }
 
 
-  @Ignore
+  @Test
   public void testStartStop() throws Exception {
 
     //deploy, check the status and start a flow. Also check the status
@@ -296,7 +296,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Metadata tests through appfabric apis.
    */
-  @Ignore
+  @Test
   public void testGetMetadata() throws Exception {
     try {
       HttpResponse response = deploy(WordCountApp.class);
@@ -339,7 +339,7 @@ public class AppFabricHttpHandlerTest {
     }
   }
 
-  @Ignore
+  @Test
   public void testStatus() throws Exception {
 
     //deploy and check the status
@@ -395,22 +395,22 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
-  @Ignore
+  @Test
   public void testFlowRuntimeArgs() throws Exception {
     testRuntimeArgs(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
   }
 
-  @Ignore
+  @Test
   public void testWorkflowRuntimeArgs() throws Exception {
     testRuntimeArgs(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow");
   }
 
-  @Ignore
+  @Test
   public void testProcedureRuntimeArgs() throws Exception {
     testRuntimeArgs(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
   }
 
-  @Ignore
+  @Test
   public void testMapreduceRuntimeArgs() throws Exception {
     testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
   }
@@ -482,7 +482,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deploying an application.
    */
-  @Ignore
+  @Test
   public void testDeploy() throws Exception {
     HttpResponse response = deploy(WordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -491,7 +491,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests taking a snapshot of the transaction manager.
    */
-  @Ignore
+  @Test
   public void testTxManagerSnapshot() throws Exception {
     Long currentTs = System.currentTimeMillis();
 
@@ -538,7 +538,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deploying an application.
    */
-  @Ignore
+  @Test
   public void testDeployInvalid() throws Exception {
     HttpResponse response = deploy(String.class);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
@@ -549,7 +549,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deleting an application.
    */
-  @Ignore
+  @Test
   public void testDelete() throws Exception {
     //Delete an invalid app
     HttpResponse response = AppFabricTestsSuite.doDelete("/v2/apps/XYZ");
@@ -570,7 +570,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Test for schedule handlers.
    */
-  @Ignore
+  @Test
   public void testScheduleEndPoints() throws Exception {
     // Steps for the test:
     // 1. Deploy the app
@@ -679,22 +679,5 @@ public class AppFabricHttpHandlerTest {
     json = EntityUtils.toString(response.getEntity());
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
-  }
-
-  /**
-   * Test for resetting app.
-   */
-  @Test
-  public void testUnRecoverableReset() throws Exception {
-    try {
-      HttpResponse response = deploy(WordCountApp.class);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    } finally {
-      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
-    }
-    // make sure that after reset (no apps), list apps returns empty, and not 404
-    Assert.assertEquals(200, AppFabricTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
   }
 }
