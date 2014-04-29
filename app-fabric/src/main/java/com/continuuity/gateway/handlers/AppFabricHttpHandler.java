@@ -31,7 +31,6 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.Authenticator;
@@ -1867,12 +1866,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       } else {
         return listPrograms(Collections.singletonList(appSpec), type);
       }
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
+      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " +
+                            throwable.getMessage());
     }
   }
 
@@ -1884,12 +1881,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       } else {
         return listPrograms(appSpecs, type);
       }
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw  new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
+      throw new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " +
+                            throwable.getMessage());
     }
   }
 
