@@ -88,8 +88,8 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
   }
 
   @Override
-  public void invalidateTx(TTransaction tx) throws TException {
-    txManager.invalidate(ConverterUtils.unwrap(tx));
+  public boolean invalidateTx(long tx) throws TException {
+    return txManager.invalidate(tx);
   }
 
   @Override
@@ -116,5 +116,10 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
     } catch (IOException e) {
       throw new TTransactionCouldNotTakeSnapshotException(e.getMessage());
     }
+  }
+
+  @Override
+  public void resetState() throws TException {
+    txManager.resetState();
   }
 }

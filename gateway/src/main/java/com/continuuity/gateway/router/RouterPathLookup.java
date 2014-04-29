@@ -2,11 +2,11 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import java.util.List;
+
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,10 +20,13 @@ public final class RouterPathLookup {
   private static final String COMMON_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/" +
     "(start|debug|stop|status|history|runtimeargs)";
+
   private static final String PROGRAMINFO_PATH = VERSION +
     "/?/(flows|procedures|mapreduce|workflows)/?$";
+
   private static final String ALLAPPINFO_PATH = VERSION +
     "/?/apps/?$";
+
   private static final String APPINFO_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/?(flows|procedures|mapreduce|workflows)?/?$";
   private static final String DELETE_PATH = VERSION +
@@ -40,8 +43,11 @@ public final class RouterPathLookup {
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
-  private static final String TRANSACTIONS_PATH = VERSION +
-    "/transactions/snapshot";
+  private static final String TRANSACTIONS_STATE_PATH = VERSION +
+    "/transactions/state";
+
+  private static final String TRANSACTION_ID_PATH = VERSION +
+    "/transactions/([A-Za-z0-9_]+)/invalidate";
 
   private static final String SCHEDULER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
@@ -54,72 +60,64 @@ public final class RouterPathLookup {
   private static final String SPEC_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
 
-  private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
-                                                                                     "PUT", HttpMethod.PUT,
-                                                                                     "POST", HttpMethod.POST,
-                                                                                     "DELETE", HttpMethod.DELETE);
+  private enum AllowedMethod {
+    GET, PUT, POST, DELETE
+  }
 
-  private static final ImmutableMap<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP =
-    ImmutableMap.<ImmutablePair<List<HttpMethod>, Pattern>, String>builder()
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(COMMON_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(SCHEDULER_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
-                                                        Pattern.compile(DEPLOY_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(DEPLOY_STATUS_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
-                                                        Pattern.compile(FLOWLET_INSTANCE_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
-                                                        Pattern.compile(SPEC_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
-                                                        Pattern.compile(LIVEINFO_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(
-                                                        HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST),
-                                                        Pattern.compile(METRICS_PATH)),
-                                                        Constants.Service.METRICS)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(LOGHANDLER_PATH)),
-                                                        Constants.Service.METRICS)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.DELETE),
-                                                        Pattern.compile(DELETE_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(TRANSACTIONS_PATH)),
-                                                        // todo change to Constants.Service.DATASET_MANAGER
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(PROGRAMINFO_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(ALLAPPINFO_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
-      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                        Pattern.compile(APPINFO_PATH)),
-                                                        Constants.Service.APP_FABRIC_HTTP)
+  private static final ImmutableMap<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String> ROUTING_MAP =
+    ImmutableMap.<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String>builder()
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(COMMON_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(SCHEDULER_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.range(AllowedMethod.PUT, AllowedMethod.POST), Pattern.compile(DEPLOY_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(DEPLOY_STATUS_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(FLOWLET_INSTANCE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(SPEC_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(LIVEINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.range(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(METRICS_PATH)),
+           Constants.Service.METRICS)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(LOGHANDLER_PATH)),
+           Constants.Service.METRICS)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.DELETE), Pattern.compile(DELETE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(PROGRAMINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(ALLAPPINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(APPINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      // todo change to Constants.Service.DATASET_MANAGER
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST),
+                            Pattern.compile(TRANSACTIONS_STATE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      // todo change to Constants.Service.DATASET_MANAGER
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(TRANSACTION_ID_PATH)),
+          Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {
-    if (!ALLOWED_METHODS_MAP.containsKey(method)) {
-      return null;
-    }
+    try {
+      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
 
-    for (Map.Entry<ImmutablePair<List<HttpMethod>, Pattern>, String> uriPattern : ROUTING_MAP.entrySet()) {
-      Matcher match = uriPattern.getKey().getSecond().matcher(requestPath);
-      if (match.find()) {
-        if (uriPattern.getKey().getFirst().contains(ALLOWED_METHODS_MAP.get(method))) {
-          return uriPattern.getValue();
+      Set<Map.Entry<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String>> entries = ROUTING_MAP.entrySet();
+      for (Map.Entry<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String> uriPattern : entries) {
+        Matcher match = uriPattern.getKey().getSecond().matcher(requestPath);
+        if (match.find()) {
+          if (uriPattern.getKey().getFirst().contains(requestMethod)) {
+            return uriPattern.getValue();
+          }
         }
       }
+    } catch (IllegalArgumentException e) {
+      // Method not supported
     }
+
     return null;
   }
 }

@@ -70,13 +70,18 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(com.continuuity.data2.transaction.Transaction tx) {
-    // do nothing
+  public boolean invalidate(long tx) {
+    return true;
   }
 
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     throw new TransactionCouldNotTakeSnapshotException(
         "Snapshot not implemented in detached transaction system client");
+  }
+
+  @Override
+  public void resetState() {
+    // do nothing
   }
 }

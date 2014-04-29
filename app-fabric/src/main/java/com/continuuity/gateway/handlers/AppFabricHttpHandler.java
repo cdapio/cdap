@@ -31,6 +31,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.Authenticator;
@@ -255,7 +256,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.txClient = txClient;
   }
 
-  @Path("/transactions/snapshot")
+  /**
+   * Retrieve the state of the transaction manager.
+   */
+  @Path("/transactions/state")
   @GET
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
@@ -281,6 +285,40 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Could not take transaction manager snapshot", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Invalidate a transaction.
+   * @param txId transaction ID.
+   */
+  @Path("/transactions/{tx-id}/invalidate")
+  @POST
+  public void invalidateTx(HttpRequest request, HttpResponder responder,
+                           @PathParam("tx-id") final String txId) {
+    try {
+      long txIdLong = Long.parseLong(txId);
+      boolean success = txClient.invalidate(txIdLong);
+      if (success) {
+        LOG.info("Transaction {} successfully invalidated", txId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        LOG.info("Transaction {} could not be invalidated: not in progress.", txId);
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
+      }
+    } catch (NumberFormatException e) {
+      LOG.info("Could not invalidate transaction: {} is not a valid tx id", txId);
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * Reset the state of the transaction manager.
+   */
+  @Path("/transactions/state")
+  @POST
+  public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
+    txClient.resetState();
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
