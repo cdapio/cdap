@@ -8,7 +8,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
 /**
- *
+ * Exception handling for failures in netty pipeline.
  */
 final class HandlerException extends RuntimeException {
 

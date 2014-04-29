@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.StickyEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
@@ -156,7 +157,7 @@ public class RouterServiceLookup {
   private EndpointStrategy discover(String discoverName) throws ExecutionException {
     LOG.debug("Looking up service name {}", discoverName);
 
-    EndpointStrategy endpointStrategy = new StickyEndpointStrategy(discoveryServiceClient.discover(discoverName));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverName));
     if (new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick() == null) {
       LOG.debug("Discoverable endpoint {} not found", discoverName);
     }

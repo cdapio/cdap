@@ -55,7 +55,7 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    LOG.error("Got exception", e);
+    LOG.error("Got exception {}", e.getCause());
     HttpRequestHandler.closeOnFlush(e.getChannel());
   }
 }

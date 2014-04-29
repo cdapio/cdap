@@ -149,7 +149,7 @@ public class NettyRouterPipelineTests {
                                  router.getServiceMap().get(gatewayService));
       socket.setSoTimeout(5000);
 
-      PrintWriter request = new PrintWriter( socket.getOutputStream() );
+      PrintWriter request = new PrintWriter(socket.getOutputStream());
 
       request.write("GET /v1/ping/3 HTTP/1.1\r\n" +
                       " Host: localhost\r\n\r\n"
@@ -174,7 +174,7 @@ public class NettyRouterPipelineTests {
       Assert.assertEquals(2, gatewayServer.getNumRequests());
       request.close();
       socket.close();
-    } catch (Throwable th){
+    } catch (Throwable th) {
       //Socket timeout exception. Do no-op.
     }
 
