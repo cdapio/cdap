@@ -139,6 +139,8 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m13_types_of_flowlets.rst
 .. landslide: module: Type Projection
 .. landslide: module link: ../modules/m14_type_projection.rst
+.. landslide: exercise: Building An Application Using Streams
+.. landslide: exercise link: ../exercises/e04_streams_example.rst
 
 .. landslide: CUT START
 

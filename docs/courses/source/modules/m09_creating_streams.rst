@@ -11,11 +11,11 @@ Creating Streams
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m08| raw:: html
+.. |br_m09| raw:: html
 
    <br />
 
-.. |br2_m08| raw:: html
+.. |br2_m09| raw:: html
 
    <br /><br />
 
@@ -138,7 +138,7 @@ You should be able describe:
 You should be able to find:
 
 - The display of Streams in the Dashboard
-- The display of a particular Stream in the Dashboard
+- The display of any particular Stream in the Dashboard
 
 ----
 

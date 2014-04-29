@@ -1,6 +1,6 @@
-============================================
-Introduction to Big Data Applications
-============================================
+==============================================
+Developing A Big Data Application with Reactor
+==============================================
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -11,13 +11,17 @@ Introduction to Big Data Applications
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
+.. |br_e00| raw:: html
+
+   <br />
+
 ----
 
 Module Objectives
 =================
 
-- Introducing a Big Data Problem
-- Realtime geo-sentiment analysis of social media
+- Introducing a Big Data Problem: |br_e00| 
+  Realtime geo-sentiment analysis of social media
 - Solving it using Continuuity Reactor
 - Problems of alternative solutions
 
@@ -28,7 +32,7 @@ Introducing a Big Data Problem 1/3
 
 **Why**
 
-Companies want to know what is happening in realtime:
+Companies want to know what is happening in realtime
 
 - What are people saying about them?
 - What are people saying about their products?
@@ -39,6 +43,7 @@ A large company launches a new mobile phone product, and wants to know:
 
 - What are people in New York thinking about it?
 - What are people in Seattle tweeting about it?
+- What did people say yesterday about it? This morning?
 
 ----
 
@@ -50,7 +55,7 @@ Introducing a Big Data Problem 2/3
 One approach is **Geo-Sentiment analysis of social media data**
 
 - Primary source for data is Twitter Firehose
-- Additional possible data sources:
+- Additional possible data sources
 
   - Call Detail Records
   - Wireless Network Traces and Logs
@@ -66,7 +71,7 @@ One approach is **Geo-Sentiment analysis of social media data**
 Introducing a Big Data Problem 3/3
 ==================================
 
-**How**
+**How:** Hadoop/HBase is at the core of Big Data reference architecture
 
 - Ingest social media data from different sources
 - Select and store tweets based on a filter
@@ -85,7 +90,10 @@ Continuuity Reactor *Geo-sentiment*
 .. image:: ../_images/Geo-sentiment-UI.jpg
    :height: 300px
 
-A web user interface displays the tweet sentiments on a map with counts over time
+A web user interface
+
+- Displays the tweet sentiments on a map
+- With counts over time
 
 ----
 
@@ -105,7 +113,7 @@ Continuuity Reactor *Geo-sentiment*
 Continuuity Reactor *Geo-sentiment*
 ===================================
 
-- Input through numerous sources:
+- Input through numerous sources
 
   - GNIP Decahose API stream
   - Twitter API public stream
@@ -116,12 +124,12 @@ Continuuity Reactor *Geo-sentiment*
   - External natural language toolkit
   - Pluggable and customizable
   
-- Term tracking:
+- Term tracking
 
   - Users specify terms that they want the application to track
   - Tweets containing these terms are aggregated and summarized in the results
 
-- Geolocation-based queries:
+- Geolocation-based queries
 
   - Identify the relative sentiment
   - Identify the tweet count in user-defined geographic coordinate ranges
@@ -135,32 +143,24 @@ Ingesting Data
 
 .. sourcecode:: shell-session
 
-	curl -X POST -d "$line" http://$gateway:10000/v2/streams/MyInputStream;
+	curl -X POST -d "$line" 
+	  http://$gateway:10000/v2/streams/MyInputStream;
 
 -----
 
-Processing Data
-=======================
-[DOCNOTE: FIXME! REWRITE]
+Processing Data: Filtering, Analyzing
+=====================================
 
 .. sourcecode:: java
 
-	class RoundingFlowlet implements Flowlet {
+	class MyFilterFlowlet implements Flowlet {
 
 	  @Override
 	  public FlowletSpecification configure() {
 	    return FlowletSpecification.Builder.with().
-	      setName("round").
-	      setDescription("A rounding Flowlet").
+	      setName("filter").
+	      setDescription("A filtering Flowlet").
 	      build();
-	  }
-
-	  @Override
-	    public void initialize(FlowletContext context) throws Exception {
-	  }
-
-	  @Override
-	  public void destroy() {
 	  }
 
 	  OutputEmitter<Long> output;
@@ -173,11 +173,10 @@ Processing Data
 
 Storing Data
 ========================
-[DOCNOTE: FIXME! REWRITE]
 
 .. sourcecode:: java
 
-	Class MyFowlet extends AbstractFlowlet {
+	Class MyCountingFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")
 	  private KeyValueTable counters;
 	  ...
@@ -189,19 +188,18 @@ Storing Data
 
 Visualizing Results
 ===================
-[DOCNOTE: FIXME! REWRITE]
 
 .. sourcecode:: java
 
-	class HelloWorld extends AbstractProcedure {
+	class MyVisulization extends AbstractProcedure {
 
-	  @Handle("hello")
+	  @Handle("visualizer")
 	  public void wave(ProcedureRequest request,
-	                   ProcedureResponder responder) throws IOException {
-	    String hello = "Hello " + request.getArgument("who");
+	      ProcedureResponder responder) throws IOException {
+	    String total = "Total " + request.getArgument("count");
 	    ProcedureResponse.Writer writer =
 	      responder.stream(new ProcedureResponse(SUCCESS));
-	    writer.write(ByteBuffer.wrap(hello.getBytes())).close();
+	    writer.write(ByteBuffer.wrap(total.getBytes())).close();
 	  }
 	}
 
@@ -244,8 +242,10 @@ How Continuuity Reactor Helps
 Module Summary
 ==============
 
-- A Big Data problem: geo-sentiment analysis of social media
-- Looked at a Continuuity Reactor solution
+You've now:
+
+- Looked at a Big Data problem: geo-sentiment analysis of social media
+- Considered a Continuuity Reactor solution
 - Examined difficulties of alternative solutions
 
 ----

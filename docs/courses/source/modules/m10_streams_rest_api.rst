@@ -11,11 +11,11 @@ Streams REST API
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m07| raw:: html
+.. |br_m10| raw:: html
 
    <br />
 
-.. |br2_m07| raw:: html
+.. |br2_m10| raw:: html
 
    <br /><br />
 
