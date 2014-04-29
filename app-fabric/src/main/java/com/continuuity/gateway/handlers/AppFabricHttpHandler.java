@@ -2185,7 +2185,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private static Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
+  private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
     Set<String> result = Sets.newHashSet();
     for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
       result.addAll(flowlet.getDatasets());
@@ -2193,7 +2193,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  private static Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
+  private Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
     Set<String> result = Sets.newHashSet();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       result.addAll(dataSetsUsedBy(flowSpec));
@@ -2208,7 +2208,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  private static Set<String> streamsUsedBy(FlowSpecification flowSpec) {
+  private Set<String> streamsUsedBy(FlowSpecification flowSpec) {
     Set<String> result = Sets.newHashSet();
     for (FlowletConnection con : flowSpec.getConnections()) {
       if (FlowletConnection.Type.STREAM == con.getSourceType()) {
@@ -2218,7 +2218,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  private static Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
+  private Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
     Set<String> result = Sets.newHashSet();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       result.addAll(streamsUsedBy(flowSpec));
