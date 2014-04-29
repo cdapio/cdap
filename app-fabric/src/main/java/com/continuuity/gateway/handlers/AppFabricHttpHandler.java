@@ -2,6 +2,8 @@ package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
@@ -31,7 +33,6 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
@@ -58,6 +59,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -110,6 +112,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1891,6 +1894,227 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return null;
   }
 
+  /**
+   * Returns a list of flows associated with account.
+   */
+  @GET
+  @Path("/flows")
+  public void getAllFlows(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, Type.FLOW, null);
+  }
+
+  /**
+   * Returns a list of procedures associated with account.
+   */
+  @GET
+  @Path("/procedures")
+  public void getAllProcedures(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, Type.PROCEDURE, null);
+  }
+
+  /**
+   * Returns a list of map/reduces associated with account.
+   */
+  @GET
+  @Path("/mapreduce")
+  public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, Type.MAPREDUCE, null);
+  }
+
+  /**
+   * Returns a list of workflows associated with account.
+   */
+  @GET
+  @Path("/workflows")
+  public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, Type.WORKFLOW, null);
+  }
+
+  /**
+   * Returns a list of applications associated with account.
+   */
+  @GET
+  @Path("/apps")
+  public void getAllApps(HttpRequest request, HttpResponder responder) {
+    getAppDetails(request, responder, null);
+  }
+
+  /**
+   * Returns the info associated with the application.
+   */
+  @GET
+  @Path("/apps/{app-id}")
+  public void getAppInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("app-id") final String appId) {
+    getAppDetails(request, responder, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/flows")
+  public void getFlowsByApp(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId) {
+    programList(request, responder, Type.FLOW, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures")
+  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    programList(request, responder, Type.PROCEDURE, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce")
+  public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId) {
+    programList(request, responder, Type.MAPREDUCE, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows")
+  public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    programList(request, responder, Type.WORKFLOW, appId);
+  }
+
+
+  private void getAppDetails(HttpRequest request, HttpResponder responder, String appid) {
+    if (appid != null && appid.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Account accId = Id.Account.from(accountId);
+      List<Map<String, String>> result = Lists.newArrayList();
+      List<ApplicationSpecification> specList;
+      if (appid == null) {
+        specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
+      } else {
+        ApplicationSpecification appSpec = store.getApplication(new Id.Application(accId, appid));
+        if (appSpec == null) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          return;
+        }
+        specList = Collections.singletonList(store.getApplication(new Id.Application(accId, appid)));
+      }
+
+      for (ApplicationSpecification appSpec : specList) {
+        result.add(makeAppRecord(appSpec));
+      }
+
+      String json = new Gson().toJson(result);
+      responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception : ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void programList(HttpRequest request, HttpResponder responder, Type type, String appid) {
+    if (appid != null && appid.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      String list;
+      if (appid == null) {
+        Id.Account accId = Id.Account.from(accountId);
+        list = listPrograms(accId, type);
+      } else {
+        Id.Application appId = Id.Application.from(accountId, appid);
+        list = listProgramsByApp(appId, type);
+      }
+
+      if (list.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String listProgramsByApp(Id.Application appId, Type type) throws Exception {
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        return "";
+      } else {
+        return listPrograms(Collections.singletonList(appSpec), type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  private String listPrograms(Id.Account accId, Type type) throws Exception {
+    try {
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
+      if (appSpecs == null) {
+        return "";
+      } else {
+        return listPrograms(appSpecs, type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  private String listPrograms(Collection<ApplicationSpecification> appSpecs, Type type) throws Exception {
+    List<Map<String, String>> result = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      if (type == Type.FLOW) {
+        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), flowSpec, Type.FLOW));
+        }
+      } else if (type == Type.PROCEDURE) {
+        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), procedureSpec, Type.PROCEDURE));
+        }
+      } else if (type == Type.MAPREDUCE) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), mrSpec, Type.MAPREDUCE));
+        }
+      } else if (type == Type.WORKFLOW) {
+        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), wfSpec, Type.WORKFLOW));
+        }
+      } else {
+        throw new Exception("Unknown program type: " + type.name());
+      }
+    }
+    return new Gson().toJson(result);
+  }
+
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
                                                             String flowId, Type typeId) {
     Type type = Type.valueOf(typeId.name());
@@ -1927,9 +2151,21 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
    /* -----------------  helpers to return Json consistently -------------- */
 
-  private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
+  private static Map<String, String> makeAppRecord(ApplicationSpecification appSpec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("type", "App");
+    builder.put("id", appSpec.getName());
+    builder.put("name", appSpec.getName());
+    if (appSpec.getDescription() != null) {
+      builder.put("description", appSpec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeProgramRecord (String appId, ProgramSpecification spec, Type type) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", type.prettyName());
+    builder.put("app", appId);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
     if (spec.getDescription() != null) {

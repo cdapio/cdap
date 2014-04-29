@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.Properties;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
@@ -57,6 +56,7 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -307,8 +307,8 @@ public class LogSaverTest extends KafkaTestBase {
     ProducerConfig config = new ProducerConfig(props);
     Producer<String, byte[]> producer = new Producer<String, byte[]>(config);
     for (int i = 0; i < 8; ++i) {
-      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>
-        ("dummy_topic_77683", "1", new byte[]{1, 2, 3, 4, 5, 6});
+      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>(
+        "dummy_topic_77683", "1", new byte[]{1, 2, 3, 4, 5, 6});
       try {
         producer.send(data);
       } catch (Exception e) {

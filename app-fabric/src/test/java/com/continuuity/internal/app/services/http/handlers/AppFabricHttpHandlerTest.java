@@ -552,6 +552,52 @@ public class AppFabricHttpHandlerTest {
   }
 
   /**
+   * Tests for program list calls
+   */
+  @Test
+  public void testProgramList() throws Exception {
+    //Test :: /flows /procedures /mapreduce /workflows
+    //App  :: /apps/AppName/flows /procedures /mapreduce /workflows
+    //App Info :: /apps/AppName
+    //All Apps :: /apps
+
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    deploy(DummyAppWithTrackingTable.class);
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> flows = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, flows.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> procedures = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, procedures.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> mapreduce = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, mapreduce.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/apps");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doDelete("/v2/apps/dummy");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  /**
    * Test for schedule handlers.
    */
   @Test
@@ -580,8 +626,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
-                                                            LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
 
     int workflowRuns = history.size();
     Assert.assertTrue(workflowRuns >= 1);
