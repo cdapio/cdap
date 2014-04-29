@@ -170,10 +170,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final QueueAdmin queueAdmin;
 
-  private final StreamAdmin streamAdmin;
-
-  private final DataSetAccessor dataSetAccessor;
-
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -241,11 +237,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              DataSetAccessor dataSetAccessor,
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              StreamAdmin streamAdmin, DiscoveryServiceClient discoveryServiceClient,
+                              DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient) {
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -260,8 +255,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.scheduler = service;
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
-    this.dataSetAccessor = dataSetAccessor;
     this.txClient = txClient;
   }
 
