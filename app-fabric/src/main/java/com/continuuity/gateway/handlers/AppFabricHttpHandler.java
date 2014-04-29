@@ -1857,7 +1857,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  public String listProgramsByApp(Id.Application appId, Type type) throws Exception {
+  private String listProgramsByApp(Id.Application appId, Type type) throws Exception {
     ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(appId);
@@ -1873,7 +1873,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  public String listPrograms(Id.Account accId, Type type) throws Exception {
+  private String listPrograms(Id.Account accId, Type type) throws Exception {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
       if (appSpecs == null) {
