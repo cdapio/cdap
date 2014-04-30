@@ -5,6 +5,7 @@ package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
@@ -24,6 +25,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
@@ -40,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A {@link StreamConsumer} that read events from stream file and uses a table to store consumer states.
@@ -71,9 +75,11 @@ import java.util.concurrent.TimeUnit;
  * }</pre>
  *
  */
+@NotThreadSafe
 public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumer.class);
+  private static final HashFunction ROUND_ROBIN_HASHER = Hashing.murmur3_32();
 
   // Persist state at most once per second.
   private static final long STATE_PERSIST_MIN_INTERVAL = TimeUnit.SECONDS.toNanos(1);
@@ -95,6 +101,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
   protected final byte[] stateColumnName;
 
+  private final QueueName streamName;
   private final StreamConfig streamConfig;
   private final ConsumerConfig consumerConfig;
   private final StreamConsumerStateStore consumerStateStore;
@@ -112,15 +119,20 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private Transaction transaction;
   private List<PollStreamEvent> polledEvents;
   private long nextPersistStateTime;
+  private boolean closed;
+  private StreamConsumerState lastPersistedState;
 
   /**
-   *  @param streamConfig Stream configuration.
+   * @param streamConfig Stream configuration.
    * @param consumerConfig Consumer configuration.
    * @param reader For reading stream events. This class is responsible for closing the reader.
    */
   protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                        StreamConsumerStateStore consumerStateStore) {
+
+    System.out.println("Consumer: " + consumerConfig);
+    this.streamName = QueueName.fromStream(streamConfig.getName());
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
@@ -130,7 +142,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.initScanned = Sets.newTreeSet(new Comparator<byte[]>() {
       @Override
       public int compare(byte[] bytes1, byte[] bytes2) {
-        // Compare row keys with the offset part (last 8 bytes).
+        // Compare row keys without the offset part (last 8 bytes).
         return Bytes.compareTo(bytes1, 0, bytes1.length - Longs.BYTES, bytes2, 0, bytes2.length - Longs.BYTES);
       }
     });
@@ -139,7 +151,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerState = new StreamConsumerState(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
     this.stateContent = new byte[Longs.BYTES + Ints.BYTES + 1];
-    this.stateColumnName = QueueEntryRow.STATE_COLUMN_PREFIX;
+    this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
   }
 
   protected void doClose() throws IOException {
@@ -155,8 +167,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected abstract StateScanner scanStates(byte[] startRow, byte[] endRow) throws IOException;
 
   @Override
-  public final String getStreamName() {
-    return streamConfig.getName();
+  public final QueueName getStreamName() {
+    return streamName;
   }
 
   @Override
@@ -179,10 +191,16 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       getEvents(eventCache, polledEvents, maxEvents);
     }
 
+    if (polledEvents.size() == maxEvents) {
+      return new SimpleDequeueResult(polledEvents);
+    }
+
     long timeoutNano = timeoutUnit.toNanos(timeout);
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
+    // Read from the underlying file reader
+    snapshotFileOffsets();
     while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
       int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
       timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
@@ -199,9 +217,22 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     }
   }
 
+  private void snapshotFileOffsets() {
+    List<StreamFileOffset> offsets = Lists.newArrayList();
+    for (StreamFileOffset offset : reader.getPosition()) {
+      offsets.add(new StreamFileOffset(offset));
+    }
+    consumerState.setState(offsets);
+  }
+
   @Override
   public final void close() throws IOException {
+    if (closed) {
+      return;
+    }
+    closed = true;
     try {
+      persistConsumerState();
       doClose();
     } finally {
       try {
@@ -252,13 +283,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     long currentNano = System.nanoTime();
     if (currentNano >= nextPersistStateTime) {
       nextPersistStateTime = currentNano + STATE_PERSIST_MIN_INTERVAL;
-      consumerState.setState(reader.getPosition());
-
-      try {
-        consumerStateStore.save(consumerState);
-      } catch (IOException e) {
-        LOG.info("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamName());
-      }
+      persistConsumerState();
     }
   }
 
@@ -299,6 +324,17 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     }
   }
 
+  private void persistConsumerState() {
+    try {
+      if (lastPersistedState == null || !consumerState.equals(lastPersistedState)) {
+        consumerStateStore.save(consumerState);
+        lastPersistedState = new StreamConsumerState(consumerState);
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamName(), e);
+    }
+  }
+
   /**
    * Encodes the value for the state column with the current transaction and consumer information.
    *
@@ -323,6 +359,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    */
   private byte[] claimEntry(StreamFileOffset offset, byte[] claimedStateContent) throws IOException {
     ByteArrayDataOutput out = ByteStreams.newDataOutput(50);
+    out.writeLong(consumerConfig.getGroupId());
     StreamUtils.encodeOffset(out, offset);
     byte[] row = out.toByteArray();
 
@@ -342,7 +379,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     } else {
       // For RoundRobin and Hash partition, the claim is done by matching hashCode to instance id.
       // For Hash, to preserve existing behavior, everything route to instance 0.
-      int hashValue = consumerConfig.getDequeueStrategy() == DequeueStrategy.HASH ? 0 : offset.hashCode();
+      int hashValue = Math.abs(consumerConfig.getDequeueStrategy() == DequeueStrategy.HASH
+                        ? 0 : ROUND_ROBIN_HASHER.hashLong(offset.getOffset()).hashCode());
       return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize()) ? row : null;
     }
   }
@@ -360,6 +398,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     // Scan till the end
     byte[] stopRow = Arrays.copyOf(row, row.length);
+
+    // Last 8 bytes are the file offset, make it max value so that it scans till last offset.
     Bytes.putLong(stopRow, stopRow.length - Longs.BYTES, Long.MAX_VALUE);
     StateScanner scanner = scanStates(row, stopRow);
     try {

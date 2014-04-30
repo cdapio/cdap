@@ -40,15 +40,9 @@ final class DistributedFlowletInstanceUpdater {
     waitForInstances(flowletId, oldInstanceCount);
     twillController.sendCommand(flowletId, ProgramCommands.SUSPEND).get();
 
-    for (QueueName queueName : consumerQueues.get(flowletId)) {
-      if (queueName.isStream()) {
-        streamAdmin.configureInstances(queueName, FlowUtils.generateConsumerGroupId(program, flowletId),
-                                       newInstanceCount);
-      } else {
-        queueAdmin.configureInstances(queueName, FlowUtils.generateConsumerGroupId(program, flowletId),
-                                      newInstanceCount);
-      }
-    }
+    FlowUtils.reconfigure(consumerQueues.get(flowletId),
+                          FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
+                          streamAdmin, queueAdmin);
 
     twillController.changeInstances(flowletId, newInstanceCount).get();
     twillController.sendCommand(flowletId, ProgramCommands.RESUME).get();

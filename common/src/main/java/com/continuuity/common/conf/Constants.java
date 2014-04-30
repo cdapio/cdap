@@ -316,6 +316,8 @@ public final class Constants {
     public static final String BASE_DIR = "stream.base.dir";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
+    public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
 
     // Stream http service configurations.
     public static final String ADDRESS = "stream.bind.address";
@@ -331,9 +333,6 @@ public final class Constants {
 
     /** How often to check for new file when reading from stream in milliseconds. **/
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
-
-    // Guice annotations
-    public static final String FILE_PREFIX_ANNOTATION = "stream.writer.file.prefix";
 
     /* End constants used by stream */
   }

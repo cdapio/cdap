@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -24,7 +25,7 @@ public interface StreamConsumer extends Closeable, TransactionAware {
   /**
    * @return Name of the stream this consumer is consuming.
    */
-  String getStreamName();
+  QueueName getStreamName();
 
   /**
    * @return Configuration of this consumer.

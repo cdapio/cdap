@@ -3,7 +3,6 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
-import com.continuuity.data.stream.service.StreamHandlerRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;

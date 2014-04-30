@@ -501,7 +501,7 @@ public abstract class StreamDataFileTestBase {
     Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, filePrefix, 0, StreamFileType.EVENT);
 
     // Creates a live stream reader that check for sequence file ever 100 millis.
-    FileReader<StreamEvent, StreamFileOffset> reader
+    FileReader<PositionStreamEvent, StreamFileOffset> reader
       = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation), 100);
 
     List<StreamEvent> events = Lists.newArrayList();

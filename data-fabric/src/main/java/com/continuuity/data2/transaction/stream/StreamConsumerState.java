@@ -17,6 +17,10 @@ public final class StreamConsumerState implements ConsumerState<Iterable<StreamF
   private final int instanceId;
   private Iterable<StreamFileOffset> state;
 
+  public StreamConsumerState(StreamConsumerState other) {
+    this(other.getGroupId(), other.getInstanceId(), other.getState());
+  }
+
   public StreamConsumerState(long groupId, int instanceId) {
     this(groupId, instanceId, ImmutableList.<StreamFileOffset>of());
   }
@@ -66,5 +70,14 @@ public final class StreamConsumerState implements ConsumerState<Iterable<StreamF
   @Override
   public int hashCode() {
     return Objects.hashCode(groupId, instanceId, state);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("groupId", groupId)
+      .add("instanceId", instanceId)
+      .add("states", state)
+      .toString();
   }
 }

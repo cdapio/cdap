@@ -15,6 +15,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumer;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
    */
   public LevelDBStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
-                                   LevelDBStreamConsumerStateStore stateStore,
+                                   StreamConsumerStateStore stateStore,
                                    LevelDBOcTableCore tableCore, Object dbLock) {
     super(streamConfig, consumerConfig, reader, stateStore);
     this.tableCore = tableCore;
@@ -57,6 +58,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
       Map<byte[], byte[]> values =
         tableCore.getRow(row, new byte[][] { stateColumnName }, null, null, -1, Transaction.ALL_VISIBLE_LATEST);
       if (values.get(stateColumnName) != null) {
+        System.out.println("Lose " + getConsumerConfig().getInstanceId());
         return false;
       }
 
@@ -66,6 +68,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
       rowMapForClaim.put(row, colMapForClaim);
 
       tableCore.persist(rowMapForClaim, KeyValue.LATEST_TIMESTAMP);
+      System.out.println("Win " + getConsumerConfig().getInstanceId());
       return true;
     }
   }

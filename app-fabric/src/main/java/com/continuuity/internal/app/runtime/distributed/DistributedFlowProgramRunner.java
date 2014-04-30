@@ -5,13 +5,9 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueSpecification;
-import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
@@ -20,15 +16,10 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
@@ -38,8 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -81,7 +70,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
       LOG.info("Configuring flowlets queues");
-      Multimap<String, QueueName> flowletQueues = configureQueue(program, flowSpec);
+      Multimap<String, QueueName> flowletQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
 
       // Launch flowlet program runners
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
@@ -102,52 +91,5 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   protected EventHandler createEventHandler(CConfiguration cConf) {
     return new AbortOnTimeoutEventHandler(
       cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
-  }
-
-  /**
-   * Configures all queues being used in this flow.
-   *
-   * @return A Multimap from flowletId to QueueName where the flowlet is a consumer of.
-   */
-  private Multimap<String, QueueName> configureQueue(Program program, FlowSpecification flowSpec) {
-    // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getAccountId(), program.getApplicationId());
-    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
-
-    // For each queue in the flow, gather a map of consumer groupId to number of instances
-    Table<QueueName, Long, Integer> queueConfigs = HashBasedTable.create();
-
-    // For storing result from flowletId to queue.
-    ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();
-
-    // Loop through each flowlet
-    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
-      String flowletId = entry.getKey();
-      long groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
-      int instances = entry.getValue().getInstances();
-
-      // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
-      for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
-        queueConfigs.put(queueSpec.getQueueName(), groupId, instances);
-        resultBuilder.put(flowletId, queueSpec.getQueueName());
-      }
-    }
-
-    try {
-      // For each queue in the flow, configure it through QueueAdmin
-      for (Map.Entry<QueueName, Map<Long, Integer>> row : queueConfigs.rowMap().entrySet()) {
-        LOG.info("Queue config for {} : {}", row.getKey(), row.getValue());
-        if (row.getKey().isStream()) {
-          streamAdmin.configureGroups(row.getKey(), row.getValue());
-        } else {
-          queueAdmin.configureGroups(row.getKey(), row.getValue());
-        }
-      }
-      return resultBuilder.build();
-    } catch (Exception e) {
-      LOG.error("Failed to configure queues", e);
-      throw Throwables.propagate(e);
-    }
   }
 }

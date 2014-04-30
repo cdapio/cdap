@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Factory for creating {@link StreamConsumerStateStore} in HBase.
  */
 public final class HBaseStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
 

@@ -1,7 +1,6 @@
 package com.continuuity.app.queue;
 
-import com.continuuity.data2.OperationException;
-
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,8 +20,8 @@ public interface QueueReader<T> {
    *
    * @return A {@link InputDatum} which
    *         represents the input being read from the queue.
-   * @throws OperationException If fails to dequeue.
+   * @throws IOException If fails to dequeue.
    * @throws InterruptedException If dequeue is interrupted.
    */
-  InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws OperationException, InterruptedException;
+  InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException;
 }

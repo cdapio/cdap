@@ -22,7 +22,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 /**
  * A {@link LiveFileReader} that gives infinite stream event.
  */
-public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, StreamFileOffset> {
+public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEvent, StreamFileOffset> {
 
   private static final Logger LOG = LoggerFactory.getLogger(LiveStreamFileReader.class);
 
@@ -60,7 +60,7 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
 
   @Nullable
   @Override
-  protected FileReader<StreamEvent, StreamFileOffset> renewReader() throws IOException {
+  protected FileReader<PositionStreamEvent, StreamFileOffset> renewReader() throws IOException {
     // If no reader has yet opened, start with the beginning offset.
     if (reader == null) {
       reader = new StreamPositionTransformFileReader(streamConfig.getLocation(), beginOffset);
@@ -113,9 +113,10 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
   }
 
   @NotThreadSafe
-  private static final class StreamPositionTransformFileReader implements FileReader<StreamEvent, StreamFileOffset> {
+  private static final class StreamPositionTransformFileReader
+                       implements FileReader<PositionStreamEvent, StreamFileOffset> {
 
-    private final FileReader<StreamEvent, Long> reader;
+    private final FileReader<PositionStreamEvent, Long> reader;
     private final StreamFileOffset offset;
     private final Location partitionLocation;
 
@@ -133,7 +134,7 @@ public final class LiveStreamFileReader extends LiveFileReader<StreamEvent, Stre
     }
 
     @Override
-    public int read(Collection<? super StreamEvent> events, int maxEvents,
+    public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
                     long timeout, TimeUnit unit) throws IOException, InterruptedException {
       int eventCount = reader.read(events, maxEvents, timeout, unit);
       offset.setOffset(reader.getPosition());

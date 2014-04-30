@@ -4,6 +4,7 @@
 package com.continuuity.data.stream.service;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.stream.StreamFileWriterFactory;
@@ -14,8 +15,6 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import java.io.IOException;
 
@@ -24,21 +23,8 @@ import java.io.IOException;
  */
 public class StreamHttpModule extends PrivateModule {
 
-  private final String filePrefix;
-
-  /**
-   * Constructor.
-   *
-   * @param filePrefix The stream file prefix for the file written by the stream writer.
-   */
-  public StreamHttpModule(String filePrefix) {
-    this.filePrefix = filePrefix;
-  }
-
-
   @Override
   protected void configure() {
-    bindConstant().annotatedWith(Names.named(Constants.Stream.FILE_PREFIX_ANNOTATION)).to(filePrefix);
     bind(StreamFileWriterFactory.class).to(FileWriterFactory.class).in(Scopes.SINGLETON);
 
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
@@ -51,9 +37,9 @@ public class StreamHttpModule extends PrivateModule {
     private final String filePrefix;
 
     @Inject
-    FileWriterFactory(StreamAdmin streamAdmin, @Named(Constants.Stream.FILE_PREFIX_ANNOTATION) String filePrefix) {
+    FileWriterFactory(CConfiguration cConf, StreamAdmin streamAdmin) {
       this.streamAdmin = streamAdmin;
-      this.filePrefix = filePrefix;
+      this.filePrefix = cConf.get(Constants.Stream.FILE_PREFIX);
     }
 
     @Override

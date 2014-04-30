@@ -2,7 +2,6 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
-import com.continuuity.data2.OperationException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +21,7 @@ public class SingleItemQueueReader<T> implements QueueReader<T> {
   }
 
   @Override
-  public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws OperationException {
+  public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) {
     input.incrementRetry();
     return input;
   }

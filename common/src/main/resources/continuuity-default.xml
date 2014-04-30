@@ -243,6 +243,18 @@
     </property>
 
     <property>
+        <name>stream.file.prefix</name>
+        <value>file</value>
+        <description>Prefix of file name for stream file</description>
+    </property>
+
+    <property>
+        <name>stream.consumer.table.presplits</name>
+        <value>16</value>
+        <description>Number of splits for the stream consumer table</description>
+    </property>
+
+    <property>
       <name>stream.bind.address</name>
       <value>127.0.0.1</value>
       <description>Default inet address for binding stream http service.</description>

@@ -5,6 +5,7 @@ import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data2.OperationException;
 import com.google.common.collect.Iterables;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +27,7 @@ public final class RoundRobinQueueReader<T> extends TimeTrackingQueueReader<T> {
     this.readers = Iterables.cycle(readers).iterator();
   }
 
-  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws OperationException, InterruptedException {
+  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException {
     if (!readers.hasNext()) {
       return nullInput;
     }

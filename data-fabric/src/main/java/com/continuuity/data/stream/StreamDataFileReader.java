@@ -9,7 +9,6 @@ import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.SeekableInputStream;
-import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.internal.io.Schema;
@@ -25,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -37,7 +37,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * @see StreamDataFileWriter
  */
 @NotThreadSafe
-public final class StreamDataFileReader implements FileReader<StreamEvent, Long> {
+public final class StreamDataFileReader implements FileReader<PositionStreamEvent, Long> {
 
   private static final byte[] MAGIC_HEADER = {'E', '1'};
 
@@ -138,7 +138,7 @@ public final class StreamDataFileReader implements FileReader<StreamEvent, Long>
   }
 
   @Override
-  public int read(Collection<? super StreamEvent> events, int maxEvents,
+  public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
     if (closed) {
       throw new IOException("Reader already closed.");
@@ -157,7 +157,7 @@ public final class StreamDataFileReader implements FileReader<StreamEvent, Long>
             doOpen();
           }
 
-          StreamEvent event = nextStreamEvent(false);
+          PositionStreamEvent event = nextStreamEvent(false);
           if (event == null) {
             break;
           }
@@ -379,9 +379,9 @@ public final class StreamDataFileReader implements FileReader<StreamEvent, Long>
    * @param skip If true, a StreamEvent will be skipped. Otherwise, read and return the StreamEvent
    * @return The next StreamEvent or {@code null} if skip is {@code true} or no more StreamEvent.
    */
-  private StreamEvent nextStreamEvent(boolean skip) throws IOException {
+  private PositionStreamEvent nextStreamEvent(boolean skip) throws IOException {
     // Data block is <timestamp> <length> <stream_data>+
-    StreamEvent event = null;
+    PositionStreamEvent event = null;
     boolean done = false;
 
     while (!done) {
@@ -404,7 +404,7 @@ public final class StreamDataFileReader implements FileReader<StreamEvent, Long>
         if (skip) {
           skipStreamData();
         } else {
-          event = new DefaultStreamEvent(readStreamData(), timestamp);
+          event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
         }
         long endPos = eventInput.getPos();
         done = true;
@@ -417,6 +417,40 @@ public final class StreamDataFileReader implements FileReader<StreamEvent, Long>
     }
 
     return event;
+  }
+
+
+  private static final class DefaultPositionStreamEvent implements PositionStreamEvent {
+
+    private final StreamEventData delegate;
+    private final long timestamp;
+    private final long position;
+
+    private DefaultPositionStreamEvent(StreamEventData delegate, long timestamp, long position) {
+      this.delegate = delegate;
+      this.timestamp = timestamp;
+      this.position = position;
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    @Override
+    public ByteBuffer getBody() {
+      return delegate.getBody();
+    }
+
+    @Override
+    public Map<String, String> getHeaders() {
+      return delegate.getHeaders();
+    }
+
+    @Override
+    public long getStart() {
+      return position;
+    }
   }
 
   private interface SkipCondition {

@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.PositionReporter;
 import com.continuuity.data2.transaction.stream.StreamConfig;
@@ -134,8 +133,8 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
   private static final class StreamEventSource implements Comparable<StreamEventSource>,
                                                           Closeable, PositionReporter<StreamFileOffset> {
 
-    private final FileReader<StreamEvent, StreamFileOffset> reader;
-    private final List<StreamEvent> events;
+    private final FileReader<PositionStreamEvent, StreamFileOffset> reader;
+    private final List<PositionStreamEvent> events;
     private StreamFileOffset currentOffset;
     private StreamFileOffset nextOffset;
 
@@ -147,8 +146,13 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
     }
 
     void read(Collection<? super StreamEventOffset> result) throws IOException, InterruptedException {
-      result.add(new StreamEventOffset(events.get(0), new StreamFileOffset(currentOffset)));
+      // Pop the cached event and use the event start position as the event offset being returned.
+      PositionStreamEvent streamEvent = events.get(0);
+      result.add(new StreamEventOffset(streamEvent,
+                                       new StreamFileOffset(currentOffset.getEventLocation(), streamEvent.getStart())));
       events.clear();
+
+      // Updates current offset information to be after the current event.
       if (!currentOffset.getEventLocation().equals(nextOffset.getEventLocation())) {
         currentOffset = new StreamFileOffset(nextOffset);
       } else {

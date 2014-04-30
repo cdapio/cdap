@@ -20,6 +20,7 @@ import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
@@ -41,9 +42,11 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
+import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -194,7 +197,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                         new OutputEmitterFieldSetter(outputEmitterFactory(flowletContext, flowletName,
                                                                           dataFabricFacade, queueSpecs)));
 
-      ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
+      ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
                                    processMethodFactory(flowlet),
@@ -202,7 +205,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                flowletName, queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
                                    Lists.<ProcessSpecification>newLinkedList());
-      List<QueueConsumerSupplier> queueConsumerSuppliers = queueConsumerSupplierBuilder.build();
+      List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
       FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
@@ -217,7 +220,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
 
       return new FlowletProgramController(program.getName(), flowletName,
-                                          flowletContext, driver, queueConsumerSuppliers);
+                                          flowletContext, driver, consumerSuppliers);
 
     } catch (Exception e) {
       // something went wrong before the flowlet even started. Make sure we release all resources (datasets, ...)
@@ -447,7 +450,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final BasicFlowletContext flowletContext, final DataFabricFacade dataFabricFacade,
     final QueueReaderFactory queueReaderFactory, final String flowletName,
     final Table<Node, String, Set<QueueSpecification>> queueSpecs,
-    final ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder,
+    final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
     return new ProcessSpecificationFactory() {
@@ -456,7 +459,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                              ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
                                              Tick tickAnnotation) {
         List<QueueReader<T>> queueReaders = Lists.newLinkedList();
-        Function<ByteBuffer, T> inputDatumDecoder = createInputDatumDecoder(dataType, schema, schemaCache);
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
           for (QueueSpecification queueSpec : entry.getValue()) {
@@ -466,16 +468,31 @@ public final class FlowletProgramRunner implements ProgramRunner {
               && (inputNames.contains(queueName.getSimpleName())
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
-              int numGroups = (entry.getKey().getType() == FlowletConnection.Type.STREAM)
-                ? -1
-                : getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
+              if (entry.getKey().getType() == FlowletConnection.Type.STREAM) {
+                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade,
+                                                                                            queueName, consumerConfig);
+                queueConsumerSupplierBuilder.add(consumerSupplier);
+                // No decoding is needed, as a process method can only have StreamEvent as type for consuming stream
+                Function<StreamEvent, T> decoder = wrapInputDecoder(flowletContext,
+                                                                    queueName, new Function<StreamEvent, T>() {
+                  @Override
+                  public T apply(StreamEvent input) {
+                    return (T) input;
+                  }
+                });
 
-              QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(dataFabricFacade,
-                                                                                 queueName, consumerConfig, numGroups);
-              queueConsumerSupplierBuilder.add(consumerSupplier);
-              queueReaders.add(
-                queueReaderFactory.create(consumerSupplier, batchSize,
-                                          wrapInputDecoder(flowletContext, queueName, inputDatumDecoder)));
+                queueReaders.add(queueReaderFactory.createStreamReader(consumerSupplier, batchSize, decoder));
+
+              } else {
+                int numGroups = getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
+                Function<ByteBuffer, T> decoder =
+                  wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
+
+                ConsumerSupplier<Queue2Consumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
+                                                                                            consumerConfig, numGroups);
+                queueConsumerSupplierBuilder.add(consumerSupplier);
+                queueReaders.add(queueReaderFactory.createQueueReader(consumerSupplier, batchSize, decoder));
+              }
             }
           }
         }
@@ -519,17 +536,17 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private <T> Function<ByteBuffer, T> wrapInputDecoder(final BasicFlowletContext context,
-                                                       final QueueName queueName,
-                                                       final Function<ByteBuffer, T> inputDecoder) {
+  private <S, T> Function<S, T> wrapInputDecoder(final BasicFlowletContext context,
+                                                 final QueueName queueName,
+                                                 final Function<S, T> inputDecoder) {
     final String eventsMetricsName = "process.events.in";
     final String eventsMetricsTag = queueName.getSimpleName();
-    return new Function<ByteBuffer, T>() {
+    return new Function<S, T>() {
       @Override
-      public T apply(ByteBuffer byteBuffer) {
+      public T apply(S source) {
         context.getSystemMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
         context.getSystemMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
-        return inputDecoder.apply(byteBuffer);
+        return inputDecoder.apply(source);
       }
     };
   }

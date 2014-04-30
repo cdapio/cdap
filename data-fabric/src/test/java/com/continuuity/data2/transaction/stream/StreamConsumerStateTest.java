@@ -3,9 +3,11 @@
  */
 package com.continuuity.data2.transaction.stream;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamFileType;
 import com.continuuity.data.stream.StreamUtils;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
@@ -19,7 +21,7 @@ import java.util.Set;
 /**
  *
  */
-public abstract class StreamConsumerStateStoreTest {
+public abstract class StreamConsumerStateTest {
 
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
@@ -112,12 +114,62 @@ public abstract class StreamConsumerStateStoreTest {
     }
   }
 
+  @Test
+  public void testChangeInstance() throws Exception {
+    StreamAdmin streamAdmin = getStreamAdmin();
+    String streamName = "testChangeInstance";
+    streamAdmin.create(streamName);
+
+    StreamConfig config = streamAdmin.getConfig(streamName);
+
+    // Creates a state with 4 offsets
+    StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
+    StreamConsumerStateStore stateStore = createStateStore(config);
+
+    // Save the state.
+    stateStore.save(state);
+
+    // Increase the number of instances
+    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 2);
+
+    StreamConsumerState newState = stateStore.get(0L, 1);
+    // Get the state of the new instance, should be the same as the existing one
+    Assert.assertTrue(Iterables.elementsEqual(state.getState(), newState.getState()));
+
+    // Change the state of instance 0 to higher offset.
+    StreamFileOffset fileOffset = Iterables.get(state.getState(), 0);
+    long oldOffset = fileOffset.getOffset();
+    long newOffset = oldOffset + 100000;
+    fileOffset.setOffset(newOffset);
+    stateStore.save(state);
+
+    // Verify the change
+    state = stateStore.get(0L, 0);
+    Assert.assertEquals(newOffset, Iterables.get(state.getState(), 0).getOffset());
+
+    // Increase the number of instances again
+    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 3);
+
+    // Verify that instance 0 has offset getting resetted to lowest
+    state = stateStore.get(0L, 0);
+    Assert.assertEquals(oldOffset, Iterables.get(state.getState(), 0).getOffset());
+
+    // Verify that all offsets are the same
+    List<StreamConsumerState> states = Lists.newArrayList();
+    stateStore.getByGroup(0L, states);
+
+    Assert.assertEquals(3, states.size());
+    Assert.assertTrue(Iterables.elementsEqual(states.get(0).getState(), states.get(1).getState()));
+    Assert.assertTrue(Iterables.elementsEqual(states.get(0).getState(), states.get(2).getState()));
+  }
+
   private StreamConsumerState generateState(long groupId, int instanceId, StreamConfig config,
                                             long partitionBaseTime, int numOffsets) throws IOException {
     List<StreamFileOffset> offsets = Lists.newArrayList();
     long partitionDuration = config.getPartitionDuration();
     for (int i = 0; i < numOffsets; i++) {
-      Location partitionLocation = StreamUtils.createPartitionLocation(partitionBaseTime * partitionDuration, config);
+      Location partitionLocation = StreamUtils.createPartitionLocation((partitionBaseTime + i) * partitionDuration,
+                                                                       config);
       offsets.add(new StreamFileOffset(StreamUtils.createStreamLocation(partitionLocation,
                                                                         "file", 0, StreamFileType.EVENT), i * 1000));
     }

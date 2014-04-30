@@ -5,8 +5,10 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 
@@ -225,6 +227,21 @@ public final class StreamUtils {
     Location partitionLocation = createPartitionLocation(baseLocation, partitionStart, duration);
     Location eventLocation = createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.EVENT);
     return new StreamFileOffset(eventLocation, offset);
+  }
+
+  public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
+    try {
+      return admin.getConfig(streamName);
+    } catch (Exception e) {
+      // Ignored
+    }
+    try {
+      admin.create(streamName);
+      return admin.getConfig(streamName);
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw new IOException(e);
+    }
   }
 
   private StreamUtils() {

@@ -5,13 +5,9 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
-import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,24 +23,22 @@ public final class SingleQueue2Reader<T> extends TimeTrackingQueueReader<T> {
 
   private final Supplier<Queue2Consumer> consumerSupplier;
   private final int batchSize;
-  private final Function<ByteBuffer, T> decoder;
+  private final Function<byte[], T> decoder;
 
-  @Inject
-  SingleQueue2Reader(@Assisted Supplier<Queue2Consumer> consumerSupplier,
-                     @Assisted int batchSize,
-                     @Assisted Function<ByteBuffer, T> decoder) {
+  SingleQueue2Reader(Supplier<Queue2Consumer> consumerSupplier, int batchSize, final Function<ByteBuffer, T> decoder) {
     this.consumerSupplier = consumerSupplier;
     this.batchSize = batchSize;
-    this.decoder = decoder;
+    this.decoder = new Function<byte[], T>() {
+      @Override
+      public T apply(byte[] input) {
+        return decoder.apply(ByteBuffer.wrap(input));
+      }
+    };
   }
 
   @Override
-  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws OperationException {
+  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws IOException {
     Queue2Consumer consumer = consumerSupplier.get();
-    try {
-      return new Queue2InputDatum<T>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);
-    } catch (IOException e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
-    }
+    return new BasicInputDatum<byte[], T>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);
   }
 }

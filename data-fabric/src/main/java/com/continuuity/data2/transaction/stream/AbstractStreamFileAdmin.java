@@ -7,8 +7,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamFileOffset;
+import com.continuuity.data.stream.StreamUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -60,7 +62,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    StreamConfig config = createIfNotExists(name);
+    System.out.println("Configure instances: " + groupId + " " + instances);
+
+    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -81,6 +85,9 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       stateStore.save(newStates);
       stateStore.remove(removeStates);
 
+      System.out.println("New states: " + newStates);
+      System.out.println("Remove states: " + removeStates);
+
     } finally {
       stateStore.close();
     }
@@ -92,67 +99,42 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    StreamConfig config = createIfNotExists(name);
+    System.out.println("Configure groups: " + groupInfo);
+
+    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
-//      Set<StreamConsumerState> states = Sets.newHashSet();
-//      stateStore.getAll(states);
-//
-//      byte[] rowKey = queueName.toBytes();
-//
-//      // Get the whole row
-//      Result result = hTable.get(new Get(rowKey));
-//
-//      // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
-//      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-//      if (columns == null) {
-//        columns = ImmutableSortedMap.of();
-//      }
-//      Map<Long, Integer> oldGroupInfo = Maps.newHashMap();
-//      byte[] smallest = decodeGroupInfo(groupInfo, columns, oldGroupInfo);
-//
-//      List<Mutation> mutations = Lists.newArrayList();
-//
-//      // For groups that are removed, simply delete the columns
-//      Sets.SetView<Long> removedGroups = Sets.difference(oldGroupInfo.keySet(), groupInfo.keySet());
-//      if (!removedGroups.isEmpty()) {
-//        Delete delete = new Delete(rowKey);
-//        for (long removeGroupId : removedGroups) {
-//          for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
-//            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
-//                                 getConsumerStateColumn(removeGroupId, i));
-//          }
-//        }
-//        mutations.add(delete);
-//      }
-//
-//      // For each group that changed (either a new group or number of instances change), update the startRow
-//      Put put = new Put(rowKey);
-//      for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
-//        long groupId = entry.getKey();
-//        int instances = entry.getValue();
-//        if (!oldGroupInfo.containsKey(groupId)) {
-//          // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
-//          for (int i = 0; i < instances; i++) {
-//            put.add(QueueEntryRow.COLUMN_FAMILY,
-//                    getConsumerStateColumn(groupId, i),
-//                    smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
-//          }
-//        } else if (oldGroupInfo.get(groupId) != instances) {
-//          // compute the mutations needed using the change instances logic
-//          SortedMap<byte[], byte[]> columnMap =
-//            columns.subMap(getConsumerStateColumn(groupId, 0),
-//                           getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
-//
-//          mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
-//        }
-//      }
-//      mutations.add(put);
-//
-//      // Compute and applies changes
-//      if (!mutations.isEmpty()) {
-//        hTable.batch(mutations);
-//      }
+      Set<StreamConsumerState> states = Sets.newHashSet();
+      stateStore.getAll(states);
+
+      // Remove all groups that are no longer exists. The offset information in that group can be discarded.
+      Set<StreamConsumerState> removeStates = Sets.newHashSet();
+      for (StreamConsumerState state : states) {
+        if (!groupInfo.containsKey(state.getGroupId())) {
+          removeStates.add(state);
+        }
+      }
+
+      // For each groups, compute the new file offsets if needed
+      Set<StreamConsumerState> newStates = Sets.newHashSet();
+      for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
+        final long groupId = entry.getKey();
+
+        // Create a view of old states which match with the current groupId only.
+        mutateStates(groupId, entry.getValue(), Sets.filter(states, new Predicate<StreamConsumerState>() {
+          @Override
+          public boolean apply(StreamConsumerState state) {
+            return state.getGroupId() == groupId;
+          }
+        }), newStates, removeStates);
+      }
+
+      // Save the states back
+      stateStore.save(newStates);
+      stateStore.remove(removeStates);
+
+      System.out.println("New states: " + newStates);
+      System.out.println("Remove states: " + removeStates);
 
     } finally {
       stateStore.close();
@@ -239,18 +221,10 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     // No-op
   }
 
-  private StreamConfig createIfNotExists(QueueName name) throws Exception {
-    String streamName = name.getSimpleName();
-    if (!exists(streamName)) {
-      create(streamName);
-    }
-    return getConfig(streamName);
-  }
-
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
                             Set<StreamConsumerState> newStates, Set<StreamConsumerState> removeStates) {
     // Collects smallest offsets across all existing consumers
-    Map<StreamFileOffset, Long> fileOffsets = Maps.newHashMap();
+    Map<StreamFileOffset, Long> fileOffsets = Maps.newTreeMap();
 
     for (StreamConsumerState state : states) {
       for (StreamFileOffset fileOffset : state.getState()) {

@@ -266,7 +266,7 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
-      new StreamHttpModule("local")
+      new StreamHttpModule()
     );
   }
 
@@ -311,6 +311,6 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule("local"));
+      new StreamHttpModule());
   }
 }

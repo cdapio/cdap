@@ -15,7 +15,7 @@ import com.google.inject.Inject;
 import java.io.IOException;
 
 /**
- *
+ * Factory for creating {@link StreamConsumerStateStore} in level db.
  */
 public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
 

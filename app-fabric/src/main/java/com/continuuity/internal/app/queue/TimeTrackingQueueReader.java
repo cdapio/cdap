@@ -5,9 +5,9 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
-import com.continuuity.data2.OperationException;
 import com.google.common.base.Stopwatch;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,7 +22,7 @@ public abstract class TimeTrackingQueueReader<T> implements QueueReader<T> {
 
   @Override
   public final InputDatum<T> dequeue(long timeout,
-                                     TimeUnit timeoutUnit) throws OperationException, InterruptedException {
+                                     TimeUnit timeoutUnit) throws IOException, InterruptedException {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     long sleepNano = computeSleepNano(timeout, timeoutUnit);
@@ -48,7 +48,7 @@ public abstract class TimeTrackingQueueReader<T> implements QueueReader<T> {
    * Children class override it to try to dequeue.
    */
   protected abstract InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit)
-                                              throws OperationException, InterruptedException;
+                                              throws IOException, InterruptedException;
 
   private long computeSleepNano(long timeout, TimeUnit unit) {
     long sleepNano = TimeUnit.NANOSECONDS.convert(timeout, unit) / DEQUEUE_TRAILS;
