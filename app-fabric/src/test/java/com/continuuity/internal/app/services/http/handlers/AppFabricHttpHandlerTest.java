@@ -305,7 +305,7 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testGetMetadata() throws Exception {
     try {
-      HttpResponse response = AppFabricTestsSuite.doPut("/v2/unrecoverable/reset");
+      HttpResponse response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
       response = deploy(WordCountApp.class);
