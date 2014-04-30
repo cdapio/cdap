@@ -16,8 +16,6 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -104,7 +102,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1324,19 +1321,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       // Checks DNS, Ipv4, Ipv6 address in one go.
       String hostname = content.get("hostname");
       Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
-      InetAddress address = InetAddress.getByName(hostname);
 
       String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      ArchiveId id = new ArchiveId(accountId, appId, "promote-" + System.currentTimeMillis() + ".jar");
+      String token = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
 
-      final Location appArchive = store.getApplicationArchiveLocation
-        (Id.Application.from(id.getAccountId(), id.getApplicationId()));
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
       if (appArchive == null || !appArchive.exists()) {
         throw new IOException("Unable to locate the application.");
       }
 
-      if (!promote(token, id, hostname)) {
+      if (!promote(token, accountId, appId, hostname)) {
         responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
       } else {
         responder.sendStatus(HttpResponseStatus.OK);
@@ -1349,11 +1343,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  public boolean promote(AuthToken authToken, ArchiveId id, String hostname) throws Exception {
+  public boolean promote(String authToken, String accountId, String appId, String hostname) throws Exception {
 
     try {
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(id.getAccountId(),
-                                                                                          id.getApplicationId()));
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId,
+                                                                                          appId));
       if (appArchive == null || !appArchive.exists()) {
         throw new Exception("Unable to locate the application.");
       }
@@ -1364,12 +1358,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
 
       String url = String.format("%s://%s:%d/v2/apps/%s",
-                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, id.getApplicationId());
+                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
         .setHeader("X-Archive-Name", appArchive.getName())
-        .setHeader("X-Continuuity-ApiKey", authToken.getToken())
+        .setHeader("X-Continuuity-ApiKey", authToken)
         .build();
 
       try {
@@ -1625,7 +1619,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
+      throw new IOException("Can't find Metrics endpoint");
     }
 
     for (MetricsScope scope : MetricsScope.values()) {
@@ -1640,11 +1634,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
     }
 
-    String url = String.format("http://%s:%d%s/metrics",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION);
-    sendMetricsDelete(url);
+    if (applicationId == null) {
+      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
+      sendMetricsDelete(url);
+    }
   }
 
   // deletes the process metrics for a flow
