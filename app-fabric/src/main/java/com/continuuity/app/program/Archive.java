@@ -5,12 +5,13 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarResources;
+import com.continuuity.common.lang.jar.ProgramClassLoader;
+import com.continuuity.common.lang.jar.ProgramJarResources;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
-import org.apache.twill.filesystem.Location;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.jar.Manifest;
 
@@ -22,18 +23,15 @@ public final class Archive {
   /**
    * Class loader for holding
    */
-  private final ClassLoader jarClassLoader;
+  private final ClassLoader classLoader;
   private final String mainClassName;
   private final Id.Account id;
 
-  public Archive(Id.Account id, Location location) throws IOException {
-    this(id, new JarResources(location));
-  }
-
-  private Archive(Id.Account id, JarResources jarResources) throws IOException {
-    jarClassLoader = new JarClassLoader(jarResources);
+  public Archive(Id.Account id, File unpackedJarFolder) throws IOException {
+    classLoader = new ProgramClassLoader(unpackedJarFolder);
     this.id = id;
 
+    ProgramJarResources jarResources = new ProgramJarResources(unpackedJarFolder);
     Manifest manifest = jarResources.getManifest();
     check(manifest != null, UserMessages.getMessage(UserErrors.BAD_JAR_MANIFEST));
 
@@ -42,7 +40,7 @@ public final class Archive {
   }
 
   public Class<?> getMainClass() throws ClassNotFoundException {
-    return jarClassLoader.loadClass(mainClassName);
+    return classLoader.loadClass(mainClassName);
   }
 
   private void check(boolean condition, String fmt, Object... objs) throws IOException {

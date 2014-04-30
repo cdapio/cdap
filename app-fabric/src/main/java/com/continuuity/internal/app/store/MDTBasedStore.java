@@ -39,6 +39,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -107,7 +108,7 @@ public class MDTBasedStore implements Store {
                                   "Newer program update time than the specification update time. " +
                                   "Application must be redeployed");
 
-      return Programs.create(programLocation);
+      return Programs.create(programLocation, Files.createTempDir());
     } catch (OperationException e) {
       throw new IOException(e);
     }
