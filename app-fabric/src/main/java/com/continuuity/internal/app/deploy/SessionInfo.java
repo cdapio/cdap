@@ -41,15 +41,14 @@ public final class SessionInfo {
   @Nullable
   private String applicationId;
 
-  /**
-   * Redundant, but useful resource information.
-   */
-  private transient ArchiveId identifier;
+  private String accountId;
 
   /**
    * Outputstream associated with file.
    */
   private transient OutputStream stream = null;
+
+  private transient ArchiveId identifier;
 
   /**
    * Status of deployment.
@@ -63,9 +62,16 @@ public final class SessionInfo {
 
   /**
    * Constructs the object with identifier and resource info provided.
-   *
-   * @param info about the resource being uploaded.
    */
+  public SessionInfo(String accountId, String appId, String filename, Location archive, DeployStatus status) {
+    this.accountId = accountId;
+    this.regtime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    this.filename = filename;
+    this.archive = archive;
+    this.status = status;
+    this.applicationId = appId;
+  }
+
   public SessionInfo(ArchiveId identifier, ArchiveInfo info, Location archive, DeployStatus status) {
     this.identifier = identifier;
     this.regtime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -74,6 +80,7 @@ public final class SessionInfo {
     this.status = status;
     this.applicationId = info.getApplicationId();
   }
+
 
   /**
    * Returns registration time of the resource.
@@ -163,7 +170,8 @@ public final class SessionInfo {
       Objects.equal(filename, that.filename) &&
       Objects.equal(regtime, that.regtime) &&
       Objects.equal(archive, that.archive) &&
-      Objects.equal(identifier, that.identifier);
+      Objects.equal(accountId, that.accountId) &&
+      Objects.equal(applicationId, that.applicationId);
   }
 
   /**
@@ -172,7 +180,7 @@ public final class SessionInfo {
    * @return hash code for this object.
    */
   public int hashCode() {
-    return Objects.hashCode(filename, regtime, archive, identifier);
+    return Objects.hashCode(filename, regtime, archive, accountId, applicationId);
   }
 
   /**
@@ -185,7 +193,8 @@ public final class SessionInfo {
       .add("filename", filename)
       .add("regtime", regtime)
       .add("archive", archive)
-      .add("identifier", identifier)
+      .add("accountId", accountId)
+      .add("appId", applicationId)
       .toString();
   }
 }
