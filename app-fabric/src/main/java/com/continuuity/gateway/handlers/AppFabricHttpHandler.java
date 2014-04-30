@@ -24,9 +24,11 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -42,6 +44,8 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -51,6 +55,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -98,10 +103,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -235,7 +239,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+                              DiscoveryServiceClient discoveryServiceClient,
+                              TransactionSystemClient txClient) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -337,13 +342,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                         @PathParam("runnable-type") final String runnableType,
                         @PathParam("runnable-id") final String runnableId) {
 
-    LOG.trace("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
-
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Program id = Id.Program.from(accountId, appId, runnableId);
-    Type type = runnableTypeMap.get(runnableType);
-
     try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      Type type = runnableTypeMap.get(runnableType);
+
       if (type == Type.MAPREDUCE) {
         String workflowName = getWorkflowName(id.getId());
         if (workflowName != null) {
@@ -375,6 +378,46 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * starts a webapp.
+   */
+  @POST
+  @Path("/apps/{app-id}/webapp/start")
+  public void webappStart(final HttpRequest request, final HttpResponder responder,
+                              @PathParam("app-id") final String appId) {
+      runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
+  }
+
+
+  /**
+   * stops a webapp.
+   */
+  @POST
+  @Path("/apps/{app-id}/webapp/stop")
+  public void webappStop(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("app-id") final String appId) {
+    runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "stop");
+  }
+
+  /**
+   * Returns status of a webapp.
+   */
+  @GET
+  @Path("/apps/{app-id}/webapp/status")
+  public void webappStatus(final HttpRequest request, final HttpResponder responder,
+                           @PathParam("app-id") final String appId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, Type.WEBAPP.prettyName().toLowerCase());
+      runnableStatus(responder, id, Type.WEBAPP);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable t) {
+      LOG.error("Got exception:", t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -633,6 +676,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
 
+
+
   /**
    * Starts a Program.
    */
@@ -793,7 +838,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return Short.parseShort(instanceCount);
   }
 
-  private synchronized ProgramStatus getProgramStatus(Id.Program id, Type type)
+  private ProgramStatus getProgramStatus(Id.Program id, Type type)
     throws Exception {
 
     try {
@@ -1025,25 +1070,59 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns specification of a runnable - flow, procedure, mapreduce, workflow.
+   * Returns specification of a runnable - flow.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}")
-  public void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("runnable-type") final String runnableType,
-                                    @PathParam("runnable-id") final String runnableId) {
+  @Path("/apps/{app-id}/flows/{flow-id}")
+  public void flowSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("flow-id")final String flowId) {
+    runnableSpecification(request, responder, appId, Type.FLOW, flowId);
+  }
 
-    Type type = runnableTypeMap.get(runnableType);
-    if (type == null || type == Type.WEBAPP) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+  /**
+   * Returns specification of procedure
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}")
+  public void procedureSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("procedure-id")final String procId) {
+    runnableSpecification(request, responder, appId, Type.PROCEDURE, procId);
+  }
+
+  /**
+   * Returns specification of mapreduce
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
+  public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("mapreduce-id")final String mapreduceId) {
+    runnableSpecification(request, responder, appId, Type.MAPREDUCE, mapreduceId);
+  }
+
+  /**
+   * Returns specification of workflow
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}")
+  public void workflowSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id")final String workflowId) {
+    runnableSpecification(request, responder, appId, Type.WORKFLOW, workflowId);
+  }
+
+
+
+  private void runnableSpecification(HttpRequest request, HttpResponder responder,
+                                    final String appId, Type runnableType,
+                                    final String runnableId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      String specification = getProgramSpecification(id, type);
+      String specification = getProgramSpecification(id, runnableType);
       if (specification == null || specification.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -1916,5 +1995,4 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
     return builder.build();
   }
-
 }
