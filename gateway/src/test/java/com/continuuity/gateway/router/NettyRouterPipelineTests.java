@@ -1,17 +1,19 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.ToyApp;
+import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.net.InetAddresses;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -32,7 +34,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
@@ -44,20 +45,19 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.List;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.Manifest;
 
 /**
  * Verify the ordering of events in the RouterPipeline.
@@ -137,54 +137,35 @@ public class NettyRouterPipelineTests {
       Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
     }
 
-  @Ignore //TODO: Uncomment this when the ordering is implemented right
   @Test
-  public void testOrderingOfevents() throws Exception {
-
-    List<Integer> events = Lists.newArrayList();
-    // Send events to the socket to sleep for n seconds in the handler (passed in the path)
-    // Verify that the order is maintained.
-    try {
-      Socket socket = new Socket("localhost",
-                                 router.getServiceMap().get(gatewayService));
-      socket.setSoTimeout(5000);
-
-      PrintWriter request = new PrintWriter(socket.getOutputStream());
-
-      request.write("GET /v1/ping/3 HTTP/1.1\r\n" +
-                      " Host: localhost\r\n\r\n"
-      );
-
-      request.write("GET /v1/ping/1 HTTP/1.1\r\n" +
-                      " Host: localhost\r\n\r\n"
-      );
-      request.flush();
-
-      BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), Charsets.UTF_8));
-
-      String line = reader.readLine();
-      while (!line.equals("\n")) {
-        if (line.contains("Ping:")) {
-          String [] words = line.split(":");
-          Assert.assertEquals(2, words.length);
-          events.add(Integer.parseInt(words[1]));
-        }
-        line = reader.readLine();
-      }
-      Assert.assertEquals(2, gatewayServer.getNumRequests());
-      request.close();
-      socket.close();
-    } catch (Throwable th) {
-      //Socket timeout exception. Do no-op.
-    }
-
-    Assert.assertEquals(2, events.size());
-    Assert.assertTrue(3 == events.get(0));
-    Assert.assertTrue(1 == events.get(1));
-
-
+  public void testDeployNTimes() throws Exception {
+    // regression tests for race condition during multiple deploys.
+    deploy(10);
   }
 
+
+  // deploy ToyApp n times.
+  private void deploy(int num) throws Exception {
+
+    for (int i = 0; i < num; i++) {
+      URL url = new URL("http://localhost:10000/v2/apps");
+      HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+      urlConn.setRequestProperty("X-Archive-Name", "Purchase-1.0.0.jar");
+      urlConn.setRequestMethod("POST");
+      urlConn.setDoOutput(true);
+      urlConn.setDoInput(true);
+
+      Manifest manifest = new Manifest();
+      manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+      manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, ToyApp.class.getName());
+
+      String path = JarFinder.getJar(ToyApp.class, manifest);
+
+      Files.copy(new File(path), urlConn.getOutputStream());
+      Assert.assertEquals(200, urlConn.getResponseCode());
+      urlConn.disconnect();
+    }
+  }
 
   private static class RouterResource extends ExternalResource {
     private final String hostname;
