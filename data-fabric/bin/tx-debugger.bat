@@ -7,12 +7,10 @@ REM ##  Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
 REM ##
 REM ##############################################################################
 
-SET ORIGPATH=%cd%
 SET CONTINUUITY_HOME=%~dp0
 SET CONTINUUITY_HOME=%CONTINUUITY_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-REM %CONTINUUITY_HOME%
 SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
 SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
 
@@ -49,4 +47,6 @@ endlocal
 mkdir %CONTINUUITY_HOME%\logs > NUL 2>&1
 
 %JAVACMD% -classpath %CLASSPATH% com.continuuity.data2.transaction.TransactionManagerDebuggerMain %*
+
+:FINALLY
 
