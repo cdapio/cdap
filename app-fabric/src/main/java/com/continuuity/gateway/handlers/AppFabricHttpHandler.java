@@ -17,7 +17,6 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.store.Store;
@@ -408,8 +407,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/start")
   public void webappStart(final HttpRequest request, final HttpResponder responder,
-                              @PathParam("app-id") final String appId) {
-      runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
+                          @PathParam("app-id") final String appId) {
+    runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
   }
 
 
@@ -419,7 +418,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/stop")
   public void webappStop(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "stop");
   }
 
@@ -523,9 +522,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
+                              @PathParam("app-id") final String appId,
+                              @PathParam("runnable-type") final String runnableType,
+                              @PathParam("runnable-id") final String runnableId) {
     Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -1106,8 +1105,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}")
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("procedure-id")final String procId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("procedure-id")final String procId) {
     runnableSpecification(request, responder, appId, Type.PROCEDURE, procId);
   }
 
@@ -1117,8 +1116,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("mapreduce-id")final String mapreduceId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("mapreduce-id")final String mapreduceId) {
     runnableSpecification(request, responder, appId, Type.MAPREDUCE, mapreduceId);
   }
 
@@ -1128,16 +1127,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}")
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id")final String workflowId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id")final String workflowId) {
     runnableSpecification(request, responder, appId, Type.WORKFLOW, workflowId);
   }
 
 
 
   private void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                    final String appId, Type runnableType,
-                                    final String runnableId) {
+                                     final String appId, Type runnableType,
+                                     final String runnableId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -1611,30 +1610,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return AppFabricServiceStatus.OK;
   }
 
-  private void deleteMetrics(String account, String application) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
+  private void deleteMetrics(String accountId, String applicationId) throws IOException, OperationException {
+    Collection<ApplicationSpecification> applications = Lists.newArrayList();
+    if (applicationId == null) {
+      applications = this.store.getAllApplications(new Id.Account(accountId));
+    } else {
+      ApplicationSpecification spec = this.store.getApplication
+        (new Id.Application(new Id.Account(accountId), applicationId));
+      applications.add(spec);
     }
-
-    LOG.debug("Deleting metrics for application {}", application);
-    for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.GATEWAY_VERSION,
-                                 scope.name().toLowerCase(),
-                                 application);
-      sendMetricsDelete(url);
-    }
-  }
-
-  private void deleteMetrics(String accountId) throws IOException, OperationException {
-    Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
@@ -1963,7 +1947,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     getAppDetails(request, responder, appId);
   }
 
@@ -2218,7 +2202,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (appRunning) {
         throw new Exception("App Still Running");
       }
-      deleteMetrics(account);
+      deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(accountId);
       // delete queues and streams data
