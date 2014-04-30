@@ -258,6 +258,16 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
+    //web-app, start, stop and status check.
+    Assert.assertEquals(200,
+                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/start", null)
+                          .getStatusLine().getStatusCode());
+    Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
+    Assert.assertEquals(200,
+                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/stop", null)
+                          .getStatusLine().getStatusCode());
+    Assert.assertEquals("STOPPED", getWebappStatus("WordCountApp"));
+
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
@@ -409,6 +419,14 @@ public class AppFabricHttpHandlerTest {
     }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
     AppFabricTestsSuite.stopProgram(workflowId);
+  }
+
+  private String getWebappStatus(String appId) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    return o.get("status");
   }
 
   @Test
