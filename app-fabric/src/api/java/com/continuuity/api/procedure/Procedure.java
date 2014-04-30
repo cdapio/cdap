@@ -4,17 +4,19 @@
 
 package com.continuuity.api.procedure;
 
+import com.continuuity.api.ProgramLifecycle;
+
 /**
  * This interface defines a Procedure.
  */
-public interface Procedure {
+public interface Procedure extends ProgramLifecycle<ProcedureContext> {
 
   /**
    * Configures this procedure providing a specification with more details about the procedure.
    * <p>
-   *   To create a Procedure, one must implement this interface. The {@link #configure()} method will be
+   *   To create a Procedure, one must implement this interface. This method will be
    *   invoked during deployment time and it returns a {@link ProcedureSpecification} to specify how to
-   *   configure the given procedure. There are no guarantees around how many times the {@link #configure()}
+   *   configure the given procedure. There are no guarantees around how many times this method
    *   will be called during deployment or runtime, hence, the configuration should be very simple and should
    *   not include initialization of resources.
    * </p>
@@ -29,10 +31,10 @@ public interface Procedure {
    *  This method is invoked only once during startup of Procedure on a per instance basis. This method can be
    *  be used to initialize any user related resources.
    * </p>
-   * @param context
+   * @param context procedure runtime context
    */
+  @Override
   void initialize(ProcedureContext context);
-
 
   /**
    * Invoked after the Procedure has been stopped.
@@ -41,5 +43,6 @@ public interface Procedure {
    *   This method will be invoked after stopping incoming requests and closing {@link ProcedureResponder}
    * </p>
    */
+  @Override
   void destroy();
 }

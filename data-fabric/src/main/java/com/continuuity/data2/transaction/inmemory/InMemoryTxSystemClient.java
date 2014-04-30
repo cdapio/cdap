@@ -61,8 +61,8 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(Transaction tx) {
-    txManager.invalidate(tx);
+  public boolean invalidate(long tx) {
+    return txManager.invalidate(tx);
   }
 
   @Override
@@ -80,5 +80,10 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
       LOG.error("Snapshot could not be taken", e);
       throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
     }
+  }
+
+  @Override
+  public void resetState() {
+    txManager.resetState();
   }
 }

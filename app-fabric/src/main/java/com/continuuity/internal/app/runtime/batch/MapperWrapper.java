@@ -1,5 +1,7 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.api.ProgramLifecycle;
+import com.continuuity.api.RuntimeContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -72,6 +74,15 @@ public class MapperWrapper extends Mapper {
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
 
+      if (delegate instanceof ProgramLifecycle) {
+        try {
+          ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
+        } catch (Exception e) {
+          LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
+          throw Throwables.propagate(e);
+        }
+      }
+
       delegate.run(flushingContext);
       // sleep to allow metrics to be written
       TimeUnit.SECONDS.sleep(2L);
@@ -81,9 +92,19 @@ public class MapperWrapper extends Mapper {
       try {
         basicMapReduceContext.flushOperations();
       } catch (Exception e) {
-        LOG.error("Failed to flush operations at the end of mapper of " + basicMapReduceContext.toString());
+        LOG.error("Failed to flush operations at the end of mapper of {}", basicMapReduceContext, e);
         throw Throwables.propagate(e);
       }
+
+      if (delegate instanceof ProgramLifecycle) {
+        try {
+          ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
+        } catch (Exception e) {
+          LOG.error("Error during destroy of mapper {}", basicMapReduceContext, e);
+          // Do nothing, try to finish
+        }
+      }
+
     } finally {
       basicMapReduceContext.close();
       basicMapReduceContext.getMetricsCollectionService().stop();
