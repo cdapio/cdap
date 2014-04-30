@@ -29,9 +29,11 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -47,6 +49,8 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -67,7 +71,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.Body;
+import com.ning.http.client.BodyGenerator;
+import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -92,6 +100,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -99,6 +108,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -122,6 +132,31 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Json serializer.
    */
   private static final Gson GSON = new Gson();
+
+  /**
+   * Number of seconds for timing out a service endpoint discovery.
+   */
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
+
+  /**
+   * Timeout to get response from metrics system.
+   */
+  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+
+  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+
+  /**
+   * Timeout to upload to remote app fabric.
+   */
+  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
+
+  private static final Map<String, Type> RUNNABLE_TYPE_MAP = ImmutableMap.of(
+    "mapreduce", Type.MAPREDUCE,
+    "flows", Type.FLOW,
+    "procedures", Type.PROCEDURE,
+    "workflows", Type.WORKFLOW,
+    "webapp", Type.WEBAPP
+  );
 
   /**
    * Configuration object passed from higher up.
@@ -162,43 +197,25 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final Store store;
 
-  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-
   private final WorkflowClient workflowClient;
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
+  private final StreamAdmin streamAdmin;
+
+  private final DataSetAccessor dataSetAccessor;
+
   private final QueueAdmin queueAdmin;
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
 
   /**
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
 
-  /**
-   * DeploymentManager responsible for running pipeline.
-   */
   private final ManagerFactory managerFactory;
   private final Scheduler scheduler;
 
-  private static final Map<String, Type> runnableTypeMap = ImmutableMap.of(
-    "mapreduce", Type.MAPREDUCE,
-    "flows", Type.FLOW,
-    "procedures", Type.PROCEDURE,
-    "workflows", Type.WORKFLOW,
-    "webapp", Type.WEBAPP
-  );
+
 
   private enum AppFabricServiceStatus {
 
@@ -237,8 +254,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              LocationFactory locationFactory, ManagerFactory managerFactory,
-                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
+                              DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
+                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient) {
@@ -256,6 +274,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
+    this.streamAdmin = streamAdmin;
+    this.dataSetAccessor = dataSetAccessor;
   }
 
   /**
@@ -346,7 +366,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      Type type = runnableTypeMap.get(runnableType);
+      Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
       if (type == Type.MAPREDUCE) {
         String workflowName = getWorkflowName(id.getId());
@@ -389,8 +409,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/start")
   public void webappStart(final HttpRequest request, final HttpResponder responder,
-                              @PathParam("app-id") final String appId) {
-      runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
+                          @PathParam("app-id") final String appId) {
+    runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
   }
 
 
@@ -400,7 +420,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/stop")
   public void webappStop(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "stop");
   }
 
@@ -507,7 +527,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               @PathParam("app-id") final String appId,
                               @PathParam("runnable-type") final String runnableType,
                               @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -533,7 +553,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -560,7 +580,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -622,7 +642,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
                                              final String appId, final String runnableType,
                                              final String runnableId, final String action) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -1162,8 +1182,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}")
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("procedure-id")final String procId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("procedure-id")final String procId) {
     runnableSpecification(request, responder, appId, Type.PROCEDURE, procId);
   }
 
@@ -1173,8 +1193,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("mapreduce-id")final String mapreduceId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("mapreduce-id")final String mapreduceId) {
     runnableSpecification(request, responder, appId, Type.MAPREDUCE, mapreduceId);
   }
 
@@ -1184,17 +1204,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}")
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id")final String workflowId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id")final String workflowId) {
     runnableSpecification(request, responder, appId, Type.WORKFLOW, workflowId);
   }
 
 
 
   private void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                    final String appId, Type runnableType,
-                                    final String runnableId) {
-
+                                     final String appId, Type runnableType,
+                                     final String runnableId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -1346,6 +1365,150 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+   * Promote an application another reactor.
+   */
+  @POST
+  @Path("/apps/{app-id}/promote")
+  public void promoteApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    try {
+      String postBody = null;
+
+      try {
+        postBody = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+      } catch (IOException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
+      }
+
+      Map<String, String> content = null;
+      try {
+        content = GSON.fromJson(postBody, MAP_STRING_STRING_TYPE);
+      } catch (JsonSyntaxException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
+        return;
+      }
+
+      if (!content.containsKey("hostname")) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Hostname not specified.");
+        return;
+      }
+
+      // Checks DNS, Ipv4, Ipv6 address in one go.
+      String hostname = content.get("hostname");
+      Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
+
+      String accountId = getAuthenticatedAccountId(request);
+      String token = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
+      if (appArchive == null || !appArchive.exists()) {
+        throw new IOException("Unable to locate the application.");
+      }
+
+      if (!promote(token, accountId, appId, hostname)) {
+        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
+      } else {
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public boolean promote(String authToken, String accountId, String appId, String hostname) throws Exception {
+
+    try {
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId,
+                                                                                          appId));
+      if (appArchive == null || !appArchive.exists()) {
+        throw new Exception("Unable to locate the application.");
+      }
+
+      String schema = "https";
+      if ("localhost".equals(hostname)) {
+        schema = "http";
+      }
+
+      String url = String.format("%s://%s:%d/v2/apps/%s",
+                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
+        .setHeader("X-Archive-Name", appArchive.getName())
+        .setHeader("X-Continuuity-ApiKey", authToken)
+        .build();
+
+      try {
+        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
+        Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
+        if (response.getStatusCode() != 200) {
+          throw new RuntimeException(response.getResponseBody());
+        }
+        return true;
+      } finally {
+        client.close();
+      }
+    } catch (Exception ex) {
+      LOG.warn(ex.getMessage(), ex);
+      throw ex;
+    }
+  }
+
+  private static final class LocationBodyGenerator implements BodyGenerator {
+
+    private final Location location;
+
+    private LocationBodyGenerator(Location location) {
+      this.location = location;
+    }
+
+    @Override
+    public Body createBody() throws IOException {
+      final InputStream input = location.getInputStream();
+
+      return new Body() {
+        @Override
+        public long getContentLength() {
+          try {
+            return location.length();
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public long read(ByteBuffer buffer) throws IOException {
+          // Fast path
+          if (buffer.hasArray()) {
+            int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            if (len > 0) {
+              buffer.position(buffer.position() + len);
+            }
+            return len;
+          }
+
+          byte[] bytes = new byte[buffer.remaining()];
+          int len = input.read(bytes);
+          if (len < 0) {
+            return len;
+          }
+          buffer.put(bytes, 0, len);
+          return len;
+        }
+
+        @Override
+        public void close() throws IOException {
+          input.close();
+        }
+      };
     }
   }
 
@@ -1521,7 +1684,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return AppFabricServiceStatus.OK;
   }
 
-  private void deleteMetrics(String account, String application) throws IOException {
+  private void deleteMetrics(String accountId, String applicationId) throws IOException, OperationException {
+    Collection<ApplicationSpecification> applications = Lists.newArrayList();
+    if (applicationId == null) {
+      applications = this.store.getAllApplications(new Id.Account(accountId));
+    } else {
+      ApplicationSpecification spec = this.store.getApplication
+        (new Id.Application(new Id.Account(accountId), applicationId));
+      applications.add(spec);
+    }
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
@@ -1531,14 +1702,21 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       throw new IOException("Can't find Metrics endpoint");
     }
 
-    LOG.debug("Deleting metrics for application {}", application);
     for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.GATEWAY_VERSION,
-                                 scope.name().toLowerCase(),
-                                 application);
+      for (ApplicationSpecification application : applications) {
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.GATEWAY_VERSION,
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
+    }
+
+    if (applicationId == null) {
+      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
       sendMetricsDelete(url);
     }
   }
@@ -1843,7 +2021,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     getAppDetails(request, responder, appId);
   }
 
@@ -2392,6 +2570,68 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       builder.put("specification", GSON.toJson(specification));
     }
     return builder.build();
+  }
+
+  /**
+   * *DO NOT DOCUMENT THIS API*
+   */
+  @POST
+  @Path("/unrecoverable/reset")
+  public void resetReactor(HttpRequest request, HttpResponder responder) {
+
+    try {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+        responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+        return;
+      }
+      String account = getAuthenticatedAccountId(request);
+      final Id.Account accountId = Id.Account.from(account);
+
+      // Check if any program is still running
+      boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+        @Override
+        public boolean apply(Id.Program programId) {
+          return programId.getAccountId().equals(accountId.getId());
+        }
+      }, Type.values());
+
+      if (appRunning) {
+        throw new Exception("App Still Running");
+      }
+      deleteMetrics(account, null);
+      // delete all meta data
+      store.removeAll(accountId);
+      // delete queues and streams data
+      queueAdmin.dropAll();
+      streamAdmin.dropAll();
+
+      LOG.info("Deleting all data for account '" + account + "'.");
+      dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+      // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
+      // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
+      Set<String> datasetsToKeep = Sets.newHashSet();
+      for (MetricsScope scope : MetricsScope.values()) {
+        datasetsToKeep.add(scope.name().toLowerCase() + "." +
+                             configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                               MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
+      }
+
+      // Don't truncate log table too - we would like to retain logs across resets.
+      datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+
+      // NOTE: there could be services running at the moment that rely on the system datasets to be available.
+      dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
+
+      LOG.info("All data for account '" + account + "' deleted.");
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
+    }
   }
 
 }

@@ -407,7 +407,7 @@ Dumping the Transaction Manager
 Reactor comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your Reactor
 tends to become slow, you can use this tool to detect the incriminating transactions.
-This script is called ``tx-debugger``.
+This script is called ``tx-debugger`` (on Windows, it is ``tx-debugger.bat``).
 
 To download a snapshot of the state of the TM of a Reactor, use the command::
 

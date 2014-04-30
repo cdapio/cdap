@@ -79,6 +79,11 @@ public final class RouterPathLookup {
   private static final String SPEC_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
 
+  private static final String PROMOTE_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/promote";
+  private static final String RESET_PATH = VERSION +
+    "/unrecoverable/reset";
+
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
   }
@@ -128,6 +133,10 @@ public final class RouterPathLookup {
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(APPDATA_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(FLOWINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(RESET_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .build();
 
