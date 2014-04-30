@@ -65,8 +65,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                                                              request.getHeader(HttpHeaders.Names.HOST),
                                                                              request.getMethod().getName());
       // Suspend incoming traffic until connected to the outbound service.
-      //TODO: Channel interest change
-      //      inboundChannel.setReadable(false);
+      inboundChannel.setReadable(false);
       int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
 
       EndpointStrategy strategy = serviceLookup.getDiscoverable(inboundPort,
@@ -89,8 +88,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       }
 
       if (future != null) {
-        // TODO: Do the channelInterest change
-        // inboundChannel.setReadable(true);
+        inboundChannel.setReadable(true);
         if (future.isSuccess()) {
           Channels.write(future.getChannel(), request);
         } else {
@@ -122,8 +120,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
-              // TODO: Do the channelInterest change
-              //inboundChannel.setReadable(true);
+              inboundChannel.setReadable(true);
               Channels.write(future.getChannel(), request);
               if (request.isChunked()) {
                 // Set success to start handling chunks. This will be after the HttpMessage is sent.
