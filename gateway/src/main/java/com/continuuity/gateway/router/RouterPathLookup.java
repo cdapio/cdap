@@ -101,7 +101,8 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(LIVEINFO_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
-      .put(ImmutablePair.of(EnumSet.range(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(METRICS_PATH)),
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST, AllowedMethod.DELETE),
+           Pattern.compile(METRICS_PATH)),
            Constants.Service.METRICS)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(LOGHANDLER_PATH)),
            Constants.Service.METRICS)
