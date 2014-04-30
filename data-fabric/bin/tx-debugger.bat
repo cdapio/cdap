@@ -16,8 +16,6 @@ REM %CONTINUUITY_HOME%
 SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
 SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
 
-cd %CONTINUUITY_HOME%
-
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
   echo 32-bit Windows operating system is currently not supported
