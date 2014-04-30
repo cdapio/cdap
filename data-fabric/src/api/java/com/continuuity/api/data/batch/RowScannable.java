@@ -1,0 +1,27 @@
+package com.continuuity.api.data.batch;
+
+import java.util.List;
+
+/**
+ * Represents data sets that can be processed in batches, as series of rows (as apposed to key/value pairs). See
+ * {@link BatchReadable}.
+ * @param <ROW> the type of objects that represents a single row
+ */
+public interface RowScannable<ROW> {
+
+  /**
+   * Returns all splits of the dataset.
+   * <p>
+   *   For feeding the whole dataset into a batch job.
+   * </p>
+   * @return A list of {@link Split}s.
+   */
+  List<Split> getSplits();
+
+  /**
+   * Creates a reader for the split of a dataset.
+   * @param split The split to create a reader for.
+   * @return The instance of a {@link SplitReader}.
+   */
+  SplitRowScanner<ROW> createSplitScanner(Split split);
+}
