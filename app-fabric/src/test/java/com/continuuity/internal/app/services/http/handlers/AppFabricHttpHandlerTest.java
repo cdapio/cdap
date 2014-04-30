@@ -28,9 +28,9 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -43,7 +43,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import javax.annotation.Nullable;
 
 
 /**
@@ -289,6 +288,9 @@ public class AppFabricHttpHandlerTest {
     //deploy and check status of a workflow
     deploy(SleepingWorkflowApp.class);
     Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
+      TimeUnit.MILLISECONDS.sleep(10);
+    }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
   }
 
@@ -725,4 +727,38 @@ public class AppFabricHttpHandlerTest {
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableReset() throws Exception {
+    try {
+      HttpResponse response = deploy(WordCountApp.class);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    } finally {
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    }
+    // make sure that after reset (no apps), list apps returns 200, and not 404
+    Assert.assertEquals(200, AppFabricTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
+  }
+
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableResetAppRunning() throws Exception {
+
+    HttpResponse response = deploy(WordCountApp.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
+  }
+
 }
