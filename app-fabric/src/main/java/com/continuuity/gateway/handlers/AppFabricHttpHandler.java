@@ -1,6 +1,11 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -30,10 +35,16 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -94,6 +105,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -105,6 +117,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -167,6 +186,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final QueueAdmin queueAdmin;
+
+  private final DataSetInstantiatorFromMetaData datasetInstantiator;
+
+  private final DataSetAccessor dataSetAccessor;
+
+  private final StreamAdmin streamAdmin;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -234,14 +259,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
+  public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration, StreamAdmin streamAdmin,
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
+                              DataSetInstantiatorFromMetaData datasetInstantiator, DataSetAccessor dataSetAccessor) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
+    this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
@@ -253,6 +280,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
+    this.datasetInstantiator = datasetInstantiator;
+    this.dataSetAccessor = dataSetAccessor;
   }
 
   /**
@@ -329,6 +358,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     response.sendString(HttpResponseStatus.OK, "OK");
   }
 
+  @Path("/status")
+  @GET
+  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+    responder.sendString(HttpResponseStatus.OK, "OK.\n");
+  }
 
   /**
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
@@ -1265,6 +1299,46 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @DELETE
+  @Path("/queues")
+  public void clearQueues(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ToClear.QUEUES);
+  }
+
+  @DELETE
+  @Path("/streams")
+  public void clearStreams(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ToClear.STREAMS);
+  }
+
+  private static enum ToClear {
+    QUEUES, STREAMS
+  }
+
+  private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
+    try {
+      getAuthenticatedAccountId(request);
+      try {
+        if (toClear == ToClear.QUEUES) {
+          queueAdmin.dropAll();
+        } else if (toClear == ToClear.STREAMS) {
+          streamAdmin.dropAll();
+        }
+        responder.sendStatus(OK);
+      } catch (Exception e) {
+        LOG.error("Exception clearing data fabric: ", e);
+        responder.sendStatus(INTERNAL_SERVER_ERROR);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /*
    * Retrieves a {@link SessionInfo} from the file system.
    */
@@ -1691,6 +1765,100 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
     }
     return null;
+  }
+
+  @POST
+  @Path("/datasets/{dataset-id}/truncate")
+  public void truncate(HttpRequest request, final HttpResponder responder,
+                       @PathParam("dataset-id") String tableName) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      try {
+        truncateTable(tableName, new OperationContext(accountId));
+        responder.sendStatus(OK);
+      } catch (OperationException e) {
+        LOG.error("could not truncate dataset {}", tableName, e);
+        responder.sendStatus(CONFLICT);
+      }
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void truncateTable(String tableName, OperationContext opContext) throws OperationException {
+    // NOTE: for now we just try to do the best we can: find all used DataSets of type Table and truncate them. This
+    //       should be done better, when we refactor DataSet API (towards separating user API and management parts)
+    DataSetSpecification config = datasetInstantiator.getDataSetSpecification(tableName, opContext);
+    List<DataSetSpecification> allDataSets = getAllUsedDataSets(config);
+    for (DataSetSpecification spec : allDataSets) {
+      DataSet ds = datasetInstantiator.getDataSet(spec.getName(), opContext);
+      if (ds instanceof Table) {
+        try {
+          DataSetManager dataSetManager =
+            dataSetAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+          dataSetManager.truncate(ds.getName());
+        } catch (Exception e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
+        }
+      }
+    }
+  }
+
+  private List<DataSetSpecification> getAllUsedDataSets(DataSetSpecification config) {
+    List<DataSetSpecification> all = new ArrayList<DataSetSpecification>();
+    LinkedList<DataSetSpecification> stack = Lists.newLinkedList();
+    stack.add(config);
+    while (stack.size() > 0) {
+      DataSetSpecification current = stack.removeLast();
+      all.add(current);
+      Iterable<DataSetSpecification> children = current.getSpecifications();
+      if (children != null) {
+        for (DataSetSpecification child : children) {
+          stack.addLast(child);
+        }
+      }
+    }
+    return all;
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-name}/current")
+  public void workflowStatus(HttpRequest request, final HttpResponder responder,
+                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
+                                       new WorkflowClient.Callback() {
+                                         @Override
+                                         public void handle(WorkflowClient.Status status) {
+                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                             responder.sendByteArray(HttpResponseStatus.OK,
+                                                                     status.getResult().getBytes(),
+                                                                     ImmutableMultimap.of(
+                                                                       HttpHeaders.Names.CONTENT_TYPE,
+                                                                       "application/json; charset=utf-8"));
+
+                                           } else {
+                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                                 status.getResult());
+                                           }
+                                         }
+                                       });
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**

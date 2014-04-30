@@ -57,6 +57,7 @@ public final class RouterPathLookup {
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures)/([A-Za-z0-9_]+)/live-info";
 
   //TODO: Consolidate this!!!
+  ///apps/{app-id}/workflows/{workflow-name}/current should also go to APP_FABRIC_HTTP
   private static final String SPEC_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
 
