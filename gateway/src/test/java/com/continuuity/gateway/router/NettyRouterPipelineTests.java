@@ -1,14 +1,17 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.ToyApp;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -71,6 +74,7 @@ public class NettyRouterPipelineTests {
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
+  private static byte[] applicationJarInBytes;
 
   private static final Supplier<String> gatewayServiceSupplier = new Supplier<String>() {
     @Override
@@ -84,7 +88,7 @@ public class NettyRouterPipelineTests {
                                                                                  "0:" + webappService));
 
   public static final ServerResource gatewayServer = new ServerResource(hostname, discoveryService,
-                                                                         gatewayServiceSupplier);
+                                                                        gatewayServiceSupplier);
 
   @SuppressWarnings("UnusedDeclaration")
   @ClassRule
@@ -105,63 +109,67 @@ public class NettyRouterPipelineTests {
   @Test
   public void testChunkRequestSuccess() throws Exception {
 
-      AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
 
-      final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
-        new NettyAsyncHttpProvider(configBuilder.build()),
-        configBuilder.build());
+    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+      new NettyAsyncHttpProvider(configBuilder.build()),
+      configBuilder.build());
 
-      byte [] requestBody = generatePostData();
-      final Request request = new RequestBuilder("POST")
-        .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(gatewayService), "/v1/upload"))
-        .setContentLength(requestBody.length)
-        .setBody(new ByteEntityWriter(requestBody))
-        .build();
+    byte [] requestBody = generatePostData();
+    final Request request = new RequestBuilder("POST")
+      .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(gatewayService), "/v1/upload"))
+      .setContentLength(requestBody.length)
+      .setBody(new ByteEntityWriter(requestBody))
+      .build();
 
-      final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
-        @Override
-        public Void onCompleted(Response response) throws Exception {
-          return null;
-        }
+    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
+      @Override
+      public Void onCompleted(Response response) throws Exception {
+        return null;
+      }
 
-        @Override
-        public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-          //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(10));
-          content.writeTo(byteArrayOutputStream);
-          return super.onBodyPartReceived(content);
-        }
-      });
+      @Override
+      public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
+        //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(10));
+        content.writeTo(byteArrayOutputStream);
+        return super.onBodyPartReceived(content);
+      }
+    });
 
-      future.get();
-      Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
-    }
+    future.get();
+    Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
+  }
 
   @Test
   public void testDeployNTimes() throws Exception {
     // regression tests for race condition during multiple deploys.
-    deploy(10);
+    deploy(100);
   }
 
-
-  // deploy ToyApp n times.
+  //Deploy word count app n times.
   private void deploy(int num) throws Exception {
 
+    String path = String.format("http://%s:%d/v1/deploy",
+                                hostname,
+                                router.getServiceMap().get(gatewayService));
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, WordCount.class.getName());
+
+    String appPath = JarFinder.getJar(WordCount.class, manifest);
+    File file = new File(appPath);
+    applicationJarInBytes = Files.toByteArray(file);
     for (int i = 0; i < num; i++) {
-      URL url = new URL("http://localhost:10000/v2/apps");
+      LOG.info("Deploying {}/{}", i, num);
+      URL url = new URL(path);
       HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
       urlConn.setRequestProperty("X-Archive-Name", "Purchase-1.0.0.jar");
       urlConn.setRequestMethod("POST");
       urlConn.setDoOutput(true);
       urlConn.setDoInput(true);
 
-      Manifest manifest = new Manifest();
-      manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-      manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, ToyApp.class.getName());
-
-      String path = JarFinder.getJar(ToyApp.class, manifest);
-
-      Files.copy(new File(path), urlConn.getOutputStream());
+      Files.copy(file, urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
       urlConn.disconnect();
     }
@@ -290,7 +298,7 @@ public class NettyRouterPipelineTests {
           responder.sendString(HttpResponseStatus.OK, "Ping: " + sleepInterval + "\n");
         } catch (InterruptedException e) {
           responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-         }
+        }
       }
 
       @POST
@@ -309,6 +317,38 @@ public class NettyRouterPipelineTests {
         }
         responder.sendChunkEnd();
       }
+
+      @POST
+      @Path("/v1/deploy")
+      public BodyConsumer deploy(HttpRequest request, final HttpResponder responder) throws InterruptedException {
+        return new BodyConsumer() {
+          ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+          int count = 0;
+          @Override
+          public void chunk(ChannelBuffer request, HttpResponder responder) {
+            count += request.readableBytes();
+            if (request.readableBytes() > 0 ) {
+            }
+            outputStream.write(request.array(), 0, request.readableBytes());
+          }
+
+          @Override
+          public void finished(HttpResponder responder) {
+
+            if (Bytes.compareTo(applicationJarInBytes, outputStream.toByteArray()) == 0) {
+              responder.sendStatus(HttpResponseStatus.OK);
+              return;
+            }
+              responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            }
+
+          @Override
+          public void handleError(Throwable cause) {
+            throw Throwables.propagate(cause);
+          }
+        };
+      }
+
     }
   }
 
@@ -328,13 +368,13 @@ public class NettyRouterPipelineTests {
   }
 
   private static byte [] generatePostData() {
-      byte [] bytes = new byte [maxUploadBytes];
+    byte [] bytes = new byte [maxUploadBytes];
 
-      for (int i = 0; i < maxUploadBytes; ++i) {
-        bytes[i] = (byte) i;
-      }
-
-      return bytes;
+    for (int i = 0; i < maxUploadBytes; ++i) {
+      bytes[i] = (byte) i;
     }
+
+    return bytes;
+  }
 
 }

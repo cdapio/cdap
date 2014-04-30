@@ -123,7 +123,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
           public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
               // TODO: Do the channelInterest change
-              //              inboundChannel.setReadable(true);
+              //inboundChannel.setReadable(true);
               Channels.write(future.getChannel(), request);
               if (request.isChunked()) {
                 // Set success to start handling chunks. This will be after the HttpMessage is sent.
@@ -146,9 +146,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   public void channelClosed(ChannelHandlerContext ctx,
                             ChannelStateEvent e) throws Exception {
     for (ChannelFuture cf : discoveryLookup.values()) {
-      cf.getChannel()
-        .write(ChannelBuffers.EMPTY_BUFFER)
-        .addListener(ChannelFutureListener.CLOSE);
+      if (cf.getChannel().isOpen()) {
+        cf.getChannel()
+          .write(ChannelBuffers.EMPTY_BUFFER)
+          .addListener(ChannelFutureListener.CLOSE);
+      }
     }
     discoveryLookup.clear();
   }
