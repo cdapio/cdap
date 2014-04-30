@@ -34,10 +34,8 @@ public class InMemorySecurityModule extends SecurityModule {
     public KeyManager get() {
       InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
       try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      } catch (IOException e) {
+        keyManager.startAndWait();
+      } catch (Exception e) {
         throw Throwables.propagate(e);
       }
       return keyManager;

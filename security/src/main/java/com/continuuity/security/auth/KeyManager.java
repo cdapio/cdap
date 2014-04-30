@@ -1,6 +1,7 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.security.io.Codec;
+import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -9,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Maintains secret keys used to sign and validate authentication tokens.
  */
-public interface KeyManager {
+public interface KeyManager extends Service {
 
   /**
    * Represents the combination of a digest computed on a message using a secret key, and the ID of the secret key
@@ -32,13 +33,6 @@ public interface KeyManager {
       return digest;
     }
   }
-
-  /**
-   * Instantiate the necessary instance variables.
-   * @throws NoSuchAlgorithmException
-   * @throws IOException
-   */
-  void init() throws NoSuchAlgorithmException, IOException;
 
   /**
    * Computes a digest for the given input message, using the current secret key.

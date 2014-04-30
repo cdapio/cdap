@@ -27,6 +27,7 @@ public abstract class TestTokenManager {
   public void testTokenValidation() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
+    tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -67,12 +68,14 @@ public abstract class TestTokenManager {
       fail("Token should have been rejected for invalid key ID but passed: " +
              Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) { }
+    tokenManager.stopAndWait();
   }
 
   @Test
   public void testTokenSerialization() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
+    tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -89,5 +92,7 @@ public abstract class TestTokenManager {
     LOG.info("Deserialized token is: " + Bytes.toStringBinary(tokenCodec.encode(token2)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
+
+    tokenManager.stopAndWait();
   }
 }

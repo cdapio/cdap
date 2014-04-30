@@ -721,7 +721,7 @@
 
     <property>
         <name>security.token.distributed.parent.znode</name>
-        <value>/${reactor.namespace}/security/keys</value>
+        <value>/${reactor.namespace}/security/auth</value>
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
     </property>
 </configuration>

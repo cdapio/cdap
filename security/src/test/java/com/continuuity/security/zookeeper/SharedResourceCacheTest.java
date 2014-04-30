@@ -7,6 +7,8 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -63,7 +65,7 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
     zkClient1.startAndWait();
     SharedResourceCache<String> cache1 = new SharedResourceCache<String>(zkClient1, new StringCodec(), parentZNode);
-    cache1.startAndWait();
+    cache1.init();
 
     // add items to one and wait for them to show up in the second
     String key1 = "key1";
@@ -73,12 +75,12 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
     zkClient2.startAndWait();
     SharedResourceCache<String> cache2 = new SharedResourceCache<String>(zkClient2, new StringCodec(), parentZNode);
-    cache2.startAndWait();
+    cache2.init();
 
     waitForEntry(cache2, key1, value1, 10000);
     assertEquals(cache1.get(key1), cache2.get(key1));
 
-    String key2 = "key2";
+    final String key2 = "key2";
     String value2 = "value2";
     cache1.put(key2, value2);
 
@@ -92,7 +94,30 @@ public class SharedResourceCacheTest {
     waitForEntry(cache1, key3, value3, 10000);
     assertEquals(cache2.get(key3), cache1.get(key3));
 
-    // verify that cache contents are equal
+    // replace an existing key
+    String value2new = "value2.2";
+    final SettableFuture<String> value2future = SettableFuture.create();
+    ResourceListener<String> value2listener = new ResourceListener<String>() {
+      @Override
+      public void onUpdate() {
+      }
+
+      @Override
+      public void onResourceUpdate(String name, String instance) {
+        LOG.info("Resource updated: {}={}", name, instance);
+        if (name.equals(key2)) {
+          value2future.set(instance);
+        }
+      }
+    };
+
+    cache2.addListener(value2listener);
+    cache1.put(key2, value2new);
+
+    //String newValue = value2future.get(10000, TimeUnit.MILLISECONDS);
+    String newValue = value2future.get();
+    assertEquals(value2new, newValue);
+    assertEquals(value2new, cache2.get(key2));
 
     // remove items from the second and wait for them to disappear from the first
     // verify that cache contents are equal

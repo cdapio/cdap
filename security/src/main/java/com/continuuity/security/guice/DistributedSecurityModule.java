@@ -5,19 +5,18 @@ import com.continuuity.security.auth.DistributedKeyManager;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.io.Codec;
-import com.continuuity.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
+ * Configures dependency injection with all security class implementations required to run in a distributed
+ * environment.
  */
 public class DistributedSecurityModule extends SecurityModule {
   @Override
@@ -29,28 +28,23 @@ public class DistributedSecurityModule extends SecurityModule {
     private final CConfiguration cConf;
     private final Codec<KeyIdentifier> keyCodec;
     private final ZKClientService zkClient;
-    private final SharedResourceCache<KeyIdentifier> keyCache;
 
 
     @Inject
-    DistributedKeyManagerProvider(CConfiguration cConf, Codec<KeyIdentifier> codec, ZKClientService zkClient,
-                                  SharedResourceCache<KeyIdentifier> keyCache) {
+    DistributedKeyManagerProvider(CConfiguration cConf, Codec<KeyIdentifier> codec, ZKClientService zkClient) {
       this.cConf = cConf;
       this.keyCodec = codec;
       this.zkClient = zkClient;
-      this.keyCache = keyCache;
     }
 
     @Override
     public KeyManager get() {
       zkClient.startAndWait();
-      KeyManager keyManager = new DistributedKeyManager(cConf, keyCodec, zkClient, keyCache);
+      KeyManager keyManager = new DistributedKeyManager(cConf, keyCodec, zkClient);
       try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      } catch (IOException ioe) {
-        throw Throwables.propagate(ioe);
+        keyManager.startAndWait();
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
       return keyManager;
     }

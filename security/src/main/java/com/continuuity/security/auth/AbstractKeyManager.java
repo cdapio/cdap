@@ -7,6 +7,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,13 +25,12 @@ import javax.crypto.SecretKey;
  * AbstractKeyManager that provides the basic functionality that all key managers share. This includes
  * generation of keys and MACs, and validation of MACs. Subclasses are expected to override the init method.
  */
-public abstract class AbstractKeyManager implements KeyManager {
+public abstract class AbstractKeyManager extends AbstractIdleService implements KeyManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractKeyManager.class);
 
   protected ThreadLocal<Mac> threadLocalMac;
   protected KeyGenerator keyGenerator;
   protected volatile KeyIdentifier currentKey;
-  protected Map<String, KeyIdentifier> allKeys = Maps.newConcurrentMap();
   protected final String keyAlgo;
   protected final int keyLength;
   /**
@@ -55,7 +55,8 @@ public abstract class AbstractKeyManager implements KeyManager {
     this.keyLength = keyLength;
   }
 
-  public final void init() throws NoSuchAlgorithmException, IOException {
+  @Override
+  public final void startUp() throws NoSuchAlgorithmException, IOException {
     keyGenerator = KeyGenerator.getInstance(keyAlgo);
     keyGenerator.init(keyLength);
 
@@ -79,6 +80,21 @@ public abstract class AbstractKeyManager implements KeyManager {
   protected abstract void doInit() throws IOException;
 
   /**
+   * Returns whether or not a key exists for the given unique ID.
+   */
+  protected abstract boolean hasKey(int id);
+
+  /**
+   * Returns the key instance matching a given unique ID.
+   */
+  protected abstract KeyIdentifier getKey(int id);
+
+  /**
+   * Adds a given key instance.
+   */
+  protected abstract void addKey(KeyIdentifier key);
+
+  /**
    * Generates a new KeyIdentifier and sets that to be the current key being used.
    * @return A new KeyIdentifier.
    */
@@ -87,13 +103,13 @@ public abstract class AbstractKeyManager implements KeyManager {
     int nextId;
     do {
       nextId = rand.nextInt(Integer.MAX_VALUE);
-    } while(allKeys.containsKey(nextId));
+    } while (hasKey(nextId));
 
     long now = System.currentTimeMillis();
     SecretKey nextKey = keyGenerator.generateKey();
     KeyIdentifier keyIdentifier =
       new KeyIdentifier(nextKey, nextId, keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
-    allKeys.put(Integer.toString(nextId), keyIdentifier);
+    addKey(keyIdentifier);
     this.currentKey = keyIdentifier;
     LOG.info("Changed current key to {}", currentKey);
     return keyIdentifier;
@@ -128,7 +144,7 @@ public abstract class AbstractKeyManager implements KeyManager {
    * by the internal {@code Mac} implementation.
    */
   protected final byte[] generateMAC(int keyId, byte[] message) throws InvalidKeyException {
-    KeyIdentifier key = allKeys.get(Integer.toString(keyId));
+    KeyIdentifier key = getKey(keyId);
     if (key == null) {
       throw new InvalidKeyException("No key found for ID " + keyId);
     }

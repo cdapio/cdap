@@ -4,16 +4,18 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Maintains secret keys used to sign and validate authentication tokens.
  * Writes and loads a serialized secret key from file.
  */
-public class FileBasedKeyManager extends AbstractKeyManager {
+public class FileBasedKeyManager extends MapBackedKeyManager {
   private final String keyFilePath;
 
   private final Codec<KeyIdentifier> keyIdentifierCodec;
@@ -49,7 +51,7 @@ public class FileBasedKeyManager extends AbstractKeyManager {
       KeyIdentifier storedKey = keyIdentifierCodec.decode(Files.toByteArray(keyFile));
       this.currentKey = storedKey;
       // the file-based key is considered valid forever
-      allKeys.put(Integer.toString(storedKey.getKeyId()), storedKey);
+      allKeys.put(storedKey.getKeyId(), storedKey);
     } else {
       Preconditions.checkState(keyFileDir.canWrite(),
                                "Configured keyFile directory " + keyFileDirectory + " exists but is not writable!");
@@ -58,5 +60,11 @@ public class FileBasedKeyManager extends AbstractKeyManager {
       keyFile.createNewFile();
       Files.write(keyIdentifierCodec.encode(currentKey), keyFile);
     }
+  }
+
+
+  @Override
+  public void shutDown() {
+    // nothing to do
   }
 }

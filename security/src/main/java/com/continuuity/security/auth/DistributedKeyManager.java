@@ -2,9 +2,12 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.zookeeper.election.ElectionHandler;
+import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.security.io.Codec;
 import com.continuuity.security.zookeeper.ResourceListener;
 import com.continuuity.security.zookeeper.SharedResourceCache;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.zookeeper.ZKClient;
@@ -16,9 +19,17 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
+ * {@link KeyManager} implementation that distributes shared secret keys via ZooKeeper to all instances, so that all
+ * distributed instances maintain the same local cache of keys.  Instances of this class will perform leader election,
+ * so that one instance functions as the "active" leader at a time.  The leader is responsible for periodically
+ * generating a new secret key (with the frequency based on the configured value for
+ * {@link Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION}.  Prior keys are retained for as long as necessary to
+ * ensure that any previously issued, non-expired tokens may be validated.  Once a previously used key's age exceeds
+ * {@link Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION} plus {@link Constants.Security#TOKEN_EXPIRATION},
+ * the key can safely be removed.
  */
 public class DistributedKeyManager extends AbstractKeyManager implements ResourceListener<KeyIdentifier> {
   /**
@@ -27,43 +38,79 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
+  private SharedResourceCache<KeyIdentifier> keyCache;
   private Timer timer;
   private long lastKeyUpdate;
-  private boolean leader;
+  protected final AtomicBoolean leader = new AtomicBoolean();
+  private LeaderElection leaderElection;
+  private String parentZNode;
+  private ZKClientService zookeeper;
 
-  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zookeeper,
-                               SharedResourceCache<KeyIdentifier> keyCache) {
+  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zookeeper) {
     super(conf);
-    this.leader = conf.getBoolean(Constants.Security.DIST_KEY_MANAGER_LEADER, false);
+    this.zookeeper = zookeeper;
+    this.parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION,
                                             Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION);
-    keyCache.addListener(this);
-    this.allKeys = keyCache;
+    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, parentZNode + "/keys");
+    this.keyCache.addListener(this);
   }
 
   @Override
   protected void doInit() throws IOException {
-    LOG.info("Starting distributed key manager as " + (leader ? "leader" : "follower"));
-    ((Service) this.allKeys).startAndWait();
-    if (isLeader()) {
-      rotateKey();
+    this.leaderElection = new LeaderElection(zookeeper, parentZNode + "/leader", new ElectionHandler() {
+      @Override
+      public void leader() {
+        leader.set(true);
+        LOG.info("Transitioned to leader");
+        if (currentKey == null) {
+          rotateKey();
+        }
+      }
+
+      @Override
+      public void follower() {
+        leader.set(false);
+        LOG.info("Transitioned to follower");
+      }
+    });
+    try {
+      keyCache.init();
+    } catch (InterruptedException ie) {
+      throw Throwables.propagate(ie);
     }
     startExpirationThread();
   }
 
-  public boolean isLeader() {
-    return leader;
+  @Override
+  public void shutDown() {
+    leaderElection.cancel();
   }
+
+  @Override
+  protected boolean hasKey(int id) {
+    return keyCache.getIfPresent(Integer.toString(id)) != null;
+  }
+
+  @Override
+  protected KeyIdentifier getKey(int id) {
+    return keyCache.get(Integer.toString(id));
+  }
+
+  @Override
+  protected void addKey(KeyIdentifier key) {
+    keyCache.put(Integer.toString(key.getKeyId()), key);
+  }
+
 
   private synchronized void rotateKey() {
     long now = System.currentTimeMillis();
     // create a new secret key
     generateKey();
     // clear out any expired keys
-    for (Map.Entry<String, KeyIdentifier> entry : allKeys.entrySet()) {
-      KeyIdentifier keyIdent = entry.getValue();
+    for (KeyIdentifier keyIdent : keyCache.getResources()) {
       if (keyIdent.getExpiration() < now) {
-        allKeys.remove(entry.getKey());
+        keyCache.remove(Integer.toString(keyIdent.getKeyId()));
       }
     }
     lastKeyUpdate = now;
@@ -74,7 +121,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     timer.scheduleAtFixedRate(new TimerTask() {
       @Override
       public void run() {
-        if (leader) {
+        if (leader.get()) {
           long now = System.currentTimeMillis();
           if (lastKeyUpdate < (now - keyExpirationPeriod)) {
             rotateKey();
@@ -87,16 +134,16 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   @Override
   public synchronized void onUpdate() {
     LOG.info("SharedResourceCache triggered update on key: leader={}", leader);
-    for (Map.Entry<String, KeyIdentifier> keyEntry : allKeys.entrySet()) {
-      if (currentKey == null || keyEntry.getValue().getExpiration() > currentKey.getExpiration()) {
-        currentKey = keyEntry.getValue();
+    for (KeyIdentifier keyEntry : keyCache.getResources()) {
+      if (currentKey == null || keyEntry.getExpiration() > currentKey.getExpiration()) {
+        currentKey = keyEntry;
         LOG.info("Set current key to {}", currentKey);
       }
     }
   }
 
   @Override
-  public synchronized void onResourceUpdate(KeyIdentifier instance) {
+  public synchronized void onResourceUpdate(String name, KeyIdentifier instance) {
     LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, instance);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;

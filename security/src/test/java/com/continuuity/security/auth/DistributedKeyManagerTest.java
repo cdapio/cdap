@@ -11,6 +11,7 @@ import com.continuuity.security.guice.SecurityModule;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.io.Codec;
 import com.continuuity.security.zookeeper.SharedResourceCache;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Binder;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +53,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf1 = CConfiguration.create();
     cConf1.set(Constants.Zookeeper.QUORUM, zkConnectString);
-    cConf1.setBoolean(Constants.Security.DIST_KEY_MANAGER_LEADER, true);
+
     CConfiguration cConf2 = CConfiguration.create();
     cConf2.set(Constants.Zookeeper.QUORUM, zkConnectString);
     injector1 = Guice.createInjector(new ConfigModule(cConf1, testUtil.getConfiguration()), new IOModule(),
@@ -69,12 +71,14 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   @Test
   public void testKeyDistribution() throws Exception {
-    DistributedKeyManager manager1 = getKeyManager(injector1);
-    DistributedKeyManager manager2 = getKeyManager(injector2);
+    DistributedKeyManager manager1 = getKeyManager(injector1, true);
+    DistributedKeyManager manager2 = getKeyManager(injector2, false);
     TimeUnit.MILLISECONDS.sleep(1000);
 
     TokenManager tokenManager1 = new TokenManager(manager1, injector1.getInstance(AccessTokenIdentifierCodec.class));
     TokenManager tokenManager2 = new TokenManager(manager2, injector2.getInstance(AccessTokenIdentifierCodec.class));
+    tokenManager1.startAndWait();
+    tokenManager2.startAndWait();
 
     long now = System.currentTimeMillis();
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier("testuser", Lists.newArrayList("users", "admins"),
@@ -87,12 +91,15 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     assertEquals(token1.getIdentifier().getUsername(), token2.getIdentifier().getUsername());
     assertEquals(token1.getIdentifier().getGroups(), token2.getIdentifier().getGroups());
     assertEquals(token1, token2);
+
+    tokenManager1.stopAndWait();
+    tokenManager2.stopAndWait();
   }
 
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
     try {
-      DistributedKeyManager keyManager = getKeyManager(injector1);
+      DistributedKeyManager keyManager = getKeyManager(injector1, true);
       TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
       return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
                                                                  injector1.getInstance(AccessTokenCodec.class));
@@ -101,16 +108,36 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     }
   }
 
-  private DistributedKeyManager getKeyManager(Injector injector) throws Exception {
+  private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader) throws Exception {
     ZKClientService zk = injector.getInstance(ZKClientService.class);
     zk.startAndWait();
-    DistributedKeyManager keyManager =
-      new DistributedKeyManager(injector.getInstance(CConfiguration.class),
+    WaitableDistributedKeyManager keyManager =
+      new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
           injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { })),
-          zk,
-          injector.getInstance(Key.get(new TypeLiteral<SharedResourceCache<KeyIdentifier>>() { })));
+          zk);
 
-    keyManager.init();
+    keyManager.startAndWait();
+    if (expectLeader) {
+      keyManager.waitForLeader(1000, TimeUnit.MILLISECONDS);
+    }
     return keyManager;
+  }
+
+  private static class WaitableDistributedKeyManager extends DistributedKeyManager {
+    public WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
+      super(conf, codec, zk);
+    }
+
+    public void waitForLeader(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
+      Stopwatch timer = new Stopwatch().start();
+      do {
+        if (!leader.get()) {
+          unit.sleep(duration / 10);
+        }
+      } while (!leader.get() && timer.elapsedTime(unit) < duration);
+      if (!leader.get()) {
+        throw new TimeoutException("Timed out waiting to become leader");
+      }
+    }
   }
 }

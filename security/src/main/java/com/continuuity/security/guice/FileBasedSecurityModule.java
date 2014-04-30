@@ -38,10 +38,8 @@ public class FileBasedSecurityModule extends SecurityModule {
     public KeyManager get() {
       FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf, keyIdentifierCodec);
       try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      } catch (IOException e) {
+        keyManager.startAndWait();
+      } catch (Exception e) {
         throw Throwables.propagate(e);
       }
       return keyManager;
