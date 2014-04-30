@@ -5,9 +5,9 @@
 Continuuity Reactor HTTP REST API
 =================================
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 
 Introduction
@@ -15,12 +15,12 @@ Introduction
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream**: sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data**: interacting with DataSets (currently limited to Tables).
-- **Procedure**: sending queries to a Procedure.
-- **Reactor**: deploying and managing Applications.
-- **Logs**: retrieving Application logs.
-- **Metrics**: retrieving metrics for system and user Applications (user-defined metrics).
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
+- **Data:** interacting with DataSets (currently limited to Tables).
+- **Procedure:** sending queries to a Procedure.
+- **Reactor:** deploying and managing Applications.
+- **Logs:** retrieving Application logs.
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -1139,8 +1139,8 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
-To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
+running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1153,9 +1153,9 @@ To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
    * - ``<ts>``
      - *Start* and *stop* time, given as seconds since the start of the Epoch.
 
@@ -1477,15 +1477,3 @@ the last of our documentation is:
 
 - `Continuuity Reactor Javadocs <javadocs>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
-
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Operating a Continuuity Reactor <operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.
-

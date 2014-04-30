@@ -33,6 +33,10 @@ public final class RouterPathLookup {
     "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
+
+  private static final String WEBAPP_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/webapp/(status|start|stop)";
+
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
   private static final String METRICS_PATH = "^" + VERSION +
