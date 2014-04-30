@@ -16,13 +16,7 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.ArchiveInfo;
-import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.DeployStatus;
-import com.continuuity.app.services.DeploymentStatus;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -36,6 +30,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -508,9 +503,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
+                              @PathParam("app-id") final String appId,
+                              @PathParam("runnable-type") final String runnableType,
+                              @PathParam("runnable-id") final String runnableId) {
     Type type = runnableTypeMap.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -612,7 +607,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, history);
       } catch (OperationException e) {
         LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
-            programId.toString(), e.getMessage()), e);
+                               programId.toString(), e.getMessage()), e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (SecurityException e) {
@@ -833,6 +828,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+
   private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
     String instanceCount = "";
     Map<String, String> arguments = decodeArguments(request);
@@ -891,8 +887,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}")
-  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    deployApp(request, responder, appId);
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    try {
+      return deployAppStream(request, responder, appId);
+    } catch (Exception ex) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
+      return null;
+    }
+
   }
 
   /**
@@ -900,9 +902,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @POST
   @Path("/apps")
-  public void deploy(HttpRequest request, HttpResponder responder) {
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
-    deployApp(request, responder, null);
+    try {
+      return deployAppStream(request, responder, null);
+    } catch (Exception ex) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
+      return null;
+    }
   }
 
   /**
@@ -1130,47 +1137,90 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-     * Deploys an application.
-     */
-  private void deployApp(HttpRequest request, HttpResponder responder, final String appId) {
+  private BodyConsumer deployAppStream (final HttpRequest request,
+                                        final HttpResponder responder, final String appId) throws IOException {
+    final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
+    final String accountId = getAuthenticatedAccountId(request);
+    final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
+    final Location archive = uploadDir.append(archiveName);
+    final OutputStream os = archive.getOutputStream();
+
+    if (archiveName == null || archiveName.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
+    }
+
+    final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
+    sessions.put(accountId, sessionInfo);
+
+    return new BodyConsumer() {
+      @Override
+      public void chunk(ChannelBuffer request, HttpResponder responder) {
+        try {
+          request.readBytes(os, request.readableBytes());
+        } catch (IOException e) {
+          sessionInfo.setStatus(DeployStatus.FAILED);
+          e.printStackTrace();
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+      }
+      @Override
+      public void finished(HttpResponder responder) {
+        try {
+          os.close();
+          sessionInfo.setStatus(DeployStatus.VERIFYING);
+          deploy(accountId, appId, archive);
+          sessionInfo.setStatus(DeployStatus.DEPLOYED);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (Exception ex) {
+          sessionInfo.setStatus(DeployStatus.FAILED);
+          ex.printStackTrace();
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
+        } finally {
+          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
+          sessions.remove(accountId);
+        }
+      }
+      @Override
+      public void handleError(Throwable t) {
+        try {
+          os.close();
+          sessionInfo.setStatus(DeployStatus.FAILED);
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
+        } catch (IOException e) {
+          e.printStackTrace();
+        } finally {
+          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
+          sessions.remove(accountId);
+        }
+      }
+    };
+
+  }
+
+  // deploy helper
+  private void deploy(final String accountId, final String appId , Location archive) throws Exception {
+
     try {
-      String accountId = getAuthenticatedAccountId(request);
-      String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
-      if (archiveName == null || archiveName.isEmpty()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
-        return;
-      }
-      ChannelBuffer content = request.getContent();
-      if (content == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
-        return;
-      }
+      Id.Account id = Id.Account.from(accountId);
+      Location archiveLocation = archive;
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
+          deleteHandler(programId, type);
+        }
+      });
 
-      try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
-        rInfo.setApplicationId(appId);
-        ArchiveId rIdentifier = init(rInfo);
-        SessionInfo info = sessions.get(rIdentifier.getAccountId()).setStatus(DeployStatus.UPLOADING);
-        OutputStream stream = info.getOutputStream();
-        int length = content.readableBytes();
-        byte[] archive = new byte[length];
-        content.readSlice(length).toByteBuffer().get(archive);
-        stream.write(archive);
-        deploy(rIdentifier);
-        responder.sendStatus(HttpResponseStatus.OK);
-
-      } catch (Throwable throwable) {
-        LOG.warn(throwable.getMessage(), throwable);
-        throw new Exception("Failed to write channel buffer content.");
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, appId, archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
+      setupSchedules(accountId, specification);
     } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      LOG.warn(e.getMessage(), e);
+      throw new Exception(e.getMessage());
     }
   }
+
+
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
@@ -1188,57 +1238,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  // deploy helper
-  private void deploy(final ArchiveId resource) throws Exception {
-    LOG.debug("Finishing deploy of application " + resource.toString());
-    if (!sessions.containsKey(resource.getAccountId())) {
-      throw new Exception("No information about archive being uploaded is available.");
-    }
-
-    final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
-    DeployStatus status = sessionInfo.getStatus();
-    try {
-      Id.Account id = Id.Account.from(resource.getAccountId());
-      Location archiveLocation = sessionInfo.getArchiveLocation();
-      sessionInfo.getOutputStream().close();
-      sessionInfo.setStatus(DeployStatus.VERIFYING);
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
-          deleteHandler(programId, type);
-        }
-      });
-
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, sessionInfo.getApplicationId(), archiveLocation).get();
-      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
-
-      setupSchedules(resource.getAccountId(), specification);
-      status = DeployStatus.DEPLOYED;
-
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-
-      status = DeployStatus.FAILED;
-      if (e instanceof ExecutionException) {
-        Throwable cause = e.getCause();
-
-        if (cause instanceof ClassNotFoundException) {
-          status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), cause.getMessage()));
-        } else if (cause instanceof IllegalArgumentException) {
-          status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), cause.getMessage()));
-        } else {
-          status.setMessage(cause.getMessage());
-        }
-      }
-
-      status.setMessage(e.getMessage());
-      throw new Exception(e.getMessage());
-    } finally {
-      save(sessionInfo.setStatus(status));
-      sessions.remove(resource.getAccountId());
-    }
-  }
 
   /**
    * Defines the class for sending deploy status to client.
@@ -1263,10 +1262,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      DeploymentStatus status  = dstatus(new ArchiveId(accountId, "", ""));
+      DeployStatus status  = dstatus(accountId);
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
+      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1577,55 +1575,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /*
    * Returns DeploymentStatus
    */
-  private DeploymentStatus dstatus(ArchiveId resource) {
-    if (!sessions.containsKey(resource.getAccountId())) {
-      SessionInfo info = retrieve(resource.getAccountId());
-      return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
+  private DeployStatus dstatus(String accountId) {
+    if (!sessions.containsKey(accountId)) {
+      SessionInfo info = retrieve(accountId);
+      return info.getStatus();
     } else {
-      SessionInfo info = sessions.get(resource.getAccountId());
-      return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
+      SessionInfo info = sessions.get(accountId);
+      return info.getStatus();
     }
   }
-
-  /*
-   * Initializes deployment of resources from the client.
-   * <p>
-   *   Upon receiving a request to initialize an upload with auth-token and resource information,
-   *   we create a unique identifier for the upload and also create directories needed for storing
-   *   the uploading archive. At this point the upload has not yet begun. The bytes of the archive
-   *   are still on the client machine. An session id is returned back to client - which will use
-   *   the session id provided to upload the chunks.
-   * </p>
-   * <p>
-   *   <i>Note:</i> As the state of upload are transient they are not being persisted on the server.
-   * </p>
-   *
-   * @param info ArchiveInfo
-   * @return ArchiveId instance containing the resource id and
-   * resource version.
-   */
-  private ArchiveId init(ArchiveInfo info) throws Exception {
-    LOG.debug("Init deploying application " + info.toString());
-    ArchiveId identifier = new ArchiveId(info.getAccountId(), "appId", "resourceId");
-
-    try {
-      if (sessions.containsKey(info.getAccountId())) {
-        throw new Exception("An upload is already in progress for this account.");
-      }
-      Location uploadDir = locationFactory.create(archiveDir + "/" + info.getAccountId());
-      if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-        LOG.warn("Unable to create directory '{}'", uploadDir.getName());
-      }
-      Location archive = uploadDir.append(info.getFilename());
-      SessionInfo sessionInfo = new SessionInfo(identifier, info, archive, DeployStatus.REGISTERED);
-      sessions.put(info.getAccountId(), sessionInfo);
-      return identifier;
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
-    }
-  }
-
 
   private void deleteHandler(Id.Program programId, Type type)
     throws ExecutionException {
@@ -1633,18 +1591,20 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       switch (type) {
         case FLOW:
           //Stop the flow if it not running
-          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
-                                                                                        programId.getApplicationId(),
-                                                                                        programId.getId()));
+          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                          programId.getApplicationId(),
+                                                                          programId.getId(),
+                                                                          type);
           if (flowRunInfo != null) {
             doStop(flowRunInfo);
           }
           break;
         case PROCEDURE:
           //Stop the procedure if it not running
-          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(
-            programId.getAccountId(), programId.getApplicationId(),
-            programId.getId()));
+          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                               programId.getApplicationId(),
+                                                                               programId.getId(),
+                                                                               type);
           if (procedureRunInfo != null) {
             doStop(procedureRunInfo);
           }
@@ -1668,10 +1628,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * @param info to be saved.
    * @return true if and only if successful; false otherwise.
    */
-  private boolean save(SessionInfo info) {
+  private boolean save(SessionInfo info, String accountId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      String accountId = info.getArchiveId().getAccountId();
       Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
       if (!outputDir.exists()) {
         return false;
@@ -1697,13 +1656,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return true;
   }
 
-  private RunIdentifier doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
     throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
     ProgramController controller = runtimeInfo.getController();
-    RunId runId = controller.getRunId();
     controller.stop().get();
-    return new RunIdentifier(runId.getId());
   }
 
   /** NOTE: This was a temporary hack done to map the status to something that is
@@ -1746,26 +1703,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return "";
   }
 
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Type type = Type.valueOf(identifier.getType().name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getAccountId(), identifier.getFlowId());
-
-    Id.Program programId = Id.Program.from(identifier.getAccountId(),
-                                           identifier.getApplicationId(),
-                                           identifier.getFlowId());
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
-  }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, Type type) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getAccountId(), identifier.getApplicationId());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (identifier.equals(info.getProgramId())) {
         return info;
