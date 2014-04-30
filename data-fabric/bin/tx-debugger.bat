@@ -3,6 +3,7 @@
 REM ##############################################################################
 REM ##
 REM ##  Continuuity Reactor start up script for WINDOWS
+REM ##  Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
 REM ##
 REM ##############################################################################
 
