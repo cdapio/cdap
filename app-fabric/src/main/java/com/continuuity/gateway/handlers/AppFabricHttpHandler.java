@@ -1,7 +1,13 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -30,11 +36,17 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -92,6 +104,13 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -104,19 +123,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -132,11 +145,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Json serializer.
    */
   private static final Gson GSON = new Gson();
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
    * Timeout to get response from metrics system.
@@ -201,11 +209,18 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
-  private final StreamAdmin streamAdmin;
+  private final QueueAdmin queueAdmin;
+
+  private final DataSetInstantiatorFromMetaData datasetInstantiator;
 
   private final DataSetAccessor dataSetAccessor;
 
-  private final QueueAdmin queueAdmin;
+  private final StreamAdmin streamAdmin;
+
+  /**
+   * Number of seconds for timing out a service endpoint discovery.
+   */
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
    * The directory where the uploaded files would be placed.
@@ -215,6 +230,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final ManagerFactory managerFactory;
   private final Scheduler scheduler;
 
+
+
+  private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
+  private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
 
   private enum AppFabricServiceStatus {
@@ -258,11 +278,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               ManagerFactory managerFactory, StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient,
-                              TransactionSystemClient txClient) {
+                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
+                              DataSetInstantiatorFromMetaData datasetInstantiator) {
+
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
+    this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
@@ -274,7 +296,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.streamAdmin = streamAdmin;
+    this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
   }
 
@@ -352,6 +374,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     response.sendString(HttpResponseStatus.OK, "OK");
   }
 
+  @Path("/status")
+  @GET
+  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+    responder.sendString(HttpResponseStatus.OK, "OK.\n");
+  }
 
   /**
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
@@ -686,7 +713,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
-      Map<String, String> args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
       return args == null ? ImmutableMap.<String, String>of() : args;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
@@ -1620,6 +1647,46 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @DELETE
+  @Path("/queues")
+  public void clearQueues(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ToClear.QUEUES);
+  }
+
+  @DELETE
+  @Path("/streams")
+  public void clearStreams(HttpRequest request, final HttpResponder responder) {
+    clear(request, responder, ToClear.STREAMS);
+  }
+
+  private static enum ToClear {
+    QUEUES, STREAMS
+  }
+
+  private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
+    try {
+      getAuthenticatedAccountId(request);
+      try {
+        if (toClear == ToClear.QUEUES) {
+          queueAdmin.dropAll();
+        } else if (toClear == ToClear.STREAMS) {
+          streamAdmin.dropAll();
+        }
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (Exception e) {
+        LOG.error("Exception clearing data fabric: ", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /*
    * Retrieves a {@link SessionInfo} from the file system.
    */
@@ -2007,6 +2074,102 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return null;
   }
 
+  @POST
+  @Path("/datasets/{dataset-id}/truncate")
+  public void truncate(HttpRequest request, final HttpResponder responder,
+                       @PathParam("dataset-id") String tableName) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      try {
+        truncateTable(tableName, new OperationContext(accountId));
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (OperationException e) {
+        LOG.error("could not truncate dataset {}", tableName, e);
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
+      }
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void truncateTable(String tableName, OperationContext opContext) throws OperationException {
+    // NOTE: for now we just try to do the best we can: find all used DataSets of type Table and truncate them. This
+    //       should be done better, when we refactor DataSet API (towards separating user API and management parts)
+    DataSetSpecification config = datasetInstantiator.getDataSetSpecification(tableName, opContext);
+    List<DataSetSpecification> allDataSets = getAllUsedDataSets(config);
+    for (DataSetSpecification spec : allDataSets) {
+      DataSet ds = datasetInstantiator.getDataSet(spec.getName(), opContext);
+      if (ds instanceof Table) {
+        try {
+          DataSetManager dataSetManager =
+            dataSetAccessor.getDataSetManager(OrderedColumnarTable.class, DataSetAccessor.Namespace.USER);
+          dataSetManager.truncate(ds.getName());
+        } catch (Exception e) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR, "failed to truncate table: " + ds.getName(), e);
+        }
+      }
+    }
+  }
+
+  private List<DataSetSpecification> getAllUsedDataSets(DataSetSpecification config) {
+    List<DataSetSpecification> all = new ArrayList<DataSetSpecification>();
+    LinkedList<DataSetSpecification> stack = Lists.newLinkedList();
+    stack.add(config);
+    while (stack.size() > 0) {
+      DataSetSpecification current = stack.removeLast();
+      all.add(current);
+      Iterable<DataSetSpecification> children = current.getSpecifications();
+      if (children != null) {
+        for (DataSetSpecification child : children) {
+          stack.addLast(child);
+        }
+      }
+    }
+    return all;
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-name}/current")
+  public void workflowStatus(HttpRequest request, final HttpResponder responder,
+                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
+                                       new WorkflowClient.Callback() {
+                                         @Override
+                                         public void handle(WorkflowClient.Status status) {
+                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                             responder.sendByteArray(HttpResponseStatus.OK,
+                                                                     status.getResult().getBytes(),
+                                                                     ImmutableMultimap.of(
+                                                                       HttpHeaders.Names.CONTENT_TYPE,
+                                                                       "application/json; charset=utf-8"));
+
+                                           } else {
+                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                                 status.getResult());
+                                           }
+                                         }
+                                       });
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /**
    * Returns a list of flows associated with account.
    */
@@ -2268,6 +2431,167 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @PUT
+  @Path("/tables/{table-id}")
+  public void createTable(HttpRequest request, final HttpResponder responder,
+                          @PathParam("table-id") String tableName) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      String spec = (new Gson()).toJson(new Table(tableName).configure());
+      Id.Program programId = Id.Program.from(accountId, "", "");
+      createDataSet(programId, spec);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Caught exception ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void createDataSet(Id.Program programId, String spec) throws Exception {
+    try {
+      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      store.addDataset(new Id.Account(programId.getAccountId()), streamSpec);
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not create dataset for " + programId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  @PUT
+  @Path("/tables/{table-id}/rows/{row-id}")
+  public void writeTableRow(HttpRequest request, final HttpResponder responder,
+                            @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      boolean counter = getCounter(queryParams);
+
+      // Read values from request body
+      Map<String, String> valueMap = getValuesMap(request);
+      // decode the columns and values into byte arrays
+      if (valueMap == null || valueMap.isEmpty()) {
+        // this happens when we have no content
+        throw new IllegalArgumentException("request body has no columns to write");
+      }
+
+      byte[][] cols = new byte[valueMap.size()][];
+      byte[][] vals = new byte[valueMap.size()][];
+      int i = 0;
+      for (Map.Entry<String, String> entry : valueMap.entrySet()) {
+        cols[i] = Util.decodeBinary(entry.getKey(), encoding);
+        vals[i] = Util.decodeBinary(entry.getValue(), encoding, counter);
+        i++;
+      }
+
+      // now execute the write
+      TransactionContext txContext = new TransactionContext(
+        txClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
+      table.put(rowKey, cols, vals);
+      txContext.finish();
+      responder.sendStatus(HttpResponseStatus.OK);
+
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/tables/{table-id}/rows/{row-id}")
+  public void readTableRow(HttpRequest request, final HttpResponder responder,
+                           @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
+
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte[] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      boolean counter = getCounter(queryParams);
+      List<String> columns = getColumns(queryParams);
+      String start = getOptionalSingletonParam(queryParams, "start");
+      String stop = getOptionalSingletonParam(queryParams, "stop");
+      int limit = getLimit(queryParams);
+
+      if (columns != null && !columns.isEmpty() && (start != null || stop != null)) {
+        throw new IllegalArgumentException("Read can only specify columns or range");
+      }
+
+      TransactionContext txContext = new TransactionContext(txClient,
+                                                          datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
+
+      Row result;
+      if (columns == null || columns.isEmpty()) {
+        // column range
+        byte[] startCol = start == null ? null : Util.decodeBinary(start, encoding);
+        byte[] stopCol = stop == null ? null : Util.decodeBinary(stop, encoding);
+        result = table.get(rowKey, startCol, stopCol, limit);
+      } else {
+        byte[][] cols = new byte[columns.size()][];
+        int i = 0;
+        for (String column : columns) {
+          cols[i++] = Util.decodeBinary(column, encoding);
+        }
+        result = table.get(rowKey, cols);
+      }
+
+      txContext.finish();
+
+      // read successful, now respond with result
+      if (result.isEmpty() || result.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NO_CONTENT);
+      } else {
+        // result is not empty, now construct a json response
+        // first convert the bytes to strings
+        Map<String, String> map = Maps.newTreeMap();
+        for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
+          map.put(Util.encodeBinary(entry.getKey(), encoding), Util.encodeBinary(entry.getValue(), encoding, counter));
+        }
+        responder.sendJson(HttpResponseStatus.OK, map, STRING_MAP_TYPE);
+      }
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
   /**
    * Returns a list of streams associated with account.
    */
@@ -2348,6 +2672,203 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception : ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/tables/{table-id}/rows/{row-id}/increment")
+  public void incrementTableRow(HttpRequest request, final HttpResponder responder,
+                                @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      // Read values from request body
+      Map<String, String> valueMap = getValuesMap(request);
+      // decode the columns and values into byte arrays
+      if (valueMap == null || valueMap.isEmpty()) {
+        // this happens when we have no content
+        throw new IllegalArgumentException("request body has no columns to write");
+      }
+
+      // decode the columns and values into byte arrays
+      byte[][] cols = new byte[valueMap.size()][];
+      long[] vals = new long[valueMap.size()];
+      int i = 0;
+      for (Map.Entry<String, String> entry : valueMap.entrySet()) {
+        cols[i] = Util.decodeBinary(entry.getKey(), encoding);
+        vals[i] = Long.parseLong(entry.getValue());
+        i++;
+      }
+      // now execute the increment
+      TransactionContext txContext = new TransactionContext(
+        txClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
+      Row result = table.increment(rowKey, cols, vals);
+      txContext.finish();
+
+      // first convert the bytes to strings
+      Map<String, Long> map = Maps.newTreeMap();
+      for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
+        map.put(Util.encodeBinary(entry.getKey(), encoding), Bytes.toLong(entry.getValue()));
+      }
+      // now write a json string representing the map
+      responder.sendJson(HttpResponseStatus.OK, map, LONG_MAP_TYPE);
+
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @DELETE
+  @Path("/tables/{table-id}/rows/{row-id}")
+  public void deleteTableRow(HttpRequest request, final HttpResponder responder,
+                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+
+      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+
+      // Fetch table
+      Table table = datasetInstantiator.getDataSet(tableName, new OperationContext(accountId));
+
+      // decode row key using the given encoding
+      String encoding = getEncoding(queryParams);
+      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+
+      List<String> columns = getColumns(queryParams);
+      byte[][] cols = null;
+      if (columns != null && !columns.isEmpty()) {
+        cols = new byte[columns.size()][];
+        int i = 0;
+        for (String column : columns) {
+          cols[i++] = Util.decodeBinary(column, encoding);
+        }
+      }
+
+      // now execute the delete operation
+      TransactionContext txContext = new TransactionContext(
+        txClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
+      table.delete(rowKey, cols);
+      txContext.finish();
+      responder.sendStatus(HttpResponseStatus.OK);
+
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Cannot instantiate table {}", tableName, e);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }  catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private Map<String, String> getValuesMap(HttpRequest request) {
+    // parse JSON string in the body
+    try {
+      InputStreamReader reader = new InputStreamReader(
+        new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+      return (new Gson()).fromJson(reader, STRING_MAP_TYPE);
+    } catch (Exception e) {
+      // failed to parse json, that is a bad request
+      throw new IllegalArgumentException("Failed to parse body as json");
+    }
+  }
+
+  private boolean getCounter(Map<String, List<String>> queryParams) {
+    // optional parameter counter - if true, column values are interpreted (and returned) as long numbers
+    boolean counter = false;
+    List<String> counterParams = queryParams.get("counter");
+    if (counterParams != null) {
+      // make sure there is at most one
+      if (counterParams.size() > 1) {
+        throw new IllegalArgumentException("More than one 'counter' parameter");
+      }
+      // make sure that if there is one, it is supported
+      if (!counterParams.isEmpty()) {
+        String param = counterParams.get(0);
+        counter = "1".equals(param) || "true".equals(param);
+      }
+    }
+
+    return counter;
+  }
+
+
+  private String getEncoding(Map<String, List<String>> queryParams) {
+    String encoding = null;
+    List<String> encodingParams = queryParams.get("encoding");
+
+    if (encodingParams != null) {
+      // make sure there is at most one
+      if (encodingParams.size() > 1) {
+        throw new IllegalArgumentException("More than one 'encoding' parameter");
+      }
+
+      // make sure that if there is one, it is supported
+      if (!encodingParams.isEmpty()) {
+        encoding = encodingParams.get(0);
+        if (!Util.supportedEncoding(encoding)) {
+          throw  new IllegalArgumentException("Unsupported 'encoding' parameter");
+        }
+      }
+    }
+
+    return encoding;
+  }
+
+  private List<String> getColumns(Map<String, List<String>> queryParams) {
+    // for read and delete operations, optional parameter is columns
+    List<String> columns = null;
+    List<String> columnParams = queryParams.get("columns");
+    if (columnParams != null && columnParams.size() > 0) {
+      columns = Lists.newLinkedList();
+      for (String param : columnParams) {
+        Collections.addAll(columns, param.split(","));
+      }
+    }
+
+    return columns;
+  }
+
+  private String getOptionalSingletonParam(Map<String, List<String>> queryParams, String name) {
+    List<String> params = queryParams.get(name);
+    if (params != null && params.size() > 1) {
+      throw new IllegalArgumentException(String.format("More than one '%s' parameter", name));
+    }
+    return  (params == null || params.isEmpty()) ? null : params.get(0);
+  }
+
+  private int getLimit(Map<String, List<String>> queryParams) {
+    List<String> limitParams = queryParams.get("limit");
+    if (limitParams != null && limitParams.size() > 1) {
+      throw new IllegalArgumentException("More than one 'limit' parameter");
+    }
+
+    try {
+      return (limitParams == null || limitParams.isEmpty()) ? -1 : Integer.parseInt(limitParams.get(0));
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("'limit' parameter is not an integer");
     }
   }
 
