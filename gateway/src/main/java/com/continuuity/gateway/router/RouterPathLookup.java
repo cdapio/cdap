@@ -8,7 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
- *
+ * Class to match the request path to corresponding service like app-fabric, or metrics service.
  */
 public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
