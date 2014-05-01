@@ -1,5 +1,6 @@
 package com.continuuity.api.data.batch;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -8,6 +9,12 @@ import java.util.List;
  * @param <ROW> the type of objects that represents a single row
  */
 public interface RowScannable<ROW> {
+
+  /**
+   * This method is needed because Java does not
+   * @returns the schema type, that is ROW.
+   */
+  Type getRowType();
 
   /**
    * Returns all splits of the dataset.

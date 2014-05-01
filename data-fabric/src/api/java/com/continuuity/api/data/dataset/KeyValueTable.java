@@ -6,7 +6,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.RowScanners;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitRowScanner;
@@ -14,6 +14,7 @@ import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -169,14 +170,19 @@ public class KeyValueTable
   }
 
   @Override
+  public Type getRowType() {
+    return Entry.class;
+  }
+
+  @Override
   public SplitRowScanner<Entry> createSplitScanner(Split split) {
-    return RowScanners.splitRowScanner(createSplitReader(split),
-                                       new RowScanners.RowMaker<byte[], byte[], Entry>() {
-                                         @Override
-                                         public Entry makeRow(byte[] key, byte[] value) {
-                                           return new Entry(key, value);
-                                         }
-                                       }
+    return Scannables.splitRowScanner(createSplitReader(split),
+                                      new Scannables.RowMaker<byte[], byte[], Entry>() {
+                                        @Override
+                                        public Entry makeRow(byte[] key, byte[] value) {
+                                          return new Entry(key, value);
+                                        }
+                                      }
     );
   }
 

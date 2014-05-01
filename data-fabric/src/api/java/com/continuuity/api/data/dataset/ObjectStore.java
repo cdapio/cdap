@@ -6,8 +6,11 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
@@ -31,7 +34,8 @@ import java.util.List;
  * @param <T> the type of objects in the store
  */
 @Beta
-public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {
+public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T>,
+  RowScannable<T> {
 
   private static final Gson GSON = new GsonBuilder()
   .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -126,8 +130,18 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
   }
 
   @Override
+  public Type getRowType() {
+    return typeRep;
+  }
+
+  @Override
   public List<Split> getSplits() {
     return delegate.get().getSplits();
+  }
+
+  @Override
+  public SplitRowScanner<T> createSplitScanner(Split split) {
+    return Scannables.valueRowScanner(createSplitReader(split));
   }
 
   @Override
