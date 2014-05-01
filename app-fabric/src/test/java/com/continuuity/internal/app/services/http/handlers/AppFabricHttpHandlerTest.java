@@ -549,7 +549,7 @@ public class AppFabricHttpHandlerTest {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
       o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertEquals(2, o.size());
+      Assert.assertEquals(1, o.size());
       expectedStreams = ImmutableSet.of("text");
       for (Map<String, String> stream : o) {
         Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
@@ -566,6 +566,9 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testProcedureInstances () throws Exception {
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, AppFabricTestsSuite.doPost("/v2/unrecoverable/reset").getStatusLine().getStatusCode());
+
     HttpResponse response = deploy(WordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 

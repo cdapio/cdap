@@ -2092,7 +2092,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         result.add(makeAppRecord(appSpec));
       }
 
-      String json = new Gson().toJson(result);
+      String json;
+      if (appid == null) {
+        json = new Gson().toJson(result);
+      } else {
+        json = new Gson().toJson(result.get(0));
+      }
+
       responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
