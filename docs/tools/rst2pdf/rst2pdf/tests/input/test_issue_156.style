@@ -1,0 +1,4 @@
+embeddedFonts: []
+        [Tuffy.ttf, Tuffy_Bold.ttf, Tuffy_Italic.ttf, Tuffy_Bold_Italic.ttf]
+
+styles: tuffy: {fontName: Tuffy, parent: normal}

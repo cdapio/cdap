@@ -1,0 +1,44 @@
+Figures with scaled PDF images and borders
+===========================================
+
+This test combines something that test_vectorpdf (reading a partial page)
+was doing with something that test_issue_266 (scale so large that it has to be 
+scaled back down) was doing, and something test_issue_265 (test with borders)
+was doing, using the vectorpdf extension ("-e vectorpdf").
+
+Basic image:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+
+Scaled up a bit:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 150%
+
+Scaled up a lot:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 300%
+
+
+Repeat the whole thing as a figure, with ``with-border`` class:
+
+Basic image:
+
+.. class:: with-border
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: center
+
+Scaled up a bit:
+
+.. class:: with-border
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 150%
+   :align: center
+
+Scaled up a lot:
+
+.. class:: with-border
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 300%
+   :align: center

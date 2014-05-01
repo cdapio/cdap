@@ -1,0 +1,34 @@
+Image rescaling test
+===============================
+
+
+Normal size PDF image:
+
+.. image:: images/text_and_vectors_001.pdf
+
+
+Shrunken PDF image:
+
+.. image:: images/text_and_vectors_001.pdf
+   :scale: 60%
+
+Enlarged PDF image:
+
+.. image:: images/text_and_vectors_001.pdf
+   :scale: 200%
+
+
+Normal image:
+
+.. image:: images/middleware.jpg
+
+Shrunken image:
+
+.. image:: images/middleware.jpg
+   :scale: 60%
+
+Enlarged image:
+
+.. image:: images/middleware.jpg
+   :scale: 900%
+

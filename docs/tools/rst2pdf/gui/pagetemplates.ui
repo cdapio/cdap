@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>605</width>
+    <height>375</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_4">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Page Template:</string>
+         </property>
+         <property name="buddy">
+          <cstring>templates</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QComboBox" name="templates"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="newTemplate">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/icons/new.svg</normaloff>:/icons/new.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="delTemplate">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/icons/close.svg</normaloff>:/icons/close.svg</iconset>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Frame:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QComboBox" name="frames"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="newFrame">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/icons/new.svg</normaloff>:/icons/new.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="delFrame">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/icons/close.svg</normaloff>:/icons/close.svg</iconset>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Top:</string>
+         </property>
+         <property name="buddy">
+          <cstring>top</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="top"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Left:</string>
+         </property>
+         <property name="buddy">
+          <cstring>left</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="left"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Width:</string>
+         </property>
+         <property name="buddy">
+          <cstring>width</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="width"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Height:</string>
+         </property>
+         <property name="buddy">
+          <cstring>height</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="height"/>
+       </item>
+       <item row="6" column="1">
+        <widget class="QCheckBox" name="header">
+         <property name="text">
+          <string>Show Header</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QCheckBox" name="footer">
+         <property name="text">
+          <string>Show Footer</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Background:</string>
+         </property>
+         <property name="buddy">
+          <cstring>background</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLineEdit" name="background"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="selectFile">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icons.qrc">
+             <normaloff>:/icons/file.svg</normaloff>:/icons/file.svg</iconset>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>top</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>150</x>
+     <y>89</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>left</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>143</x>
+     <y>121</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>4</x>
+     <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>width</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>135</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>168</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>height</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1</x>
+     <y>221</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>header</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>167</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>6</x>
+     <y>264</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>footer</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>196</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>315</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>background</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>225</x>
+     <y>273</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1</x>
+     <y>356</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>applyChanges()</slot>
+ </slots>
+</ui>

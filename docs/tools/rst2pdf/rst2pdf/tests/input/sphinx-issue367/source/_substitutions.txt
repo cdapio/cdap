@@ -1,0 +1,37 @@
+.. |prodname| replace:: "Das Weinkellerbuch"
+.. |vinoXML| replace:: vinoXML
+.. _vinoXML: http://www.vinoxml.org/
+.. |GWS| replace:: Global Wine Stocks (GWS)
+.. _GWS: http://www.globalwinestocks.com/
+.. |GWSafil| replace:: Global Wine Stocks (GWS)
+.. _GWSafil: http://www.globalwinestocks.com/customerSignin.asp?id_customerType=1&membership=PE2?affiliate=5672005530 
+.. |xmlimportdir| replace:: "C:\\TheWineCellarBook\\xmlImport"
+.. |xmlexportdir| replace:: "C:\\TheWineCellarBook\\xmlExport"
+.. |imagedir| replace:: "C:\\TheWineCellarBook\\images"
+.. |imagerecdir| replace:: "C:\\TheWineCellarBook\\imagesRecipe"
+.. |backupdir| replace:: "C:\\TheWineCellarBook\\backup"
+.. |basedatadir| replace:: "C:\\TheWineCellarBook\\"
+.. |baseprogdir| replace:: "C:\\Program Files\\TheWineCellarBook\\prog"
+.. |logdir| replace:: "C:\\Users\\user name\\TheWineCellarBook"
+.. |configdir| replace:: "C:\\TheWineCellarBook\\config"
+.. |downloadpage| replace::    
+   download page
+.. _downloadpage: http://www.thewinecellarbook.com/enigma/index.php?module=Downloads
+.. |emailsuggestion| replace::
+   email
+.. _emailsuggestion: mailto:wbruhin@thewinecellarbook.com?subject=Suggestion:
+.. |emailregistration| replace::
+   email für Registrierung
+.. _emailregistration: mailto:wbruhin@thewinecellarbook.com?subject=Registration%20gekauft%20von%20Wiederverkäufer:
+.. |emailsupportbackup| replace::
+   Support email
+.. _emailsupportbackup: mailto:support@thewinecellarbook.com?subject=Backup%20problem:
+.. |emailsupportrecipe| replace::
+   Support email
+.. _emailsupportrecipe: mailto:support@thewinecellarbook.com?subject=Recipe%20import:
+.. |registration| replace:: 
+   Registrations Seite
+.. _registration: http://www.thewinecellarbook.com/html/de/registrierung.html
+.. |whatsnew| replace:: Neuigkeiten
+.. _whatsnew: http://www.thewinecellarbook.com/html/de/neuigkeiten.html
+.. |imagecaption| replace:: *Click on the image to see an enlarged version, and use the browser's back button to return to this page*

@@ -1,0 +1,10 @@
+styles:
+    pad1:
+        borderColor: black
+        borderPadding: 0
+        borderWidth: 1
+
+    pad2:
+        borderColor: black
+        borderPadding: [4, 8, 12, 16]
+        borderWidth: 1
