@@ -154,6 +154,9 @@ public abstract class StreamConsumerStateTest {
     state = stateStore.get(0L, 0);
     Assert.assertEquals(oldOffset, Iterables.get(state.getState(), 0).getOffset());
 
+    // Verify that no new file offsets state is being introduced (test a bug in the configureInstance implementation)
+    Assert.assertEquals(4, Iterables.size(state.getState()));
+
     // Verify that all offsets are the same
     List<StreamConsumerState> states = Lists.newArrayList();
     stateStore.getByGroup(0L, states);
