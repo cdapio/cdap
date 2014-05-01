@@ -15,9 +15,19 @@ import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.Queue2Consumer;
+import com.continuuity.data2.queue.Queue2Producer;
+import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
@@ -27,6 +37,7 @@ import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -55,6 +66,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -999,6 +1011,160 @@ public class AppFabricHttpHandlerTest {
                Base64.encodeBase64URLSafeString(Bytes.toBytes(42L)));
   }
 
+
+  @Test
+  public void testTruncateTable() throws Exception {
+    String urlPrefix = "/v2";
+    String tablePrefix = urlPrefix + "/tables/";
+    String table = "ttTbl_" + System.nanoTime();
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/rows/abc", "{ \"c1\":\"v1\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 1, 1, table + "/rows/abc");
+
+    assertTruncate(urlPrefix, HttpStatus.SC_OK, "/datasets/" + table + "/truncate");
+
+    // make sure data was removed: 204 on read
+    assertReadFails(tablePrefix, table + "/rows/abc", HttpStatus.SC_NO_CONTENT);
+
+    // but table is there: we can write into it again
+    assertCreate(tablePrefix, HttpStatus.SC_OK, table);
+    assertWrite(tablePrefix, HttpStatus.SC_OK, table + "/rows/abc", "{ \"c3\":\"v3\"}");
+    // make sure both columns are there
+    assertRead(tablePrefix, 3, 3, table + "/rows/abc");
+  }
+
+  @Test
+  public void testClearQueuesStreams() throws Exception {
+    // setup accessor
+    String tableName = "mannamanna2";
+    String streamName = "doobdoobee2";
+    String queueName = "doobee2";
+
+    // create a stream, a queue, a table
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+    createTable(tableName, instantiator);
+    createStream(streamName);
+    createQueue(queueName);
+
+    // verify they are all there
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyStream(streamName));
+    Assert.assertTrue(verifyQueue(queueName));
+
+    // clear queues
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/queues").getStatusLine().getStatusCode());
+
+    // verify tables and streams are still here
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyStream(streamName));
+    // verify queue is gone
+    Assert.assertFalse(verifyQueue(queueName));
+
+    // recreate the queue
+    createQueue(queueName);
+    Assert.assertTrue(verifyQueue(queueName));
+
+    // clear streams
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/streams").getStatusLine().getStatusCode());
+
+    // verify table and queue are still here
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyQueue(queueName));
+    // verify stream is gone
+    Assert.assertFalse(verifyStream(streamName));
+
+  }
+
+
+   final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+
+   void createStream(String name) throws Exception {
+    // create stream
+    Assert.assertEquals(200, AppFabricTestsSuite.doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
+
+    // write smth to a stream
+    QueueName queueName = QueueName.fromStream(name);
+    enqueue(queueName, STREAM_ENTRY);
+  }
+
+   void createQueue(String name) throws Exception {
+    // write smth to a queue
+    QueueName queueName = getQueueName(name);
+    enqueue(queueName, STREAM_ENTRY);
+  }
+
+   boolean dequeueOne(QueueName queueName) throws Exception {
+    QueueClientFactory queueClientFactory = AppFabricTestsSuite.getInjector().getInstance(QueueClientFactory.class);
+    final Queue2Consumer consumer = queueClientFactory.createConsumer(queueName,
+                                                                      new ConsumerConfig(1L, 0, 1,
+                                                                                         DequeueStrategy.ROUND_ROBIN,
+                                                                                         null),
+                                                                      1);
+    // doing inside tx
+    TransactionExecutorFactory txExecutorFactory =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionExecutorFactory.class);
+    return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) consumer))
+      .execute(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return !consumer.dequeue(1).isEmpty();
+        }
+      });
+  }
+
+  boolean verifyStream(String name) throws Exception {
+    // for now, DELETE /streams only deletes the stream data, not meta data
+    // boolean streamExists = 200 ==
+    //   AppFabricTestsSuite.doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
+    return dequeueOne(QueueName.fromStream(name));
+  }
+
+  boolean verifyQueue(String name) throws Exception {
+    return dequeueOne(getQueueName(name));
+  }
+
+  boolean verifyTable(String name) throws Exception {
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+    TransactionSystemClient txClient = AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    txContext.start();
+    byte[] result = table.get(new byte[]{'a'}, new byte[]{'b'});
+    txContext.finish();
+    return result != null;
+  }
+
+  private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
+    QueueClientFactory queueClientFactory = AppFabricTestsSuite.getInjector().getInstance(QueueClientFactory.class);
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    // doing inside tx
+    TransactionExecutorFactory txExecutorFactory =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionExecutorFactory.class);
+    txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // write more than one so that we can dequeue multiple times for multiple checks
+          producer.enqueue(queueEntry);
+          producer.enqueue(queueEntry);
+        }
+      });
+  }
+
+  private  QueueName getQueueName(String name) {
+    // i.e. flow and flowlet are constants: should be good enough
+    return QueueName.fromFlowlet("app1", "flow1", "flowlet1", name);
+  }
+
+  void assertTruncate(String prefix, int expected, String query) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPost(prefix + query, "");
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
 
   Table newTable(String name, DataSetInstantiatorFromMetaData instantiator) throws Exception {
     String accountId = DefaultId.DEFAULT_ACCOUNT_ID;
