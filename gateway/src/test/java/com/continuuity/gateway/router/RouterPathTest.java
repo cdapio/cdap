@@ -86,6 +86,18 @@ public class RouterPathTest {
     httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
     result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals("procedure." + accId + ".InvalidApp.ProName", result);
+
+    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
+    httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingPath(flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
+    httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("POST"), flowPath);
+    httpRequest.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    result = pathLookup.getRoutingPath(flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
   @Test
