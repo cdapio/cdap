@@ -199,7 +199,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       //TODO: Fix for URIs with cache=true at the end; Need to be modified!
-      requestPath = requestPath.replaceAll("\\?cache=true","");
+      requestPath = requestPath.replaceAll("\\?cache=true", "");
       Set<Map.Entry<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String>> entries = ROUTING_MAP.entrySet();
       for (Map.Entry<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String> uriPattern : entries) {
         Matcher match = uriPattern.getKey().getSecond().matcher(requestPath);
