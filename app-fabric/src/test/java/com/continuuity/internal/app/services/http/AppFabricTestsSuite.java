@@ -14,8 +14,8 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
-import com.continuuity.internal.app.services.http.handlers.ProcedureHandlerTest;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
@@ -47,9 +47,8 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, //AppFabricHttpHandlerTest.class,
-  ProcedureHandlerTest.class})
-public class AppFabricTestsSuite {
+@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
+  public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);

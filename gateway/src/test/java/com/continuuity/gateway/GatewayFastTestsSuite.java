@@ -9,8 +9,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
-import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
+import com.continuuity.gateway.handlers.ProcedureHandlerTest;
 import com.continuuity.gateway.handlers.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
@@ -24,6 +24,7 @@ import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.InMemorySecurityModule;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
@@ -67,10 +68,10 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class,
+@Suite.SuiteClasses(value = {PingHandlerTest.class, ProcedureHandlerTest.class,
   TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class, RouterPathTest.class})
+  DataSetClientTest.class, StreamClientTest.class, NettyFlumeCollectorTest.class,
+  MetricsReporterHookTest.class, RouterPathTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -86,6 +87,7 @@ public class GatewayFastTestsSuite {
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
+  private static MetricsQueryService metrics;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -157,7 +159,9 @@ public class GatewayFastTestsSuite {
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    metrics = injector.getInstance(MetricsQueryService.class);
     appFabricServer.startAndWait();
+    metrics.startAndWait();
     gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
@@ -184,6 +188,7 @@ public class GatewayFastTestsSuite {
   public static void stopGateway(CConfiguration conf) {
     gateway.stopAndWait();
     appFabricServer.stopAndWait();
+    metrics.stopAndWait();
     conf.clear();
   }
 

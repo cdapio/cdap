@@ -33,7 +33,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -145,9 +144,6 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals("", responseStr);
   }
 
-  //TODO: Ignoring this test; This test expects 404 when a procedure is not found;
-  //Currently connection is closed instead;
-  @Ignore
   @Test
   public void testPostNoProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
@@ -155,7 +151,7 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doPost("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1",
                                    GSON.toJson(content, new TypeToken<Map<String, String>>() {
                                    }.getType()));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
   }
 
   /**
@@ -247,16 +243,13 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals("", responseStr);
   }
 
-  //TODO: Ignoring this test; This test expects 404 when a procedure is not found;
-  //Currently connection is closed instead;
-  @Ignore
   @Test
   public void testGetNoProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
     HttpResponse response =
       GatewayFastTestsSuite.doGet("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1&" + getQueryParams
         (content));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -334,8 +327,8 @@ public class ProcedureHandlerTest  {
 
 
     // Delete app
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        GatewayFastTestsSuite.doDelete("/v2/apps/ProcedureTestApp").getStatusLine().getStatusCode());
+    response = GatewayFastTestsSuite.doDelete("/v2/apps/ProcedureTestApp");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     //TODO: 404 won't be returned until Router refactoring
     //Second assertion won't be valid even after refactoring

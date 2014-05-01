@@ -53,8 +53,10 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     "/metrics";
   private static final String LOGHANDLER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_-]+)/logs";
+
   private static final String PROCEDURE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/procedures/([A-Za-z0-9_-]+)/methods/(.+)";
+
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/flows/([A-Za-z0-9_-]+)/flowlets/([A-Za-z0-9_-]+)/instances";
 
@@ -150,7 +152,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(PROCEDURE_PATH)),
-           Constants.Service.APP_FABRIC_HTTP)
+           Constants.Service.PROCEDURES)
       .build();
 
   public String getRoutingPath(String requestPath, HttpRequest httpRequest) {
