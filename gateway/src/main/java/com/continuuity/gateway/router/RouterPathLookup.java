@@ -15,12 +15,6 @@ public class RouterPathLookup extends AuthenticatedHttpHandler {
   @Inject
   public RouterPathLookup(Authenticator authenticator) { super(authenticator); }
 
-  private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
-
-  private static final String METRICS = "metrics";
-
-  private static final String STREAM = "stream";
-
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
   }
@@ -30,9 +24,9 @@ public class RouterPathLookup extends AuthenticatedHttpHandler {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
-      if ((uriParts.length >= 2) && uriParts[1].contains(METRICS)) {
+      if ((uriParts.length >= 2) && uriParts[1].contains("metrics")) {
         return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 2) && uriParts[1].contains(STREAM)) {
+      } else if ((uriParts.length >= 2) && uriParts[1].contains("streams")) {
         // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
         // /v2/streams should go to AppFabricHttp
         // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
