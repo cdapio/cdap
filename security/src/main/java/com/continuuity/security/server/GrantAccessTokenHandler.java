@@ -50,8 +50,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
       }
     }
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
-                                       Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
