@@ -128,7 +128,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     ImmutableMap.<ImmutablePair<? extends Set<AllowedMethod>, Pattern>, String>builder()
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(COMMON_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
-      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(SCHEDULER_PATH)),
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(SCHEDULER_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.range(AllowedMethod.PUT, AllowedMethod.POST), Pattern.compile(DEPLOY_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
