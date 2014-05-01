@@ -42,10 +42,10 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   private static final String DELETE_PATH = VERSION +
     "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
-    "/?/apps/?([A-Za-z0-9_]+)?/?$";
+    "/?/apps/?([A-Za-z0-9_-]+)?/?$";
 
   private static final String WEBAPP_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/webapp/(status|start|stop)";
+    "/?/apps/([A-Za-z0-9_-]+)/webapp/(status|start|stop)";
 
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
@@ -67,7 +67,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     "/transactions/state";
 
   private static final String TRANSACTION_ID_PATH = VERSION +
-    "/transactions/([A-Za-z0-9_]+)/invalidate";
+    "/transactions/([A-Za-z0-9_-]+)/invalidate";
 
   private static final String SCHEDULER_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/workflows/([A-Za-z0-9_-]+)/" +
@@ -93,7 +93,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     "/?/apps/([A-Za-z0-9_-]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_-]+)/?$";
 
   private static final String PROMOTE_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/promote";
+    "/?/apps/([A-Za-z0-9_-]+)/promote";
   private static final String RESET_PATH = VERSION +
     "/unrecoverable/reset";
 

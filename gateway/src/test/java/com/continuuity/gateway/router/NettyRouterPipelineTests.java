@@ -66,7 +66,7 @@ import javax.ws.rs.Path;
  */
 public class NettyRouterPipelineTests {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTests.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.GATEWAY;

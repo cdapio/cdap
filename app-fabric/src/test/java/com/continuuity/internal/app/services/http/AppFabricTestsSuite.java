@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
-  public class AppFabricTestsSuite {
+public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
@@ -203,7 +203,6 @@ import java.util.concurrent.TimeUnit;
     }
     return client.execute(post);
   }
-
 
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
