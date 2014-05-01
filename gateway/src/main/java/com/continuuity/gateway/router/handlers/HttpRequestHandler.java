@@ -118,7 +118,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   /**
    * Closes the specified channel after all queued write requests are flushed.
    */
-   static void closeOnFlush(Channel ch) {
+  static void closeOnFlush(Channel ch) {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
