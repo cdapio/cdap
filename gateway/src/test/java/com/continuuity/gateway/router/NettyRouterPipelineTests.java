@@ -6,6 +6,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.gateway.apps.wordcount.WordCount;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -44,8 +45,6 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -59,13 +58,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Manifest;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
  * Verify the ordering of events in the RouterPipeline.
  */
 public class NettyRouterPipelineTests {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTests.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.GATEWAY;
@@ -194,7 +195,8 @@ public class NettyRouterPipelineTests {
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                        new RouterPathLookup(new NoAuthenticator())));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

@@ -182,6 +182,28 @@ public class AppFabricTestsSuite {
     return client.execute(post);
   }
 
+  public static HttpResponse doPost(HttpPost post) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
+  }
+
+  public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+
+    if (body != null) {
+      post.setEntity(new StringEntity(body));
+    }
+
+    if (headers != null) {
+      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+      post.setHeader(AUTH_HEADER);
+    }
+    return client.execute(post);
+  }
+
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
