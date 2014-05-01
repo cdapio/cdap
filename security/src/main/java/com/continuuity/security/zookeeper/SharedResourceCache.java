@@ -213,18 +213,26 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
    * @param key the name of the resource to remove
    * @return the previously set resource
    */
-  public T remove(Object key) {
+  public void remove(Object key) {
     if (key == null) {
       throw new NullPointerException("Key cannot be null.");
     }
-    String name = key.toString();
-    String znode = joinZNode(parentZnode, name);
-    T removedInstance = null;
+    final String name = key.toString();
+    final String znode = joinZNode(parentZnode, name);
+
     OperationFuture<String> future = zookeeper.delete(znode);
-    Futures.getUnchecked(future);
-    LOG.info("Removed value for node " + znode);
-    removedInstance = resources.remove(name);
-    return removedInstance;
+    Futures.addCallback(future, new FutureCallback<String>() {
+      @Override
+      public void onSuccess(String result) {
+        LOG.info("Removed value for node {}", znode);
+        resources.remove(name);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        LOG.error("Failed to remove znode {}", znode);
+      }
+    });
   }
 
   /**

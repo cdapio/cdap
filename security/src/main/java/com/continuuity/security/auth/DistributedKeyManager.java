@@ -58,6 +58,11 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   protected void doInit() throws IOException {
+    try {
+      keyCache.init();
+    } catch (InterruptedException ie) {
+      throw Throwables.propagate(ie);
+    }
     this.leaderElection = new LeaderElection(zookeeper, parentZNode + "/leader", new ElectionHandler() {
       @Override
       public void leader() {
@@ -74,11 +79,6 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
         LOG.info("Transitioned to follower");
       }
     });
-    try {
-      keyCache.init();
-    } catch (InterruptedException ie) {
-      throw Throwables.propagate(ie);
-    }
     startExpirationThread();
   }
 
@@ -144,7 +144,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public synchronized void onResourceUpdate(String name, KeyIdentifier instance) {
-    LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, instance);
+    LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;
       LOG.info("Set current key: leader={}, key={}", leader, currentKey);
