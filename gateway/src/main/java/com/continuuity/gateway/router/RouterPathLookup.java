@@ -10,7 +10,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 /**
  *
  */
-public class RouterPathLookup extends AuthenticatedHttpHandler {
+public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   @Inject
   public RouterPathLookup(Authenticator authenticator) { super(authenticator); }
