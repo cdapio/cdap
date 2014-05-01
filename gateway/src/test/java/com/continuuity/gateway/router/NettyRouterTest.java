@@ -171,9 +171,9 @@ public class NettyRouterTest {
 
   @Test
   public void testRouterSync() throws Exception {
-    testSync();
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    testSync(25);
+    // sticky endpoint strategy used so the sum should be 25
+    Assert.assertEquals(25, gatewayServer1.getNumRequests() + gatewayServer2.getNumRequests());
   }
 
   @Test
@@ -218,8 +218,8 @@ public class NettyRouterTest {
     asyncHttpClient.close();
 
     Assert.assertEquals(NUM_ELEMENTS, numSuccessfulRequests.get());
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    // we use sticky endpoint strategy so the sum of requests from the two gateways should be NUM_ELEMENTS
+    Assert.assertTrue(NUM_ELEMENTS == (gatewayServer1.getNumRequests() + gatewayServer2.getNumRequests()));
   }
 
   @Test
@@ -228,7 +228,7 @@ public class NettyRouterTest {
       // Bring down gatewayServer1
       gatewayServer1.cancelRegistration();
 
-      testSync();
+      testSync(25);
     } finally {
       Assert.assertEquals(0, gatewayServer1.getNumRequests());
       Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
@@ -237,14 +237,14 @@ public class NettyRouterTest {
     }
   }
 
-  @Test(expected = Exception.class)
+  @Test
   public void testRouterAllServersDown() throws Exception {
     try {
       // Bring down all servers
       gatewayServer1.cancelRegistration();
       gatewayServer2.cancelRegistration();
 
-      testSync();
+      testSyncServiceUnavailable();
     } finally {
       Assert.assertEquals(0, gatewayServer1.getNumRequests());
       Assert.assertEquals(0, gatewayServer2.getNumRequests());
@@ -325,13 +325,23 @@ public class NettyRouterTest {
     Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
   }
 
-  private void testSync() throws Exception {
-    for (int i = 0; i < 25; ++i) {
+  private void testSync(int numRequests) throws Exception {
+    for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending request " + i);
       HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
                                                 hostname, router.getServiceMap().get(gatewayService),
                                                 "/v1/ping", "sync", i));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    }
+  }
+
+  private void testSyncServiceUnavailable() throws Exception {
+    for (int i = 0; i < 25; ++i) {
+      LOG.trace("Sending request " + i);
+      HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
+                                                hostname, router.getServiceMap().get(gatewayService),
+                                                "/v1/ping", "sync", i));
+      Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
     }
   }
 
