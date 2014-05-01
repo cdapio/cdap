@@ -292,8 +292,8 @@ A read is performed as an HTTP POST method to the URL::
 
    * - Parameter
      - Description
-   * - ``<new-stream-id>``
-     - Name of the Stream to be read from
+   * - ``<stream-id>``
+     - Name of an existing Stream
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
