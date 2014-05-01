@@ -159,6 +159,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST, AllowedMethod.GET), Pattern.compile(WEBAPP_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(PROCEDURE_PATH)),
            Constants.Service.PROCEDURES)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(STREAM_PATH_1)),
