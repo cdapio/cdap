@@ -2,7 +2,7 @@
 Continuuity Reactor Overview
 ============================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -27,10 +27,10 @@ In this module, you will learn:
 Continuuity Reactor Architecture
 ================================
 
-[DOCNOTE: FIXME! Graphic content/shape or size]
-
 .. image:: ../_images/Architecture.png
-   :height: 400px
+   :height: 500px
+
+.. [DOCNOTE: FIXME! Graphic content/shape or size]
 
 ----
 

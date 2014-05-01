@@ -2,7 +2,7 @@
 Continuuity Reactor Purchase Example using REST
 ===========================================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -30,7 +30,6 @@ In this exercise, you will:
 - An application that uses scheduled MapReduce Workflows to read from one 
   ObjectStore DataSet and write to another
 - Use shell commands to install Applications and interact with Reactor
-- ??
 
 ----
 
@@ -69,7 +68,6 @@ You are now able to:
 
 - Install pre-compiled Applications using shell commands
 - Interact with the Reactor with shell commands, both sending and receiving
-- ?
 
 ----
 

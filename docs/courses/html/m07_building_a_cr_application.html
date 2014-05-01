@@ -776,10 +776,6 @@ a {
   border-bottom: 2px solid #3f3f3f;
 }
 
-pre, code, tt {
-  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
-}
-
 pre, .gist .gist-file .gist-data {
 /*  font-size: 0.8em; */
   color:#28B2E7; /* Sean bright blue */
@@ -789,12 +785,17 @@ pre, .gist .gist-file .gist-data {
   line-height:1.8em;
 /* 
   font-size: 18px;
- */
   max-height: 485px;
+*/
   padding-top: 0.25em !important;
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;
   overflow: auto;
+}
+
+pre, code, tt {
+  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
+  font-size: 1.0em;
 }
 
 
@@ -999,14 +1000,17 @@ div.slide p.notes {
 .s  { color: #BA2121 } /* Literal.String */
 .na { color: #7D9029 } /* Name.Attribute */
 .nb { color: #008000 } /* Name.Builtin */
-.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+/*.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.nc { color: #FFFFFF; font-weight: bold } /* Name.Class */
 .no { color: #880000 } /* Name.Constant */
 .nd { color: #AA22FF } /* Name.Decorator */
 .ni { color: #999999; font-weight: bold } /* Name.Entity */
 .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
-.nf { color: #0000FF } /* Name.Function */
+/*.nf { color: #0000FF } /* Name.Function */
+.nf { color: #FFFFFF } /* Name.Function */
 .nl { color: #A0A000 } /* Name.Label */
-.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+/*.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.nn { color: #FFFFFF; font-weight: bold } /* Name.Namespace */
 .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .nv { color: #19177C } /* Name.Variable */
 .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
@@ -1718,7 +1722,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1726,7 +1730,8 @@ function main() {
             <header><h1>Building Your First Continuuity Reactor Application</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
+            <section><!-- .. reST Editor: .. section-numbering:: -->
+<!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1739,7 +1744,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1749,7 +1754,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1759,10 +1764,9 @@ function main() {
             
             <section><p>In this module, you will learn how to:</p>
 <ul class="simple">
-<li>Use the Continuuity Reactor maven archetype</li>
+<li>Use the Continuuity Reactor <tt class="docutils literal">maven</tt> archetype</li>
 <li>Build a Continuuity Reactor Application</li>
-<li>Deploy the application</li>
-<li>?</li>
+<li>Deploy and run the application</li>
 </ul></section>
             
           </div>
@@ -1775,7 +1779,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1785,7 +1789,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1815,7 +1819,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1825,7 +1829,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1849,7 +1853,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1859,7 +1863,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1867,9 +1871,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
             <header><h1>Specifying the Maven Properties</h1></header>
             
             
-            <section><ul class="simple">
-<li>For &quot;HelloWorld&quot;:</li>
-</ul>
+            <section><p>For &quot;HelloWorld&quot;:</p>
 <pre><span class="go">Define value for property &#39;groupId&#39;: : com.example</span>
 <span class="go">Define value for property &#39;artifactId&#39;: : HelloWorld</span>
 <span class="go">Define value for property &#39;version&#39;: 1.0-SNAPSHOT: :</span>
@@ -1892,7 +1894,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1902,7 +1904,7 @@ dependencies and sample code as a base to start writing your own Big Data applic
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1935,7 +1937,7 @@ created under the current directory</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1945,7 +1947,7 @@ created under the current directory</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1954,7 +1956,7 @@ created under the current directory</li>
             
             
             <section><p>[DOCNOTE: FIXME! Add additional material]</p>
-<p>[What do we want to do here/]</p></section>
+<p>[What do we want to do here?]</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1966,7 +1968,7 @@ created under the current directory</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1976,7 +1978,7 @@ created under the current directory</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1986,9 +1988,9 @@ created under the current directory</li>
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
+<li>Use the Continuuity Reactor <tt class="docutils literal">maven</tt> archetype</li>
 <li>Create a simple Continuuity Reactor Application</li>
-<li>Deploy it to the Reactor</li>
-<li>Run and test your application</li>
+<li>Deploy and run it in the Reactor</li>
 </ul></section>
             
           </div>
@@ -2001,7 +2003,7 @@ created under the current directory</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2011,7 +2013,7 @@ created under the current directory</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2031,7 +2033,7 @@ created under the current directory</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m07_building_a_cr_application.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m07_building_a_cr_application.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">

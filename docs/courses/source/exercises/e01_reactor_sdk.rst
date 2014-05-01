@@ -1,8 +1,8 @@
-===========================================================
-Continuuity Reactor SDK Download & Install
-===========================================================
+============================================================
+Download Continuuity Reactor SDK, Install and Run Quickstart
+============================================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -27,8 +27,8 @@ Exercise Objectives
 In this exercise, you will:
 
 - Download and install the SDK
-- Basic Continuuity Reactor operations Start and Stop
-- Run the Quick Start tour
+- Learn Basic Continuuity Reactor operations: Start and Stop
+- Run the Quickstart tour
 
 ----
 
@@ -41,7 +41,7 @@ Exercise Steps
 - Unzip the download
 - Open a command line window, go to ``/bin`` and run ``reactor.sh start``
 - Open a browser window, go to ``http://localhost:9999``
-- Follow the steps of the *Log Analytics Application* Tour
+- Follow the steps of the *Log Analytics Application* Quickstart Tour
 - When finished, shut down the Reactor with ``reactor.sh stop``
 
 These steps are online at ``http://continuuity.com/developers/quickstart``
@@ -54,7 +54,7 @@ Exercise Summary
 You should now be able to:
 
 - Perform basic Reactor operations of Start and Stop
-- Taken the Quick Start tour
+- Taken the Quickstart tour
 - Use the Dashboard for basic operations
 - Inject and Query Data through the Dashboard
 - Modify an Application

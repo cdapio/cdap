@@ -2,7 +2,7 @@
 Types of Flowlets
 ============================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -192,34 +192,26 @@ uses the input context to decide which tokenizer to use
 
 ----
 
-Flowlet Input Context Example 1/2
-=================================
+Flowlet Input Context Example
+=============================
 
 .. sourcecode:: java
 
 	@ProcessInput
-	public void tokenize(String text, InputContext context)
-         throws Exception {
+	public void tokenize(String text, InputContext context) throws Exception {
 	  Tokenizer tokenizer;
+	  // If this failed before, fall back to simple white space
 	  if (context.getRetryCount() > 0) {
-	    // If failed before, fallback to simple white space
 	    tokenizer = new WhiteSpaceTokenizer();
-	  } else if ("code".equals(context.getOrigin())) {
-	    // Is this code? If its origin is "code",  assume yes
+	  }
+	  // Is this code? If its origin is named "code", then assume yes
+	  else if ("code".equals(context.getOrigin())) {
 	    tokenizer = new CodeTokenizer();
-	  } else { // Use the smarter tokenizer
+	  }
+	  else {
+	    // Use the smarter tokenizer
 	    tokenizer = new NaturalLanguageTokenizer();
 	  }
-	. . .
-
-----
-
-Flowlet Input Context Example 2/2
-=================================
-
-.. sourcecode:: java
-
-	. . .
 	  for (String token : tokenizer.tokenize(text)) {
 	    output.emit(token);
 	  }

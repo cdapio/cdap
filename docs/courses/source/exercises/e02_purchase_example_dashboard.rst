@@ -2,7 +2,7 @@
 Continuuity Reactor Purchase Example using Dashboard
 ===========================================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -27,9 +27,11 @@ Exercise Objectives
 In this exercise, you will:
 
 - Run the Continuuity Reactor *Purchase* Example
-- An application that uses scheduled MapReduce Workflows to read from one 
+- This application uses scheduled MapReduce Workflows to read from one 
   ObjectStore DataSet and write to another
-- ??
+- Learn how to use the Dashboard to enter events to a Stream
+- Learn how to use the Dashboard to run MapReduce Workflows
+- Learn how to use the Dashboard to run Procedures and query results
 
 ----
 
@@ -66,8 +68,9 @@ Exercise Summary
 You are now able to:
 
 - Install pre-compiled Applications
-- Use the Dashboard to...
-- ?
+- Use the Dashboard to enter events to a Stream
+- Use the Dashboard to run MapReduce Workflows
+- Use the Dashboard to query Reactor using a Procedure
 
 ----
 

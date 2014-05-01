@@ -776,10 +776,6 @@ a {
   border-bottom: 2px solid #3f3f3f;
 }
 
-pre, code, tt {
-  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
-}
-
 pre, .gist .gist-file .gist-data {
 /*  font-size: 0.8em; */
   color:#28B2E7; /* Sean bright blue */
@@ -795,6 +791,11 @@ pre, .gist .gist-file .gist-data {
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;
   overflow: auto;
+}
+
+pre, code, tt {
+  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
+  font-size: 1.0em;
 }
 
 
@@ -999,14 +1000,17 @@ div.slide p.notes {
 .s  { color: #BA2121 } /* Literal.String */
 .na { color: #7D9029 } /* Name.Attribute */
 .nb { color: #008000 } /* Name.Builtin */
-.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+/*.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.nc { color: #FFFFFF; font-weight: bold } /* Name.Class */
 .no { color: #880000 } /* Name.Constant */
 .nd { color: #AA22FF } /* Name.Decorator */
 .ni { color: #999999; font-weight: bold } /* Name.Entity */
 .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
-.nf { color: #0000FF } /* Name.Function */
+/*.nf { color: #0000FF } /* Name.Function */
+.nf { color: #FFFFFF } /* Name.Function */
 .nl { color: #A0A000 } /* Name.Label */
-.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+/*.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.nn { color: #FFFFFF; font-weight: bold } /* Name.Namespace */
 .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .nv { color: #19177C } /* Name.Variable */
 .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
@@ -1726,7 +1730,8 @@ function main() {
             <header><h1>Type Projection</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
+            <section><!-- .. reST Editor: .. section-numbering:: -->
+<!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -2022,12 +2027,14 @@ if type A is compatible with type B</li>
 projecting from <tt class="docutils literal">Coordinate</tt> to <tt class="docutils literal">Point</tt> will leave the <tt class="docutils literal">color</tt> field
 as <tt class="docutils literal">null</tt></p>
 <pre><span class="kd">class</span> <span class="nc">Point</span> <span class="o">{</span>
-  <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
   <span class="kd">private</span> <span class="n">String</span> <span class="n">color</span><span class="o">;</span>
 <span class="o">}</span>
 
 <span class="kd">class</span> <span class="nc">Coordinates</span> <span class="o">{</span>
-  <span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">;</span>
+  <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
+  <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
 <span class="o">}</span>
 </pre></section>
             
@@ -2129,7 +2136,7 @@ any subclass of that class</li>
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m15">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m14">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">

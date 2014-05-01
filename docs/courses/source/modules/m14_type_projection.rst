@@ -2,7 +2,7 @@
 Type Projection
 ============================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -124,12 +124,14 @@ as ``null``
 .. sourcecode:: java
 
 	class Point {
-	  private int x, y;
+	  private int x;
+	  private int y;
 	  private String color;
 	}
 
 	class Coordinates {
-	  int x, y;
+	  int x;
+	  int y;
 	}
 
 ----
@@ -158,4 +160,4 @@ You should now understand:
 Module Completed
 ================
 
-`Chapter Index <return.html#m15>`__
+`Chapter Index <return.html#m14>`__

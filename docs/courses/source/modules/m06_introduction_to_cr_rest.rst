@@ -2,7 +2,7 @@
 Introduction to the Continuuity Reactor REST API
 ================================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation

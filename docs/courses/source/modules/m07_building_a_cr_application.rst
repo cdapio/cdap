@@ -2,7 +2,7 @@
 Building Your First Continuuity Reactor Application
 ===================================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -18,10 +18,9 @@ Module Objectives
 
 In this module, you will learn how to:
 
-- Use the Continuuity Reactor maven archetype
+- Use the Continuuity Reactor ``maven`` archetype
 - Build a Continuuity Reactor Application
-- Deploy the application
-- ?
+- Deploy and run the application
 
 ----
 
@@ -58,7 +57,7 @@ Specifying the Maven Properties
 Specifying the Maven Properties
 =================================
 
-- For "HelloWorld":
+For "HelloWorld":
 
 .. sourcecode:: shell-session
 
@@ -100,7 +99,7 @@ Changing The Project
 
 [DOCNOTE: FIXME! Add additional material]
 
-[What do we want to do here/]
+[What do we want to do here?]
 
 ----
 
@@ -109,9 +108,9 @@ Module Summary
 
 You should now be able to:
 
+- Use the Continuuity Reactor ``maven`` archetype
 - Create a simple Continuuity Reactor Application
-- Deploy it to the Reactor
-- Run and test your application
+- Deploy and run it in the Reactor
 
 ----
 

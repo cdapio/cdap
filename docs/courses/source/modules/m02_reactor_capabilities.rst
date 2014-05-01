@@ -2,7 +2,6 @@
 Continuuity Reactor Capabilities
 ============================================
 
-.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -16,7 +15,7 @@ Continuuity Reactor Capabilities
 Module Objectives
 =================
 
-In this module, you will learn about:
+In this module, you will learn:
 
 - Continuuity Reactor APIs
 - Reactor as an integrated platform
@@ -78,11 +77,11 @@ Reactor supports developers through the entire application development lifecycle
 Module Summary
 ==============
 
-You have looked at:
+You have now:
 
-- Continuuity Reactor's simple APIs
-- Reactor as an integrated platform
-- Reactor's application lifecycle support
+- Seen Continuuity Reactor's simple APIs
+- Looked at Reactor as an integrated platform
+- Reviewed Reactor's application lifecycle support
 
 ----
 

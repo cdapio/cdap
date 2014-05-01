@@ -2,7 +2,7 @@
 Flows and Flowlets
 ============================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -126,7 +126,8 @@ Flow Example in Dashboard
 =========================
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_24_app_crawler_detail_dag.png
-   :width: 600px
+
+..   :width: 600px
    
 ----
 

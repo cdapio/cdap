@@ -1,20 +1,21 @@
 .. :Author: JJ
    :Description: Getting Started With Continuuity Reactor
 
-.. reST Editor: .. section-numbering::
+========================================
+Getting Started With Continuuity Reactor
+========================================
+
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
+.. landslide: return c01_return.html
 
 .. Presentation PDF Generation
 .. rst2pdf: config ../_theme/pdf-generation/pdf_config
 .. rst2pdf: stylesheets ../_theme/pdf-generation/pdf_stylesheet
-
-========================================
-Getting Started With Continuuity Reactor
-========================================
 
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
@@ -76,6 +77,8 @@ Upon completion of this course you should be able to:
 - Understand Reactor application debugging and testing strategies
 - Complete common operations tasks and procedures
 
+----
+
 .. landslide: COURSE MODULES START HERE
 
 
@@ -85,15 +88,15 @@ Upon completion of this course you should be able to:
 .. chapter 1
 .. landslide: chapter: What Does Continuuity Reactor Do?
 .. .....................................................
-.. landslide: module: Developing a Big Data Application with Reactor
-.. landslide: module link: ../modules/m01_developing_a_big_data_application.rst
+.. landslide: module: Solving Big Data Problems with Reactor
+.. landslide: module link: ../modules/m01_solving_big_data_problems_with_reactor.rst
 .. landslide: module: Continuuity Reactor Capabilities
 .. landslide: module link: ../modules/m02_reactor_capabilities.rst
 .. landslide: module: Continuuity Reactor Overview
 .. landslide: module link: ../modules/m03_reactor_overview.rst
 .. landslide: module: Continuuity Reactor SDK
 .. landslide: module link: ../modules/m04_reactor_sdk.rst
-.. landslide: exercise: Download Continuuity Reactor SDK, install and run Quickstart
+.. landslide: exercise: Download Continuuity Reactor SDK, Install and Run Quickstart
 .. landslide: exercise link: ../exercises/e01_reactor_sdk.rst
 
 
@@ -105,7 +108,7 @@ Upon completion of this course you should be able to:
 .. ....................................................
 .. landslide: module: Exploring an Example Reactor Application
 .. landslide: module link: ../modules/m05_exploring_a_reactor_application.rst
-.. landslide: exercise: Continuuity Reactor Purchase Example with Dashboard
+.. landslide: exercise: Continuuity Reactor Purchase Example using Dashboard
 .. landslide: exercise link: ../exercises/e02_purchase_example_dashboard.rst
 .. landslide: module: Introduction to the Continuuity Reactor REST API
 .. landslide: module link: ../modules/m06_introduction_to_cr_rest.rst
@@ -116,11 +119,11 @@ Upon completion of this course you should be able to:
 .. chapter 3
 .. landslide: chapter: Ingesting Data into Continuuity Reactor
 .. ...........................................................
-.. landslide: module: Methods for Ingesting Data
+.. landslide: module: Sending Data To Streams
 .. landslide: module link: ../modules/m08_sending_data_to_streams.rst
 .. landslide: module: Creating Streams
 .. landslide: module link: ../modules/m09_creating_streams.rst
-.. landslide: module: Sending Data to Streams
+.. landslide: module: Streams REST API
 .. landslide: module link: ../modules/m10_streams_rest_api.rst
 .. landslide: exercise: Continuuity Reactor Purchase Example with REST
 .. landslide: exercise link: ../exercises/e03_purchase_example_rest.rst
@@ -173,14 +176,14 @@ Upon completion of this course you should be able to:
 .. landslide: module: Integrating Reactor in CI
 
 .. chapter 8
-.. ................................................
 .. landslide: chapter: Integration Testing Strategies
+.. ................................................
 .. landslide: module: Testing with Local Reactor
 .. landslide: module: Testing with Distributed Reactor
 
 .. chapter 9
-.. ................................................
 .. landslide: chapter: Debugging Applications With Reactor
+.. ................................................
 .. landslide: module: Debugging Strategies
 
 
@@ -216,11 +219,9 @@ Upon completion of this course you should be able to:
 
 ----
 
-==========
 Conclusion
 ==========
-
-..
+.fx: center_title_slide
 
 ----
 
@@ -241,10 +242,10 @@ You should now be able to:
 
 - Describe Continuuity Reactor capabilities
 - Explain Reactor programming paradigms
+- Build basic Reactor applications
 - Understand real-time processing using Flows
 - Perform batch processing using MapReduce
 - Serve data using Procedures
-- Build basic Reactor applications
 - Understand Reactor application testing strategies
 
 ----
@@ -253,9 +254,7 @@ Congratulations!
 ================
 
 - You have completed the **Getting Started With Continuuity Reactor** course
-
 - Please be sure to complete the course evaluation
-
 - Thank you for your time and attention!
 
 ---- 

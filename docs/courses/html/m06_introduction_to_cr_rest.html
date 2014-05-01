@@ -776,10 +776,6 @@ a {
   border-bottom: 2px solid #3f3f3f;
 }
 
-pre, code, tt {
-  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
-}
-
 pre, .gist .gist-file .gist-data {
 /*  font-size: 0.8em; */
   color:#28B2E7; /* Sean bright blue */
@@ -789,12 +785,17 @@ pre, .gist .gist-file .gist-data {
   line-height:1.8em;
 /* 
   font-size: 18px;
- */
   max-height: 485px;
+*/
   padding-top: 0.25em !important;
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;
   overflow: auto;
+}
+
+pre, code, tt {
+  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
+  font-size: 1.0em;
 }
 
 
@@ -999,14 +1000,17 @@ div.slide p.notes {
 .s  { color: #BA2121 } /* Literal.String */
 .na { color: #7D9029 } /* Name.Attribute */
 .nb { color: #008000 } /* Name.Builtin */
-.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+/*.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.nc { color: #FFFFFF; font-weight: bold } /* Name.Class */
 .no { color: #880000 } /* Name.Constant */
 .nd { color: #AA22FF } /* Name.Decorator */
 .ni { color: #999999; font-weight: bold } /* Name.Entity */
 .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
-.nf { color: #0000FF } /* Name.Function */
+/*.nf { color: #0000FF } /* Name.Function */
+.nf { color: #FFFFFF } /* Name.Function */
 .nl { color: #A0A000 } /* Name.Label */
-.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+/*.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.nn { color: #FFFFFF; font-weight: bold } /* Name.Namespace */
 .nt { color: #008000; font-weight: bold } /* Name.Tag */
 .nv { color: #19177C } /* Name.Variable */
 .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
@@ -1718,7 +1722,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1726,7 +1730,8 @@ function main() {
             <header><h1>Introduction to the Continuuity Reactor REST API</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
+            <section><!-- .. reST Editor: .. section-numbering:: -->
+<!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1739,7 +1744,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1749,7 +1754,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1780,7 +1785,7 @@ Continuuity Reactor through its REST API:</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1790,7 +1795,7 @@ Continuuity Reactor through its REST API:</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1820,7 +1825,7 @@ Continuuity Reactor through its REST API:</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1830,7 +1835,7 @@ Continuuity Reactor through its REST API:</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1865,7 +1870,7 @@ PUT http://&lt;gateway&gt;:10000/v2/streams/&lt;new-stream-id&gt;
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1875,7 +1880,7 @@ PUT http://&lt;gateway&gt;:10000/v2/streams/&lt;new-stream-id&gt;
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1906,7 +1911,7 @@ each of which may be a group of different agents
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1916,7 +1921,7 @@ each of which may be a group of different agents
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1946,7 +1951,7 @@ though you can truncate the DataSet using this API</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1956,7 +1961,7 @@ though you can truncate the DataSet using this API</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1981,7 +1986,7 @@ though you can truncate the DataSet using this API</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1991,7 +1996,7 @@ though you can truncate the DataSet using this API</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2015,7 +2020,7 @@ though you can truncate the DataSet using this API</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2025,7 +2030,7 @@ though you can truncate the DataSet using this API</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2053,7 +2058,7 @@ elements running in the Continuuity Reactor</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2063,7 +2068,7 @@ elements running in the Continuuity Reactor</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2090,7 +2095,7 @@ about the Application’s behavior and performance</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2100,7 +2105,7 @@ about the Application’s behavior and performance</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2125,7 +2130,7 @@ about the Application’s behavior and performance</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2135,7 +2140,7 @@ about the Application’s behavior and performance</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2164,7 +2169,7 @@ about the Application’s behavior and performance</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2174,7 +2179,7 @@ about the Application’s behavior and performance</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2194,7 +2199,7 @@ about the Application’s behavior and performance</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../modules/m06_introduction_to_cr_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">

@@ -11,11 +11,11 @@ Sending Data to Streams
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m09| raw:: html
+.. |br_m08| raw:: html
 
    <br />
 
-.. |br2_m09| raw:: html
+.. |br2_m08| raw:: html
 
    <br /><br />
 
@@ -27,14 +27,9 @@ Module Objectives
 In this module, you will look at:
 
 - Sending events to an existing Stream
-- Sending data to an existing Stream using curl
+- Sending data to an existing Stream using the ``curl`` command
 
 ----
-
-.. Overview
-.. ========
-.. .fx: center_title_slide
-
 
 Sending Events to a Stream
 ==========================
@@ -80,7 +75,7 @@ Sending Events to a Stream: Passing Headers
 
 - The body of the request must contain the event in binary form
 - Pass headers for the event as HTTP headers,
-  prefixing them with the *stream-id*: |br_m09|
+  prefixing them with the *stream-id*: |br_m08|
   ``<stream-id>.<property>:<string value>``
 - After receiving the request, the HTTP handler transforms it into a Stream event:
 
@@ -89,8 +84,6 @@ Sending Events to a Stream: Passing Headers
 #. If the request contains any headers prefixed with the *stream-id*,
    the *stream-id* prefix is stripped from the header name and
    the header is added to the event
-
-.. [DOCNOTE: FIXME: this formatting is wonky]
 
 ----
 
@@ -103,21 +96,22 @@ Sending Events to a Stream: Example using curl
     
 where
 
-$line
-  is a line from a log file, such as 
-  
-``165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225``
-``"http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"``
+``$line`` is a line from a log file, such as 
+
+.. sourcecode:: shell-session
+
+	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225
+	"http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
   
 ----
 
 Module Summary
 ==============
 
-You should be able to:
+You should now be able to:
 
 - Send events to an existing Stream
-- Sending data to an existing Stream using curl
+- Sending data to an existing Stream using ``curl``
 
 ----
 

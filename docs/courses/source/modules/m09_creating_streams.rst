@@ -2,7 +2,7 @@
 Creating Streams
 ================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -28,15 +28,7 @@ In this module, you will look at:
 
 - Creating Streams
 - Naming conventions for Streams
-- Display of Streams in the Dashboard
-- Display of a Stream's details in the Dashboard
-
-.. ----
-
-.. Overview
-.. ========
-.. .fx: center_title_slide
-
+- Display of Stream and their details in the Dashboard
 
 ----
 
@@ -135,7 +127,7 @@ You should be able describe:
 - The two methods for creating Streams
 - Naming conventions for Streams
 
-You should be able to find:
+You should now be able to find:
 
 - The display of Streams in the Dashboard
 - The display of any particular Stream in the Dashboard

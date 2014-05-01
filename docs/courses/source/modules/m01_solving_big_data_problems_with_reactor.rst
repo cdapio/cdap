@@ -1,8 +1,7 @@
-==============================================
-Developing A Big Data Application with Reactor
-==============================================
+======================================
+Solving Big Data Problems with Reactor
+======================================
 
-.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -143,8 +142,7 @@ Ingesting Data
 
 .. sourcecode:: shell-session
 
-	curl -X POST -d "$line" 
-	  http://$gateway:10000/v2/streams/MyInputStream;
+	curl -X POST -d "$line" http://$gateway:10000/v2/streams/MyInputStream;
 
 -----
 
@@ -168,6 +166,7 @@ Processing Data: Filtering, Analyzing
 	  public void round(Double number) {
 	    output.emit(Math.round(number));
 	  }
+	}
 
 -----
 
@@ -176,13 +175,14 @@ Storing Data
 
 .. sourcecode:: java
 
-	Class MyCountingFowlet extends AbstractFlowlet {
+	class MyCountingFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")
 	  private KeyValueTable counters;
 	  ...
 	  void process(String key) {
 	    counters.increment(key.getBytes());
 	  }
+	}
 
 -----
 
