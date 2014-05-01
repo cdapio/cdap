@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 
 /**
- *
+ * Tests covering the {@link SharedResourceCache} implementation.
  */
 public class SharedResourceCacheTest {
   private static final String ZK_NAMESPACE = "/SharedResourceCacheTest";

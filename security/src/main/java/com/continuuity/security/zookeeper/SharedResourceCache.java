@@ -123,10 +123,19 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     return loaded;
   }
 
+  /**
+   * Adds a {@code ResourceListener} to be notified of cache updates.
+   * @param listener the listener to be invoked
+   */
   public void addListener(ResourceListener<T> listener) {
     listeners.add(listener);
   }
 
+  /**
+   * Removes a previously registered listener from further notifications.
+   * @param listener the listener to remove
+   * @return whether or not the listener was found and removed
+   */
   public boolean removeListener(ResourceListener<T> listener) {
     return listeners.remove(listener);
   }
@@ -199,6 +208,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
   }
 
+  /**
+   * Removes a resource from the shared cache.
+   * @param key the name of the resource to remove
+   * @return the previously set resource
+   */
   public T remove(Object key) {
     if (key == null) {
       throw new NullPointerException("Key cannot be null.");
@@ -213,6 +227,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     return removedInstance;
   }
 
+  /**
+   * Returns a view of all currently set resources.
+   */
   public Iterable<T> getResources() {
     return resources.values();
   }

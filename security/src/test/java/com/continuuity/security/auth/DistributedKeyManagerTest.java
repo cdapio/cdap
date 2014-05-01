@@ -35,7 +35,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.assertEquals;
 
 /**
- *
+ * Tests covering the {@link DistributedKeyManager} implementation.
  */
 public class DistributedKeyManagerTest extends TestTokenManager {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
