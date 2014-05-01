@@ -2,15 +2,19 @@ package com.continuuity.app.program;
 
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarResources;
+import com.continuuity.common.lang.jar.ProgramClassLoader;
+import com.continuuity.common.lang.jar.ProgramJarResources;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.InputSupplier;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.jar.Attributes;
@@ -20,23 +24,24 @@ import java.util.jar.Manifest;
  * Default implementation of program.
  */
 final class DefaultProgram implements Program {
-  private final ClassLoader jarClassLoader;
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultProgram.class);
+  private final ClassLoader classLoader;
   private final String mainClassName;
   private final Type processorType;
   private final ApplicationSpecification specification;
   private final Id.Program id;
-  // TODO: should not be exposed at this level of abstraction. Added to support first cut of MapReduce integration
+  private final File jarDir;
   private final Location programJarLocation;
 
-  DefaultProgram(Location location, final JarResources jarResources) throws IOException {
-    this.programJarLocation = location;
-
-    jarClassLoader = new JarClassLoader(jarResources);
+  DefaultProgram(Location programJarLocation, File bundleJarFolder, final ProgramJarResources jarResources,
+                 ClassLoader parentClassLoader) throws IOException {
+    this.programJarLocation = programJarLocation;
+    this.jarDir = bundleJarFolder;
+    this.classLoader = new ProgramClassLoader(bundleJarFolder, parentClassLoader);
 
     Manifest manifest = jarResources.getManifest();
 
     mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
-
     String accountId = getAttribute(manifest, ManifestFields.ACCOUNT_ID);
     String applicationId = getAttribute(manifest, ManifestFields.APPLICATION_ID);
     String programName = getAttribute(manifest, ManifestFields.PROGRAM_NAME);
@@ -61,7 +66,7 @@ final class DefaultProgram implements Program {
 
   @Override
   public <T> Class<T> getMainClass() throws ClassNotFoundException {
-    return (Class<T>) jarClassLoader.loadClass(mainClassName);
+    return (Class<T>) classLoader.loadClass(mainClassName);
   }
 
   @Override
@@ -101,7 +106,7 @@ final class DefaultProgram implements Program {
 
   @Override
   public ClassLoader getClassLoader() {
-    return jarClassLoader;
+    return classLoader;
   }
 
   private String getAttribute(Manifest manifest, Attributes.Name name) throws IOException {

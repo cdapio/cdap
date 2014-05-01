@@ -136,7 +136,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       return;
     } else {
       LOG.info("Authentication succeeded for token: {}", accessToken);
-      //TODO: transform the access token and send the access token identifier
       String serealizedAccessTokenIdentifier = accessTokenTransformer.transform(accessToken.trim());
       msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + serealizedAccessTokenIdentifier);
       Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());

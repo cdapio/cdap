@@ -17,6 +17,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.Specifications;
+import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -76,7 +77,9 @@ public class ReactorTestBase {
    * @param applicationClz The application class
    * @return An {@link com.continuuity.test.ApplicationManager} to manage the deployed application.
    */
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) {
+  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+                                                 File...bundleEmbeddedJars) {
+
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
     try {
@@ -86,7 +89,7 @@ public class ReactorTestBase {
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
                                                           TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
-                                                          applicationClz);
+                                                          applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,

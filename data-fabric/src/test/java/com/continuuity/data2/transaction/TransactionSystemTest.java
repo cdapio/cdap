@@ -1,6 +1,10 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,6 +22,8 @@ public abstract class TransactionSystemTest {
   public static final byte[] C4 = Bytes.toBytes("change4");
 
   protected abstract TransactionSystemClient getClient() throws Exception;
+
+  protected abstract TransactionStateStorage getSateStorage() throws Exception;
 
   @Test
   public void testCommitRaceHandling() throws Exception {
@@ -170,6 +176,45 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client.commit(tx));
     // abort of not active tx has no affect
     client.abort(tx);
+  }
+
+  // todo add test invalidate method
+  @Test
+  public void testInvalidateTx() throws Exception {
+    TransactionSystemClient client = getClient();
+    // Invalidate an in-progress tx
+    Transaction tx1 = client.startShort();
+    client.canCommit(tx1, $(C1, C2));
+    Assert.assertTrue(client.invalidate(tx1.getWritePointer()));
+    // Cannot invalidate a committed tx
+    Transaction tx2 = client.startShort();
+    client.canCommit(tx2, $(C3, C4));
+    client.commit(tx2);
+    Assert.assertFalse(client.invalidate(tx2.getWritePointer()));
+  }
+
+  @Test
+  public void testResetState() throws Exception {
+    // have tx in progress, committing and committed then reset,
+    // get the last snapshot and see that it is empty
+    TransactionSystemClient client = getClient();
+    TransactionStateStorage stateStorage = getSateStorage();
+
+    Transaction tx1 = client.startShort();
+    Transaction tx2 = client.startShort();
+    client.canCommit(tx1, $(C1, C2));
+    client.commit(tx1);
+    client.canCommit(tx2, $(C3, C4));
+
+    long currentTs = System.currentTimeMillis();
+    client.resetState();
+
+    TransactionSnapshot snapshot = stateStorage.getLatestSnapshot();
+    Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    Assert.assertEquals(0, snapshot.getInvalid().size());
+    Assert.assertEquals(0, snapshot.getInProgress().size());
+    Assert.assertEquals(0, snapshot.getCommittingChangeSets().size());
+    Assert.assertEquals(0, snapshot.getCommittedChangeSets().size());
   }
 
   private Collection<byte[]> $(byte[]... val) {

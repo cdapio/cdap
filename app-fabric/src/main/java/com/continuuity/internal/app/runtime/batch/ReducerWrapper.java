@@ -1,5 +1,7 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.api.ProgramLifecycle;
+import com.continuuity.api.RuntimeContext;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -7,12 +9,15 @@ import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.reduce.WrappedReducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -25,16 +30,32 @@ public class ReducerWrapper extends Reducer {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
 
+  private File unpackedJarDir;
+
+  @Override
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    super.cleanup(context);
+
+    if (unpackedJarDir != null) {
+      try {
+        FileUtils.deleteDirectory(unpackedJarDir);
+      } catch (IOException e) {
+        // NO-OP
+      }
+    }
+  }
+
   @Override
   public void run(Context context) throws IOException, InterruptedException {
+    unpackedJarDir = Files.createTempDir();
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
+      Reducer delegate = createReducerInstance(basicMapReduceContext.getProgram().getClassLoader(), userReducer);
 
       // injecting runtime components, like datasets, etc.
       try {
@@ -52,6 +73,15 @@ public class ReducerWrapper extends Reducer {
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
 
+      if (delegate instanceof ProgramLifecycle) {
+        try {
+          ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
+        } catch (Exception e) {
+          LOG.error("Failed to initialize mapper with " + basicMapReduceContext.toString(), e);
+          throw Throwables.propagate(e);
+        }
+      }
+
       delegate.run(flushingContext);
       // sleep to allow metrics to be written
       TimeUnit.SECONDS.sleep(2L);
@@ -61,9 +91,20 @@ public class ReducerWrapper extends Reducer {
       try {
         basicMapReduceContext.flushOperations();
       } catch (Exception e) {
-        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString());
+        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString(), e);
         throw Throwables.propagate(e);
       }
+
+
+      if (delegate instanceof ProgramLifecycle) {
+        try {
+          ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
+        } catch (Exception e) {
+          LOG.error("Error during destroy of mapper", e);
+          // Do nothing, try to finish
+        }
+      }
+
     } finally {
       basicMapReduceContext.close(); // closes all datasets
       basicMapReduceContext.getMetricsCollectionService().stop();

@@ -20,6 +20,7 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -96,51 +97,61 @@ public class SandboxJVM {
     }
 
     // Load the JAR using the JAR class load and load the manifest file.
+    File unpackedJarDir = Files.createTempDir();
 
-    Object mainClass;
     try {
-      if ("LOCAL".equals(locationFactory)) {
-        lf = new LocalLocationFactory();
-      } else if ("DISTRIBUTED".equals(locationFactory)) {
-        lf = new HDFSLocationFactory(new Configuration());
-      } else {
-        LOG.error("Unknown location factory specified");
+      Object mainClass;
+
+      try {
+        if ("LOCAL".equals(locationFactory)) {
+          lf = new LocalLocationFactory();
+        } else if ("DISTRIBUTED".equals(locationFactory)) {
+          lf = new HDFSLocationFactory(new Configuration());
+        } else {
+          LOG.error("Unknown location factory specified");
+          return -1;
+        }
+
+        Program archive = Programs.create(lf.create(jarFilename), unpackedJarDir);
+        mainClass = archive.getMainClass().newInstance();
+      } catch (Exception e) {
+        LOG.error(e.getMessage());
         return -1;
       }
 
-      Program archive = Programs.create(lf.create(jarFilename));
-      mainClass = archive.getMainClass().newInstance();
-    } catch (Exception e) {
-      LOG.error(e.getMessage());
-      return -1;
-    }
+      // Convert it to the type application.
+      Application application = (Application) mainClass;
 
-    // Convert it to the type application.
-    Application application = (Application) mainClass;
+      // Now, we are ready to call configure on application.
+      // Setup security manager, this setting allows only output file to be written.
+      // Nothing else can be done from here on other than creating that file.
+      ApplicationSecurity.builder()
+        .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
+        .apply();
 
-    // Now, we are ready to call configure on application.
-    // Setup security manager, this setting allows only output file to be written.
-    // Nothing else can be done from here on other than creating that file.
-    ApplicationSecurity.builder()
-      .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
-      .apply();
+      // Now, we call configure, which returns application specification.
+      ApplicationSpecification specification = Specifications.from(application.configure());
 
-    // Now, we call configure, which returns application specification.
-    ApplicationSpecification specification = Specifications.from(application.configure());
-
-    // Convert the specification to JSON.
-    // We write the Application specification to output file in JSON format.
-    try {
-      Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
+      // Convert the specification to JSON.
+      // We write the Application specification to output file in JSON format.
       try {
-        // TODO: The SchemaGenerator should be injected.
-        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
-      } finally {
-        writer.close();
+        Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
+        try {
+          // TODO: The SchemaGenerator should be injected.
+          ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
+        } finally {
+          writer.close();
+        }
+      } catch (IOException e) {
+        LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
+        return -1;
       }
-    } catch (IOException e) {
-      LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
-      return -1;
+    } finally {
+      try {
+        FileUtils.deleteDirectory(unpackedJarDir);
+      } catch (IOException e) {
+        LOG.warn("Error deleting temp unpacked jar directory: {}", unpackedJarDir.getAbsolutePath(), e);
+      }
     }
 
     return 0;

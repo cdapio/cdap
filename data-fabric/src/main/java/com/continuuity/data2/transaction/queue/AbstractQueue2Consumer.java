@@ -37,6 +37,8 @@ import java.util.SortedMap;
  */
 public abstract class AbstractQueue2Consumer implements Queue2Consumer, TransactionAware, Closeable {
 
+  private static final DequeueResult<byte[]> EMPTY_RESULT = DequeueResult.Empty.result();
+
   // TODO: Make these configurable.
   // Minimum number of rows to fetch per scan.
   private static final int MIN_FETCH_ROWS = 100;
@@ -93,12 +95,12 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   }
 
   @Override
-  public DequeueResult dequeue() throws IOException {
+  public DequeueResult<byte[]> dequeue() throws IOException {
     return dequeue(1);
   }
 
   @Override
-  public DequeueResult dequeue(int maxBatchSize) throws IOException {
+  public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
     Preconditions.checkArgument(maxBatchSize > 0, "Batch size must be > 0.");
 
     // pre-compute the "claimed" state content in case of FIFO.
@@ -133,7 +135,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
     // If nothing get dequeued, return the empty result.
     if (consumingEntries.isEmpty()) {
-      return DequeueResult.EMPTY_RESULT;
+      return EMPTY_RESULT;
     }
 
     return new SimpleDequeueResult(consumingEntries.values());
@@ -367,7 +369,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   /**
    * Implementation of dequeue result.
    */
-  private final class SimpleDequeueResult implements DequeueResult {
+  private final class SimpleDequeueResult implements DequeueResult<byte[]> {
 
     private final List<SimpleQueueEntry> entries;
 

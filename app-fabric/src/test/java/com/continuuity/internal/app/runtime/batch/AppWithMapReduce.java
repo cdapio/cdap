@@ -28,6 +28,7 @@ public class AppWithMapReduce implements Application {
         .add(new KeyValueTable("onFinish"))
         .add(new SimpleTimeseriesTable("timeSeries"))
         .add(new Table("counters"))
+        .add(new Table("countersFromContext"))
       .noFlow()
       .noProcedure()
       .withMapReduce().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())

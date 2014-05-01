@@ -4,10 +4,16 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
+import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.JarResources;
+import com.continuuity.common.lang.jar.ProgramJarResources;
+import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
@@ -17,8 +23,19 @@ import java.util.Locale;
  */
 public final class Programs {
 
-  public static Program create(Location location) throws IOException {
-    return new DefaultProgram(location, new JarResources(location));
+  public static Program create(Location location, File destinationUnpackedJarDir,
+                               ClassLoader parentClassLoader) throws IOException {
+    Preconditions.checkArgument(location != null);
+    Preconditions.checkArgument(location.exists());
+    Preconditions.checkArgument(destinationUnpackedJarDir != null);
+    Preconditions.checkArgument(destinationUnpackedJarDir.exists());
+
+    File unpackedJarDir = BundleJarUtil.unpackProgramJar(location, destinationUnpackedJarDir);
+    return new DefaultProgram(location, unpackedJarDir, new ProgramJarResources(unpackedJarDir), parentClassLoader);
+  }
+
+  public static Program create(Location location, File destinationUnpackedJarDir) throws IOException {
+    return Programs.create(location, destinationUnpackedJarDir, null);
   }
 
   /**

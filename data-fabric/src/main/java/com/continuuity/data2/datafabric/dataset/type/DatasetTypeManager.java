@@ -1,31 +1,31 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.lang.ClassLoaders;
-import com.google.common.util.concurrent.AbstractIdleService;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -41,8 +41,6 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DatasetManager mdsDatasetManager;
   private final LocationFactory locationFactory;
-  /** guards {@link #mds} */
-  private final Object mdsGuard = new Object();
 
   /** dataset types metadata store */
   private DatasetTypeMDS mds;
@@ -63,8 +61,9 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    // todo: once namespacing is implemented in new datasets "continuuity.system" should go away from here
-    OrderedTable table = getMDSTable(mdsDatasetManager, "continuuity.system.datasets.instance");
+    // "null" for class being in system classpath, for mds it is always true
+    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetManager, "datasets.type", "orderedTable",
+                                                         DatasetInstanceProperties.EMPTY, null);
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);
   }
@@ -83,61 +82,63 @@ public class DatasetTypeManager extends AbstractIdleService {
   public void addModule(final String name, final String className, final Location jarLocation)
     throws DatasetModuleConflictException {
 
-    LOG.info("adding module, name: {}, className: {}, jarLocation: {}", name, className, jarLocation);
+    LOG.info("adding module, name: {}, className: {}, jarLocation: {}",
+             name, className, jarLocation == null ? "[local]" : jarLocation.toURI());
 
     try {
-      getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+      getTxExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws DatasetModuleConflictException {
-          synchronized (mdsGuard) {
-            DatasetModuleMeta existing = mds.getModule(name);
-            if (existing != null) {
-              String msg = String.format("cannot add module %s, module with the same name already exists: %s",
-                                         name, existing);
-              LOG.warn(msg);
-              throw new DatasetModuleConflictException(msg);
-            }
-
-            DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
-            ClassLoader cl;
-            DatasetModule module;
-            try {
-              // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
-              //       are system classes
-              cl = new JarClassLoader(jarLocation);
-              @SuppressWarnings("unchecked")
-              Class<DatasetModule> moduleClass = (Class<DatasetModule>) ClassLoaders.loadClass(className, cl, this);
-              module = moduleClass.newInstance();
-            } catch (Exception e) {
-              throw Throwables.propagate(e);
-            }
-
-            DependencyTrackingRegistry reg = new DependencyTrackingRegistry(registry, cl);
-            module.register(reg);
-
-            List<String> moduleDependencies = Lists.newArrayList();
-            for (String usedType : reg.getUsedTypes()) {
-              DatasetModuleMeta usedModule = mds.getModuleByType(usedType);
-              // adding all used types and the module itself, in this very order to keep the order of loading modules
-              // for instantiating a type
-              moduleDependencies.addAll(usedModule.getUsesModules());
-              moduleDependencies.add(usedModule.getName());
-              // also adding this module as a dependent for all modules it uses
-              usedModule.addUsedByModule(name);
-              mds.write(usedModule);
-            }
-
-            DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className, jarLocation.toURI(),
-                                                                 reg.getTypes(), moduleDependencies);
-            mds.write(moduleMeta);
+          DatasetModuleMeta existing = mds.getModule(name);
+          if (existing != null) {
+            String msg = String.format("cannot add module %s, module with the same name already exists: %s",
+                                       name, existing);
+            LOG.warn(msg);
+            throw new DatasetModuleConflictException(msg);
           }
+
+          ClassLoader cl;
+          DatasetModule module;
+          try {
+            // NOTE: we assume all classes needed to load dataset module class are available in the jar or otherwise
+            //       are system classes
+            // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
+            cl = jarLocation == null ? this.getClass().getClassLoader() : new JarClassLoader(jarLocation);
+            @SuppressWarnings("unchecked")
+            Class<DatasetModule> moduleClass = (Class<DatasetModule>) ClassLoaders.loadClass(className, cl, this);
+            module = moduleClass.newInstance();
+          } catch (Exception e) {
+            LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
+                      className, name, jarLocation);
+            throw Throwables.propagate(e);
+          }
+
+          DependencyTrackingRegistry reg = new DependencyTrackingRegistry(cl);
+          module.register(reg);
+
+          List<String> moduleDependencies = Lists.newArrayList();
+          for (String usedType : reg.getUsedTypes()) {
+            DatasetModuleMeta usedModule = mds.getModuleByType(usedType);
+            // adding all used types and the module itself, in this very order to keep the order of loading modules
+            // for instantiating a type
+            moduleDependencies.addAll(usedModule.getUsesModules());
+            moduleDependencies.add(usedModule.getName());
+            // also adding this module as a dependent for all modules it uses
+            usedModule.addUsedByModule(name);
+            mds.write(usedModule);
+          }
+
+          DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className,
+                                                               jarLocation == null ? null : jarLocation.toURI(),
+                                                               reg.getTypes(), moduleDependencies);
+          mds.write(moduleMeta);
         }
       });
-    } catch (UncheckedExecutionException e) {
+    } catch (TransactionFailureException e) {
       if (e.getCause() != null && e.getCause() instanceof DatasetModuleConflictException) {
         throw (DatasetModuleConflictException) e.getCause();
       }
-      throw e;
+      throw Throwables.propagate(e);
     }
   }
 
@@ -151,9 +152,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       @Override
       public DatasetDefinition call() throws Exception {
         DatasetTypeMeta type = null;
-        synchronized (mdsGuard) {
-          type = mds.getType(datasetTypeName);
-        }
+        type = mds.getType(datasetTypeName);
         if (type == null) {
           return null;
         }
@@ -169,9 +168,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetTypeMeta>>() {
       @Override
       public Collection<DatasetTypeMeta> call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.getTypes();
-        }
+        return mds.getTypes();
       }
     });
   }
@@ -187,9 +184,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<DatasetTypeMeta>() {
       @Override
       public DatasetTypeMeta call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.getType(typeName);
-        }
+        return mds.getType(typeName);
       }
     });
   }
@@ -201,9 +196,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetModuleMeta>>() {
       @Override
       public Collection<DatasetModuleMeta> call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.getModules();
-        }
+        return mds.getModules();
       }
     });
   }
@@ -217,9 +210,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     return getTxExecutor().executeUnchecked(new Callable<DatasetModuleMeta>() {
       @Override
       public DatasetModuleMeta call() throws Exception {
-        synchronized (mdsGuard) {
-          return mds.getModule(name);
-        }
+        return mds.getModule(name);
       }
     });
   }
@@ -237,29 +228,27 @@ public class DatasetTypeManager extends AbstractIdleService {
       return getTxExecutor().execute(new Callable<Boolean>() {
         @Override
         public Boolean call() throws DatasetModuleConflictException {
-          synchronized (mdsGuard) {
-            DatasetModuleMeta module = mds.getModule(name);
+          DatasetModuleMeta module = mds.getModule(name);
 
-            if (module == null) {
-              return false;
-            }
-
-            // cannot delete when there's module that uses it
-            if (module.getUsedByModules().size() > 0) {
-              String msg =
-                String.format("Cannot delete module %s: other modules depend on it. Delete them first", module);
-              throw new DatasetModuleConflictException(msg);
-            }
-
-            // remove it from "usedBy" from other modules
-            for (String usedModuleName : module.getUsesModules()) {
-              DatasetModuleMeta usedModule = mds.getModule(usedModuleName);
-              usedModule.removeUsedByModule(name);
-              mds.write(usedModule);
-            }
-
-            mds.deleteModule(name);
+          if (module == null) {
+            return false;
           }
+
+          // cannot delete when there's module that uses it
+          if (module.getUsedByModules().size() > 0) {
+            String msg =
+              String.format("Cannot delete module %s: other modules depend on it. Delete them first", module);
+            throw new DatasetModuleConflictException(msg);
+          }
+
+          // remove it from "usedBy" from other modules
+          for (String usedModuleName : module.getUsesModules()) {
+            DatasetModuleMeta usedModule = mds.getModule(usedModuleName);
+            usedModule.removeUsedByModule(name);
+            mds.write(usedModule);
+          }
+
+          mds.deleteModule(name);
 
           return true;
         }
@@ -276,44 +265,16 @@ public class DatasetTypeManager extends AbstractIdleService {
     return new DefaultTransactionExecutor(txClient, ImmutableList.of(txAware));
   }
 
-  private OrderedTable getMDSTable(DatasetManager datasetManager, String mdsTable) {
-    try {
-      DatasetAdmin admin = datasetManager.getAdmin(mdsTable);
-      try {
-        if (admin == null) {
-          datasetManager.addInstance("orderedTable", mdsTable, DatasetInstanceProperties.EMPTY);
-          admin = datasetManager.getAdmin(mdsTable);
-          if (admin == null) {
-            throw new RuntimeException("Cannot add instance of a table " + mdsTable);
-          }
-        }
-
-        if (!admin.exists()) {
-          admin.create();
-        }
-
-        return (OrderedTable) datasetManager.getDataset(mdsTable);
-      } finally {
-        if (admin != null) {
-          admin.close();
-        }
-      }
-    } catch (Exception e) {
-      LOG.error("Could not get access to MDS table", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
-    private final DatasetDefinitionRegistry delegate;
+    private final DatasetDefinitionRegistry registry;
     private final ClassLoader classLoader;
 
     private final List<String> types = Lists.newArrayList();
     private final List<String> usedTypes = Lists.newArrayList();
 
-    public DependencyTrackingRegistry(DatasetDefinitionRegistry delegate, ClassLoader classLoader) {
-      this.delegate = delegate;
+    public DependencyTrackingRegistry(ClassLoader classLoader) {
       this.classLoader = classLoader;
+      this.registry = new InMemoryDatasetDefinitionRegistry();
     }
 
     public List<String> getTypes() {
@@ -327,13 +288,25 @@ public class DatasetTypeManager extends AbstractIdleService {
     @Override
     public void add(DatasetDefinition def) {
       types.add(def.getName());
-      delegate.add(def);
+      registry.add(def);
     }
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
+      T def = registry.get(datasetTypeName);
+      if (def == null) {
+        DatasetTypeMeta typeMeta = mds.getType(datasetTypeName);
+        if (typeMeta == null) {
+          throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
+        }
+        try {
+          def = new DatasetDefinitionLoader(locationFactory).load(typeMeta, registry);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
       usedTypes.add(datasetTypeName);
-      return delegate.get(datasetTypeName);
+      return def;
     }
 
     public ClassLoader getClassLoader() {

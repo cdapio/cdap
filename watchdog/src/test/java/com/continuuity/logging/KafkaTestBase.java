@@ -67,7 +67,7 @@ public abstract class KafkaTestBase {
     prop.setProperty("socket.receive.buffer.bytes", "1048576");
     prop.setProperty("socket.request.max.bytes", "104857600");
     prop.setProperty("log.dir", tmpFolder.newFolder().getAbsolutePath());
-    prop.setProperty("num.partitions", "10");
+    prop.setProperty("num.partitions", "2");
     prop.setProperty("log.flush.interval.messages", "10000");
     prop.setProperty("log.flush.interval.ms", "1000");
     prop.setProperty("log.retention.hours", "1");
