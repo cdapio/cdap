@@ -5,14 +5,24 @@ import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -22,10 +32,14 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -34,8 +48,11 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +61,8 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+
+import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
 
 
 /**
@@ -54,6 +73,7 @@ public class AppFabricHttpHandlerTest {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
+  private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
@@ -199,7 +219,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a flow.
    */
-  @Test
+  @Ignore
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
   }
@@ -207,7 +227,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a procedure.
    */
-  @Test
+  @Ignore
   public void testProcedureHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
   }
@@ -215,7 +235,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a mapreduce.
    */
-  @Test
+  @Ignore
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
   }
@@ -223,12 +243,12 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests history of a workflow.
    */
-  @Test
+  @Ignore
   public void testWorkflowHistory() throws Exception {
     testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
   }
 
-  @Test
+  @Ignore
   public void testGetSetFlowletInstances() throws Exception {
     //deploy, check the status and start a flow. Also check the status
     deploy(WordCountApp.class);
@@ -249,7 +269,7 @@ public class AppFabricHttpHandlerTest {
   }
 
 
-  @Test
+  @Ignore
   public void testStartStop() throws Exception {
 
     //deploy, check the status and start a flow. Also check the status
@@ -259,9 +279,8 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //web-app, start, stop and status check.
-    Assert.assertEquals(200,
-                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/start", null)
-                          .getStatusLine().getStatusCode());
+    Assert.assertEquals(200, AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode()
+    );
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
     Assert.assertEquals(200,
                         AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/stop", null)
@@ -296,7 +315,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Metadata tests through appfabric apis.
    */
-  @Test
+  @Ignore
   public void testGetMetadata() throws Exception {
     try {
       HttpResponse response = deploy(WordCountApp.class);
@@ -339,7 +358,7 @@ public class AppFabricHttpHandlerTest {
     }
   }
 
-  @Test
+  @Ignore
   public void testStatus() throws Exception {
 
     //deploy and check the status
@@ -395,22 +414,22 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
-  @Test
+  @Ignore
   public void testFlowRuntimeArgs() throws Exception {
     testRuntimeArgs(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
   }
 
-  @Test
+  @Ignore
   public void testWorkflowRuntimeArgs() throws Exception {
     testRuntimeArgs(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow");
   }
 
-  @Test
+  @Ignore
   public void testProcedureRuntimeArgs() throws Exception {
     testRuntimeArgs(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
   }
 
-  @Test
+  @Ignore
   public void testMapreduceRuntimeArgs() throws Exception {
     testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
   }
@@ -482,7 +501,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deploying an application.
    */
-  @Test
+  @Ignore
   public void testDeploy() throws Exception {
     HttpResponse response = deploy(WordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -491,7 +510,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests taking a snapshot of the transaction manager.
    */
-  @Test
+  @Ignore
   public void testTxManagerSnapshot() throws Exception {
     Long currentTs = System.currentTimeMillis();
 
@@ -512,7 +531,7 @@ public class AppFabricHttpHandlerTest {
    * Tests invalidating a transaction.
    * @throws Exception
    */
-  @Test
+  @Ignore
   public void testInvalidateTx() throws Exception {
     TransactionSystemClient txClient = AppFabricTestsSuite.getTxClient();
 
@@ -525,11 +544,10 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx2.getWritePointer() + "/invalidate");
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(400, AppFabricTestsSuite.doPost("/v2/transactions/foobar/invalidate")
-                               .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, AppFabricTestsSuite.doPost("/v2/transactions/foobar/invalidate").getStatusLine().getStatusCode());
   }
 
-  @Test
+  @Ignore
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -538,7 +556,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deploying an application.
    */
-  @Test
+  @Ignore
   public void testDeployInvalid() throws Exception {
     HttpResponse response = deploy(String.class);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
@@ -549,7 +567,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests deleting an application.
    */
-  @Test
+  @Ignore
   public void testDelete() throws Exception {
     //Delete an invalid app
     HttpResponse response = AppFabricTestsSuite.doDelete("/v2/apps/XYZ");
@@ -570,7 +588,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Tests for program list calls
    */
-  @Test
+  @Ignore
   public void testProgramList() throws Exception {
     //Test :: /flows /procedures /mapreduce /workflows
     //App  :: /apps/AppName/flows /procedures /mapreduce /workflows
@@ -616,7 +634,7 @@ public class AppFabricHttpHandlerTest {
   /**
    * Test for schedule handlers.
    */
-  @Test
+  @Ignore
   public void testScheduleEndPoints() throws Exception {
     // Steps for the test:
     // 1. Deploy the app
@@ -725,4 +743,344 @@ public class AppFabricHttpHandlerTest {
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
+
+  @Test
+  public void testTableReads() throws Exception {
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+
+    Table t = newTable("tTR_" + System.nanoTime(), instantiator);
+    // write a row with 10 cols c0...c9 with values v0..v9
+    String row = "tTR10";
+    byte[] rowKey = row.getBytes();
+    byte[][] cols = new byte[10][];
+    byte[][] vals = new byte[10][];
+    for (int i = 0; i < 10; ++i) {
+      cols[i] = ("c" + i).getBytes();
+      vals[i] = ("v" + i).getBytes();
+    }
+
+    TransactionSystemClient txClient =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+
+    txContext.start();
+    t.put(rowKey, cols, vals);
+    txContext.finish();
+
+    // now read back in various ways
+    String queryPrefix = "/v2/tables/" + t.getName() + "/rows/" + row;
+    assertRead(queryPrefix, 0, 9, ""); // all columns
+    assertRead(queryPrefix, 5, 5, "?columns=c5"); // only c5
+    assertRead(queryPrefix, 3, 5, "?columns=c5,c3,c4"); // only c3,c4, and c5
+    assertRead(queryPrefix, 8, 9, "?columns=c8,c9,c10"); // only c8 and c9
+    assertRead(queryPrefix, 0, 4, "?stop=c5"); // range up to exclusive 5
+    assertRead(queryPrefix, 0, 2, "?stop=c5&limit=3"); // range up to exclusive 5, limit 3 -> c0..c2
+    assertRead(queryPrefix, 0, 2, "?stop=c3&limit=5"); // range up to exclusive 3, limit 5 -> c0..c2
+    assertRead(queryPrefix, 5, 9, "?start=c5"); // range starting at 5
+    assertRead(queryPrefix, 5, 7, "?start=c5&limit=3"); // range starting at 5, limit 3 -> c5..c7
+    assertRead(queryPrefix, 0, 4, "?limit=5"); // all limit 5 -> c0..c5
+    assertRead(queryPrefix, 0, 9, "?limit=12"); // all limit 12 -> c0..c9
+    assertRead(queryPrefix, 2, 5, "?start=c2&stop=c6"); // range from 2 to exclusive 6 -> 2,3,4,5
+    assertRead(queryPrefix, 2, 4, "?start=c2&stop=c6&limit=3"); // range from 2 to exclusive 6 limited to 3 -> 2,3,4
+
+    // now read some stuff that returns errors
+    assertReadFails(queryPrefix, "/c1", HttpStatus.SC_NOT_FOUND); // path does not end with row
+    assertReadFails(queryPrefix, "?columns=c1,c2&start=c5", HttpStatus.SC_BAD_REQUEST); // range and list of columns
+    assertReadFails(queryPrefix, "?columns=c10&encoding=hex", HttpStatus.SC_BAD_REQUEST); // col invalid under encoding
+    assertReadFails(queryPrefix, "?columns=c10&encoding=blah", HttpStatus.SC_BAD_REQUEST); // bad encoding
+    assertReadFails(queryPrefix, "?columns=a", HttpStatus.SC_NO_CONTENT); // non-existing column
+    assertReadFails("", "/v2/tables/" + t.getName() + "/rows/abc", HttpStatus.SC_NO_CONTENT); // non-existing row
+    assertReadFails("", "/v2/tables/abc/rows/tTR10", HttpStatus.SC_NOT_FOUND); // non-existing table
+  }
+
+  @Test
+  public void testTableWritesAndDeletes() throws Exception {
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+    String urlPrefix = "/v2";
+    Table t = newTable("tTW_" + System.nanoTime(),instantiator);
+    String row = "abc";
+    byte[] c1 = { 'c', '1' }, c2 = { 'c', '2' }, c3 = { 'c', '3' };
+    byte[] v1 = { 'v', '1' }, mt = { }, v3 = { 'v', '3' };
+
+    // write a row with 3 cols c1...c3 with values v1, "", v3
+    String json = "{\"c1\":\"v1\",\"c2\":\"\",\"c3\":\"v3\"}";
+    assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row, json);
+
+    // starting new tx so that we see what was committed
+    TransactionSystemClient txClient = AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext = new TransactionContext(txClient,
+                                                          instantiator.getInstantiator().getTransactionAware());
+
+    // read back directly and verify
+    txContext.start();
+    Row result = t.get(row.getBytes());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertArrayEquals(v1, result.get(c1));
+    byte[] r2 = result.get(c2);
+    Assert.assertTrue(null == r2 || Arrays.equals(mt, r2));
+    Assert.assertArrayEquals(v3, result.get(c3));
+
+    // delete c1 and c2
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row + "?columns=c1;columns=c2");
+
+    // starting new tx so that we see what was committed
+    txContext.finish();
+
+    txContext.start();
+
+    // read back directly and verify they're gone
+    result = t.get(row.getBytes());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertNull(result.get(c1));
+    Assert.assertNull(result.get(c2));
+    Assert.assertArrayEquals(v3, result.get(c3));
+
+    // test some error cases
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row, json); // non-existent table
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/a/x" + row, json); // path does not end with row
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row, ""); // no json
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row,
+                "{\"\"}"); // wrong json
+
+    // we can delete whole row by providing no columns
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row);
+    // specified
+    assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row + "?columns=a"); // non-existent table
+    assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables/" + t.getName()); // no/empty row key
+    assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables//" + t.getName()); // no/empty row key
+  }
+
+
+
+  @Test
+  public void testIncrement() throws Exception {
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+    String urlPrefix = "/v2";
+    Table t = newTable("tI_" + System.nanoTime(),instantiator);
+    String row = "abc";
+    // directly write a row with two columns, a long, b not
+    final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
+    TransactionSystemClient txClient =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+
+    txContext.start();
+    t.put(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b });
+    txContext.finish();
+
+    // submit increment for row with c1 and c3, should succeed
+    String json = "{\"a\":35, \"c\":11}";
+    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/" + row + "/increment",
+                                            json);
+
+    // starting new tx so that we see what was committed
+    txContext.start();
+    // verify result is the incremented value
+    Assert.assertNotNull(map);
+    Assert.assertEquals(2L, map.size());
+    Assert.assertEquals(new Long(42), map.get("a"));
+    Assert.assertEquals(new Long(11), map.get("c"));
+
+    // verify directly incremented has happened
+    Row result = t.get(row.getBytes());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
+
+    // submit an increment for a and b, must fail with not-a-number
+    json = "{\"a\":1,\"b\":12}";
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/" + row + "/increment", json);
+
+    // starting new tx so that we see what was committed
+    txContext.finish();
+    txContext.start();
+    // verify directly that the row is unchanged
+    result = t.get(row.getBytes());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
+
+    // submit an increment for non-existent row, should succeed
+    json = "{\"a\":1,\"b\":-12}";
+    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/xyz/increment", json);
+
+    // starting new tx so that we see what was committed
+    txContext.finish();
+    txContext.start();
+    // verify return value is equal to increments
+    Assert.assertNotNull(map);
+    Assert.assertEquals(2L, map.size());
+    Assert.assertEquals(new Long(1), map.get("a"));
+    Assert.assertEquals(new Long(-12), map.get("b"));
+    // verify directly that new values are there
+    // verify directly that the row is unchanged
+    result = t.get("xyz".getBytes());
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(2, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(1L), result.get(a));
+    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.get(b));
+
+    // test some bad cases
+    assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc", json); // table does not exist
+    assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc/x", json); // path does not end on row
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz/increment", "{\"a\":\"b\"}"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz/increment", "{\"a\":1"); // json invalid
+  }
+
+  @Test
+  public void testEncodingOfKeysAndValues() throws Exception {
+
+    DataSetInstantiatorFromMetaData instantiator =
+      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+    // first create the table
+    String tableName = "tEOCAV_" + System.nanoTime();
+    Table table = createTable(tableName, instantiator);
+    byte[] x = { 'x' }, y = { 'y' }, z = { 'z' }, a = { 'a' };
+
+    // setup accessor
+    String urlPrefix = "/v2";
+    String tablePrefix = urlPrefix + "/tables/" + tableName + "/rows/";
+
+    // table is empty, write value z to column y of row x, use encoding "url"
+    assertWrite(tablePrefix, HttpStatus.SC_OK, "%78" + "?encoding=url", "{\"%79\":\"%7A\"}");
+    // read back directly and verify
+
+    // starting new tx so that we see what was committed
+    TransactionSystemClient txClient =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+
+    txContext.start();
+    Row result = table.get(x);
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(z, result.get(y));
+
+    // read back with same encoding through REST - the response will not escape y or z
+    assertRead(tablePrefix, "%78" + "?columns=%79" + "&encoding=url", "y", "z");
+    // read back with hex encoding through REST - the response will escape y and z
+    assertRead(tablePrefix, "78" + "?columns=79" + "&encoding=hex", "79", "7a");
+    // read back with base64 encoding through REST - the response will escape y and z
+    assertRead(tablePrefix, "eA" + "?columns=eQ" + "&encoding=base64", "eQ", "eg");
+
+    // delete using hex encoding
+    assertDelete(tablePrefix, 200, "78" + "?columns=79" + "&encoding=hex");
+
+    // starting new tx so that we see what was committed
+    txContext.finish();
+    txContext.start();
+    // and verify that it is really gone
+    Row read = table.get(x);
+    Assert.assertTrue(read.isEmpty());
+
+    // increment column using REST
+    assertIncrement(tablePrefix, 200, "eA" + "/increment" + "?encoding=base64", "{\"YQ\":42}");
+    // verify the value was written using the Table
+    // starting new tx so that we see what was committed
+    txContext.finish();
+    txContext.start();
+    result = table.get(x);
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    // read back via REST with hex encoding
+    assertRead(tablePrefix, "eA" + "?column=YQ" + "&encoding=base64", "YQ",
+               Base64.encodeBase64URLSafeString(Bytes.toBytes(42L)));
+  }
+
+
+  Table newTable(String name, DataSetInstantiatorFromMetaData instantiator) throws Exception {
+    String accountId = DefaultId.DEFAULT_ACCOUNT_ID;
+    String spec = new Gson().toJson(new Table(name).configure());
+    instantiator.createDataSet(accountId, spec);
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
+    table.getName();
+    return table;
+  }
+
+   Table createTable(String name, DataSetInstantiatorFromMetaData instantiator) throws Exception {
+    TransactionSystemClient txClient =
+      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionContext txContext =
+      new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
+    Table table = newTable(name, instantiator);
+    txContext.start();
+    table.put(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
+    txContext.finish();
+    return table;
+  }
+
+
+   void assertRead(String prefix, int start, int end, String query) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet(prefix + query);
+    junit.framework.Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    Type stringMapType = MAP_STRING_STRING_TYPE;
+    Map<String, String> map = new Gson().fromJson(reader, stringMapType);
+    junit.framework.Assert.assertEquals(end - start + 1, map.size());
+    for (int i = start; i < end; i++) {
+      junit.framework.Assert.assertEquals("v" + i, map.get("c" + i));
+    }
+  }
+
+  void assertRead(String prefix, String query, String col, String val) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet(prefix + query);
+    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    Type stringMapType = MAP_STRING_STRING_TYPE;
+    Map<String, String> map = new Gson().fromJson(reader, stringMapType);
+    Assert.assertEquals(1, map.size());
+    Assert.assertEquals(val, map.get(col));
+  }
+
+  void assertReadFails(String prefix, String query, int expected) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet(prefix + query);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+   void assertWrite(String prefix, int expected, String query, String json) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPut(prefix + query, json);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+   void assertDelete(String prefix, int expected, String query) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doDelete(prefix + query);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+   void assertCreate(String prefix, int expected, String query) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPut(prefix + query);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+  }
+
+  static Map<String, Long> assertIncrement(String prefix, int expected, String query, String json) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPost(prefix + query, json);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
+    if (expected != HttpStatus.SC_OK) {
+      return null;
+    }
+
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    // JSon always returns string maps, no matter what the type, must be due to type erasure
+    Type valueMapType = MAP_STRING_STRING_TYPE;
+    Map<String, String> map = new Gson().fromJson(reader, valueMapType);
+    // convert to map(string->long)
+    Map<String, Long> longMap = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      longMap.put(entry.getKey(), Long.parseLong(entry.getValue()));
+    }
+    return longMap;
+  }
+
 }
