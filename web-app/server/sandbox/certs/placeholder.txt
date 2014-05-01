@@ -1,0 +1,5 @@
+The code expects the following 3 files to be placed here.  Certs are managed by Chef.
+
+STAR_continuuity_net.ca-bundle
+STAR_continuuity_net.crt
+continuuity-com-key.key
