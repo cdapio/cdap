@@ -3,7 +3,6 @@ package com.continuuity.gateway.router.handlers;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -69,7 +68,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                                                        request.getMethod().getName());
       // Suspend incoming traffic until connected to the outbound service.
       inboundChannel.setReadable(false);
-      WrappedDiscoverable discoverable = getDiscoverable(headInfo,
+      WrappedDiscoverable discoverable = getDiscoverable(request,
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
       // if there is a event sender is already present use it.
@@ -133,15 +132,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     return reference;
   }
 
-  private WrappedDiscoverable getDiscoverable(final HeaderDecoder.HeaderInfo headInfo,
+  private WrappedDiscoverable getDiscoverable(final HttpRequest httpRequest,
                                               final InetSocketAddress address) {
-    EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(),
-                                                              new Supplier<HeaderDecoder.HeaderInfo>() {
-                                                                @Override
-                                                                public HeaderDecoder.HeaderInfo get() {
-                                                                  return headInfo;
-                                                                }
-                                                              });
+    EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
     raiseExceptionIfNull(strategy, HttpResponseStatus.SERVICE_UNAVAILABLE,
                          "Router cannot forward this request to any service");
     Discoverable discoverable = strategy.pick();
