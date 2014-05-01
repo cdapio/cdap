@@ -28,6 +28,7 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -45,6 +46,7 @@ public abstract class AbstractMapReduceContextBuilder {
 
   /**
    * Build the instance of {@link BasicMapReduceContext}.
+   *
    * @param conf runtime configuration
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
@@ -68,14 +70,15 @@ public abstract class AbstractMapReduceContextBuilder {
                                      URI programLocation,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
-                                     @Nullable String outputDataSetName) {
+                                     @Nullable String outputDataSetName,
+                                     File destinationUnpackedJarDir) {
     Injector injector = createInjector();
 
     // Initializing Program
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = loadProgram(programLocation, locationFactory);
+      program = loadProgram(programLocation, locationFactory, destinationUnpackedJarDir, classLoader);
       // See if it is launched from Workflow, if it is, change the Program.
       if (workflowBatch != null) {
         MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);
@@ -142,8 +145,9 @@ public abstract class AbstractMapReduceContextBuilder {
     return context;
   }
 
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return Programs.create(locationFactory.create(programLocation));
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory,
+                                File destinationUnpackedJarDir, ClassLoader classLoader) throws IOException {
+    return Programs.create(locationFactory.create(programLocation), destinationUnpackedJarDir, classLoader);
   }
 
   /**
