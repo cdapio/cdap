@@ -2162,6 +2162,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                            }
                                          }
                                        });
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);

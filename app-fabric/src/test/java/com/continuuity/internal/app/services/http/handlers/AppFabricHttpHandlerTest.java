@@ -287,13 +287,20 @@ public class AppFabricHttpHandlerTest {
     deploy(MultiStreamApp.class);
 
     Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream2"));
+    // stream1 is no longer a connection
+    Assert.assertEquals(500,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream3"));
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream2", "stream3"));
+
+    Assert.assertEquals(200,
                         changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream4"));
     // stream1 is no longer a connection
     Assert.assertEquals(500,
                         changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream1"));
     Assert.assertEquals(200,
                         changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream4", "stream1"));
-
   }
 
   private int changeFlowletStreamInput(String app, String flow, String flowlet,
@@ -1327,12 +1334,12 @@ public class AppFabricHttpHandlerTest {
     DataSetInstantiatorFromMetaData instantiator =
       AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     createTable(tableName, instantiator);
-    //createStream(streamName);
+    createStream(streamName);
     createQueue(queueName);
 
     // verify they are all there
     Assert.assertTrue(verifyTable(tableName, instantiator));
-    //Assert.assertTrue(verifyStream(streamName));
+    Assert.assertTrue(verifyStream(streamName));
     Assert.assertTrue(verifyQueue(queueName));
 
     // clear queues
@@ -1340,7 +1347,7 @@ public class AppFabricHttpHandlerTest {
 
     // verify tables and streams are still here
     Assert.assertTrue(verifyTable(tableName, instantiator));
-    //Assert.assertTrue(verifyStream(streamName));
+    Assert.assertTrue(verifyStream(streamName));
     // verify queue is gone
     Assert.assertFalse(verifyQueue(queueName));
 
@@ -1355,7 +1362,7 @@ public class AppFabricHttpHandlerTest {
     Assert.assertTrue(verifyTable(tableName, instantiator));
     Assert.assertTrue(verifyQueue(queueName));
     // verify stream is gone
-    //Assert.assertFalse(verifyStream(streamName));
+    Assert.assertFalse(verifyStream(streamName));
 
   }
 

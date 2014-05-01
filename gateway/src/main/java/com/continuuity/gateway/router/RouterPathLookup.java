@@ -95,16 +95,30 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   private static final String PROMOTE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_-]+)/promote";
+
   private static final String RESET_PATH = VERSION +
     "/unrecoverable/reset";
 
   private static final String STREAM_PATH_1 = "^" + VERSION +
-    "/streams/([A-Za-z0-9_]+)/(info|dequeue|consumer|truncate)";
+    "/streams/([A-Za-z0-9_-]+)/(info|dequeue|consumer|truncate)";
 
   // Need this separated out because AppFabric has an endpoint of GET /streams/[streamName].
   // The follow pattern is for PUT and POST
   private static final String STREAM_PATH_2 = VERSION +
-    "/streams/([A-Za-z0-9_]+)";
+    "/streams/([A-Za-z0-9_-]+)";
+
+  private static final String WORKFLOW_CURRENT_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/workflows/([A-Za-z0-9_-]+)/current/?$";
+
+  private static final String DATASET_TRUNC_PATH = VERSION +
+    "/?/datasets/([A-Za-z0-9_-]+)/truncate/?$";
+
+  private static final String TABLE_PATH = VERSION +
+    "/?/tables/";
+  private static final String CLEAR_STREAM_PATH = VERSION +
+    "/?/streams/?$";
+  private static final String CLEAR_QUEUE_PATH = VERSION +
+    "/?/queues/?$";
 
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
@@ -168,6 +182,16 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
            Constants.Service.STREAM_HANDLER)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.PUT, AllowedMethod.POST), Pattern.compile(STREAM_PATH_2)),
            Constants.Service.STREAM_HANDLER)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(WORKFLOW_CURRENT_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(DATASET_TRUNC_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST, AllowedMethod.GET, AllowedMethod.POST, AllowedMethod.DELETE),
+                            Pattern.compile(TABLE_PATH)), Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.DELETE), Pattern.compile(CLEAR_STREAM_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.DELETE), Pattern.compile(CLEAR_QUEUE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public String getRoutingPath(String requestPath, HttpRequest httpRequest) {
