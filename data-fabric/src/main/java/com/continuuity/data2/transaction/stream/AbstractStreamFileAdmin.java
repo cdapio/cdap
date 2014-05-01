@@ -70,13 +70,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       Set<StreamConsumerState> states = Sets.newHashSet();
       stateStore.getByGroup(groupId, states);
 
-      int oldInstances = states.size();
-
-      // Nothing to do if size doesn't change
-      if (oldInstances == instances) {
-        return;
-      }
-
       Set<StreamConsumerState> newStates = Sets.newHashSet();
       Set<StreamConsumerState> removeStates = Sets.newHashSet();
       mutateStates(groupId, instances, states, newStates, removeStates);
@@ -99,7 +92,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    LOG.info("Configure groups: {}", groupInfo);
+    LOG.info("Configure groups for {}: {}", name, groupInfo);
 
     StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
@@ -223,6 +216,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
                             Set<StreamConsumerState> newStates, Set<StreamConsumerState> removeStates) {
+    int oldInstances = states.size();
+    if (oldInstances == instances) {
+      // If number of instances doesn't changed, no need to mutate any states
+      return;
+    }
+
     // Collects smallest offsets across all existing consumers
     // Map from event file location to file offset.
     // Use tree map to maintain ordering consistency in the offsets.
@@ -240,7 +239,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     // Constructs smallest offsets
     Collection<StreamFileOffset> smallestOffsets = fileOffsets.values();
-    int oldInstances = states.size();
 
     // When group size changed, reset all existing instances states to have smallest files offsets constructed above.
     for (StreamConsumerState state : states) {
