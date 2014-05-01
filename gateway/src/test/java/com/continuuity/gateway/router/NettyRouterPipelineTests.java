@@ -44,10 +44,8 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -288,19 +286,6 @@ public class NettyRouterPipelineTests {
      */
     public class ServerHandler extends AbstractHttpHandler {
       private final Logger LOG = LoggerFactory.getLogger(ServerHandler.class);
-      @GET
-      @Path("/v1/ping/{sleepInterval}")
-      public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,
-                       @PathParam("sleepInterval") String sleepInterval) {
-        numRequests.incrementAndGet();
-        try {
-          TimeUnit.SECONDS.sleep(Long.valueOf(sleepInterval));
-          responder.sendString(HttpResponseStatus.OK, "Ping: " + sleepInterval + "\n");
-        } catch (InterruptedException e) {
-          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        }
-      }
-
       @POST
       @Path("/v1/upload")
       public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
@@ -327,7 +312,7 @@ public class NettyRouterPipelineTests {
           @Override
           public void chunk(ChannelBuffer request, HttpResponder responder) {
             count += request.readableBytes();
-            if (request.readableBytes() > 0 ) {
+            if (request.readableBytes() > 0) {
             }
             outputStream.write(request.array(), 0, request.readableBytes());
           }

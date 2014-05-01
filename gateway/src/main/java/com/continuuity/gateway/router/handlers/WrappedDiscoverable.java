@@ -3,6 +3,8 @@ package com.continuuity.gateway.router.handlers;
 import com.google.common.base.Objects;
 import org.apache.twill.discovery.Discoverable;
 
+import java.net.InetSocketAddress;
+
 /**
  * Wrapped discoverable is used to be used in other containers e.g., HashMap. Since the DiscoverableWrapper
  * is not available as a public class.
@@ -18,13 +20,8 @@ public class WrappedDiscoverable {
     return discoverable.getName();
   }
 
-
-  public String getHostName() {
-    return discoverable.getSocketAddress().getHostName();
-  }
-
-  public int getPort() {
-    return discoverable.getSocketAddress().getPort();
+  public InetSocketAddress getSocketAddress() {
+    return discoverable.getSocketAddress();
   }
 
   @Override
@@ -44,7 +41,7 @@ public class WrappedDiscoverable {
     }
     WrappedDiscoverable that = (WrappedDiscoverable) object;
     return Objects.equal(discoverable.getName(), that.getName()) &&
-           Objects.equal(discoverable.getSocketAddress().getHostName(), that.getHostName()) &&
-           Objects.equal(discoverable.getSocketAddress().getPort(), that.getPort());
+           Objects.equal(discoverable.getSocketAddress().getHostName(), that.getSocketAddress().getHostName()) &&
+           Objects.equal(discoverable.getSocketAddress().getPort(), that.getSocketAddress().getPort());
   }
 }

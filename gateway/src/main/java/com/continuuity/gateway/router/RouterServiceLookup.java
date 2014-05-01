@@ -2,7 +2,6 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.StickyEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.google.common.base.Objects;
@@ -73,8 +72,7 @@ public class RouterServiceLookup {
    * @param hostHeaderSupplier supplies the header information for the lookup.
    * @return instance of EndpointStrategy if available null otherwise.
    */
-  public EndpointStrategy getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
-    throws Exception {
+  public EndpointStrategy getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier) {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
