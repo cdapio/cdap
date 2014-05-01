@@ -19,7 +19,6 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
@@ -44,15 +43,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private EventSender chunkEventSender;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
-                            final RouterServiceLookup serviceLookup) {
+                            RouterServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
     this.discoveryLookup = Maps.newHashMap();
   }
 
   @Override
-  public void messageReceived(final ChannelHandlerContext ctx,
-                              final MessageEvent event) throws Exception {
+  public void messageReceived(ChannelHandlerContext ctx,
+                              MessageEvent event) throws Exception {
 
     final Channel inboundChannel = event.getChannel();
     if (event.getMessage() instanceof HttpChunk) {
@@ -85,8 +84,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
         ChannelFuture outFuture = clientBootstrap.connect(address);
         Channel outboundChannel = outFuture.getChannel();
-        outboundChannel.getPipeline().addLast("request-encoder", new HttpRequestEncoder());
-        outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
+        outboundChannel.getPipeline().addAfter("request-encoder",
+                                               "outbound-handler", new OutboundHandler(inboundChannel));
 
         EventSender eventSender = new EventSender(outFuture);
         eventSender.sendMessage(request);
@@ -99,7 +98,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       }
 
     } else {
-      throw new HandlerException(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Only HttpRequests are handled by router");
+      super.messageReceived(ctx, event);
     }
   }
 
@@ -119,7 +118,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   /**
    * Closes the specified channel after all queued write requests are flushed.
    */
-  static void closeOnFlush(Channel ch) {
+   static void closeOnFlush(Channel ch) {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
