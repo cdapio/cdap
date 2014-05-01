@@ -924,6 +924,43 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Changes input stream for a flowlet connection.
+   */
+  @PUT
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
+  public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
+                                            @PathParam("app-id") final String appId,
+                                            @PathParam("flow-id") final String flowId,
+                                            @PathParam("flowlet-id") final String flowletId,
+                                            @PathParam("stream-id") final String streamId) throws IOException {
+
+    try {
+      Map<String, String> arguments = decodeArguments(request);
+      String oldStreamId = arguments.get("oldStreamId");
+      if (oldStreamId == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
+        return;
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      StreamSpecification stream = store.getStream(Id.Account.from(accountId), streamId);
+      if (stream == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
+        return;
+      }
+
+      Id.Program programID = Id.Program.from(accountId, appId, flowId);
+      store.changeFlowletSteamConnection(programID, flowletId, oldStreamId, streamId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
 
   private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
     String instanceCount = "";

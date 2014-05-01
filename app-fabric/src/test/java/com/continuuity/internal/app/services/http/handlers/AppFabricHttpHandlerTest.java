@@ -3,6 +3,7 @@ package com.continuuity.internal.app.services.http.handlers;
 import com.continuuity.AppWithSchedule;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
+import com.continuuity.MultiStreamApp;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.data.DataSetSpecification;
@@ -253,6 +254,36 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
   }
+
+  @Test
+  public void testChangeFlowletStreamInput() throws Exception {
+    deploy(MultiStreamApp.class);
+
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream2"));
+    // stream1 is no longer a connection
+    Assert.assertEquals(500,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream3"));
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream2", "stream3"));
+
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream4"));
+    // stream1 is no longer a connection
+    Assert.assertEquals(500,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream1"));
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream4", "stream1"));
+
+  }
+
+  private int changeFlowletStreamInput(String app, String flow, String flowlet,
+                                                String oldStream, String newStream) throws Exception {
+    return AppFabricTestsSuite.doPut(
+      String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream),
+      String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
+  }
+
 
   @Test
   public void testStartStop() throws Exception {
