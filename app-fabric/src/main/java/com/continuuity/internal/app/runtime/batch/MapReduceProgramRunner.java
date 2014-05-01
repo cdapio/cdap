@@ -263,8 +263,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
           try {
             LOG.info("Submitting mapreduce job {}", context.toString());
 
-            // submits job and returns immediately
-            jobConf.submit();
+            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+            try {
+              // submits job and returns immediately
+              jobConf.submit();
+            } finally {
+              Thread.currentThread().setContextClassLoader(oldClassLoader);
+            }
 
             MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(jobConf, context);
 
@@ -325,7 +331,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        job.beforeSubmit(context);
+        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(job.getClass().getClassLoader());
+        try {
+          job.beforeSubmit(context);
+        } finally {
+          Thread.currentThread().setContextClassLoader(oldClassLoader);
+        }
       }
     });
   }

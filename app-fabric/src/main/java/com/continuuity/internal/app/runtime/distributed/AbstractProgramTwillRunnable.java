@@ -20,6 +20,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -36,6 +37,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -66,6 +68,7 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -164,7 +167,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       logAppenderInitializer.initialize();
 
       try {
-        program = injector.getInstance(ProgramFactory.class).create(cmdLine.getOptionValue(RunnableOptions.JAR));
+        program = injector.getInstance(ProgramFactory.class)
+          .create(cmdLine.getOptionValue(RunnableOptions.JAR));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -352,7 +356,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
 
     public Program create(String path) throws IOException {
-      return Programs.create(locationFactory.create(path));
+      Location location = locationFactory.create(path);
+      return Programs.create(location, Files.createTempDir());
     }
   }
 }

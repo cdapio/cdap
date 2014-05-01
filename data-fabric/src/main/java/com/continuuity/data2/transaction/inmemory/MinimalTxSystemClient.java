@@ -1,7 +1,9 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 
+import java.io.InputStream;
 import java.util.Collection;
 
 /**
@@ -45,7 +47,17 @@ public class MinimalTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(com.continuuity.data2.transaction.Transaction tx) {
+  public boolean invalidate(long tx) {
+    return true;
+  }
+
+  @Override
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
+    throw new TransactionCouldNotTakeSnapshotException("Not snapshot to take.");
+  }
+
+  @Override
+  public void resetState() {
     // do nothing
   }
 }

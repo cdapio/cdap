@@ -1,6 +1,7 @@
 package com.continuuity.internal.data.dataset;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Defines the minimum administrative operations a dataset should support.
@@ -12,8 +13,33 @@ import java.io.Closeable;
  *       administration design and better guide the design of new datasets.
  */
 public interface DatasetAdmin extends Closeable {
-  boolean exists() throws Exception;
-  void create() throws Exception;
-  void drop() throws Exception;
-  void truncate() throws Exception;
+  /**
+   * @return true if dataset exists
+   * @throws IOException
+   */
+  boolean exists() throws IOException;
+
+  /**
+   * Creates dataset
+   * @throws IOException
+   */
+  void create() throws IOException;
+
+  /**
+   * Drops dataset
+   * @throws IOException
+   */
+  void drop() throws IOException;
+
+  /**
+   * Deletes all data of the dataset
+   * @throws IOException
+   */
+  void truncate() throws IOException;
+
+  /**
+   * Upgrades dataset.
+   * @throws IOException
+   */
+  void upgrade() throws IOException;
 }

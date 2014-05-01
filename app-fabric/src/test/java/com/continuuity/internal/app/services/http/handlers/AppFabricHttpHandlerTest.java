@@ -3,16 +3,27 @@ package com.continuuity.internal.app.services.http.handlers;
 import com.continuuity.AppWithSchedule;
 import com.continuuity.AppWithWorkflow;
 import com.continuuity.DummyAppWithTrackingTable;
+import com.continuuity.MultiStreamApp;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -33,6 +44,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -137,8 +149,7 @@ public class AppFabricHttpHandlerTest {
         Assert.assertEquals(4, m.size());
       }
     } finally {
-      // TODO find a way to delete deployed apps. Once all the endpoints are moved, it should be easier
-//      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
   }
 
@@ -244,15 +255,53 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
   }
 
+  @Test
+  public void testChangeFlowletStreamInput() throws Exception {
+    deploy(MultiStreamApp.class);
+
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream2"));
+    // stream1 is no longer a connection
+    Assert.assertEquals(500,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream1", "stream3"));
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter1", "stream2", "stream3"));
+
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream4"));
+    // stream1 is no longer a connection
+    Assert.assertEquals(500,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream3", "stream1"));
+    Assert.assertEquals(200,
+                        changeFlowletStreamInput("MultiStreamApp", "CounterFlow", "counter2", "stream4", "stream1"));
+
+  }
+
+  private int changeFlowletStreamInput(String app, String flow, String flowlet,
+                                                String oldStream, String newStream) throws Exception {
+    return AppFabricTestsSuite.doPut(
+      String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream),
+      String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
+  }
+
 
   @Test
   public void testStartStop() throws Exception {
-
     //deploy, check the status and start a flow. Also check the status
     deploy(WordCountApp.class);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+
+    //web-app, start, stop and status check.
+    Assert.assertEquals(200,
+                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/start", null)
+                          .getStatusLine().getStatusCode());
+    Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
+    Assert.assertEquals(200,
+                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/stop", null)
+                          .getStatusLine().getStatusCode());
+    Assert.assertEquals("STOPPED", getWebappStatus("WordCountApp"));
 
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
@@ -275,9 +324,11 @@ public class AppFabricHttpHandlerTest {
     //deploy and check status of a workflow
     deploy(SleepingWorkflowApp.class);
     Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
+      TimeUnit.MILLISECONDS.sleep(10);
+    }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
   }
-
 
   /**
    * Metadata tests through appfabric apis.
@@ -285,7 +336,10 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testGetMetadata() throws Exception {
     try {
-      HttpResponse response = deploy(WordCountApp.class);
+      HttpResponse response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+      response = deploy(WordCountApp.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
       response = deploy(AppWithWorkflow.class);
@@ -318,10 +372,261 @@ public class AppFabricHttpHandlerTest {
       Assert.assertNotNull(result);
       Assert.assertTrue(result.contains("SampleWorkflow"));
 
+      // verify apps
+      response = AppFabricTestsSuite.doGet("/v2/apps");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      String s = EntityUtils.toString(response.getEntity());
+      List<Map<String, String>> o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(2, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "WordCountApp", "name", "WordCountApp",
+                                                   "description", "Application for counting words")));
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "AppWithWorkflow", "name",
+                                                   "AppWithWorkflow", "description", "Sample application")));
+
+      // verify a single app
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      Map<String, String> app = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(ImmutableMap.of("type", "App", "id", "WordCountApp", "name", "WordCountApp",
+                                          "description", "Application for counting words"), app);
+
+      // verify flows
+      response = AppFabricTestsSuite.doGet("/v2/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
+                                                   "WordCountFlow", "description", "Flow for counting words")));
+
+      // verify flows by app
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
+                                                   "WordCountFlow", "description", "Flow for counting words")));
+
+      // verify procedures
+      response = AppFabricTestsSuite.doGet("/v2/procedures");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
+                                                   "name", "WordFrequency", "description",
+                                                   "Procedure for executing WordFrequency.")));
+
+      // verify procedures by app
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
+                                                   "name", "WordFrequency", "description",
+                                                   "Procedure for executing WordFrequency.")));
+
+
+      // verify mapreduces
+      response = AppFabricTestsSuite.doGet("/v2/mapreduce");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Mapreduce", "app", "WordCountApp", "id", "VoidMapReduceJob",
+                                                   "name", "VoidMapReduceJob",
+                                                   "description", "Mapreduce that does nothing " +
+                                                   "(and actually doesn't run) - it is here for testing MDS")));
+
+      // verify workflows
+      response = AppFabricTestsSuite.doGet("/v2/workflows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of(
+        "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
+        "name", "SampleWorkflow", "description",  "SampleWorkflow description")));
+
+
+      // verify programs by non-existent app
+      response = AppFabricTestsSuite.doGet("/v2/apps/NonExistenyApp/flows");
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doGet("/v2/apps/NonExistenyApp/procedures");
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doGet("/v2/apps/NonExistenyApp/mapreduce");
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doGet("/v2/apps/NonExistenyApp/workflows");
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+      // verify programs by app that does not have that program type
+      response = AppFabricTestsSuite.doGet("/v2/apps/AppWithWorkflow/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertTrue(o.isEmpty());
+      response = AppFabricTestsSuite.doGet("/v2/apps/AppWithWorkflow/procedures");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertTrue(o.isEmpty());
+      response = AppFabricTestsSuite.doGet("/v2/apps/AppWithWorkflow/mapreduce");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertTrue(o.isEmpty());
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/workflows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertTrue(o.isEmpty());
+
+      // verify flows by stream
+      response = AppFabricTestsSuite.doGet("/v2/streams/text/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
+                                                   "WordCountFlow", "description", "Flow for counting words")));
+
+      // verify flows by dataset
+      response = AppFabricTestsSuite.doGet("/v2/datasets/mydataset/flows");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
+                                                   "WordCountFlow", "description", "Flow for counting words")));
+
+      // verify one dataset
+      response = AppFabricTestsSuite.doGet("/v2/datasets/mydataset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      Map<String, String> map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      Assert.assertNotNull(map);
+      Assert.assertEquals("mydataset", map.get("id"));
+      Assert.assertEquals("mydataset", map.get("name"));
+      Assert.assertNotNull(map.get("specification"));
+      DataSetSpecification spec = new Gson().fromJson(map.get("specification"), DataSetSpecification.class);
+      Assert.assertNotNull(spec);
+
+      // verify all datasets
+      response = AppFabricTestsSuite.doGet("/v2/datasets");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(3, o.size());
+      Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
+        .put("input", ObjectStore.class.getName())
+        .put("output", ObjectStore.class.getName())
+        .put("mydataset", KeyValueTable.class.getName()).build();
+      for (Map<String, String> ds : o) {
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("id"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("name"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("classname"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), expectedDataSets.containsKey(ds.get("id")));
+        Assert.assertEquals("problem with dataset " + ds.get("id"),
+                            expectedDataSets.get(ds.get("id")), ds.get("classname"));
+      }
+
+      // verify datasets by app
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/datasets");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      expectedDataSets = ImmutableMap.<String, String>builder()
+        .put("mydataset", KeyValueTable.class.getName()).build();
+      for (Map<String, String> ds : o) {
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("id"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("name"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("classname"));
+        Assert.assertTrue("problem with dataset " + ds.get("id"), expectedDataSets.containsKey(ds.get("id")));
+        Assert.assertEquals("problem with dataset " + ds.get("id"),
+                            expectedDataSets.get(ds.get("id")), ds.get("classname"));
+      }
+
+      // verify one stream
+      response = AppFabricTestsSuite.doGet("/v2/streams/text");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      Assert.assertNotNull(map);
+      Assert.assertEquals("text", map.get("id"));
+      Assert.assertEquals("text", map.get("name"));
+      Assert.assertNotNull(map.get("specification"));
+      StreamSpecification sspec = new Gson().fromJson(map.get("specification"), StreamSpecification.class);
+      Assert.assertNotNull(sspec);
+
+      // verify all streams
+      response = AppFabricTestsSuite.doGet("/v2/streams");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      Set<String> expectedStreams = ImmutableSet.of("text");
+      for (Map<String, String> stream : o) {
+        Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
+        Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
+        Assert.assertTrue("problem with dataset " + stream.get("id"), expectedStreams.contains(stream.get("id")));
+      }
+
+      // verify streams by app
+      response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/streams");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      s = EntityUtils.toString(response.getEntity());
+      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      Assert.assertEquals(1, o.size());
+      expectedStreams = ImmutableSet.of("text");
+      for (Map<String, String> stream : o) {
+        Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
+        Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
+        Assert.assertTrue("problem with dataset " + stream.get("id"), expectedStreams.contains(stream.get("id")));
+      }
     } finally {
-     // TODO: Uncomment after Delete end-point is ported over
-     // Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
+  }
+
+  /**
+   * Tests procedure instances.
+   */
+  @Test
+  public void testProcedureInstances () throws Exception {
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, AppFabricTestsSuite.doPost("/v2/unrecoverable/reset").getStatusLine().getStatusCode());
+
+    HttpResponse response = deploy(WordCountApp.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
+
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", 10);
+
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/procedures/WordFrequency/instances",
+                                           json.toString());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    s = EntityUtils.toString(response.getEntity());
+    result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
+
+    Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
 
   @Test
@@ -370,6 +675,14 @@ public class AppFabricHttpHandlerTest {
     }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
     AppFabricTestsSuite.stopProgram(workflowId);
+  }
+
+  private String getWebappStatus(String appId) throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    return o.get("status");
   }
 
   @Test
@@ -465,6 +778,52 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  /**
+   * Tests taking a snapshot of the transaction manager.
+   */
+  @Test
+  public void testTxManagerSnapshot() throws Exception {
+    Long currentTs = System.currentTimeMillis();
+
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/state");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    InputStream in = response.getEntity().getContent();
+    try {
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      TransactionSnapshot snapshot = codec.decodeState(in);
+      Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    } finally {
+      in.close();
+    }
+  }
+
+  /**
+   * Tests invalidating a transaction.
+   * @throws Exception
+   */
+  @Test
+  public void testInvalidateTx() throws Exception {
+    TransactionSystemClient txClient = AppFabricTestsSuite.getTxClient();
+
+    Transaction tx1 = txClient.startShort();
+    HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx1.getWritePointer() + "/invalidate");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Transaction tx2 = txClient.startShort();
+    txClient.commit(tx2);
+    response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx2.getWritePointer() + "/invalidate");
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(400, AppFabricTestsSuite.doPost("/v2/transactions/foobar/invalidate")
+                               .getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testResetTxManagerState() throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/state");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
 
   /**
    * Tests deploying an application.
@@ -475,6 +834,74 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
+  }
+
+  /**
+   * Tests deleting an application.
+   */
+  @Test
+  public void testDelete() throws Exception {
+    //Delete an invalid app
+    HttpResponse response = AppFabricTestsSuite.doDelete("/v2/apps/XYZ");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    deploy(WordCountApp.class);
+    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
+    //Try to delete an App while its flow is running
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
+    //Delete the App after stopping the flow
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doDelete("/v2/apps/WordCountApp");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Tests for program list calls
+   */
+  @Test
+  public void testProgramList() throws Exception {
+    //Test :: /flows /procedures /mapreduce /workflows
+    //App  :: /apps/AppName/flows /procedures /mapreduce /workflows
+    //App Info :: /apps/AppName
+    //All Apps :: /apps
+
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    deploy(WordCountApp.class);
+    deploy(DummyAppWithTrackingTable.class);
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> flows = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, flows.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> procedures = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, procedures.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> mapreduce = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, mapreduce.size());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/apps");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doDelete("/v2/apps/dummy");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   /**
@@ -506,8 +933,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
-                                                            LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
 
     int workflowRuns = history.size();
     Assert.assertTrue(workflowRuns >= 1);
@@ -590,4 +1016,38 @@ public class AppFabricHttpHandlerTest {
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableReset() throws Exception {
+    try {
+      HttpResponse response = deploy(WordCountApp.class);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    } finally {
+      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    }
+    // make sure that after reset (no apps), list apps returns 200, and not 404
+    Assert.assertEquals(200, AppFabricTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
+  }
+
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableResetAppRunning() throws Exception {
+
+    HttpResponse response = deploy(WordCountApp.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    response = AppFabricTestsSuite.doPost("/v2/unrecoverable/reset");
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
+  }
+
 }

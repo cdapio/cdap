@@ -1,8 +1,10 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
 
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,7 +70,18 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public void invalidate(com.continuuity.data2.transaction.Transaction tx) {
+  public boolean invalidate(long tx) {
+    return true;
+  }
+
+  @Override
+  public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
+    throw new TransactionCouldNotTakeSnapshotException(
+        "Snapshot not implemented in detached transaction system client");
+  }
+
+  @Override
+  public void resetState() {
     // do nothing
   }
 }

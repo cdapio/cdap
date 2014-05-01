@@ -30,3 +30,6 @@ logs/
 
 # Singlenode run files. 
 data/
+
+# Include helloworld.jar resource
+!src/test/resources/helloworld.jar

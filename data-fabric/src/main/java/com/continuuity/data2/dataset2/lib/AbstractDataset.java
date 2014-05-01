@@ -17,10 +17,12 @@ import java.util.Collection;
  * logic to each dataset in a list when possible.
  */
 public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware {
+  private final String instanceName;
   private final Collection<Dataset> underlying;
   private final TransactionAware txAwares;
 
-  public AbstractDataset(Dataset... underlying) {
+  public AbstractDataset(String instanceName, Dataset... underlying) {
+    this.instanceName = instanceName;
     this.underlying = Lists.newArrayList(underlying);
     ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
     for (Dataset dataset : underlying) {
@@ -78,6 +80,16 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
 
   @Override
   public String getName() {
-    return txAwares.getName();
+    return instanceName;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("Dataset");
+    sb.append("{underlying=").append(underlying);
+    sb.append(", instanceName='").append(instanceName).append('\'');
+    sb.append('}');
+    return sb.toString();
   }
 }
