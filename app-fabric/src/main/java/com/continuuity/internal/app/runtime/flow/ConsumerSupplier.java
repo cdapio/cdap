@@ -8,6 +8,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -20,20 +21,32 @@ import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A helper class for managing queue consumer instances.
+ *
+ * @param <T> Type of consumer to supply.
  */
 @NotThreadSafe
-final class QueueConsumerSupplier implements Supplier<Queue2Consumer>, Closeable {
+final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueueConsumerSupplier.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ConsumerSupplier.class);
 
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
   private ConsumerConfig consumerConfig;
-  private Queue2Consumer consumer;
+  private Object consumer;
 
-  QueueConsumerSupplier(DataFabricFacade dataFabricFacade,
-                        QueueName queueName, ConsumerConfig consumerConfig, int numGroups) {
+  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade,
+                                        QueueName queueName, ConsumerConfig consumerConfig) {
+    return create(dataFabricFacade, queueName, consumerConfig, -1);
+  }
+
+  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade, QueueName queueName,
+                                        ConsumerConfig consumerConfig, int numGroups) {
+    return new ConsumerSupplier<T>(dataFabricFacade, queueName, consumerConfig, numGroups);
+  }
+
+  private ConsumerSupplier(DataFabricFacade dataFabricFacade, QueueName queueName,
+                           ConsumerConfig consumerConfig, int numGroups) {
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.numGroups = numGroups;
@@ -58,8 +71,15 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer>, Closeable
                                     consumerConfig.getDequeueStrategy(),
                                     consumerConfig.getHashKey());
       }
-      consumer = dataFabricFacade.createConsumer(queueName, config, numGroups);
-      consumerConfig = consumer.getConfig();
+      if (queueName.isQueue()) {
+        Queue2Consumer queueConsumer = dataFabricFacade.createConsumer(queueName, config, numGroups);
+        consumerConfig = queueConsumer.getConfig();
+        consumer = queueConsumer;
+      } else {
+        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName, config);
+        consumerConfig = streamConsumer.getConsumerConfig();
+        consumer = streamConsumer;
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -91,7 +111,7 @@ final class QueueConsumerSupplier implements Supplier<Queue2Consumer>, Closeable
   }
 
   @Override
-  public Queue2Consumer get() {
-    return consumer;
+  public T get() {
+    return (T) consumer;
   }
 }

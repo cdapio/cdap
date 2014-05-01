@@ -1,13 +1,12 @@
-package com.continuuity.streamevent;
+package com.continuuity.common.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
-import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.collect.ImmutableMap;
 
-import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Default implementation of {@link StreamEvent}.

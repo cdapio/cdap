@@ -1,5 +1,7 @@
 package com.continuuity.common.conf;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Constants used by different systems are all defined here.
  */
@@ -15,6 +17,7 @@ public final class Constants {
     public static final String METRICS = "metrics";
     public static final String PROCEDURES = "procedures";
     public static final String GATEWAY = "gateway";
+    public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
@@ -304,6 +307,35 @@ public final class Constants {
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
     }
+  }
+
+  /**
+   * Stream configurations.
+   */
+  public static final class Stream {
+    /* Begin CConfiguration keys */
+    public static final String BASE_DIR = "stream.base.dir";
+    public static final String PARTITION_DURATION = "stream.partition.duration";
+    public static final String INDEX_INTERVAL = "stream.index.interval";
+    public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
+
+    // Stream http service configurations.
+    public static final String ADDRESS = "stream.bind.address";
+    public static final String WORKER_THREADS = "stream.worker.threads";
+
+    // YARN container configurations.
+    public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "stream.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "stream.container.instances";
+    /* End CConfiguration keys */
+
+    /* Begin constants used by stream */
+
+    /** How often to check for new file when reading from stream in milliseconds. **/
+    public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
+
+    /* End constants used by stream */
   }
 
   /**

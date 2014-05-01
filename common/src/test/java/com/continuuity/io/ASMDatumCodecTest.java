@@ -11,7 +11,7 @@ import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.streamevent.DefaultStreamEvent;
+import com.continuuity.common.stream.DefaultStreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

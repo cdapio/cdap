@@ -6,14 +6,15 @@ import com.continuuity.common.queue.QueueName;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An {@link com.continuuity.app.queue.InputDatum} that has nothing inside and is not from queue.
+ *
+ * @param <T> Type of input.
  */
-public final class NullInputDatum implements InputDatum {
+public final class NullInputDatum<T> implements InputDatum<T> {
 
   private final AtomicInteger retries = new AtomicInteger(0);
   private final InputContext inputContext =  new InputContext() {
@@ -69,7 +70,7 @@ public final class NullInputDatum implements InputDatum {
   }
 
   @Override
-  public Iterator<ByteBuffer> iterator() {
+  public Iterator<T> iterator() {
     return Iterators.emptyIterator();
   }
 
