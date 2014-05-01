@@ -5,9 +5,9 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventDecoder;
+import com.continuuity.common.io.Locations;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -53,12 +53,12 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
   public boolean nextKeyValue() throws IOException, InterruptedException {
     StreamEvent streamEvent;
     do {
-      if (reader.position() >= inputSplit.getStart() + inputSplit.getLength()) {
+      if (reader.getPosition() >= inputSplit.getStart() + inputSplit.getLength()) {
         return false;
       }
 
       events.clear();
-      if (reader.next(events, 1, 0, TimeUnit.SECONDS) <= 0) {
+      if (reader.read(events, 1, 0, TimeUnit.SECONDS) <= 0) {
         return false;
       }
       streamEvent = events.get(0);
@@ -88,7 +88,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
       return 0.0f;
     }
 
-    long processed = reader.position() - inputSplit.getStart();
+    long processed = reader.getPosition() - inputSplit.getStart();
     return Math.min((float) processed / (float) inputSplit.getLength(), 1.0f);
   }
 
@@ -107,11 +107,8 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
    * @return A {@link StreamRecordReader} that is ready for reading events as specified by the input split.
    */
   private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) {
-    Path indexPath = inputSplit.getIndexPath();
-
-    return StreamDataFileReader.createWithOffset(
-      StreamUtils.newInputSupplier(fs, inputSplit.getPath()),
-      indexPath == null ? null : StreamUtils.newInputSupplier(fs, indexPath),
-      inputSplit.getStart());
+    return StreamDataFileReader.createWithOffset(Locations.newInputSupplier(fs, inputSplit.getPath()),
+                                                 Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
+                                                 inputSplit.getStart());
   }
 }

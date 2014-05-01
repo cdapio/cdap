@@ -33,7 +33,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;

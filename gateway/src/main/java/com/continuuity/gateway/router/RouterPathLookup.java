@@ -84,6 +84,14 @@ public final class RouterPathLookup {
   private static final String RESET_PATH = VERSION +
     "/unrecoverable/reset";
 
+  private static final String STREAM_PATH_1 = "^" + VERSION +
+    "/streams/([A-Za-z0-9_]+)/(info|dequeue|consumer|truncate)";
+
+  // Need this separated out because AppFabric has an endpoint of GET /streams/[streamName].
+  // The follow pattern is for PUT and POST
+  private static final String STREAM_PATH_2 = VERSION +
+    "/streams/([A-Za-z0-9_]+)";
+
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
   }
@@ -138,6 +146,10 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(STREAM_PATH_1)),
+           Constants.Service.STREAM_HANDLER)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.PUT, AllowedMethod.POST), Pattern.compile(STREAM_PATH_2)),
+           Constants.Service.STREAM_HANDLER)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {

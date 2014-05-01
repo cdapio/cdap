@@ -3,13 +3,7 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamEventData;
-import com.continuuity.api.stream.StreamEventDecoder;
-import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -82,8 +76,8 @@ public class StreamInputFormatTest {
   private void generateEvents(File inputDir) throws IOException {
     long baseTimestamp = 1000;
     File partition = new File(inputDir, Long.toString(baseTimestamp / 1000) + ".1000");
-    File eventFile = new File(partition, "bucket.1." + StreamFileType.EVENT.getSuffix());
-    File indexFile = new File(partition, "bucket.1." + StreamFileType.INDEX.getSuffix());
+    File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
+    File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
 
     partition.mkdirs();
 
@@ -92,7 +86,7 @@ public class StreamInputFormatTest {
                                                            100L);
     // Write 1000 events
     for (int i = 0; i < 1000; i++) {
-      writer.write(baseTimestamp + i, Iterators.singletonIterator(createData("Testing " + (i % 10))));
+      writer.append(StreamFileTestUtils.createEvent(baseTimestamp + i, "Testing " + (i % 10)));
     }
 
     writer.close();
@@ -102,10 +96,10 @@ public class StreamInputFormatTest {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf);
 
-    StreamInputFormat.setStreamPath(job, new Path(inputDir.toURI()));
+    StreamInputFormat.setStreamPath(job, inputDir.toURI());
     StreamInputFormat.setTimeRange(job, startTime, endTime);
     StreamInputFormat.setMaxSplitSize(job, splitSize);
-    job.setInputFormatClass(DefaultStreamInputFormat.class);
+    job.setInputFormatClass(TextStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));
     job.setOutputFormatClass(TextOutputFormat.class);
@@ -136,31 +130,6 @@ public class StreamInputFormatTest {
     return output;
   }
 
-
-  private StreamEventData createData(String body) {
-    return new DefaultStreamEventData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
-  }
-
-  /**
-   * InputFormat for testing.
-   */
-  public static final class DefaultStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
-
-    @Override
-    protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder() {
-      return new StreamEventDecoder<LongWritable, Text>() {
-        private final LongWritable key = new LongWritable();
-        private final Text value = new Text();
-
-        @Override
-        public DecodeResult<LongWritable, Text> decode(StreamEvent event, DecodeResult<LongWritable, Text> result) {
-          key.set(event.getTimestamp());
-          value.set(Charsets.UTF_8.decode(event.getBody()).toString());
-          return result.setKey(key).setValue(value);
-        }
-      };
-    }
-  }
 
   /**
    * Mapper for testing.
