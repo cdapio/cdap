@@ -138,6 +138,8 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST, AllowedMethod.GET), Pattern.compile(WEBAPP_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {
