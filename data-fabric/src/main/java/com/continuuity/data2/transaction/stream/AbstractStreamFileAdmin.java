@@ -62,7 +62,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    System.out.println("Configure instances: " + groupId + " " + instances);
+    LOG.info("Configure instances: {} {}", groupId, instances);
 
     StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
@@ -85,8 +85,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       stateStore.save(newStates);
       stateStore.remove(removeStates);
 
-      System.out.println("New states: " + newStates);
-      System.out.println("Remove states: " + removeStates);
+      LOG.info("Configure instances new states: {} {} {}", groupId, instances, newStates);
+      LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
 
     } finally {
       stateStore.close();
@@ -99,7 +99,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    System.out.println("Configure groups: " + groupInfo);
+    LOG.info("Configure groups: {}", groupInfo);
 
     StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
@@ -133,8 +133,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       stateStore.save(newStates);
       stateStore.remove(removeStates);
 
-      System.out.println("New states: " + newStates);
-      System.out.println("Remove states: " + removeStates);
+      LOG.info("Configure groups new states: {} {}", groupInfo, newStates);
+      LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
 
     } finally {
       stateStore.close();

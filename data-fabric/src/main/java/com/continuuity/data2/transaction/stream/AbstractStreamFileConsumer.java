@@ -131,7 +131,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                        StreamConsumerStateStore consumerStateStore) {
 
-    System.out.println("Consumer: " + consumerConfig);
+    LOG.info("Create consumer {}, reader offsets: {}", consumerConfig, reader.getPosition());
     this.streamName = QueueName.fromStream(streamConfig.getName());
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
