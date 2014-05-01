@@ -6,6 +6,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 
 /**
  * Provides access to the Datasets System.
@@ -30,9 +31,20 @@ public interface DatasetManager {
    * Registers dataset types by adding dataset module to the system.
    * @param moduleName dataset module name
    * @param moduleClass dataset module class
-   * @throws Exception
+   * @throws ModuleConflictException when module with same name is already registered
+   * @throws DatasetManagementException
    */
-  void register(String moduleName, Class<? extends DatasetModule> moduleClass) throws Exception;
+  void register(String moduleName, Class<? extends DatasetModule> moduleClass)
+    throws DatasetManagementException;
+
+  /**
+   * Deletes dataset module and its types from the system.
+   * @param moduleName dataset module name
+   * @throws ModuleConflictException when module cannot be deleted because of its dependants
+   * @throws DatasetManagementException
+   */
+  void deleteModule(String moduleName)
+    throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -42,34 +54,51 @@ public interface DatasetManager {
    * method to build {@link com.continuuity.internal.data.dataset.DatasetInstanceSpec} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
-   * NOTE: It does NOT create dataset instance automatically, use {@link #getAdmin(String)} to obtain dataset admin to
-   *       perform such administrative operations
+   * NOTE: It does NOT create physical dataset automatically, use {@link #getAdmin(String, ClassLoader)} to obtain
+   *       dataset admin to perform such administrative operations
    * @param datasetTypeName dataset instance type name
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
-   * @throws IllegalArgumentException if dataset instance with this name already exists
-   * @throws Exception
+   * @throws InstanceConflictException if dataset instance with this name already exists
+   * @throws DatasetManagementException
    */
   void addInstance(String datasetTypeName, String datasetInstanceName, DatasetInstanceProperties props)
-    throws Exception;
+    throws DatasetManagementException;
+
+  /**
+   * Deletes dataset instance from the system.
+   *
+   * NOTE: It will NOT delete physical data set, use {@link #getAdmin(String, ClassLoader)} to obtain
+   *       dataset admin to perform such administrative operations
+   * @param datasetInstanceName dataset instance name
+   * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
+   * @throws DatasetManagementException
+   */
+  void deleteInstance(String datasetInstanceName) throws DatasetManagementException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.
    * @param datasetInstanceName dataset instance name
    * @param <T> dataset admin type
+   * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset admin or {@code null} if dataset instance of this name doesn't exist.
-   * @throws Exception
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link DatasetAdmin}
    */
   @Nullable
-  <T extends DatasetAdmin> T getAdmin(String datasetInstanceName) throws Exception;
+  <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset to be used to perform data operations.
    * @param datasetInstanceName dataset instance name
    * @param <T> dataset type to be returned
+   * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
-   * @throws Exception
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link Dataset}
    */
   @Nullable
-  <T extends Dataset> T getDataset(String datasetInstanceName) throws Exception;
+  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException;
 }

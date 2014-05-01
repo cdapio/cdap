@@ -267,4 +267,15 @@ public interface Store {
    * @throws OperationException
    */
   Map<String, String> getRunArguments(Id.Program programId) throws OperationException;
+
+  /**
+   * Changes input stream for a flowlet connection
+   * @param flow defines flow that contains a flowlet which connection to change
+   * @param flowletId flowlet which connection to change
+   * @param oldValue name of the stream in stream connection to change
+   * @param newValue name of the new stream to connect to
+   * @throws OperationException
+   */
+  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue)
+    throws OperationException;
 }

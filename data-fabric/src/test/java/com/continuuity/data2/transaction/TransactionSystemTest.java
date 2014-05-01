@@ -178,30 +178,43 @@ public abstract class TransactionSystemTest {
     client.abort(tx);
   }
 
+  // todo add test invalidate method
   @Test
-  public void testGetSnapshot() throws Exception {
+  public void testInvalidateTx() throws Exception {
+    TransactionSystemClient client = getClient();
+    // Invalidate an in-progress tx
+    Transaction tx1 = client.startShort();
+    client.canCommit(tx1, $(C1, C2));
+    Assert.assertTrue(client.invalidate(tx1.getWritePointer()));
+    // Cannot invalidate a committed tx
+    Transaction tx2 = client.startShort();
+    client.canCommit(tx2, $(C3, C4));
+    client.commit(tx2);
+    Assert.assertFalse(client.invalidate(tx2.getWritePointer()));
+  }
+
+  @Test
+  public void testResetState() throws Exception {
+    // have tx in progress, committing and committed then reset,
+    // get the last snapshot and see that it is empty
     TransactionSystemClient client = getClient();
     TransactionStateStorage stateStorage = getSateStorage();
 
-    TransactionSnapshot snapshotBefore = stateStorage.getLatestSnapshot();
-
     Transaction tx1 = client.startShort();
-    long currentTime = System.currentTimeMillis();
+    Transaction tx2 = client.startShort();
+    client.canCommit(tx1, $(C1, C2));
+    client.commit(tx1);
+    client.canCommit(tx2, $(C3, C4));
 
-    InputStream in = client.getSnapshotInputStream();
-    SnapshotCodecV2 codec = new SnapshotCodecV2();
-    TransactionSnapshot snapshot = codec.decodeState(in);
+    long currentTs = System.currentTimeMillis();
+    client.resetState();
 
-    Assert.assertTrue(snapshot.getTimestamp() >= currentTime);
-    Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
-
-    // Ensures that getSnapshot didn't persist a snapshot
-    TransactionSnapshot snapshotAfter = stateStorage.getLatestSnapshot();
-    Assert.assertEquals(snapshotAfter.getTimestamp(), snapshotBefore.getTimestamp());
-    Assert.assertEquals(snapshotAfter.getWritePointer(), snapshotBefore.getWritePointer());
-    Assert.assertEquals(snapshotAfter.getReadPointer(), snapshotBefore.getReadPointer());
-    Assert.assertEquals(snapshotAfter.getInvalid(), snapshotBefore.getInvalid());
-    Assert.assertEquals(snapshotAfter.getVisibilityUpperBound(), snapshotBefore.getVisibilityUpperBound());
+    TransactionSnapshot snapshot = stateStorage.getLatestSnapshot();
+    Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
+    Assert.assertEquals(0, snapshot.getInvalid().size());
+    Assert.assertEquals(0, snapshot.getInProgress().size());
+    Assert.assertEquals(0, snapshot.getCommittingChangeSets().size());
+    Assert.assertEquals(0, snapshot.getCommittedChangeSets().size());
   }
 
   private Collection<byte[]> $(byte[]... val) {

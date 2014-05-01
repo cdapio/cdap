@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,12 +26,13 @@ public class DatasetModuleMeta {
    * Creates instance of {@link DatasetModuleMeta}
    * @param name name of the dataset module
    * @param className class name of the dataset module
-   * @param jarLocation location of the dataset module jar
+   * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
+   *                    always present in classpath. This helps to minimize redundant copying of jars.
    * @param types list of types announced by this module in the order they are announced
    * @param usesModules list of modules that this module depends on, ordered in a way they must be
    *                    loaded and initialized
    */
-  public DatasetModuleMeta(String name, String className, URI jarLocation,
+  public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
                            List<String> types, List<String> usesModules) {
     this.name = name;
     this.className = className;
@@ -55,8 +57,10 @@ public class DatasetModuleMeta {
   }
 
   /**
-   * @return location of the dataset module jar
+   * @return location of the dataset module jar, {@code null} means this is "system module" which classes always present
+   *         in classpath. This helps to minimize redundant copying of jars
    */
+  @Nullable
   public URI getJarLocation() {
     return jarLocation;
   }

@@ -92,8 +92,8 @@ public class TransactionServiceThriftClient {
       client.abortTx(ConverterUtils.wrap(tx));
   }
 
-  public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws TException {
-      client.invalidateTx(ConverterUtils.wrap(tx));
+  public boolean invalidate(long tx) throws TException {
+    return client.invalidateTx(tx);
   }
 
   public InputStream getSnapshotStream() throws TTransactionCouldNotTakeSnapshotException, TException {
@@ -101,4 +101,7 @@ public class TransactionServiceThriftClient {
     return new ByteBufferInputStream(buffer);
   }
 
+  public void resetState() throws TException {
+    client.resetState();
+  }
 }

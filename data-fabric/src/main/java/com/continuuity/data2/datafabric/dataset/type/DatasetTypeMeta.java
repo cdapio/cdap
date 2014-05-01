@@ -1,5 +1,8 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
+
 import java.util.List;
 
 /**
@@ -33,5 +36,13 @@ public class DatasetTypeMeta {
    */
   public List<DatasetModuleMeta> getModules() {
     return modules;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("modules", Joiner.on(",").skipNulls().join(modules))
+      .toString();
   }
 }

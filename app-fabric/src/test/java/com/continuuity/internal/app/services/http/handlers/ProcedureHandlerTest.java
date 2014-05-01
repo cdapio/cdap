@@ -152,7 +152,7 @@ public class ProcedureHandlerTest {
     HttpResponse response =
       AppFabricTestsSuite.doPost("/v2/apps/testApp1/procedures/testProc2/methods/testMethod1",
                                    GSON.toJson(content, new TypeToken<Map<String, String>>() {
-                                   }.getType()));
+                                   }.getType()), null);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
   }
 
@@ -207,7 +207,7 @@ public class ProcedureHandlerTest {
     Assert.assertFalse(contentStr.isEmpty());
 
     HttpResponse response =
-      AppFabricTestsSuite.doPost("/v2/apps/testApp2/procedures/testProc2/methods/testChunkedMethod", contentStr);
+      AppFabricTestsSuite.doPost("/v2/apps/testApp2/procedures/testProc2/methods/testChunkedMethod", contentStr, null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String expected = contentStr + contentStr;
@@ -221,7 +221,7 @@ public class ProcedureHandlerTest {
     HttpResponse response =
       AppFabricTestsSuite.doPost("/v2/apps/testApp2/procedures/testProc2/methods/testExceptionMethod",
                                    GSON.toJson(content, new TypeToken<Map<String, String>>() {
-                                   }.getType()));
+                                   }.getType()), null);
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
   }
 
@@ -294,7 +294,7 @@ public class ProcedureHandlerTest {
     //Assert.assertEquals("Procedure not deployed", EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
-    AppFabricTestsSuite.deploy(ProcedureTestApp.class);
+    AppFabricHttpHandlerTest.deploy(ProcedureTestApp.class);
 
     //TODO: 404 won't be returned until Router refactoring
     //Second assertion won't be valid even after refactoring

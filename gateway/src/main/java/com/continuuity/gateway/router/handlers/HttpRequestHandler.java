@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -40,9 +41,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final RouterServiceLookup serviceLookup;
   // Data structure is used to clean up the channel futures on connection close.
   private final Map<WrappedDiscoverable, EventSender> discoveryLookup;
-  private EventSender chunkHandler;
-
-
+  private EventSender chunkEventSender;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             final RouterServiceLookup serviceLookup) {
@@ -57,10 +56,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
     final Channel inboundChannel = event.getChannel();
     if (event.getMessage() instanceof HttpChunk) {
-      // This case below should never happen.
-      raiseExceptionIfNull(chunkHandler, HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Chunk received and channel future is null");
-      chunkHandler.sendMessage(((HttpChunk) event.getMessage()));
+      // This case below should never happen this would mean we get Chunks before HTTPMessage.
+      raiseExceptionIfNull(chunkEventSender, HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Chunk received and event sender is null");
+      chunkEventSender.sendMessage(((HttpChunk) event.getMessage()));
     } else if (event.getMessage() instanceof HttpRequest) {
       // Discover and forward event.
       HttpRequest request = (HttpRequest) event.getMessage();
@@ -72,13 +71,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       WrappedDiscoverable discoverable = getDiscoverable(request,
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
+      // if there is a event sender is already present use it.
       if (discoveryLookup.containsKey(discoverable)) {
         inboundChannel.setReadable(true);
         EventSender eventSender =  discoveryLookup.get(discoverable);
         eventSender.sendMessage(request);
         //Save the channelFuture for subsequent chunks
         if (request.isChunked()) {
-          chunkHandler = eventSender;
+          chunkEventSender = eventSender;
         }
       } else {
         InetSocketAddress address = discoverable.getSocketAddress();
@@ -93,7 +93,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         inboundChannel.setReadable(true);
         //Save the channelFuture for subsequent chunks
         if (request.isChunked()) {
-          chunkHandler = eventSender;
+          chunkEventSender = eventSender;
         }
         discoveryLookup.put(discoverable, eventSender);
       }
@@ -152,46 +152,32 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private static final class EventSender {
     private final ChannelFuture connectionFuture;
     private final ChannelFuture eventFuture;
-    boolean connected;
-
+    private final AtomicBoolean first;
 
     private EventSender(ChannelFuture connectionFuture) {
-      connected = false;
+      this.first = new AtomicBoolean(true);
       this.connectionFuture = connectionFuture;
       this.eventFuture = Channels.future(connectionFuture.getChannel());
     }
 
     void sendMessage(final Object o) {
-      if (!connected) {
-        if (connectionFuture.isSuccess()) {
-          Channels.write(connectionFuture.getChannel(), o);
-          eventFuture.setSuccess();
-          connected = true;
-        } else {
-          connectionFuture.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-              Channels.write(future.getChannel(), o);
-              connected = true;
-              eventFuture.setSuccess();
-            }
-          });
-        }
+      if (first.compareAndSet(true, false)) {
+        connectionFuture.addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            Channels.write(future.getChannel(), o);
+            eventFuture.setSuccess();
+          }
+        });
       } else {
-        if (eventFuture.isSuccess()) {
-          Channels.write(eventFuture.getChannel(), o);
-        } else {
-          eventFuture.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-              Channels.write(future.getChannel(), o);
-            }
-          });
-        }
+        eventFuture.addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            Channels.write(future.getChannel(), o);
+          }
+        });
       }
     }
   }
-
-
 }
 

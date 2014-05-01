@@ -10,11 +10,12 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
+import com.continuuity.internal.app.services.http.handlers.ProcedureHandlerTest;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
@@ -46,7 +47,8 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class, //AppFabricHttpHandlerTest.class,
+  ProcedureHandlerTest.class})
 public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -63,6 +65,8 @@ public class AppFabricTestsSuite {
   private static EndpointStrategy endpointStrategy;
   private static AppFabricService.Iface app;
   private static MetricsQueryService metrics;
+
+  private static TransactionSystemClient txClient;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -89,6 +93,7 @@ public class AppFabricTestsSuite {
       injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       app =  appFabricServer.getService();
+      txClient = injector.getInstance(TransactionSystemClient.class);
       metrics = injector.getInstance(MetricsQueryService.class);
       metrics.startAndWait();
     }
@@ -102,6 +107,10 @@ public class AppFabricTestsSuite {
 
   public static Injector getInjector() {
     return injector;
+  }
+
+  public static TransactionSystemClient getTxClient() {
+    return txClient;
   }
 
   public static Injector startAppFabric(CConfiguration conf) {
@@ -173,6 +182,29 @@ public class AppFabricTestsSuite {
     }
     return client.execute(post);
   }
+
+  public static HttpResponse doPost(HttpPost post) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
+  }
+
+  public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+
+    if (body != null) {
+      post.setEntity(new StringEntity(body));
+    }
+
+    if (headers != null) {
+      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+      post.setHeader(AUTH_HEADER);
+    }
+    return client.execute(post);
+  }
+
 
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();

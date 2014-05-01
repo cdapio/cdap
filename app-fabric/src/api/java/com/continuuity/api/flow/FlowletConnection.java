@@ -23,7 +23,7 @@ public final class FlowletConnection {
   private final String sourceName;
   private final String targetName;
 
-  FlowletConnection(Type sourceType, String sourceName, String targetName) {
+  public FlowletConnection(Type sourceType, String sourceName, String targetName) {
     this.sourceType = sourceType;
     this.sourceName = sourceName;
     this.targetName = targetName;

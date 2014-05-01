@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+
 /**
  * Provides access to MapReduceContext for mapreduce job tasks.
  */
@@ -34,7 +36,7 @@ public final class MapReduceContextProvider {
     this.contextBuilder = null;
   }
 
-  public synchronized BasicMapReduceContext get() {
+  public synchronized BasicMapReduceContext get(File unpackedJarDir) {
     if (context == null) {
       CConfiguration conf = contextConfig.getConf();
       context = getBuilder(conf)
@@ -49,7 +51,8 @@ public final class MapReduceContextProvider {
                contextConfig.getProgramLocation(),
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
-               contextConfig.getOutputDataSet());
+               contextConfig.getOutputDataSet(),
+               unpackedJarDir);
     }
     return context;
   }
