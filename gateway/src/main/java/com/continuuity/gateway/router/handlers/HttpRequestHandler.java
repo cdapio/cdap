@@ -44,8 +44,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final Map<WrappedDiscoverable, EventSender> discoveryLookup;
   private EventSender chunkEventSender;
 
-
-
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             final RouterServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
@@ -162,7 +160,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     private final ChannelFuture connectionFuture;
     private final ChannelFuture eventFuture;
     private final AtomicBoolean first;
-
 
     private EventSender(ChannelFuture connectionFuture) {
       this.first = new AtomicBoolean(true);
