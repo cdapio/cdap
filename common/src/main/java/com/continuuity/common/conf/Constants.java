@@ -471,18 +471,15 @@ public final class Constants {
   public static final class Security {
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
-    public static final String DEFAULT_TOKEN_DIGEST_ALGO = "HmacSHA256";
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
-    public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
 
-    /** Configuration for External Authentication Server */
+    /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
-    public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
+    /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
-    public static final int DEFAULT_MAX_THREADS = 100;
+    /** Access token expiration time in milliseconds. */
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 24 * 60 * 60 * 1000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";

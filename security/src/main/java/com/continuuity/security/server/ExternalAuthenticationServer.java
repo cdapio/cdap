@@ -49,8 +49,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
                                       @Named("security.handlers") HandlerList handlers) {
-    this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
-    this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS, Constants.Security.DEFAULT_MAX_THREADS);
+    this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+    this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
   }
