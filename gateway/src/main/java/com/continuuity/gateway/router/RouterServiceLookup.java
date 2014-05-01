@@ -5,12 +5,12 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -69,13 +69,13 @@ public class RouterServiceLookup {
   }
 
   /**
-     * Returns the discoverable mapped to the given port.
-     *
-     * @param port port to lookup.
-     * @param httpRequest supplies the header information for the lookup.
-     * @return discoverable based on port and host header.
-     */
-  public Discoverable getDiscoverable(int port, HttpRequest httpRequest) throws Exception {
+   * Returns the discoverable mapped to the given port.
+   *
+   * @param port port to lookup.
+   * @param httpRequest supplies the header information for the lookup.
+   * @return instance of EndpointStrategy if available null otherwise.
+   */
+  public EndpointStrategy getDiscoverable(int port, HttpRequest httpRequest) {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
@@ -94,22 +94,17 @@ public class RouterServiceLookup {
     }
 
     try {
-      String destService = routerPathLookup.getRoutingPath(path, httpRequest);
+      String destService = routerPathLookup.getRoutingPath(headerInfo.getPath(), httpRequest);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, destService);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, service);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), service);
       }
-      Discoverable discoverable = discoverableCache.get(cacheKey).pick();
-      if (discoverable == null) {
-        // Looks like the service is no longer running.
-        LOG.debug("Invalidating cache for service {} on port {}", service, port);
-        discoverableCache.invalidate(cacheKey);
-      }
-      return discoverable;
+      EndpointStrategy strategy = discoverableCache.get(cacheKey);
+      return strategy;
     } catch (ExecutionException e) {
       return null;
     }

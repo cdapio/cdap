@@ -8,11 +8,20 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
+import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
+import com.continuuity.gateway.handlers.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
+import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
+import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.gateway.router.NettyRouter;
+import com.continuuity.gateway.router.RouterPathTest;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.gateway.tools.DataSetClientTest;
+import com.continuuity.gateway.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.passport.http.client.PassportClient;
@@ -58,10 +67,10 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class})
-  //ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  //DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  //NettyFlumeCollectorTest.class, MetricsReporterHookTest.class, RouterPathTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class,
+  TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
+  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class, RouterPathTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -211,7 +220,7 @@ public class GatewayFastTestsSuite {
     return client.execute(get);
   }
 
-  public static HttpResponse doPut(String resource) throws Exception {
+  public static org.apache.http.HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
     put.setHeader(AUTH_HEADER);
