@@ -32,12 +32,12 @@ public class ReactorTwillApplication implements TwillApplication {
     // It is always present in continuuity-default.xml
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
-    TwillSpecification.Builder.MoreRunnable serviceRunnables = TwillSpecification.Builder.with()
-                                                              .setName(NAME).withRunnable();
-    addMetricsService(serviceRunnables);
-    TwillSpecification.Builder.RunnableSetter runnableSetter = addTransactionService(serviceRunnables);
-
-    return runnableSetter.anyOrder()
+    return
+      addStreamService(
+      addTransactionService(
+      addMetricsService(
+        TwillSpecification.Builder.with().setName(NAME).withRunnable())))
+      .anyOrder()
       .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
       .build();
   }
@@ -81,5 +81,19 @@ public class ReactorTwillApplication implements TwillApplication {
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
       .apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+      .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES, 1))
+      .setMemory(cConf.getInt(Constants.Stream.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 2))
+      .build();
+
+    return builder.add(new StreamHandlerRunnable("stream", "cConf.xml", "hConf.xml"), resourceSpec)
+      .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI())
+        .apply();
   }
 }

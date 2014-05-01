@@ -147,6 +147,7 @@ abstract class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     try {
       stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
     } finally {
+      scansExecutor.shutdownNow();
       hTable.close();
       closed = true;
     }

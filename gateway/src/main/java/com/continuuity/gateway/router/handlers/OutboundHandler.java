@@ -49,12 +49,12 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    InboundHandler.closeOnFlush(inboundChannel);
+    HttpRequestHandler.closeOnFlush(inboundChannel);
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    LOG.error("Got exception", e);
-    InboundHandler.closeOnFlush(e.getChannel());
+    LOG.error("Got exception {}", e.getCause());
+    HttpRequestHandler.closeOnFlush(e.getChannel());
   }
 }

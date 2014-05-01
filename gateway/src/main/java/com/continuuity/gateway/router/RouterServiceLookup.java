@@ -11,7 +11,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +70,9 @@ public class RouterServiceLookup {
    *
    * @param port port to lookup.
    * @param hostHeaderSupplier supplies the header information for the lookup.
-   * @return discoverable based on port and host header.
+   * @return instance of EndpointStrategy if available null otherwise.
    */
-  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
-    throws Exception {
+  public EndpointStrategy getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier) {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
@@ -88,24 +86,17 @@ public class RouterServiceLookup {
     }
 
     try {
-      String path = headerInfo.getPath();
-      String method = headerInfo.getMethod();
-      String destService = RouterPathLookup.getRoutingPath(path, method);
+      String destService = RouterPathLookup.getRoutingPath(headerInfo.getPath(), headerInfo.getMethod());
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, destService);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, service);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), service);
       }
-      Discoverable discoverable = discoverableCache.get(cacheKey).pick();
-      if (discoverable == null) {
-        // Looks like the service is no longer running.
-        LOG.debug("Invalidating cache for service {} on port {}", service, port);
-        discoverableCache.invalidate(cacheKey);
-      }
-      return discoverable;
+      EndpointStrategy strategy = discoverableCache.get(cacheKey);
+      return strategy;
     } catch (ExecutionException e) {
       return null;
     }

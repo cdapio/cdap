@@ -11,33 +11,27 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * An abstract implementation for {@link InputDatum} for common operations across old and new queue.
+ * An implementation for {@link InputDatum} for common operations across queue and stream
  *
- * TODO: This class should be renamed to QueueInputDatum once migration to txds2 is completed.
+ * @param <T> Type of input.
  */
-public final class Queue2InputDatum implements InputDatum {
+final class BasicInputDatum<S, T> implements InputDatum<T> {
 
-  private static final Function<byte[], ByteBuffer> BYTE_ARRAY_TO_BYTE_BUFFER = new Function<byte[], ByteBuffer>() {
-    @Override
-    public ByteBuffer apply(byte[] input) {
-      return ByteBuffer.wrap(input);
-    }
-  };
-
-  private final DequeueResult result;
+  private final DequeueResult<S> result;
   private final AtomicInteger retry;
   private final InputContext inputContext;
   private final QueueName queueName;
+  private final Function<S, T> decoder;
 
-  public Queue2InputDatum(final QueueName queueName, final DequeueResult result) {
+  BasicInputDatum(final QueueName queueName, DequeueResult<S> result, Function<S, T> decoder) {
     this.result = result;
     this.retry = new AtomicInteger(0);
     this.queueName = queueName;
+    this.decoder = decoder;
     this.inputContext = new InputContext() {
       @Override
       public String getOrigin() {
@@ -64,8 +58,8 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
-  public Iterator<ByteBuffer> iterator() {
-    return Iterators.transform(result.iterator(), BYTE_ARRAY_TO_BYTE_BUFFER);
+  public Iterator<T> iterator() {
+    return Iterators.transform(result.iterator(), decoder);
   }
 
   @Override

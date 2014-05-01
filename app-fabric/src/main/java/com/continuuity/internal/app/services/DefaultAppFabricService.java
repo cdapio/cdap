@@ -51,7 +51,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
