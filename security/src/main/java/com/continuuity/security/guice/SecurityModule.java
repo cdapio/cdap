@@ -56,7 +56,6 @@ public abstract class SecurityModule extends PrivateModule {
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
     expose(AccessTokenTransformer.class);
     expose(TokenValidator.class);
-    
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
   }

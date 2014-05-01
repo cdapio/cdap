@@ -105,15 +105,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
         break;
     }
     if (tokenState != TokenValidator.State.TOKEN_VALID) {
-//      Iterable<Discoverable> discoverables
-//                    = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-//      Iterator<Discoverable> discoverableIterator = discoverables.iterator();
-//      JsonArray externalAuthenticationURIs = new JsonArray();
-//      while (discoverableIterator.hasNext()) {
-//        Discoverable d = discoverableIterator.next();
-//        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getAddress().getHostAddress()));
-//      }
-
       JsonArray externalAuthenticationURIs = new JsonArray();
       Iterable<Discoverable> discoverables = discoveredExternalAuthFuture.get();
       if (discoverables == null) {
