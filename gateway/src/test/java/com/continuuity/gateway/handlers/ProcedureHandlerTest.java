@@ -279,28 +279,24 @@ public class ProcedureHandlerTest  {
   public void testRealProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
 
-    //TODO: 404 won't be returned until Router refactoring
-    //Second assertion won't be valid even after refactoring
-    // Make procedure call without deploying ProcedureTestApp
-    //HttpResponse response =
-    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
-    //                                getQueryParams(content));
-    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
-    //Assert.assertEquals("Procedure not deployed", EntityUtils.toString(response.getEntity()));
+    //Make procedure call without deploying ProcedureTestApp
+    HttpResponse response =
+      GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+                                    getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
     AppFabricServiceHandlerTest.deploy(ProcedureTestApp.class);
 
-    //TODO: 404 won't be returned until Router refactoring
-    //Second assertion won't be valid even after refactoring
-    //response =
-    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
-    //                                getQueryParams(content));
-    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
-    //Assert.assertEquals("Procedure not running", EntityUtils.toString(response.getEntity()));
+    response =
+      GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+                                    getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
 
     // Start procedure
-    HttpResponse response =
+    response =
       GatewayFastTestsSuite.doPost("/v2/apps/ProcedureTestApp/procedures/TestProcedure/start", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
@@ -317,26 +313,22 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doPost("/v2/apps/ProcedureTestApp/procedures/TestProcedure/stop", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    //TODO: 404 won't be returned until Router refactoring
-    //Second assertion won't be valid even after refactoring
-    //response =
-    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
-    //                                getQueryParams(content));
-    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
-    //Assert.assertEquals("Procedure not running", EntityUtils.toString(response.getEntity()));
+    response =
+      GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+                                    getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
 
 
     // Delete app
     response = GatewayFastTestsSuite.doDelete("/v2/apps/ProcedureTestApp");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    //TODO: 404 won't be returned until Router refactoring
-    //Second assertion won't be valid even after refactoring
-    //response =
-    //  GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
-    //                                getQueryParams(content));
-    //Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
-    //Assert.assertEquals("Procedure not deployed", EntityUtils.toString(response.getEntity()));
+    response =
+      GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
+                                    getQueryParams(content));
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
   }
 
   /**
