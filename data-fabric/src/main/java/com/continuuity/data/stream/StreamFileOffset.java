@@ -88,7 +88,6 @@ public final class StreamFileOffset {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("event", eventLocation.toURI())
-      .add("index", indexLocation == null ? null : indexLocation.toURI())
       .add("offset", getOffset())
       .toString();
   }
