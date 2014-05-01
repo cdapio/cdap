@@ -284,7 +284,8 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals("Router cannot forward this request to any service",
+                        EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
     AppFabricServiceHandlerTest.deploy(ProcedureTestApp.class);
@@ -293,7 +294,8 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals("Router cannot forward this request to any service",
+                        EntityUtils.toString(response.getEntity()));
 
     // Start procedure
     response =
@@ -317,7 +319,8 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals("Router cannot forward this request to any service",
+                        EntityUtils.toString(response.getEntity()));
 
 
     // Delete app
@@ -328,7 +331,8 @@ public class ProcedureHandlerTest  {
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Router cannot forward this request to any service", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals("Router cannot forward this request to any service",
+                        EntityUtils.toString(response.getEntity()));
   }
 
   /**
