@@ -42,6 +42,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_OUTPUT_DATASET = "hconf.program.output.dataset";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
+  private static final String HCONF_ATTR_UNPACKED_JAR_DIR = "hconf.program.unpacked.jar.dir";
 
   private final JobContext jobContext;
 

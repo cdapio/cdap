@@ -33,6 +33,10 @@ public final class RouterPathLookup {
     "/?/apps/?";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
+
+  private static final String WEBAPP_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/webapp/(status|start|stop)";
+
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
   private static final String METRICS_PATH = "^" + VERSION +
@@ -42,6 +46,9 @@ public final class RouterPathLookup {
 
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
+
+  private static final String PROCEDURE_INSTANCE_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/procedures/(A-Za-z0-9_-]+)/instances/?$";
 
   private static final String TRANSACTIONS_STATE_PATH = VERSION +
     "/transactions/state";
@@ -56,9 +63,26 @@ public final class RouterPathLookup {
   private static final String LIVEINFO_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures)/([A-Za-z0-9_]+)/live-info";
 
+  private static final String ALLDATA_PATH = VERSION +
+    "/(streams|datasets)/?$";
+
+  private static final String DATA_PATH = VERSION +
+    "/(streams|datasets)/([A-Za-z0-9_-]+)/?$";
+
+  private static final String APPDATA_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_-]+)/(streams|datasets)/?$";
+
+  private static final String FLOWINFO_PATH = VERSION +
+    "/(streams|datasets)/([A-Za-z0-9_-]+)/flows/?$";
+
   //TODO: Consolidate this!!!
   private static final String SPEC_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)";
+
+  private static final String PROMOTE_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/promote";
+  private static final String RESET_PATH = VERSION +
+    "/unrecoverable/reset";
 
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
@@ -76,11 +100,14 @@ public final class RouterPathLookup {
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(FLOWLET_INSTANCE_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(PROCEDURE_INSTANCE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(SPEC_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.PUT), Pattern.compile(LIVEINFO_PATH)),
            Constants.Service.APP_FABRIC_HTTP)
-      .put(ImmutablePair.of(EnumSet.range(AllowedMethod.GET, AllowedMethod.POST), Pattern.compile(METRICS_PATH)),
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET, AllowedMethod.POST, AllowedMethod.DELETE),
+           Pattern.compile(METRICS_PATH)),
            Constants.Service.METRICS)
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(LOGHANDLER_PATH)),
            Constants.Service.METRICS)
@@ -99,6 +126,18 @@ public final class RouterPathLookup {
       // todo change to Constants.Service.DATASET_MANAGER
       .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(TRANSACTION_ID_PATH)),
           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(ALLDATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(DATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(APPDATA_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.GET), Pattern.compile(FLOWINFO_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(RESET_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
+      .put(ImmutablePair.of(EnumSet.of(AllowedMethod.POST), Pattern.compile(PROMOTE_PATH)),
+           Constants.Service.APP_FABRIC_HTTP)
       .build();
 
   public static String getRoutingPath(String requestPath, String method) {
