@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
 
 /**
  * Security handler that intercept HTTP message and validates the access token in
- * header Authorization field
+ * header Authorization field.
  */
 public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SecurityAuthenticationHttpHandler.class);
@@ -105,7 +105,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
         break;
     }
     if (tokenState != TokenValidator.State.TOKEN_VALID) {
-//      Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+//      Iterable<Discoverable> discoverables
+//                    = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
 //      Iterator<Discoverable> discoverableIterator = discoverables.iterator();
 //      JsonArray externalAuthenticationURIs = new JsonArray();
 //      while (discoverableIterator.hasNext()) {
@@ -151,9 +152,11 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     Future<Iterable<Discoverable>> future = pool.submit(new Callable<Iterable<Discoverable>>() {
       @Override
       public Iterable<Discoverable> call() throws Exception {
-        Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+        Iterable<Discoverable> discoverables =
+          discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
         while (!discoverables.iterator().hasNext()) {
-          discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+          discoverables =
+            discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
         }
         return discoverables;
       }
