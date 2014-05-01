@@ -41,7 +41,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
    * @param length Size of this split.
    * @param locations List of hosts containing this split.
    */
-  StreamInputSplit(Path path, @Nullable Path indexPath, long startTime, long endTime,
+  StreamInputSplit(Path path, Path indexPath, long startTime, long endTime,
                    long start, long length, @Nullable String[] locations) {
     super(path, start, length, locations);
     this.indexPath = indexPath;
@@ -52,7 +52,6 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   /**
    * Returns the path for index file.
    */
-  @Nullable
   public Path getIndexPath() {
     return indexPath;
   }

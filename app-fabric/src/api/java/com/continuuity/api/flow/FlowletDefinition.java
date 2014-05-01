@@ -6,6 +6,7 @@ package com.continuuity.api.flow;
 
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
@@ -75,6 +76,48 @@ public final class FlowletDefinition {
   public FlowletDefinition(FlowletDefinition definition, int instances) {
     this(definition);
     this.instances = instances;
+  }
+
+  /**
+   * Creates a definition from a copy and overrides the stream connection.
+   * @param definition definition to copy from
+   * @param oldStreamInput stream connection to override
+   * @param newStreamInput new value for input stream
+   */
+  public FlowletDefinition(FlowletDefinition definition, String oldStreamInput, String newStreamInput) {
+    this(definition);
+
+    // Changing what is going to be serialized and stored in MDS: intputs
+
+    Set<Schema> schemas = inputs.get(oldStreamInput);
+    if (schemas == null) {
+      // This is fine: stream name was not in set in @ProcessInput, so no need to change it, as the change will
+      // be reflected in Flow spec in flowlet connections
+      return;
+    }
+
+    Schema streamSchema = null;
+    Set<Schema> changedSchemas = Sets.newLinkedHashSet();
+    for (Schema schema : schemas) {
+      if (StreamEvent.class.getName().equals(schema.getRecordName())) {
+        streamSchema = schema;
+      } else {
+        changedSchemas.add(schema);
+      }
+    }
+
+    // Removing schema from set under old name (removing the whole set if nothing is left there)
+    if (changedSchemas.isEmpty()) {
+      inputs.remove(oldStreamInput);
+    } else {
+      inputs.put(oldStreamInput, changedSchemas);
+    }
+
+    // Adding schema to the set under new name (creating set if not exists)
+    Set<Schema> newSchemas =
+      inputs.containsKey(newStreamInput) ? inputs.get(newStreamInput) : Sets.<Schema>newLinkedHashSet();
+    newSchemas.add(streamSchema);
+    inputs.put(newStreamInput, newSchemas);
   }
 
   private FlowletDefinition(FlowletDefinition definition) {

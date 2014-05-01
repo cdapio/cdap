@@ -38,6 +38,8 @@ import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,6 +62,7 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
   public static final AuthToken DUMMY_AUTH_TOKEN = new AuthToken("appFabricTest");
   public static final TempFolder TEMP_FOLDER = new TempFolder();
@@ -162,9 +165,10 @@ public class TestHelper {
                                            final AuthToken token,
                                            final String applicationId,
                                            final String fileName,
-                                           Class<? extends Application> applicationClz) throws Exception {
+                                           Class<? extends Application> applicationClz,
+                                           File...bundleEmbeddedJars) throws Exception {
     return deployApplication(appFabricServer, locationFactory, account.getId(), token, applicationId, fileName,
-                             applicationClz);
+                             applicationClz, bundleEmbeddedJars);
   }
 
     private static Location deployApplication(AppFabricService.Iface appFabricServer,
@@ -173,12 +177,15 @@ public class TestHelper {
                                           final AuthToken token,
                                           final String applicationId,
                                           final String fileName,
-                                          Class<? extends Application> applicationClz) throws Exception {
+                                          Class<? extends Application> applicationClz,
+                                          File...bundleEmbeddedJars) throws Exception {
       Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
       Application application = applicationClz.newInstance();
       ApplicationSpecification appSpec = Specifications.from(application.configure());
-      Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
+      Location deployedJar = locationFactory.create(
+        createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
+      LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
       ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
       archiveInfo.setApplicationId(applicationId);
@@ -209,7 +216,7 @@ public class TestHelper {
       return deployedJar;
   }
 
-  private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec) {
+  private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
     File testAppDir;
     File tmpDir;
     testAppDir = Files.createTempDir();
@@ -260,7 +267,7 @@ public class TestHelper {
         File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
         File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
                                            ".jar", tmpDir);
-        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
+        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec, bundleEmbeddedJars);
       } else {
         // return null if neither existing jar was found nor jar was built based on class file
         return null;
@@ -276,10 +283,11 @@ public class TestHelper {
    * @param manifest The Jar manifest content.
    * @param outputFile Location of the Jar file.
    * @param appSpec The {@link com.continuuity.app.ApplicationSpecification} of the deploying application.
+   * @param bundleEmbeddedJars
    */
-  private static File jarDir(File dir, File relativeBase, Manifest manifest,
-                             File outputFile, ApplicationSpecification appSpec) throws IOException,
-    ClassNotFoundException {
+  private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile,
+                             ApplicationSpecification appSpec, File...bundleEmbeddedJars)
+    throws IOException, ClassNotFoundException {
 
     JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile), manifest);
     Queue<File> queue = Lists.newLinkedList();
@@ -299,10 +307,18 @@ public class TestHelper {
       jarOut.closeEntry();
     }
 
+    for (File bundledEmbeddedJar : bundleEmbeddedJars) {
+      String entryName = bundledEmbeddedJar.getName();
+      jarOut.putNextEntry(new JarEntry(entryName));
+      Files.copy(bundledEmbeddedJar, jarOut);
+      jarOut.closeEntry();
+    }
+
     jarOut.close();
 
     return outputFile;
   }
+
   private static String pathToClassName(String path) {
     return path.replace('/', '.').substring(0, path.length() - ".class".length());
   }

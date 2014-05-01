@@ -185,11 +185,17 @@ public class AppFabricTestsSuite {
     if (headers != null) {
       post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
-
       post.setHeader(AUTH_HEADER);
     }
     return client.execute(post);
   }
+
+  public static HttpResponse doPost(HttpPost post) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
+  }
+
 
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();

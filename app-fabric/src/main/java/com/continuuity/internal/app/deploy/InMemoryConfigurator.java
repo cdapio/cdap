@@ -10,10 +10,12 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
+import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -22,6 +24,7 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -103,13 +106,16 @@ public final class InMemoryConfigurator implements Configurator {
   public ListenableFuture<ConfigResponse> config() {
     StringWriter writer = null;
     SettableFuture result = SettableFuture.create();
+    File unpackedJarDir = null;
 
     try {
       Application app;
 
       if (archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass = new Archive(id, archive).getMainClass().newInstance();
+        unpackedJarDir = Files.createTempDir();
+        Object mainClass = new Archive(id, BundleJarUtil.unpackProgramJar(archive, unpackedJarDir))
+          .getMainClass().newInstance();
         // Convert it to the type application.
         app = (Application) mainClass;
       } else if (application != null && archive == null) {  // Provided Application instance
@@ -132,6 +138,10 @@ public final class InMemoryConfigurator implements Configurator {
       LOG.error(t.getMessage(), t);
       return Futures.immediateFailedFuture(t);
     } finally {
+      if (unpackedJarDir != null) {
+        unpackedJarDir.delete();
+      }
+
       if (writer != null) {
         try {
           writer.close();

@@ -13,6 +13,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;

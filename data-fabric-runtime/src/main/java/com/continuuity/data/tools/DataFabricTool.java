@@ -11,7 +11,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.inject.AbstractModule;

@@ -2,15 +2,11 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.common.utils.Networks;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -32,6 +28,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -46,10 +47,6 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -61,6 +58,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Tests Netty Router.
@@ -171,9 +172,9 @@ public class NettyRouterTest {
 
   @Test
   public void testRouterSync() throws Exception {
-    testSync();
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    testSync(25);
+    // sticky endpoint strategy used so the sum should be 25
+    Assert.assertEquals(25, gatewayServer1.getNumRequests() + gatewayServer2.getNumRequests());
   }
 
   @Test
@@ -218,8 +219,8 @@ public class NettyRouterTest {
     asyncHttpClient.close();
 
     Assert.assertEquals(NUM_ELEMENTS, numSuccessfulRequests.get());
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    // we use sticky endpoint strategy so the sum of requests from the two gateways should be NUM_ELEMENTS
+    Assert.assertTrue(NUM_ELEMENTS == (gatewayServer1.getNumRequests() + gatewayServer2.getNumRequests()));
   }
 
   @Test
@@ -228,7 +229,7 @@ public class NettyRouterTest {
       // Bring down gatewayServer1
       gatewayServer1.cancelRegistration();
 
-      testSync();
+      testSync(25);
     } finally {
       Assert.assertEquals(0, gatewayServer1.getNumRequests());
       Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
@@ -237,14 +238,14 @@ public class NettyRouterTest {
     }
   }
 
-  @Test(expected = Exception.class)
+  @Test
   public void testRouterAllServersDown() throws Exception {
     try {
       // Bring down all servers
       gatewayServer1.cancelRegistration();
       gatewayServer2.cancelRegistration();
 
-      testSync();
+      testSyncServiceUnavailable();
     } finally {
       Assert.assertEquals(0, gatewayServer1.getNumRequests());
       Assert.assertEquals(0, gatewayServer2.getNumRequests());
@@ -325,13 +326,23 @@ public class NettyRouterTest {
     Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
   }
 
-  private void testSync() throws Exception {
-    for (int i = 0; i < 25; ++i) {
+  private void testSync(int numRequests) throws Exception {
+    for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending request " + i);
       HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
                                                 hostname, router.getServiceMap().get(gatewayService),
                                                 "/v1/ping", "sync", i));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    }
+  }
+
+  private void testSyncServiceUnavailable() throws Exception {
+    for (int i = 0; i < 25; ++i) {
+      LOG.trace("Sending request " + i);
+      HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
+                                                hostname, router.getServiceMap().get(gatewayService),
+                                                "/v1/ping", "sync", i));
+      Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
     }
   }
 
@@ -394,7 +405,8 @@ public class NettyRouterTest {
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                                                new RouterPathLookup(new NoAuthenticator())));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

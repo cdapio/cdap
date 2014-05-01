@@ -2,7 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.router.handlers.InboundHandler;
+import com.continuuity.gateway.router.handlers.HttpRequestHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +30,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorker;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
+import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,8 +152,10 @@ public class NettyRouter extends AbstractIdleService {
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, serviceLookup));
+          pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
+          pipeline.addLast("http-decoder", new HttpRequestDecoder());
+          pipeline.addLast("http-request-handler",
+                           new HttpRequestHandler(clientBootstrap, serviceLookup));
           return pipeline;
         }
       }

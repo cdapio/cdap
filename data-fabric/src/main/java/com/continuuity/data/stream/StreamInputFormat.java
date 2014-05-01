@@ -5,8 +5,8 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.stream.StreamEventDecoder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -19,8 +19,9 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A {@link InputFormat} for reading stream data. Stream data files are organized by partition directories with
@@ -38,15 +39,14 @@ import java.util.Map;
  * <pre>
  *   [partitionStartTime].[duration]
  * </pre>
- * with both {@code partitionStartTime} and {@code durable} in seconds.
+ * with both {@code partitionStartTime} and {@code duration} in seconds.
  *
  * <br/><br/>
  * The {@code bucketName} is formatted as
  * <pre>
- *   "bucket".[bucketId].[seqNo]
+ *   [prefix].[seqNo]
  * </pre>
- * where the {@code bucketId} is an integer. The {@code seqNo} is a strictly increasing integer for the same
- * {@code bucketId}.
+ * The {@code seqNo} is a strictly increasing integer for the same prefix starting with 0.
  *
  * @param <K> Key type of input
  * @param <V> Value type of input
@@ -80,7 +80,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param job The job to modify.
    * @param path The file path to stream base directory.
    */
-  public static void setStreamPath(Job job, Path path) {
+  public static void setStreamPath(Job job, URI path) {
     job.getConfiguration().set(STREAM_PATH, path.toString());
   }
 
@@ -115,14 +115,14 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
 
-    long startTime = conf.getLong(EVENT_START_TIME, -1L);
-    long endTime = conf.getLong(EVENT_END_TIME, -1L);
-    Path path = new Path(conf.get(STREAM_PATH));
+    long startTime = conf.getLong(EVENT_START_TIME, 0L);
+    long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
+    Path path = new Path(URI.create(conf.get(STREAM_PATH)));
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
 
-    Preconditions.checkArgument(startTime >= 0, "Missing start time");
-    Preconditions.checkArgument(endTime >= 0, "Missing end time");
+    Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
+    Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
 
     List<InputSplit> splits = Lists.newArrayList();
 
@@ -145,12 +145,11 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
       }
 
       // Collects all bucket file status in the partition.
-      Map<String, StreamDataFileSplitter> dataFileStatusMap = collectBuckets(fs, partitionStatus.getPath());
+      Collection<StreamDataFileSplitter> eventFiles = collectBuckets(fs, partitionStatus.getPath());
 
       // For each bucket inside the partition directory, compute the splits
-      for (Map.Entry<String, StreamDataFileSplitter> entry : dataFileStatusMap.entrySet()) {
-        StreamDataFileSplitter dataFileStatus = entry.getValue();
-        dataFileStatus.computeSplits(fs, minSplitSize, maxSplitSize, startTime, endTime, splits);
+      for (StreamDataFileSplitter splitter : eventFiles) {
+        splitter.computeSplits(fs, minSplitSize, maxSplitSize, startTime, endTime, splits);
       }
     }
 
@@ -167,19 +166,14 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Collects file status of all buckets under a given partition.
    */
-  private Map<String, StreamDataFileSplitter> collectBuckets(FileSystem fs, Path partitionPath) throws IOException {
-    Map<String, StreamDataFileSplitter> result = Maps.newHashMap();
+  private Collection<StreamDataFileSplitter> collectBuckets(FileSystem fs, Path partitionPath) throws IOException {
+    ImmutableList.Builder<StreamDataFileSplitter> builder = ImmutableList.builder();
 
     for (FileStatus fileStatus : fs.listStatus(partitionPath)) {
-      String bucketName = StreamUtils.getBucketName(fileStatus.getPath());
-      StreamDataFileSplitter dataFileStatus = result.get(bucketName);
-      if (dataFileStatus == null) {
-        dataFileStatus = new StreamDataFileSplitter();
-        result.put(bucketName, dataFileStatus);
+      if (StreamFileType.EVENT.isMatched(fileStatus.getPath().getName())) {
+        builder.add(new StreamDataFileSplitter(fileStatus));
       }
-      dataFileStatus.addFileStatus(fileStatus);
     }
-
-    return result;
+    return builder.build();
   }
 }

@@ -8,7 +8,10 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -23,6 +26,7 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
+import com.continuuity.app.services.Data;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
@@ -39,7 +43,7 @@ import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
@@ -57,6 +61,8 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -66,6 +72,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -76,7 +83,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.Body;
+import com.ning.http.client.BodyGenerator;
+import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -108,13 +119,16 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -124,10 +138,33 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
+
   /**
    * Json serializer.
    */
   private static final Gson GSON = new Gson();
+
+  /**
+   * Timeout to get response from metrics system.
+   */
+  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+
+  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+
+  /**
+   * Timeout to upload to remote app fabric.
+   */
+  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
+
+  private static final Map<String, Type> RUNNABLE_TYPE_MAP = ImmutableMap.of(
+    "mapreduce", Type.MAPREDUCE,
+    "flows", Type.FLOW,
+    "procedures", Type.PROCEDURE,
+    "workflows", Type.WORKFLOW,
+    "webapp", Type.WEBAPP
+  );
 
   /**
    * Configuration object passed from higher up.
@@ -168,8 +205,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final Store store;
 
-  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-
   private final WorkflowClient workflowClient;
 
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -188,29 +223,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
-
-  /**
    * The directory where the uploaded files would be placed.
    */
   private final String archiveDir;
 
-  /**
-   * DeploymentManager responsible for running pipeline.
-   */
   private final ManagerFactory managerFactory;
   private final Scheduler scheduler;
 
-  private static final Map<String, Type> runnableTypeMap = ImmutableMap.of(
-    "mapreduce", Type.MAPREDUCE,
-    "flows", Type.FLOW,
-    "procedures", Type.PROCEDURE,
-    "workflows", Type.WORKFLOW,
-    "webapp", Type.WEBAPP
-  );
+
 
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -253,12 +273,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration, StreamAdmin streamAdmin,
-                              LocationFactory locationFactory, ManagerFactory managerFactory,
-                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
+  public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
+                              DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
+                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator, DataSetAccessor dataSetAccessor) {
+                              DataSetInstantiatorFromMetaData datasetInstantiator) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -372,7 +393,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      Type type = runnableTypeMap.get(runnableType);
+      Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
       if (type == Type.MAPREDUCE) {
         String workflowName = getWorkflowName(id.getId());
@@ -415,8 +436,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/start")
   public void webappStart(final HttpRequest request, final HttpResponder responder,
-                              @PathParam("app-id") final String appId) {
-      runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
+                          @PathParam("app-id") final String appId) {
+    runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "start");
   }
 
 
@@ -426,7 +447,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/stop")
   public void webappStop(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     runnableStartStop(request, responder, appId, Type.WEBAPP.prettyName().toLowerCase(), Type.WEBAPP, "stop");
   }
 
@@ -533,7 +554,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               @PathParam("app-id") final String appId,
                               @PathParam("runnable-type") final String runnableType,
                               @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -559,7 +580,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -586,7 +607,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -648,7 +669,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
                                              final String appId, final String runnableType,
                                              final String runnableId, final String action) {
-    Type type = runnableTypeMap.get(runnableType);
+    Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -789,6 +810,81 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Returns number of instances for a procedure.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      int count = getProgramInstances(Id.Program.from(accountId, appId, procedureId));
+      JsonObject json = new JsonObject();
+      json.addProperty("instances", count);
+
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+   * Sets number of instances for a procedure
+   */
+  @PUT
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void setProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      short instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+
+      setProgramInstances(programId, instances);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable throwable) {
+      LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void setProgramInstances(Id.Program programId, short instances) throws Exception {
+    try {
+      store.setProcedureInstances(programId, instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, Type.PROCEDURE);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(programId.getId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               programId.getId(), Type.PROCEDURE.prettyName(), throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
+    }
+  }
+
+  private int getProgramInstances(Id.Program programId) throws Exception {
+    try {
+      return store.getProcedureInstances(programId);
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}.{}",
+               programId.getId(), Type.PROCEDURE.prettyName(), throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
+    }
+  }
 
   /**
    * Returns number of instances for a flowlet within a flow.
@@ -846,6 +942,43 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                                               "oldInstances", String.valueOf(oldInstances))).get();
         }
       }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Changes input stream for a flowlet connection.
+   */
+  @PUT
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
+  public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
+                                            @PathParam("app-id") final String appId,
+                                            @PathParam("flow-id") final String flowId,
+                                            @PathParam("flowlet-id") final String flowletId,
+                                            @PathParam("stream-id") final String streamId) throws IOException {
+
+    try {
+      Map<String, String> arguments = decodeArguments(request);
+      String oldStreamId = arguments.get("oldStreamId");
+      if (oldStreamId == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
+        return;
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      StreamSpecification stream = store.getStream(Id.Account.from(accountId), streamId);
+      if (stream == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
+        return;
+      }
+
+      Id.Program programID = Id.Program.from(accountId, appId, flowId);
+      store.changeFlowletSteamConnection(programID, flowletId, oldStreamId, streamId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1113,8 +1246,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}")
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("procedure-id")final String procId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("procedure-id")final String procId) {
     runnableSpecification(request, responder, appId, Type.PROCEDURE, procId);
   }
 
@@ -1124,8 +1257,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("mapreduce-id")final String mapreduceId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("mapreduce-id")final String mapreduceId) {
     runnableSpecification(request, responder, appId, Type.MAPREDUCE, mapreduceId);
   }
 
@@ -1135,17 +1268,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}")
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id")final String workflowId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id")final String workflowId) {
     runnableSpecification(request, responder, appId, Type.WORKFLOW, workflowId);
   }
 
 
 
   private void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                    final String appId, Type runnableType,
-                                    final String runnableId) {
-
+                                     final String appId, Type runnableType,
+                                     final String runnableId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -1297,6 +1429,150 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+   * Promote an application another reactor.
+   */
+  @POST
+  @Path("/apps/{app-id}/promote")
+  public void promoteApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    try {
+      String postBody = null;
+
+      try {
+        postBody = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+      } catch (IOException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
+      }
+
+      Map<String, String> content = null;
+      try {
+        content = GSON.fromJson(postBody, MAP_STRING_STRING_TYPE);
+      } catch (JsonSyntaxException e) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
+        return;
+      }
+
+      if (!content.containsKey("hostname")) {
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Hostname not specified.");
+        return;
+      }
+
+      // Checks DNS, Ipv4, Ipv6 address in one go.
+      String hostname = content.get("hostname");
+      Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
+
+      String accountId = getAuthenticatedAccountId(request);
+      String token = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
+      if (appArchive == null || !appArchive.exists()) {
+        throw new IOException("Unable to locate the application.");
+      }
+
+      if (!promote(token, accountId, appId, hostname)) {
+        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
+      } else {
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public boolean promote(String authToken, String accountId, String appId, String hostname) throws Exception {
+
+    try {
+      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId,
+                                                                                          appId));
+      if (appArchive == null || !appArchive.exists()) {
+        throw new Exception("Unable to locate the application.");
+      }
+
+      String schema = "https";
+      if ("localhost".equals(hostname)) {
+        schema = "http";
+      }
+
+      String url = String.format("%s://%s:%d/v2/apps/%s",
+                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
+        .setHeader("X-Archive-Name", appArchive.getName())
+        .setHeader("X-Continuuity-ApiKey", authToken)
+        .build();
+
+      try {
+        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
+        Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
+        if (response.getStatusCode() != 200) {
+          throw new RuntimeException(response.getResponseBody());
+        }
+        return true;
+      } finally {
+        client.close();
+      }
+    } catch (Exception ex) {
+      LOG.warn(ex.getMessage(), ex);
+      throw ex;
+    }
+  }
+
+  private static final class LocationBodyGenerator implements BodyGenerator {
+
+    private final Location location;
+
+    private LocationBodyGenerator(Location location) {
+      this.location = location;
+    }
+
+    @Override
+    public Body createBody() throws IOException {
+      final InputStream input = location.getInputStream();
+
+      return new Body() {
+        @Override
+        public long getContentLength() {
+          try {
+            return location.length();
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public long read(ByteBuffer buffer) throws IOException {
+          // Fast path
+          if (buffer.hasArray()) {
+            int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+            if (len > 0) {
+              buffer.position(buffer.position() + len);
+            }
+            return len;
+          }
+
+          byte[] bytes = new byte[buffer.remaining()];
+          int len = input.read(bytes);
+          if (len < 0) {
+            return len;
+          }
+          buffer.put(bytes, 0, len);
+          return len;
+        }
+
+        @Override
+        public void close() throws IOException {
+          input.close();
+        }
+      };
     }
   }
 
@@ -1512,7 +1788,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return AppFabricServiceStatus.OK;
   }
 
-  private void deleteMetrics(String account, String application) throws IOException {
+  private void deleteMetrics(String accountId, String applicationId) throws IOException, OperationException {
+    Collection<ApplicationSpecification> applications = Lists.newArrayList();
+    if (applicationId == null) {
+      applications = this.store.getAllApplications(new Id.Account(accountId));
+    } else {
+      ApplicationSpecification spec = this.store.getApplication
+        (new Id.Application(new Id.Account(accountId), applicationId));
+      applications.add(spec);
+    }
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
@@ -1522,14 +1806,21 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       throw new IOException("Can't find Metrics endpoint");
     }
 
-    LOG.debug("Deleting metrics for application {}", application);
     for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.GATEWAY_VERSION,
-                                 scope.name().toLowerCase(),
-                                 application);
+      for (ApplicationSpecification application : applications) {
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.GATEWAY_VERSION,
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
+    }
+
+    if (applicationId == null) {
+      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
       sendMetricsDelete(url);
     }
   }
@@ -1928,7 +2219,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") final String appId) {
     getAppDetails(request, responder, appId);
   }
 
@@ -1999,7 +2290,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         result.add(makeAppRecord(appSpec));
       }
 
-      String json = new Gson().toJson(result);
+      String json;
+      if (appid == null) {
+        json = new Gson().toJson(result);
+      } else {
+        json = new Gson().toJson(result.get(0));
+      }
+
       responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
@@ -2236,7 +2533,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       // decode row key using the given encoding
       String encoding = getEncoding(queryParams);
-      byte [] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
+      byte[] rowKey = key == null ? null : Util.decodeBinary(key, encoding);
 
       boolean counter = getCounter(queryParams);
       List<String> columns = getColumns(queryParams);
@@ -2248,8 +2545,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         throw new IllegalArgumentException("Read can only specify columns or range");
       }
 
-      TransactionContext txContext = new TransactionContext(
-        txClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      TransactionContext txContext = new TransactionContext(txClient,
+                                                          datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
 
       Row result;
@@ -2277,8 +2574,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         // first convert the bytes to strings
         Map<String, String> map = Maps.newTreeMap();
         for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
-          map.put(Util.encodeBinary(entry.getKey(), encoding),
-                  Util.encodeBinary(entry.getValue(), encoding, counter));
+          map.put(Util.encodeBinary(entry.getKey(), encoding), Util.encodeBinary(entry.getValue(), encoding, counter));
         }
         responder.sendJson(HttpResponseStatus.OK, map, STRING_MAP_TYPE);
       }
@@ -2289,8 +2585,90 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }  catch (Throwable e) {
+    } catch (Throwable e) {
       LOG.error("Caught exception", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+  /**
+   * Returns a list of streams associated with account.
+   */
+  @GET
+  @Path("/streams")
+  public void getStreams(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, Data.STREAM, null, null);
+  }
+
+  /**
+   * Returns a stream associated with account.
+   */
+  @GET
+  @Path("/streams/{stream-id}")
+  public void getStreamSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("stream-id") final String streamId) {
+    dataList(request, responder, Data.STREAM, streamId, null);
+  }
+
+  /**
+   * Returns a list of streams associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/streams")
+  public void getStreamsByApp(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId) {
+    dataList(request, responder, Data.STREAM, null, appId);
+  }
+
+  /**
+   * Returns a list of dataset associated with account.
+   */
+  @GET
+  @Path("/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, Data.DATASET, null, null);
+  }
+
+  /**
+   * Returns a dataset associated with account.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("dataset-id") final String datasetId) {
+    dataList(request, responder, Data.DATASET, datasetId, null);
+  }
+
+  /**
+   * Returns a list of dataset associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/datasets")
+  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId) {
+    dataList(request, responder, Data.DATASET, null, appId);
+  }
+
+  private void dataList(HttpRequest request, HttpResponder responder, Data type, String name, String appId) {
+    try {
+      if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided");
+        return;
+      }
+
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program program = Id.Program.from(accountId, appId == null ? "" : appId, "");
+      String json = name != null ? getDataEntity(program, type, name) :
+        appId != null ? listDataEntitiesByApp(program, type) : listDataEntities(program, type);
+      if (json.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception : ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -2492,6 +2870,219 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
+    try {
+      if (type == Data.DATASET) {
+        DataSetSpecification spec = store.getDataSet(new Id.Account(programId.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      } else if (type == Data.STREAM) {
+        StreamSpecification spec = store.getStream(new Id.Account(programId.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private String listDataEntities(Id.Program programId, Data type) throws Exception {
+    try {
+      if (type == Data.DATASET) {
+        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(programId.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (DataSetSpecification spec : specs) {
+          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      } else if (type == Data.STREAM) {
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (StreamSpecification spec : specs) {
+          result.add(makeStreamRecord(spec.getName(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private String listDataEntitiesByApp(Id.Program programId, Data type) throws Exception {
+    try {
+      Id.Account account = new Id.Account(programId.getAccountId());
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(
+        account, programId.getApplicationId()));
+      if (type == Data.DATASET) {
+        Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+        for (String dsName : dataSetsUsed) {
+          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
+          if (spec == null) {
+            spec = store.getDataSet(account, dsName);
+          }
+          result.add(makeDataSetRecord(dsName, spec == null ? null : spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == Data.STREAM) {
+        Set<String> streamsUsed = streamsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+        for (String streamName : streamsUsed) {
+          result.add(makeStreamRecord(streamName, null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      result.addAll(flowlet.getDatasets());
+    }
+    return result;
+  }
+
+  private Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(dataSetsUsedBy(flowSpec));
+    }
+    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
+      result.addAll(procSpec.getDataSets());
+    }
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+      result.addAll(mrSpec.getDataSets());
+    }
+    result.addAll(appSpec.getDataSets().keySet());
+    return result;
+  }
+
+  private Set<String> streamsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
+        result.add(con.getSourceName());
+      }
+    }
+    return result;
+  }
+
+  private Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(streamsUsedBy(flowSpec));
+    }
+    result.addAll(appSpec.getStreams().keySet());
+    return result;
+  }
+
+  /**
+   * Returns all flows associated with a stream.
+   */
+  @GET
+  @Path("/streams/{stream-id}/flows")
+  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
+                               @PathParam("stream-id") final String streamId) {
+    programListByDataAccess(request, responder, Type.FLOW, Data.STREAM, streamId);
+  }
+
+  /**
+   * Returns all flows associated with a dataset.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                                @PathParam("dataset-id") final String datasetId) {
+    programListByDataAccess(request, responder, Type.FLOW, Data.DATASET, datasetId);
+  }
+
+  private void programListByDataAccess(HttpRequest request, HttpResponder responder,
+                                       Type type, Data data, String name) {
+    try {
+      if (name.isEmpty()) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, data.prettyName().toLowerCase() + " name is empty");
+        return;
+      }
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, "", "");
+      String list = listProgramsByDataAccess(programId, type, data, name);
+      if (list.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String listProgramsByDataAccess(Id.Program programId, Type type, Data data, String name) throws Exception {
+    try {
+      List<Map<String, String>> result = Lists.newArrayList();
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
+        new Id.Account(programId.getAccountId()));
+      if (appSpecs != null) {
+        for (ApplicationSpecification appSpec : appSpecs) {
+          if (type == Type.FLOW) {
+            for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+              if ((data == Data.DATASET && usesDataSet(flowSpec, name))
+                || (data == Data.STREAM && usesStream(flowSpec, name))) {
+                result.add(makeProgramRecord(appSpec.getName(), flowSpec, Type.FLOW));
+              }
+            }
+          } else if (type == Type.PROCEDURE) {
+            for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+              if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
+                result.add(makeProgramRecord(appSpec.getName(), procedureSpec, Type.PROCEDURE));
+              }
+            }
+          } else if (type == Type.MAPREDUCE) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+              if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
+                result.add(makeProgramRecord(appSpec.getName(), mrSpec, Type.MAPREDUCE));
+              }
+            }
+          }
+        }
+      }
+      return new Gson().toJson(result);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception("Could not retrieve application specs for " +
+                                             programId.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      if (flowlet.getDatasets().contains(dataset)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
    /* -----------------  helpers to return Json consistently -------------- */
 
   private static Map<String, String> makeAppRecord(ApplicationSpecification appSpec) {
@@ -2515,5 +3106,93 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       builder.put("description", spec.getDescription());
     }
     return builder.build();
+  }
+
+  private static Map<String, String> makeDataSetRecord(String name, String classname,
+                                                       DataSetSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Dataset");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (classname != null) {
+      builder.put("classname", classname);
+    }
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Stream");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  /**
+   * *DO NOT DOCUMENT THIS API*
+   */
+  @POST
+  @Path("/unrecoverable/reset")
+  public void resetReactor(HttpRequest request, HttpResponder responder) {
+
+    try {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+        responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+        return;
+      }
+      String account = getAuthenticatedAccountId(request);
+      final Id.Account accountId = Id.Account.from(account);
+
+      // Check if any program is still running
+      boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+        @Override
+        public boolean apply(Id.Program programId) {
+          return programId.getAccountId().equals(accountId.getId());
+        }
+      }, Type.values());
+
+      if (appRunning) {
+        throw new Exception("App Still Running");
+      }
+      deleteMetrics(account, null);
+      // delete all meta data
+      store.removeAll(accountId);
+      // delete queues and streams data
+      queueAdmin.dropAll();
+      streamAdmin.dropAll();
+
+      LOG.info("Deleting all data for account '" + account + "'.");
+      dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
+      // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
+      // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
+      Set<String> datasetsToKeep = Sets.newHashSet();
+      for (MetricsScope scope : MetricsScope.values()) {
+        datasetsToKeep.add(scope.name().toLowerCase() + "." +
+                             configuration.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                               MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
+      }
+
+      // Don't truncate log table too - we would like to retain logs across resets.
+      datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+
+      // NOTE: there could be services running at the moment that rely on the system datasets to be available.
+      dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
+
+      LOG.info("All data for account '" + account + "' deleted.");
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
+    }
   }
 }
