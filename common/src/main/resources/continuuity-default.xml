@@ -102,7 +102,7 @@
         <name>hdfs.lib.dir</name>
         <value>${hdfs.namespace}/lib</value>
         <description>Common directory in HDFS for jar files for coprocessors,
-        etc.</description>
+            etc.</description>
     </property>
 
     <!--
@@ -311,7 +311,7 @@
         <name>data.tx.snapshot.local.dir</name>
         <value>${local.data.dir}/tx.snapshot</value>
         <description>Directory on the local filesystem used to store snapshots
-        and logs of transaction state for single-node operation.</description>
+            and logs of transaction state for single-node operation.</description>
     </property>
 
     <property>
@@ -332,7 +332,7 @@
         <name>data.tx.janitor.enable</name>
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor
-        should be enabled on tables.  Should normally be true.</description>
+            should be enabled on tables.  Should normally be true.</description>
     </property>
 
     <property>
@@ -357,7 +357,7 @@
         <name>data.queue.config.update.interval</name>
         <value>5</value>
         <description>Frequency, in seconds, of updates to the queue consumer
-        configuration used in evicting queue entries on flush and compaction.
+            configuration used in evicting queue entries on flush and compaction.
         </description>
     </property>
 
@@ -704,7 +704,7 @@
     <property>
         <name>security.server.token.expiration.ms</name>
         <description>AccessToken expiration time in milliseconds</description>
-        <value>10000</value>
+        <value>84000000</value>
     </property>
 
     <property>
@@ -712,4 +712,31 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <property>
+        <name>security.token.digest.key.expiration.ms</name>
+        <value>3600000</value>
+        <description>Time duration (in milliseconds) after which an active secret key used
+            for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.token.distributed.parent.znode</name>
+        <value>/${reactor.namespace}/security/keys</value>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
+    </property>
+
+    <!--
+        Security enabled flag
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>true</value>
+        <description>If this is set to true, security layer will be up and active in reactor</description>
+    </property>
+
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
+    </property>
 </configuration>

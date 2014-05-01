@@ -16,6 +16,7 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
+    public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }
 
   /**
@@ -153,11 +154,11 @@ public final class Constants {
      * TransactionService configuration.
      */
     public static final class Service {
-  
+
       /** for the port of the tx server. */
       public static final String CFG_DATA_TX_BIND_PORT
         = "data.tx.bind.port";
-  
+
       /** for the address (hostname) of the tx server. */
       public static final String CFG_DATA_TX_BIND_ADDRESS
         = "data.tx.bind.address";
@@ -169,97 +170,97 @@ public final class Constants {
       /** the number of IO threads in the tx service. */
       public static final String CFG_DATA_TX_SERVER_IO_THREADS
         = "data.tx.server.io.threads";
-  
+
       /** the number of handler threads in the tx service. */
       public static final String CFG_DATA_TX_SERVER_THREADS
         = "data.tx.server.threads";
-  
+
       /** default tx service port. */
       public static final int DEFAULT_DATA_TX_BIND_PORT
         = 15165;
-  
+
       /** default tx service address. */
       public static final String DEFAULT_DATA_TX_BIND_ADDRESS
         = "0.0.0.0";
-  
+
       /** default number of handler IO threads in tx service. */
       public static final int DEFAULT_DATA_TX_SERVER_IO_THREADS
         = 2;
-  
+
       /** default number of handler threads in tx service. */
       public static final int DEFAULT_DATA_TX_SERVER_THREADS
         = 20;
-  
+
       // Configuration key names and defaults used by tx client.
-  
+
       /** to specify the tx client socket timeout in ms. */
       public static final String CFG_DATA_TX_CLIENT_TIMEOUT
         = "data.tx.client.timeout";
-  
+
       /** to specify the tx client socket timeout for long-running ops in ms. */
       public static final String CFG_DATA_TX_CLIENT_LONG_TIMEOUT
         = "data.tx.client.long.timeout";
-  
+
       /** to specify the tx client provider strategy. */
       public static final String CFG_DATA_TX_CLIENT_PROVIDER
         = "data.tx.client.provider";
-  
+
       /** to specify the number of threads for client provider "pool". */
       public static final String CFG_DATA_TX_CLIENT_COUNT
         = "data.tx.client.count";
-  
+
       /** to specify the retry strategy for a failed thrift call. */
       public static final String CFG_DATA_TX_CLIENT_RETRY_STRATEGY
         = "data.tx.client.retry.strategy";
-  
+
       /** to specify the number of times to retry a failed thrift call. */
       public static final String CFG_DATA_TX_CLIENT_ATTEMPTS
         = "data.tx.client.retry.attempts";
-  
+
       /** to specify the initial sleep time for retry strategy backoff. */
       public static final String CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL
         = "data.tx.client.retry.backoff.initial";
-  
+
       /** to specify the backoff factor for retry strategy backoff. */
       public static final String CFG_DATA_TX_CLIENT_BACKOFF_FACTOR
         = "data.tx.client.retry.backoff.factor";
-  
+
       /** to specify the sleep time limit for retry strategy backoff. */
       public static final String CFG_DATA_TX_CLIENT_BACKOFF_LIMIT
         = "data.tx.client.retry.backoff.limit";
-  
+
       /** the default tx client socket timeout in milli seconds. */
       public static final int DEFAULT_DATA_TX_CLIENT_TIMEOUT
         = 30 * 1000;
-  
+
       /** tx client timeout for long operations such as ClearFabric. */
       public static final int DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT
         = 300 * 1000;
-  
+
       /** default number of pooled tx clients. */
       public static final int DEFAULT_DATA_TX_CLIENT_COUNT
         = 5;
-  
+
       /** default tx client provider strategy. */
       public static final String DEFAULT_DATA_TX_CLIENT_PROVIDER
         = "pool";
-  
+
       /** retry strategy for thrift clients, e.g. backoff, or n-times. */
       public static final String DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY
         = "backoff";
-  
+
       /** default number of attempts for strategy n-times. */
       public static final int DEFAULT_DATA_TX_CLIENT_ATTEMPTS
         = 2;
-  
+
       /** default initial sleep is 100ms. */
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL
         = 100;
-  
+
       /** default backoff factor is 4. */
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR
         = 4;
-  
+
       /** default sleep limit is 30 sec. */
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
         = 30 * 1000;
@@ -441,17 +442,30 @@ public final class Constants {
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
     public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
+    /** Time duration in milliseconds after which an active secret key should be retired. */
+    public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
+    public static final long DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION = 60 * 60 * 1000;
+    /** Parent znode used for secret key distribution in ZooKeeper. */
+    public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
+    /** Property to override the leader status of DistributedKeyManager. */
+    public static final String DIST_KEY_MANAGER_LEADER = "security.token.distributed.leader";
 
     /** Configuration for External Authentication Server */
     public static final String AUTH_SERVER_PORT = "security.server.port";
     public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
     public static final String MAX_THREADS = "security.server.maxthreads";
     public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
+    public static final int DEFAULT_TOKEN_EXPIRATION = 60 * 60 * 1000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
+
+    /** Configuration for enabling the security */
+    public static final String CFG_SECURITY_ENABLED = "security.enabled";
+
+    /**Configuration for security realm */
+    public static final String CFG_REALM = "security.realm";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

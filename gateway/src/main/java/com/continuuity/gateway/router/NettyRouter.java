@@ -3,6 +3,9 @@ package com.continuuity.gateway.router;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.router.handlers.HttpRequestHandler;
+import com.continuuity.gateway.router.handlers.SecurityAuthenticationHttpHandler;
+import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -11,6 +14,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.DirectChannelBufferFactory;
@@ -62,12 +66,21 @@ public class NettyRouter extends AbstractIdleService {
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
 
+  private final boolean securityEnabled;
+  private final TokenValidator tokenValidator;
+  private final AccessTokenTransformer accessTokenTransformer;
+  private final String realm;
+
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
 
+  private DiscoveryServiceClient discoveryServiceClient;
+
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     RouterServiceLookup serviceLookup) {
+                     RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
+                     AccessTokenTransformer accessTokenTransformer,
+                     DiscoveryServiceClient discoveryServiceClient) {
 
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
@@ -87,6 +100,13 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Forwards - {}", this.forwards);
 
     this.serviceLookup = serviceLookup;
+
+    this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
+
+
+    this.realm = cConf.get(Constants.Security.CFG_REALM);
+    this.tokenValidator = tokenValidator;
+    this.accessTokenTransformer = accessTokenTransformer;
   }
 
   @Override
@@ -154,6 +174,10 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
+          pipeline.addLast("SecurityHandler", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
+                                                                                    accessTokenTransformer,
+                                                                                    securityEnabled,
+                                                                                    discoveryServiceClient));
           pipeline.addLast("http-request-handler",
                            new HttpRequestHandler(clientBootstrap, serviceLookup));
           return pipeline;

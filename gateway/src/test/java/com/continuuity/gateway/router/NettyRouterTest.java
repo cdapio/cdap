@@ -2,10 +2,17 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.guice.InMemorySecurityModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -400,11 +407,21 @@ public class NettyRouterTest {
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
+      Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(),
+                                               new DiscoveryRuntimeModule().getInMemoryModules());
+      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+      AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService),
+                        new TokenValidator() {
+                          @Override
+                          public State validate(String token) {
+                            return State.TOKEN_VALID;
+                          }
+                        }, accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
