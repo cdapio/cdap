@@ -2676,5 +2676,4 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                            String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
     }
   }
-
 }

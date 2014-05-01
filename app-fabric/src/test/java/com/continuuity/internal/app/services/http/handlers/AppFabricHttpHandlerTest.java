@@ -878,7 +878,6 @@ public class AppFabricHttpHandlerTest {
 
     deploy(WordCountApp.class);
     deploy(DummyAppWithTrackingTable.class);
-    deploy(WordCountApp.class);
     response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
