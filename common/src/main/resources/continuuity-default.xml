@@ -763,8 +763,8 @@
 
     <property>
         <name>security.server.token.expiration.ms</name>
-        <description>AccessToken expiration time in milliseconds</description>
-        <value>10000</value>
+        <description>AccessToken expiration time in milliseconds (defaults to 24 hours)</description>
+        <value>86400000</value>
     </property>
 
     <property>

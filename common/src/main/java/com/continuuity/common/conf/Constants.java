@@ -481,8 +481,8 @@ public final class Constants {
     public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
     public static final String MAX_THREADS = "security.server.maxthreads";
     public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
+    public static final int DEFAULT_TOKEN_EXPIRATION = 24 * 60 * 60 * 1000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
