@@ -94,9 +94,8 @@ public class ReactorTestBase {
         Specifications.from(applicationClz.newInstance().configure());
 
       Location deployedJar = AppFabricServiceWrapper.deployApplication(
-        httpHandler, locationFactory, DefaultId.ACCOUNT.getId(),
-        TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
-        applicationClz, bundleEmbeddedJars);
+        httpHandler, locationFactory,
+        appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,

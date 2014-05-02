@@ -107,12 +107,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-
-//        appFabricHttpHandler.startProgram(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, ), null, applicationId, "flow", flowName);
-        //appFabricService.start(applicationId, "flow", flowId);
-//);
-        AppFabricServiceWrapper.startFlow(httpHandler, accountId, applicationId, flowName);
-        //appFabricServer.start(token, new ProgramDescriptor(flowId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, flowName, "flows");
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -124,8 +119,7 @@ public class DefaultApplicationManager implements ApplicationManager {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
             AppFabricServiceWrapper.setFlowletInstances
-              (httpHandler, accountId, applicationId, flowId, flowletName, instances);
-            appFabricServer.setFlowletInstances(token, flowId, flowletName, (short) instances);
+              (httpHandler, applicationId, flowName, flowletName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -135,7 +129,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(flowName, flowId)) {
-              appFabricServer.stop(token, flowId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, flowName, "flows");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -166,7 +160,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(jobId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, jobName, "mapreduce");
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -177,7 +171,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(jobName, jobId)) {
-              appFabricServer.stop(token, jobId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -215,7 +209,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(procedureId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, procedureName , "procedures");
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
@@ -226,7 +220,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(procedureName, procedureId)) {
-              appFabricServer.stop(token, procedureId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, procedureName , "procedures");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);

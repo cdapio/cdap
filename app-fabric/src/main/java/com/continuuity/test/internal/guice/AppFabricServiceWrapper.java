@@ -3,10 +3,6 @@ package com.continuuity.test.internal.guice;
 import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.ArchiveInfo;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.BodyConsumer;
@@ -19,7 +15,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -41,163 +36,18 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 
 /**
- *
+ * This is helper class to make calls to AppFabricHttpHandler methods directly.
  */
-public class AppFabricServiceWrapper extends AppFabricService {
+public class AppFabricServiceWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceWrapper.class);
-
-
-  public HttpRequest createHtttpRequest() {
-   return  new HttpRequest() {
-      @Override
-      public HttpMethod getMethod() {
-        return null;
-      }
-
-      @Override
-      public void setMethod(HttpMethod method) {
-
-      }
-
-      @Override
-      public String getUri() {
-        return null;
-      }
-
-      @Override
-      public void setUri(String uri) {
-
-      }
-
-      @Override
-      public String getHeader(String name) {
-        return null;
-      }
-
-      @Override
-      public List<String> getHeaders(String name) {
-        return null;
-      }
-
-      @Override
-      public List<Map.Entry<String, String>> getHeaders() {
-        return null;
-      }
-
-      @Override
-      public boolean containsHeader(String name) {
-        return false;
-      }
-
-      @Override
-      public Set<String> getHeaderNames() {
-        return null;
-      }
-
-      @Override
-      public HttpVersion getProtocolVersion() {
-        return null;
-      }
-
-      @Override
-      public void setProtocolVersion(HttpVersion version) {
-
-      }
-
-      @Override
-      public ChannelBuffer getContent() {
-        return null;
-      }
-
-      @Override
-      public void setContent(ChannelBuffer content) {
-
-      }
-
-      @Override
-      public void addHeader(String name, Object value) {
-
-      }
-
-      @Override
-      public void setHeader(String name, Object value) {
-
-      }
-
-      @Override
-      public void setHeader(String name, Iterable<?> values) {
-
-      }
-
-      @Override
-      public void removeHeader(String name) {
-
-      }
-
-      @Override
-      public void clearHeaders() {
-
-      }
-
-      @Override
-      public long getContentLength() {
-        return 0;
-      }
-
-      @Override
-      public long getContentLength(long defaultValue) {
-        return 0;
-      }
-
-      @Override
-      public boolean isChunked() {
-        return false;
-      }
-
-      @Override
-      public void setChunked(boolean chunked) {
-
-      }
-
-      @Override
-      public boolean isKeepAlive() {
-        return false;
-      }
-    };
-
-
-  }
-
-  public static void startFlow(AppFabricHttpHandler httpHandler, String accountId, String appId, String flowId) {
-
-    MockResponder responder = new MockResponder();
-    String uri = "/v2/apps/"+appId + "/flows/+" + flowId + "/start";
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    httpHandler.startProgram(request,responder,appId,"flows",flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode()==200, "start flow failed");
-  }
-
-  public static void setFlowletInstances(AppFabricHttpHandler httpHandler, String accountId, String applicationId,
-                                         ProgramId flowId, String flowletName, int instances) {
-    MockResponder responder = new MockResponder();
-    String uri = "/v2/apps/"+ applicationId + "/flows/+" + flowId + "/flowlets/"+
-      flowletName + "/instances/" + instances;
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    httpHandler.setFlowletInstances(request,responder,applicationId,flowId,flowletName);
-    Preconditions.checkArgument(responder.getStatus().getCode()==200, "start flow failed");
-  }
-
 
   private static final class MockResponder implements HttpResponder {
     private HttpResponseStatus status = null;
@@ -223,7 +73,7 @@ public class AppFabricServiceWrapper extends AppFabricService {
 
     @Override
     public void sendString(HttpResponseStatus status, String data) {
-      this.status =status;
+      this.status = status;
     }
 
     @Override
@@ -233,7 +83,7 @@ public class AppFabricServiceWrapper extends AppFabricService {
 
     @Override
     public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
-
+      this.status = status;
     }
 
     @Override
@@ -267,8 +117,9 @@ public class AppFabricServiceWrapper extends AppFabricService {
     }
 
     @Override
-    public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType, Multimap<String, String> headers) {
-
+    public void sendContent(HttpResponseStatus status,
+                            ChannelBuffer content, String contentType, Multimap<String, String> headers) {
+      this.status = status;
     }
 
     @Override
@@ -277,12 +128,41 @@ public class AppFabricServiceWrapper extends AppFabricService {
     }
   }
 
+  public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                  String type) {
+
+    MockResponder responder = new MockResponder();
+    String uri = "/v2/apps/" + appId + "/" + type + "/" + flowId + "/" + "start";
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    httpHandler.startProgram(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
+  }
+
+  public static void stopProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                 String type) {
+
+    MockResponder responder = new MockResponder();
+    String uri = "/v2/apps/" + appId + "/" + type + "/" + flowId + "/" + "stop";
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    httpHandler.stopProgram(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+  }
+
+  public static void setFlowletInstances(AppFabricHttpHandler httpHandler, String applicationId,
+                                         String flowId, String flowletName, int instances) {
+
+    MockResponder responder = new MockResponder();
+    String uri = "/v2/apps/" + applicationId + "/flows/" + flowId + "/flowlets/" +
+      flowletName + "/instances/" + instances;
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    request.addHeader("instances", instances);
+    httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
+  }
+
   public static Location deployApplication(AppFabricHttpHandler httpHandler,
                                     LocationFactory locationFactory,
-                                    final String account,
-                                    final AuthToken token,
                                     final String applicationId,
-                                    final String fileName,
                                     Class<? extends Application> applicationClz,
                                     File...bundleEmbeddedJars) throws Exception {
 
@@ -290,12 +170,10 @@ public class AppFabricServiceWrapper extends AppFabricService {
 
     Application application = applicationClz.newInstance();
     ApplicationSpecification appSpec = Specifications.from(application.configure());
-    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
+    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz,
+                                                                      appSpec, bundleEmbeddedJars).toURI());
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
-    archiveInfo.setApplicationId(applicationId);
-    String deployUri = "/v2/apps/";
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
     request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", applicationId + ".jar");
