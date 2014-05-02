@@ -9,12 +9,14 @@ import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -36,6 +38,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Queue;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -48,6 +51,7 @@ import java.util.jar.Manifest;
 public class AppFabricServiceWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceWrapper.class);
+  private static final Gson GSON = new Gson();
 
   private static final class MockResponder implements HttpResponder {
     private HttpResponseStatus status = null;
@@ -129,11 +133,13 @@ public class AppFabricServiceWrapper {
   }
 
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
-                                  String type) {
+                                  String type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
+    request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     httpHandler.startProgram(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
   }
