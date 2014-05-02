@@ -366,21 +366,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Ping: responds with an OK message.
-   */
-  @Path("/ping")
-  @GET
-  public void Get(HttpRequest request, HttpResponder response) {
-    response.sendString(HttpResponseStatus.OK, "OK.\n");
-  }
-
-  @Path("/status")
-  @GET
-  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendString(HttpResponseStatus.OK, "OK.\n");
-  }
-
-  /**
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
    */
   @GET

@@ -24,9 +24,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
-      if ((uriParts.length >= 2) && uriParts[1].contains("metrics")) {
+      if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 2) && uriParts[1].contains("streams")) {
+      } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
         // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
         // /v2/streams should go to AppFabricHttp
         // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
@@ -35,12 +35,12 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         } else if (uriParts.length == 3) {
           return (requestMethod.equals(AllowedMethod.GET)) ?
             Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAM_HANDLER;
-        } else if ((uriParts.length == 4) && uriParts[3].contains("flows") && requestMethod.equals(AllowedMethod.GET)) {
+        } else if ((uriParts.length == 4) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
           return Constants.Service.APP_FABRIC_HTTP;
         } else {
           return Constants.Service.STREAM_HANDLER;
         }
-      } else if ((uriParts.length >= 6) && uriParts[5].contains("logs")) {
+      } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
         //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
         return Constants.Service.METRICS;
       } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {

@@ -44,6 +44,25 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testAppFabricPath() throws Exception {
+    //Default destination for URIs will APP_FABRIC_HTTP
+    String flowPath = "/v2/ping/";
+    HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
+    String result = pathLookup.getRoutingPath(flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    flowPath = "/status";
+    httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
+    result = pathLookup.getRoutingPath(flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    flowPath = "/v2/monitor///abcd/";
+    httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("POST"), flowPath);
+    result = pathLookup.getRoutingPath(flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
+  @Test
   public void testLogPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
     String flowPath = "/v2/apps//InvalidApp///procedures/ProcName/logs?start=10";
