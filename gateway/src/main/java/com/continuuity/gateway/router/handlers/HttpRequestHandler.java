@@ -1,7 +1,6 @@
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -19,7 +18,6 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -63,24 +61,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     } else if (event.getMessage() instanceof HttpRequest) {
       // Discover and forward event.
       HttpRequest request = (HttpRequest) event.getMessage();
-      HeaderDecoder.HeaderInfo headInfo = new HeaderDecoder.HeaderInfo(request.getUri(),
-                                                                       request.getHeader(HttpHeaders.Names.HOST),
-                                                                       request.getMethod().getName());
+
       // Suspend incoming traffic until connected to the outbound service.
       inboundChannel.setReadable(false);
       WrappedDiscoverable discoverable = getDiscoverable(request,
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
-      // if there is a event sender is already present use it.
-      if (discoveryLookup.containsKey(discoverable)) {
-        inboundChannel.setReadable(true);
-        EventSender eventSender =  discoveryLookup.get(discoverable);
-        eventSender.sendMessage(request);
-        //Save the channelFuture for subsequent chunks
-        if (request.isChunked()) {
-          chunkEventSender = eventSender;
-        }
-      } else {
+      // If no event sender, make new connection, otherwise reuse existing one.
+      EventSender eventSender =  discoveryLookup.get(discoverable);
+      if (eventSender == null) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
         ChannelFuture outFuture = clientBootstrap.connect(address);
@@ -88,14 +77,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
 
-        EventSender eventSender = new EventSender(outFuture);
-        eventSender.sendMessage(request);
-        inboundChannel.setReadable(true);
-        //Save the channelFuture for subsequent chunks
-        if (request.isChunked()) {
-          chunkEventSender = eventSender;
-        }
+        eventSender = new EventSender(outFuture);
         discoveryLookup.put(discoverable, eventSender);
+      }
+
+      // Send the message.
+      eventSender.sendMessage(request);
+      inboundChannel.setReadable(true);
+      //Save the channelFuture for subsequent chunks
+      if (request.isChunked()) {
+        chunkEventSender = eventSender;
       }
 
     } else {
