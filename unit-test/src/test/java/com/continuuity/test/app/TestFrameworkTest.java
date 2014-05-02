@@ -16,6 +16,7 @@ import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -33,6 +34,28 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class TestFrameworkTest extends ReactorTestBase {
+
+
+  @Test
+  public void testFlowRuntimeArguments() throws  Exception {
+
+    ApplicationManager applicationManager = deployApplication(FilterApp.class);
+    Map<String, String> args = Maps.newHashMap();
+    args.put("threshold", "10");
+    applicationManager.startFlow("FilterFlow", args);
+
+    StreamWriter input = applicationManager.getStreamWriter("input");
+    input.send("1");
+    input.send("11");
+
+
+    ProcedureManager queryManager = applicationManager.startProcedure("Count");
+    ProcedureClient client = queryManager.getClient();
+    Gson gson = new Gson();
+
+    Assert.assertEquals("1",
+                        gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+  }
 
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
