@@ -45,13 +45,14 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   private LeaderElection leaderElection;
   private String parentZNode;
   private ZKClientService zookeeper;
+  private final long tokenExpiration;
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zookeeper) {
     super(conf);
     this.zookeeper = zookeeper;
     this.parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
-    this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION,
-                                            Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_EXPIRATION);
+    this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION);
+    this.tokenExpiration = conf.getLong(Constants.Security.TOKEN_EXPIRATION);
     this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, parentZNode + "/keys");
     this.keyCache.addListener(this);
   }
@@ -109,7 +110,8 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     generateKey();
     // clear out any expired keys
     for (KeyIdentifier keyIdent : keyCache.getResources()) {
-      if (keyIdent.getExpiration() < now) {
+      // we can only remove keys that expired prior to the oldest non-expired token
+      if (keyIdent.getExpiration() < (now - tokenExpiration)) {
         keyCache.remove(Integer.toString(keyIdent.getKeyId()));
       }
     }
