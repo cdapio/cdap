@@ -4,6 +4,7 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -11,6 +12,7 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -22,9 +24,9 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * performed using Discovery service for forwarding.
  */
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
 
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
@@ -115,6 +116,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
+  @Override
+  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    // Close all event sender
+    for (EventSender sender : discoveryLookup.values()) {
+      Closeables.closeQuietly(sender);
+    }
+    super.channelClosed(ctx, e);
+  }
+
   /**
    * Closes the specified channel after all queued write requests are flushed.
    */
@@ -124,7 +134,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
-  private  static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
+  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
     if (reference == null) {
       throw new HandlerException(status, message);
     }
@@ -148,7 +158,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
    * ConnectionFuture is used for the first event and event future for subsequent events.
    * Reason to use event future is to send chunked requests in the same channel.
    */
-  private static final class EventSender {
+  private static final class EventSender implements Closeable {
     private final ChannelFuture connectionFuture;
     private final ChannelFuture eventFuture;
     private final AtomicBoolean first;
@@ -176,6 +186,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
           }
         });
       }
+    }
+
+    @Override
+    public void close() throws IOException {
+      closeOnFlush(connectionFuture.getChannel());
     }
   }
 }
