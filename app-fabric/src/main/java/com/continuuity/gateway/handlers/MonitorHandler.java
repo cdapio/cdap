@@ -1,14 +1,17 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -21,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+
+import static com.continuuity.data2.transaction.distributed.thrift.TTransactionServer.Client;
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -82,20 +87,25 @@ public class MonitorHandler extends AbstractHttpHandler {
   private boolean discoverService(String serviceName) {
     try {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
-                                                                                  serviceName).getName());
-      Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                                DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+        serviceName).getName());
+      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
+        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      Discoverable discoverable = endpointStrategy.pick();
       if (discoverable == null) {
         return false;
       } else {
         // Ping the discovered service to check its status
         String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort());
-        //TODO: Figure out a way to Ping Transaction Service (Hint: Use RUOK?)
+
+        //Use Thrift Client for Transaction and HTTP PingHandlers for other services
         if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
           return checkGetStatus(url).equals(HttpResponseStatus.OK);
+        } else {
+          TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.TRANSACTION, endpointStrategy);
+          Client client = new Client(protocol);
+          return client.status().equals("OK");
         }
-        return true;
       }
     } catch (IllegalArgumentException e) {
       return false;
