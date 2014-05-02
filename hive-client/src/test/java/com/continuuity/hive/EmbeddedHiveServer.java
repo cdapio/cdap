@@ -30,6 +30,8 @@ public class EmbeddedHiveServer extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     // TODO: use dynamic tmp dir for warehouse dir
+    // Currently not possible to dynamically set hive.metastore.warehouse.dir since the HiveConf object does not
+    // passed on to Hive Meta Store. Instead Hive Meta Store instantiates its own HiveConf.
     HiveConf hiveConf = new HiveConf();
 //    hiveConf.set("hive.metastore.warehouse.dir",
 //                 new File(temporaryFolder.newFolder(), "/user/hive/warehouse").getAbsolutePath());
