@@ -71,16 +71,18 @@ public class MonitorHandler extends AbstractHttpHandler {
                       @PathParam("service-id") final String service) {
     if (discoverService(service)) {
       //Service is discoverable
-      responder.sendString(HttpResponseStatus.OK, service + " is OK\n");
+      String response = String.format("%s is OK\n", service);
+      responder.sendString(HttpResponseStatus.OK, response);
     } else {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, service + " not found\n");
+      String response = String.format("%s not found\n", service);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, service);
     }
   }
 
   private boolean discoverService(String serviceName) {
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(
-        Services.valueofName(serviceName).getName());
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
+                                                                                  serviceName).getName());
       Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                                 DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
       if (discoverable == null) {
@@ -91,7 +93,7 @@ public class MonitorHandler extends AbstractHttpHandler {
                                    discoverable.getSocketAddress().getPort());
         //TODO: Figure out a way to Ping Transaction Service (Hint: Use RUOK?)
         if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
-          checkGetStatus(url);
+          return checkGetStatus(url).equals(HttpResponseStatus.OK);
         }
         return true;
       }
@@ -103,7 +105,7 @@ public class MonitorHandler extends AbstractHttpHandler {
     }
   }
 
-  private void checkGetStatus(String url) throws Exception {
+  private HttpResponseStatus checkGetStatus(String url) throws Exception {
     SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
       .setUrl(url)
       .setRequestTimeoutInMs((int) SERVICE_PING_RESPONSE_TIMEOUT)
@@ -112,13 +114,12 @@ public class MonitorHandler extends AbstractHttpHandler {
     try {
       Future<Response> future = client.get();
       Response response = future.get(SERVICE_PING_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      if (!HttpResponseStatus.valueOf(response.getStatusCode()).equals(HttpResponseStatus.OK)) {
-        throw new Exception(response.getResponseBody());
-      }
+      return HttpResponseStatus.valueOf(response.getStatusCode());
     } catch (Exception e) {
       Throwables.propagate(e);
     } finally {
       client.close();
     }
+    return HttpResponseStatus.NOT_FOUND;
   }
 }
