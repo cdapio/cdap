@@ -471,22 +471,20 @@ public final class Constants {
   public static final class Security {
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
+    /** Key length for secret key used by token digest algorithm. */
+    public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
 
     /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
-
     /** Access token expiration time in milliseconds. */
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
-
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
-
     /** Configuration for enabling the security */
     public static final String CFG_SECURITY_ENABLED = "security.enabled";
-
     /**Configuration for security realm */
     public static final String CFG_REALM = "security.realm";
   }
