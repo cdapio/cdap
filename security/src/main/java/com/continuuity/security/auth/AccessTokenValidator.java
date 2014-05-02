@@ -43,7 +43,7 @@ public class AccessTokenValidator implements TokenValidator {
       tokenManager.validateSecret(accessToken);
     } catch (IOException ioe) {
       state = State.TOKEN_INVALID;
-      LOG.debug("Unknown Schema version for Access Token.");
+      LOG.debug("Unknown Schema version for Access Token. {}", ioe);
     } catch (InvalidTokenException ite) {
       InvalidTokenException.Reason reason = ite.getReason();
       switch(reason) {
@@ -57,7 +57,7 @@ public class AccessTokenValidator implements TokenValidator {
           state = State.TOKEN_INTERNAL;
           break;
       }
-      LOG.debug(state.getMsg());
+      LOG.debug("{} {}", state, ite);
     }
     return state;
   }

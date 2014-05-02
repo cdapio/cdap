@@ -101,7 +101,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
           "  error_description=\"" + tokenState.getMsg() + "\"");
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
-        LOG.info("Failed authentication due to invalid token, reason={}; token={}", tokenState.getMsg(), accessToken);
+        LOG.info("Failed authentication due to invalid token, reason={};", tokenState);
         break;
     }
     if (tokenState != TokenValidator.State.TOKEN_VALID) {
@@ -126,9 +126,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       writeFuture.addListener(ChannelFutureListener.CLOSE);
       return;
     } else {
-      LOG.info("Authentication succeeded for token: {}", accessToken);
       String serealizedAccessTokenIdentifier = accessTokenTransformer.transform(accessToken.trim());
       msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + serealizedAccessTokenIdentifier);
+      inboundChannel.setReadable(true);
       Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
     }
     pool.shutdown();
@@ -156,14 +156,12 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, final MessageEvent event) throws Exception {
-    HttpRequest msg = (HttpRequest) event.getMessage();
     if (event.getMessage() instanceof HttpChunk) {
-      Channels.fireMessageReceived(ctx, event.getMessage(), event.getRemoteAddress());
+      super.messageReceived(ctx, event);
     } else if (securityEnabled) {
       securedInterception(ctx, event);
-
     } else {
-      Channels.fireMessageReceived(ctx, event.getMessage(), event.getRemoteAddress());
+      super.messageReceived(ctx, event);
     }
   }
 }
