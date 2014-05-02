@@ -11,6 +11,10 @@ dependencies {
     compile libraries.google_guice
     compile libraries.google_guice_assistedinject
     compile libraries.google_guava
+    compile libraries.jetty8
+    compile libraries.jetty8_util
+    compile libraries.jetty8_security
+    compile libraries.servlet_api
 
     testCompile libraries.junit
 }

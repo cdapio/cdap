@@ -20,8 +20,9 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.handler.HandlerList;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.handler.HandlerList;
 
 import java.util.Set;
 
@@ -47,20 +48,24 @@ public abstract class SecurityModule extends PrivateModule {
     handlerBinder.addBinding().to(BasicAuthenticationHandler.class);
     handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
-                           .toProvider(HandlerListProvider.class)
+                           .toProvider(BasicAuthenticationHandlerListProvider.class)
                            .in(Scopes.SINGLETON);
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
   }
 
-  private static final class HandlerListProvider implements Provider<HandlerList> {
+  private static final class BasicAuthenticationHandlerListProvider implements Provider<HandlerList> {
     private final HandlerList handlerList;
 
     @Inject
-    public HandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
+    public BasicAuthenticationHandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
       handlerList = new HandlerList();
-      handlerList.setHandlers(handlers.toArray(new Handler[handlers.size()]));
+      Handler[] handlerArray = handlers.toArray(new Handler[handlers.size()]);
+      ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlerArray[0];
+      Handler grantAccessTokenHandler = handlerArray[1];
+      securityHandler.setHandler(grantAccessTokenHandler);
+      handlerList.setHandlers(handlerArray);
     }
 
     @Override

@@ -9,11 +9,12 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.HandlerList;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.thread.QueuedThreadPool;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
+  private final HashLoginService loginService;
 
   /**
    * Constants for a valid JSON response.
@@ -48,11 +50,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HandlerList handlers) {
+                                      @Named("security.handlers") HandlerList handlers, HashLoginService loginService) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
+    this.loginService = loginService;
   }
 
   /**
@@ -96,10 +99,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      Connector connector = new SelectChannelConnector();
+      SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
       server.setConnectors(new Connector[]{connector});
 
+      server.addBean(loginService);
       server.setHandler(handlers);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
