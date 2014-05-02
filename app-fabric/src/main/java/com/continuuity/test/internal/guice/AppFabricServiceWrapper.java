@@ -132,7 +132,7 @@ public class AppFabricServiceWrapper {
                                   String type) {
 
     MockResponder responder = new MockResponder();
-    String uri = "/v2/apps/" + appId + "/" + type + "/" + flowId + "/" + "start";
+    String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.startProgram(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
@@ -142,7 +142,7 @@ public class AppFabricServiceWrapper {
                                  String type) {
 
     MockResponder responder = new MockResponder();
-    String uri = "/v2/apps/" + appId + "/" + type + "/" + flowId + "/" + "stop";
+    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.stopProgram(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
@@ -152,8 +152,8 @@ public class AppFabricServiceWrapper {
                                          String flowId, String flowletName, int instances) {
 
     MockResponder responder = new MockResponder();
-    String uri = "/v2/apps/" + applicationId + "/flows/" + flowId + "/flowlets/" +
-      flowletName + "/instances/" + instances;
+    String uri = String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances/%s",
+                               applicationId, flowId, flowletName, instances);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     request.addHeader("instances", instances);
     httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
@@ -192,14 +192,13 @@ public class AppFabricServiceWrapper {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
-      is.close();
     } catch (Exception ex) {
       ex.printStackTrace();
     } finally {
+      is.close();
     }
     return deployedJar;
   }
-
 
   private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
     File testAppDir;
@@ -261,7 +260,6 @@ public class AppFabricServiceWrapper {
       throw Throwables.propagate(e);
     }
   }
-
 
   private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile,
                              ApplicationSpecification appSpec, File...bundleEmbeddedJars)
