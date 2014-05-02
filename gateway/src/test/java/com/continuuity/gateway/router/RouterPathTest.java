@@ -27,7 +27,7 @@ public class RouterPathTest {
   @Test
   public void testMetricsPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2///metrics/reactor/apps/InvalidApp?cache=true";
+    String flowPath = "/v2///metrics/reactor/apps/InvalidApp//";
     HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
@@ -37,7 +37,7 @@ public class RouterPathTest {
     result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "/v2/metrics?cache=true";
+    flowPath = "/v2/metrics//";
     httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
@@ -65,17 +65,17 @@ public class RouterPathTest {
   @Test
   public void testLogPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName/logs?start=10";
+    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName/logs/";
     HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "///v2///apps/InvalidApp/flows/FlowName/////logs?stop=10";
+    flowPath = "///v2///apps/InvalidApp/flows/FlowName/////logs";
     httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/logs/abcd?stop=10";
+    flowPath = "v2/apps/InvalidApp/procedures/ProName/logs/abcd";
     httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
@@ -122,7 +122,7 @@ public class RouterPathTest {
   @Test
   public void testStreamPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2/streams?cache=true";
+    String flowPath = "/v2/streams";
     HttpRequest httpRequest = new DefaultHttpRequest(new HttpVersion(VERSION), new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingPath(flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
