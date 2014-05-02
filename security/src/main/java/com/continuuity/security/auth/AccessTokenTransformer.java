@@ -28,12 +28,10 @@ public class AccessTokenTransformer {
    * @throws IOException
    */
   public String transform(String accessToken) throws IOException {
-    String accessTokenIdentifier = null;
     byte[] decodedAccessToken = Base64.decodeBase64(accessToken);
     AccessToken accessTokenObj = accessTokenCodec.decode(decodedAccessToken);
     AccessTokenIdentifier accessTokenIdentifierObj = accessTokenObj.getIdentifier();
     byte[] encodedAccessTokenIdentifier = accessTokenIdentifierCodec.encode(accessTokenIdentifierObj);
-    accessTokenIdentifier = Base64.encodeBase64String(encodedAccessTokenIdentifier);
-    return accessTokenIdentifier.trim();
+    return Base64.encodeBase64String(encodedAccessTokenIdentifier);
   }
 }

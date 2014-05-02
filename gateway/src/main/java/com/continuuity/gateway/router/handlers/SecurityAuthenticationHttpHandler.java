@@ -39,12 +39,12 @@ import java.util.concurrent.Future;
 public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SecurityAuthenticationHttpHandler.class);
 
-  private TokenValidator tokenValidator;
-  private AccessTokenTransformer accessTokenTransformer;
+  private final TokenValidator tokenValidator;
+  private final AccessTokenTransformer accessTokenTransformer;
   DiscoveryServiceClient discoveryServiceClient;
   Future<Iterable<Discoverable>> discoveredExternalAuthFuture;
-  private boolean securityEnabled;
-  private String realm;
+  private final boolean securityEnabled;
+  private final String realm;
 
   private  ExecutorService pool;
 

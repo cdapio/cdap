@@ -100,13 +100,11 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Forwards - {}", this.forwards);
 
     this.serviceLookup = serviceLookup;
-
     this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
-
-
     this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -174,7 +172,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
-          pipeline.addLast("SecurityHandler", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
+          pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
                                                                                     accessTokenTransformer,
                                                                                     securityEnabled,
                                                                                     discoveryServiceClient));

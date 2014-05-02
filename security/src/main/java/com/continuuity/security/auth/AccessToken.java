@@ -22,7 +22,8 @@ import java.util.Map;
  * secret key.  If the recomputed digest matches that provided by the client, we know that, barring compromise of the
  * secret keys or exposure of the token itself, the token was issued by Reactor for this client.
  */
-public class AccessToken implements Signed<AccessTokenIdentifier> {
+public class
+  AccessToken implements Signed<AccessTokenIdentifier> {
   static final class Schemas {
     private static final int VERSION = 1;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();

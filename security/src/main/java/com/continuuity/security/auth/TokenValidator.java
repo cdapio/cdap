@@ -23,6 +23,11 @@ public interface TokenValidator {
     public String getMsg() {
       return msg;
     }
+
+    @Override
+    public String toString(){
+      return this.msg;
+    }
   }
 
   /**
