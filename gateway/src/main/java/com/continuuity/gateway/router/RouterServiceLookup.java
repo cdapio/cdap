@@ -11,8 +11,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +35,12 @@ public class RouterServiceLookup {
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
+  private final RouterPathLookup routerPathLookup;
 
   @Inject
-  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup) {
     this.discoveryServiceClient = discoveryServiceClient;
-
+    this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<CacheKey, EndpointStrategy>() {
@@ -70,42 +72,39 @@ public class RouterServiceLookup {
    * Returns the discoverable mapped to the given port.
    *
    * @param port port to lookup.
-   * @param hostHeaderSupplier supplies the header information for the lookup.
-   * @return discoverable based on port and host header.
+   * @param httpRequest supplies the header information for the lookup.
+   * @return instance of EndpointStrategy if available null otherwise.
    */
-  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
-    throws Exception {
+  public EndpointStrategy getDiscoverable(int port, HttpRequest httpRequest) {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
     }
 
-    HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+    String path = httpRequest.getUri();
+    String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
+    String httpMethod = httpRequest.getMethod().getName();
+
+    final HeaderDecoder.HeaderInfo headerInfo = new HeaderDecoder.HeaderInfo(path, host, httpMethod);
+
     if (headerInfo == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
     }
 
     try {
-      String path = headerInfo.getPath();
-      String method = headerInfo.getMethod();
-      String destService = RouterPathLookup.getRoutingPath(path, method);
+      String destService = routerPathLookup.getRoutingPath(headerInfo.getPath(), httpRequest);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, destService);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", path, service);
+        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), service);
       }
-      Discoverable discoverable = discoverableCache.get(cacheKey).pick();
-      if (discoverable == null) {
-        // Looks like the service is no longer running.
-        LOG.debug("Invalidating cache for service {} on port {}", service, port);
-        discoverableCache.invalidate(cacheKey);
-      }
-      return discoverable;
+      EndpointStrategy strategy = discoverableCache.get(cacheKey);
+      return strategy;
     } catch (ExecutionException e) {
       return null;
     }

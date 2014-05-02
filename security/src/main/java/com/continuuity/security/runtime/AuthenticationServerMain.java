@@ -7,13 +7,16 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Services;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
- *
+ * Server for authenticating clients accessing Reactor.  When a client authenticates successfully, it is issued
+ * an access token containing a verifiable representation of the client's identity.  Other Reactor services
+ * (such as the router) can independently verify client identities based on the token contents.
  */
 public class AuthenticationServerMain extends DaemonMain {
   private ZKClientService zkClientService;
@@ -37,7 +40,7 @@ public class AuthenticationServerMain extends DaemonMain {
 
   @Override
   public void stop() {
-    authServer.stop();
+    Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
   }
 
   @Override

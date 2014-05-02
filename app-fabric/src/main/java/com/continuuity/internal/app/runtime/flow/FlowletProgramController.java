@@ -20,15 +20,15 @@ final class FlowletProgramController extends AbstractProgramController {
 
   private final BasicFlowletContext flowletContext;
   private final FlowletProcessDriver driver;
-  private final Collection<QueueConsumerSupplier> queueConsumerSuppliers;
+  private final Collection<ConsumerSupplier<?>> consumerSuppliers;
 
   FlowletProgramController(String programName, String flowletName,
                            BasicFlowletContext flowletContext, FlowletProcessDriver driver,
-                           Collection<QueueConsumerSupplier> queueConsumerSuppliers) {
+                           Collection<ConsumerSupplier<?>> consumerSuppliers) {
     super(programName + ":" + flowletName, flowletContext.getRunId());
     this.flowletContext = flowletContext;
     this.driver = driver;
-    this.queueConsumerSuppliers = queueConsumerSuppliers;
+    this.consumerSuppliers = consumerSuppliers;
     started();
   }
 
@@ -37,8 +37,8 @@ final class FlowletProgramController extends AbstractProgramController {
     LOG.info("Suspending flowlet: " + flowletContext);
     driver.suspend();
     // Close all consumers
-    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
-      queueConsumerSupplier.close();
+    for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
+      consumerSupplier.close();
     }
     LOG.info("Flowlet suspended: " + flowletContext);
   }
@@ -47,8 +47,8 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doResume() throws Exception {
     LOG.info("Resuming flowlet: " + flowletContext);
     // Open consumers
-    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
-      queueConsumerSupplier.open(flowletContext.getInstanceCount());
+    for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
+      consumerSupplier.open(flowletContext.getInstanceCount());
     }
     driver.resume();
     LOG.info("Flowlet resumed: " + flowletContext);
@@ -59,8 +59,8 @@ final class FlowletProgramController extends AbstractProgramController {
     LOG.info("Stopping flowlet: " + flowletContext);
     driver.stopAndWait();
     // Close all consumers
-    for (QueueConsumerSupplier queueConsumerSupplier : queueConsumerSuppliers) {
-      queueConsumerSupplier.close();
+    for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
+      consumerSupplier.close();
     }
     LOG.info("Flowlet stopped: " + flowletContext);
   }

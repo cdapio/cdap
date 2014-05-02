@@ -10,7 +10,6 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -33,10 +32,10 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   @Inject
   public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                                 QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                                 QueueAdmin queueAdmin, HBaseStreamAdmin streamAdmin) {
     this.hConf = hConf;
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
-    this.streamAdmin = (HBaseStreamAdmin) streamAdmin;
+    this.streamAdmin = streamAdmin;
     this.queueUtil = new HBaseQueueUtilFactory().get();
   }
 

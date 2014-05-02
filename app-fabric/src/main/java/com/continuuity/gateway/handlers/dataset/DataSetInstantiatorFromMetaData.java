@@ -3,23 +3,23 @@ package com.continuuity.gateway.handlers.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.DataType;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.common.conf.Constants;
+import com.continuuity.app.Id;
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.gateway.handlers.util.ThriftHelper;
-import com.google.common.base.Preconditions;
+import com.continuuity.data2.OperationException;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -29,6 +29,8 @@ import java.util.Map;
  * and passes that spec on to a plain instantiator.
  */
 public final class DataSetInstantiatorFromMetaData {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiatorFromMetaData.class);
 
   // the location factory
   private LocationFactory locationFactory;
@@ -42,9 +44,15 @@ public final class DataSetInstantiatorFromMetaData {
   // the strategy for discovering app-fabric thrift service
   private EndpointStrategy endpointStrategy;
 
+  /**
+   * Json serializer.
+   */
+  private static final Gson GSON = new Gson();
+
+  private Store store;
   @Inject
   public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
-                                         DataSetAccessor dataSetAccessor) {
+                                         DataSetAccessor dataSetAccessor, StoreFactory storeFactory) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
     // we don't set the data set specs of the instantiator, instead we will
@@ -52,6 +60,7 @@ public final class DataSetInstantiatorFromMetaData {
 
     this.locationFactory = locationFactory;
     this.dataSetAccessor = dataSetAccessor;
+    this.store = storeFactory.create();
   }
 
   /**
@@ -76,42 +85,47 @@ public final class DataSetInstantiatorFromMetaData {
     }
   }
 
-  public DataSetSpecification getDataSetSpecification(String name, OperationContext context) {
+  public DataSetSpecification getDataSetSpecification(String name, OperationContext context)
+    throws DataSetInstantiationException {
     // get the data set spec from the meta data store
     String jsonSpec = null;
     try {
-      Preconditions.checkNotNull(endpointStrategy, "not initialized - endPointStrategy is null.");
-      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        String json = client.getDataEntity(new ProgramId(context.getAccount(), "", ""), DataType.DATASET, name);
-        if (json != null) {
-          Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
-          if (map != null) {
-            jsonSpec = map.get("specification");
-          }
-        }
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
+      DataSetSpecification spec = store.getDataSet(new Id.Account(context.getAccount()), name);
+      String json =  spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      if (json != null) {
+        Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
+        if (map != null) {
+          jsonSpec = map.get("specification");
         }
       }
-    } catch (Exception e) {
-      throw new DataSetInstantiationException(
-        "Error reading data set spec for '" + name + "' from meta data service.", e);
-    }
-    if (jsonSpec == null || jsonSpec.isEmpty()) {
-      throw new DataSetInstantiationException(
-        "Data set '" + name + "' has no specification in meta data service.");
-    }
-    try {
+      if (jsonSpec == null || jsonSpec.isEmpty()) {
+        throw new DataSetInstantiationException(
+          "Data set '" + name + "' has no specification in meta data service.");
+      }
       return new Gson().fromJson(jsonSpec, DataSetSpecification.class);
+
     } catch (JsonSyntaxException e) {
       throw new DataSetInstantiationException(
         "Error deserializing data set spec for '" + name + "' from JSON in meta data service.", e);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw new DataSetInstantiationException ("Could not retrieve data specs for " +
+                             context.getAccount() + ", reason: " + e.getMessage());
+    }
+  }
+
+
+  public void createDataSet(String accountId, String spec) throws Exception {
+    try {
+      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      store.addDataset(new Id.Account(accountId), streamSpec);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new Exception("Could not create dataset for " +
+                                             accountId + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
     }
   }
 
@@ -119,4 +133,20 @@ public final class DataSetInstantiatorFromMetaData {
   public DataSetInstantiationBase getInstantiator() {
     return instantiator;
   }
+
+  private static Map<String, String> makeDataSetRecord(String name, String classname,
+                                                       DataSetSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Dataset");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (classname != null) {
+      builder.put("classname", classname);
+    }
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
 }

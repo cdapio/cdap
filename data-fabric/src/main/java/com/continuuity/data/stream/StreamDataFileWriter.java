@@ -1,15 +1,16 @@
 package com.continuuity.data.stream;
 
-import com.continuuity.api.stream.StreamEventData;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.BufferedEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.common.stream.StreamEventDataCodec;
+import com.continuuity.data.file.FileWriter;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.io.OutputSupplier;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.fs.Syncable;
 
@@ -17,8 +18,6 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -32,10 +31,9 @@ import javax.annotation.concurrent.NotThreadSafe;
  * event_file = <header> <data>* <end_marker>
  * header = "E" "1" <properties>
  * properties = Avro encoded with the properties schema
- * data = <timestamp> <length> <count> <stream_event>+
+ * data = <timestamp> <length> <stream_event>+
  * timestamp = 8 bytes int64 for timestamp in milliseconds
- * length = Avro encoded int64 for size in bytes for <count> + all <stream_event>s
- * count = Avro encoded int32 for number of <stream_event>s
+ * length = Avro encoded int32 for size in bytes for all <stream_event>s
  * stream_event = Avro encoded bytes according to the StreamData schema
  * end_marker = 8 bytes int64 with value == -1
  *
@@ -58,18 +56,20 @@ import javax.annotation.concurrent.NotThreadSafe;
  * </pre>
  */
 @NotThreadSafe
-public final class StreamDataFileWriter implements Closeable, Flushable {
+public final class StreamDataFileWriter implements Closeable, Flushable, FileWriter<StreamEvent> {
 
   private static final byte[] MAGIC_HEADER = {'E', '1'};
   private static final byte[] INDEX_MAGIC_HEADER = {'I', '1'};
+  private static final int BUFFER_SIZE = 256 * 1024;    // 256K
 
   private final OutputStream eventOutput;
   private final OutputStream indexOutput;
   private final long indexInterval;
-  private final ByteBuffer buffer;
-  private final BufferedEncoder sizeEncoder;
-  private final BufferedEncoder countEncoder;
-  private final BufferedEncoder eventEncoder;
+  private final BufferedEncoder encoder;
+  private final BufferedEncoder lengthEncoder;
+
+  // Timestamp for the current block
+  private long currentTimestamp;
   private long position;
   private long nextIndexTime;
   private boolean closed;
@@ -94,11 +94,11 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
       throw e;
     }
     this.indexInterval = indexInterval;
+    this.currentTimestamp = -1L;
 
-    this.buffer = ByteBuffer.allocate(Longs.BYTES * 2);
-    this.sizeEncoder = new BufferedEncoder(Longs.BYTES + 1, createEncoderFactory());
-    this.countEncoder = new BufferedEncoder(Ints.BYTES + 1, createEncoderFactory());
-    this.eventEncoder = new BufferedEncoder(32768, createEncoderFactory());
+    Function<OutputStream, Encoder> encoderFactory = createEncoderFactory();
+    this.encoder = new BufferedEncoder(BUFFER_SIZE, encoderFactory);
+    this.lengthEncoder = new BufferedEncoder(5, encoderFactory);
 
     try {
       init();
@@ -109,74 +109,39 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
     }
   }
 
-  /**
-   * Writes a series of {@link com.continuuity.api.stream.StreamEventData} with the given timestamp.
-   *
-   * @param timestamp Timestamp of the event.
-   * @param events Iterator to provides the {@link com.continuuity.api.stream.StreamEventData} to be written.
-   * @throws IOException If there is error during writing.
-   */
-  public void write(long timestamp, Iterator<StreamEventData> events) throws IOException {
+
+  @Override
+  public void append(StreamEvent event) throws IOException {
     if (closed) {
       throw new IOException("Writer already closed.");
     }
 
-    // Record the current event output position if needs to update index
-    long indexOffset = -1L;
-    if (timestamp >= nextIndexTime) {
-      indexOffset = position;
+    long eventTimestamp = event.getTimestamp();
+    if (eventTimestamp < currentTimestamp) {
+      throw closeWithException(new IOException("Out of order events written."));
     }
 
     try {
-      // Write to event output first.
-      // Each data block is <timestamp> <length> <count> <stream_event>+
+      if (eventTimestamp > currentTimestamp) {
+        flushBlock(false);
 
-      // Encode all events to get count.
-      eventEncoder.reset();
-      int count = 0;
-      while (events.hasNext()) {
-        StreamEventDataCodec.encode(events.next(), eventEncoder);
-        count++;
+        currentTimestamp = eventTimestamp;
+
+        // Write the timestamp directly to output
+        eventOutput.write(Bytes.toBytes(currentTimestamp));
+        position += Bytes.SIZEOF_LONG;
       }
 
-      // Encode count
-      countEncoder.reset();
-      countEncoder.writeInt(count);
+      // Encodes the event data into buffer.
+      StreamEventDataCodec.encode(event, encoder);
 
-      // Encode size = size of count + size of events
-      long size = countEncoder.size() + eventEncoder.size();
-      sizeEncoder.reset();
-      sizeEncoder.writeLong(size);
-
-      // Write the 8 bytes <timestamp>, followed by size, count, and events
-      buffer.clear();
-      buffer.putLong(timestamp);
-
-      eventOutput.write(buffer.array(), 0, buffer.position());
-      sizeEncoder.writeTo(eventOutput);
-      countEncoder.writeTo(eventOutput);
-      eventEncoder.writeTo(eventOutput);
-
-      // Sync to event output
-      sync(eventOutput);
-      // Position moves 8 bytes (timestamp) + size of "size" + size
-      position += Longs.BYTES + sizeEncoder.size() + size;
-
-      // If needs to write a new index, write it and update the nextIndexTime.
-      if (indexOffset >= 0) {
-        buffer.clear();
-        buffer.putLong(timestamp)
-              .putLong(indexOffset);
-        indexOutput.write(buffer.array(), 0, buffer.position());
-        sync(indexOutput);
-        nextIndexTime = timestamp + indexInterval;
+      // Optionally flush if already filled up the buffer.
+      if (encoder.size() >= BUFFER_SIZE) {
+        flushBlock(false);
       }
+
     } catch (IOException e) {
-      // If there is any IOException, close this writer to avoid further writes.
-      closed = true;
-      Closeables.closeQuietly(eventOutput);
-      Closeables.closeQuietly(indexOutput);
-      throw e;
+      throw closeWithException(e);
     }
   }
 
@@ -187,6 +152,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
     }
 
     try {
+      flushBlock(false);
       // Write the tail marker, which is a -1 timestamp.
       eventOutput.write(Longs.toByteArray(-1L));
     } finally {
@@ -201,32 +167,78 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
 
   @Override
   public void flush() throws IOException {
-    sync(eventOutput);
-    sync(indexOutput);
+    try {
+      flushBlock(true);
+    } catch (IOException e) {
+      throw closeWithException(e);
+    }
   }
 
   private void init() throws IOException {
     // Writes the header for event file
-    eventOutput.write(MAGIC_HEADER);
+    encoder.writeRaw(MAGIC_HEADER);
 
-    long headerSize = 2;
-
-    BufferedEncoder encoder = new BufferedEncoder(1024, createEncoderFactory());
     StreamUtils.encodeMap(ImmutableMap.of("stream.schema",
                                           StreamEventDataCodec.STREAM_DATA_SCHEMA.toString()), encoder);
-    headerSize += encoder.size();
+    long headerSize = encoder.size();
     encoder.writeTo(eventOutput);
     sync(eventOutput);
     position = headerSize;
 
     // Writes the header for index file
-    indexOutput.write(INDEX_MAGIC_HEADER);
+    encoder.writeRaw(INDEX_MAGIC_HEADER);
 
-    encoder.reset();
     // Empty properties map for now. May have properties in future version.
     StreamUtils.encodeMap(ImmutableMap.<String, String>of(), encoder);
     encoder.writeTo(indexOutput);
     sync(indexOutput);
+  }
+
+  /**
+   * Writes the buffered data to underlying output stream.
+   *
+   * @param sync If {@code true}, perform a sync call to the underlying output stream.
+   * @throws IOException If failed to flush.
+   */
+  private void flushBlock(boolean sync) throws IOException {
+    if (encoder.size() == 0) {
+      return;
+    }
+
+    // Record the current event output position if needs to update index
+    long indexOffset = -1L;
+    if (currentTimestamp >= nextIndexTime) {
+      // Index offset is the current block start, hence is current position - 8 bytes timestamp already written.
+      indexOffset = position - Bytes.SIZEOF_LONG;
+    }
+
+    // Writes the size of the encoded event
+    lengthEncoder.writeInt(encoder.size());
+    int size = lengthEncoder.size();
+    lengthEncoder.writeTo(eventOutput);
+    position += size;
+
+    // Writes all encoded data from the buffer to the output.
+    size = encoder.size();
+    encoder.writeTo(eventOutput);
+    position += size;
+    if (sync) {
+      sync(eventOutput);
+    }
+
+    if (indexOffset >= 0) {
+      encoder.writeRaw(Bytes.toBytes(currentTimestamp));
+      encoder.writeRaw(Bytes.toBytes(indexOffset));
+      encoder.writeTo(indexOutput);
+      if (sync) {
+        sync(indexOutput);
+      }
+
+      nextIndexTime = currentTimestamp + indexInterval;
+    }
+
+    // Reset the current timestamp so that a data block will start.
+    currentTimestamp = -1L;
   }
 
   private void sync(OutputStream output) throws IOException {
@@ -235,6 +247,17 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
     } else {
       output.flush();
     }
+  }
+
+  /**
+   * Close this writer because of exception.
+   * This method always throw exception.
+   */
+  private IOException closeWithException(IOException ex) throws IOException {
+    closed = true;
+    Closeables.closeQuietly(eventOutput);
+    Closeables.closeQuietly(indexOutput);
+    throw ex;
   }
 
   private static Function<OutputStream, Encoder> createEncoderFactory() {

@@ -28,7 +28,7 @@ public interface Queue2Consumer {
    * Dequeue an entry from the queue.
    * @return A {@link DequeueResult}.
    */
-  DequeueResult dequeue() throws IOException;
+  DequeueResult<byte[]> dequeue() throws IOException;
 
   /**
    * Dequeue multiple entries from the queue. The dequeue result may have less entries than the given
@@ -36,5 +36,5 @@ public interface Queue2Consumer {
    * @param maxBatchSize Maximum number of entries to queue.
    * @return A {@link DequeueResult}.
    */
-  DequeueResult dequeue(int maxBatchSize) throws IOException;
+  DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException;
 }
