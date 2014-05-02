@@ -27,6 +27,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -61,7 +63,7 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final int workerThreads;
   private final MetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
-
+  private final Lock createLock;
 
   public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
@@ -70,6 +72,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     this.workerThreads = workerThreads;
     this.metricsCollector = metricsCollector;
     this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
+    this.createLock = new ReentrantLock();
   }
 
   /**
@@ -110,16 +113,18 @@ public final class ConcurrentStreamWriter implements Closeable {
     if (eventQueue != null) {
       return eventQueue;
     }
+
+    // TODO: Check with MDS
+    createLock.lock();
+    try {
+      StreamUtils.ensureExists(streamAdmin, streamName);
+    } finally {
+      createLock.unlock();
+    }
     eventQueue = new EventQueue(streamName, createWriterSupplier(streamName));
     EventQueue oldQueue = eventQueues.putIfAbsent(streamName, eventQueue);
 
-    if (oldQueue == null) {
-      // Only do the ensure exists once
-      // TODO: Check with MDS
-      StreamUtils.ensureExists(streamAdmin, streamName);
-      return eventQueue;
-    }
-    return oldQueue;
+    return (oldQueue == null) ? eventQueue : oldQueue;
   }
 
   private Supplier<FileWriter<StreamEvent>> createWriterSupplier(final String streamName) {
