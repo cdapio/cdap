@@ -7,7 +7,6 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

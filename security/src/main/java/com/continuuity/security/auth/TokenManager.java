@@ -13,7 +13,7 @@ import java.security.InvalidKeyException;
  */
 public class TokenManager extends AbstractIdleService {
 
-  private final KeyManager keyManager;
+  protected final KeyManager keyManager;
   private final Codec<AccessTokenIdentifier> identifierCodec;
 
   @Inject

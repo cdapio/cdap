@@ -9,6 +9,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.security.NoSuchAlgorithmException;
 public class DistributedSecurityModule extends SecurityModule {
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(DistributedKeyManagerProvider.class);
+    binder.bind(KeyManager.class).toProvider(DistributedKeyManagerProvider.class).in(Scopes.SINGLETON);
   }
 
   private static final class DistributedKeyManagerProvider implements Provider<KeyManager> {

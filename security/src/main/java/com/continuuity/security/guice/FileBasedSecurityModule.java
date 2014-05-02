@@ -9,6 +9,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -21,7 +22,7 @@ public class FileBasedSecurityModule extends SecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(FileBasedKeyManagerProvider.class);
+    binder.bind(KeyManager.class).toProvider(FileBasedKeyManagerProvider.class).in(Scopes.SINGLETON);
   }
 
   private static final class FileBasedKeyManagerProvider implements  Provider<KeyManager> {

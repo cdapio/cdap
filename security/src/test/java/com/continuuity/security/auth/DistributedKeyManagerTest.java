@@ -75,8 +75,10 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     DistributedKeyManager manager2 = getKeyManager(injector2, false);
     TimeUnit.MILLISECONDS.sleep(1000);
 
-    TokenManager tokenManager1 = new TokenManager(manager1, injector1.getInstance(AccessTokenIdentifierCodec.class));
-    TokenManager tokenManager2 = new TokenManager(manager2, injector2.getInstance(AccessTokenIdentifierCodec.class));
+    TestingTokenManager tokenManager1 =
+      new TestingTokenManager(manager1, injector1.getInstance(AccessTokenIdentifierCodec.class));
+    TestingTokenManager tokenManager2 =
+      new TestingTokenManager(manager2, injector2.getInstance(AccessTokenIdentifierCodec.class));
     tokenManager1.startAndWait();
     tokenManager2.startAndWait();
 
@@ -84,8 +86,11 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier("testuser", Lists.newArrayList("users", "admins"),
                                                              now, now + 60 * 60 * 1000);
     AccessToken token1 = tokenManager1.signIdentifier(ident1);
-    // the second token manager should now have the secret key required to validate the signature
+    // make sure the second token manager has the secret key required to validate the signature
+    tokenManager2.waitForKey(tokenManager1.getCurrentKey().getKeyId(), 2000, TimeUnit.MILLISECONDS);
     tokenManager2.validateSecret(token1);
+
+    tokenManager2.waitForCurrentKey(2000, TimeUnit.MILLISECONDS);
     AccessToken token2 = tokenManager2.signIdentifier(ident1);
     tokenManager1.validateSecret(token2);
     assertEquals(token1.getIdentifier().getUsername(), token2.getIdentifier().getUsername());
@@ -118,7 +123,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
     keyManager.startAndWait();
     if (expectLeader) {
-      keyManager.waitForLeader(1000, TimeUnit.MILLISECONDS);
+      keyManager.waitForLeader(5000, TimeUnit.MILLISECONDS);
     }
     return keyManager;
   }
@@ -137,6 +142,61 @@ public class DistributedKeyManagerTest extends TestTokenManager {
       } while (!leader.get() && timer.elapsedTime(unit) < duration);
       if (!leader.get()) {
         throw new TimeoutException("Timed out waiting to become leader");
+      }
+    }
+
+    public KeyIdentifier getCurrentKey() {
+      return currentKey;
+    }
+
+    public boolean hasKey(int keyId) {
+      return super.hasKey(keyId);
+    }
+  }
+
+  private static class TestingTokenManager extends TokenManager {
+    private TestingTokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
+      super(keyManager, identifierCodec);
+    }
+
+    public KeyIdentifier getCurrentKey() {
+      if (keyManager instanceof WaitableDistributedKeyManager) {
+        return ((WaitableDistributedKeyManager) keyManager).getCurrentKey();
+      }
+      return null;
+    }
+
+    public void waitForKey(int keyId, long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
+      if (keyManager instanceof WaitableDistributedKeyManager) {
+        WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
+        Stopwatch timer = new Stopwatch().start();
+        boolean hasKey = false;
+        do {
+          hasKey = waitKeyManager.hasKey(keyId);
+          if (!hasKey) {
+            unit.sleep(duration / 10);
+          }
+        } while (!hasKey && timer.elapsedTime(unit) < duration);
+        if (!hasKey) {
+          throw new TimeoutException("Timed out waiting for key " + keyId);
+        }
+      }
+    }
+
+    public void waitForCurrentKey(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
+      if (keyManager instanceof WaitableDistributedKeyManager) {
+        WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
+        Stopwatch timer = new Stopwatch().start();
+        boolean hasKey = false;
+        do {
+          hasKey = waitKeyManager.getCurrentKey() != null;
+          if (!hasKey) {
+            unit.sleep(duration / 10);
+          }
+        } while (!hasKey && timer.elapsedTime(unit) < duration);
+        if (!hasKey) {
+          throw new TimeoutException("Timed out waiting for current key to be set");
+        }
       }
     }
   }

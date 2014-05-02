@@ -33,9 +33,8 @@ public class TestKeyIdentifierCodec {
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     CConfiguration conf = injector.getInstance(CConfiguration.class);
     keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
-    keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH,
-                            Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH);
-    keyAlgo = conf.get(Constants.Security.TOKEN_DIGEST_ALGO, Constants.Security.DEFAULT_TOKEN_DIGEST_ALGO);
+    keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH);
+    keyAlgo = conf.get(Constants.Security.TOKEN_DIGEST_ALGO);
 
     keyGenerator = KeyGenerator.getInstance(keyAlgo);
     keyGenerator.init(keyLength);

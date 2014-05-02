@@ -45,9 +45,8 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
    * @param conf
    */
   public AbstractKeyManager(CConfiguration conf) {
-    this(conf.get(Constants.Security.TOKEN_DIGEST_ALGO, Constants.Security.DEFAULT_TOKEN_DIGEST_ALGO),
-         conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH, Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH));
-
+    this(conf.get(Constants.Security.TOKEN_DIGEST_ALGO),
+         conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH));
   }
 
   public AbstractKeyManager(String keyAlgo, int keyLength) {

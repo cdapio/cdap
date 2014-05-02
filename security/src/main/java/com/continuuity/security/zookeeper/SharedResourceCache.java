@@ -104,6 +104,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               try {
                 T resource = codec.decode(result.getData());
                 loaded.put(nodeName, resource);
+                for (ResourceListener<T> listener : listeners) {
+                  listener.onResourceUpdate(nodeName, resource);
+                }
               } catch (IOException ioe) {
                 throw Throwables.propagate(ioe);
               }

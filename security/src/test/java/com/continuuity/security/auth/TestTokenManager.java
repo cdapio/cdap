@@ -68,6 +68,7 @@ public abstract class TestTokenManager {
       fail("Token should have been rejected for invalid key ID but passed: " +
              Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) { }
+
     tokenManager.stopAndWait();
   }
 
