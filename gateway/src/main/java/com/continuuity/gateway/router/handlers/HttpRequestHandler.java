@@ -1,9 +1,9 @@
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -11,20 +11,20 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * performed using Discovery service for forwarding.
  */
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
 
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
@@ -62,24 +61,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     } else if (event.getMessage() instanceof HttpRequest) {
       // Discover and forward event.
       HttpRequest request = (HttpRequest) event.getMessage();
-      HeaderDecoder.HeaderInfo headInfo = new HeaderDecoder.HeaderInfo(request.getUri(),
-                                                                       request.getHeader(HttpHeaders.Names.HOST),
-                                                                       request.getMethod().getName());
+
       // Suspend incoming traffic until connected to the outbound service.
       inboundChannel.setReadable(false);
       WrappedDiscoverable discoverable = getDiscoverable(request,
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
-      // if there is a event sender is already present use it.
-      if (discoveryLookup.containsKey(discoverable)) {
-        inboundChannel.setReadable(true);
-        EventSender eventSender =  discoveryLookup.get(discoverable);
-        eventSender.sendMessage(request);
-        //Save the channelFuture for subsequent chunks
-        if (request.isChunked()) {
-          chunkEventSender = eventSender;
-        }
-      } else {
+      // If no event sender, make new connection, otherwise reuse existing one.
+      EventSender eventSender =  discoveryLookup.get(discoverable);
+      if (eventSender == null) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
         ChannelFuture outFuture = clientBootstrap.connect(address);
@@ -87,14 +77,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
 
-        EventSender eventSender = new EventSender(outFuture);
-        eventSender.sendMessage(request);
-        inboundChannel.setReadable(true);
-        //Save the channelFuture for subsequent chunks
-        if (request.isChunked()) {
-          chunkEventSender = eventSender;
-        }
+        eventSender = new EventSender(outFuture);
         discoveryLookup.put(discoverable, eventSender);
+      }
+
+      // Send the message.
+      eventSender.sendMessage(request);
+      inboundChannel.setReadable(true);
+      //Save the channelFuture for subsequent chunks
+      if (request.isChunked()) {
+        chunkEventSender = eventSender;
       }
 
     } else {
@@ -115,6 +107,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
+  @Override
+  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    // Close all event sender
+    for (EventSender sender : discoveryLookup.values()) {
+      Closeables.closeQuietly(sender);
+    }
+    super.channelClosed(ctx, e);
+  }
+
   /**
    * Closes the specified channel after all queued write requests are flushed.
    */
@@ -124,7 +125,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
   }
 
-  private  static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
+  private static <T> T raiseExceptionIfNull(T reference, HttpResponseStatus status, String message) {
     if (reference == null) {
       throw new HandlerException(status, message);
     }
@@ -148,7 +149,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
    * ConnectionFuture is used for the first event and event future for subsequent events.
    * Reason to use event future is to send chunked requests in the same channel.
    */
-  private static final class EventSender {
+  private static final class EventSender implements Closeable {
     private final ChannelFuture connectionFuture;
     private final ChannelFuture eventFuture;
     private final AtomicBoolean first;
@@ -176,6 +177,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
           }
         });
       }
+    }
+
+    @Override
+    public void close() throws IOException {
+      closeOnFlush(connectionFuture.getChannel());
     }
   }
 }
