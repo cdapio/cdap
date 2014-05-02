@@ -12,6 +12,10 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
 
     compile libraries.hive_beeline
+    compile libraries.hive_jdbc
+    compile libraries.hadoop_mapreduce_client_core
+
+    testCompile libraries.junit
 }
 
 sourceSets{
