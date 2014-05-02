@@ -55,6 +55,8 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     Assert.assertEquals("1",
                         gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+
+    applicationManager.stopAll();
   }
 
   @Test(timeout = 240000)

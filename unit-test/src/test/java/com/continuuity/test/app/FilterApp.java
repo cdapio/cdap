@@ -43,7 +43,7 @@ public class FilterApp implements Application {
   }
 
   /**
-   * Filter Flow
+   * Flow to implement highpass filter.
    */
   public static class FilterFlow implements Flow {
     @Override
@@ -59,7 +59,7 @@ public class FilterApp implements Application {
   }
 
   /**
-   * Filter
+   * Flowlet that has filtering logic.
    */
   public static class Filter extends AbstractFlowlet {
 
