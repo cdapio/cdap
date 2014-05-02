@@ -19,7 +19,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractHttpHandler {
@@ -33,7 +33,6 @@ public class MonitorHandler extends AbstractHttpHandler {
    * Number of seconds for timing out a service endpoint discovery.
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
 
   private enum Services {
     METRICS (Constants.Service.METRICS),
@@ -75,7 +74,7 @@ public class MonitorHandler extends AbstractHttpHandler {
         Services.valueofName(serviceName).getName());
       Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                                 DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
-      return (discoverable != null) ? true : false;
+      return (discoverable != null);
     } catch (IllegalArgumentException e) {
       return false;
     }
