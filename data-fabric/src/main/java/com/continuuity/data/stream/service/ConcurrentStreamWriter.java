@@ -1,13 +1,15 @@
 /*
  * Copyright 2014 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data.stream;
+package com.continuuity.data.stream.service;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.stream.DefaultStreamEventData;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;

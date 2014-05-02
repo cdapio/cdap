@@ -22,7 +22,7 @@ public final class StreamFileOffset {
   private final long partitionEnd;
   private final String namePrefix;
   private final int seqId;
-  private long offset;
+  private final long offset;
 
   /**
    * Clones from another {@link StreamFileOffset}.
@@ -30,6 +30,16 @@ public final class StreamFileOffset {
    */
   public StreamFileOffset(StreamFileOffset other) {
     this(other.getEventLocation(), other.getOffset());
+  }
+
+  /**
+   * Clones from another {@link StreamFileOffset} but with a different offset value.
+   *
+   * @param other The instance to clone from
+   * @param offset file offset
+   */
+  public StreamFileOffset(StreamFileOffset other, long offset) {
+    this(other.getEventLocation(), offset);
   }
 
   public StreamFileOffset(Location eventLocation) {
@@ -62,10 +72,6 @@ public final class StreamFileOffset {
 
   public long getOffset() {
     return offset;
-  }
-
-  public void setOffset(long offset) {
-    this.offset = offset;
   }
 
   public final long getPartitionStart() {

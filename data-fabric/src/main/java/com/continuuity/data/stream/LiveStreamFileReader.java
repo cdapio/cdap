@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.data.file.FileReader;
@@ -117,8 +116,8 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
                        implements FileReader<PositionStreamEvent, StreamFileOffset> {
 
     private final FileReader<PositionStreamEvent, Long> reader;
-    private final StreamFileOffset offset;
     private final Location partitionLocation;
+    private StreamFileOffset offset;
 
     private StreamPositionTransformFileReader(Location streamLocation, StreamFileOffset offset) throws IOException {
       this.reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(offset.getEventLocation()),
@@ -137,7 +136,7 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
                     long timeout, TimeUnit unit) throws IOException, InterruptedException {
       int eventCount = reader.read(events, maxEvents, timeout, unit);
-      offset.setOffset(reader.getPosition());
+      offset = new StreamFileOffset(offset, reader.getPosition());
       return eventCount;
     }
 

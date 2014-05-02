@@ -23,21 +23,50 @@ import java.util.jar.Manifest;
 /**
  * Default implementation of program.
  */
-final class DefaultProgram implements Program {
+public final class DefaultProgram implements Program {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultProgram.class);
   private final ClassLoader classLoader;
   private final String mainClassName;
   private final Type processorType;
   private final ApplicationSpecification specification;
   private final Id.Program id;
-  private final File jarDir;
   private final Location programJarLocation;
 
   DefaultProgram(Location programJarLocation, File bundleJarFolder, final ProgramJarResources jarResources,
                  ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
-    this.jarDir = bundleJarFolder;
     this.classLoader = new ProgramClassLoader(bundleJarFolder, parentClassLoader);
+
+    Manifest manifest = jarResources.getManifest();
+
+    mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
+    String accountId = getAttribute(manifest, ManifestFields.ACCOUNT_ID);
+    String applicationId = getAttribute(manifest, ManifestFields.APPLICATION_ID);
+    String programName = getAttribute(manifest, ManifestFields.PROGRAM_NAME);
+    id = Id.Program.from(accountId, applicationId, programName);
+
+    String type = getAttribute(manifest, ManifestFields.PROCESSOR_TYPE);
+    processorType = type == null ? null : Type.valueOf(type);
+
+    final String appSpecFile = getAttribute(manifest, ManifestFields.SPEC_FILE);
+
+    specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create()
+      .fromJson(CharStreams.newReaderSupplier(
+        new InputSupplier<InputStream>() {
+          @Override
+          public InputStream getInput() throws IOException {
+            return jarResources.getResourceAsStream(appSpecFile);
+          }
+        },
+        Charsets.UTF_8)
+      );
+  }
+
+  // TODO: Remove this.
+  public DefaultProgram(Location programJarLocation,
+                        final JarResources jarResources, ClassLoader classLoader) throws IOException {
+    this.programJarLocation = programJarLocation;
+    this.classLoader = classLoader;
 
     Manifest manifest = jarResources.getManifest();
 

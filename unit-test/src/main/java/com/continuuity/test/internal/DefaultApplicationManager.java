@@ -5,7 +5,6 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.common.lang.jar.JarClassLoader;
@@ -107,7 +106,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, flowName, "flows");
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -160,7 +159,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, jobName, "mapreduce");
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, jobName, "mapreduce", arguments);
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -209,7 +208,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, procedureName , "procedures");
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, procedureName , "procedures", arguments);
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
