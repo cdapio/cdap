@@ -27,7 +27,6 @@ import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -69,7 +68,6 @@ public class TestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
   public static CConfiguration configuration;
   private static Injector injector;
-  private AppFabricServiceWrapper appFabricServiceWrapper;
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
@@ -173,49 +171,49 @@ public class TestHelper {
                              applicationClz, bundleEmbeddedJars);
   }
 
-  private static Location deployApplication(AppFabricService.Iface appFabricServer,
-                                            LocationFactory locationFactory,
-                                            final String account,
-                                            final AuthToken token,
-                                            final String applicationId,
-                                            final String fileName,
-                                            Class<? extends Application> applicationClz,
-                                            File...bundleEmbeddedJars) throws Exception {
-    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+    private static Location deployApplication(AppFabricService.Iface appFabricServer,
+                                          LocationFactory locationFactory,
+                                          final String account,
+                                          final AuthToken token,
+                                          final String applicationId,
+                                          final String fileName,
+                                          Class<? extends Application> applicationClz,
+                                          File...bundleEmbeddedJars) throws Exception {
+      Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-    Application application = applicationClz.newInstance();
-    ApplicationSpecification appSpec = Specifications.from(application.configure());
-    Location deployedJar = locationFactory.create(
-      createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
-    LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
+      Application application = applicationClz.newInstance();
+      ApplicationSpecification appSpec = Specifications.from(application.configure());
+      Location deployedJar = locationFactory.create(
+        createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
+      LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
-    archiveInfo.setApplicationId(applicationId);
-    ArchiveId id = appFabricServer.init(token, archiveInfo);
+      ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
+      archiveInfo.setApplicationId(applicationId);
+      ArchiveId id = appFabricServer.init(token, archiveInfo);
 
-    // Upload the jar file to remote location.
-    BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
-    try {
-      byte[] chunk = is.read();
-      while (chunk.length > 0) {
-        appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
-        chunk = is.read();
-        DeploymentStatus status = appFabricServer.dstatus(token, id);
-        Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
+      // Upload the jar file to remote location.
+      BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
+      try {
+        byte[] chunk = is.read();
+        while (chunk.length > 0) {
+          appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
+          chunk = is.read();
+          DeploymentStatus status = appFabricServer.dstatus(token, id);
+          Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
+        }
+      } finally {
+        is.close();
       }
-    } finally {
-      is.close();
-    }
 
-    // Deploy the app
-    appFabricServer.deploy(token, id);
-    int status = appFabricServer.dstatus(token, id).getOverall();
-    while (status == 3) {
-      status = appFabricServer.dstatus(token, id).getOverall();
-      TimeUnit.MILLISECONDS.sleep(100);
-    }
-    Preconditions.checkState(status == 5, "Fail to deploy app: %s", status);
-    return deployedJar;
+      // Deploy the app
+      appFabricServer.deploy(token, id);
+      int status = appFabricServer.dstatus(token, id).getOverall();
+      while (status == 3) {
+        status = appFabricServer.dstatus(token, id).getOverall();
+        TimeUnit.MILLISECONDS.sleep(100);
+      }
+      Preconditions.checkState(status == 5, "Fail to deploy app: %s", status);
+      return deployedJar;
   }
 
   private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
