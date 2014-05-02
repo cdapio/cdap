@@ -13,7 +13,7 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
-import com.continuuity.gateway.handlers.PingStatusHandler;
+import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -100,7 +100,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
-      handlerBinder.addBinding().to(PingStatusHandler.class);
+      handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
     }
 

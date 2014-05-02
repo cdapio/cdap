@@ -1,6 +1,7 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.logging.gateway.handlers.LogHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
@@ -8,7 +9,6 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
-import com.continuuity.metrics.query.MetricsPingHandler;
 import com.continuuity.metrics.query.MetricsQueryHandler;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
@@ -34,6 +34,6 @@ public class MetricsHandlerModule extends PrivateModule {
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
     handlerBinder.addBinding().to(MetricsQueryHandler.class);
     handlerBinder.addBinding().to(LogHandler.class);
-    handlerBinder.addBinding().to(MetricsPingHandler.class);
+    handlerBinder.addBinding().to(PingHandler.class);
   }
 }

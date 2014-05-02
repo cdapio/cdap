@@ -4,8 +4,7 @@
 package com.continuuity.data.stream.service;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.stream.StreamHandler;
-import com.continuuity.data.stream.StreamPingHandler;
+import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -22,7 +21,7 @@ public class StreamHttpModule extends PrivateModule {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Service.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
-    handlerBinder.addBinding().to(StreamPingHandler.class);
+    handlerBinder.addBinding().to(PingHandler.class);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);
   }

@@ -89,6 +89,7 @@ public class MonitorHandler extends AbstractHttpHandler {
         // Ping the discovered service to check its status
         String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort());
+        //TODO: Figure out a way to Ping Transaction Service (Hint: Used RUOK?)
         if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
           checkGetStatus(url);
         }

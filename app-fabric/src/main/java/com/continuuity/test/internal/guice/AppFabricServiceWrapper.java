@@ -138,7 +138,7 @@ public class AppFabricServiceWrapper {
     String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
-    if (argString != null){
+    if (argString != null) {
       request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
     httpHandler.startProgram(request, responder, appId, type, flowId);
