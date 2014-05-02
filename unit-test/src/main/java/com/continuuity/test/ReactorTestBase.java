@@ -16,8 +16,9 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.Specifications;
-import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -33,6 +34,9 @@ import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.TestMetricsCollectionService;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -68,6 +72,8 @@ public class ReactorTestBase {
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
+  private static AppFabricService appFabricServiceWrapper;
+  private static AppFabricHttpHandler httpHandler;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -87,9 +93,10 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
-                                                          applicationClz, bundleEmbeddedJars);
+      Location deployedJar = AppFabricServiceWrapper.deployApplication(
+        httpHandler, locationFactory, DefaultId.ACCOUNT.getId(),
+        TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
+        applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,
@@ -171,6 +178,8 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
+    //httpHandler = injector.getInstance(Key.get(HttpHandler.class, Names.named("app.fabric.http")));
+    httpHandler = injector.getInstance(AppFabricHttpHandler.class);
   }
 
   private static void copyTempFile (String infileName, File outDir) {
