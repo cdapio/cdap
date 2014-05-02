@@ -20,7 +20,6 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
@@ -28,7 +27,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,18 +54,15 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
 
   /**
    * Intercepts the HttpMessage for getting the access token in authorization header
-   * and validates it for authentication.
    * @param ctx channel handler context delegated from MessageReceived callback
-   * @param event Message event delegated from MessageReceived callback
+   * @param msg intercepted HTTP message
+   * @param inboundChannel
+   * @return {@code true} if the HTTP message has valid Access token
    * @throws Exception
    */
-  private void securedInterception(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
-    final HttpRequest msg = (HttpRequest) event.getMessage();
+  private boolean validateSecuredInterception(ChannelHandlerContext ctx, HttpRequest msg,
+                                      Channel inboundChannel) throws Exception {
     JsonObject jsonObject = new JsonObject();
-    // Suspend incoming traffic until connected to the outbound service.
-    final Channel inboundChannel = event.getChannel();
-    inboundChannel.setReadable(false);
-
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
@@ -96,12 +91,15 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
                                                "error_description=\"%s\"", realm, tokenState.getMsg()));
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
-        LOG.info("Failed authentication due to invalid token, reason={};", tokenState);
+        LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
         break;
     }
     if (tokenState != TokenValidator.State.TOKEN_VALID) {
       JsonArray externalAuthenticationURIs = new JsonArray();
+
+      //Waiting for service to get discovered
       stopWatchWait(externalAuthenticationURIs);
+
       jsonObject.add("auth_uri", externalAuthenticationURIs);
 
       ChannelBuffer content = ChannelBuffers.wrappedBuffer(jsonObject.toString().getBytes(Charsets.UTF_8));
@@ -109,19 +107,24 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json;charset=UTF-8");
 
-      ChannelFuture writeFuture = Channels.future(event.getChannel());
+      ChannelFuture writeFuture = Channels.future(inboundChannel);
       Channels.write(ctx, writeFuture, httpResponse);
       writeFuture.addListener(ChannelFutureListener.CLOSE);
-      return;
-    } else {
-      String serealizedAccessTokenIdentifier = accessTokenTransformer.transform(accessToken.trim());
-      msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + serealizedAccessTokenIdentifier);
-      inboundChannel.setReadable(true);
-      Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
+      return false;
     }
+
+    String serealizedAccessTokenIdentifier = accessTokenTransformer.transform(accessToken.trim());
+    msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + serealizedAccessTokenIdentifier);
+    return true;
   }
 
-  private void stopWatchWait(JsonArray externalAuthenticationURIs) throws Exception{
+  /**
+   *
+   * @param externalAuthenticationURIs the list that should be populated with discovered with
+   *                                   external auth servers URIs
+   * @throws Exception
+   */
+  private void stopWatchWait(JsonArray externalAuthenticationURIs) throws Exception {
     boolean done = false;
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     Stopwatch stopwatch = new Stopwatch();
@@ -140,10 +143,15 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, final MessageEvent event) throws Exception {
-    if (event.getMessage() instanceof HttpChunk) {
+    Object msg = event.getMessage();
+    if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
     } else if (securityEnabled) {
-      securedInterception(ctx, event);
+      if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
+        Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
+      } else {
+        return;
+      }
     } else {
       super.messageReceived(ctx, event);
     }

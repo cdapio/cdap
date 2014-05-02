@@ -9,14 +9,12 @@ import java.io.IOException;
  * It takes the access token and transforms it to Access Token Identifier
  */
 public class AccessTokenTransformer {
-  private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
   private final Codec<AccessTokenIdentifier> accessTokenIdentifierCodec;
 
   @Inject
-  public AccessTokenTransformer(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec,
+  public AccessTokenTransformer(Codec<AccessToken> accessTokenCodec,
                                 Codec<AccessTokenIdentifier> accessTokenIdentifierCodec) {
-    this.tokenManager = tokenManager;
     this.accessTokenCodec = accessTokenCodec;
     this.accessTokenIdentifierCodec = accessTokenIdentifierCodec;
   }
