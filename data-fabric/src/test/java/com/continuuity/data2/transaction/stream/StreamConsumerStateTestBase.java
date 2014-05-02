@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  *
  */
-public abstract class StreamConsumerStateTest {
+public abstract class StreamConsumerStateTestBase {
 
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
@@ -137,10 +137,12 @@ public abstract class StreamConsumerStateTest {
     Assert.assertTrue(Iterables.elementsEqual(state.getState(), newState.getState()));
 
     // Change the state of instance 0 to higher offset.
-    StreamFileOffset fileOffset = Iterables.get(state.getState(), 0);
+    List<StreamFileOffset> fileOffsets = Lists.newArrayList(state.getState());
+    StreamFileOffset fileOffset = fileOffsets.get(0);
     long oldOffset = fileOffset.getOffset();
     long newOffset = oldOffset + 100000;
-    fileOffset.setOffset(newOffset);
+    fileOffsets.set(0, new StreamFileOffset(fileOffset, newOffset));
+    state.setState(fileOffsets);
     stateStore.save(state);
 
     // Verify the change

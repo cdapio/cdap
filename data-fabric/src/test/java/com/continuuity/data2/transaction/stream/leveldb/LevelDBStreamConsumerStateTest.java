@@ -12,7 +12,7 @@ import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import com.continuuity.data2.transaction.stream.StreamConsumerStateTest;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateTestBase;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -24,7 +24,7 @@ import java.io.IOException;
 /**
  *
  */
-public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTest {
+public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
