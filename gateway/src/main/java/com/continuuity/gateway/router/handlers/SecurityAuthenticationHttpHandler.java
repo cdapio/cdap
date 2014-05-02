@@ -4,6 +4,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -27,10 +28,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Security handler that intercept HTTP message and validates the access token in
@@ -42,11 +41,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
   DiscoveryServiceClient discoveryServiceClient;
-  Future<Iterable<Discoverable>> discoveredExternalAuthFuture;
   private final boolean securityEnabled;
   private final String realm;
-
-  private  ExecutorService pool;
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
                                            AccessTokenTransformer accessTokenTransformer, boolean securityEnabled,
@@ -56,8 +52,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     this.accessTokenTransformer = accessTokenTransformer;
     this.securityEnabled = securityEnabled;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.pool = Executors.newFixedThreadPool(1);
-    this.discoveredExternalAuthFuture = asyncDiscoveryWait();
   }
 
   /**
@@ -87,7 +81,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
     switch (tokenState) {
       case TOKEN_MISSING:
-        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"");
+        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+                               String.format("Bearer realm=\"%s\"", realm));
         jsonObject.addProperty("error", "Token Missing");
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.info("Failed authentication due to missing token");
@@ -96,9 +91,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       case TOKEN_INVALID:
       case TOKEN_EXPIRED:
       case TOKEN_INTERNAL:
-        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"" +
-          "  error=\"invalid_token\"" +
-          "  error_description=\"" + tokenState.getMsg() + "\"");
+        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+                               String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
+                                               "error_description=\"%s\"", realm, tokenState.getMsg()));
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.info("Failed authentication due to invalid token, reason={};", tokenState);
@@ -106,14 +101,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     }
     if (tokenState != TokenValidator.State.TOKEN_VALID) {
       JsonArray externalAuthenticationURIs = new JsonArray();
-      Iterable<Discoverable> discoverables = discoveredExternalAuthFuture.get();
-      if (discoverables == null) {
-        discoveredExternalAuthFuture.cancel(true);
-      } else {
-        for (Discoverable d :discoverables) {
-          externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getAddress().getHostAddress()));
-        }
-      }
+      stopWatchWait(externalAuthenticationURIs);
       jsonObject.add("auth_uri", externalAuthenticationURIs);
 
       ChannelBuffer content = ChannelBuffers.wrappedBuffer(jsonObject.toString().getBytes(Charsets.UTF_8));
@@ -131,28 +119,24 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       inboundChannel.setReadable(true);
       Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
     }
-    pool.shutdown();
   }
 
-  /**
-   * Asynchronous waiting for External authentication service to be discovered
-   * @return Future discoverable iterable object for external authentication discovery
-   */
-  private Future<Iterable<Discoverable>> asyncDiscoveryWait() {
-    Future<Iterable<Discoverable>> future = pool.submit(new Callable<Iterable<Discoverable>>() {
-      @Override
-      public Iterable<Discoverable> call() throws Exception {
-        Iterable<Discoverable> discoverables =
-          discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-        while (!discoverables.iterator().hasNext()) {
-          discoverables =
-            discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
-        }
-        return discoverables;
+  private void stopWatchWait(JsonArray externalAuthenticationURIs) throws Exception{
+    boolean done = false;
+    Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.start();
+    do {
+      for (Discoverable d : discoverables)  {
+        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getAddress().getHostAddress()));
+        done = true;
       }
-    });
-    return future;
+      if (!done) {
+        TimeUnit.MILLISECONDS.sleep(200);
+      }
+    } while (!done && stopwatch.elapsedTime(TimeUnit.SECONDS) < 2L);
   }
+
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, final MessageEvent event) throws Exception {

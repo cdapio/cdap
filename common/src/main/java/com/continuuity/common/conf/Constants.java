@@ -471,8 +471,6 @@ public final class Constants {
   public static final class Security {
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
-    /** Key length for secret key used by token digest algorithm. */
-    public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
 
     /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
