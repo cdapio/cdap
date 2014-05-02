@@ -83,10 +83,15 @@ public abstract class AbstractMapReduceContextBuilder {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-//      program = loadProgram(programLocation, locationFactory, destinationUnpackedJarDir, classLoader);
+      // TODO: remove HACK to make ProgramClassLoader check for classes in parent classloader first.
+      // Rather than checking its own classes first, ProgramClassLoader will now check the parent
+      // first. This is done because the InputFormat and OutputFormat classes of the MapReduce job
+      // exist in the system classloader (due to adding them in MapReduceProgramRunner.buildJobJar())
+      // AND the ProgramClassLoader created here, so the Mappers and Reducers load the
+      // InputFormat and OutputFormat classes from the ProgramClassLoader BUT MapReduce framework is using
+      // InputFormta and OutputFormat classes from the system classloader. This causes a class cast exception.
       Location programJarLocation = locationFactory.create(programLocation);
       File unpackedJarDir = BundleJarUtil.unpackProgramJar(programJarLocation, destinationUnpackedJarDir);
-
       program = new DefaultProgram(programJarLocation, new JarResources(programJarLocation),
                                    new ProgramClassLoader(unpackedJarDir, null, true));
       // See if it is launched from Workflow, if it is, change the Program.
