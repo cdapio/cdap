@@ -1,14 +1,18 @@
 package com.continuuity.common.lang.jar;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,6 +36,7 @@ public class ProgramClassLoader extends URLClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClassLoader.class);
 
   private final ClassLoader parentDelegate;
+  private final boolean normalOrder;
 
   // TODO: Consider consolidating with MultiClassLoader.CLASS_PREFER_EXEMPTIONS
   private static final String[] CLASS_PREFER_EXEMPTIONS = new String[] {
@@ -62,6 +67,12 @@ public class ProgramClassLoader extends URLClassLoader {
     // "com.continuuity.examples"
   };
 
+  public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate, boolean normalOrder) {
+    super(getClassPathUrls(unpackedJarDir), normalOrder ? determineParentClassLoader(parentDelegate) : null);
+    this.parentDelegate = determineParentClassLoader(parentDelegate);
+    this.normalOrder = normalOrder;
+  }
+
   /**
    * Same as URLClassLoader, except tell URLClassLoader to use the bootstrap class loader
    * as the parent instead of the specified parent classloader. This is done so that we
@@ -73,8 +84,7 @@ public class ProgramClassLoader extends URLClassLoader {
    * @param parentDelegate Parent classloader.
    */
   public ProgramClassLoader(File unpackedJarDir, ClassLoader parentDelegate) {
-    super(getClassPathUrls(unpackedJarDir), null);
-    this.parentDelegate = determineParentClassLoader(parentDelegate);
+    this(unpackedJarDir, parentDelegate, false);
   }
 
   /**
@@ -140,6 +150,39 @@ public class ProgramClassLoader extends URLClassLoader {
 
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    if (normalOrder) {
+      return super.loadClass(name, resolve);
+    }
+    Class<?> cls = doLoadClass(name, resolve);
+    return cls;
+  }
+
+  @Override
+  public URL findResource(String name) {
+    if (normalOrder) {
+      return super.findResource(name);
+    }
+    // TODO: check isPreferred() somehow to determine which order
+    URL url = parentDelegate.getResource(name);
+    if (url == null) {
+      return super.findResource(name);
+    }
+    return url;
+  }
+
+  @Override
+  public Enumeration<URL> findResources(String name) throws IOException {
+    if (normalOrder) {
+      return super.findResources(name);
+    }
+
+    List<URL> urls = Lists.newArrayList();
+    Iterators.addAll(urls, Iterators.forEnumeration(parentDelegate.getResources(name)));
+    Iterators.addAll(urls, Iterators.forEnumeration(super.findResources(name)));
+    return Iterators.asEnumeration(urls.iterator());
+  }
+
+  private synchronized Class<?> doLoadClass(String name, boolean resolve) throws ClassNotFoundException {
     Class<?> loadedClass = findLoadedClass(name);
     if (loadedClass != null) {
       return loadedClass;
