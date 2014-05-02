@@ -42,6 +42,9 @@ public class FilterApp implements Application {
       .build();
   }
 
+  /**
+   * Flow to implement highpass filter.
+   */
   public static class FilterFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -55,6 +58,9 @@ public class FilterApp implements Application {
     }
   }
 
+  /**
+   * Flowlet that has filtering logic.
+   */
   public static class Filter extends AbstractFlowlet {
 
     @UseDataSet("count")
