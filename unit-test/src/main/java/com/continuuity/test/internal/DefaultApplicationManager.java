@@ -1,7 +1,7 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
@@ -17,6 +17,7 @@ import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -25,8 +26,7 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -34,6 +34,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -55,6 +57,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final DataSetInstantiator dataSetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
+  private final AppFabricHttpHandler httpHandler;
+
 
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
@@ -67,7 +71,8 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    @Assisted("applicationId") String applicationId,
                                    @Assisted AppFabricService.Iface appFabricServer,
                                    @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec) {
+                                   @Assisted ApplicationSpecification appSpec,
+                                   AppFabricHttpHandler httpHandler) {
     this.token = token;
     this.accountId = accountId;
     this.applicationId = applicationId;
@@ -75,6 +80,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
     this.txSystemClient = txSystemClient;
+    this.httpHandler = httpHandler;
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
 
@@ -101,7 +107,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(flowId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, flowName, "flows");
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -112,7 +118,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            appFabricServer.setFlowletInstances(token, flowId, flowletName, (short) instances);
+            AppFabricServiceWrapper.setFlowletInstances
+              (httpHandler, applicationId, flowName, flowletName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -122,7 +129,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(flowName, flowId)) {
-              appFabricServer.stop(token, flowId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, flowName, "flows");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -153,7 +160,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(jobId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, jobName, "mapreduce");
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -164,7 +171,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(jobName, jobId)) {
-              appFabricServer.stop(token, jobId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -202,7 +209,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(procedureId, arguments));
+        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, procedureName , "procedures");
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
@@ -213,7 +220,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(procedureName, procedureId)) {
-              appFabricServer.stop(token, procedureId);
+              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, procedureName , "procedures");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);

@@ -45,7 +45,7 @@ public final class DefaultProcedureClient implements ProcedureClient {
       String.format("procedure.%s.%s.%s",
                     accountId, applicationId, procedureName)).iterator().next();
 
-    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
+    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
                       discoverable.getSocketAddress().getHostName(),
                       discoverable.getSocketAddress().getPort(),
                       applicationId,

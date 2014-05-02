@@ -10,8 +10,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.gateway.handlers.AppFabricGatewayModule;
-import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
@@ -88,9 +86,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
-
-    install(new GatewayCommonHandlerModule());
-    install(new AppFabricGatewayModule());
   }
 
   @Singleton

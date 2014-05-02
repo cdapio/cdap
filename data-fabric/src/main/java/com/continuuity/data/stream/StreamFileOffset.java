@@ -5,7 +5,6 @@ package com.continuuity.data.stream;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -15,7 +14,7 @@ import java.net.URI;
  * Represents offset information for single stream file. The comparison of offset instance
  * is done by comparing event location path followed by offset.
  */
-public final class StreamFileOffset implements Comparable<StreamFileOffset> {
+public final class StreamFileOffset {
 
   private final Location eventLocation;
   private final Location indexLocation;
@@ -89,7 +88,6 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("event", eventLocation.toURI())
-      .add("index", indexLocation == null ? null : indexLocation.toURI())
       .add("offset", getOffset())
       .toString();
   }
@@ -127,11 +125,5 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
     return factory.create(URI.create(String.format("%s%s",
                                                    eventPath.substring(0, eventPath.length() - extLength),
                                                    StreamFileType.INDEX.getSuffix())));
-  }
-
-  @Override
-  public int compareTo(StreamFileOffset other) {
-    int cmp = eventLocation.toURI().compareTo(other.getEventLocation().toURI());
-    return cmp == 0 ? Longs.compare(offset, other.getOffset()) : cmp;
   }
 }

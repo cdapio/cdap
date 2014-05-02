@@ -58,7 +58,6 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
       Map<byte[], byte[]> values =
         tableCore.getRow(row, new byte[][] { stateColumnName }, null, null, -1, Transaction.ALL_VISIBLE_LATEST);
       if (values.get(stateColumnName) != null) {
-        System.out.println("Lose " + getConsumerConfig().getInstanceId());
         return false;
       }
 
@@ -68,7 +67,6 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
       rowMapForClaim.put(row, colMapForClaim);
 
       tableCore.persist(rowMapForClaim, KeyValue.LATEST_TIMESTAMP);
-      System.out.println("Win " + getConsumerConfig().getInstanceId());
       return true;
     }
   }

@@ -38,39 +38,47 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
     int eventCount = currentReader.read(events, maxEvents, timeout, unit);
     long timeElapse = System.nanoTime() - startTime;
 
-    if (eventCount <= 0) {
-      if (nextReader == null) {
-        nextReader = renewReader();
+    if (eventCount > 0) {
+      return eventCount;
+    }
+
+    if (nextReader == null) {
+      nextReader = renewReader();
+    }
+
+    if (nextReader != null) {
+      long readTimeout = unit.toNanos(timeout) - timeElapse;
+      if (readTimeout < 0) {
+        readTimeout = 0;
       }
 
-      if (nextReader != null) {
-        long readTimeout = unit.toNanos(timeout) - timeElapse;
-        if (readTimeout < 0) {
-          readTimeout = 0;
-        }
+      if (eventCount == 0) {
+        // Not yet EOF. Since next reader is already available, it could either be the reader doesn't see
+        // the last flush from the writer in the read() above or the writer actually crashed.
+        // To handle these cases, an extra read is done when a new reader is available but current read
+        // gives no event, so that
+        // 1. If the writer properly closed the file, by the time we see a new file here, an extra read should be
+        //    able to see events till the end of file, as writer won't create new file before old one is closed.
+        // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more write will
+        //    be happening to the old file.
+        eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
+      }
 
-        if (eventCount == 0) {
-          // Not yet EOF. Since next reader is already available, it could either be the reader doesn't see
-          // the last flush from the writer in the read() above or the writer actually crashed.
-          // To handle these cases, an extra read is done when a new reader is available but current read
-          // gives no event, so that
-          // 1. If the writer properly closed the file, by the time we see a new file here, an extra read should be
-          //    able to see events till the end of file, as writer won't create new file before old one is closed.
-          // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more write will
-          //    be happening to the old file.
-          eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
-        }
-
-        // If it's EOF, ok to read from new reader one more time without adjusting the readTime before a EOF
-        // read should return immediately.
-        // Otherwise, it no events from current reader, it's safe to read from the new one, but with 0 timeout.
-        if (eventCount < 0) {
-          eventCount = nextReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
-        } else if (eventCount == 0) {
-          eventCount = nextReader.read(events, maxEvents, 0, TimeUnit.NANOSECONDS);
-        }
+      if (eventCount <= 0) {
+        // Only switch reader when nothing get read above as it guaranteed no more events can come from the
+        // currentReader since new file is already available.
         currentReader = nextReader;
         nextReader = null;
+
+        // If it's EOF, ok to read from new reader one more time without adjusting the readTime because a EOF
+        // read (happened above) should return immediately.
+        // Otherwise, if no events from current reader, it's safe to read from the new one, but with 0 timeout,
+        // assuming the read happened above used up all readTimeout allowed time.
+        if (eventCount < 0) {
+          eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
+        } else {
+          eventCount = currentReader.read(events, maxEvents, 0, TimeUnit.NANOSECONDS);
+        }
       }
     }
 
