@@ -199,8 +199,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
+    // Save the reader position.
+    // It's safe to use the latest reader position as stream file is append only.
+    consumerState.setState(reader.getPosition());
+
     // Read from the underlying file reader
-    snapshotFileOffsets();
     while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
       int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
       timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
@@ -215,14 +218,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     } else {
       return new SimpleDequeueResult(polledEvents);
     }
-  }
-
-  private void snapshotFileOffsets() {
-    List<StreamFileOffset> offsets = Lists.newArrayList();
-    for (StreamFileOffset offset : reader.getPosition()) {
-      offsets.add(new StreamFileOffset(offset));
-    }
-    consumerState.setState(offsets);
   }
 
   @Override

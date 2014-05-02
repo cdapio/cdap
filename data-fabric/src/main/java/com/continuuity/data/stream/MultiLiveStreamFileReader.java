@@ -157,12 +157,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       events.clear();
 
       // Updates current offset information to be after the current event.
-      // Need to copy the offset value since nextOffset could be a live offset.
-      if (!currentOffset.getEventLocation().equals(nextOffset.getEventLocation())) {
-        currentOffset = new StreamFileOffset(nextOffset);
-      } else {
-        currentOffset.setOffset(nextOffset.getOffset());
-      }
+      currentOffset = nextOffset;
     }
 
     /**
