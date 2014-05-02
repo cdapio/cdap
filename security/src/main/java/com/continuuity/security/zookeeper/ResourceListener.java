@@ -12,10 +12,22 @@ public interface ResourceListener<T> {
   void onUpdate();
 
   /**
-   * Invoked on an update to an individual resource.  If the resource has been removed from the cache, then
-   * the passed {@code instance} value will be {@code null}.
+   * Invoked on an update to an individual resource.
    * @param name the key for the resource being updated
-   * @param instance the resource instance which was updated (null if the resource was removed)
+   * @param instance the resource instance which was updated
    */
   void onResourceUpdate(String name, T instance);
+
+  /**
+   * Invoked when a resource is removed from the shared cache.
+   * @param name the key for the resource that has been removed
+   */
+  void onResourceDelete(String name);
+
+  /**
+   * Invoked when an error occurs in one of the resource operations.
+   * @param name the key for the resource on which the error occurred
+   * @param throwable the exception that was thrown
+   */
+  void onError(String name, Throwable throwable);
 }

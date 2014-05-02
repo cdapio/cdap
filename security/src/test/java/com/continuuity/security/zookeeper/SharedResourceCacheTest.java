@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * Tests covering the {@link SharedResourceCache} implementation.
@@ -87,7 +88,7 @@ public class SharedResourceCacheTest {
     waitForEntry(cache2, key2, value2, 10000);
     assertEquals(cache1.get(key2), cache2.get(key2));
 
-    String key3 = "key3";
+    final String key3 = "key3";
     String value3 = "value3";
     cache2.put(key3, value3);
 
@@ -97,11 +98,7 @@ public class SharedResourceCacheTest {
     // replace an existing key
     String value2new = "value2.2";
     final SettableFuture<String> value2future = SettableFuture.create();
-    ResourceListener<String> value2listener = new ResourceListener<String>() {
-      @Override
-      public void onUpdate() {
-      }
-
+    ResourceListener<String> value2listener = new BaseResourceListener<String>() {
       @Override
       public void onResourceUpdate(String name, String instance) {
         LOG.info("Resource updated: {}={}", name, instance);
@@ -119,8 +116,27 @@ public class SharedResourceCacheTest {
     assertEquals(value2new, newValue);
     assertEquals(value2new, cache2.get(key2));
 
+    cache2.removeListener(value2listener);
     // remove items from the second and wait for them to disappear from the first
+    final SettableFuture<String> key3RemoveFuture = SettableFuture.create();
+    ResourceListener<String> key3Listener = new BaseResourceListener<String>() {
+      @Override
+      public void onResourceDelete(String name) {
+        LOG.info("Resource deleted {}", name);
+        if (name.equals(key3)) {
+          key3RemoveFuture.set(name);
+        }
+      }
+    };
+
+    cache2.addListener(key3Listener);
+    cache1.remove(key3);
+    String removedKey = key3RemoveFuture.get();
+    assertEquals(key3, removedKey);
+    assertNull(cache2.get(key3));
+
     // verify that cache contents are equal
+    assertEquals(cache1, cache2);
   }
 
 

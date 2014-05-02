@@ -135,7 +135,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public synchronized void onUpdate() {
-    LOG.info("SharedResourceCache triggered update on key: leader={}", leader);
+    LOG.debug("SharedResourceCache triggered update on key: leader={}", leader);
     for (KeyIdentifier keyEntry : keyCache.getResources()) {
       if (currentKey == null || keyEntry.getExpiration() > currentKey.getExpiration()) {
         currentKey = keyEntry;
@@ -146,10 +146,20 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public synchronized void onResourceUpdate(String name, KeyIdentifier instance) {
-    LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
+    LOG.debug("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;
-      LOG.info("Set current key: leader={}, key={}", leader, currentKey);
+      LOG.debug("Set current key: leader={}, key={}", leader, name);
     }
+  }
+
+  @Override
+  public void onResourceDelete(String name) {
+    // nothing to update
+  }
+
+  @Override
+  public void onError(String name, Throwable throwable) {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 }

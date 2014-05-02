@@ -104,7 +104,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               try {
                 T resource = codec.decode(result.getData());
                 loaded.put(nodeName, resource);
-                notifyResourceListeners(nodeName, resource);
               } catch (IOException ioe) {
                 throw Throwables.propagate(ioe);
               }
@@ -113,6 +112,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             @Override
             public void onFailure(Throwable t) {
               LOG.error("Failed to get data for child node " + nodeName, t);
+              notifyListenersError(nodeName, t);
             }
           });
           LOG.info("Added future for " + child);
@@ -146,9 +146,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
   }
 
-  private void notifyResourceListeners(String name, T resource) {
-    for (ResourceListener listener : listeners) {
-      listener.onResourceUpdate(name, resource);
+  private void notifyListenersError(String name, Throwable throwable) {
+    for (ResourceListener<T> listener : listeners) {
+      listener.onError(name, throwable);
     }
   }
 
@@ -195,8 +195,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
               @Override
               public void onFailure(Throwable t) {
-                //TODO
                 LOG.error("Failed to set value for node " + znode);
+                notifyListenersError(name, t);
               }
             });
           }
@@ -231,6 +231,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed to remove znode {}", znode);
+        notifyListenersError(name, t);
       }
     });
   }
@@ -254,6 +255,17 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
   }
 
+  @Override
+  public boolean equals(Object object) {
+    if (!(object instanceof SharedResourceCache)) {
+      return false;
+    }
+
+    SharedResourceCache other = (SharedResourceCache) object;
+    return this.parentZnode.equals(other.parentZnode) &&
+      this.resources.equals(other.resources);
+  }
+
   private String joinZNode(String parent, String name) {
     if (parent.endsWith(ZNODE_PATH_SEP)) {
       return parent + name;
@@ -272,12 +284,15 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onSuccess(T result) {
         resources.put(name, result);
-        notifyResourceListeners(name, result);
+        for (ResourceListener<T> listener : listeners) {
+          listener.onResourceUpdate(name, result);
+        }
       }
 
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed updating resource for created znode " + path);
+        notifyListenersError(name, t);
       }
     });
   }
@@ -286,7 +301,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     LOG.info("Got deleted event on " + path);
     String name = getZNode(path);
     resources.remove(name);
-    notifyResourceListeners(name, null);
+    for (ResourceListener<T> listener : listeners) {
+      listener.onResourceDelete(name);
+    }
   }
 
   private void notifyChildrenChanged(String path) {
@@ -306,12 +323,15 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onSuccess(T result) {
         resources.put(name, result);
-        notifyResourceListeners(name, result);
+        for (ResourceListener<T> listener : listeners) {
+          listener.onResourceUpdate(name, result);
+        }
       }
 
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed updating resource for data change on znode " + path);
+        notifyListenersError(name, t);
       }
     });
   }
