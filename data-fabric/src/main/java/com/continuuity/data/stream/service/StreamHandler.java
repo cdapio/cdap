@@ -1,13 +1,14 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data.stream;
+package com.continuuity.data.stream.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
