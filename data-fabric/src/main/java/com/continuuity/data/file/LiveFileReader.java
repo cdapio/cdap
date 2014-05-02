@@ -4,6 +4,7 @@
 package com.continuuity.data.file;
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -67,6 +68,7 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
       if (eventCount <= 0) {
         // Only switch reader when nothing get read above as it guaranteed no more events can come from the
         // currentReader since new file is already available.
+        Closeables.closeQuietly(currentReader);
         currentReader = nextReader;
         nextReader = null;
 
