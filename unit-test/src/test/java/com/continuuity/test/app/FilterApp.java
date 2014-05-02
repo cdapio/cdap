@@ -42,6 +42,9 @@ public class FilterApp implements Application {
       .build();
   }
 
+  /**
+   * Filter Flow
+   */
   public static class FilterFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -55,6 +58,9 @@ public class FilterApp implements Application {
     }
   }
 
+  /**
+   * Filter
+   */
   public static class Filter extends AbstractFlowlet {
 
     @UseDataSet("count")
