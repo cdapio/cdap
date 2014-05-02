@@ -16,7 +16,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -138,8 +137,10 @@ public class AppFabricServiceWrapper {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+    String argString = GSON.toJson(args);
+    if (argString != null){
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+    }
     httpHandler.startProgram(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
   }
