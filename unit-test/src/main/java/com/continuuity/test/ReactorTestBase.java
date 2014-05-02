@@ -177,7 +177,6 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
-    //httpHandler = injector.getInstance(Key.get(HttpHandler.class, Names.named("app.fabric.http")));
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
   }
 
