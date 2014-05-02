@@ -7,8 +7,6 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -29,8 +27,6 @@ import java.util.Map;
  */
 public class FilterApp implements Application {
   private static final byte[] highPass = Bytes.toBytes("h");
-  private static final byte[] lowPass = Bytes.toBytes("l");
-  private static final byte[] all = Bytes.toBytes("r");
 
   @Override
   public ApplicationSpecification configure() {
@@ -39,7 +35,6 @@ public class FilterApp implements Application {
       .setDescription("Application for filtering numbers. Test runtimeargs.")
       .withStreams().add(new Stream("input"))
       .withDataSets().add(new KeyValueTable("count"))
-        .add(new SimpleTimeseriesTable("number"))
       .withFlows().add(new FilterFlow())
       .withProcedures().add(new Count())
       .noMapReduce()
@@ -47,10 +42,6 @@ public class FilterApp implements Application {
       .build();
   }
 
-
-  /**
-   *
-   */
   public static class FilterFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -68,18 +59,12 @@ public class FilterApp implements Application {
 
     @UseDataSet("count")
     private KeyValueTable counters;
-
-    @UseDataSet("number")
-    private SimpleTimeseriesTable numbers;
-
-
     private long threshold = 0L;
 
     @ProcessInput
     public void process (StreamEvent event) {
       //Store event and do highpass filter.
       String value = Bytes.toString(event.getBody().array());
-      numbers.write(new TimeseriesTable.Entry(all, event.getBody().array(), event.getTimestamp()));
       if (Long.parseLong(value) > threshold) {
         counters.increment(highPass, 1L);
       }
@@ -93,7 +78,6 @@ public class FilterApp implements Application {
       }
       super.initialize(context);
     }
-
   }
 
 
@@ -106,22 +90,12 @@ public class FilterApp implements Application {
 
     @Handle("result")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String type = request.getArgument("type");
-      type = type == null ? "highpass" : type;
-      byte[] result = null;
-
-      if ("highpass".equals(type)) {
-        result = counters.read(highPass);
+      byte[]  result = counters.read(highPass);
+      if (result == null) {
+        responder.sendJson(ProcedureResponse.Code.NOT_FOUND, "No result");
       } else {
-        result = counters.read(lowPass);
-      }
-
-        if (result == null) {
-          responder.sendJson(ProcedureResponse.Code.NOT_FOUND, "No result");
-        } else {
-          responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toLong(result));
-        }
-
+        responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toLong(result));
       }
     }
   }
+}
