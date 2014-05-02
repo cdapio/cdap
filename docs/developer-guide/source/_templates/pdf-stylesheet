@@ -10,16 +10,16 @@ embeddedFonts: [["MavenPro-Regular.ttf","MavenPro-Bold.ttf","MavenPro-Oblique.tt
 # stylesheets with -s
 
 pageSetup:
-    size: A4
+    size: Letter
     width: null
     height: null
-    margin-top: 2cm
-    margin-bottom: 2cm
-    margin-left: 2cm
-    margin-right: 2cm
+    margin-top: 4pc
+    margin-bottom: 4pc
+    margin-left: 4pc
+    margin-right: 4pc
     margin-gutter: 0cm
-    spacing-header: 5mm
-    spacing-footer: 5mm
+    spacing-header: 1pc
+    spacing-footer: 1pc
 
     # The first template is one of the 'pageTemplates"
     # (See next section)
