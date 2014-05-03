@@ -93,19 +93,18 @@ public class MonitorHandler extends AbstractHttpHandler {
       Discoverable discoverable = endpointStrategy.pick();
       if (discoverable == null) {
         return false;
-      } else {
-        // Ping the discovered service to check its status
+      }
+
+      //Ping the discovered service to check its status.
+      //Use Thrift Client for Transaction and HTTP PingHandlers for other services
+      if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
         String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort());
-
-        //Use Thrift Client for Transaction and HTTP PingHandlers for other services
-        if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
-          return checkGetStatus(url).equals(HttpResponseStatus.OK);
-        } else {
-          TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.TRANSACTION, endpointStrategy);
-          Client client = new Client(protocol);
-          return client.status().equals("OK");
-        }
+        return checkGetStatus(url).equals(HttpResponseStatus.OK);
+      } else {
+        TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.TRANSACTION, endpointStrategy);
+        Client client = new Client(protocol);
+        return client.status().equals("OK");
       }
     } catch (IllegalArgumentException e) {
       return false;
