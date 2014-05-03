@@ -91,6 +91,7 @@ public class MonitorHandler extends AbstractHttpHandler {
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       Discoverable discoverable = endpointStrategy.pick();
+      //Transaction Service will return null discoverable in SingleNode mode
       if (discoverable == null) {
         return false;
       }
