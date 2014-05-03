@@ -27,6 +27,26 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamAdmin getStreamAdmin();
 
   @Test
+  public void testStateExists() throws Exception {
+    StreamAdmin streamAdmin = getStreamAdmin();
+    String streamName = "testStateExists";
+    streamAdmin.create(streamName);
+
+    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConsumerStateStore stateStore = createStateStore(config);
+
+    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 1);
+
+    // Get a consumer state that is configured
+    StreamConsumerState state = stateStore.get(0L, 0);
+    Assert.assertNotNull(state);
+
+    // Try to get a consumer state that not configured yet.
+    state = stateStore.get(0L, 1);
+    Assert.assertNull(state);
+  }
+
+  @Test
   public void testStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStore";

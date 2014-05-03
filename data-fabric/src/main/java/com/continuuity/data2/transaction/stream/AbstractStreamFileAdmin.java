@@ -75,11 +75,14 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       mutateStates(groupId, instances, states, newStates, removeStates);
 
       // Save the states back
-      stateStore.save(newStates);
-      stateStore.remove(removeStates);
-
-      LOG.info("Configure instances new states: {} {} {}", groupId, instances, newStates);
-      LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
+      if (!newStates.isEmpty()) {
+        stateStore.save(newStates);
+        LOG.info("Configure instances new states: {} {} {}", groupId, instances, newStates);
+      }
+      if (!removeStates.isEmpty()) {
+        stateStore.remove(removeStates);
+        LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
+      }
 
     } finally {
       stateStore.close();
@@ -123,11 +126,14 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       }
 
       // Save the states back
-      stateStore.save(newStates);
-      stateStore.remove(removeStates);
-
-      LOG.info("Configure groups new states: {} {}", groupInfo, newStates);
-      LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
+      if (!newStates.isEmpty()) {
+        stateStore.save(newStates);
+        LOG.info("Configure groups new states: {} {}", groupInfo, newStates);
+      }
+      if (!removeStates.isEmpty()) {
+        stateStore.remove(removeStates);
+        LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
+      }
 
     } finally {
       stateStore.close();
