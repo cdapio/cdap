@@ -139,17 +139,17 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyEntry : keyCache.getResources()) {
       if (currentKey == null || keyEntry.getExpiration() > currentKey.getExpiration()) {
         currentKey = keyEntry;
-        LOG.info("Set current key to {}", currentKey);
+        LOG.debug("Set current key to {}", currentKey.getKeyId());
       }
     }
   }
 
   @Override
   public synchronized void onResourceUpdate(String name, KeyIdentifier instance) {
-    LOG.info("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
+    LOG.debug("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;
-      LOG.info("Set current key: leader={}, key={}", leader, name);
+      LOG.debug("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
     }
   }
 
@@ -160,6 +160,9 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public void onError(String name, Throwable throwable) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    /*
+     * TODO: we may want to shutdown the server here, though for followers, staying up and processing requests
+     * that we can may be more important.
+     */
   }
 }
