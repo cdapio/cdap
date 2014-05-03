@@ -5,16 +5,18 @@ package com.continuuity.data.stream.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 /**
  * A Http service endpoint that host the stream handler.
@@ -26,13 +28,14 @@ public final class StreamHttpService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService, StreamHandler handler) {
+  public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
+                           @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers) {
 
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(handler))
+      .addHttpHandlers(handlers)
       .setHost(cConf.get(Constants.Stream.ADDRESS))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)
