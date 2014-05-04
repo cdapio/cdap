@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
@@ -61,6 +62,8 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     }
 
     HTable hTable = new HTable(hConf, tableName);
+    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
+    hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
 }

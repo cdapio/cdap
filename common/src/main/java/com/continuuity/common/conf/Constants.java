@@ -334,6 +334,8 @@ public final class Constants {
 
     /** How often to check for new file when reading from stream in milliseconds. **/
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
+    public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
+
 
     /* End constants used by stream */
   }

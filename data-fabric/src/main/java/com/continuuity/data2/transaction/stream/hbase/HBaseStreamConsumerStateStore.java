@@ -3,7 +3,6 @@
  */
 package com.continuuity.data2.transaction.stream.hbase;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
@@ -34,7 +33,6 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
   public HBaseStreamConsumerStateStore(StreamConfig streamConfig, HTable hTable) {
     super(streamConfig);
     this.hTable = hTable;
-
   }
 
   @Override
@@ -48,7 +46,7 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
     get.addColumn(QueueEntryRow.COLUMN_FAMILY, column);
     get.setMaxVersions(1);
     Result result = hTable.get(get);
-    return result.isEmpty() ? Bytes.EMPTY_BYTE_ARRAY : result.value();
+    return result.isEmpty() ? null : result.value();
   }
 
   @Override
@@ -60,7 +58,7 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
   protected void fetchAll(byte[] row, byte[] columnPrefix, Map<byte[], byte[]> result) throws IOException {
     Get get = new Get(row);
     get.addFamily(QueueEntryRow.COLUMN_FAMILY);
-    get.setMaxVersions();
+    get.setMaxVersions(1);
     if (columnPrefix != null) {
       get.setFilter(new ColumnPrefixFilter(columnPrefix));
     }
@@ -70,7 +68,6 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
       return;
     }
     result.putAll(hTableResult.getFamilyMap(QueueEntryRow.COLUMN_FAMILY));
-
   }
 
   @Override
@@ -83,6 +80,9 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
 
   @Override
   protected void store(byte[] row, Map<byte[], byte[]> values) throws IOException {
+    if (values.isEmpty()) {
+      return;
+    }
     Put put = new Put(row);
     for (Map.Entry<byte[], byte[]> entry : values.entrySet()) {
       put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
@@ -93,9 +93,12 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
 
   @Override
   protected void delete(byte[] row, Set<byte[]> columns) throws IOException {
+    if (columns.isEmpty()) {
+      return;
+    }
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, column);
+      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, column);
     }
     hTable.delete(delete);
     hTable.flushCommits();

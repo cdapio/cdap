@@ -91,7 +91,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     List<Delete> deletes = Lists.newArrayListWithCapacity(size);
     for (byte[] row : rows) {
       Delete delete = new Delete(keyDistributor.getDistributedKey(row));
-      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       deletes.add(delete);
     }
     hTable.delete(deletes);
