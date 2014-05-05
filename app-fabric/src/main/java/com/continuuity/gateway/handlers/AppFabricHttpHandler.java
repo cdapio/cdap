@@ -377,8 +377,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      Type type = RUNNABLE_TYPE_MAP.get(runnableType);
+      final Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      final Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
       if (type == Type.MAPREDUCE) {
         String workflowName = getWorkflowName(id.getId());
@@ -391,10 +391,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                 JsonObject reply = new JsonObject();
                 if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
                   reply.addProperty("status", "RUNNING");
+                  responder.sendJson(HttpResponseStatus.OK, reply);
                 } else {
-                  reply.addProperty("status", "STOPPED");
+                  //mapreduce name might follow the same format even when its not part of the workflow.
+                  runnableStatus(responder, id, type);
                 }
-                responder.sendJson(HttpResponseStatus.OK, reply);
               }
             }
           );
