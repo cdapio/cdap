@@ -1,17 +1,14 @@
-Continuuity (tm) Reactor Development Kit - 2.2.0
+Continuuity (tm) Reactor Development Kit - 2.1.1
 
 Copyright 2014 Continuuity,Inc. All Rights Reserved.
 ================================================================================
-
-Continuuity Reactor Development Kit includes a Local Reactor: a fully functioning 
-single-node edition of the Continuuity Reactor runtime. You can use this edition to
+Continuuity Reactor Development Kit  includes a Local Reactor: a fully functioning 
+single node edition of the Continuuity Reactor runtime. You can use this edition to
 write, debug and test your Big Data applications, before deploying them to a
 remote staging or production Reactor.
 
-
 Installation
 ============
-
 To install and use Reactor and the included examples there are a few simple
 prerequisites:
 
@@ -19,41 +16,16 @@ prerequisites:
   2. Node.js 0.8.16+ (required to run the Reactor Dashboard)
   3. Apache Maven 3.0+ (required to build the example applications)
 
-Once you have installed the prerequisites, unzip the Developer Suite
-distribution to a suitable directory:
+Once you have installed the prerequisites, you should unzip the Developer Suite
+distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-reactor-development-kit-2.2.0.zip
+  %> unzip /tmp/continuuity-reactor-development-kit-2.1.1.zip
 
+You are now ready to start Reactor. Do so by running the 'continuuity-reactor' 
+script in the $CONTINUUITY/bin folder. E.g.
 
-Starting Continuuity Reactor
-============================
+  %> cd ~/Projects/continuuity-reactor-development-kit-2.1.1
+  %> bin/continuuity-reactor start
+  %> bin/run-example SentimentAnalysis
 
-You are now ready to start Reactor. Do so by running the 'reactor' 
-script in the $CONTINUUITY/bin folder:
-
-  %> cd ~/Projects/continuuity-reactor-development-kit-2.2.0
-  %> ./bin/reactor.sh start
-  
-or on Windows:
-  
-  > cd ~\Projects\continuuity-reactor-development-kit-2.2.0
-  > bin\reactor.bat start
-  
-
-Using Continuuity Reactor
-=========================
-
-Open a browser window to http://localhost:9999 to view the Reactor Dashboard and take our
-Quickstart tour. More information about the tour can be found online:
- 
-    http://continuuity.com/developers/quickstart
-
-Documentation for Continuuity Reactor can be found at our developer's website:
-
-  http://continuuity.com/developers/
-
-Let us know how you make out!
-
--- The Continuuity Reactor team
- 
