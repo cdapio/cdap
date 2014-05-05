@@ -16,6 +16,7 @@ dependencies {
     compile libraries.hadoop_mapreduce_client_core
 
     testCompile libraries.junit
+    testCompile libraries.hadoop_minicluster
 }
 
 sourceSets{
