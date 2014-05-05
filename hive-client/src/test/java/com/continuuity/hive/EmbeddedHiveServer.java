@@ -5,6 +5,7 @@ import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hive.service.server.HiveServer2;
@@ -25,12 +26,17 @@ public class EmbeddedHiveServer extends ExternalResource {
 
   private HiveServer2 hiveServer2;
   private int hiveServerPort;
+  private int hiveMetaStorePort;
 
   private MiniMRCluster miniMR;
   private MiniDFSCluster miniDFS;
 
   public int getHiveServerPort() {
     return hiveServerPort;
+  }
+
+  public int getHiveMetaStorePort() {
+    return hiveMetaStorePort;
   }
 
   @Override
@@ -57,11 +63,29 @@ public class EmbeddedHiveServer extends ExternalResource {
                                numTaskTrackerDirectories, racks, hosts, jobConf);
 
     writeYarnConf();
-    writeHiveConf();
+    final File hiveConfFile = writeHiveConf();
 
-    // Start Hive
+    // Start Hive MetaStore
+    LOG.info("Starting hive metastore on port {}...", hiveMetaStorePort);
+    Thread metaStoreRunner = new Thread(
+      new Runnable() {
+        @Override
+        public void run() {
+          try {
+            HiveMetaStore.main(new String[]{"-v", "-p", Integer.toString(hiveMetaStorePort),
+              "--hiveconf", hiveConfFile.getAbsolutePath()});
+          } catch (Throwable throwable) {
+            LOG.error("Exception while starting Hive MetaStore: ", throwable);
+          }
+        }
+      });
+    metaStoreRunner.setDaemon(true);
+    metaStoreRunner.start();
+    TimeUnit.SECONDS.sleep(5);
+
+    // Start Hive Server2
     HiveConf hiveConf = new HiveConf();
-    LOG.error("Starting hive server...");
+    LOG.error("Starting hive server on port {}...", hiveServerPort);
     hiveServer2 = new HiveServer2();
     hiveServer2.init(hiveConf);
     hiveServer2.start();
@@ -104,7 +128,7 @@ public class EmbeddedHiveServer extends ExternalResource {
     LOG.info("Wrote yarn conf into {}", newYarnConf.getAbsolutePath());
   }
 
-  private void writeHiveConf() throws Exception {
+  private File writeHiveConf() throws Exception {
     URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
     assert url != null;
     File confDir = new File(url.toURI()).getParentFile();
@@ -120,8 +144,13 @@ public class EmbeddedHiveServer extends ExternalResource {
     hiveServerPort = PortDetector.findFreePort();
     hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
+    hiveMetaStorePort = PortDetector.findFreePort();
+    hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
+
     File newHiveConf = new File(confDir, "hive-site.xml");
     hiveConf.writeXml(new FileOutputStream(newHiveConf));
     LOG.info("Wrote hive conf into {}", newHiveConf.getAbsolutePath());
+
+    return newHiveConf;
   }
 }
