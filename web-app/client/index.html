@@ -57,6 +57,12 @@
   <script type="text/x-handlebars" data-template-name="application">
     <div id="header">
       <div id="global">
+      {{#if C.Env.security_enabled}}
+          {{#if C.Env.auth}}
+            <a href="/logout" id="header-logout">Logout</a>
+          {{else}}
+            <a href="/#/login" id="header-login">Login</a>
+          {{/if}}
       {{#if C.Env.authenticated}}
         <a href="https://accounts.continuuity.com/logout">Logout</a>
         <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
@@ -65,6 +71,7 @@
       {{else}}
         <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
         <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
+      {{/if}}
       {{/if}}
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
@@ -119,6 +126,42 @@
       </div>
     </div>
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Login">
+    <div id="title">
+      <h1>Login&nbsp;<span>Accounts</span></h1>
+    </div>
+    <div id="panels">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title"></div>Log into Reactor</div>
+        <div class="panel-body">
+          <div class="warning">{{warning}}</div>
+          {{view C.Embed.Login}}
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="login-view">
+    <form method="POST" action="/login" id="login-form">
+    <table>
+      <tr>
+        <td>Username</td>
+        <td>{{input type="text" value=username class="username" name="username" }}</td>
+      </tr>
+      <tr>
+        <td>Password</td>
+        <td>{{input type="password" value=password class="password" name="password" }}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+        <button type="button" class="btn btn-default" id="login-submit-btn">Login</button>
+        </td>
+      </tr>
+    </table>
+    </form>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Overview">

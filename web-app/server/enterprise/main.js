@@ -83,7 +83,6 @@ EntServer.prototype.start = function() {
   self.getConfig(function(version) {
 
     self.server = self.getServerInstance(self.app);
-    self.bindRoutes();
 
     if (!('dashboard.bind.port' in self.config)) {
       self.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
@@ -93,6 +92,7 @@ EntServer.prototype.start = function() {
 
     self.setEnvironment('enterprise', 'Enterprise Reactor', version, function () {
 
+      self.bindRoutes();
       self.logger.info('I am the master.', cluster.isMaster);
 
       if (cluster.isMaster) {

@@ -261,6 +261,10 @@ a, a:visited {
 	text-decoration: underline;
 }
 
+.warning {
+	color: red;
+}
+
 #content {
 	min-width: 1056px;
 	margin-left: 224px;
@@ -436,6 +440,13 @@ h1 span {
 	border-bottom: 1px solid #eee;
 	font-family: "HelveticaNeueW01-Thin";
 }
+
+.panel-body {
+		padding-left: 50px;
+		padding-right: 100px;
+		padding-top: 30px;
+}
+
 .panel-control {
 	float: right;
 	line-height: 28px;
