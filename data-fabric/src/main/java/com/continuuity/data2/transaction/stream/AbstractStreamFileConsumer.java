@@ -530,8 +530,9 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     @Override
     public ByteBuffer getBody() {
-      // Return a read only buffer.
-      return streamEventOffset.getBody().asReadOnlyBuffer();
+      // Return a copy of the ByteBuffer (not copy of content),
+      // so that the underlying stream buffer can be reused (rollback, retries).
+      return streamEventOffset.getBody().slice();
     }
 
     private byte[] getStateRow() {
@@ -557,9 +558,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     @Override
     public void reclaim() {
-      // Simply copy events back to polledEvents
+      // Copy events back to polledEvents and need to remove them from eventCache
       polledEvents.clear();
       polledEvents.addAll(events);
+
+      eventCache.removeAll(Lists.transform(events, CONVERT_STREAM_EVENT_OFFSET));
     }
 
     @Override
