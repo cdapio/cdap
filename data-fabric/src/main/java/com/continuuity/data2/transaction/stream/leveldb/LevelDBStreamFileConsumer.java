@@ -15,10 +15,12 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumer;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -43,9 +45,9 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
    */
   public LevelDBStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
-                                   StreamConsumerStateStore stateStore,
+                                   StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                    LevelDBOcTableCore tableCore, Object dbLock) {
-    super(streamConfig, consumerConfig, reader, stateStore);
+    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState);
     this.tableCore = tableCore;
     this.dbLock = dbLock;
     this.rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -53,11 +55,11 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
   }
 
   @Override
-  protected boolean claimFifoEntry(byte[] row, byte[] value) throws IOException {
+  protected boolean claimFifoEntry(byte[] row, byte[] value, byte[] oldValue) throws IOException {
     synchronized (dbLock) {
       Map<byte[], byte[]> values =
         tableCore.getRow(row, new byte[][] { stateColumnName }, null, null, -1, Transaction.ALL_VISIBLE_LATEST);
-      if (values.get(stateColumnName) != null) {
+      if (!Arrays.equals(values.get(stateColumnName), oldValue)) {
         return false;
       }
 
