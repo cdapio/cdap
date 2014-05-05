@@ -487,9 +487,9 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
       int stateInstanceId = QueueEntryRow.getStateInstanceId(stateValue);
 
-      // If the state was written by a consumer that is still live, record the state value as null so that
-      // it'll get skipped in the claim entry logic.
-      if (stateInstanceId < consumerConfig.getGroupSize()) {
+      // If the state was written by a consumer that is still live, and not by itself,
+      // record the state value as null so that it'll get skipped in the claim entry logic.
+      if (stateInstanceId < consumerConfig.getGroupSize() && stateInstanceId != consumerConfig.getInstanceId()) {
         states.put(row, null);
       } else {
         // Otherwise memorize the value for checkAndPut operation in claim entry.
