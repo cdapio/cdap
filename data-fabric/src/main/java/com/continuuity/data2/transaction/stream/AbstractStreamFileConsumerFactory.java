@@ -53,8 +53,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    * @return A new instance of {@link StreamConsumer}
    */
   protected abstract StreamConsumer create(
-    String tableName, StreamConfig streamConfig,
-    ConsumerConfig consumerConfig, StreamConsumerStateStore stateStore,
+    String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException;
 
   /**
@@ -75,7 +75,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
-    return create(tableName, streamConfig, consumerConfig, stateStore, createReader(streamConfig, consumerState));
+    return create(tableName, streamConfig, consumerConfig,
+                  stateStore, consumerState, createReader(streamConfig, consumerState));
   }
 
   private String getTableName(QueueName streamName, String namespace) {

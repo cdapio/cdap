@@ -20,6 +20,7 @@ import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactor
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -58,7 +59,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Override
   protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
-                                  StreamConsumerStateStore stateStore,
+                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
 
     String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
@@ -77,8 +78,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     HTable hTable = new HTable(hConf, hBaseTableName);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
-    return new HBaseStreamFileConsumer(streamConfig, consumerConfig,
-                                       hTable, reader, stateStore, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+    return new HBaseStreamFileConsumer(streamConfig, consumerConfig, hTable, reader,
+                                       stateStore, beginConsumerState, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
   }
 
   @Override
