@@ -337,6 +337,19 @@ public final class Constants {
     public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
 
+    /**
+     * Contains HTTP headers used by Stream handler.
+     */
+    public static final class Headers {
+      public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
+    }
+
+    // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.
+    public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
+
+    // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
+    public static final String HANDLER_CONSUMER_NS = "stream.handler";
+
     /* End constants used by stream */
   }
 
@@ -392,7 +405,6 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
-    public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
