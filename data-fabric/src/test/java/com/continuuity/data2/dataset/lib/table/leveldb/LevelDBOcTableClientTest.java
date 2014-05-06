@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
@@ -15,7 +16,9 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 
@@ -24,6 +27,9 @@ import java.io.IOException;
  */
 public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDBOcTableClient> {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   static LevelDBOcTableService service;
   static Injector injector = null;
 
@@ -31,7 +37,10 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
-    injector = Guice.createInjector(new DataFabricLevelDBModule(conf));
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    injector = Guice.createInjector(
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new DataFabricLevelDBModule(conf));
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 
