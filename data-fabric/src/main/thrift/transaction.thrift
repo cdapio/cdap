@@ -32,4 +32,5 @@ service TTransactionServer {
   bool invalidateTx(1: i64 tx),
   binary getSnapshot() throws (1:TTransactionCouldNotTakeSnapshotException e),
   void resetState(),
+  string status(),
 }

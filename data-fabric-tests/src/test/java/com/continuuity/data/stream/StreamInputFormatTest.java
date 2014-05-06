@@ -73,6 +73,39 @@ public class StreamInputFormatTest {
     Assert.assertEquals(1, output.get("1").intValue());
   }
 
+  @Test
+  public void testLiveStream() throws Exception {
+    File inputDir = tmpFolder.newFolder();
+    File outputDir = tmpFolder.newFolder();
+
+    outputDir.delete();
+
+    // Write 2 events, and keep the writer open
+    File partition = new File(inputDir, "0.1000");
+    File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
+    File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
+
+    partition.mkdirs();
+
+    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
+                                                           Files.newOutputStreamSupplier(indexFile),
+                                                           100L);
+
+    writer.append(StreamFileTestUtils.createEvent(0, "Testing 0"));
+    writer.append(StreamFileTestUtils.createEvent(1, "Testing 1"));
+
+    writer.flush();
+
+    // Run MapReduce to process all data.
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 1000);
+    Map<String, Integer> output = loadMRResult(outputDir);
+
+    Assert.assertEquals(3, output.size());
+    Assert.assertEquals(2, output.get("Testing").intValue());
+    Assert.assertEquals(1, output.get("0").intValue());
+    Assert.assertEquals(1, output.get("1").intValue());
+  }
+
   private void generateEvents(File inputDir) throws IOException {
     long baseTimestamp = 1000;
     File partition = new File(inputDir, Long.toString(baseTimestamp / 1000) + ".1000");

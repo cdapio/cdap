@@ -11,9 +11,9 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
-import java.io.IOException;
 import org.apache.thrift.TException;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -35,6 +35,7 @@ import java.util.Set;
  */
 public class TransactionServiceThriftHandler implements TTransactionServer.Iface, RPCServiceHandler {
   private InMemoryTransactionManager txManager;
+  private static final String STATUS_OK = "OK";
 
   public TransactionServiceThriftHandler(InMemoryTransactionManager txManager) {
     this.txManager = txManager;
@@ -121,5 +122,10 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
   @Override
   public void resetState() throws TException {
     txManager.resetState();
+  }
+
+  @Override
+  public String status() throws TException {
+    return STATUS_OK;
   }
 }

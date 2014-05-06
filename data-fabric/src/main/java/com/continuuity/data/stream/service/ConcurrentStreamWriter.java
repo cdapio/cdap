@@ -1,13 +1,15 @@
 /*
  * Copyright 2014 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data.stream;
+package com.continuuity.data.stream.service;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.stream.DefaultStreamEventData;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -27,6 +29,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -57,19 +61,23 @@ public final class ConcurrentStreamWriter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
 
   private final StreamAdmin streamAdmin;
+  private final StreamMetaStore streamMetaStore;
   private final StreamFileWriterFactory writerFactory;
   private final int workerThreads;
   private final MetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
+  private final Lock createLock;
 
-
-  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory,
+  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                                StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
     this.streamAdmin = streamAdmin;
+    this.streamMetaStore = streamMetaStore;
     this.writerFactory = writerFactory;
     this.workerThreads = workerThreads;
     this.metricsCollector = metricsCollector;
     this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
+    this.createLock = new ReentrantLock();
   }
 
   /**
@@ -80,9 +88,11 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param body content of the event
    *
    * @throws IOException if failed to write to stream
+   * @throws java.lang.IllegalArgumentException If the stream doesn't exists
    */
-  public boolean enqueue(String stream, Map<String, String> headers, ByteBuffer body) throws IOException {
-    EventQueue eventQueue = getEventQueue(stream);
+  public boolean enqueue(String accountId, String stream,
+                         Map<String, String> headers, ByteBuffer body) throws IOException {
+    EventQueue eventQueue = getEventQueue(accountId, stream);
     HandlerStreamEventData event = eventQueue.add(headers, body);
     do {
       if (!eventQueue.tryWrite()) {
@@ -105,21 +115,28 @@ public final class ConcurrentStreamWriter implements Closeable {
   }
 
 
-  private EventQueue getEventQueue(String streamName) throws IOException {
+  private EventQueue getEventQueue(String accountId, String streamName) throws IOException {
     EventQueue eventQueue = eventQueues.get(streamName);
     if (eventQueue != null) {
       return eventQueue;
     }
+
+    createLock.lock();
+    try {
+      if (!streamMetaStore.streamExists(accountId, streamName)) {
+        throw new IllegalArgumentException("Stream not exists");
+      }
+      StreamUtils.ensureExists(streamAdmin, streamName);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    } finally {
+      createLock.unlock();
+    }
     eventQueue = new EventQueue(streamName, createWriterSupplier(streamName));
     EventQueue oldQueue = eventQueues.putIfAbsent(streamName, eventQueue);
 
-    if (oldQueue == null) {
-      // Only do the ensure exists once
-      // TODO: Check with MDS
-      StreamUtils.ensureExists(streamAdmin, streamName);
-      return eventQueue;
-    }
-    return oldQueue;
+    return (oldQueue == null) ? eventQueue : oldQueue;
   }
 
   private Supplier<FileWriter<StreamEvent>> createWriterSupplier(final String streamName) {

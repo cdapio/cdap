@@ -25,10 +25,6 @@ public class DataFabricLocalModule extends AbstractModule {
 
   private final CConfiguration conf;
 
-  public DataFabricLocalModule() {
-    this(CConfiguration.create());
-  }
-
   public DataFabricLocalModule(CConfiguration conf) {
     this.conf = conf;
 

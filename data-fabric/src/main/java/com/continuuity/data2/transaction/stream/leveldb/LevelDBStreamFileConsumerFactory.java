@@ -18,6 +18,7 @@ import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactor
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.google.common.collect.Maps;
@@ -50,15 +51,16 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
 
   @Override
-  protected StreamConsumer create(String tableName, StreamConfig streamConfig,
-                                  ConsumerConfig consumerConfig, StreamConsumerStateStore stateStore,
+  protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
 
     tableService.ensureTableExists(tableName);
 
     LevelDBOcTableCore tableCore = new LevelDBOcTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
-    return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader, stateStore, tableCore, dbLock);
+    return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader,
+                                         stateStore, beginConsumerState, tableCore, dbLock);
   }
 
   @Override
