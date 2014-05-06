@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.ConnectException;
+import java.net.Socket;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -81,7 +83,7 @@ public class EmbeddedHiveServer extends ExternalResource {
       });
     metaStoreRunner.setDaemon(true);
     metaStoreRunner.start();
-    TimeUnit.SECONDS.sleep(5);
+    waitForPort(hiveMetaStorePort);
 
     // Start Hive Server2
     HiveConf hiveConf = new HiveConf();
@@ -89,7 +91,7 @@ public class EmbeddedHiveServer extends ExternalResource {
     hiveServer2 = new HiveServer2();
     hiveServer2.init(hiveConf);
     hiveServer2.start();
-    TimeUnit.SECONDS.sleep(1);
+    waitForPort(hiveServerPort);
   }
 
   @Override
@@ -152,5 +154,28 @@ public class EmbeddedHiveServer extends ExternalResource {
     LOG.info("Wrote hive conf into {}", newHiveConf.getAbsolutePath());
 
     return newHiveConf;
+  }
+
+  private void waitForPort(int port) throws Exception {
+    final int maxTries = 20;
+    int tries = 0;
+
+    Socket socket = null;
+    try {
+      do {
+        TimeUnit.MILLISECONDS.sleep(500);
+        try {
+          socket = new Socket("localhost", port);
+        } catch (ConnectException e) {
+          if (++tries > maxTries) {
+            throw e;
+          }
+        }
+      } while (socket == null);
+    } finally {
+      if (socket != null) {
+        socket.close();
+      }
+    }
   }
 }
