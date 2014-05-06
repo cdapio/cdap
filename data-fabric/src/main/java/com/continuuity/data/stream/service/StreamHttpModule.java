@@ -22,6 +22,8 @@ public class StreamHttpModule extends PrivateModule {
                                                                       Names.named(Constants.Service.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
+
+    bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
     expose(StreamHttpService.class);
   }

@@ -61,15 +61,18 @@ public final class ConcurrentStreamWriter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
 
   private final StreamAdmin streamAdmin;
+  private final StreamMetaStore streamMetaStore;
   private final StreamFileWriterFactory writerFactory;
   private final int workerThreads;
   private final MetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
   private final Lock createLock;
 
-  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamFileWriterFactory writerFactory,
+  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                                StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
     this.streamAdmin = streamAdmin;
+    this.streamMetaStore = streamMetaStore;
     this.writerFactory = writerFactory;
     this.workerThreads = workerThreads;
     this.metricsCollector = metricsCollector;
@@ -85,9 +88,11 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param body content of the event
    *
    * @throws IOException if failed to write to stream
+   * @throws java.lang.IllegalArgumentException If the stream doesn't exists
    */
-  public boolean enqueue(String stream, Map<String, String> headers, ByteBuffer body) throws IOException {
-    EventQueue eventQueue = getEventQueue(stream);
+  public boolean enqueue(String accountId, String stream,
+                         Map<String, String> headers, ByteBuffer body) throws IOException {
+    EventQueue eventQueue = getEventQueue(accountId, stream);
     HandlerStreamEventData event = eventQueue.add(headers, body);
     do {
       if (!eventQueue.tryWrite()) {
@@ -110,16 +115,21 @@ public final class ConcurrentStreamWriter implements Closeable {
   }
 
 
-  private EventQueue getEventQueue(String streamName) throws IOException {
+  private EventQueue getEventQueue(String accountId, String streamName) throws IOException {
     EventQueue eventQueue = eventQueues.get(streamName);
     if (eventQueue != null) {
       return eventQueue;
     }
 
-    // TODO: Check with MDS
     createLock.lock();
     try {
+      if (!streamMetaStore.streamExists(accountId, streamName)) {
+        throw new IllegalArgumentException("Stream not exists");
+      }
       StreamUtils.ensureExists(streamAdmin, streamName);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
     } finally {
       createLock.unlock();
     }
