@@ -27,6 +27,12 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
   @Override
   public int read(Collection<? super T> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
+    return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);
+  }
+
+  @Override
+  public int read(Collection<? super T> events, int maxEvents,
+                  long timeout, TimeUnit unit, ReadFilter readFilter) throws IOException, InterruptedException {
     if (currentReader == null) {
       currentReader = renewReader();
     }
@@ -36,7 +42,7 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
     }
 
     long startTime = System.nanoTime();
-    int eventCount = currentReader.read(events, maxEvents, timeout, unit);
+    int eventCount = currentReader.read(events, maxEvents, timeout, unit, readFilter);
     long timeElapse = System.nanoTime() - startTime;
 
     if (eventCount > 0) {
@@ -62,7 +68,7 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
         //    able to see events till the end of file, as writer won't create new file before old one is closed.
         // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more write will
         //    be happening to the old file.
-        eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
+        eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS, readFilter);
       }
 
       if (eventCount <= 0) {
@@ -77,9 +83,9 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
         // Otherwise, if no events from current reader, it's safe to read from the new one, but with 0 timeout,
         // assuming the read happened above used up all readTimeout allowed time.
         if (eventCount < 0) {
-          eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS);
+          eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS, readFilter);
         } else {
-          eventCount = currentReader.read(events, maxEvents, 0, TimeUnit.NANOSECONDS);
+          eventCount = currentReader.read(events, maxEvents, 0, TimeUnit.NANOSECONDS, readFilter);
         }
       }
     }

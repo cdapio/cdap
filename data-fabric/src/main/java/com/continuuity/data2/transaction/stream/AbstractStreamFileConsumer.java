@@ -7,6 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -115,6 +116,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private final ConsumerConfig consumerConfig;
   private final StreamConsumerStateStore consumerStateStore;
   private final FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader;
+  private final ReadFilter readFilter;
 
   // Map from row key prefix (row key without last eight bytes offset) to
   // a sorted map of row key to state value when first encountered a given row prefix.
@@ -149,6 +151,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
+    this.readFilter = createReadFilter(consumerConfig);
 
     // Use a special comparator to only compare the row prefix, hence different row key can be used directly against
     // this map, hence reduce the need for byte[] array creation.
@@ -224,7 +227,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     // Read from the underlying file reader
     while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
-      int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
+      int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS, readFilter);
       timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
 
       if (readCount > 0) {
@@ -356,6 +359,30 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .toString();
   }
 
+  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
+    final int groupSize = consumerConfig.getGroupSize();
+    final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
+
+    if (groupSize == 1 && strategy == DequeueStrategy.FIFO) {
+      return ReadFilter.ALWAYS_ACCEPT;
+    }
+
+    // For RoundRobin and Hash partition, the claim is done by matching hashCode to instance id.
+    // For Hash, to preserve existing behavior, everything route to instance 0.
+    // For RoundRobin, the idea is to scatter the events across consumers evenly. Since there is no way to known
+    // about the absolute starting point to do true round robin, we employ a good enough hash function on the
+    // file offset as a way to spread events across consumers
+    final int instanceId = consumerConfig.getInstanceId();
+
+    return new ReadFilter() {
+      @Override
+      public boolean acceptOffset(long offset) {
+        int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
+        return instanceId == (hashValue % groupSize);
+      }
+    };
+  }
+
   private void getEvents(List<? extends StreamEventOffset> source,
                          List<? super PollStreamEvent> result,
                          int maxEvents, byte[] stateContent) throws IOException {
@@ -418,19 +445,14 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       return null;
     }
 
-    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO) {
-      if (consumerConfig.getGroupSize() == 1) {
-        // Special FIFO case, no need to write claim entry
-        return row;
-      }
+    // Only need to claim entry if FIFO and group size > 1
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
       return claimFifoEntry(row, claimedStateContent, rowState) ? row : null;
-    } else {
-      // For RoundRobin and Hash partition, the claim is done by matching hashCode to instance id.
-      // For Hash, to preserve existing behavior, everything route to instance 0.
-      int hashValue = Math.abs(consumerConfig.getDequeueStrategy() == DequeueStrategy.HASH
-                        ? 0 : ROUND_ROBIN_HASHER.hashLong(offset.getOffset()).hashCode());
-      return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize()) ? row : null;
     }
+
+    // For Hash, RR and FIFO with group size == 1, no need to claim and check,
+    // as it's already handled by the readFilter
+    return row;
   }
 
   /**
