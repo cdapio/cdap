@@ -16,8 +16,8 @@ Installation and Configuration Guide
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: config _templates/pdf-config
-.. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: config ../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../developer-guide/source/_templates/pdf-stylesheet
 
 Introduction
 ============
@@ -342,6 +342,8 @@ The RPM packages are accessible using Yum at this authenticated URL::
 :where:
 	:<username>: Username provided by your Continuuity.com representative
 	:<password>: Password provided by your Continuuity.com representative
+
+.. rst2pdf: PageBreak
 
 Debian using APT
 ----------------
