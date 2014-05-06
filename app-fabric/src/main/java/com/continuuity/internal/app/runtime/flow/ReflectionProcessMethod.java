@@ -7,16 +7,13 @@ package com.continuuity.internal.app.runtime.flow;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterators;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -66,13 +63,13 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   }
 
   @Override
-  public ProcessResult invoke(InputDatum input, Function<ByteBuffer, T> inputDecoder) {
+  public ProcessResult<T> invoke(InputDatum<T> input) {
     try {
       Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
 
       T event = null;
       if (hasParam) {
-        Iterator<T> dataIterator = Iterators.transform(input.iterator(), inputDecoder);
+        Iterator<T> dataIterator = input.iterator();
 
         if (needsBatch) {
           //noinspection unchecked

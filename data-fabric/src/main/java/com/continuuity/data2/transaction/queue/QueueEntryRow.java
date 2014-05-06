@@ -266,7 +266,7 @@ public class QueueEntryRow {
         return CanConsume.YES;
       case ROUND_ROBIN: {
         int hashValue = Objects.hashCode(enqueueWritePointer, counter);
-        return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize()) ?
+        return consumerConfig.getInstanceId() == Math.abs(hashValue % consumerConfig.getGroupSize()) ?
                                                  CanConsume.YES : CanConsume.NO;
       }
       case HASH: {

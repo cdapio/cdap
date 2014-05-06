@@ -17,8 +17,8 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.streamevent.DefaultStreamEvent;
-import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.common.stream.DefaultStreamEvent;
+import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.common.base.Charsets;
@@ -101,7 +101,7 @@ public class OpenCloseDataSetTest {
       String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
 
     HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
+    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
                                                discoverable.getSocketAddress().getHostName(),
                                                discoverable.getSocketAddress().getPort(),
                                                "dummy",

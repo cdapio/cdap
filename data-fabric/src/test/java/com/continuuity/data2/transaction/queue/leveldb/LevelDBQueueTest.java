@@ -5,6 +5,8 @@ package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -13,21 +15,30 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * LevelDB queue tests.
  */
 public class LevelDBQueueTest extends QueueTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
-    Injector injector = Guice.createInjector(new DataFabricLevelDBModule(conf));
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(conf),
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new DataFabricLevelDBModule(conf));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();

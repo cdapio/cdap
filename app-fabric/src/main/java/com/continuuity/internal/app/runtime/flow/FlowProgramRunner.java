@@ -14,6 +14,9 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.queue.QueueName;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
@@ -27,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,10 +55,14 @@ public final class FlowProgramRunner implements ProgramRunner {
 
   private final ProgramRunnerFactory programRunnerFactory;
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
+  private final StreamAdmin streamAdmin;
+  private final QueueAdmin queueAdmin;
 
   @Inject
-  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory) {
+  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin, QueueAdmin queueAdmin) {
     this.programRunnerFactory = programRunnerFactory;
+    this.streamAdmin = streamAdmin;
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
@@ -80,9 +88,10 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Launch flowlet program runners
       RunId runId = RunIds.generate();
       programOptions.put(runId, options);
+      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId,
                                                                                 flowSpec, disableTransaction);
-      return new FlowProgramController(flowlets, runId, program, flowSpec, disableTransaction);
+      return new FlowProgramController(flowlets, runId, program, flowSpec, disableTransaction, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -158,14 +167,17 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final FlowSpecification flowSpec;
     private final Lock lock = new ReentrantLock();
     private final boolean disableTransaction;
+    private final Multimap<String, QueueName> consumerQueues;
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
-                          Program program, FlowSpecification flowSpec, boolean disableTransaction) {
+                          Program program, FlowSpecification flowSpec, boolean disableTransaction,
+                          Multimap<String, QueueName> consumerQueues) {
       super(program.getName(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
       this.disableTransaction = disableTransaction;
+      this.consumerQueues = consumerQueues;
       started();
     }
 
@@ -251,8 +263,7 @@ public final class FlowProgramRunner implements ProgramRunner {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    private synchronized void changeInstances(String flowletName, final int newInstanceCount)
-                                                      throws ExecutionException, InterruptedException {
+    private synchronized void changeInstances(String flowletName, final int newInstanceCount) throws Exception {
       Map<Integer, ProgramController> liveFlowlets = flowlets.row(flowletName);
       int liveCount = liveFlowlets.size();
       if (liveCount == newInstanceCount) {
@@ -267,8 +278,8 @@ public final class FlowProgramRunner implements ProgramRunner {
     }
 
     private synchronized void increaseInstances(String flowletName, final int newInstanceCount,
-                                                Map<Integer, ProgramController> liveFlowlets, int liveCount)
-                                                            throws InterruptedException, ExecutionException {
+                                                Map<Integer, ProgramController> liveFlowlets,
+                                                int liveCount) throws Exception {
       // First pause all flowlets
       Futures.successfulAsList(Iterables.transform(
         liveFlowlets.values(),
@@ -278,6 +289,11 @@ public final class FlowProgramRunner implements ProgramRunner {
             return controller.suspend();
           }
         })).get();
+
+      // Then reconfigure stream/queue consumers
+      FlowUtils.reconfigure(consumerQueues.get(flowletName),
+                            FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
+                            streamAdmin, queueAdmin);
 
       // Then change instance count of current flowlets
       Futures.successfulAsList(Iterables.transform(
@@ -309,8 +325,8 @@ public final class FlowProgramRunner implements ProgramRunner {
 
 
     private synchronized void decreaseInstances(String flowletName, final int newInstanceCount,
-                                                Map<Integer, ProgramController> liveFlowlets, int liveCount)
-                                                            throws InterruptedException, ExecutionException {
+                                                Map<Integer, ProgramController> liveFlowlets,
+                                                int liveCount) throws Exception {
       // Shrink number of flowlets
       // First stop the extra flowlets
       List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
@@ -328,6 +344,11 @@ public final class FlowProgramRunner implements ProgramRunner {
             return controller.suspend();
           }
         })).get();
+
+      // Then reconfigure stream/queue consumers
+      FlowUtils.reconfigure(consumerQueues.get(flowletName),
+                            FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
+                            streamAdmin, queueAdmin);
 
       // Next updates instance count for each flowlets
       Futures.successfulAsList(Iterables.transform(

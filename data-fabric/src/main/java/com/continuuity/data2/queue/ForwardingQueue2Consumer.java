@@ -46,12 +46,12 @@ public abstract class ForwardingQueue2Consumer implements Queue2Consumer, Transa
   }
 
   @Override
-  public DequeueResult dequeue() throws IOException {
+  public DequeueResult<byte[]> dequeue() throws IOException {
     return consumer.dequeue();
   }
 
   @Override
-  public DequeueResult dequeue(int maxBatchSize) throws IOException {
+  public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
     return consumer.dequeue(maxBatchSize);
   }
 

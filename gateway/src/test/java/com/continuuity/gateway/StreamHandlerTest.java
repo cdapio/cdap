@@ -163,7 +163,7 @@ public class StreamHandlerTest {
       HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
                                                      hostname, port));
       httpPost.setHeader(AUTH_HEADER);
-      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
       response = httpclient.execute(httpPost);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int actual = Integer.parseInt(EntityUtils.toString(response.getEntity()));
@@ -176,7 +176,7 @@ public class StreamHandlerTest {
     HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
                                                    hostname, port));
     httpPost.setHeader(AUTH_HEADER);
-    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
     response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -188,8 +188,8 @@ public class StreamHandlerTest {
     httpPost.setHeader(AUTH_HEADER);
     HttpResponse response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Stream.Headers.CONSUMER_ID).length);
+    String groupId = response.getFirstHeader(Constants.Stream.Headers.CONSUMER_ID).getValue();
     EntityUtils.consume(response.getEntity());
     return groupId;
   }
@@ -224,7 +224,7 @@ public class StreamHandlerTest {
     HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/dequeue",
                                                    hostname, port));
     httpPost.setHeader(AUTH_HEADER);
-    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
     response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String actual = EntityUtils.toString(response.getEntity());
@@ -242,7 +242,7 @@ public class StreamHandlerTest {
     httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/dequeue",
                                           hostname, port));
     httpPost.setHeader(AUTH_HEADER);
-    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
     response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
@@ -267,8 +267,8 @@ public class StreamHandlerTest {
     httpPost.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Stream.Headers.CONSUMER_ID).length);
+    String groupId = response.getFirstHeader(Constants.Stream.Headers.CONSUMER_ID).getValue();
     EntityUtils.consume(response.getEntity());
 
     ExecutorService executorService = Executors.newFixedThreadPool(5);
@@ -286,7 +286,7 @@ public class StreamHandlerTest {
       httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
                                             port));
       httpPost.setHeader(AUTH_HEADER);
-      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
       response = httpclient.execute(httpPost);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
@@ -391,8 +391,8 @@ public class StreamHandlerTest {
     httpPost.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Stream.Headers.CONSUMER_ID).length);
+    String groupId = response.getFirstHeader(Constants.Stream.Headers.CONSUMER_ID).getValue();
     EntityUtils.consume(response.getEntity());
 
     ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -415,7 +415,7 @@ public class StreamHandlerTest {
         = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
                                      port));
       httpPost.setHeader(AUTH_HEADER);
-      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      httpPost.setHeader(Constants.Stream.Headers.CONSUMER_ID, groupId);
       response = httpclient.execute(httpPost);
       Assert.assertEquals("Failed for entry number " + i,
                           HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());

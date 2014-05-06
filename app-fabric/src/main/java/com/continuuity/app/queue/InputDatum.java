@@ -3,12 +3,12 @@ package com.continuuity.app.queue;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.common.queue.QueueName;
 
-import java.nio.ByteBuffer;
-
 /**
+ * Represents a dequeue result from {@link QueueReader}.
  *
+ * @param <T> Type of input.
  */
-public interface InputDatum extends Iterable<ByteBuffer> {
+public interface InputDatum<T> extends Iterable<T> {
 
   boolean needProcess();
 

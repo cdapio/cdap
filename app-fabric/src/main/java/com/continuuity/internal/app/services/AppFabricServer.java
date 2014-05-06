@@ -10,7 +10,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,7 +43,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private TThreadedSelectorServer server;
   private NettyHttpService httpService;
   private ExecutorService executor;
-  private HttpHandler handler;
+  private Set<HttpHandler> handlers;
   private CConfiguration configuration;
 
   /**
@@ -54,13 +54,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
                          CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named("appfabric.http.handler") HttpHandler handler) {
+                         @Named("appfabric.http.handler") Set<HttpHandler> handlers) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
-    this.handler = handler;
+    this.handlers = handlers;
     this.configuration = configuration;
   }
 
@@ -99,11 +99,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
-    LOG.info("AppFabric Handler name: {}", handler.getClass().getSimpleName());
+    for (HttpHandler handler : handlers) {
+      LOG.info("AppFabric Handler name: {}", handler.getClass().getSimpleName());
+    }
 
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
-      .addHttpHandlers(ImmutableList.of(handler))
+      .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                                  Constants.Gateway.DEFAULT_BACKLOG))
       .setExecThreadPoolSize(configuration.getInt(Constants.Gateway.EXEC_THREADS,
