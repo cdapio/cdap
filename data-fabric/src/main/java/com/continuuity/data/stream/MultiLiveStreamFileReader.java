@@ -68,7 +68,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       }
       eventsRead += read(events);
 
-      if (stopwatch.elapsedTime(unit) > timeout) {
+      if (eventSources.isEmpty() && stopwatch.elapsedTime(unit) > timeout) {
         break;
       }
     }
