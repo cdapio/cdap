@@ -47,9 +47,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -68,20 +66,26 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
 
+  // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
+  // Currently is here to align with the existing Reactor organization that dataset admin is not aware of MDS
+  private final StreamMetaStore streamMetaStore;
+
   // A timed cache from consumer id (group id) to stream consumer.
   private final LoadingCache<ConsumerCacheKey, StreamDequeuer> dequeuerCache;
 
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator, StreamAdmin streamAdmin,
+  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
+                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
     this.streamAdmin = streamAdmin;
+    this.streamMetaStore = streamMetaStore;
     this.dequeuerCache = createDequeuerCache(streamConsumerFactory, executorFactory);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
-    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
 
@@ -90,29 +94,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     Closeables.closeQuietly(streamWriter);
   }
 
-  @GET
-  @Path("/{stream}/info")
-  public void info(HttpRequest request, HttpResponder responder,
-                   @PathParam("stream") String stream) throws Exception {
-    // Just call to verify, but not using the accountId returned.
-    getAuthenticatedAccountId(request);
-
-    if (streamAdmin.exists(stream)) {
-      responder.sendStatus(HttpResponseStatus.OK);
-    } else {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    }
-  }
-
   @PUT
   @Path("/{stream}")
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream) throws Exception {
 
-    getAuthenticatedAccountId(request);
+    String accountID = getAuthenticatedAccountId(request);
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
+    streamMetaStore.addStream(accountID, stream);
 
     // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
@@ -123,12 +114,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
 
-    getAuthenticatedAccountId(request);
+    String accountId = getAuthenticatedAccountId(request);
 
-    if (streamWriter.enqueue(stream, getHeaders(request, stream), request.getContent().toByteBuffer())) {
-      responder.sendStatus(HttpResponseStatus.OK);
-    } else {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    try {
+      if (streamWriter.enqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer())) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
     }
   }
 
@@ -180,7 +175,11 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                           @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    // TODO: Check with MDS for stream existences?
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
     long groupId = Hashing.md5().newHasher()
       .putString(stream)
       .putString(accountId)
@@ -198,16 +197,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws Exception {
-    getAuthenticatedAccountId(request);
+    String accountId = getAuthenticatedAccountId(request);
 
-    // TODO: This is not thread and multi-instances safe yet
-    // Need to communicates with other instances with a barrier for closing current file for the given stream
-    if (streamAdmin.exists(stream)) {
-      streamAdmin.truncate(stream);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } else {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    }
+    streamMetaStore.removeStream(accountId, stream);
+
+    // TODO: Implement file removal logic
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
