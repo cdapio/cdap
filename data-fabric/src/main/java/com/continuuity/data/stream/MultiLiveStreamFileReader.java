@@ -68,7 +68,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       }
       eventsRead += read(events);
 
-      if (stopwatch.elapsedTime(unit) > timeout) {
+      if (eventSources.isEmpty() && stopwatch.elapsedTime(unit) > timeout) {
         break;
       }
     }
@@ -148,16 +148,16 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
     void read(Collection<? super StreamEventOffset> result) throws IOException, InterruptedException {
       // Pop the cached event and use the event start position as the event offset being returned.
       PositionStreamEvent streamEvent = events.get(0);
+
+      // Use nextOffset location to construct file offset
+      // because the actual file location can only be determined by a read to a LiveFileReader,
+      // hence located inside nextOffset
       result.add(new StreamEventOffset(streamEvent,
-                                       new StreamFileOffset(currentOffset.getEventLocation(), streamEvent.getStart())));
+                                       new StreamFileOffset(nextOffset.getEventLocation(), streamEvent.getStart())));
       events.clear();
 
       // Updates current offset information to be after the current event.
-      if (!currentOffset.getEventLocation().equals(nextOffset.getEventLocation())) {
-        currentOffset = new StreamFileOffset(nextOffset);
-      } else {
-        currentOffset.setOffset(nextOffset.getOffset());
-      }
+      currentOffset = nextOffset;
     }
 
     /**

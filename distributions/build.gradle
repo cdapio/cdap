@@ -417,6 +417,20 @@ task examples_page_analytics (type: Zip) {
    }
 }
 
+task docs_dist_pdf (type: Zip) {
+   doFirst {
+     runSphinxPDF("${buildDir}/../../docs/developer-guide")
+   }
+   group = 'Continuuity'
+   baseName = "continuuity"
+   appendix = "pdf-docs"
+   def name = "${baseName}-${appendix}-${version}"
+   into name
+   description = 'Distribution to package PDF documents'
+   into("pdf") {
+    from "${buildDir}/../../docs/developer-guide/build-pdf"
+   } 
+}
 
 task docs_dist (type: Zip, dependsOn: ['examples_response_analytics', 'examples_traffic_analytics', 'examples_page_analytics']) {
    doFirst {

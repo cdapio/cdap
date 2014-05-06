@@ -49,7 +49,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
     for (Map.Entry<byte[], byte[]> entry : states.entrySet()) {
       byte[] column = entry.getKey();
       byte[] value = entry.getValue();
-      if (value != null && value.length > 0) {
+      if (value != null) {
         result.add(new StreamConsumerState(getGroupId(column), getInstanceId(column), decodeOffsets(value)));
       }
     }
@@ -66,7 +66,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
         continue;
       }
       byte[] value = entry.getValue();
-      if (value != null && value.length > 0) {
+      if (value != null) {
         result.add(new StreamConsumerState(groupId, getInstanceId(column), decodeOffsets(value)));
       }
     }
@@ -74,8 +74,8 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
 
   @Override
   public final StreamConsumerState get(long groupId, int instanceId) throws IOException {
-    return new StreamConsumerState(groupId, instanceId,
-                                   decodeOffsets(fetch(name.toBytes(), getColumn(groupId, instanceId))));
+    byte[] value = fetch(name.toBytes(), getColumn(groupId, instanceId));
+    return value == null ? null : new StreamConsumerState(groupId, instanceId, decodeOffsets(value));
   }
 
   @Override
@@ -108,6 +108,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
 
   /**
    * Fetches the cell value for the given row and column.
+   * If no such value exists, {@code null} should be returned.
    */
   protected abstract byte[] fetch(byte[] row, byte[] column) throws IOException;
 

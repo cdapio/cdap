@@ -16,6 +16,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -26,6 +28,8 @@ import java.util.List;
  * {@link MultiLiveStreamFileReader}.
  */
 public abstract class AbstractStreamFileConsumerFactory implements StreamConsumerFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumerFactory.class);
 
   private final StreamAdmin streamAdmin;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
@@ -49,8 +53,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    * @return A new instance of {@link StreamConsumer}
    */
   protected abstract StreamConsumer create(
-    String tableName, StreamConfig streamConfig,
-    ConsumerConfig consumerConfig, StreamConsumerStateStore stateStore,
+    String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException;
 
   /**
@@ -71,7 +75,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
-    return create(tableName, streamConfig, consumerConfig, stateStore, createReader(streamConfig, consumerState));
+    return create(tableName, streamConfig, consumerConfig,
+                  stateStore, consumerState, createReader(streamConfig, consumerState));
   }
 
   private String getTableName(QueueName streamName, String namespace) {
@@ -84,6 +89,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
 
     if (!Iterables.isEmpty(consumerState.getState())) {
+      LOG.info("Create file reader with consumer state: {}", consumerState);
       // Has existing offsets, just resume from there.
       return new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
     }
@@ -114,6 +120,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                                                      startTime, streamConfig.getPartitionDuration());
     List<StreamFileOffset> fileOffsets = Lists.newArrayList();
     getFileOffsets(partitionLocation, fileOffsets);
+
+    LOG.info("Empty consumer state. Create file reader with file offsets: groupId={}, instanceId={} states={}",
+             consumerState.getGroupId(), consumerState.getInstanceId(), fileOffsets);
 
     return new MultiLiveStreamFileReader(streamConfig, fileOffsets);
   }

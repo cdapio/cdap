@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
@@ -29,7 +30,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   private final Configuration hConf;
   private final String storeTableName;
   private final HBaseTableUtil tableUtil;
-  private HBaseAdmin admin;
+  private boolean tableCreated;
 
   @Inject
   HBaseStreamConsumerStateStoreFactory(Configuration hConf, DataSetAccessor dataSetAccessor, HBaseTableUtil tableUtil) {
@@ -43,19 +44,26 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     byte[] tableName = Bytes.toBytes(storeTableName);
 
-    if (admin == null) {
-      admin = new HBaseAdmin(hConf);
-      HTableDescriptor htd = new HTableDescriptor(tableName);
+    if (!tableCreated) {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      try {
+        HTableDescriptor htd = new HTableDescriptor(tableName);
 
-      HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-      htd.addFamily(hcd);
-      hcd.setMaxVersions(1);
+        HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
+        htd.addFamily(hcd);
+        hcd.setMaxVersions(1);
 
-      tableUtil.createTableIfNotExists(admin, tableName, htd, null,
-                                       QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
+        tableUtil.createTableIfNotExists(admin, tableName, htd, null,
+                                         QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
+        tableCreated = true;
+      } finally {
+        admin.close();
+      }
     }
 
     HTable hTable = new HTable(hConf, tableName);
+    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
+    hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
 }

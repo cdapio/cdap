@@ -51,9 +51,11 @@ import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -65,13 +67,13 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Runs {@link MapReduce} programs.
@@ -223,6 +225,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       jobConf.getCredentials().addAll(credentials);
     }
 
+    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -250,8 +253,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     jobConf.setJar(jobJar.toURI().toString());
     jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
-
-    jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobConf);
     // We start long-running tx to be used by mapreduce job tasks.
@@ -521,7 +522,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private Location buildJobJar(BasicMapReduceContext context) throws IOException {
     ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
-                                                           Lists.newArrayList("org.apache.hadoop.hbase"));
+                                                           Lists.newArrayList("org.apache.hadoop.hbase",
+                                                                              "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
 
     Location appFabricDependenciesJarLocation =
@@ -533,8 +535,26 @@ public class MapReduceProgramRunner implements ProgramRunner {
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
     List<Class<?>> classes = Lists.newArrayList(MapReduce.class,
-                                                          DataSetOutputFormat.class, DataSetInputFormat.class,
-                                                          MapperWrapper.class, ReducerWrapper.class);
+                                                DataSetOutputFormat.class, DataSetInputFormat.class,
+                                                MapperWrapper.class, ReducerWrapper.class);
+
+    Job jobConf = context.getHadoopJob();
+    try {
+      Class<? extends InputFormat<?, ?>> inputFormatClass = jobConf.getInputFormatClass();
+      LOG.info("InputFormat class: {} {}", inputFormatClass, inputFormatClass.getClassLoader());
+      classes.add(inputFormatClass);
+    } catch (Throwable t) {
+      LOG.info("InputFormat class not found: {}", t.getMessage(), t);
+      // Ignore
+    }
+    try {
+      Class<? extends OutputFormat<?, ?>> outputFormatClass = jobConf.getOutputFormatClass();
+      LOG.info("OutputFormat class: {} {}", outputFormatClass, outputFormatClass.getClassLoader());
+      classes.add(outputFormatClass);
+    } catch (Throwable t) {
+      LOG.info("OutputFormat class not found: {}", t.getMessage(), t);
+      // Ignore
+    }
 
     try {
       Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
@@ -543,7 +563,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
       LOG.warn("Not including HBaseTableUtil classes in submitted job jar since they are not available.");
     }
 
+    ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
     appBundler.createBundle(appFabricDependenciesJarLocation, classes);
+    Thread.currentThread().setContextClassLoader(oldCLassLoader);
 
     return appFabricDependenciesJarLocation;
   }

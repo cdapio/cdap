@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumer;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
 import com.continuuity.hbase.wd.DistributedScanner;
@@ -53,8 +54,9 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
    */
   public HBaseStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
-                                 StreamConsumerStateStore stateStore, AbstractRowKeyDistributor keyDistributor) {
-    super(streamConfig, consumerConfig, reader, stateStore);
+                                 StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
+                                 AbstractRowKeyDistributor keyDistributor) {
+    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState);
     this.hTable = hTable;
     this.keyDistributor = keyDistributor;
     this.scanExecutor = createScanExecutor(streamConfig.getName());
@@ -67,10 +69,10 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   }
 
   @Override
-  protected boolean claimFifoEntry(byte[] row, byte[] value) throws IOException {
+  protected boolean claimFifoEntry(byte[] row, byte[] value, byte[] oldValue) throws IOException {
     Put put = new Put(keyDistributor.getDistributedKey(row));
     put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
-    return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY, stateColumnName, null, put);
+    return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY, stateColumnName, oldValue, put);
   }
 
   @Override
@@ -91,7 +93,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     List<Delete> deletes = Lists.newArrayListWithCapacity(size);
     for (byte[] row : rows) {
       Delete delete = new Delete(keyDistributor.getDistributedKey(row));
-      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       deletes.add(delete);
     }
     hTable.delete(deletes);

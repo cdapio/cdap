@@ -11,11 +11,19 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Comparator;
 
 /**
  * Utility class to help interaction with {@link Location}.
  */
 public final class Locations {
+
+  public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
+    @Override
+    public int compare(Location o1, Location o2) {
+      return o1.toURI().compareTo(o2.toURI());
+    }
+  };
 
   /**
    * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given path.
