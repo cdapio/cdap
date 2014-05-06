@@ -3,7 +3,6 @@ package com.continuuity.gateway.router.handlers;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -23,11 +22,8 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -38,8 +34,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
   // Data structure is used to clean up the channel futures on connection close.
-  private final Map<WrappedDiscoverable, EventSender> discoveryLookup;
-  private EventSender chunkEventSender;
+  private final Map<WrappedDiscoverable, ChannelFuture> discoveryLookup;
+  private ChannelFuture chunkFuture;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             RouterServiceLookup serviceLookup) {
@@ -52,15 +48,18 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   public void messageReceived(ChannelHandlerContext ctx,
                               MessageEvent event) throws Exception {
 
-    final Channel inboundChannel = event.getChannel();
-    if (event.getMessage() instanceof HttpChunk) {
+    Channel inboundChannel = event.getChannel();
+    Object msg = event.getMessage();
+
+    if (msg instanceof HttpChunk) {
       // This case below should never happen this would mean we get Chunks before HTTPMessage.
-      raiseExceptionIfNull(chunkEventSender, HttpResponseStatus.INTERNAL_SERVER_ERROR,
+      raiseExceptionIfNull(chunkFuture, HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Chunk received and event sender is null");
-      chunkEventSender.sendMessage(((HttpChunk) event.getMessage()));
-    } else if (event.getMessage() instanceof HttpRequest) {
+      writeMessage(chunkFuture, msg);
+
+    } else if (msg instanceof HttpRequest) {
       // Discover and forward event.
-      HttpRequest request = (HttpRequest) event.getMessage();
+      HttpRequest request = (HttpRequest) msg;
 
       // Suspend incoming traffic until connected to the outbound service.
       inboundChannel.setReadable(false);
@@ -68,25 +67,24 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
       // If no event sender, make new connection, otherwise reuse existing one.
-      EventSender eventSender =  discoveryLookup.get(discoverable);
-      if (eventSender == null) {
+      ChannelFuture future =  discoveryLookup.get(discoverable);
+      if (future == null) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
-        ChannelFuture outFuture = clientBootstrap.connect(address);
-        Channel outboundChannel = outFuture.getChannel();
+        future = clientBootstrap.connect(address);
+        Channel outboundChannel = future.getChannel();
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
-
-        eventSender = new EventSender(outFuture);
-        discoveryLookup.put(discoverable, eventSender);
+        discoveryLookup.put(discoverable, future);
       }
 
       // Send the message.
-      eventSender.sendMessage(request);
+      writeMessage(future, request);
       inboundChannel.setReadable(true);
+
       //Save the channelFuture for subsequent chunks
       if (request.isChunked()) {
-        chunkEventSender = eventSender;
+        chunkFuture = future;
       }
 
     } else {
@@ -110,8 +108,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     // Close all event sender
-    for (EventSender sender : discoveryLookup.values()) {
-      Closeables.closeQuietly(sender);
+    for (ChannelFuture future : discoveryLookup.values()) {
+      closeOnFlush(future.getChannel());
     }
     super.channelClosed(ctx, e);
   }
@@ -145,44 +143,18 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   }
 
   /**
-   * EventSender uses connection future or event future to send the message.
-   * ConnectionFuture is used for the first event and event future for subsequent events.
-   * Reason to use event future is to send chunked requests in the same channel.
+   * Sends a message to a channel, carried inside the given {@link ChannelFuture}. This method will block
+   * until the given future is completed.
+   *
+   * @param future Future to block on and also carry the channel to write to.
+   * @param o The message.
+   * @throws InterruptedException if there is thread interruption while waiting for the future to complete.
    */
-  private static final class EventSender implements Closeable {
-    private final ChannelFuture connectionFuture;
-    private final ChannelFuture eventFuture;
-    private final AtomicBoolean first;
-
-    private EventSender(ChannelFuture connectionFuture) {
-      this.first = new AtomicBoolean(true);
-      this.connectionFuture = connectionFuture;
-      this.eventFuture = Channels.future(connectionFuture.getChannel());
+  private void writeMessage(ChannelFuture future, Object o) throws InterruptedException {
+    if (!future.isSuccess()) {
+      future.sync();
     }
-
-    void sendMessage(final Object o) {
-      if (first.compareAndSet(true, false)) {
-        connectionFuture.addListener(new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) throws Exception {
-            Channels.write(future.getChannel(), o);
-            eventFuture.setSuccess();
-          }
-        });
-      } else {
-        eventFuture.addListener(new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) throws Exception {
-            Channels.write(future.getChannel(), o);
-          }
-        });
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      closeOnFlush(connectionFuture.getChannel());
-    }
+    Channels.write(future.getChannel(), o);
   }
 }
 
