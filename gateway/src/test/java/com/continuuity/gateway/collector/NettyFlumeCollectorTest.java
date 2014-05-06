@@ -58,14 +58,14 @@ public class NettyFlumeCollectorTest {
     // Get new consumer id
     response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/consumer-id", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
+    Assert.assertEquals(1, response.getHeaders(Constants.Stream.Headers.CONSUMER_ID).length);
+    String groupId = response.getFirstHeader(Constants.Stream.Headers.CONSUMER_ID).getValue();
 
     // Dequeue all entries
     for (int i = 0; i <= 12; ++i) {
       response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
                                              new Header[]{
-                                               new BasicHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId)
+                                               new BasicHeader(Constants.Stream.Headers.CONSUMER_ID, groupId)
                                              });
       Assert.assertEquals("Item " + i, HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       String actual = EntityUtils.toString(response.getEntity());
@@ -76,7 +76,7 @@ public class NettyFlumeCollectorTest {
     // No more content
     response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
                                            new Header[]{
-                                             new BasicHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId)
+                                             new BasicHeader(Constants.Stream.Headers.CONSUMER_ID, groupId)
                                            });
     Assert.assertEquals("No item", HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
   }
