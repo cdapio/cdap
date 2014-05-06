@@ -48,7 +48,7 @@ public class LocalQueueTest extends QueueTest {
 
   @Test
   public void testInjection() throws IOException {
-    Injector injector = Guice.createInjector(new DataFabricModules().getSingleNodeModules(conf));
+    Injector injector = Guice.createInjector(new DataFabricModules(conf).getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueue2Producer);

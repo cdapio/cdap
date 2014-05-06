@@ -51,11 +51,12 @@ public class ReducerWrapper extends Reducer {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
+    context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      Reducer delegate = createReducerInstance(basicMapReduceContext.getProgram().getClassLoader(), userReducer);
+      Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
 
       // injecting runtime components, like datasets, etc.
       try {

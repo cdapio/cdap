@@ -11,6 +11,8 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.common.stream.DefaultStreamEvent;
+import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
@@ -26,8 +28,6 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.common.stream.DefaultStreamEvent;
-import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.common.base.Charsets;
@@ -37,11 +37,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
@@ -50,6 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -84,16 +81,16 @@ public class FlowTest {
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
 
-    HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
-                                               discoverable.getSocketAddress().getHostName(),
-                                               discoverable.getSocketAddress().getPort(),
-                                               "ArgumentCheckApp",
-                                               "SimpleProcedure",
-                                               "argtest"));
-    post.setEntity(new StringEntity(gson.toJson(ImmutableMap.of("word", "text:Testing"))));
-    HttpResponse response = client.execute(post);
-    Assert.assertTrue(response.getStatusLine().getStatusCode() == 200);
+    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(),
+                                    "ArgumentCheckApp",
+                                    "SimpleProcedure",
+                                    "argtest"));
+    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
+    Assert.assertTrue(urlConn.getResponseCode() == 200);
 
     for (ProgramController controller : controllers) {
       controller.stop().get();
@@ -149,23 +146,20 @@ public class FlowTest {
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency")).iterator().next();
 
-    HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
-                                               discoverable.getSocketAddress().getHostName(),
-                                               discoverable.getSocketAddress().getPort(),
-                                               "WordCountApp",
-                                               "WordFrequency",
-                                               "wordfreq"));
-    post.setEntity(new StringEntity(gson.toJson(ImmutableMap.of("word", "text:Testing"))));
-    HttpResponse response = client.execute(post);
-    Map<String, Long> responseContent = gson.fromJson(
-      new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8),
-      new TypeToken<Map<String, Long>>() { }.getType());
+    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(),
+                                    "WordCountApp",
+                                    "WordFrequency",
+                                    "wordfreq"));
+    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    urlConn.setDoOutput(true);
+    urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
+    Map<String, Long> responseContent = gson.fromJson(new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8),
+                                                      new TypeToken<Map<String, Long>>() { }.getType());
 
     LOG.info("Procedure response: " + responseContent);
     Assert.assertEquals(ImmutableMap.of("text:Testing", 10L), responseContent);
-
-    client.getConnectionManager().shutdown();
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

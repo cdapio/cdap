@@ -7,7 +7,6 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -44,18 +43,15 @@ public class WebappProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final Set<HttpHandler> handlers;
   private final WebappHttpHandlerFactory webappHttpHandlerFactory;
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
                              @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                             Set<HttpHandler> handlers,
                              WebappHttpHandlerFactory webappHttpHandlerFactory) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
-    this.handlers = ImmutableSet.copyOf(handlers);
     this.webappHttpHandlerFactory = webappHttpHandlerFactory;
   }
 
@@ -78,8 +74,7 @@ public class WebappProgramRunner implements ProgramRunner {
       // TODO: add metrics reporting
       JarHttpHandler jarHttpHandler = webappHttpHandlerFactory.createHandler(program.getJarLocation());
       NettyHttpService.Builder builder = NettyHttpService.builder();
-      builder.addHttpHandlers(
-        Iterables.concat(handlers, ImmutableSet.of(jarHttpHandler)));
+      builder.addHttpHandlers(ImmutableSet.of(jarHttpHandler));
       builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();

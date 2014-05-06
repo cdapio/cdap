@@ -296,40 +296,47 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   private void skipUntil(SkipCondition condition) throws IOException {
     long positionBound = position = eventInput.getPos();
 
-    while (!eof) {
-      positionBound = eventInput.getPos();
+    try {
+      while (!eof) {
+        positionBound = eventInput.getPos();
 
-      // Read timestamp
-      long timestamp = readTimestamp();
+        // Read timestamp
+        long timestamp = readTimestamp();
 
-      // If EOF or condition match, upper bound found. Break the loop.
-      if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
-        break;
+        // If EOF or condition match, upper bound found. Break the loop.
+        if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
+          break;
+        }
+
+        int len = readLength();
+        position = positionBound;
+
+        // Jump to next timestamp
+        eventInput.seek(eventInput.getPos() + len);
       }
 
-      int len = readLength();
-      position = positionBound;
-
-      // Jump to next timestamp
-      eventInput.seek(eventInput.getPos() + len);
-    }
-
-    if (eof) {
-      position = positionBound;
-      return;
-    }
-
-    // search for the exact StreamData position within the bound.
-    eventInput.seek(position);
-    while (position < positionBound) {
-      if (timestamp < 0) {
-        timestamp = readTimestamp();
+      if (eof) {
+        position = positionBound;
+        return;
       }
-      if (condition.apply(position, timestamp)) {
-        break;
+
+      // search for the exact StreamData position within the bound.
+      eventInput.seek(position);
+      while (position < positionBound) {
+        if (timestamp < 0) {
+          timestamp = readTimestamp();
+        }
+        if (condition.apply(position, timestamp)) {
+          break;
+        }
+        nextStreamEvent(true);
+        position = eventInput.getPos();
       }
-      nextStreamEvent(true);
-      position = eventInput.getPos();
+    } catch (IOException e) {
+      // It's ok if hitting EOF, meaning it's could be a live stream file or closed by a dead stream handler.
+      if (!(e instanceof EOFException)) {
+        throw e;
+      }
     }
   }
 

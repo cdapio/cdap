@@ -11,7 +11,13 @@ import org.junit.Test;
 public class PingHandlerTest {
   @Test
   public void testPing() throws Exception {
-    HttpResponse response = AppFabricTestsSuite.doGet("/v2/ping");
+    HttpResponse response = AppFabricTestsSuite.doGet("/ping");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testStatus() throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet("/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
