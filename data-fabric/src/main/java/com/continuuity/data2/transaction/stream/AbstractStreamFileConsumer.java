@@ -7,6 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -24,7 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteArrayDataOutput;
@@ -36,12 +37,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -91,6 +94,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       return input.getStateRow();
     }
   };
+  private static final Function<PollStreamEvent, StreamEventOffset> CONVERT_STREAM_EVENT_OFFSET =
+    new Function<PollStreamEvent, StreamEventOffset>() {
+      @Override
+      public StreamEventOffset apply(PollStreamEvent input) {
+        return input.getStreamEventOffset();
+      }
+    };
   private static final Function<PollStreamEvent, StreamEvent> CONVERT_STREAM_EVENT =
     new Function<PollStreamEvent, StreamEvent>() {
       @Override
@@ -106,30 +116,34 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private final ConsumerConfig consumerConfig;
   private final StreamConsumerStateStore consumerStateStore;
   private final FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader;
+  private final ReadFilter readFilter;
 
-  // Records rows that shouldn't be processed by this consumer.
-  // The rows are only needed for entries that are already in the state table when this consumer start,
-  // since the consumer claim entry logic already handle different strategies.
-  private final SortedSet<byte[]> ignoreRows;
-  private final SortedSet<byte[]> initScanned;
+  // Map from row key prefix (row key without last eight bytes offset) to
+  // a sorted map of row key to state value when first encountered a given row prefix.
+  // The rows are only needed for entries that are already in the state table when this consumer start.
+  private final Map<byte[], SortedMap<byte[], byte[]>> entryStates;
 
   private final StreamConsumerState consumerState;
   private final List<StreamEventOffset> eventCache;
-  private final byte[] stateContent;
   private Transaction transaction;
   private List<PollStreamEvent> polledEvents;
   private long nextPersistStateTime;
+  private boolean committed;
   private boolean closed;
   private StreamConsumerState lastPersistedState;
 
   /**
+   *
    * @param streamConfig Stream configuration.
    * @param consumerConfig Consumer configuration.
    * @param reader For reading stream events. This class is responsible for closing the reader.
+   * @param consumerStateStore The state store for saving consumer state
+   * @param beginConsumerState Consumer state to begin with.
    */
   protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
-                                       StreamConsumerStateStore consumerStateStore) {
+                                       StreamConsumerStateStore consumerStateStore,
+                                       StreamConsumerState beginConsumerState) {
 
     LOG.info("Create consumer {}, reader offsets: {}", consumerConfig, reader.getPosition());
     this.streamName = QueueName.fromStream(streamConfig.getName());
@@ -137,9 +151,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
+    this.readFilter = createReadFilter(consumerConfig);
 
-    this.ignoreRows = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    this.initScanned = Sets.newTreeSet(new Comparator<byte[]>() {
+    // Use a special comparator to only compare the row prefix, hence different row key can be used directly against
+    // this map, hence reduce the need for byte[] array creation.
+    this.entryStates = Maps.newTreeMap(new Comparator<byte[]>() {
       @Override
       public int compare(byte[] bytes1, byte[] bytes2) {
         // Compare row keys without the offset part (last 8 bytes).
@@ -148,9 +164,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     });
 
     this.eventCache = Lists.newArrayList();
-    this.consumerState = new StreamConsumerState(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
-
-    this.stateContent = new byte[Longs.BYTES + Ints.BYTES + 1];
+    this.consumerState = beginConsumerState;
+    this.lastPersistedState = new StreamConsumerState(beginConsumerState);
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
   }
 
@@ -158,7 +173,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     // No-op.
   }
 
-  protected abstract boolean claimFifoEntry(byte[] row, byte[] value) throws IOException;
+  protected abstract boolean claimFifoEntry(byte[] row, byte[] value, byte[] oldValue) throws IOException;
 
   protected abstract void updateState(Iterable<byte[]> rows, int size, byte[] value) throws IOException;
 
@@ -180,36 +195,43 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   public final DequeueResult<StreamEvent> poll(int maxEvents, long timeout,
                                                TimeUnit timeoutUnit) throws IOException, InterruptedException {
 
-    // Number of events it tries to read by multiply the maxEvents with the group size. It doesn't have to be exact,
-    // just a rough estimate for better read throughput.
-    // Also, this maxRead is used throughout the read loop below, hence some extra events might be read and cached
-    // for next poll call.
-    int maxRead = maxEvents * consumerConfig.getGroupSize();
+    // Only need the CLAIMED state for FIFO with group size > 1.
+    byte[] fifoStateContent = null;
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+      fifoStateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
+    }
 
     // Try to read from cache if any
     if (!eventCache.isEmpty()) {
-      getEvents(eventCache, polledEvents, maxEvents);
+      getEvents(eventCache, polledEvents, maxEvents, fifoStateContent);
     }
 
     if (polledEvents.size() == maxEvents) {
       return new SimpleDequeueResult(polledEvents);
     }
 
+    // Number of events it tries to read by multiply the maxEvents with the group size. It doesn't have to be exact,
+    // just a rough estimate for better read throughput.
+    // Also, this maxRead is used throughout the read loop below, hence some extra events might be read and cached
+    // for next poll call.
+    int maxRead = maxEvents * consumerConfig.getGroupSize();
+
     long timeoutNano = timeoutUnit.toNanos(timeout);
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
 
     // Save the reader position.
-    // It's safe to use the latest reader position as stream file is append only.
+    // It's a conservative approach to save the reader position before reading so that no
+    // event will be missed upon restart.
     consumerState.setState(reader.getPosition());
 
     // Read from the underlying file reader
     while (timeoutNano >= 0 && polledEvents.size() < maxEvents) {
-      int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS);
+      int readCount = reader.read(eventCache, maxRead, timeoutNano, TimeUnit.NANOSECONDS, readFilter);
       timeoutNano -= stopwatch.elapsedTime(TimeUnit.NANOSECONDS);
 
       if (readCount > 0) {
-        getEvents(eventCache, polledEvents, polledEvents.size() - maxEvents);
+        getEvents(eventCache, polledEvents, maxEvents - polledEvents.size(), fifoStateContent);
       }
     }
 
@@ -241,16 +263,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   @Override
   public final void startTx(Transaction tx) {
     transaction = tx;
-    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
-      // Pre-fill the state value.
-      encodeStateColumn(ConsumerEntryState.CLAIMED, stateContent);
-    }
-
     if (polledEvents == null) {
       polledEvents = Lists.newArrayList();
     } else {
       polledEvents.clear();
     }
+
+    committed = false;
   }
 
   @Override
@@ -266,10 +285,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     }
 
     // For each polled events, set the state column to PROCESSED
-    updateState(Iterables.transform(polledEvents, EVENT_ROW_KEY),
-                polledEvents.size(),
-                encodeStateColumn(ConsumerEntryState.PROCESSED, stateContent));
+    updateState(Iterables.transform(polledEvents, EVENT_ROW_KEY), polledEvents.size(),
+                encodeStateColumn(ConsumerEntryState.PROCESSED));
 
+    committed = true;
     return true;
   }
 
@@ -280,6 +299,14 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       nextPersistStateTime = currentNano + STATE_PERSIST_MIN_INTERVAL;
       persistConsumerState();
     }
+
+    // Cleanup the entryStates map to free up memory
+    for (PollStreamEvent event : polledEvents) {
+      SortedMap<byte[], byte[]> states = entryStates.get(event.getStateRow());
+      if (states != null) {
+        states.headMap(event.getStateRow()).clear();
+      }
+    }
   }
 
   @Override
@@ -287,8 +314,35 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     if (polledEvents.isEmpty()) {
       return true;
     }
-    undoState(Iterables.transform(polledEvents, EVENT_ROW_KEY),
-              polledEvents.size());
+
+    // Reset the consumer state to some earlier persisted state.
+    // This is to avoid upon close() is called right after rollback, it recorded uncommitted file offsets.
+    consumerState.setState(lastPersistedState.getState());
+
+    // Insert all polled events back to beginning of the eventCache
+    eventCache.addAll(0, Lists.transform(polledEvents, CONVERT_STREAM_EVENT_OFFSET));
+
+    // Special case for FIFO. On rollback, put the CLAIMED state into the entry states for claim entry to use.
+    byte[] fifoState = null;
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+      fifoState = encodeStateColumn(ConsumerEntryState.CLAIMED);
+      for (PollStreamEvent event : polledEvents) {
+        entryStates.get(event.getStateRow()).put(event.getStateRow(), fifoState);
+      }
+    }
+
+    // If committed, also need to rollback backing store.
+    if (committed) {
+      // Special case for FIFO.
+      // If group size > 1, need to update the rows states to CLAIMED state with this instance Id.
+      // The transaction pointer used for the entry doesn't matter.
+      if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+        updateState(Iterables.transform(polledEvents, EVENT_ROW_KEY), polledEvents.size(), fifoState);
+      } else {
+        undoState(Iterables.transform(polledEvents, EVENT_ROW_KEY), polledEvents.size());
+      }
+    }
+
     return true;
   }
 
@@ -305,9 +359,33 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .toString();
   }
 
+  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
+    final int groupSize = consumerConfig.getGroupSize();
+    final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
+
+    if (groupSize == 1 || strategy == DequeueStrategy.FIFO) {
+      return ReadFilter.ALWAYS_ACCEPT;
+    }
+
+    // For RoundRobin and Hash partition, the claim is done by matching hashCode to instance id.
+    // For Hash, to preserve existing behavior, everything route to instance 0.
+    // For RoundRobin, the idea is to scatter the events across consumers evenly. Since there is no way to known
+    // about the absolute starting point to do true round robin, we employ a good enough hash function on the
+    // file offset as a way to spread events across consumers
+    final int instanceId = consumerConfig.getInstanceId();
+
+    return new ReadFilter() {
+      @Override
+      public boolean acceptOffset(long offset) {
+        int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
+        return instanceId == (hashValue % groupSize);
+      }
+    };
+  }
+
   private void getEvents(List<? extends StreamEventOffset> source,
                          List<? super PollStreamEvent> result,
-                         int maxEvents) throws IOException {
+                         int maxEvents, byte[] stateContent) throws IOException {
     Iterator<? extends StreamEventOffset> iterator = Iterators.consumingIterator(source.iterator());
     while (result.size() < maxEvents && iterator.hasNext()) {
       StreamEventOffset event = iterator.next();
@@ -334,11 +412,12 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * Encodes the value for the state column with the current transaction and consumer information.
    *
    * @param state The state to encode
-   * @param stateContent byte array to carry the result
    * @return The stateContent byte array
    */
   // TODO: This method is copied from AbstractQueue2Consumer. Future effort is needed to unify them.
-  private byte[] encodeStateColumn(ConsumerEntryState state, byte[] stateContent) {
+  private byte[] encodeStateColumn(ConsumerEntryState state) {
+    byte[] stateContent = new byte[Longs.BYTES + Ints.BYTES + 1];
+
     // State column content is encoded as (writePointer) + (instanceId) + (state)
     Bytes.putLong(stateContent, 0, transaction.getWritePointer());
     Bytes.putInt(stateContent, Longs.BYTES, consumerConfig.getInstanceId());
@@ -358,26 +437,22 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     StreamUtils.encodeOffset(out, offset);
     byte[] row = out.toByteArray();
 
-    initScanIfNeeded(row);
+    SortedMap<byte[], byte[]> rowStates = getInitRowStates(row);
 
-    // See if the row is in ignore list
-    if (ignoreRows.contains(row)) {
+    // See if the entry should be ignored. If it is in the rowStates with null value, then it should be ignored.
+    byte[] rowState = rowStates.get(row);
+    if (rowStates.containsKey(row) && rowState == null) {
       return null;
     }
 
-    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO) {
-      if (consumerConfig.getGroupSize() == 1) {
-        // Special FIFO case, no need to write claim entry
-        return row;
-      }
-      return claimFifoEntry(row, claimedStateContent) ? row : null;
-    } else {
-      // For RoundRobin and Hash partition, the claim is done by matching hashCode to instance id.
-      // For Hash, to preserve existing behavior, everything route to instance 0.
-      int hashValue = Math.abs(consumerConfig.getDequeueStrategy() == DequeueStrategy.HASH
-                        ? 0 : ROUND_ROBIN_HASHER.hashLong(offset.getOffset()).hashCode());
-      return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize()) ? row : null;
+    // Only need to claim entry if FIFO and group size > 1
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+      return claimFifoEntry(row, claimedStateContent, rowState) ? row : null;
     }
+
+    // For Hash, RR and FIFO with group size == 1, no need to claim and check,
+    // as it's already handled by the readFilter
+    return row;
   }
 
   /**
@@ -386,29 +461,33 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    *
    * @param row the entry row key.
    */
-  private void initScanIfNeeded(byte[] row) throws IOException {
-    if (initScanned.contains(row)) {
-      return;
+  private SortedMap<byte[], byte[]> getInitRowStates(byte[] row) throws IOException {
+    SortedMap<byte[], byte[]> rowStates = entryStates.get(row);
+
+    if (rowStates != null) {
+      return rowStates;
     }
 
-    // Scan till the end
+    // Scan till the end.
+    // TODO: Current assumption is that a given consumer instance shouldn't be too far behind.
     byte[] stopRow = Arrays.copyOf(row, row.length);
+    rowStates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    entryStates.put(row, rowStates);
 
     // Last 8 bytes are the file offset, make it max value so that it scans till last offset.
     Bytes.putLong(stopRow, stopRow.length - Longs.BYTES, Long.MAX_VALUE);
     StateScanner scanner = scanStates(row, stopRow);
     try {
       while (scanner.nextStateRow()) {
-        storeInitState(scanner.getRow(), scanner.getState());
+        storeInitState(scanner.getRow(), scanner.getState(), rowStates);
       }
-
-      initScanned.add(row);
     } finally {
       scanner.close();
     }
+    return rowStates;
   }
 
-  private void storeInitState(byte[] row, byte[] stateValue) {
+  private void storeInitState(byte[] row, byte[] stateValue, Map<byte[], byte[]> states) {
     // Logic is adpated from QueueEntryRow.canConsume(), with modification.
 
     if (stateValue == null) {
@@ -416,23 +495,28 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       return;
     }
 
-    // If the state was updated by a different consumer instance that is still active, ignore this entry.
-    // The assumption is, the corresponding instance is either processing (claimed)
-    // or going to process it (due to rollback/restart).
-    // This only applies to FIFO, as for hash and rr, repartition needs to happen if group size change.
-    int stateInstanceId = QueueEntryRow.getStateInstanceId(stateValue);
-    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO
-      && stateInstanceId < consumerConfig.getGroupSize()
-      && stateInstanceId != consumerConfig.getInstanceId()) {
-      ignoreRows.add(row);
-    }
-
+    // If state is PROCESSED and committed, need to memorize it so that it can be skipped.
     long stateWritePointer = QueueEntryRow.getStateWritePointer(stateValue);
-
-    // If state is PROCESSED and committed, ignore it:
     ConsumerEntryState state = QueueEntryRow.getState(stateValue);
     if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
-      ignoreRows.add(row);
+      // No need to store the state value.
+      states.put(row, null);
+      return;
+    }
+
+    // Special case for FIFO.
+    // For group size > 1 case, if the state is not committed, need to memorize current state value for claim entry.
+    if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO && consumerConfig.getGroupSize() > 1) {
+      int stateInstanceId = QueueEntryRow.getStateInstanceId(stateValue);
+
+      // If the state was written by a consumer that is still live, and not by itself,
+      // record the state value as null so that it'll get skipped in the claim entry logic.
+      if (stateInstanceId < consumerConfig.getGroupSize() && stateInstanceId != consumerConfig.getInstanceId()) {
+        states.put(row, null);
+      } else {
+        // Otherwise memorize the value for checkAndPut operation in claim entry.
+        states.put(row, stateValue);
+      }
     }
   }
 
@@ -454,10 +538,23 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private static final class PollStreamEvent extends ForwardingStreamEvent {
 
     private final byte[] stateRow;
+    private final StreamEventOffset streamEventOffset;
 
-    protected PollStreamEvent(StreamEventOffset delegate, byte[] stateRow) {
-      super(delegate);
+    protected PollStreamEvent(StreamEventOffset streamEventOffset, byte[] stateRow) {
+      super(streamEventOffset);
+      this.streamEventOffset = streamEventOffset;
       this.stateRow = stateRow;
+    }
+
+    public StreamEventOffset getStreamEventOffset() {
+      return streamEventOffset;
+    }
+
+    @Override
+    public ByteBuffer getBody() {
+      // Return a copy of the ByteBuffer (not copy of content),
+      // so that the underlying stream buffer can be reused (rollback, retries).
+      return streamEventOffset.getBody().slice();
     }
 
     private byte[] getStateRow() {
@@ -483,9 +580,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     @Override
     public void reclaim() {
-      // Simply copy events back to polledEvents
+      // Copy events back to polledEvents and need to remove them from eventCache
       polledEvents.clear();
       polledEvents.addAll(events);
+
+      eventCache.removeAll(Lists.transform(events, CONVERT_STREAM_EVENT_OFFSET));
     }
 
     @Override

@@ -4,12 +4,6 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.lang.jar.JarResources;
-import com.continuuity.common.lang.jar.ProgramJarResources;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -25,17 +19,19 @@ public final class Programs {
 
   public static Program create(Location location, File destinationUnpackedJarDir,
                                ClassLoader parentClassLoader) throws IOException {
-    Preconditions.checkArgument(location != null);
-    Preconditions.checkArgument(location.exists());
-    Preconditions.checkArgument(destinationUnpackedJarDir != null);
-    Preconditions.checkArgument(destinationUnpackedJarDir.exists());
-
-    File unpackedJarDir = BundleJarUtil.unpackProgramJar(location, destinationUnpackedJarDir);
-    return new DefaultProgram(location, unpackedJarDir, new ProgramJarResources(unpackedJarDir), parentClassLoader);
+    return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
   }
 
   public static Program create(Location location, File destinationUnpackedJarDir) throws IOException {
     return Programs.create(location, destinationUnpackedJarDir, null);
+  }
+
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * would not function from the program this method returns.
+   */
+  public static Program create(Location location) throws IOException {
+    return Programs.create(location, null);
   }
 
   /**

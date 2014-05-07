@@ -39,7 +39,7 @@ public interface DequeueResult<T> extends Iterable<T> {
    *
    *     // Skip the result.
    *     startTransaction();
-   *     result.skip;
+   *     result.reclaim();
    *     commitTransaction();
    *   }
    *

@@ -1304,7 +1304,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           request.readBytes(os, request.readableBytes());
         } catch (IOException e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
-          e.printStackTrace();
+          LOG.error("Failed to write deploy jar", e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
       }
@@ -1316,10 +1316,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           deploy(accountId, appId, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-        } catch (Exception ex) {
+        } catch (Exception e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
-          ex.printStackTrace();
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
@@ -1332,7 +1332,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           sessionInfo.setStatus(DeployStatus.FAILED);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
         } catch (IOException e) {
-          e.printStackTrace();
+          LOG.error("Error while saving deploy jar.", e);
         } finally {
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);

@@ -5,6 +5,7 @@ package com.continuuity.data.stream;
 
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.PositionReporter;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
@@ -56,7 +57,12 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
   @Override
   public int read(Collection<? super StreamEventOffset> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
+    return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);
+  }
 
+  @Override
+  public int read(Collection<? super StreamEventOffset> events, int maxEvents,
+                  long timeout, TimeUnit unit, ReadFilter readFilter) throws IOException, InterruptedException {
     int eventsRead = 0;
 
     Stopwatch stopwatch = new Stopwatch();
@@ -64,11 +70,11 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
 
     while (eventsRead < maxEvents && !(emptySources.isEmpty() && eventSources.isEmpty())) {
       if (!emptySources.isEmpty()) {
-        prepareEmptySources();
+        prepareEmptySources(readFilter);
       }
-      eventsRead += read(events);
+      eventsRead += read(events, readFilter);
 
-      if (stopwatch.elapsedTime(unit) > timeout) {
+      if (eventSources.isEmpty() && stopwatch.elapsedTime(unit) > timeout) {
         break;
       }
     }
@@ -85,11 +91,11 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
    * For all sources that doesn't have any event buffered, try to read an event and put it in the priority queue
    * if event is available.
    */
-  private void prepareEmptySources() throws IOException, InterruptedException {
+  private void prepareEmptySources(ReadFilter readFilter) throws IOException, InterruptedException {
     Iterator<StreamEventSource> iterator = emptySources.iterator();
     while (iterator.hasNext()) {
       StreamEventSource source = iterator.next();
-      int len = source.prepare();
+      int len = source.prepare(readFilter);
       if (len != 0) {
         iterator.remove();
         if (len > 0) {
@@ -99,7 +105,8 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
     }
   }
 
-  private int read(Collection<? super StreamEventOffset> events) throws IOException, InterruptedException {
+  private int read(Collection<? super StreamEventOffset> events,
+                   ReadFilter readFilter) throws IOException, InterruptedException {
     if (eventSources.isEmpty()) {
       return 0;
     }
@@ -107,7 +114,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
     StreamEventSource source = eventSources.first();
     source.read(events);
 
-    int res = source.prepare();
+    int res = source.prepare(readFilter);
     if (res > 0) {
       eventSources.changed();
     } else if (res <= 0) {
@@ -169,9 +176,9 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
      * @throws IOException
      * @throws InterruptedException
      */
-    int prepare() throws IOException, InterruptedException {
+    int prepare(ReadFilter readFilter) throws IOException, InterruptedException {
       if (events.isEmpty()) {
-        int res = reader.read(events, 1, 0L, TimeUnit.MILLISECONDS);
+        int res = reader.read(events, 1, 0L, TimeUnit.MILLISECONDS, readFilter);
         nextOffset = reader.getPosition();
         return res;
       }

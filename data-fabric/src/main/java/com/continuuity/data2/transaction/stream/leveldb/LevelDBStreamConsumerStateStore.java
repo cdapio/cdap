@@ -8,6 +8,7 @@ import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,6 +49,9 @@ public final class LevelDBStreamConsumerStateStore extends StreamConsumerStateSt
 
   @Override
   protected void store(byte[] row, Map<byte[], byte[]> values) throws IOException {
+    if (values.isEmpty()) {
+      return;
+    }
     Map<byte[], Map<byte[], byte[]>> changes =
       ImmutableSortedMap.<byte[], Map<byte[], byte[]>>orderedBy(Bytes.BYTES_COMPARATOR)
       .put(row, values)
@@ -58,9 +62,19 @@ public final class LevelDBStreamConsumerStateStore extends StreamConsumerStateSt
 
   @Override
   protected void delete(byte[] row, Set<byte[]> columns) throws IOException {
-    for (byte[] column : columns) {
-      store(row, column, Bytes.EMPTY_BYTE_ARRAY);
+    if (columns.isEmpty()) {
+      return;
     }
+    Map<byte[], byte[]> deleteColumns = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (byte[] column : columns) {
+      deleteColumns.put(column, Bytes.EMPTY_BYTE_ARRAY);   // Value doesn't matter
+    }
+    Map<byte[], Map<byte[], byte[]>> undoes =
+      ImmutableSortedMap.<byte[], Map<byte[], byte[]>>orderedBy(Bytes.BYTES_COMPARATOR)
+      .put(row, deleteColumns)
+      .build();
+
+    tableCore.undo(undoes, Long.MAX_VALUE);
   }
 
   @Override

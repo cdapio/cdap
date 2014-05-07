@@ -86,10 +86,9 @@ __ support_
 
 I have a Hadoop cluster in my datacenter, can I run Reactor that uses my Hadoop cluster?
 ---------------------------------------------------------------------------------------- 
-Yes. You can install Reactor on your Hadoop cluster. Contact `Continuuity support` on how this can be done.
+Yes. You can install Reactor on your Hadoop cluster. Contact `Continuuity support`__ on how this can be done.
 
 __ support_
-
 
 What Hadoop distributions can the Reactor run on? 
 -------------------------------------------------

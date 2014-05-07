@@ -17,7 +17,6 @@ import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +24,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Provides common operations for levelDB tables and queues.
@@ -115,11 +115,11 @@ public class LevelDBOcTableCore {
     return result;
   }
 
-  public void persist(Map<byte[], Map<byte[], byte[]>> changes, long version) throws IOException {
+  public void persist(Map<byte[], ? extends Map<byte[], byte[]>> changes, long version) throws IOException {
     DB db = getDB();
     // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], Map<byte[], byte[]>> row : changes.entrySet()) {
+    for (Map.Entry<byte[], ? extends Map<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), version);
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
@@ -128,26 +128,13 @@ public class LevelDBOcTableCore {
     db.write(batch, service.getWriteOptions());
   }
 
-  public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
-    DB db = getDB();
-    // todo support writing null when no transaction
-    WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
-        byte[] key = createPutKey(row.getKey(), column.getKey(), version);
-        batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
-      }
-    }
-    db.write(batch, service.getWriteOptions());
-  }
-
-  public void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) throws IOException {
+  public void undo(Map<byte[], ? extends Map<byte[], byte[]>> persisted, long version) throws IOException {
     if (persisted.isEmpty()) {
       return;
     }
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
+    for (Map.Entry<byte[], ? extends Map<byte[], byte[]>> row : persisted.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
         byte[] key = createPutKey(row.getKey(), column.getKey(), version);
         batch.delete(key);
