@@ -715,7 +715,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> overrides, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -728,13 +728,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
+      Map<String, String> storedRuntimeArguments = store.getRunArguments(id);
+      BasicArguments arguments = new BasicArguments(storedRuntimeArguments);
+
       BasicArguments userArguments = new BasicArguments();
-      if (arguments != null) {
-        userArguments = new BasicArguments(arguments);
+      if (overrides != null) {
+        userArguments = new BasicArguments(overrides);
       }
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
+        runtimeService.run(program, new SimpleProgramOptions(id.getId(), arguments, userArguments, debug));
 
       ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
