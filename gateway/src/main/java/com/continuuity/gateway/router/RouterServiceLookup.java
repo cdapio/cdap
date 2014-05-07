@@ -98,7 +98,7 @@ public class RouterServiceLookup {
       // Path lookup can be skipped for requests to webapp.
       String destService = service.contains("$HOST") ?
                            service :
-                           routerPathLookup.getRoutingPath(path, httpRequest);
+                           routerPathLookup.getRoutingService(path, httpRequest);
       CacheKey cacheKey = new CacheKey(destService, host, path);
       LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
 

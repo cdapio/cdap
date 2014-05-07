@@ -19,7 +19,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     GET, PUT, POST, DELETE
   }
 
-  public String getRoutingPath(String requestPath, HttpRequest httpRequest) {
+  public String getRoutingService(String requestPath, HttpRequest httpRequest) {
     try {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
