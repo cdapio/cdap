@@ -8,9 +8,9 @@ import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
-import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
+import com.continuuity.security.server.JAASAuthenticationHandler;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -45,7 +45,7 @@ public abstract class SecurityModule extends PrivateModule {
 
     Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
                                                                   Names.named("security.handlers.set"));
-    handlerBinder.addBinding().to(BasicAuthenticationHandler.class);
+    handlerBinder.addBinding().to(JAASAuthenticationHandler.class);
     handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(BasicAuthenticationHandlerListProvider.class)

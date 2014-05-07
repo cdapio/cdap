@@ -2,14 +2,19 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -36,7 +41,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
-  private final HashLoginService loginService;
 
   /**
    * Constants for a valid JSON response.
@@ -50,12 +54,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HandlerList handlers, HashLoginService loginService) {
+                                      @Named("security.handlers") HandlerList handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
-    this.loginService = loginService;
   }
 
   /**
@@ -103,7 +106,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       connector.setPort(port);
       server.setConnectors(new Connector[]{connector});
 
-      server.addBean(loginService);
       server.setHandler(handlers);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
@@ -131,5 +133,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
     }
+  }
+
+  public static void main(String[] args) {
+    Injector injector = Guice.createInjector(new DiscoveryRuntimeModule().getInMemoryModules(), new IOModule(), new ConfigModule(), new SecurityModules().getInMemoryModules());
+    ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
+    server.startAndWait();
   }
 }
