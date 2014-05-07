@@ -6,6 +6,7 @@ import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of program.
@@ -38,10 +40,12 @@ public final class DefaultProgram implements Program {
    * Creates a program instance.
    *
    * @param programJarLocation Location of the program jar file.
-   * @param expandFolder Local directory for expanding the jar file into.
+   * @param expandFolder Local directory for expanding the jar file into. If it is {@code null},
+   *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation, File expandFolder, ClassLoader parentClassLoader) throws IOException {
+  DefaultProgram(Location programJarLocation,
+                 @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
@@ -58,33 +62,22 @@ public final class DefaultProgram implements Program {
 
     processorType = Type.valueOf(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
 
-    specFile = new File(expandFolder, getAttribute(manifest, ManifestFields.SPEC_FILE));
+    // Load the app spec from the jar file if no expand folder is provided. Otherwise do lazy loading after the jar
+    // is expanded.
+    String specPath = getAttribute(manifest, ManifestFields.SPEC_FILE);
+    if (expandFolder == null) {
+      specification = ApplicationSpecificationAdapter.create().fromJson(
+        CharStreams.newReaderSupplier(BundleJarUtil.getEntry(programJarLocation, specPath), Charsets.UTF_8));
+      specFile = null;
+    } else {
+      specFile = new File(expandFolder, specPath);
+    }
   }
 
   // TODO: Remove this.
   public DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
-    this.programJarLocation = programJarLocation;
+    this(programJarLocation, null, null);
     this.classLoader = classLoader;
-    this.expanded = true;
-    this.expandFolder = null;
-    this.parentClassLoader = null;
-    this.specFile = null;
-
-    Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
-    if (manifest == null) {
-      throw new IOException("Failed to load manifest in program jar from " + programJarLocation.toURI());
-    }
-
-    mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
-    id = Id.Program.from(getAttribute(manifest, ManifestFields.ACCOUNT_ID),
-                         getAttribute(manifest, ManifestFields.APPLICATION_ID),
-                         getAttribute(manifest, ManifestFields.PROGRAM_NAME));
-
-    processorType = Type.valueOf(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
-
-    String appSpecFile = getAttribute(manifest, ManifestFields.SPEC_FILE);
-    specification = ApplicationSpecificationAdapter.create().fromJson(
-      CharStreams.newReaderSupplier(BundleJarUtil.getEntry(programJarLocation, appSpecFile), Charsets.UTF_8));
   }
 
   @SuppressWarnings("unchecked")
@@ -162,6 +155,8 @@ public final class DefaultProgram implements Program {
     if (expanded) {
       return;
     }
+
+    Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
 
     try {
       BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
