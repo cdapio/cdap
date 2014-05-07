@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Download Continuuity Reactor SDK, Install and Run Quickstart</title>
+    <title>DataSet Types</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Download Continuuity Reactor SDK, Install and Run Quickstart</h1></header>
+            <header><h1>DataSet Types</h1></header>
             
             
             <section><!-- .. reST Editor: .. section-numbering:: -->
@@ -1744,29 +1744,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Objectives</h1></header>
+            <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this exercise, you will:</p>
+            <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Learn Basic Continuuity Reactor operations: Start and Stop</li>
-<li>Run the Quickstart tour</li>
+<li>What is a Custom DataSet?</li>
+<li>Declaring a Custom DataSet</li>
+<li>How to use Custom DataSets</li>
 </ul></section>
             
           </div>
@@ -1779,35 +1779,163 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Custom DataSets</h1></header>
+            
+            
+            <section><p>Your own DataSet classes that implement common data patterns specific to your code</p>
+<p>Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen</p>
+<p>The DataSet can be built on top two underlying DataSets</p>
+<ul class="simple">
+<li>a first Table (<tt class="docutils literal">entryCountTable</tt>) to count all the words and</li>
+<li>a second Table (<tt class="docutils literal">uniqueCountTable</tt>) for the unique count</li>
+</ul>
+<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">DataSet</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><tt class="docutils literal">configure()</tt> and <tt class="docutils literal">initialize()</tt> methods</h1></header>
+            
+            
+            <section><p>Custom DataSets can also optionally implement</p>
+<p><tt class="docutils literal">configure()</tt> method:</p>
+<blockquote>
+<ul class="simple">
+<li>Returns a specification which can be used to save metadata about the DataSet (such as
+configuration parameters)</li>
+</ul>
+</blockquote>
+<p><tt class="docutils literal">initialize()</tt> method:</p>
+<blockquote>
+<ul class="simple">
+<li>Called at execution time</li>
+<li>Any operations on the data of this DataSet are prohibited in <tt class="docutils literal">initialize()</tt></li>
+</ul>
+</blockquote></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets Example (1 of 3)</h1></header>
+            
+            
+            <section><p>Now we can begin with the implementation of the <tt class="docutils literal">UniqueCountTable</tt> logic</p>
+<p>Start with a few constants:</p>
+<pre><span class="c1">// Column name used for storing count of each entry.</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ENTRY_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+
+<span class="c1">// Row and column name used for storing the unique count.</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">UNIQUE_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;unique&quot;</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets Example (2 of 3)</h1></header>
             
             
             <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Quickstart Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
+<li><tt class="docutils literal">UniqueCountTable</tt> stores a counter for each word in its own row of the entry count table</li>
+<li>For each word the counter is incremented</li>
+<li>If the result of the increment is 1, then:<ul>
+<li>this is the first time the word has been encountered, hence a new unique word</li>
+<li>increment the unique counter by 1:</li>
 </ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+</li>
+</ul>
+<pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">entry</span><span class="o">),</span> <span class="n">ENTRY_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1819,32 +1947,64 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              6/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Summary</h1></header>
+            <header><h1>Custom DataSets Example (3 of 3)</h1></header>
             
             
-            <section><p>You should now be able to:</p>
+            <section><p>Finally, write a method to retrieve the number of unique words seen:</p>
+<pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">))</span>
+                         <span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
+            
+            
+            <section><p>You should be able describe:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quickstart tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>??</li>
+<li>??</li>
+<li>??</li>
 </ul></section>
             
           </div>
@@ -1857,25 +2017,25 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              8/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e01">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m16">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1887,11 +2047,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              9/9
             </aside>
           </footer>
         </div>
@@ -1906,32 +2066,56 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Download Continuuity Reactor SDK, Install and Run Quickstart</a></th>
+        <th><a href="#slide1">DataSet Types</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Exercise Objectives</a></th>
+        <th><a href="#slide2">Module Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Custom DataSets</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4"><tt class="docutils literal">configure()</tt> and <tt class="docutils literal">initialize()</tt> methods</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Custom DataSets Example (1 of 3)</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Custom DataSets Example (2 of 3)</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Custom DataSets Example (3 of 3)</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Module Summary</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Module Completed</a></th>
+        <td><a href="#slide9">9</a></td>
       </tr>
       
       

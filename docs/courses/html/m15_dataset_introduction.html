@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Download Continuuity Reactor SDK, Install and Run Quickstart</title>
+    <title>Introduction to DataSets</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Download Continuuity Reactor SDK, Install and Run Quickstart</h1></header>
+            <header><h1>Introduction to DataSets</h1></header>
             
             
             <section><!-- .. reST Editor: .. section-numbering:: -->
@@ -1744,29 +1744,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Objectives</h1></header>
+            <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this exercise, you will:</p>
+            <section><p>In this module, you will learn:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Learn Basic Continuuity Reactor operations: Start and Stop</li>
-<li>Run the Quickstart tour</li>
+<li>The purpose of DataSets</li>
+<li>The different types of DataSets</li>
+<li>Using DataSets in Applications</li>
 </ul></section>
             
           </div>
@@ -1779,35 +1779,40 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1><strong>DataSets</strong> Store and Retrieve Data</h1></header>
             
             
             <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Quickstart Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
+<li>DataSets are the means of reading and writing data to and from the Reactor’s storage capabilities</li>
+<li>DataSets provide:<ul>
+<li>Higher-level abstractions</li>
+<li>A way to avoid manipulating data with low-level APIs</li>
+<li>Generic, reusable Java implementations of common data patterns</li>
 </ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+</li>
+<li>A DataSet represents both the API and the actual data itself<ul>
+<li>It is a named collection of data with associated metadata</li>
+<li>It is manipulated through a DataSet class</li>
+<li>A Java class that extends the abstract DataSet class with its own, custom methods</li>
+<li>Implementation of a DataSet typically relies on one or more underlying (embedded) DataSets</li>
+</ul>
+</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -1819,32 +1824,316 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Summary</h1></header>
+            <header><h1>Types of DataSets</h1></header>
+            
+            
+            <section><p>Three categories of DataSets: <em>core</em>, <em>system</em>, and <em>custom</em> DataSets:</p>
+<ul class="simple">
+<li>The <strong>core</strong> DataSet of the Reactor is a Table<ul>
+<li>Its implementation is hidden from developers</li>
+<li>It may use private DataSet interfaces that are not available to you</li>
+</ul>
+</li>
+<li>A <strong>system</strong> DataSet is bundled with the Reactor<ul>
+<li>It is built around one or more underlying core or system DataSets to
+implement a specific data pattern</li>
+</ul>
+</li>
+<li>A <strong>custom</strong> DataSet is implemented by you and can have arbitrary code and methods<ul>
+<li>It is typically built around one or more Tables (or other DataSets)
+to implement a specific data pattern</li>
+<li>A custom DataSet can only manipulate data through its underlying DataSets</li>
+</ul>
+</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Core DataSet of Continuuity Reactor is a <strong>Table</strong></h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Unlike relational database systems, these tables are not organized into rows with a fixed schema</li>
+<li>They are optimized for efficient storage of:<ul>
+<li>Semi-structured data;</li>
+<li>Data with unknown or variable schema; or</li>
+<li>Sparse data</li>
+</ul>
+</li>
+<li>Other DataSets are built on top of Tables</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>System and Custom DataSets</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>A DataSet can implement specific semantics around a Table, such as:<ul>
+<li>a Key/value Table</li>
+<li>a Counter Table</li>
+</ul>
+</li>
+<li>Can combine multiple DataSets to create complex data patterns</li>
+<li>Example: An indexed Table can be implemented by using one Table for the data to index
+and a second Table for the index itself</li>
+<li>A number of useful DataSets—<strong>system DataSets</strong>—are
+included with Reactor, including <strong>key/value</strong> tables, <strong>indexed</strong> tables and
+<strong>time series</strong> tables</li>
+<li>You can implement your own data patterns as <strong>custom DataSets</strong> on top of Tables</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>System DataSets</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>The <tt class="docutils literal">KeyValueTable</tt> implements a key/value store as a Table with a single column</li>
+<li>The <tt class="docutils literal">IndexedTable</tt> implements a Table with a secondary key using two embedded Tables,
+one for the data and one for the secondary index</li>
+<li>The <tt class="docutils literal">TimeseriesTable</tt> uses a Table to store keyed data over time
+and allows querying that data over ranges of time</li>
+</ul>
+<p>Further details:</p>
+<blockquote>
+<ul class="simple">
+<li>The Javadocs (/developers/javadocs/index.html) for these classes</li>
+<li>The  examples (/developers/examples) include usage of these</li>
+</ul>
+</blockquote></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Using DataSets in Applications</h1></header>
+            
+            
+            <section><p>To use a DataSet, you must declare it in the Application specification</p>
+<p>To specify that your Application
+uses a <tt class="docutils literal">KeyValueTable</tt> DataSet named <em>myCounters</em>, write:</p>
+<pre><span class="kd">public</span> <span class="n">ApplicationSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+    <span class="o">...</span>
+    <span class="o">.</span><span class="na">withDataSets</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">KeyValueTable</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">))</span>
+    <span class="o">...</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Using DataSets in a Flowlet or a Procedure</h1></header>
+            
+            
+            <section><p>To use a DataSet in a Flowlet or a Procedure, instruct the runtime
+system to inject an instance of the DataSet with the <tt class="docutils literal">&#64;UseDataSet</tt>
+annotation:</p>
+<pre><span class="n">Class</span> <span class="n">MyFowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">counters</span><span class="o">;</span>
+  <span class="o">...</span>
+  <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">counters</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">getBytes</span><span class="o">());</span>
+  <span class="o">}</span>
+</pre>
+<p>The runtime system:</p>
+<ul class="simple">
+<li>Reads the DataSet specification for the key/value table <em>myCounters</em> from the metadata store</li>
+<li>Injects a functional instance of the DataSet class into the Application</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Using Custom DataSets in Applications</h1></header>
+            
+            
+            <section><p>Implement custom DataSets by extending the <tt class="docutils literal">DataSet</tt> base
+class or by extending existing DataSet types</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
             
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quickstart tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Describe the three different types of DataSets</li>
+<li>Understand the difference between DataSet types and when to use them</li>
+<li>Implement using existing DataSets in an application</li>
 </ul></section>
             
           </div>
@@ -1857,25 +2146,25 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              11/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e01">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m15">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1887,11 +2176,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e01_reactor_sdk.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m15_dataset_introduction.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              12/12
             </aside>
           </footer>
         </div>
@@ -1906,32 +2195,74 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Download Continuuity Reactor SDK, Install and Run Quickstart</a></th>
+        <th><a href="#slide1">Introduction to DataSets</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Exercise Objectives</a></th>
+        <th><a href="#slide2">Module Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3"><strong>DataSets</strong> Store and Retrieve Data</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">Types of DataSets</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Core DataSet of Continuuity Reactor is a <strong>Table</strong></a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">System and Custom DataSets</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">System DataSets</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Using DataSets in Applications</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Using DataSets in a Flowlet or a Procedure</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Using Custom DataSets in Applications</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Module Summary</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12">Module Completed</a></th>
+        <td><a href="#slide12">12</a></td>
       </tr>
       
       

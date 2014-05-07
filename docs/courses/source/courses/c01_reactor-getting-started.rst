@@ -143,19 +143,30 @@ Upon completion of this course you should be able to:
 .. landslide: module: Type Projection
 .. landslide: module link: ../modules/m14_type_projection.rst
 .. landslide: exercise: Building An Application Using Streams
-.. landslide: exercise link: ../exercises/e04_streams_example.rst
-
-.. landslide: CUT START
+.. landslide: exercise link: ../exercises/e04_streams_exercise.rst
 
 .. chapter 5
 .. landslide: chapter: Storing Data Using DataSets
 .. ................................................
+.. landslide: module: Introduction to DataSets
+.. landslide: module link: ../modules/m15_dataset_introduction.rst
+
 .. landslide: module: DataSet Types
+.. landslide: module link: ../modules/m16_dataset_types.rst
 .. landslide: module: DataSet Lifecycle
-.. landslide: module: Programming API
+.. landslide: module link: ../modules/m17_dataset_lifecycle.rst
+.. landslide: module: DataSet Programming API
+.. landslide: module link: ../modules/m18_dataset_programming_api.rst
 .. landslide: module: Core DataSet Operations
-.. landslide: module: DataSet and Transactions
-.. landslide: module: DataSet REST APIs
+.. landslide: module link: ../modules/m19_core_dataset_operations.rst
+.. landslide: module: DataSets and Transactions
+.. landslide: module link: ../modules/m20_datasets_transactions.rst
+.. landslide: module: DataSet REST API
+.. landslide: module link: ../modules/m21_dataset_rest_api.rst
+.. landslide: exercise: Building An Application Using DataSets
+.. landslide: exercise link: ../exercises/e05_datasets_exercise.rst
+
+.. landslide: CUT START
 
 .. chapter 6
 .. landslide: chapter: Batch Processing Using MapReduce
@@ -163,7 +174,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Introduction to MapReduce
 .. landslide: module: DataSets and MapReduce
 .. landslide: module: Transactions and MapReduce
-.. landslide: module: REST APIs
+.. landslide: module: MapReduce REST API
 
 
 .. landslide: section: Integrating Reactor Into Application Development Workflow
@@ -202,8 +213,8 @@ Upon completion of this course you should be able to:
 .. chapter 11
 .. landslide: chapter: Controlling Application Lifecycle using REST APIs
 .. ................................................
-.. landslide: module: Application Management APIs
-.. landslide: module: Flow Management APIs
+.. landslide: module: Application Management API
+.. landslide: module: Flow Management API
 .. landslide: module: Procedure Management APIs
 
 .. chapter 12

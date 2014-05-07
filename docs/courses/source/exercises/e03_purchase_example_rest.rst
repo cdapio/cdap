@@ -54,10 +54,19 @@ Purchase Example and Steps
 Purchase Example Hints
 ==========================
 
-- Send sentences using
-- ``curl -X POST -d "Tom bought 5 apples for $10" http://localhost:10000/v2/streams/purchaseStream``
-- Execute the PurchaseQuery procedure using
-- ``curl -v -d '{"customer": "Tom"}' -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history'``
+Send sentences using
+
+.. sourcecode:: shell-session
+
+	curl -X POST -d "Tom bought 5 apples for $10" \
+	  http://localhost:10000/v2/streams/purchaseStream
+
+Execute the PurchaseQuery procedure using
+
+.. sourcecode:: shell-session
+
+	curl -v -d '{"customer": "Tom"}' -X POST \
+	  'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history'
 
 ----
 

@@ -1722,7 +1722,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1744,7 +1744,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1754,7 +1754,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1780,7 +1780,7 @@ ObjectStore DataSet and write to another</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1790,7 +1790,7 @@ ObjectStore DataSet and write to another</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1823,7 +1823,7 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1833,7 +1833,7 @@ the purchase history of each customer</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1841,12 +1841,14 @@ the purchase history of each customer</li>
             <header><h1>Purchase Example Hints</h1></header>
             
             
-            <section><ul class="simple">
-<li>Send sentences using</li>
-<li><tt class="docutils literal">curl <span class="pre">-X</span> POST <span class="pre">-d</span> &quot;Tom bought 5 apples for $10&quot; <span class="pre">http://localhost:10000/v2/streams/purchaseStream</span></tt></li>
-<li>Execute the PurchaseQuery procedure using</li>
-<li><tt class="docutils literal">curl <span class="pre">-v</span> <span class="pre">-d</span> <span class="pre">'{&quot;customer&quot;:</span> <span class="pre">&quot;Tom&quot;}'</span> <span class="pre">-X</span> POST <span class="pre">'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history'</span></tt></li>
-</ul></section>
+            <section><p>Send sentences using</p>
+<pre><span class="go">curl -X POST -d &quot;Tom bought 5 apples for $10&quot; \</span>
+<span class="go">  http://localhost:10000/v2/streams/purchaseStream</span>
+</pre>
+<p>Execute the PurchaseQuery procedure using</p>
+<pre><span class="go">curl -v -d &#39;{&quot;customer&quot;: &quot;Tom&quot;}&#39; -X POST \</span>
+<span class="go">  &#39;http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history&#39;</span>
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1858,7 +1860,7 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1868,7 +1870,7 @@ the purchase history of each customer</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1892,7 +1894,7 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1902,7 +1904,7 @@ the purchase history of each customer</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1922,7 +1924,7 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
