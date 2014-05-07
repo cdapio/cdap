@@ -363,7 +363,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     final int groupSize = consumerConfig.getGroupSize();
     final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
 
-    if (groupSize == 1 && strategy == DequeueStrategy.FIFO) {
+    if (groupSize == 1 || strategy == DequeueStrategy.FIFO) {
       return ReadFilter.ALWAYS_ACCEPT;
     }
 
