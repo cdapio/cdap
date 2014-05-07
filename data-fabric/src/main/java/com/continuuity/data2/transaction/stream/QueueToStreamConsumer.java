@@ -152,6 +152,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   public String getName() {
     return Objects.toStringHelper(this)
       .add("queue", streamName)
+      .add("config", consumerConfig)
       .toString();
   }
 }
