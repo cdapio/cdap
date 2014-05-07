@@ -1,23 +1,28 @@
 <div class="config-editor clearfix">
   {{#collection contentBinding="config"}}
-    <div class="config-editor-key" {{action edit "key" view.contentIndex}}>
-      <div class="config-text">{{key}} </div>
-      {{view C.Embed.KeyVal.Field kind="key" indexBinding=view.contentIndex valueBinding="key"}}
+    <div class="single-config">
+      <div class="config-editor-key" {{action edit "key" view.contentIndex}}>
+        <div class="config-text">{{key}} </div>
+        {{view C.Embed.KeyVal.Field kind="key" indexBinding=view.contentIndex valueBinding="key"}}
+      </div>
+      <div class="config-editor-value" {{action edit "value" view.contentIndex}}>
+        <div class="config-text">{{value}}</div>
+        {{view C.Embed.KeyVal.Field kind="value" indexBinding=view.contentIndex valueBinding="value"}}
+      </div>
+      <div class="config-editor-remove" {{action remove view}}>&times;</div>
+      <div style="clear:both"></div>
     </div>
-    <div class="config-editor-value" {{action edit "value" view.contentIndex}}>
-      <div class="config-text">{{value}}</div>
-      {{view C.Embed.KeyVal.Field kind="value" indexBinding=view.contentIndex valueBinding="value"}}
-    </div>
-    <div class="config-editor-remove" {{action remove view}}>&times;</div>
   {{/collection}}
-
-  <div class="config-editor-new">
-    <div class="config-editor-key editing" style="border: 0;">
-      {{view C.Embed.KeyVal.Field}}
+  <div class="single-config">
+    <div class="config-editor-new">
+      <div class="config-editor-key editing" style="border: 0;">
+        {{view C.Embed.KeyVal.Field}}
+      </div>
+      <div class="config-editor-value editing" style="border: 0;">
+        {{view C.Embed.KeyVal.Field}}
+      </div>
+      <div class="config-editor-add" {{action add}}>&#43;</div>
     </div>
-    <div class="config-editor-value editing" style="border: 0;">
-      {{view C.Embed.KeyVal.Field}}
-    </div>
-    <div class="config-editor-add" {{action add}}>&#43;</div>
+    <div style="clear:both"></div>
   </div>
 </div>
