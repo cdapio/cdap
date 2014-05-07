@@ -106,6 +106,7 @@ public final class CombineStreamConsumer implements StreamConsumer {
     // it's ok to switch to second consumer permanently in post commit call.
     if (activeConsumer == firstConsumer && emptyResult) {
       activeConsumer = secondConsumer;
+      Closeables.closeQuietly(firstConsumer);
     }
   }
 
