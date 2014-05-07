@@ -3,6 +3,8 @@ package com.continuuity.gateway.router.handlers;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
+import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -11,7 +13,6 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -21,9 +22,15 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -31,11 +38,13 @@ import java.util.Map;
  */
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
+
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
   // Data structure is used to clean up the channel futures on connection close.
-  private final Map<WrappedDiscoverable, ChannelFuture> discoveryLookup;
-  private ChannelFuture chunkFuture;
+  private final Map<WrappedDiscoverable, MessageSender> discoveryLookup;
+  private MessageSender chunkSender;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             RouterServiceLookup serviceLookup) {
@@ -53,9 +62,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
     if (msg instanceof HttpChunk) {
       // This case below should never happen this would mean we get Chunks before HTTPMessage.
-      raiseExceptionIfNull(chunkFuture, HttpResponseStatus.INTERNAL_SERVER_ERROR,
+      raiseExceptionIfNull(chunkSender, HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Chunk received and event sender is null");
-      writeMessage(chunkFuture, msg);
+      chunkSender.send(msg);
 
     } else if (msg instanceof HttpRequest) {
       // Discover and forward event.
@@ -67,24 +76,25 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                                          (InetSocketAddress) inboundChannel.getLocalAddress());
 
       // If no event sender, make new connection, otherwise reuse existing one.
-      ChannelFuture future =  discoveryLookup.get(discoverable);
-      if (future == null) {
+      MessageSender sender =  discoveryLookup.get(discoverable);
+      if (sender == null) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
-        future = clientBootstrap.connect(address);
+        ChannelFuture future = clientBootstrap.connect(address);
         Channel outboundChannel = future.getChannel();
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
-        discoveryLookup.put(discoverable, future);
+        sender = new MessageSender(inboundChannel, future);
+        discoveryLookup.put(discoverable, sender);
       }
 
       // Send the message.
-      writeMessage(future, request);
+      sender.send(request);
       inboundChannel.setReadable(true);
 
       //Save the channelFuture for subsequent chunks
       if (request.isChunked()) {
-        chunkFuture = future;
+        chunkSender = sender;
       }
 
     } else {
@@ -95,6 +105,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
     Throwable cause = e.getCause();
+
+    LOG.error("Exception raised in request handler", cause);
     if (cause instanceof HandlerException) {
       ctx.getChannel().write(((HandlerException) cause).createFailureResponse())
         .addListener(ChannelFutureListener.CLOSE);
@@ -108,8 +120,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     // Close all event sender
-    for (ChannelFuture future : discoveryLookup.values()) {
-      closeOnFlush(future.getChannel());
+    for (Closeable c : discoveryLookup.values()) {
+      Closeables.closeQuietly(c);
     }
     super.channelClosed(ctx, e);
   }
@@ -143,18 +155,99 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   }
 
   /**
-   * Sends a message to a channel, carried inside the given {@link ChannelFuture}. This method will block
-   * until the given future is completed.
+   * For sending messages to outbound channel while maintaining the order of messages according to
+   * the order that {@link #send(Object)} method is called.
    *
-   * @param future Future to block on and also carry the channel to write to.
-   * @param o The message.
-   * @throws InterruptedException if there is thread interruption while waiting for the future to complete.
+   * It uses a lock-free algorithm similar to the one
+   * in {@link com.continuuity.data.stream.service.ConcurrentStreamWriter} to do the write through the
+   * channel callback.
    */
-  private void writeMessage(ChannelFuture future, Object o) throws InterruptedException {
-    if (!future.isSuccess()) {
-      future.sync();
+  private static final class MessageSender implements Closeable {
+    private final Channel inBoundChannel;
+    private final ChannelFuture channelFuture;
+    private final Queue<OutboundMessage> messages;
+    private final AtomicBoolean writer;
+
+    private MessageSender(Channel inBoundChannel, ChannelFuture channelFuture) {
+      this.inBoundChannel = inBoundChannel;
+      this.channelFuture = channelFuture;
+      this.messages = Queues.newConcurrentLinkedQueue();
+      this.writer = new AtomicBoolean(false);
     }
-    Channels.write(future.getChannel(), o);
+
+    private void send(Object msg) {
+      final OutboundMessage message = new OutboundMessage(msg);
+      messages.add(message);
+      if (channelFuture.isSuccess()) {
+        flushUntilCompleted(channelFuture.getChannel(), message);
+      } else {
+        channelFuture.addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            if (!future.isSuccess()) {
+              closeOnFlush(inBoundChannel);
+              return;
+            }
+
+            flushUntilCompleted(future.getChannel(), message);
+          }
+        });
+      }
+    }
+
+    /**
+     * Writes queued messages to the given channel and keep doing it until the given message is written.
+     */
+    private void flushUntilCompleted(Channel channel, OutboundMessage message) {
+      // Retry until the message is sent.
+      while (!message.isCompleted()) {
+        // If lose to be write, just yield for other threads and recheck if the message is sent.
+        if (!writer.compareAndSet(false, true)) {
+          Thread.yield();
+          continue;
+        }
+
+        // Otherwise, send every messages in the queue and notify others by setting the completed flag
+        // The visibility of the flag is guaranteed by the setting of the atomic boolean.
+        try {
+          OutboundMessage m = messages.poll();
+          while (m != null) {
+            m.write(channel);
+            m.completed();
+            m = messages.poll();
+          }
+        } finally {
+          writer.set(false);
+        }
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      closeOnFlush(channelFuture.getChannel());
+    }
+  }
+
+
+  private static final class OutboundMessage {
+    private final Object message;
+    private boolean completed;
+
+    private OutboundMessage(Object message) {
+      this.message = message;
+    }
+
+    private boolean isCompleted() {
+      return completed;
+    }
+
+    private void completed() {
+      completed = true;
+    }
+
+    private void write(Channel channel) {
+      channel.write(message);
+    }
   }
 }
 
