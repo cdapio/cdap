@@ -76,6 +76,7 @@ public class RouterServiceLookup {
    * @return instance of EndpointStrategy if available null otherwise.
    */
   public EndpointStrategy getDiscoverable(int port, HttpRequest httpRequest) {
+    //Get the service based on Port.
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
@@ -92,7 +93,10 @@ public class RouterServiceLookup {
     }
 
     try {
-      String destService = routerPathLookup.getRoutingPath(path, httpRequest);
+      // Look destination service if it is not routed to webapp
+      String destService = service.contains("$HOST") ?
+                           service :
+                           routerPathLookup.getRoutingPath(path, httpRequest);
       CacheKey cacheKey = new CacheKey(destService == null ? service : destService, host, path);
       LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
 
