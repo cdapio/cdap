@@ -2,6 +2,7 @@ package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
@@ -41,7 +42,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
   private DiscoveryServiceClient discoveryServiceClient;
-  Iterable<Discoverable> discoverables;
+  private Iterable<Discoverable> discoverables;
   private final String realm;
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
@@ -68,7 +69,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
-    //Parsing the access token from authorization.The request authorization comes as
+    //Parsing the access token from authorization header.The request authorization comes as
     //Authorization: Bearer accesstoken
     if (auth != null) {
       int spIndex = auth.trim().indexOf(' ');
@@ -76,11 +77,11 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
         accessToken = auth.substring(spIndex + 1).trim();
       }
     }
-    TokenValidator.State tokenState = tokenValidator.validate(accessToken);
+    TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
       switch (tokenState) {
-        case TOKEN_MISSING:
+        case MISSING:
           httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\"", realm));
           jsonObject.addProperty("error", "Token Missing");
@@ -88,9 +89,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
           LOG.debug("Failed authentication due to missing token");
           break;
 
-        case TOKEN_INVALID:
-        case TOKEN_EXPIRED:
-        case TOKEN_INTERNAL:
+        case INVALID:
+        case EXPIRED:
+        case INTERNAL:
           httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
                                                  "error_description=\"%s\"", realm, tokenState.getMsg()));
@@ -117,7 +118,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       writeFuture.addListener(ChannelFutureListener.CLOSE);
       return false;
     } else {
-      msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + accessTokenTransformer.transform(accessToken));
+      msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " +
+                                                        accessTokenTransformer.transform(accessToken));
       return true;
     }
   }
@@ -134,7 +136,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     stopwatch.start();
     do {
       for (Discoverable d : discoverables)  {
-        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getAddress().getHostAddress()));
+        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getHostName()));
         done = true;
       }
       if (!done) {
@@ -151,7 +153,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       super.messageReceived(ctx, event);
     } else if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
         Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
-    } else{
+    } else {
       return;
     }
   }

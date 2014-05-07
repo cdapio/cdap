@@ -10,6 +10,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.guice.InMemorySecurityModule;
 import com.google.inject.Guice;
@@ -420,8 +421,8 @@ public class NettyRouterTest {
                                                 new RouterPathLookup(new NoAuthenticator())),
                         new TokenValidator() {
                           @Override
-                          public State validate(String token) {
-                            return State.TOKEN_VALID;
+                          public TokenState validate(String token) {
+                            return TokenState.VALID;
                           }
                         }, accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();

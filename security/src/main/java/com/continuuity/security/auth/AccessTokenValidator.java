@@ -29,12 +29,12 @@ public class AccessTokenValidator implements TokenValidator {
    * @return The state after validation
    */
   @Override
-  public State validate(String token) {
+  public TokenState validate(String token) {
     AccessToken accessToken;
-    State state = State.TOKEN_VALID;
+    TokenState state = TokenState.VALID;
     if (token == null) {
       LOG.debug("Token is missing");
-      return State.TOKEN_MISSING;
+      return TokenState.MISSING;
     }
     byte[] decodedToken = Base64.decodeBase64(token);
 
@@ -42,21 +42,10 @@ public class AccessTokenValidator implements TokenValidator {
       accessToken = accessTokenCodec.decode(decodedToken);
       tokenManager.validateSecret(accessToken);
     } catch (IOException ioe) {
-      state = State.TOKEN_INVALID;
+      state = TokenState.INVALID;
       LOG.debug("Unknown Schema version for Access Token. {}", ioe);
     } catch (InvalidTokenException ite) {
-      InvalidTokenException.Reason reason = ite.getReason();
-      switch(reason) {
-        case INVALID:
-          state = State.TOKEN_INVALID;
-          break;
-        case EXPIRED:
-          state = State.TOKEN_EXPIRED;
-          break;
-        case INTERNAL:
-          state = State.TOKEN_INTERNAL;
-          break;
-      }
+      state = ite.getReason();
       LOG.debug("{} {}", state, ite);
     }
     return state;
