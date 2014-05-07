@@ -29,6 +29,7 @@ public final class CombineStreamConsumer implements StreamConsumer {
   private final StreamConsumer firstConsumer;
   private final StreamConsumer secondConsumer;
   private StreamConsumer activeConsumer;
+  private boolean emptyResult;
 
   /**
    * Constructs a new instance. Both consumers provided should have the same stream name and consumer config.
@@ -39,6 +40,8 @@ public final class CombineStreamConsumer implements StreamConsumer {
    * @throws IllegalArgumentException if consumers don't have the same stream name or consumer config.
    */
   public CombineStreamConsumer(StreamConsumer firstConsumer, StreamConsumer secondConsumer) {
+    Preconditions.checkArgument(firstConsumer != secondConsumer,
+                                "First and second consumers cannot be the same instance");
     Preconditions.checkArgument(firstConsumer.getStreamName().equals(secondConsumer.getStreamName()),
                                 "Stream not match between %s and %s", firstConsumer, secondConsumer);
     Preconditions.checkArgument(firstConsumer.getConsumerConfig().equals(secondConsumer.getConsumerConfig()),
@@ -64,9 +67,8 @@ public final class CombineStreamConsumer implements StreamConsumer {
                                          long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException {
 
     DequeueResult<StreamEvent> result = activeConsumer.poll(maxEvents, timeout, timeoutUnit);
-    if (result.isEmpty() && activeConsumer == firstConsumer) {
-      Closeables.closeQuietly(activeConsumer);
-      activeConsumer = secondConsumer;
+    if (activeConsumer == firstConsumer) {
+      emptyResult = result.isEmpty();
     }
     return result;
   }
@@ -99,6 +101,12 @@ public final class CombineStreamConsumer implements StreamConsumer {
   @Override
   public void postTxCommit() {
     activeConsumer.postTxCommit();
+
+    // If the first consumer has empty dequeue result in the poll call,
+    // it's ok to switch to second consumer permanently in post commit call.
+    if (activeConsumer == firstConsumer && emptyResult) {
+      activeConsumer = secondConsumer;
+    }
   }
 
   @Override
