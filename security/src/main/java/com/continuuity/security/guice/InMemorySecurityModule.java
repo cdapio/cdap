@@ -33,13 +33,7 @@ public class InMemorySecurityModule extends SecurityModule {
 
     @Override
     public KeyManager get() {
-      InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
-      try {
-        keyManager.startAndWait();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new InMemoryKeyManager(cConf);
     }
   };
 }

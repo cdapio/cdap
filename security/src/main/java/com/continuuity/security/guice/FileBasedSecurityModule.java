@@ -37,13 +37,7 @@ public class FileBasedSecurityModule extends SecurityModule {
 
     @Override
     public KeyManager get() {
-      FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf, keyIdentifierCodec);
-      try {
-        keyManager.startAndWait();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new FileBasedKeyManager(cConf, keyIdentifierCodec);
     }
   };
 

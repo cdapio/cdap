@@ -38,6 +38,16 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   }
 
   @Override
+  protected void doStart() {
+    tokenManager.start();
+  }
+
+  @Override
+  protected void doStop() {
+    tokenManager.stop();
+  }
+
+  @Override
   public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
     throws IOException, ServletException {
 

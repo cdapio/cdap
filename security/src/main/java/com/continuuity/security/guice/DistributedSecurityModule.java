@@ -40,14 +40,7 @@ public class DistributedSecurityModule extends SecurityModule {
 
     @Override
     public KeyManager get() {
-      zkClient.startAndWait();
-      KeyManager keyManager = new DistributedKeyManager(cConf, keyCodec, zkClient);
-      try {
-        keyManager.startAndWait();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new DistributedKeyManager(cConf, keyCodec, zkClient);
     }
   }
 }

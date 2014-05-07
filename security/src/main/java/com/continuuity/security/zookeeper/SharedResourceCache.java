@@ -1,27 +1,15 @@
 package com.continuuity.security.zookeeper;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.zookeeper.ZKExtOperations;
 import com.continuuity.security.io.Codec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.AbstractLoadingCache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;
@@ -39,13 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * ZooKeeper recipe to propagate changes to a shared cache across a number of listeners.  The cache entries
@@ -62,14 +49,15 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private final ZKClient zookeeper;
   private final Codec<T> codec;
   private final String parentZnode;
-  private final List<ResourceListener<T>> listeners = Lists.newArrayList();
   private ZKWatcher watcher;
   private Map<String, T> resources;
+  private ListenerManager listeners;
 
   public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode) {
     this.zookeeper = zookeeper;
     this.codec = codec;
     this.parentZnode = parentZnode;
+    this.listeners = new ListenerManager();
   }
 
   public void init() throws InterruptedException {
@@ -77,14 +65,16 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     try {
       LOG.info("Checking for parent znode {}", parentZnode);
       if (zookeeper.exists(parentZnode).get() == null) {
-        zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL).get();
+        // may be created in parallel by another instance
+        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL),
+                                 KeeperException.NodeExistsException.class, null).get();
       }
     } catch (ExecutionException ee) {
       // recheck if already created
       throw Throwables.propagate(ee.getCause());
     }
     this.resources = reloadAll();
-    notifyListeners();
+    listeners.notifyUpdate();
   }
 
   private Map<String, T> reloadAll() {
@@ -102,11 +92,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             public void onSuccess(NodeData result) {
               LOG.info("Got data for child " + nodeName);
               try {
-                T resource = codec.decode(result.getData());
+                final T resource = codec.decode(result.getData());
                 loaded.put(nodeName, resource);
-                for (ResourceListener<T> listener : listeners) {
-                  listener.onResourceUpdate(nodeName, resource);
-                }
+                listeners.notifyResourceUpdate(nodeName, resource);
               } catch (IOException ioe) {
                 throw Throwables.propagate(ioe);
               }
@@ -115,7 +103,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             @Override
             public void onFailure(Throwable t) {
               LOG.error("Failed to get data for child node " + nodeName, t);
-              notifyListenersError(nodeName, t);
+              listeners.notifyError(nodeName, t);
             }
           });
           LOG.info("Added future for " + child);
@@ -143,18 +131,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     return listeners.remove(listener);
   }
 
-  private void notifyListeners() {
-    for (ResourceListener listener : listeners) {
-      listener.onUpdate();
-    }
-  }
-
-  private void notifyListenersError(String name, Throwable throwable) {
-    for (ResourceListener<T> listener : listeners) {
-      listener.onError(name, throwable);
-    }
-  }
-
   @Override
   public T get(String key) {
     if (key == null) {
@@ -174,8 +150,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     final String znode = joinZNode(parentZnode, name);
     try {
       final byte[] encoded = codec.encode(instance);
-      LOG.info("Setting value for node " + znode);
-      OperationFuture<String> future = zookeeper.create(znode, encoded, CreateMode.PERSISTENT);
+      LOG.debug("Setting value for node " + znode);
+      ListenableFuture<String> future = ZKExtOperations.createOrSet(zookeeper, znode, encoded, znode,
+                                                                    MAX_RETRIES, znodeACL);
 
       Futures.addCallback(future, new FutureCallback<String>() {
         @Override
@@ -186,23 +163,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
         @Override
         public void onFailure(Throwable t) {
-          if (t instanceof KeeperException.NodeExistsException) {
-            LOG.info("Node " + znode + " already exists.  Setting data.");
-            OperationFuture<Stat> setDataFuture = zookeeper.setData(znode, encoded);
-            Futures.addCallback(setDataFuture, new FutureCallback<Stat>() {
-              @Override
-              public void onSuccess(Stat result) {
-                LOG.info("Set data for node " + znode);
-                resources.put(name, instance);
-              }
-
-              @Override
-              public void onFailure(Throwable t) {
-                LOG.error("Failed to set value for node " + znode);
-                notifyListenersError(name, t);
-              }
-            });
-          }
+          LOG.error("Failed to set value for node " + znode);
+          listeners.notifyError(name, t);
         }
       });
 
@@ -234,7 +196,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed to remove znode {}", znode);
-        notifyListenersError(name, t);
+        listeners.notifyError(name, t);
       }
     });
   }
@@ -287,15 +249,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onSuccess(T result) {
         resources.put(name, result);
-        for (ResourceListener<T> listener : listeners) {
-          listener.onResourceUpdate(name, result);
-        }
+        listeners.notifyResourceUpdate(name, result);
       }
 
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed updating resource for created znode " + path);
-        notifyListenersError(name, t);
+        listeners.notifyError(name, t);
       }
     });
   }
@@ -304,9 +264,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     LOG.info("Got deleted event on " + path);
     String name = getZNode(path);
     resources.remove(name);
-    for (ResourceListener<T> listener : listeners) {
-      listener.onResourceDelete(name);
-    }
+    listeners.notifyDelete(name);
   }
 
   private void notifyChildrenChanged(String path) {
@@ -316,7 +274,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       return;
     }
     resources = reloadAll();
-    notifyListeners();
+    listeners.notifyUpdate();
   }
 
   private void notifyDataChanged(final String path) {
@@ -326,15 +284,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       @Override
       public void onSuccess(T result) {
         resources.put(name, result);
-        for (ResourceListener<T> listener : listeners) {
-          listener.onResourceUpdate(name, result);
-        }
+        listeners.notifyResourceUpdate(name, result);
       }
 
       @Override
       public void onFailure(Throwable t) {
         LOG.error("Failed updating resource for data change on znode " + path);
-        notifyListenersError(name, t);
+        listeners.notifyError(name, t);
       }
     });
   }
@@ -381,6 +337,88 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
           notifyDataChanged(event.getPath());
           break;
       }
+    }
+  }
+
+  private class ListenerManager {
+    private final Set<ResourceListener<T>> listeners = Sets.newCopyOnWriteArraySet();
+    private ExecutorService listenerExecutor;
+
+    private ListenerManager() {
+      this.listenerExecutor = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("SharedResourceCache-listener-%d"));
+    }
+
+    private void add(ResourceListener<T> listener) {
+      this.listeners.add(listener);
+    }
+
+    private boolean remove(ResourceListener<T> listener) {
+      return this.listeners.remove(listener);
+    }
+
+    private void notifyUpdate() {
+      listenerExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          for (ResourceListener listener : listeners) {
+            try {
+              listener.onUpdate();
+            } catch (Throwable t) {
+              LOG.error("Exception notifying listener " + listener, t);
+              Throwables.propagateIfInstanceOf(t, Error.class);
+            }
+          }
+        }
+      });
+    }
+
+    private void notifyResourceUpdate(final String name, final T resource) {
+      listenerExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          for (ResourceListener<T> listener : listeners) {
+            try {
+              listener.onResourceUpdate(name, resource);
+            } catch (Throwable t) {
+              LOG.error("Exception notifying listener " + listener, t);
+              Throwables.propagateIfInstanceOf(t, Error.class);
+            }
+          }
+        }
+      });
+    }
+
+    private void notifyDelete(final String name) {
+      listenerExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          for (ResourceListener<T> listener : listeners) {
+            try {
+              listener.onResourceDelete(name);
+            } catch (Throwable t) {
+              LOG.error("Exception notifying listener " + listener, t);
+              Throwables.propagateIfInstanceOf(t, Error.class);
+            }
+          }
+        }
+      });
+    }
+
+    private void notifyError(final String name, final Throwable throwable) {
+      listenerExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          for (ResourceListener<T> listener : listeners) {
+            try {
+              listener.onError(name, throwable);
+            } catch (Throwable t) {
+              LOG.error("Exception notifying listener " + listener, t);
+              Throwables.propagateIfInstanceOf(t, Error.class);
+            }
+          }
+        }
+      });
     }
   }
 }

@@ -31,6 +31,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
                                              new FileBasedSecurityTestModule(temporaryFolder),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
   }
@@ -50,6 +51,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
                                              new FileBasedSecurityTestModule(temporaryFolder),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
+    tokenManager2.startAndWait();
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);
 

@@ -106,6 +106,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     try {
       DistributedKeyManager keyManager = getKeyManager(injector1, true);
       TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
+      tokenManager.startAndWait();
       return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
                                                                  injector1.getInstance(AccessTokenCodec.class));
     } catch (Exception e) {

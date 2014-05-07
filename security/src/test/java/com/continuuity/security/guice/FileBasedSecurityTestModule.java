@@ -46,13 +46,7 @@ public class FileBasedSecurityTestModule extends SecurityModule {
       cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH,
                 temporaryFolder.getRoot().getAbsolutePath().concat("/keyfile"));
 
-      FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf, keyIdentifierCodec);
-      try {
-        keyManager.startAndWait();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new FileBasedKeyManager(cConf, keyIdentifierCodec);
     }
   };
 }
