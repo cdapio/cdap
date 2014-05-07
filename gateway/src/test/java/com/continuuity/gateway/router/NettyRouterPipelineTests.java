@@ -52,6 +52,8 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -65,8 +67,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Manifest;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * Verify the ordering of events in the RouterPipeline.
@@ -76,7 +76,7 @@ public class NettyRouterPipelineTests {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTests.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private static final String gatewayService = Constants.Service.GATEWAY;
+  private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
