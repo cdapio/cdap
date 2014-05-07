@@ -27,6 +27,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,18 +40,18 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
 
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
-  DiscoveryServiceClient discoveryServiceClient;
-  private final boolean securityEnabled;
+  private DiscoveryServiceClient discoveryServiceClient;
+  Iterable<Discoverable> discoverables;
   private final String realm;
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
-                                           AccessTokenTransformer accessTokenTransformer, boolean securityEnabled,
+                                           AccessTokenTransformer accessTokenTransformer,
                                            DiscoveryServiceClient discoveryServiceClient) {
     this.realm = realm;
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
-    this.securityEnabled = securityEnabled;
     this.discoveryServiceClient = discoveryServiceClient;
+    discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
   }
 
   /**
@@ -66,35 +68,38 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
+    //Parsing the access token from authorization.The request authorization comes as
+    //Authorization: Bearer accesstoken
     if (auth != null) {
-      int spIndex = auth.trim().indexOf(' ') + 1;
+      int spIndex = auth.trim().indexOf(' ');
       if (spIndex != -1) {
-        accessToken = auth.substring(spIndex).trim();
+        accessToken = auth.substring(spIndex + 1).trim();
       }
     }
     TokenValidator.State tokenState = tokenValidator.validate(accessToken);
-    HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-    switch (tokenState) {
-      case TOKEN_MISSING:
-        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                               String.format("Bearer realm=\"%s\"", realm));
-        jsonObject.addProperty("error", "Token Missing");
-        jsonObject.addProperty("error_description", tokenState.getMsg());
-        LOG.info("Failed authentication due to missing token");
-        break;
+    if (!tokenState.isValid()) {
+      HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+      switch (tokenState) {
+        case TOKEN_MISSING:
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+                                 String.format("Bearer realm=\"%s\"", realm));
+          jsonObject.addProperty("error", "Token Missing");
+          jsonObject.addProperty("error_description", tokenState.getMsg());
+          LOG.debug("Failed authentication due to missing token");
+          break;
 
-      case TOKEN_INVALID:
-      case TOKEN_EXPIRED:
-      case TOKEN_INTERNAL:
-        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                               String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
-                                               "error_description=\"%s\"", realm, tokenState.getMsg()));
-        jsonObject.addProperty("error", "invalid_token");
-        jsonObject.addProperty("error_description", tokenState.getMsg());
-        LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
-        break;
-    }
-    if (tokenState != TokenValidator.State.TOKEN_VALID) {
+        case TOKEN_INVALID:
+        case TOKEN_EXPIRED:
+        case TOKEN_INTERNAL:
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+                                 String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
+                                                 "error_description=\"%s\"", realm, tokenState.getMsg()));
+          jsonObject.addProperty("error", "invalid_token");
+          jsonObject.addProperty("error_description", tokenState.getMsg());
+          LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
+          break;
+      }
+
       JsonArray externalAuthenticationURIs = new JsonArray();
 
       //Waiting for service to get discovered
@@ -111,11 +116,10 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       Channels.write(ctx, writeFuture, httpResponse);
       writeFuture.addListener(ChannelFutureListener.CLOSE);
       return false;
+    } else {
+      msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + accessTokenTransformer.transform(accessToken));
+      return true;
     }
-
-    String serealizedAccessTokenIdentifier = accessTokenTransformer.transform(accessToken.trim());
-    msg.setHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Reactor-verified " + serealizedAccessTokenIdentifier);
-    return true;
   }
 
   /**
@@ -126,7 +130,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
    */
   private void stopWatchWait(JsonArray externalAuthenticationURIs) throws Exception {
     boolean done = false;
-    Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     do {
@@ -146,13 +149,11 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     Object msg = event.getMessage();
     if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
-    } else if (securityEnabled) {
-      if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
+    } else if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
         Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
-      }
+    } else{
       return;
-    } else {
-      super.messageReceived(ctx, event);
     }
   }
+
 }

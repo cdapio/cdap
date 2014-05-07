@@ -173,10 +173,11 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
-          pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
+          if(securityEnabled) {
+            pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
                                                                                     accessTokenTransformer,
-                                                                                    securityEnabled,
                                                                                     discoveryServiceClient));
+          }
           pipeline.addLast("http-request-handler",
                            new HttpRequestHandler(clientBootstrap, serviceLookup));
           return pipeline;
