@@ -27,5 +27,5 @@ script in the $CONTINUUITY/bin folder. E.g.
 
   %> cd ~/Projects/continuuity-sdk-2.2.0
   %> bin/reactor.sh start
-  %> bin/run-example Purchase 
+  %> bin/run-example SentimentAnalysis 
 
