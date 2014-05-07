@@ -88,7 +88,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
       @Override
       public void reclaim() {
-
+        result.reclaim();
       }
 
       @Override
