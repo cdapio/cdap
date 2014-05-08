@@ -784,6 +784,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
         }
       } catch (Exception e) {
+        if (e instanceof FileNotFoundException) {
+          return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+        }
         return AppFabricServiceStatus.INTERNAL_ERROR;
       }
     }
@@ -795,9 +798,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      if (throwable instanceof FileNotFoundException) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
