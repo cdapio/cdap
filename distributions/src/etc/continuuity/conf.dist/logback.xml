@@ -23,5 +23,23 @@
       <appender-ref ref="Console"/>
     </root>
 
+    <!--
+      Uncomment the following section to enable access logging by the Router process.
+      Log output will be in the standard Apache HTTPd access log format (see
+      http://httpd.apache.org/docs/2.2/logs.html#accesslog).
+    -->
+    <!--
+    <appender name="AUDIT" class="ch.qos.logback.core.FileAppender">
+      <file>access.log</file>
+      <append>true</append>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="http-access" level="TRACE" additivity="false">
+      <appender-ref ref="AUDIT" />
+    </logger>
+    -->
+
 </configuration>
 
