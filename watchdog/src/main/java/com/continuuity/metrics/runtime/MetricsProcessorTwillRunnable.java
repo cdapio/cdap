@@ -12,11 +12,9 @@ import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.migrate.MetricsTableMigrator_2_0_to_2_1;
 import com.continuuity.internal.migrate.TableMigrator;
-import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
-import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
@@ -25,11 +23,8 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -81,48 +76,31 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   }
 
   public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
-    return Guice.createInjector(new ConfigModule(cConf, hConf),
-                                new IOModule(),
-                                new ZKClientModule(),
-                                new KafkaClientModule(),
-                                new DiscoveryRuntimeModule().getDistributedModules(),
-                                new LocationRuntimeModule().getDistributedModules(),
-                                new DataFabricModules(cConf, hConf).getDistributedModules(),
-                                new PrivateModule() {
-                                  @Override
-                                  protected void configure() {
-                                    install(new MetricsProcessorModule());
-                                    bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
-                                      .in(Scopes.SINGLETON);
-                                    bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
-                                    bind(TableMigrator.class).to(MetricsTableMigrator_2_0_to_2_1.class);
-                                    install(new FactoryModuleBuilder()
-                                              .build(KafkaMetricsProcessorServiceFactory.class));
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new KafkaMetricsProcessorModule()
+     );
+  }
 
-                                    expose(TableMigrator.class);
-                                    expose(KafkaMetricsProcessorServiceFactory.class);
-                                  }
+  static final class KafkaMetricsProcessorModule extends PrivateModule {
+   @Override
+    protected void configure() {
+      install(new MetricsProcessorModule());
+      bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
+        .in(Scopes.SINGLETON);
+      bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
+      bind(TableMigrator.class).to(MetricsTableMigrator_2_0_to_2_1.class);
+      install(new FactoryModuleBuilder()
+                .build(KafkaMetricsProcessorServiceFactory.class));
 
-                                  @Provides
-                                  @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
-                                  public int providesConsumerPersistThreshold(CConfiguration cConf) {
-                                    return cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                                                        MetricsConstants.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
-                                  }
-
-                                  @Provides
-                                  @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
-                                  public String providesKafkaTopicPrefix(CConfiguration cConf) {
-                                    return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX,
-                                                     MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
-                                  }
-
-                                  @Provides
-                                  @Singleton
-                                  public KafkaConsumerMetaTable providesKafkaConsumerMetaTable(MetricsTableFactory
-                                                                                                 tableFactory) {
-                                    return tableFactory.createKafkaConsumerMeta("default");
-                                  }
-                                });
+      expose(TableMigrator.class);
+      expose(KafkaMetricsProcessorServiceFactory.class);
+    }
   }
 }
