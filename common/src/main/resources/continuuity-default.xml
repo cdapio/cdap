@@ -782,4 +782,18 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <!--
+        Security enabled flag
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>false</value>
+        <description>If this is set to true, security layer will be up and active in reactor</description>
+    </property>
+
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
+    </property>
 </configuration>
