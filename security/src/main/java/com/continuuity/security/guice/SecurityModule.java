@@ -1,5 +1,6 @@
 package com.continuuity.security.guice;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -10,7 +11,7 @@ import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
-import com.continuuity.security.server.JAASAuthenticationHandler;
+import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -45,7 +46,7 @@ public abstract class SecurityModule extends PrivateModule {
 
     Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
                                                                   Names.named("security.handlers.set"));
-    handlerBinder.addBinding().to(JAASAuthenticationHandler.class);
+    handlerBinder.addBinding().to(getAuthenticationHandlerClass());
     handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(BasicAuthenticationHandlerListProvider.class)
@@ -53,6 +54,17 @@ public abstract class SecurityModule extends PrivateModule {
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
+  }
+
+  private static final Class<? extends Handler> getAuthenticationHandlerClass() {
+    CConfiguration cConfiguration = CConfiguration.create();
+    try {
+      return (Class<? extends Handler>) cConfiguration.getClassByName(
+                                                      cConfiguration.get("security.authentication.handler.className"));
+    } catch (ClassNotFoundException e) {
+      Throwables.propagate(e);
+    }
+    return null;
   }
 
   private static final class BasicAuthenticationHandlerListProvider implements Provider<HandlerList> {
