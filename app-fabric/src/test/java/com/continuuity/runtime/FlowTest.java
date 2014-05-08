@@ -31,6 +31,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -40,10 +41,14 @@ import com.google.gson.Gson;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -57,11 +62,27 @@ import java.util.concurrent.TimeUnit;
  */
 public class FlowTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   private static final Logger LOG = LoggerFactory.getLogger(FlowTest.class);
 
   @Test
   public void testAppWithArgs() throws Exception {
-   final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class);
+   final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
+                                                                               TEMP_FOLDER_SUPPLIER);
    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
@@ -99,7 +120,8 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
@@ -168,7 +190,8 @@ public class FlowTest {
 
   @Test
   public void testCountRandomApp() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
 
     System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
                                                       .toJson(app.getAppSpecLoc().getSpecification()));
@@ -187,7 +210,8 @@ public class FlowTest {
 
   @Test
   public void testCountAndFilterWord() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(CountAndFilterWord.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(CountAndFilterWord.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
 
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
@@ -231,7 +255,7 @@ public class FlowTest {
   @Test (expected = IllegalArgumentException.class)
   public void testInvalidOutputEmitter() throws Throwable {
     try {
-      TestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class);
+      TestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class, TEMP_FOLDER_SUPPLIER);
     } catch (Exception e) {
       throw Throwables.getRootCause(e);
     }

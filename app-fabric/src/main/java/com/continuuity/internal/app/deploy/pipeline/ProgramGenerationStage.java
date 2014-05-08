@@ -15,7 +15,6 @@ import com.continuuity.pipeline.AbstractStage;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -101,9 +100,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         futures.add(future);
       }
 
-      Futures.allAsList(futures).get();
-      for (ListenableFuture<Location> f : futures) {
-        programs.add(Programs.create(f.get(), Files.createTempDir()));
+      for (Location jarLocation : Futures.allAsList(futures).get()) {
+        programs.add(Programs.create(jarLocation));
       }
     } finally {
       executorService.shutdown();

@@ -23,12 +23,18 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +42,21 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MultiConsumerTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
 
   /**
    *
@@ -131,7 +152,7 @@ public class MultiConsumerTest {
   @Test
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(MultiApp.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(MultiApp.class, TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
