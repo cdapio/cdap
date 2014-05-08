@@ -11,12 +11,12 @@ import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
-import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
@@ -57,28 +57,25 @@ public abstract class SecurityModule extends PrivateModule {
     expose(ExternalAuthenticationServer.class);
   }
 
+  @Provides
+  private Class<Handler> provideHandlerClass(CConfiguration configuration) throws ClassNotFoundException {
+    return (Class<Handler>) configuration.getClass("security.authentication.handler.className", null, Handler.class);
+  }
+
   private static final class AuthenticationHandlerProvider implements  Provider<Handler> {
 
-    private final CConfiguration cConf;
     private final Injector injector;
+    private final Class<Handler> handlerClass;
 
     @Inject
-    AuthenticationHandlerProvider(CConfiguration cConf, Injector injector) {
-      this.cConf = cConf;
+    private AuthenticationHandlerProvider(Injector injector, Class<Handler> handlerClass) {
       this.injector = injector;
+      this.handlerClass = handlerClass;
     }
 
     @Override
     public Handler get() {
-      try {
-        Class<Handler> handlerClass = (Class<Handler>) cConf.getClassByName(
-                                                                cConf.get("security.authentication.handler.className"));
-        Handler handler = handlerClass.newInstance();
-        injector.injectMembers(handler);
-        return handler;
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+      return injector.getInstance(handlerClass);
     }
   }
 
