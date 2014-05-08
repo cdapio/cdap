@@ -13,11 +13,9 @@ import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamFileType;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import com.continuuity.data2.transaction.queue.hbase.HBaseStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
@@ -52,9 +50,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Inject
   HBaseStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
                                  StreamConsumerStateStoreFactory stateStoreFactory,
-                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
-                                 QueueClientFactory queueClientFactory, HBaseStreamAdmin oldStreamAdmin) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
+    super(dataSetAccessor, streamAdmin, stateStoreFactory);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;

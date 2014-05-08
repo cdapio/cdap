@@ -35,7 +35,7 @@ import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -57,10 +57,10 @@ public class MDTBasedStoreTest {
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    store = TestHelper.getInjector().getInstance(MDTBasedStore.class);
+    store = AppFabricServiceWrapper.getInjector().getInstance(MDTBasedStore.class);
 
     // clean up data
-    MetaDataTable mds = TestHelper.getInjector().getInstance(MetaDataTable.class);
+    MetaDataTable mds = AppFabricServiceWrapper.getInjector().getInstance(MetaDataTable.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);
     }
@@ -68,7 +68,7 @@ public class MDTBasedStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    TestHelper.deployApplication(ToyApp.class);
+    AppFabricServiceWrapper.deployApplication(ToyApp.class);
     Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"), Type.FLOW);
     Assert.assertNotNull(program);
   }
@@ -356,7 +356,7 @@ public class MDTBasedStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    TestHelper.deployApplication(WordCountApp.class);
+    AppFabricServiceWrapper.deployApplication(WordCountApp.class);
 
     ApplicationSpecification spec = getSpec(new WordCountApp().configure());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
@@ -381,7 +381,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testProcedureInstances() throws Exception {
 
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricServiceWrapper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
@@ -513,7 +513,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs () throws Exception {
     //Deploy program with all types of programs.
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricServiceWrapper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
@@ -549,7 +549,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testCheckDeletedProceduresAndWorkflow () throws Exception {
     //Deploy program with all types of programs.
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricServiceWrapper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();

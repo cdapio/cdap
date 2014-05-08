@@ -23,7 +23,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -79,7 +79,7 @@ public class MapReduceProgramRunnerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = TestHelper.getInjector(conf);
+    injector = AppFabricServiceWrapper.getInjector(conf);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
@@ -100,8 +100,9 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app =
+      AppFabricServiceWrapper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class,
+                                                           TEMP_FOLDER_SUPPLIER);
 
     dataSetInstantiator.setDataSets(new AppWithMapReduceUsingObjectStore().configure().getDataSets().values());
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
@@ -138,9 +139,9 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testWordCount() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
 
+    final ApplicationWithPrograms app = AppFabricServiceWrapper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                             TEMP_FOLDER_SUPPLIER);
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
@@ -194,8 +195,9 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void testSuccess(boolean frequentFlushing) throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricServiceWrapper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                             TEMP_FOLDER_SUPPLIER);
+
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -264,8 +266,9 @@ public class MapReduceProgramRunnerTest {
     // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
     //       here to be recognized by map tasks as a message to emulate failure
 
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricServiceWrapper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                             TEMP_FOLDER_SUPPLIER);
+
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()

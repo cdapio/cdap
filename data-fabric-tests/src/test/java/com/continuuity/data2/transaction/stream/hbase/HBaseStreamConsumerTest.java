@@ -10,7 +10,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -44,7 +43,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
   private static InMemoryTransactionManager txManager;
-  private static QueueClientFactory queueClientFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -73,8 +71,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(InMemoryTransactionManager.class);
-    queueClientFactory = injector.getInstance(QueueClientFactory.class);
-
     txManager.startAndWait();
   }
 
@@ -82,11 +78,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   public static void finish() throws Exception {
     txManager.stopAndWait();
     testHBase.stopHBase();
-  }
-
-  @Override
-  protected QueueClientFactory getQueueClientFactory() {
-    return queueClientFactory;
   }
 
   @Override

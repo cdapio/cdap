@@ -7,16 +7,11 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.stream.service.StreamHttpModule;
-import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
 import com.continuuity.gateway.handlers.ProcedureHandlerTest;
-import com.continuuity.gateway.handlers.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
-import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.gateway.router.NettyRouter;
@@ -71,7 +66,6 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {PingHandlerTest.class, ProcedureHandlerTest.class,
-  TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, NettyFlumeCollectorTest.class,
   MetricsReporterHookTest.class, RouterPathTest.class})
 public class GatewayFastTestsSuite {
@@ -90,7 +84,6 @@ public class GatewayFastTestsSuite {
   private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
-  private static StreamHttpService streamHttpService;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -142,8 +135,7 @@ public class GatewayFastTestsSuite {
         },
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
-        new AppFabricTestModule(conf),
-        new StreamHttpModule()
+        new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
                @Override
                protected void configure() {
@@ -164,10 +156,8 @@ public class GatewayFastTestsSuite {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
-    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
     metrics.startAndWait();
-    streamHttpService.startAndWait();
     gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
@@ -195,7 +185,6 @@ public class GatewayFastTestsSuite {
     gateway.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
-    streamHttpService.stopAndWait();
     conf.clear();
   }
 
@@ -257,6 +246,7 @@ public class GatewayFastTestsSuite {
 
   public static HttpResponse execute(HttpUriRequest request) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
+
     request.setHeader(AUTH_HEADER);
     return client.execute(request);
   }

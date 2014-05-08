@@ -14,8 +14,6 @@ import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
@@ -44,9 +42,8 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   @Inject
   LevelDBStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                   CConfiguration cConf, LevelDBOcTableService tableService,
-                                   QueueClientFactory queueClientFactory, LevelDBStreamAdmin oldStreamAdmin) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+                                   CConfiguration cConf, LevelDBOcTableService tableService) {
+    super(dataSetAccessor, streamAdmin, stateStoreFactory);
     this.cConf = cConf;
     this.tableService = tableService;
     this.dbLocks = Maps.newConcurrentMap();

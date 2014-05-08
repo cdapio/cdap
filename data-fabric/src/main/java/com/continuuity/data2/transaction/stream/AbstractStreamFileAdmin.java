@@ -45,17 +45,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
 
-  // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
-  // TODO: Remove usage of this when no longer needed
-  private final StreamAdmin oldStreamAdmin;
-
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                    StreamAdmin oldStreamAdmin) {
+                                    StreamConsumerStateStoreFactory stateStoreFactory) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
     this.stateStoreFactory = stateStoreFactory;
-    this.oldStreamAdmin = oldStreamAdmin;
   }
 
   @Override
@@ -94,10 +88,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       stateStore.close();
     }
 
-    // Also configure the old stream if it exists
-    if (oldStreamAdmin.exists(name.toURI().toString())) {
-      oldStreamAdmin.configureInstances(name, groupId, instances);
-    }
   }
 
   @Override
@@ -148,17 +138,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     } finally {
       stateStore.close();
     }
-
-    // Also configure the old stream if it exists
-    if (oldStreamAdmin.exists(name.toURI().toString())) {
-      oldStreamAdmin.configureGroups(name, groupInfo);
-    }
   }
 
   @Override
   public void upgrade() throws Exception {
     // No-op
-    oldStreamAdmin.upgrade();
   }
 
   @Override
@@ -179,8 +163,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     try {
-      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists()
-        || oldStreamAdmin.exists(QueueName.fromStream(name).toURI().toString());
+      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -225,28 +208,16 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public void truncate(String name) throws Exception {
     // TODO: How to support it properly with opened stream writer?
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.truncate(streamName);
-    }
   }
 
   @Override
   public void drop(String name) throws Exception {
   // TODO: How to support it properly with opened stream writer?
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.drop(streamName);
-    }
   }
 
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
     // No-op
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.upgrade(streamName, properties);
-    }
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,

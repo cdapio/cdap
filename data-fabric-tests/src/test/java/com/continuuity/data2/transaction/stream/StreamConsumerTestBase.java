@@ -6,15 +6,11 @@ package com.continuuity.data2.transaction.stream;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
-import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.stream.TimePartitionedStreamFileWriter;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
-import com.continuuity.data2.queue.Queue2Producer;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -25,7 +21,6 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +31,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public abstract class StreamConsumerTestBase {
-
-  protected abstract QueueClientFactory getQueueClientFactory();
 
   protected abstract StreamConsumerFactory getConsumerFactory();
 
@@ -206,81 +199,6 @@ public abstract class StreamConsumerTestBase {
     for (StreamConsumer consumer : consumers) {
       consumer.close();
     }
-  }
-
-  @Test
-  public void testCombineConsumer() throws Exception {
-    String stream = "testCombineConsumer";
-    QueueName streamName = QueueName.fromStream(stream);
-    StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-
-    // Writer 10 messages to new stream
-    writeEvents(streamConfig, "New event ", 10);
-
-    QueueClientFactory oldStreamFactory = getQueueClientFactory();
-
-    // Write 10 messages to old stream
-    StreamEventCodec streamEventCodec = new StreamEventCodec();
-    Queue2Producer producer = oldStreamFactory.createProducer(streamName);
-    TransactionContext txContext = createTxContext((TransactionAware) producer);
-    for (int i = 0; i < 10; i++) {
-      txContext.start();
-      String msg = "Old event " + i;
-      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(msg));
-      producer.enqueue(new QueueEntry(streamEventCodec.encodePayload(event)));
-      txContext.finish();
-    }
-    if (producer instanceof Closeable) {
-      ((Closeable) producer).close();
-    }
-
-    streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
-
-    // Create a consumer, that should be able to see all old events before the new events
-    StreamConsumer consumer = getConsumerFactory().create(streamName, "combine.consumer",
-                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
-
-    txContext = createTxContext(consumer);
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("Old event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      // Would expect one empty result during the switch
-      DequeueResult<StreamEvent> result = consumer.poll(10, 0, TimeUnit.SECONDS);
-      Assert.assertTrue(result.isEmpty());
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("New event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    consumer.close();
   }
 
   private TransactionContext createTxContext(TransactionAware... txAwares) {

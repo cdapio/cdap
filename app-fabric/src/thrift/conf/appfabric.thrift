@@ -39,6 +39,14 @@ struct ArchiveId {
  3:required string resource,
 }
 
+
+/**
+ * Identifies the resource that is being deployed.
+ */
+struct ArchiveIdTest {
+ 1:required string accountId
+}
+
 /**
  * Information about resource
  */

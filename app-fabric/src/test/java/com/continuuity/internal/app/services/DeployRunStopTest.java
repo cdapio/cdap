@@ -9,13 +9,9 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.ProgramDescriptor;
-import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
@@ -35,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DeployRunStopTest {
 
-  private static AppFabricService.Iface server;
+  private static AppFabricHttpHandler server;
   private static LocationFactory lf;
   private static StoreFactory sFactory;
   private static AtomicInteger instanceCount = new AtomicInteger(0);
@@ -124,33 +120,26 @@ public class DeployRunStopTest {
 
   @Test @Ignore
   public void testDeployRunStop() throws Exception {
-    TestHelper.deployApplication(GenSinkApp.class);
-
-    AuthToken token = new AuthToken("12345");
-    ProgramId flowIdentifier = new ProgramId(DefaultId.ACCOUNT.getId(), "GenSinkApp", "GenSinkFlow");
-    server.start(token, new ProgramDescriptor(flowIdentifier, ImmutableMap.<String, String>of()));
-
+    AppFabricServiceWrapper.deployApplication(GenSinkApp.class);
+    AppFabricServiceWrapper.startProgram(server, "GenSinkApp", "GenSinkFlow", "flows",
+                                         ImmutableMap.<String, String>of());
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
-
-    server.setFlowletInstances(token, flowIdentifier, "SinkFlowlet", (short) 3);
-
+    AppFabricServiceWrapper.setFlowletInstances(server, "GenSinkApp", "GenSinkFlow", "SinkFlowlet", (short) 3);
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
     // TODO: The flow test need to reform later using the new test framework.
     // Sleep one extra seconds to consume any unconsumed items (there shouldn't be, but this is for catching error).
     TimeUnit.SECONDS.sleep(1);
-
-    server.stop(token, flowIdentifier);
-
+    AppFabricServiceWrapper.stopProgram(server, "GenSinkApp", "GenSinkFlow", "flows");
     Assert.assertEquals(9999, messageCount.get());
     Assert.assertEquals(3, instanceCount.get());
   }
 
   @BeforeClass
   public static void before() throws Exception {
-    final Injector injector = TestHelper.getInjector();
+    final Injector injector = AppFabricServiceWrapper.getInjector();
 
-    server = injector.getInstance(AppFabricService.Iface.class);
+    server = injector.getInstance(AppFabricHttpHandler.class);
 
     // Create location factory.
     lf = injector.getInstance(LocationFactory.class);

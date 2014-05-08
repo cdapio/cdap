@@ -2,20 +2,43 @@ package com.continuuity.test.internal.guice;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.Id;
+import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.test.internal.DefaultId;
+import com.continuuity.test.internal.TempFolder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -37,8 +60,10 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -51,27 +76,60 @@ public class AppFabricServiceWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceWrapper.class);
   private static final Gson GSON = new Gson();
+  public static final TempFolder TEMP_FOLDER = new TempFolder();
+  public static CConfiguration configuration;
+  private static Injector injector;
+
+  public static Injector getInjector() {
+    return getInjector(CConfiguration.create());
+  }
+
+  public static synchronized Injector getInjector(CConfiguration conf) {
+    if (injector == null) {
+      configuration = conf;
+      configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+      configuration.set(Constants.AppFabric.OUTPUT_DIR, TEMP_FOLDER.newFolder("app").getAbsolutePath());
+      configuration.set(Constants.AppFabric.TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
+      configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+      injector = Guice.createInjector(new AppFabricTestModule(configuration));
+      injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
+    }
+    return injector;
+  }
+
 
   private static final class MockResponder implements HttpResponder {
     private HttpResponseStatus status = null;
+    private String response = null;
 
-    HttpResponseStatus getStatus() {
+
+    private HttpResponseStatus getStatus() {
       return status;
     }
 
+    private String getResponse() {
+      return response;
+    }
     @Override
     public void sendJson(HttpResponseStatus status, Object object) {
       this.status = status;
+      sendJson(status, object, null, null);
     }
 
     @Override
     public void sendJson(HttpResponseStatus status, Object object, Type type) {
-
+       sendJson(status, object, type, null);
     }
 
     @Override
     public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
-
+      Map<String, String> o = GSON.fromJson(object.toString(), new TypeToken<Map<String, String>>() { }.getType());
+      this.response = o.get("status");
     }
 
     @Override
@@ -81,7 +139,7 @@ public class AppFabricServiceWrapper {
 
     @Override
     public void sendStatus(HttpResponseStatus status) {
-
+      this.status = status;
     }
 
     @Override
@@ -131,6 +189,14 @@ public class AppFabricServiceWrapper {
     }
   }
 
+  public static void reset(AppFabricHttpHandler httpHandler) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/unrecoverable/reset");
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    httpHandler.resetReactor(request, responder);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
+  }
+
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                   String type, Map<String, String> args) {
 
@@ -155,6 +221,18 @@ public class AppFabricServiceWrapper {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
   }
 
+
+  public static String getStatus(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                 String type) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    httpHandler.getStatus(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+    return responder.getResponse();
+  }
+
   public static void setFlowletInstances(AppFabricHttpHandler httpHandler, String applicationId,
                                          String flowId, String flowletName, int instances) {
 
@@ -166,6 +244,79 @@ public class AppFabricServiceWrapper {
     httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
   }
+  /**
+   * Given a class generates a manifest file with main-class as class.
+   *
+   * @param klass to set as Main-Class in manifest file.
+   * @return An instance {@link Manifest}
+   */
+  public static Manifest getManifestWithMainClass(Class<?> klass) {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
+    return manifest;
+  }
+
+  /**
+   * @return Returns an instance of {@link com.continuuity.internal.app.deploy.LocalManager}
+   */
+  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
+    ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
+    return factory.create(new ProgramTerminator() {
+      @Override
+      public void stop(Id.Account id, Id.Program programId, com.continuuity.app.program.Type type) throws Exception {
+        //No-op
+      }
+    });
+  }
+
+
+  public static void deployApplication(Class<? extends Application> application) throws Exception {
+    deployApplication(application,
+                      "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
+  }
+
+  /**
+   *
+   */
+  public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
+    Location deployedJar =
+      deployApplication(getInjector().getInstance(AppFabricHttpHandler.class),
+                        getInjector().getInstance(LocationFactory.class),
+                        fileName, applicationClz);
+    deployedJar.delete(true);
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
+                                                                     final Supplier<File> folderSupplier)
+    throws Exception {
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(appClass, AppFabricServiceWrapper.getManifestWithMainClass(appClass))
+    );
+    try {
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+
+      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+                                                                        new Function<Program, Program>() {
+            @Override
+            public Program apply(Program program) {
+              try {
+                return Programs.create(program.getJarLocation(), folderSupplier.get());
+              } catch (IOException e) {
+                throw Throwables.propagate(e);
+              }
+            }
+          }
+      ));
+      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
+    } finally {
+      deployedJar.delete(true);
+    }
+  }
+
 
   public static Location deployApplication(AppFabricHttpHandler httpHandler,
                                     LocationFactory locationFactory,

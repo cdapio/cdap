@@ -83,7 +83,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
     return new DequeueResult<StreamEvent>() {
       @Override
       public boolean isEmpty() {
-        return events.isEmpty();
+        return result.isEmpty();
       }
 
       @Override
@@ -93,7 +93,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
       @Override
       public int size() {
-        return events.size();
+        return 0;
       }
 
       @Override
@@ -152,7 +152,6 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   public String getName() {
     return Objects.toStringHelper(this)
       .add("queue", streamName)
-      .add("config", consumerConfig)
       .toString();
   }
 }
