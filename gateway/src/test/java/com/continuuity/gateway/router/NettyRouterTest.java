@@ -13,6 +13,7 @@ import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;
@@ -409,7 +410,7 @@ public class NettyRouterTest {
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
-      Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(),
+      Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);

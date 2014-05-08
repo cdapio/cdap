@@ -16,8 +16,7 @@ public enum TokenState {
   INVALID("Invalid token signature.", false),
   EXPIRED("Expired token.", false),
   INTERNAL("Invalid key for token.", false),
-  VALID("Token is valid.", true),
-  UNAUTHORIZED("Token is unauthorized.", false);
+  VALID("Token is valid.", true);
 
   private final String msg;
   private final boolean valid;

@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Date;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -80,25 +82,19 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-      switch (tokenState) {
-        case MISSING:
-          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+      if (tokenState == TokenState.MISSING) {
+        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\"", realm));
-          jsonObject.addProperty("error", "Token Missing");
-          jsonObject.addProperty("error_description", tokenState.getMsg());
-          LOG.debug("Failed authentication due to missing token");
-          break;
+        LOG.debug("Failed authentication due to missing token");
 
-        case INVALID:
-        case EXPIRED:
-        case INTERNAL:
-          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
+      }
+      else {
+        httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
                                                  "error_description=\"%s\"", realm, tokenState.getMsg()));
-          jsonObject.addProperty("error", "invalid_token");
-          jsonObject.addProperty("error_description", tokenState.getMsg());
-          LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
-          break;
+        jsonObject.addProperty("error", "invalid_token");
+        jsonObject.addProperty("error_description", tokenState.getMsg());
+        LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
       }
 
       JsonArray externalAuthenticationURIs = new JsonArray();

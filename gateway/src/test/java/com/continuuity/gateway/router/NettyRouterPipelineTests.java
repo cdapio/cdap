@@ -17,6 +17,7 @@ import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -199,7 +200,7 @@ public class NettyRouterPipelineTests {
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
-      Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(),
+      Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);

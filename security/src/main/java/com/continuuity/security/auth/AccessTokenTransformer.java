@@ -32,4 +32,5 @@ public class AccessTokenTransformer {
     byte[] encodedAccessTokenIdentifier = accessTokenIdentifierCodec.encode(accessTokenIdentifierObj);
     return Base64.encodeBase64String(encodedAccessTokenIdentifier).trim();
   }
+
 }
