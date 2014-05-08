@@ -7,7 +7,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.OperationException;
 import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.process.KafkaMetricsProcessorService;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
@@ -28,9 +27,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Metrics processor service that processes events from Kafka.
  */
-public final class MetricsProcessorService extends AbstractIdleService {
+public final class KafkaMetricsProcessorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
   private final MultiLeaderElection multiElection;
   private final TableMigrator tableMigrator;
@@ -38,9 +37,9 @@ public final class MetricsProcessorService extends AbstractIdleService {
   private final SettableFuture<?> completion = SettableFuture.create();
 
   @Inject
-  public MetricsProcessorService(CConfiguration conf, TableMigrator tableMigrator,
-                                 ZKClientService zkClientService,
-                                 KafkaMetricsProcessorServiceFactory kafkaMetricsProcessorServiceFactory) {
+  public KafkaMetricsProcessorService(CConfiguration conf, TableMigrator tableMigrator,
+                                      ZKClientService zkClientService,
+                                      KafkaMetricsProcessorServiceFactory kafkaMetricsProcessorServiceFactory) {
     this.zkClientService = zkClientService;
     this.tableMigrator = tableMigrator;
 
@@ -92,7 +91,7 @@ public final class MetricsProcessorService extends AbstractIdleService {
   private PartitionChangeHandler createPartitionChangeHandler(final KafkaMetricsProcessorServiceFactory factory) {
     return new PartitionChangeHandler() {
 
-      private KafkaMetricsProcessorService service;
+      private com.continuuity.metrics.process.KafkaMetricsProcessorService service;
 
       @Override
       public void partitionsChanged(Set<Integer> partitions) {

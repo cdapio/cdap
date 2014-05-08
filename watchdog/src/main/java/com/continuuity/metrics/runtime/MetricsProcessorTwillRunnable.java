@@ -42,10 +42,10 @@ import java.util.List;
 /**
  * Twill Runnable to run MetricsProcessor in YARN.
  */
-public class MetricsProcessorTwillRunnable extends AbstractReactorTwillRunnable {
+public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
-  private MetricsProcessorService metricsProcessorService;
+  private KafkaMetricsProcessorService kafkaMetricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
 
@@ -65,7 +65,7 @@ public class MetricsProcessorTwillRunnable extends AbstractReactorTwillRunnable 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
-      metricsProcessorService = injector.getInstance(MetricsProcessorService.class);
+      kafkaMetricsProcessorService = injector.getInstance(KafkaMetricsProcessorService.class);
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -77,7 +77,7 @@ public class MetricsProcessorTwillRunnable extends AbstractReactorTwillRunnable 
   public void getServices(List<? super Service> services) {
     services.add(zkClientService);
     services.add(kafkaClientService);
-    services.add(metricsProcessorService);
+    services.add(kafkaMetricsProcessorService);
   }
 
   public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
