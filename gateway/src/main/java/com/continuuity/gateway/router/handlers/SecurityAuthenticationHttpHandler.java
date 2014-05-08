@@ -87,8 +87,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
                                  String.format("Bearer realm=\"%s\"", realm));
         LOG.debug("Failed authentication due to missing token");
 
-      }
-      else {
+      } else {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
                                                  "error_description=\"%s\"", realm, tokenState.getMsg()));
