@@ -68,7 +68,6 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-
 @Suite.SuiteClasses(value = {
   PingHandlerTest.class,
   ProcedureHandlerTest.class,
