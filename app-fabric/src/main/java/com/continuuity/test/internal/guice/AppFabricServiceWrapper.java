@@ -33,6 +33,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -51,6 +52,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.channels.Channel;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -147,7 +149,9 @@ public class AppFabricServiceWrapper {
     String uri = String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances/%s",
                                applicationId, flowId, flowletName, instances);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    request.addHeader("instances", instances);
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
   }

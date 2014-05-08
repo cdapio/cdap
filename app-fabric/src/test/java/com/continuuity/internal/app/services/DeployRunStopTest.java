@@ -2,6 +2,7 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -89,8 +90,8 @@ public class DeployRunStopTest {
       public void generate() throws Exception {
         if (i < 10000) {
           output.emit("Testing " + ++i);
-          if (i == 1000) {
-            throw new IllegalStateException("1000 hitted");
+          if (i == 10000) {
+            throw new IllegalStateException("10000 hitted");
           }
         }
       }
@@ -108,6 +109,7 @@ public class DeployRunStopTest {
         instanceCount.incrementAndGet();
       }
 
+      @ProcessInput
       public void process(String text) {
         if (messageCount.incrementAndGet() == 5000) {
           messageSemaphore.release();
@@ -118,7 +120,7 @@ public class DeployRunStopTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   public void testDeployRunStop() throws Exception {
     AppFabricServiceWrapper.deployApplication(GenSinkApp.class);
     AppFabricServiceWrapper.startProgram(server, "GenSinkApp", "GenSinkFlow", "flows",
