@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Streams REST API</title>
+    <title>DataSet Transactions</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,15 +1722,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Streams REST API</h1></header>
+            <header><h1>DataSet Transactions</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
+            <section><!-- .. eST Editor: .. section-numbering:: -->
 <!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
@@ -1744,17 +1744,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/16
+              1/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1762,14 +1762,95 @@ function main() {
             <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at the Continuuity Reactor Streams REST API:</p>
+            <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Creating a Stream</li>
-<li>Sending Events to a Stream</li>
-<li>Reading Events from a Stream</li>
-<li>Reading Multiple Events from a Stream [tbc]</li>
+<li>The need for transactions</li>
+<li>OCC: Optimistic Concurrency Control</li>
+<li>Rules for transactions</li>
+<li>Disabling transactions: when and where</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              2/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>The Need for Transactions (1 of 2)</h1></header>
+            
+            
+            <section><p>A Flowlet processes the data objects received on its inputs one at a time</p>
+<p>While processing a single input object, all operations, including the removal of the data
+from the input, and emission of data to the outputs, are executed in a <strong>transaction</strong></p>
+<p>This provides us with <strong>ACID:</strong></p>
+<ul class="simple">
+<li>Atomicity</li>
+<li>Consistency</li>
+<li>Isolation, and</li>
+<li>Durability properties</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>The Need for Transactions (2 of 2)</h1></header>
+            
+            
+            <section><p>To create <strong>ACID:</strong></p>
+<ul class="simple">
+<li>The process method runs under read isolation to ensure that it does not see dirty writes
+(uncommitted writes from concurrent processing) in any of its reads; it does see,
+however, its own writes</li>
+<li>A failed attempt to process an input object leaves the data in a consistent state;
+it does not leave partial writes behind</li>
+<li>All writes and emission of data are committed atomically; either all of them or none of
+them are persisted</li>
+<li>After processing completes successfully, all its writes are persisted in a durable way</li>
 </ul>
-<p>[DOCNOTE: FIXME!]</p></section>
+<p>In case of failure, the state of the data is unchanged and processing of the input
+object can be reattempted</p>
+<p>This ensures &quot;exactly-once&quot; processing of each object</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1781,212 +1862,33 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/16
+              4/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Streams Recap</h1></header>
+            <header><h1>OCC: Optimistic Concurrency Control (1 of 2)</h1></header>
             
             
-            <section><p>Stream REST API supports:</p>
+            <section><p>The Continuuity Reactor uses <strong>Optimistic Concurrency Control</strong> (OCC) to implement transactions</p>
 <ul class="simple">
-<li>Creating Streams</li>
-<li>Sending events to a Stream</li>
-<li>Reading single events from a Stream</li>
-<li>Streams may have multiple consumers (for example, multiple Flows),
-each of which may be a group of different agents
-(for example, multiple instances of a Flowlet)</li>
-<li>In order to read events from a Stream, a client application must first obtain a consumer
-(group) id, which is then passed to subsequent read requests</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Creating a Stream</h1></header>
-            
-            
-            <section><p>A Stream can be created with an HTTP PUT method to the URL:</p>
-<pre class="literal-block">
-PUT &lt;base-url&gt;/streams/&lt;new-stream-id&gt;
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of the Stream to be created</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event either successfully created a Stream or the Stream already exists</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Creating a Stream: Example</h1></header>
-            
-            
-            <section><p><tt class="docutils literal">PUT <span class="pre">&lt;base-url&gt;/streams/mystream</span></tt></p>
-<ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt> (<em>mystream</em>) should only contain ASCII letters,
-digits and hyphens</li>
-<li>If the Stream already exists, no error is returned,
-and the existing Stream remains in place</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Sending Events to a Stream</h1></header>
-            
-            
-            <section><p>An event can be sent to a Stream by an HTTP POST method to the URL of the Stream:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of an existing Stream</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Note:</th><td class="field-body">The response will always have an empty body</td>
-</tr>
-</tbody>
-</table></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              6/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Sending Events to a Stream: Example</h1></header>
-            
-            
-            <section><p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream</span></tt></p>
-<ul class="simple">
-<li>The body of the request must contain the event in binary form</li>
-<li>Pass headers for the event as HTTP headers,
-prefixing them with the <em>stream-id</em>: <br />
-<tt class="docutils literal"><span class="pre">&lt;stream-id&gt;.&lt;property&gt;:&lt;string</span> value&gt;</tt></li>
+<li>Most relational databases use locks to prevent conflicting operations between transactions</li>
+<li>Under OCC we allow conflicting writes to happen</li>
+<li>When the transaction is committed, we can detect whether it has any conflicts: namely,
+if during the lifetime of the transaction, another transaction committed a write for one
+of the same keys that the transaction has written</li>
 </ul>
-<p>After receiving the request, the HTTP handler transforms it into a Stream event:</p>
-<ol class="arabic simple">
-<li>The body of the event is an identical copy of the bytes
-found in the body of the HTTP post request</li>
-<li>If the request contains any headers prefixed with the <em>stream-id</em>,
-the <em>stream-id</em> prefix is stripped from the header name and
-the header is added to the event</li>
-</ol></section>
+<p>In last case, the transaction is aborted and all of its writes are rolled back</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1998,203 +1900,37 @@ the header is added to the event</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              7/16
+              5/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reading Events from a Stream: <br /> Getting a Consumer-ID</h1></header>
+            <header><h1>OCC: Optimistic Concurrency Control (2 of 2)</h1></header>
             
             
-            <section><p><br /></p>
-<p>Get a <em>Consumer-ID</em> for a Stream by sending an HTTP POST method to the URL:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;/consumer-id
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of an existing Stream</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received and a new <tt class="docutils literal"><span class="pre">consumer-id</span></tt> was returned <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              8/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Getting a Consumer-ID: Example</h1></header>
-            
-            
-            <section><p><br /></p>
-<p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream/consumer-id</span></tt></p>
-<p>Requests a <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> for the Stream named <em>mystream</em></p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              9/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream</h1></header>
-            
-            
-            <section><ul class="simple">
-<li>Streams may have multiple consumers (for example, multiple Flows),
-each of which may be a group of different agents
-(for example, multiple instances of a Flowlet)</li>
-<li>In order to read events from a Stream, a client application must
-first obtain a consumer (group) id, which is then passed to subsequent read requests</li>
-<li>The <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> is returned in a response header
-and in the body of the response: <br /><br />
-<tt class="docutils literal"><span class="pre">X-Continuuity-ConsumerId:</span> <span class="pre">&lt;consumer-id&gt;</span></tt> <br /><br /></li>
-<li>Once you have the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt>, single events can be read from the Stream</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              10/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Using the Consumer-ID</h1></header>
-            
-            
-            <section><p><br />
-A read is performed as an HTTP POST method to the URL:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;/dequeue
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of the Stream to be read from</dd>
-</dl>
-<p>The request must pass the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> in a header of the form:</p>
-<pre class="literal-block">
-X-Continuuity-ConsumerId: &lt;consumer-id&gt;
-</pre>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received and the result of the read was returned <br />
-<tt class="docutils literal">204 No Content</tt> : The Stream exists but it is either empty or <br />
-the given <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> has read all the events in the Stream <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              11/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Using the Consumer-ID: Example</h1></header>
-            
-            
-            <section><p><br /></p>
-<p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream/dequeue</span></tt></p>
-<p>Read the next event from an existing Stream named <em>mystream</em></p>
-<p>Comments</p>
+            <section><p>In other words:</p>
 <ul class="simple">
-<li>The read will always return the next event from the Stream that was inserted first
-and has not been read yet (first-in, first-out or FIFO semantics)</li>
-<li>If the Stream has never been read from before, the first event will be read</li>
-<li>You can always start reading from the first event by getting a new <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt></li>
+<li>If two overlapping transactions modify the same row, then the transaction that commits
+first will succeed, but the transaction that commits last is rolled back due to a write
+conflict</li>
+</ul>
+<p>Optimistic Concurrency Control</p>
+<ul class="simple">
+<li>Is lockless and therefore avoids problems such as idle processes waiting for locks, or
+even worse, deadlocks</li>
+<li>Comes at the cost of rollback in case of write conflicts</li>
+<li>We can only achieve high throughput with OCC if the number of conflicts is small</li>
+<li>Good practice to reduce the probability of conflicts wherever possible</li>
 </ul></section>
             
           </div>
@@ -2207,32 +1943,37 @@ and has not been read yet (first-in, first-out or FIFO semantics)</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              12/16
+              6/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reading Events from a Stream</h1></header>
+            <header><h1>Rules for Flows, Flowlets and Procedures (1 of 2)</h1></header>
             
             
-            <section><p>For example, in order to read the third event that was sent to a Stream,
-two previous reads have to be performed after receiving the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt></p>
-<p>The response will contain the binary body of the event in its body and a header
-for each header of the Stream event, analogous to how you send headers when
-posting an event to the Stream:</p>
-<pre class="literal-block">
-&lt;stream-id&gt;.&lt;property&gt;:&lt;value&gt;
-</pre></section>
+            <section><p><strong>Keep transactions short: minimize the duration of transactions</strong></p>
+<ul class="simple">
+<li>Reactor attempts to delay the beginning of each transaction as long as possible</li>
+<li><strong>If your Flowlet only performs write operations</strong>, but no read operations, then all writes
+are deferred until the process method returns</li>
+<li>They are then performed and transacted, together with the removal of the processed
+object from the input, in a single batch execution</li>
+<li><strong>If your Flowlet performs a read</strong>, then the transaction must begin at the time of
+the read</li>
+<li>If your Flowlet performs long-running computations after that read, then the transaction
+runs longer and the risk of conflicts increases</li>
+<li>Good practice: <strong>perform reads as late as possible</strong> in the process method</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -2244,31 +1985,38 @@ posting an event to the Stream:</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              13/16
+              7/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reading Multiple Events from a Stream [tbc]</h1></header>
+            <header><h1>Rules for Flows, Flowlets and Procedures (2 of 2)</h1></header>
             
             
-            <section><p>Reading multiple events is not supported directly by the Stream HTTP API,
-but the command-line tool <tt class="docutils literal"><span class="pre">stream-client</span></tt> demonstrates how to view
-<em>all</em>, the <em>first N</em>, or the <em>last N</em> events in the Stream.</p>
-<p>For more information, see the Stream Command Line Client
-<tt class="docutils literal"><span class="pre">stream-client</span></tt> in the <tt class="docutils literal">/bin</tt> directory of the
-Continuuity Reactor SDK distribution.</p>
-<p>[DOCNOTE: FIXME!]</p></section>
+            <section><p><strong>There are two ways to perform an increment</strong></p>
+<ul class="simple">
+<li>As a write operation that returns nothing, or</li>
+<li>As a read-write operation that returns the incremented value</li>
+<li>If you perform the read-write operation, then that forces the transaction to begin, and
+the chance of conflict increases</li>
+<li>Unless you depend on that return value, always perform an increment only as a write operation</li>
+</ul>
+<p><strong>Use hash-based partitioning</strong></p>
+<ul class="simple">
+<li>For the inputs of highly concurrent Flowlets that perform writes</li>
+<li>This helps reduce concurrent writes to the same key from different instances of the Flowlet</li>
+</ul>
+<p>These guidelines will help you write more efficient and faster-performing code</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2280,17 +2028,96 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              14/16
+              8/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>The Need for Disabling Transactions (1 of 2)</h1></header>
+            
+            
+            <section><p>Transactions providing <strong>ACID</strong> (atomicity, consistency, isolation, and durability)
+guarantees are useful in applications where data accuracy is critical:</p>
+<ul class="simple">
+<li>Billing applications</li>
+<li>Computing click-through rates</li>
+</ul>
+<p>However, some applications—such as trending—might not need it</p>
+<p>Applications that do not strictly require accuracy can trade off accuracy against
+increased throughput by taking advantage of not having to write/read all the data
+in a transaction</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>The Need for Disabling Transactions (2 of 2)</h1></header>
+            
+            
+            <section><p>Transaction can be disabled for a Flow by annotating the Flow class with the
+<tt class="docutils literal">&#64;DisableTransaction</tt> annotation:</p>
+<pre><span class="nd">@DisableTransaction</span>
+<span class="kd">class</span> <span class="nc">MyExampleFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre>
+<p>While this may speed up performance, if—for example—a Flowlet fails, the system would not
+be able to roll back to its previous state</p>
+<p>You will need to judge whether the increase in performance offsets the increased risk of
+inaccurate data</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2298,12 +2125,12 @@ Continuuity Reactor SDK distribution.</p>
             <header><h1>Module Summary</h1></header>
             
             
-            <section><p>You should now be able to:</p>
+            <section><p>You should be able to explain:</p>
 <ul class="simple">
-<li>Create a Stream</li>
-<li>Send Events to a Stream</li>
-<li>Read Events from a Stream</li>
-<li>Read Multiple Events from a Stream [tbc]</li>
+<li>The need for transactions</li>
+<li>OCC: Optimistic Concurrency Control</li>
+<li>Rules for transactions</li>
+<li>Disabling transactions: when and where</li>
 </ul></section>
             
           </div>
@@ -2316,17 +2143,17 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              15/16
+              11/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2334,7 +2161,7 @@ Continuuity Reactor SDK distribution.</p>
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m10">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m18">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2346,11 +2173,11 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m18_datasets_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              16/16
+              12/12
             </aside>
           </footer>
         </div>
@@ -2365,7 +2192,7 @@ Continuuity Reactor SDK distribution.</p>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Streams REST API</a></th>
+        <th><a href="#slide1">DataSet Transactions</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2377,86 +2204,62 @@ Continuuity Reactor SDK distribution.</p>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Streams Recap</a></th>
+        <th><a href="#slide3">The Need for Transactions (1 of 2)</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Creating a Stream</a></th>
+        <th><a href="#slide4">The Need for Transactions (2 of 2)</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Creating a Stream: Example</a></th>
+        <th><a href="#slide5">OCC: Optimistic Concurrency Control (1 of 2)</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Sending Events to a Stream</a></th>
+        <th><a href="#slide6">OCC: Optimistic Concurrency Control (2 of 2)</a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Sending Events to a Stream: Example</a></th>
+        <th><a href="#slide7">Rules for Flows, Flowlets and Procedures (1 of 2)</a></th>
         <td><a href="#slide7">7</a></td>
       </tr>
       
       
       <tr id="toc-row-8">
-        <th><a href="#slide8">Reading Events from a Stream: <br /> Getting a Consumer-ID</a></th>
+        <th><a href="#slide8">Rules for Flows, Flowlets and Procedures (2 of 2)</a></th>
         <td><a href="#slide8">8</a></td>
       </tr>
       
       
       <tr id="toc-row-9">
-        <th><a href="#slide9">Reading Events from a Stream: <br /> Getting a Consumer-ID: Example</a></th>
+        <th><a href="#slide9">The Need for Disabling Transactions (1 of 2)</a></th>
         <td><a href="#slide9">9</a></td>
       </tr>
       
       
       <tr id="toc-row-10">
-        <th><a href="#slide10">Reading Events from a Stream</a></th>
+        <th><a href="#slide10">The Need for Disabling Transactions (2 of 2)</a></th>
         <td><a href="#slide10">10</a></td>
       </tr>
       
       
       <tr id="toc-row-11">
-        <th><a href="#slide11">Reading Events from a Stream: <br /> Using the Consumer-ID</a></th>
+        <th><a href="#slide11">Module Summary</a></th>
         <td><a href="#slide11">11</a></td>
       </tr>
       
       
       <tr id="toc-row-12">
-        <th><a href="#slide12">Reading Events from a Stream: <br /> Using the Consumer-ID: Example</a></th>
+        <th><a href="#slide12">Module Completed</a></th>
         <td><a href="#slide12">12</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-13">
-        <th><a href="#slide13">Reading Events from a Stream</a></th>
-        <td><a href="#slide13">13</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-14">
-        <th><a href="#slide14">Reading Multiple Events from a Stream [tbc]</a></th>
-        <td><a href="#slide14">14</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-15">
-        <th><a href="#slide15">Module Summary</a></th>
-        <td><a href="#slide15">15</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-16">
-        <th><a href="#slide16">Module Completed</a></th>
-        <td><a href="#slide16">16</a></td>
       </tr>
       
       

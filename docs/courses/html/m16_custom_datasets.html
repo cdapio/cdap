@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Streams REST API</title>
+    <title>Custom DataSets</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Streams REST API</h1></header>
+            <header><h1>Custom DataSets</h1></header>
             
             
             <section><!-- .. reST Editor: .. section-numbering:: -->
@@ -1744,17 +1744,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/16
+              1/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1762,476 +1762,53 @@ function main() {
             <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at the Continuuity Reactor Streams REST API:</p>
+            <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Creating a Stream</li>
-<li>Sending Events to a Stream</li>
-<li>Reading Events from a Stream</li>
-<li>Reading Multiple Events from a Stream [tbc]</li>
+<li>What is a Custom DataSet?</li>
+<li>Declaring a Custom DataSet</li>
+<li>How to use Custom DataSets</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              2/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets</h1></header>
+            
+            
+            <section><p>Your own DataSet classes that implement common data patterns specific to your code</p>
+<p>Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen</p>
+<p>The DataSet can be built on top two underlying DataSets</p>
+<ul class="simple">
+<li>a first Table (<tt class="docutils literal">entryCountTable</tt>) to count all the words and</li>
+<li>a second Table (<tt class="docutils literal">uniqueCountTable</tt>) for the unique count</li>
 </ul>
-<p>[DOCNOTE: FIXME!]</p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              2/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Streams Recap</h1></header>
-            
-            
-            <section><p>Stream REST API supports:</p>
-<ul class="simple">
-<li>Creating Streams</li>
-<li>Sending events to a Stream</li>
-<li>Reading single events from a Stream</li>
-<li>Streams may have multiple consumers (for example, multiple Flows),
-each of which may be a group of different agents
-(for example, multiple instances of a Flowlet)</li>
-<li>In order to read events from a Stream, a client application must first obtain a consumer
-(group) id, which is then passed to subsequent read requests</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Creating a Stream</h1></header>
-            
-            
-            <section><p>A Stream can be created with an HTTP PUT method to the URL:</p>
-<pre class="literal-block">
-PUT &lt;base-url&gt;/streams/&lt;new-stream-id&gt;
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of the Stream to be created</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event either successfully created a Stream or the Stream already exists</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Creating a Stream: Example</h1></header>
-            
-            
-            <section><p><tt class="docutils literal">PUT <span class="pre">&lt;base-url&gt;/streams/mystream</span></tt></p>
-<ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt> (<em>mystream</em>) should only contain ASCII letters,
-digits and hyphens</li>
-<li>If the Stream already exists, no error is returned,
-and the existing Stream remains in place</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Sending Events to a Stream</h1></header>
-            
-            
-            <section><p>An event can be sent to a Stream by an HTTP POST method to the URL of the Stream:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of an existing Stream</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field"><th class="field-name">Note:</th><td class="field-body">The response will always have an empty body</td>
-</tr>
-</tbody>
-</table></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              6/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Sending Events to a Stream: Example</h1></header>
-            
-            
-            <section><p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream</span></tt></p>
-<ul class="simple">
-<li>The body of the request must contain the event in binary form</li>
-<li>Pass headers for the event as HTTP headers,
-prefixing them with the <em>stream-id</em>: <br />
-<tt class="docutils literal"><span class="pre">&lt;stream-id&gt;.&lt;property&gt;:&lt;string</span> value&gt;</tt></li>
-</ul>
-<p>After receiving the request, the HTTP handler transforms it into a Stream event:</p>
-<ol class="arabic simple">
-<li>The body of the event is an identical copy of the bytes
-found in the body of the HTTP post request</li>
-<li>If the request contains any headers prefixed with the <em>stream-id</em>,
-the <em>stream-id</em> prefix is stripped from the header name and
-the header is added to the event</li>
-</ol></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              7/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Getting a Consumer-ID</h1></header>
-            
-            
-            <section><p><br /></p>
-<p>Get a <em>Consumer-ID</em> for a Stream by sending an HTTP POST method to the URL:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;/consumer-id
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of an existing Stream</dd>
-</dl>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received and a new <tt class="docutils literal"><span class="pre">consumer-id</span></tt> was returned <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              8/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Getting a Consumer-ID: Example</h1></header>
-            
-            
-            <section><p><br /></p>
-<p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream/consumer-id</span></tt></p>
-<p>Requests a <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> for the Stream named <em>mystream</em></p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              9/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream</h1></header>
-            
-            
-            <section><ul class="simple">
-<li>Streams may have multiple consumers (for example, multiple Flows),
-each of which may be a group of different agents
-(for example, multiple instances of a Flowlet)</li>
-<li>In order to read events from a Stream, a client application must
-first obtain a consumer (group) id, which is then passed to subsequent read requests</li>
-<li>The <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> is returned in a response header
-and in the body of the response: <br /><br />
-<tt class="docutils literal"><span class="pre">X-Continuuity-ConsumerId:</span> <span class="pre">&lt;consumer-id&gt;</span></tt> <br /><br /></li>
-<li>Once you have the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt>, single events can be read from the Stream</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              10/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Using the Consumer-ID</h1></header>
-            
-            
-            <section><p><br />
-A read is performed as an HTTP POST method to the URL:</p>
-<pre class="literal-block">
-POST &lt;base-url&gt;/streams/&lt;stream-id&gt;/dequeue
-</pre>
-<dl class="docutils">
-<dt>Parameter</dt>
-<dd><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></dd>
-<dt>Description</dt>
-<dd>Name of the Stream to be read from</dd>
-</dl>
-<p>The request must pass the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> in a header of the form:</p>
-<pre class="literal-block">
-X-Continuuity-ConsumerId: &lt;consumer-id&gt;
-</pre>
-<p>HTTP Responses</p>
-<dl class="docutils">
-<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
-<dd><tt class="docutils literal">200 OK</tt> : The event was successfully received and the result of the read was returned <br />
-<tt class="docutils literal">204 No Content</tt> : The Stream exists but it is either empty or <br />
-the given <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt> has read all the events in the Stream <br />
-<tt class="docutils literal">404 Not Found</tt> : The Stream does not exist</dd>
-</dl></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              11/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream: <br /> Using the Consumer-ID: Example</h1></header>
-            
-            
-            <section><p><br /></p>
-<p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/streams/mystream/dequeue</span></tt></p>
-<p>Read the next event from an existing Stream named <em>mystream</em></p>
-<p>Comments</p>
-<ul class="simple">
-<li>The read will always return the next event from the Stream that was inserted first
-and has not been read yet (first-in, first-out or FIFO semantics)</li>
-<li>If the Stream has never been read from before, the first event will be read</li>
-<li>You can always start reading from the first event by getting a new <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt></li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              12/16
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Reading Events from a Stream</h1></header>
-            
-            
-            <section><p>For example, in order to read the third event that was sent to a Stream,
-two previous reads have to be performed after receiving the <tt class="docutils literal"><span class="pre">Consumer-ID</span></tt></p>
-<p>The response will contain the binary body of the event in its body and a header
-for each header of the Stream event, analogous to how you send headers when
-posting an event to the Stream:</p>
-<pre class="literal-block">
-&lt;stream-id&gt;.&lt;property&gt;:&lt;value&gt;
+<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">DataSet</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
 </pre></section>
             
           </div>
@@ -2244,31 +1821,39 @@ posting an event to the Stream:</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              13/16
+              3/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reading Multiple Events from a Stream [tbc]</h1></header>
+            <header><h1>Configuration and Initialization methods</h1></header>
             
             
-            <section><p>Reading multiple events is not supported directly by the Stream HTTP API,
-but the command-line tool <tt class="docutils literal"><span class="pre">stream-client</span></tt> demonstrates how to view
-<em>all</em>, the <em>first N</em>, or the <em>last N</em> events in the Stream.</p>
-<p>For more information, see the Stream Command Line Client
-<tt class="docutils literal"><span class="pre">stream-client</span></tt> in the <tt class="docutils literal">/bin</tt> directory of the
-Continuuity Reactor SDK distribution.</p>
-<p>[DOCNOTE: FIXME!]</p></section>
+            <section><p>Custom DataSets can also optionally implement</p>
+<p><tt class="docutils literal">configure</tt> method:</p>
+<blockquote>
+<ul class="simple">
+<li>Returns a specification which can be used to save metadata about the DataSet (such as
+configuration parameters)</li>
+</ul>
+</blockquote>
+<p><tt class="docutils literal">initialize</tt> method:</p>
+<blockquote>
+<ul class="simple">
+<li>Called at execution time</li>
+<li>Any operations on the data of this DataSet are prohibited in <tt class="docutils literal">initialize()</tt></li>
+</ul>
+</blockquote></section>
             
           </div>
           <div class="presenter_notes">
@@ -2280,17 +1865,134 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              14/16
+              4/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets Example (1 of 3)</h1></header>
+            
+            
+            <section><p>Now we can begin with the implementation of the <tt class="docutils literal">UniqueCountTable</tt> logic</p>
+<p>Start with a few constants:</p>
+<pre><span class="c1">// Column name used for storing count of each entry.</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ENTRY_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+
+<span class="c1">// Row and column name used for storing the unique count.</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">UNIQUE_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;unique&quot;</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets Example (2 of 3)</h1></header>
+            
+            
+            <section><ul class="simple">
+<li><tt class="docutils literal">UniqueCountTable</tt> stores a counter for each word in its own row of the entry count table</li>
+<li>For each word the counter is incremented</li>
+<li>If the result of the increment is 1, then:<ul>
+<li>this is the first time the word has been encountered, hence a new unique word</li>
+<li>increment the unique counter by 1:</li>
+</ul>
+</li>
+</ul>
+<pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">entry</span><span class="o">),</span> <span class="n">ENTRY_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Custom DataSets Example (3 of 3)</h1></header>
+            
+            
+            <section><p>Finally, write a method to retrieve the number of unique words seen:</p>
+<pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">))</span>
+                         <span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2298,12 +2000,11 @@ Continuuity Reactor SDK distribution.</p>
             <header><h1>Module Summary</h1></header>
             
             
-            <section><p>You should now be able to:</p>
+            <section><p>You should be able to:</p>
 <ul class="simple">
-<li>Create a Stream</li>
-<li>Send Events to a Stream</li>
-<li>Read Events from a Stream</li>
-<li>Read Multiple Events from a Stream [tbc]</li>
+<li>Describe what are Custom DataSets</li>
+<li>Design a Custom DataSet</li>
+<li>Use Custom DataSets in an Application</li>
 </ul></section>
             
           </div>
@@ -2316,17 +2017,17 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              15/16
+              8/9
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2334,7 +2035,7 @@ Continuuity Reactor SDK distribution.</p>
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m10">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m16">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2346,11 +2047,11 @@ Continuuity Reactor SDK distribution.</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m10_streams_rest_api.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m16_custom_datasets.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              16/16
+              9/9
             </aside>
           </footer>
         </div>
@@ -2365,7 +2066,7 @@ Continuuity Reactor SDK distribution.</p>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Streams REST API</a></th>
+        <th><a href="#slide1">Custom DataSets</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2377,86 +2078,44 @@ Continuuity Reactor SDK distribution.</p>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Streams Recap</a></th>
+        <th><a href="#slide3">Custom DataSets</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Creating a Stream</a></th>
+        <th><a href="#slide4">Configuration and Initialization methods</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Creating a Stream: Example</a></th>
+        <th><a href="#slide5">Custom DataSets Example (1 of 3)</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Sending Events to a Stream</a></th>
+        <th><a href="#slide6">Custom DataSets Example (2 of 3)</a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Sending Events to a Stream: Example</a></th>
+        <th><a href="#slide7">Custom DataSets Example (3 of 3)</a></th>
         <td><a href="#slide7">7</a></td>
       </tr>
       
       
       <tr id="toc-row-8">
-        <th><a href="#slide8">Reading Events from a Stream: <br /> Getting a Consumer-ID</a></th>
+        <th><a href="#slide8">Module Summary</a></th>
         <td><a href="#slide8">8</a></td>
       </tr>
       
       
       <tr id="toc-row-9">
-        <th><a href="#slide9">Reading Events from a Stream: <br /> Getting a Consumer-ID: Example</a></th>
+        <th><a href="#slide9">Module Completed</a></th>
         <td><a href="#slide9">9</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-10">
-        <th><a href="#slide10">Reading Events from a Stream</a></th>
-        <td><a href="#slide10">10</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-11">
-        <th><a href="#slide11">Reading Events from a Stream: <br /> Using the Consumer-ID</a></th>
-        <td><a href="#slide11">11</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-12">
-        <th><a href="#slide12">Reading Events from a Stream: <br /> Using the Consumer-ID: Example</a></th>
-        <td><a href="#slide12">12</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-13">
-        <th><a href="#slide13">Reading Events from a Stream</a></th>
-        <td><a href="#slide13">13</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-14">
-        <th><a href="#slide14">Reading Multiple Events from a Stream [tbc]</a></th>
-        <td><a href="#slide14">14</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-15">
-        <th><a href="#slide15">Module Summary</a></th>
-        <td><a href="#slide15">15</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-16">
-        <th><a href="#slide16">Module Completed</a></th>
-        <td><a href="#slide16">16</a></td>
       </tr>
       
       

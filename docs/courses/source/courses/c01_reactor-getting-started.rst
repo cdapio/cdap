@@ -36,7 +36,8 @@ Getting Started With Continuuity Reactor
 - Chapter 3: Ingesting Data into Continuuity Reactor
 - Chapter 4: Real-time Processing Using Flows
 - Chapter 5: Storing Data Using DataSets
-- Chapter 6: Batch Processing Using MapReduce
+- Chapter 6: Batch Processing Using MapReduce and Workflows
+- Chapter 7: Querying Using Procedures
 
 .. *Lunch Break*
 
@@ -47,17 +48,17 @@ Getting Started With Continuuity Reactor
 
 **Integrating Reactor Into Application Development Workflow**
 
-- Chapter 7: Reactor In Your Continuous Integration Environment
-- Chapter 8: Integration Testing Strategies
-- Chapter 9: Debugging Applications With Reactor
+- Chapter 8: Reactor In Your Continuous Integration Environment
+- Chapter 9: Integration Testing Strategies
+- Chapter 10: Debugging Applications With Reactor
 
 .. *10 Minute Break*
 
 **Reactor In Production**
 
-- Chapter 10: Operational Considerations For Reactor
-- Chapter 11: Controlling Application Lifecycle using REST APIs
-- Chapter 12: Collecting Data From External Sources
+- Chapter 11: Operational Considerations For Reactor
+- Chapter 12: Controlling Application Lifecycle using REST APIs
+- Chapter 13: Collecting Data From External Sources
 
 .. *Conclusion*
 
@@ -149,38 +150,48 @@ Upon completion of this course you should be able to:
 .. landslide: chapter: Storing Data Using DataSets
 .. ................................................
 .. landslide: module: Introduction to DataSets
-.. landslide: module link: ../modules/m15_dataset_introduction.rst
-
-.. landslide: module: DataSet Types
-.. landslide: module link: ../modules/m16_dataset_types.rst
-.. landslide: module: DataSet Lifecycle
-.. landslide: module link: ../modules/m17_dataset_lifecycle.rst
+.. landslide: module link: ../modules/m15_introduction_datasets.rst
+.. landslide: module: Custom DataSets
+.. landslide: module link: ../modules/m16_custom_datasets.rst
 .. landslide: module: DataSet Programming API
-.. landslide: module link: ../modules/m18_dataset_programming_api.rst
-.. landslide: module: Core DataSet Operations
-.. landslide: module link: ../modules/m19_core_dataset_operations.rst
+.. landslide: module link: ../modules/m17_dataset_programming_api.rst
 .. landslide: module: DataSets and Transactions
-.. landslide: module link: ../modules/m20_datasets_transactions.rst
+.. landslide: module link: ../modules/m18_datasets_transactions.rst
 .. landslide: module: DataSet REST API
-.. landslide: module link: ../modules/m21_dataset_rest_api.rst
+.. landslide: module link: ../modules/m19_dataset_rest_api.rst
 .. landslide: exercise: Building An Application Using DataSets
 .. landslide: exercise link: ../exercises/e05_datasets_exercise.rst
 
-.. landslide: CUT START
-
 .. chapter 6
-.. landslide: chapter: Batch Processing Using MapReduce
+.. landslide: chapter: Batch Processing Using MapReduce and Workflows
 .. ................................................
-.. landslide: module: Introduction to MapReduce
-.. landslide: module: DataSets and MapReduce
-.. landslide: module: Transactions and MapReduce
-.. landslide: module: MapReduce REST API
+.. landslide: module: Introduction to MapReduce and Workflows
+.. landslide: module link: ../modules/m20_mapreduce_workflows.rst
+.. landslide: module: MapReduce and DataSets
+.. landslide: module link: ../modules/m21_mapreduce_datasets.rst
+.. landslide: module: MapReduce and Transactions
+.. landslide: module link: ../modules/m22_mapreduce_transactions.rst
+.. landslide: module: Workflows
+.. landslide: module link: ../modules/m23_workflows.rst
+.. landslide: exercise: Building An Application Using MapReduce and Workflows
+.. landslide: exercise link: ../exercises/e06_mapreduce_workflow_exercise.rst
 
+.. chapter 7
+.. landslide: chapter: Querying Using Procedures
+.. ................................................
+.. landslide: module: Querying Using Procedures
+.. landslide: module link: ../modules/m24_querying_using_procedures.rst
+.. landslide: module: Procedures REST API
+.. landslide: module link: ../modules/m25_procedures_rest_api.rst
+.. landslide: exercise: Building An Application Using Procedures
+.. landslide: exercise link: ../exercises/e07_procedures_exercise.rst
+
+.. landslide: CUT START
 
 .. landslide: section: Integrating Reactor Into Application Development Workflow
 .. -------------------------------------------
 
-.. chapter 7
+.. chapter 8
 .. landslide: chapter: Reactor In Your Continuous Integration Environment
 .. ................................................
 .. landslide: module: Introduction to Types of Reactors

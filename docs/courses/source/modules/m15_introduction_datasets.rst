@@ -116,12 +116,6 @@ System DataSets
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time
 
-Further details:
-
-  - The Javadocs (/developers/javadocs/index.html) for these classes
-
-  - The  examples (/developers/examples) include usage of these
-
 ----
 
 Using DataSets in Applications
@@ -163,14 +157,6 @@ The runtime system:
 
 - Reads the DataSet specification for the key/value table *myCounters* from the metadata store
 - Injects a functional instance of the DataSet class into the Application
-
-----
-
-Using Custom DataSets in Applications
-=====================================
-
-Implement custom DataSets by extending the ``DataSet`` base
-class or by extending existing DataSet types
 
 ----
 

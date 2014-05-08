@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Building An Application Using Streams</title>
+    <title>DataSet Programming API</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Building An Application Using Streams</h1></header>
+            <header><h1>DataSet Programming API</h1></header>
             
             
             <section><!-- .. reST Editor: .. section-numbering:: -->
@@ -1744,29 +1744,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Objectives</h1></header>
+            <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this exercise, you will:</p>
+            <section><p>In this module, you will learn:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>The Continuuity Reactor Java <tt class="docutils literal">Table</tt> API</li>
+<li>Reading, writing and deleting data from DataSets</li>
+<li>Scanning, incrementing and swapping data from DataSets</li>
 </ul></section>
             
           </div>
@@ -1779,35 +1779,38 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Continuuity Reactor <strong>Table</strong> API</h1></header>
             
             
-            <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
+            <section><p>The <tt class="docutils literal">Table</tt> API provides basic methods to perform:</p>
+<ul class="simple">
+<li><strong>Read, Write and Delete</strong> operations</li>
 </ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+<p>plus special</p>
+<ul class="simple">
+<li><strong>Scan</strong></li>
+<li><strong>Atomic increment</strong> and</li>
+<li><strong>Compare-and-swap</strong> operations</li>
+</ul>
+<p>Each basic operation has a <strong>method that takes an operation-type object</strong> as a parameter
+plus handy <strong>methods for working directly with byte arrays</strong></p>
+<p>If your application code already deals with byte arrays,
+you can use the latter methods to save a conversion</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1819,32 +1822,484 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Summary</h1></header>
+            <header><h1><strong>Table</strong> Read, Write and Delete</h1></header>
+            
+            
+            <section><pre><span class="c1">// Read</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="n">Get</span> <span class="n">get</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">byte</span><span class="o">[]</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">startColumn</span><span class="o">,</span>
+               <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopColumn</span><span class="o">,</span> <span class="kt">int</span> <span class="n">limit</span><span class="o">)</span>
+
+<span class="c1">// Write</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="n">Put</span> <span class="n">put</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">values</span><span class="o">)</span>
+
+<span class="c1">// Delete</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="n">Delete</span> <span class="n">delete</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Scan, Increment, Compare and Swap</h1></header>
+            
+            
+            <section><pre><span class="c1">// Scan</span>
+<span class="kd">public</span> <span class="n">Scanner</span> <span class="nf">scan</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">)</span>
+
+<span class="c1">// Increment</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">increment</span><span class="o">(</span><span class="n">Increment</span> <span class="n">increment</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">long</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">)</span>
+<span class="kd">public</span> <span class="n">Row</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">amounts</span><span class="o">)</span>
+
+<span class="c1">// Compare and Swap</span>
+<span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">compareAndSwap</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span>
+                              <span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedValue</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">)</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Read (1 of 3)</h1></header>
+            
+            
+            <section><p>A <tt class="docutils literal">get</tt> operation reads all columns or selection of columns of a single row:</p>
+<pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">rowKey1</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnX</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnY</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">n</span><span class="o">;</span>
+
+<span class="c1">// Read all columns of a row</span>
+<span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+
+<span class="c1">// Read specified columns from a row</span>
+<span class="n">Row</span> <span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+
+<span class="c1">// Reads a column range from x (inclusive) to y (exclusive)</span>
+<span class="c1">// with a limit of n return values</span>
+<span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span> <span class="n">columnY</span><span class="o">;</span> <span class="n">n</span><span class="o">);</span>
+
+<span class="c1">// Read only one column in one row byte[]</span>
+<span class="n">value</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Read (2 of 3)</h1></header>
+            
+            
+            <section><ul class="simple">
+<li><tt class="docutils literal">Row</tt> object provides access to the Row data including its columns</li>
+<li>If only a selection of row columns is requested, the returned Row object will contain
+only those columns</li>
+<li>Row object provides an extensive API for accessing returned column values:</li>
+</ul>
+<pre><span class="c1">// Get column value as a byte array</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+
+<span class="c1">// Get column value of a specific type</span>
+<span class="n">String</span> <span class="n">valueAsString</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+<span class="n">Integer</span> <span class="n">valueAsInteger</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Read (3 of 3)</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>When requested, the value of a column is converted to a specific type automatically</li>
+<li>If the column is absent in a Row, the returned value is <tt class="docutils literal">null</tt></li>
+<li>To return primitive types, the corresponding methods accepts default value to be
+returned when the column is absent:</li>
+</ul>
+<pre><span class="c1">// Get column value as a primitive type or 0 if column is absent</span>
+<span class="kt">long</span> <span class="n">valueAsLong</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Write</h1></header>
+            
+            
+            <section><p>A <tt class="docutils literal">put</tt> operation writes data into a row:</p>
+<pre><span class="c1">// Write a set of columns with their values</span>
+<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;value1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Delete</h1></header>
+            
+            
+            <section><p>A <tt class="docutils literal">delete</tt> operation removes an entire row or a subset of its columns:</p>
+<pre><span class="c1">// Delete the entire row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+
+<span class="c1">// Delete a selection of columns from the row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+</pre>
+<p>Specifying a set of columns helps to perform delete operation faster</p>
+<p>When you want to delete all the columns of a row and you know all of them,
+passing all of them will make the deletion faster</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Scan (1 of 2)</h1></header>
+            
+            
+            <section><p>A <tt class="docutils literal">scan</tt> operation fetches a subset of rows or all of the rows of a Table:</p>
+<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">;</span>
+<span class="n">Row</span> <span class="n">row</span><span class="o">;</span>
+
+<span class="c1">// Scan all rows from startRow (inclusive) to stopRow (exclusive)</span>
+<span class="n">Scanner</span> <span class="n">scanner</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">);</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="k">while</span> <span class="o">((</span><span class="n">row</span> <span class="o">=</span> <span class="n">scanner</span><span class="o">.</span><span class="na">next</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;column1: &quot;</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+  <span class="n">scanner</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              11/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Scan (2 of 2)</h1></header>
+            
+            
+            <section><p>To scan a set of rows not bounded by <tt class="docutils literal">startRow</tt> and/or <tt class="docutils literal">stopRow</tt>
+you can pass <tt class="docutils literal">null</tt> as their value:</p>
+<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
+
+<span class="c1">// Scan all rows of a table</span>
+<span class="n">Scanner</span> <span class="n">allRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+
+<span class="c1">// Scan all columns up to stopRow (exclusive)</span>
+<span class="n">Scanner</span> <span class="n">headRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">);</span>
+
+<span class="c1">// Scan all columns starting from startRow (inclusive)</span>
+<span class="n">Scanner</span> <span class="n">tailRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              12/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Increment</h1></header>
+            
+            
+            <section><p>An increment operation increments a <tt class="docutils literal">long</tt> value of one or more columns by either <tt class="docutils literal">1L</tt>
+or an integer amount <em>n</em></p>
+<p>If a column doesn’t exist, it is created with an assumed value before the increment of zero:</p>
+<pre><span class="c1">// Write long value to a column of a row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+
+<span class="c1">// Increment values of several columns in a row</span>
+<span class="n">t</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">23L</span><span class="o">));</span>
+</pre>
+<p>If the existing value of the column cannot be converted to a <tt class="docutils literal">long</tt>,
+a <tt class="docutils literal">NumberFormatException</tt> will be thrown</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              13/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><strong>Table</strong> Compare and Swap</h1></header>
+            
+            
+            <section><p>A swap operation compares the existing value of a column with an expected value,
+and if it matches, replaces it with a new value</p>
+<p>The operation returns <tt class="docutils literal">true</tt> if it succeeds and <tt class="docutils literal">false</tt> otherwise:</p>
+<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedCurrentValue</span><span class="o">;</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(!</span><span class="n">t</span><span class="o">.</span><span class="na">compareAndSwap</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span>
+      <span class="n">expectedCurrentValue</span><span class="o">,</span> <span class="n">newValue</span><span class="o">))</span> <span class="o">{</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Current value was different from expected&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              14/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
             
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Use the Continuuity Reactor Java <tt class="docutils literal">Table</tt> API</li>
+<li>Perform reading, writing and deleting data from DataSets</li>
+<li>Understand Scanning, incrementing and swapping data from DataSets</li>
 </ul></section>
             
           </div>
@@ -1857,25 +2312,25 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              15/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e04">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m17">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1887,11 +2342,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst">/Users/john/Source/release_2.2.0/reactor/docs/courses/source/exercises/e04_streams_example.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_programming_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              16/16
             </aside>
           </footer>
         </div>
@@ -1906,32 +2361,98 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Building An Application Using Streams</a></th>
+        <th><a href="#slide1">DataSet Programming API</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Exercise Objectives</a></th>
+        <th><a href="#slide2">Module Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Continuuity Reactor <strong>Table</strong> API</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4"><strong>Table</strong> Read, Write and Delete</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5"><strong>Table</strong> Scan, Increment, Compare and Swap</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6"><strong>Table</strong> Read (1 of 3)</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7"><strong>Table</strong> Read (2 of 3)</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8"><strong>Table</strong> Read (3 of 3)</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9"><strong>Table</strong> Write</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10"><strong>Table</strong> Delete</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11"><strong>Table</strong> Scan (1 of 2)</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12"><strong>Table</strong> Scan (2 of 2)</a></th>
+        <td><a href="#slide12">12</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-13">
+        <th><a href="#slide13"><strong>Table</strong> Increment</a></th>
+        <td><a href="#slide13">13</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-14">
+        <th><a href="#slide14"><strong>Table</strong> Compare and Swap</a></th>
+        <td><a href="#slide14">14</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-15">
+        <th><a href="#slide15">Module Summary</a></th>
+        <td><a href="#slide15">15</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-16">
+        <th><a href="#slide16">Module Completed</a></th>
+        <td><a href="#slide16">16</a></td>
       </tr>
       
       

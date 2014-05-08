@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>DataSet Types</title>
+    <title>Querying Using Procedures</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,16 +1722,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>DataSet Types</h1></header>
+            <header><h1>Querying Using Procedures</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
+            <section><!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1744,17 +1743,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/9
+              1/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1762,11 +1761,12 @@ function main() {
             <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at:</p>
+            <section><p>In this module, you will cover:</p>
 <ul class="simple">
-<li>What is a Custom DataSet?</li>
-<li>Declaring a Custom DataSet</li>
-<li>How to use Custom DataSets</li>
+<li>Using Procedures for querying Reactor</li>
+<li>Creating a Procedure</li>
+<li>Implementing responses</li>
+<li>Handling errors</li>
 </ul></section>
             
           </div>
@@ -1779,163 +1779,173 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/9
+              2/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Custom DataSets</h1></header>
+            <header><h1>Querying Reactor</h1></header>
             
             
-            <section><p>Your own DataSet classes that implement common data patterns specific to your code</p>
-<p>Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen</p>
-<p>The DataSet can be built on top two underlying DataSets</p>
+            <section><p><strong>Procedures</strong> let you query the Reactor, its DataSets and retrieve results</p>
+<p>Procedures:</p>
 <ul class="simple">
-<li>a first Table (<tt class="docutils literal">entryCountTable</tt>) to count all the words and</li>
-<li>a second Table (<tt class="docutils literal">uniqueCountTable</tt>) for the unique count</li>
+<li>Allow synchronous calls into the Reactor from an external system</li>
+<li>Perform server-side processing on-demand</li>
+<li>Are Similar to a stored procedure in a traditional database</li>
 </ul>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">DataSet</span> <span class="o">{</span>
+<p>Procedures are typically used to post-process data at query time:</p>
+<ul class="simple">
+<li>Filtering</li>
+<li>Aggregating</li>
+<li>Joins over multiple DataSets</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Procedure Operations</h1></header>
+            
+            
+            <section><p>A Procedure can perform all the same operations as a Flowlet</p>
+<ul class="simple">
+<li>With the same consistency and durability guarantees</li>
+<li>Deployed into the same pool of application containers as Flows</li>
+<li>Can run multiple instances to increase the throughput of requests</li>
+</ul>
+<p>A Procedure implements and exposes a very simple API:</p>
+<ul class="simple">
+<li>A method name (String) and</li>
+<li>Arguments (map of Strings)</li>
+</ul>
+<p>This implementation is then bound to a REST endpoint and can be
+called from any external system</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Creating and Implementing a Procedure</h1></header>
+            
+            
+            <section><p>To create a Procedure:</p>
+<ul class="simple">
+<li>Implement the <tt class="docutils literal">Procedure</tt> interface, or</li>
+<li>More conveniently, extend the <tt class="docutils literal">AbstractProcedure</tt> class</li>
+</ul>
+<p>Configuration and Initialization</p>
+<ul class="simple">
+<li>Similar to a Flowlet</li>
+<li>Instead of a process method you’ll define a handler method</li>
+</ul>
+<p>Response</p>
+<ul class="simple">
+<li>Upon external call, the handler method receives the request and sends a
+response</li>
+<li>The most generic way to send a response is to obtain a <tt class="docutils literal">Writer</tt> and
+stream out the response as bytes</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Example Procedure</h1></header>
+            
+            
+            <section><pre><span class="kn">import</span> <span class="nn">static</span> <span class="n">com</span><span class="o">.</span><span class="na">continuuity</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">procedure</span><span class="o">.</span><span class="na">ProcedureResponse</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SUCCESS</span><span class="o">;</span>
+<span class="o">...</span>
+<span class="kd">class</span> <span class="nc">HelloWorld</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
 
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/9
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">configure()</tt> and <tt class="docutils literal">initialize()</tt> methods</h1></header>
-            
-            
-            <section><p>Custom DataSets can also optionally implement</p>
-<p><tt class="docutils literal">configure()</tt> method:</p>
-<blockquote>
-<ul class="simple">
-<li>Returns a specification which can be used to save metadata about the DataSet (such as
-configuration parameters)</li>
-</ul>
-</blockquote>
-<p><tt class="docutils literal">initialize()</tt> method:</p>
-<blockquote>
-<ul class="simple">
-<li>Called at execution time</li>
-<li>Any operations on the data of this DataSet are prohibited in <tt class="docutils literal">initialize()</tt></li>
-</ul>
-</blockquote></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/9
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Custom DataSets Example (1 of 3)</h1></header>
-            
-            
-            <section><p>Now we can begin with the implementation of the <tt class="docutils literal">UniqueCountTable</tt> logic</p>
-<p>Start with a few constants:</p>
-<pre><span class="c1">// Column name used for storing count of each entry.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ENTRY_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
-
-<span class="c1">// Row and column name used for storing the unique count.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">UNIQUE_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;unique&quot;</span><span class="o">);</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/9
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Custom DataSets Example (2 of 3)</h1></header>
-            
-            
-            <section><ul class="simple">
-<li><tt class="docutils literal">UniqueCountTable</tt> stores a counter for each word in its own row of the entry count table</li>
-<li>For each word the counter is incremented</li>
-<li>If the result of the increment is 1, then:<ul>
-<li>this is the first time the word has been encountered, hence a new unique word</li>
-<li>increment the unique counter by 1:</li>
-</ul>
-</li>
-</ul>
-<pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
-  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">entry</span><span class="o">),</span> <span class="n">ENTRY_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">)</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">wave</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
+                   <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">hello</span> <span class="o">=</span> <span class="s">&quot;Hello &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;who&quot;</span><span class="o">);</span>
+    <span class="n">ProcedureResponse</span><span class="o">.</span><span class="na">Writer</span> <span class="n">writer</span> <span class="o">=</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">stream</span><span class="o">(</span><span class="k">new</span> <span class="n">ProcedureResponse</span><span class="o">(</span><span class="n">SUCCESS</span><span class="o">));</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">ByteBuffer</span><span class="o">.</span><span class="na">wrap</span><span class="o">(</span><span class="n">hello</span><span class="o">.</span><span class="na">getBytes</span><span class="o">())).</span><span class="na">close</span><span class="o">();</span>
   <span class="o">}</span>
 <span class="o">}</span>
-</pre></section>
+</pre>
+<ul class="simple">
+<li>This uses the most generic way to create the response, which allows you
+to send arbitrary byte content as the response body</li>
+<li>Make sure to close the <tt class="docutils literal">Writer</tt> when you are done</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -1947,29 +1957,32 @@ configuration parameters)</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/9
+              6/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Custom DataSets Example (3 of 3)</h1></header>
+            <header><h1>Responding with JSON</h1></header>
             
             
-            <section><p>Finally, write a method to retrieve the number of unique words seen:</p>
-<pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">))</span>
-                         <span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
-<span class="o">}</span>
+            <section><p>In many cases, you will actually respond with JSON</p>
+<p>Reactor <tt class="docutils literal">ProcedureResponder</tt> has convenience methods for returning JSON maps:</p>
+<pre><span class="c1">// Return a JSON map</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TreeMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;();</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">,</span> <span class="n">totalWords</span><span class="o">);</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;uniqueWords&quot;</span><span class="o">,</span> <span class="n">uniqueWords</span><span class="o">);</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;averageLength&quot;</span><span class="o">,</span> <span class="n">averageLength</span><span class="o">);</span>
+<span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">results</span><span class="o">);</span>
 </pre></section>
             
           </div>
@@ -1982,17 +1995,57 @@ configuration parameters)</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              7/9
+              7/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Responding to Errors</h1></header>
+            
+            
+            <section><p>Convenience method to respond with an error message:</p>
+<pre><span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;getCount&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getCount</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span>
+                     <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
+  <span class="n">String</span> <span class="n">word</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">word</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="n">Code</span><span class="o">.</span><span class="na">CLIENT_ERROR</span><span class="o">,</span>
+                    <span class="s">&quot;Method &#39;getCount&#39; requires argument &#39;word&#39;&quot;</span><span class="o">);</span>
+    <span class="k">return</span><span class="o">;</span>
+  <span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2000,11 +2053,12 @@ configuration parameters)</li>
             <header><h1>Module Summary</h1></header>
             
             
-            <section><p>You should be able describe:</p>
+            <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>??</li>
-<li>??</li>
-<li>??</li>
+<li>Using Procedures for querying Reactor</li>
+<li>Create a Procedure</li>
+<li>Implement a response</li>
+<li>Handle errors</li>
 </ul></section>
             
           </div>
@@ -2017,17 +2071,17 @@ configuration parameters)</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              8/9
+              9/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2035,7 +2089,7 @@ configuration parameters)</li>
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m16">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m24">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2047,11 +2101,11 @@ configuration parameters)</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m16_dataset_types.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_querying_using_procedures.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              9/9
+              10/10
             </aside>
           </footer>
         </div>
@@ -2066,7 +2120,7 @@ configuration parameters)</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">DataSet Types</a></th>
+        <th><a href="#slide1">Querying Using Procedures</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2078,44 +2132,50 @@ configuration parameters)</li>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Custom DataSets</a></th>
+        <th><a href="#slide3">Querying Reactor</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4"><tt class="docutils literal">configure()</tt> and <tt class="docutils literal">initialize()</tt> methods</a></th>
+        <th><a href="#slide4">Procedure Operations</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Custom DataSets Example (1 of 3)</a></th>
+        <th><a href="#slide5">Creating and Implementing a Procedure</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Custom DataSets Example (2 of 3)</a></th>
+        <th><a href="#slide6">Example Procedure</a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Custom DataSets Example (3 of 3)</a></th>
+        <th><a href="#slide7">Responding with JSON</a></th>
         <td><a href="#slide7">7</a></td>
       </tr>
       
       
       <tr id="toc-row-8">
-        <th><a href="#slide8">Module Summary</a></th>
+        <th><a href="#slide8">Responding to Errors</a></th>
         <td><a href="#slide8">8</a></td>
       </tr>
       
       
       <tr id="toc-row-9">
-        <th><a href="#slide9">Module Completed</a></th>
+        <th><a href="#slide9">Module Summary</a></th>
         <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Module Completed</a></th>
+        <td><a href="#slide10">10</a></td>
       </tr>
       
       

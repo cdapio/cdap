@@ -238,8 +238,6 @@ To use, the emitting Flowlet must annotate each data object with the partitionin
 Example Flow Partitioning Strategy: Hash-based 3/3
 ==================================================
 
-Notes:
-
 - The emitter must use the same name ("wordHash") for the key 
   that the consuming Flowlet specifies as the partitioning key
 

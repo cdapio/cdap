@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>placeholder</title>
+    <title>Workflows</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>placeholder</h1></header>
+            <header><h1>Workflows</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1743,17 +1743,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1763,11 +1763,9 @@ function main() {
             
             <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Overview</li>
-<li>Collect</li>
-<li>Process</li>
-<li>Store</li>
-<li>Query</li>
+<li>What are Workflows</li>
+<li>Creating a Workflow</li>
+<li>Implementing a Workflow</li>
 </ul></section>
             
           </div>
@@ -1780,23 +1778,40 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
-        <div class="slide center_title_slide">
+        <div class="slide">
           <div class="inner">
             
-            <header><h1>Overview</h1></header>
+            <header><h1>Workflows</h1></header>
             
+            
+            <section><ul class="simple">
+<li><strong>Workflows</strong> are used to execute a series of <cite>MapReduce</cite> jobs</li>
+<li>A Workflow is given a sequence of jobs that follow each other, with an
+optional schedule to run the Workflow periodically</li>
+<li><strong>On successful execution</strong> of a job, the control is transferred to the next job in
+sequence until the last job in the sequence is executed</li>
+<li><strong>On failure</strong>, the execution is stopped at the failed job and no subsequent jobs in the
+sequence are executed</li>
+</ul>
+<p>To process one or more MapReduce jobs in sequence, specify <tt class="docutils literal">withWorkflows()</tt> in your application:</p>
+<pre><span class="kd">public</span> <span class="n">ApplicationSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+    <span class="o">...</span>
+    <span class="o">.</span><span class="na">withWorkflows</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryWorkflow</span><span class="o">())</span>
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1808,17 +1823,111 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Implement the Workflow Interface</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Requires the <tt class="docutils literal">configure()</tt> method</li>
+<li>From within <tt class="docutils literal">configure</tt>, call the <tt class="docutils literal">addSchedule()</tt> method to run a WorkFlow job periodically:</li>
+</ul>
+<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryWorkflow</span> <span class="kd">implements</span> <span class="n">Workflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">WorkflowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">WorkflowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow description&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">startWith</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryBuilder</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">then</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryAggregateBuilder</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">last</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseTrendBuilder</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">addSchedule</span><span class="o">(</span><span class="k">new</span> <span class="n">DefaultSchedule</span><span class="o">(</span><span class="s">&quot;FiveMinuteSchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Run every 5 minutes&quot;</span><span class="o">,</span>
+                   <span class="s">&quot;0/5 * * * *&quot;</span><span class="o">,</span> <span class="n">Schedule</span><span class="o">.</span><span class="na">Action</span><span class="o">.</span><span class="na">START</span><span class="o">))</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Workflow with a single MapReduce Job</h1></header>
+            
+            
+            <section><p>If there is only one MapReduce job to be run as a part of a WorkFlow,
+use the <tt class="docutils literal">onlyWith()</tt> method after <tt class="docutils literal">setDescription()</tt> when building
+the Workflow:</p>
+<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryWorkflow</span> <span class="kd">implements</span> <span class="n">Workflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">WorkflowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">WorkflowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span> <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow description&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">onlyWith</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryBuilder</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">addSchedule</span><span class="o">(</span><span class="k">new</span> <span class="n">DefaultSchedule</span><span class="o">(</span><span class="s">&quot;FiveMinuteSchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Run every 5 minutes&quot;</span><span class="o">,</span>
+                   <span class="s">&quot;0/5 * * * *&quot;</span><span class="o">,</span> <span class="n">Schedule</span><span class="o">.</span><span class="na">Action</span><span class="o">.</span><span class="na">START</span><span class="o">))</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1826,14 +1935,11 @@ function main() {
             <header><h1>Module Summary</h1></header>
             
             
-            <section><p>You should be able describe:</p>
+            <section><p>You should be able to:</p>
 <ul class="simple">
-<li>Streams</li>
-<li>Flows</li>
-<li>DataSets</li>
-<li>Procedures</li>
-<li>MapReduce Jobs</li>
-<li>Workflows</li>
+<li>Define a Workflow</li>
+<li>Create Workflows</li>
+<li>Implement Workflows</li>
 </ul></section>
             
           </div>
@@ -1846,17 +1952,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              6/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1864,7 +1970,7 @@ function main() {
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m19">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m23">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1876,11 +1982,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m19_core_dataset_operations.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              7/7
             </aside>
           </footer>
         </div>
@@ -1895,7 +2001,7 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">placeholder</a></th>
+        <th><a href="#slide1">Workflows</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -1907,20 +2013,32 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Overview</a></th>
+        <th><a href="#slide3">Workflows</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Module Summary</a></th>
+        <th><a href="#slide4">Implement the Workflow Interface</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Module Completed</a></th>
+        <th><a href="#slide5">Workflow with a single MapReduce Job</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Module Summary</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Module Completed</a></th>
+        <td><a href="#slide7">7</a></td>
       </tr>
       
       

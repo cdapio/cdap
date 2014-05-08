@@ -11,7 +11,7 @@ Custom DataSets
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m15| raw:: html
+.. |br_m16| raw:: html
 
    <br />
 
@@ -49,17 +49,17 @@ The DataSet can be built on top two underlying DataSets
 
 ----
 
-``configure()`` and ``initialize()`` methods
+Configuration and Initialization methods
 ============================================
 
 Custom DataSets can also optionally implement
 
-``configure()`` method:
+``configure`` method:
 
   - Returns a specification which can be used to save metadata about the DataSet (such as
     configuration parameters)
 
-``initialize()`` method:
+``initialize`` method:
 
   - Called at execution time
 
@@ -129,7 +129,7 @@ You should be able to:
 
 - Describe what are Custom DataSets
 - Design a Custom DataSet
-- Use Custom DataSets in an Applicatino
+- Use Custom DataSets in an Application
 
 ----
 

@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>placeholder</title>
+    <title>Introduction to MapReduce and Workflows</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,12 +1722,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>placeholder</h1></header>
+            <header><h1>Introduction to MapReduce and Workflows</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1743,17 +1743,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/11
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1761,13 +1761,11 @@ function main() {
             <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at:</p>
+            <section><p>In this module, you will learn about:</p>
 <ul class="simple">
-<li>Overview</li>
-<li>Collect</li>
-<li>Process</li>
-<li>Store</li>
-<li>Query</li>
+<li>MapReduce and Workflows</li>
+<li>Configuring MapReduce jobs</li>
+<li>Mapping and reducing</li>
 </ul></section>
             
           </div>
@@ -1780,23 +1778,30 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/11
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
-        <div class="slide center_title_slide">
+        <div class="slide">
           <div class="inner">
             
-            <header><h1>Overview</h1></header>
+            <header><h1>MapReduce and Workflows</h1></header>
             
+            
+            <section><p><strong>MapReduce</strong> is used to process data in batch</p>
+<ul class="simple">
+<li>MapReduce jobs can be written as in a conventional Hadoop system</li>
+<li>Additionally, Reactor <strong>DataSets</strong> can be accessed from MapReduce jobs as both input and output</li>
+</ul>
+<p><strong>Workflows</strong> are used to execute a series of MapReduce jobs</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1808,17 +1813,280 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/11
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>MapReduce in an Application</h1></header>
+            
+            
+            <section><p>To process data using MapReduce, specify <tt class="docutils literal">withMapReduce()</tt> in your
+Application specification:</p>
+<pre><span class="kd">public</span> <span class="n">ApplicationSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+<span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+   <span class="o">...</span>
+   <span class="o">.</span><span class="na">withMapReduce</span><span class="o">()</span>
+     <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountJob</span><span class="o">())</span>
+   <span class="o">...</span>
+</pre>
+<p>You must implement the <tt class="docutils literal">MapReduce</tt> interface, which requires the
+implementation of three methods:</p>
+<ul class="simple">
+<li><tt class="docutils literal">configure()</tt></li>
+<li><tt class="docutils literal">beforeSubmit()</tt></li>
+<li><tt class="docutils literal">onFinish()</tt></li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>configure() method</h1></header>
+            
+            
+            <section><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountJob</span> <span class="kd">implements</span> <span class="n">MapReduce</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">MapReduceSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">MapReduceSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;WordCountJob&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Calculates word frequency&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">useInputDataSet</span><span class="o">(</span><span class="s">&quot;messages&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">useOutputDataSet</span><span class="o">(</span><span class="s">&quot;wordFrequency&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+</pre>
+<ul class="simple">
+<li>Configure method similar to the one found in Flow and Application</li>
+<li>Defines the name and description of the MapReduce job</li>
+<li>Can also specify DataSets to be used as input or output for the job</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>beforeSubmit() method</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Invoked at runtime, before the MapReduce job is executed</li>
+<li>Passed an instance of the <tt class="docutils literal">MapReduceContext</tt></li>
+<li>Provides access to the actual Hadoop job configuration, as though you were
+running the MapReduce job directly on Hadoop</li>
+</ul>
+<p>For example, you can specify the Mapper and Reducer classes as
+well as the intermediate data format:</p>
+<pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">TokenizerMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">IntSumReducer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+  <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">IntWritable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>onFinish() method</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Invoked after the MapReduce job has finished</li>
+<li>Can perform cleanup or send a notification of job completion, if required</li>
+<li>Because many MapReduce jobs do not need this method, the <tt class="docutils literal">AbstractMapReduce</tt>
+class provides a default implementation that does nothing:</li>
+</ul>
+<pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+  <span class="c1">// do nothing</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mapping and Reducing (1 of 2)</h1></header>
+            
+            
+            <section><p>Continuuity Reactor <tt class="docutils literal">Mapper</tt> and <tt class="docutils literal">Reducer</tt> implement the standard Hadoop APIs:</p>
+<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TokenizerMapper</span>
+    <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[],</span> <span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="kd">static</span> <span class="n">IntWritable</span> <span class="n">one</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IntWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="n">Text</span> <span class="n">word</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Text</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">key</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="n">StringTokenizer</span> <span class="n">itr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StringTokenizer</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">value</span><span class="o">));</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">itr</span><span class="o">.</span><span class="na">hasMoreTokens</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">word</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">itr</span><span class="o">.</span><span class="na">nextToken</span><span class="o">());</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="n">one</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mapping and Reducing (2 of 2)</h1></header>
+            
+            
+            <section><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">IntSumReducer</span>
+    <span class="kd">extends</span> <span class="n">Reducer</span><span class="o">&lt;</span><span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="n">Text</span> <span class="n">key</span><span class="o">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">IntWritable</span><span class="o">&gt;</span> <span class="n">values</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">IntWritable</span> <span class="n">val</span> <span class="o">:</span> <span class="n">values</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sum</span> <span class="o">+=</span> <span class="n">val</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">copyBytes</span><span class="o">(),</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">sum</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1828,12 +2096,9 @@ function main() {
             
             <section><p>You should be able describe:</p>
 <ul class="simple">
-<li>Streams</li>
-<li>Flows</li>
-<li>DataSets</li>
-<li>Procedures</li>
-<li>MapReduce Jobs</li>
-<li>Workflows</li>
+<li>Describe the difference between MapReduce and Workflows</li>
+<li>Configure a MapReduce job</li>
+<li>Implement Mapping and reducing</li>
 </ul></section>
             
           </div>
@@ -1846,17 +2111,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              10/11
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1864,7 +2129,7 @@ function main() {
             <header><h1>Module Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m17">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#m20">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1876,11 +2141,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m17_dataset_lifecycle.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m20_mapreduce_workflows.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              11/11
             </aside>
           </footer>
         </div>
@@ -1895,7 +2160,7 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">placeholder</a></th>
+        <th><a href="#slide1">Introduction to MapReduce and Workflows</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -1907,20 +2172,56 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Overview</a></th>
+        <th><a href="#slide3">MapReduce and Workflows</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Module Summary</a></th>
+        <th><a href="#slide4">MapReduce in an Application</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Module Completed</a></th>
+        <th><a href="#slide5">configure() method</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">beforeSubmit() method</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">onFinish() method</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Mapping and Reducing (1 of 2)</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Mapping and Reducing (2 of 2)</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Module Summary</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Module Completed</a></th>
+        <td><a href="#slide11">11</a></td>
       </tr>
       
       

@@ -1,8 +1,8 @@
 ============================================
-placeholder
+DataSet Programming API
 ============================================
 
-.. reST Editor: .. section-numbering::
+.. .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -33,18 +33,16 @@ Continuuity Reactor **Table** API
 
 The ``Table`` API provides basic methods to perform:
 
-- Read
-- Write and 
-- Delete operations
+- **Read, Write and Delete** operations
 
 plus special 
 
-- Scan
-- Atomic increment and 
-- Compare-and-swap operations
+- **Scan**
+- **Atomic increment** and 
+- **Compare-and-swap** operations
 
-Each basic operation has a method that takes an operation-type object as a parameter
-plus handy methods for working directly with byte arrays
+Each basic operation has a **method that takes an operation-type object** as a parameter
+plus handy **methods for working directly with byte arrays**
 
 If your application code already deals with byte arrays, 
 you can use the latter methods to save a conversion
@@ -96,7 +94,7 @@ you can use the latter methods to save a conversion
 
 ----
 
-**Table** Read (1 of 2)
+**Table** Read (1 of 3)
 =======================
 
 A ``get`` operation reads all columns or selection of columns of a single row:
@@ -124,7 +122,7 @@ A ``get`` operation reads all columns or selection of columns of a single row:
 
 ----
 
-**Table** Read (2 of 2)
+**Table** Read (2 of 3)
 =======================
 
 - ``Row`` object provides access to the Row data including its columns
@@ -142,6 +140,11 @@ A ``get`` operation reads all columns or selection of columns of a single row:
 	// Get column value of a specific type
 	String valueAsString = row.getString("column1");
 	Integer valueAsInteger = row.getInt("column1");
+
+----
+
+**Table** Read (3 of 3)
+=======================
 
 - When requested, the value of a column is converted to a specific type automatically
 - If the column is absent in a Row, the returned value is ``null``
@@ -188,8 +191,8 @@ passing all of them will make the deletion faster
 
 ----
 
-**Table** Scan
-=======================
+**Table** Scan (1 of 2)
+========================
 
 A ``scan`` operation fetches a subset of rows or all of the rows of a Table:
 
@@ -209,16 +212,24 @@ A ``scan`` operation fetches a subset of rows or all of the rows of a Table:
 	  scanner.close();
 	}
 
+----
+
+**Table** Scan (2 of 2)
+========================
+
 To scan a set of rows not bounded by ``startRow`` and/or ``stopRow``
 you can pass ``null`` as their value:
 
 .. sourcecode:: java
 
 	byte[] startRow;
+
 	// Scan all rows of a table
 	Scanner allRows = t.scan(null, null);
+
 	// Scan all columns up to stopRow (exclusive)
 	Scanner headRows = t.scan(null, stopRow);
+
 	// Scan all columns starting from startRow (inclusive)
 	Scanner tailRows = t.scan(startRow, null);
 
@@ -277,4 +288,4 @@ You should now be able to:
 Module Completed
 ================
 
-`Chapter Index <return.html#m18>`__
+`Chapter Index <return.html#m17>`__
