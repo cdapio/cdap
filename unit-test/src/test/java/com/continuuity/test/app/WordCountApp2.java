@@ -328,6 +328,9 @@ public class WordCountApp2 implements Application {
       job.setReducerClass(StreamReducer.class);
     }
 
+    /**
+     * Mapper for the count from stream.
+     */
     public static final class StreamMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
 
       private static final Text TOTAL = new Text("total");
@@ -344,6 +347,9 @@ public class WordCountApp2 implements Application {
       }
     }
 
+    /**
+     * Reducer for the count from stream.
+     */
     public static final class StreamReducer extends Reducer<Text, LongWritable, byte[], byte[]> {
 
       @Override
