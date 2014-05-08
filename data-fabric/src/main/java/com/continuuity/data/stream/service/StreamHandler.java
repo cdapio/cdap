@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -92,6 +93,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @Override
   public void destroy(HandlerContext context) {
     Closeables.closeQuietly(streamWriter);
+  }
+
+  @GET
+  @Path("/{stream}/info")
+  public void info(HttpRequest request, HttpResponder responder,
+                   @PathParam("stream") String stream) throws Exception {
+    String accountID = getAuthenticatedAccountId(request);
+
+    if (streamMetaStore.streamExists(accountID, stream)) {
+      responder.sendStatus(HttpResponseStatus.OK);
+    } else {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   @PUT
@@ -199,10 +213,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    streamMetaStore.removeStream(accountId, stream);
-
     // TODO: Implement file removal logic
-    responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
   /**
