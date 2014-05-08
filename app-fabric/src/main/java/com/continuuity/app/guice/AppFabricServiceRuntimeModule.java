@@ -21,7 +21,6 @@ import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
-import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.pipeline.PipelineFactory;
@@ -41,7 +40,6 @@ import org.quartz.core.QuartzScheduler;
 import org.quartz.core.QuartzSchedulerResources;
 import org.quartz.impl.DefaultThreadExecutor;
 import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.SchedulerRepository;
 import org.quartz.impl.StdJobRunShellFactory;
 import org.quartz.impl.StdScheduler;
 import org.quartz.simpl.CascadingClassLoadHelper;
@@ -50,8 +48,6 @@ import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.List;
 
 /**
  *
@@ -166,18 +162,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       jrsf.initialize(scheduler);
       qs.initialize();
-
-      SchedulerRepository schedRep = SchedulerRepository.getInstance();
-      qs.addNoGCObject(schedRep); // prevents the repository from being garbage collected
-
-      Collection<org.quartz.Scheduler> schedulers = schedRep.lookupAll();
-      for (org.quartz.Scheduler sched : schedulers) {
-        sched.clear();
-        sched.shutdown();
-        schedRep.remove(sched.getSchedulerName());
-      }
-
-      schedRep.bind(scheduler);
 
       return scheduler;
     }

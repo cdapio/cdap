@@ -1030,6 +1030,21 @@ public class AppFabricHttpHandlerTest {
     json = EntityUtils.toString(response.getEntity());
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
+
+    response = AppFabricTestsSuite.doPost(scheduleSuspend);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //check paused state
+    response = AppFabricTestsSuite.doGet(scheduleStatus);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals("SUSPENDED", output.get("status"));
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+
+    response = AppFabricTestsSuite.doDelete("/v2/apps/AppWithSchedule");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test

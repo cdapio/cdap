@@ -224,7 +224,6 @@ public class AppFabricServiceWrapper {
     }
   }
 
-
   public static Location deployApplication(AppFabricHttpHandler httpHandler,
                                     LocationFactory locationFactory,
                                     final String applicationId,
