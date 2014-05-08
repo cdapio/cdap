@@ -36,5 +36,4 @@ public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandle
   }
 
   protected abstract Configuration getConfiguration();
-
 }

@@ -11,12 +11,11 @@ import java.util.HashMap;
  *
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
-  private final CConfiguration configuration;
-
   @Inject
-  public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
+  private CConfiguration configuration;
+
+  public LDAPAuthenticationHandler() throws Exception {
     super("ldaploginmodule");
-    this.configuration = configuration;
   }
 
   @Override

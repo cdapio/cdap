@@ -14,6 +14,7 @@ import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
@@ -46,32 +47,46 @@ public abstract class SecurityModule extends PrivateModule {
 
     Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
                                                                   Names.named("security.handlers.set"));
-    handlerBinder.addBinding().to(getAuthenticationHandlerClass());
+    handlerBinder.addBinding().toProvider(AuthenticationHandlerProvider.class);
     handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
-                           .toProvider(BasicAuthenticationHandlerListProvider.class)
+                           .toProvider(AuthenticationHandlerListProvider.class)
                            .in(Scopes.SINGLETON);
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
   }
 
-  private static final Class<? extends Handler> getAuthenticationHandlerClass() {
-    CConfiguration cConfiguration = CConfiguration.create();
-    try {
-      return (Class<? extends Handler>) cConfiguration.getClassByName(
-                                                      cConfiguration.get("security.authentication.handler.className"));
-    } catch (ClassNotFoundException e) {
-      Throwables.propagate(e);
+  private static final class AuthenticationHandlerProvider implements  Provider<Handler> {
+
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    AuthenticationHandlerProvider(CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
     }
-    return null;
+
+    @Override
+    public Handler get() {
+      try {
+        Class<Handler> handlerClass = (Class<Handler>) cConf.getClassByName(
+                                                                cConf.get("security.authentication.handler.className"));
+        Handler handler = handlerClass.newInstance();
+        injector.injectMembers(handler);
+        return handler;
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
-  private static final class BasicAuthenticationHandlerListProvider implements Provider<HandlerList> {
+  private static final class AuthenticationHandlerListProvider implements Provider<HandlerList> {
     private final HandlerList handlerList;
 
     @Inject
-    public BasicAuthenticationHandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
+    public AuthenticationHandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
       handlerList = new HandlerList();
       Handler[] handlerArray = handlers.toArray(new Handler[handlers.size()]);
       ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlerArray[0];
