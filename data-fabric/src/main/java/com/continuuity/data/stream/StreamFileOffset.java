@@ -23,6 +23,7 @@ public final class StreamFileOffset {
   private final String namePrefix;
   private final int seqId;
   private final long offset;
+  private final int generationId;
 
   /**
    * Clones from another {@link StreamFileOffset}.
@@ -60,6 +61,9 @@ public final class StreamFileOffset {
 
     this.namePrefix = StreamUtils.getNamePrefix(eventLocation.getName());
     this.seqId = StreamUtils.getSequenceId(eventLocation.getName());
+
+    // TODO: This is plan for stream truncate implementation.
+    this.generationId = 0;
   }
 
   public final Location getEventLocation() {
@@ -88,6 +92,10 @@ public final class StreamFileOffset {
 
   public final int getSequenceId() {
     return seqId;
+  }
+
+  public int getGenerationId() {
+    return generationId;
   }
 
   @Override
