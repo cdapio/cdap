@@ -8,6 +8,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
@@ -33,6 +34,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
   private static InMemoryTransactionManager txManager;
+  private static QueueClientFactory queueClientFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -49,12 +51,19 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(InMemoryTransactionManager.class);
+    queueClientFactory = injector.getInstance(QueueClientFactory.class);
+
     txManager.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
     txManager.stopAndWait();
+  }
+
+  @Override
+  protected QueueClientFactory getQueueClientFactory() {
+    return queueClientFactory;
   }
 
   @Override
