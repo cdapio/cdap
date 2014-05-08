@@ -1,26 +1,29 @@
-.. :Author: John Jackson
-   :Description: HTTP Interface to the Continuuity Reactor
+.. :author: Continuuity, Inc.
+   :version: 2.2.0
+   :description: HTTP Interface to the Continuuity Reactor
 
 =================================
 Continuuity Reactor HTTP REST API
 =================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
+.. rst2pdf: .. contents::
+.. rst2pdf: config _templates/pdf-config
+.. rst2pdf: stylesheets _templates/pdf-stylesheet
 
 Introduction
 ============
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream**: sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data**: interacting with DataSets (currently limited to Tables).
-- **Procedure**: sending queries to a Procedure.
-- **Reactor**: deploying and managing Applications.
-- **Logs**: retrieving Application logs.
-- **Metrics**: retrieving metrics for system and user Applications (user-defined metrics).
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
+- **Data:** interacting with DataSets (currently limited to Tables).
+- **Procedure:** sending queries to a Procedure.
+- **Reactor:** deploying and managing Applications.
+- **Logs:** retrieving Application logs.
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -58,6 +61,7 @@ and that you are to replace it with your value, perhaps in this case *mystream*:
 
 	PUT <base-url>/streams/mystream
 
+.. rst2pdf: PageBreak
 
 Status Codes
 ------------
@@ -66,7 +70,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 8 25 67
+   :widths: 8 30 62
    :header-rows: 1
 
    * - Code
@@ -74,28 +78,28 @@ Status Codes
      - Explanation
    * - ``200``
      - ``OK``
-     - The request returned successfully.
+     - The request returned successfully
    * - ``400``
      - ``Bad Request``
-     - The request had a combination of parameters that is not recognized.
+     - The request had a combination of parameters that is not recognized
    * - ``401``
      - ``Unauthorized``
-     - The request did not contain an authentication token.
+     - The request did not contain an authentication token
    * - ``403``
      - ``Forbidden``
-     - The request was authenticated but the client does not have permission.
+     - The request was authenticated but the client does not have permission
    * - ``404``
      - ``Not Found``
-     - The request did not address any of the known URIs.
+     - The request did not address any of the known URIs
    * - ``405``
      - ``Method Not Allowed``
-     - A request was received with a method not supported for the URI.
+     - A request was received with a method not supported for the URI
    * - ``500``
      - ``Internal Server Error``
-     - An internal error occurred while processing the request.
+     - An internal error occurred while processing the request
    * - ``501``
      - ``Not Implemented``
-     - A request contained a query that is not supported by this API.
+     - A request contained a query that is not supported by this API
 
 **Note:** These returned status codes are not necessarily included in the descriptions of the API,
 but a request may return any of these.
@@ -110,14 +114,14 @@ and that you authenticate your request by sending your API key in an HTTP header
 	X-Continuuity-ApiKey: <api-key>
 
 .. list-table::
-   :widths: 12 85
+   :widths: 15 85
    :header-rows: 1
 
    * - Parameter
      - Description
    * - ``<api-key>``
      - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`__.
+       `Continuuity Accounts <http://accounts.continuuity.com>`__
 
 
 Stream HTTP API
@@ -147,18 +151,18 @@ A Stream can be created with an HTTP PUT method to the URL::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event either successfully created a Stream or the Stream already exists.
+     - The event either successfully created a Stream or the Stream already exists
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -171,6 +175,7 @@ Comments
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
+.. rst2pdf: PageBreak
 
 Sending Events to a Stream
 --------------------------
@@ -190,22 +195,22 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received.
+     - The event was successfully received
    * - ``404 Not Found``
-     - The Stream does not exist.
+     - The Stream does not exist
 
-:Note: The response will always have an empty body.
+:Note: The response will always have an empty body
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -227,6 +232,8 @@ Comments
   #. If the request contains any headers prefixed with the *stream-id*,
      the *stream-id* prefix is stripped from the header name and
      the header is added to the event.
+
+.. rst2pdf: PageBreak
 
 Reading Events from a Stream: Getting a Consumer-ID
 ---------------------------------------------------
@@ -252,9 +259,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and a new ``consumer-id`` was returned.
+     - The event was successfully received and a new ``consumer-id`` was returned
    * - ``404 Not Found``
-     - The Stream does not exist.
+     - The Stream does not exist
 
 Example
 .......
@@ -292,8 +299,8 @@ A read is performed as an HTTP POST method to the URL::
 
    * - Parameter
      - Description
-   * - ``<new-stream-id>``
-     - Name of the Stream to be read from
+   * - ``<stream-id>``
+     - Name of an existing Stream
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
@@ -302,23 +309,23 @@ The request must pass the ``Consumer-ID`` in a header of the form::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and the result of the read was returned.
+     - The event was successfully received and the result of the read was returned
    * - ``204 No Content``
      - The Stream exists but it is either empty or the given ``Consumer-ID``
-       has read all the events in the Stream.
+       has read all the events in the Stream
    * - ``404 Not Found``
-     - The Stream does not exist.
+     - The Stream does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -375,20 +382,20 @@ To create a new table, issue an HTTP PUT method to the URL::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and the Table was either created or already exists.
+     - The event was successfully received and the Table was either created or already exists
    * - ``409 Conflict``
-     - A DataSet of a different type already exists with the given name.
+     - A DataSet of a different type already exists with the given name
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -405,6 +412,8 @@ and the existing Table remains in place.
 
 However, if a DataSet of a different type exists with the same name—for example,
 a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
+
+.. rst2pdf: PageBreak
 
 Writing Data to a Table
 -----------------------
@@ -426,22 +435,22 @@ To write to a table, send an HTTP PUT method to the table’s URI::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and the Table was successfully written to.
+     - The event was successfully received and the Table was successfully written to
    * - ``400 Bad Request``
-     - The JSON String map is not well-formed or cannot be parsed as a map from String to String.
+     - The JSON String map is not well-formed or cannot be parsed as a map from String to String
    * - ``404 Not Found``
-     - A Table with the given name does not exist.
+     - A Table with the given name does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -458,6 +467,7 @@ that you want to write to the Table as a JSON String map. For example::
 
 This writes three columns named *x*, *y*, and *z* with values *y*, *a*, and *1*, respectively.
 
+.. rst2pdf: PageBreak
 
 Reading Data from a Table
 -------------------------
@@ -483,22 +493,22 @@ in an HTTP GET method to the table’s URI::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and the Table was successfully read from.
+     - The event was successfully received and the Table was successfully read from
    * - ``400 Bad Request``
-     - The column list is not well-formed or cannot be parsed.
+     - The column list is not well-formed or cannot be parsed
    * - ``404 Not Found``
-     - A Table with the given name does not exist.
+     - A Table with the given name does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -535,6 +545,8 @@ To return all columns equal to or greater than (inclusive) *c2* and less than (e
 	GET .../rows/<row-key>?start=c2&stop=c5
 
 
+.. rst2pdf: PageBreak
+
 Increment Data in a Table
 -------------------------
 You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
@@ -556,23 +568,23 @@ by issue an HTTP POST method to the row’s URL::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully incremented the row of the Table.
+     - The event successfully incremented the row of the Table
    * - ``400 Bad Request``
      - The JSON String is not well-formed; or cannot be parsed as a map from a String to a Long;
-       or one of the existing column values is not an 8-byte long value.
+       or one of the existing column values is not an 8-byte long value
    * - ``404 Not Found``
-     - A table with the given name does not exist.
+     - A table with the given name does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -597,6 +609,7 @@ For example, if the existing value of column *x* was 4, and column *y* did not e
 
 Column *y* is newly created.
 
+.. rst2pdf: PageBreak
 
 Delete Data from a Table
 ------------------------
@@ -624,20 +637,20 @@ To delete from a table, submit an HTTP DELETE method::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully deleted the data of the Table.
+     - The event successfully deleted the data of the Table
    * - ``404 Not Found``
-     - A table with the given name does not exist.
+     - A table with the given name does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -651,6 +664,7 @@ Similarly to `Reading Data from a Table`_, explicitly list the columns that you 
 by adding a parameter of the form ``?columns=<column-key,...>``.
 See the examples under `Reading Data from a Table`_.
 
+.. rst2pdf: PageBreak
 
 Deleting Data from a DataSet
 ----------------------------
@@ -671,20 +685,20 @@ To clear a dataset from all data, submit an HTTP POST request::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully deleted the data of the DataSet.
+     - The event successfully deleted the data of the DataSet
    * - ``404 Not Found``
-     - A DataSet with the given name does not exist.
+     - A DataSet with the given name does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -695,7 +709,8 @@ Example
 Comments
 ........
 Note that this works not only for Tables but with other DataSets, including user-defined Custom DataSets.
-	
+
+.. rst2pdf: PageBreak
 
 Encoding of Keys and Values
 ---------------------------
@@ -748,9 +763,9 @@ The supported encodings are:
    * - Encoding
      - Description
    * - ``encoding=ascii``
-     - Only ASCII characters are supported and are mapped to bytes one-to-one. (Default)
+     - Only ASCII characters are supported and are mapped to bytes one-to-one (Default)
    * - ``encoding=hex``
-     - Hexadecimal strings. Example: the ASCII string ``a:b`` is represented as ``613A62``.
+     - Hexadecimal strings. Example: the ASCII string ``a:b`` is represented as ``613A62``
    * - ``encoding=url``
      - URL encoding (also known as %-encoding or percent-encoding).
        URL-safe characters use ASCII-encoding, while other bytes values are escaped using a ``%`` sign.
@@ -812,26 +827,27 @@ The request is an HTTP POST::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully called the method, and the body contains the results.
+     - The event successfully called the method, and the body contains the results
    * - ``400 Bad Request``
-     - The Application, Procedure and method exist, but the arguments are not as expected.
+     - The Application, Procedure and method exist, but the arguments are not as expected
    * - ``404 Not Found``
-     - The Application, Procedure, or method does not exist.
+     - The Application, Procedure, or method does not exist
 
 Example
 .......
 .. list-table::
-   :widths: 30 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/getCount``
+     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/``
+       ``getCount``
    * - Description
      - Call the ``getCount()`` method of the *RetrieveCounts* Procedure in the *WordCount* Application
        with the arguments as a JSON string in the body::
@@ -890,6 +906,8 @@ and not necessarily the same as the name of the JAR file that was used to deploy
 Note also that this does not delete the Streams and DataSets associated with the Application
 because they belong to your account, not the Application.
 
+.. rst2pdf: PageBreak
+
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
@@ -914,26 +932,30 @@ and query for their status using HTTP POST and GET methods::
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
-Example
-.......
+Examples
+........
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
-   * - 
-     -
    * - HTTP Method
      - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
      - Start a Flow *WhoFlow* in the Application *HelloWorld*
-   * - 
-     - 
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
    * - HTTP Method
      - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
    * - Description
      - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
-   * - 
-     - 
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
@@ -962,6 +984,8 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
+
+.. rst2pdf: PageBreak
 
 Scale
 -----
@@ -993,23 +1017,27 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
 
-Example
-.......
+Examples
+........
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
-   * - 
-     -
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
+       ``instances``
    * - Description
      - Find out the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
-   * - 
-     -
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
    * - HTTP Method
-     - ``PUT <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
+     - ``PUT <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
+       ``instances``
+
        with the arguments as a JSON string in the body::
 
 	  { "instances" : 2 }
@@ -1017,6 +1045,7 @@ Example
      - Change the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
 
+.. rst2pdf: PageBreak
 
 Scaling Procedures
 ..................
@@ -1046,15 +1075,17 @@ with the arguments as a JSON string in the body::
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/``
+       ``instances``
    * - Description
      - Find out the number of instances of the Procedure *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
 
+.. rst2pdf: PageBreak
 
 Run History and Schedule
 ------------------------
@@ -1080,7 +1111,7 @@ end time and termination status::
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -1104,6 +1135,7 @@ For Workflows, you can also retrieve:
 
 	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
+.. rst2pdf: PageBreak
 
 Promote
 -------
@@ -1129,7 +1161,7 @@ with the API Key in the header::
      - Description
    * - ``<api-key>``
      - Continuuity Reactor API key, obtained from an account at
-       `Continuuity Accounts <http://accounts.continuuity.com>`_.
+       `Continuuity Accounts <http://accounts.continuuity.com>`_
    * - ``<sandbox>``
      - Sandbox located on ``continuuity.net``
 
@@ -1139,8 +1171,8 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
-To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
+running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1153,16 +1185,16 @@ To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
    * - ``<ts>``
-     - *Start* and *stop* time, given as seconds since the start of the Epoch.
+     - *Start* and *stop* time, given as seconds since the start of the Epoch
 
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
@@ -1212,21 +1244,22 @@ The general form of a metrics request is::
    * - ``<time-range>``
      - A `Time Range`_ or ``aggregate=true`` for all since the Application was deployed
 
-Example
-.......
+Examples
+........
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
-   * - 
-     -
    * - HTTP Method
      - ``GET <base-url>/metrics/reactor/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
    * - Description
      - Using a *System* metric, *process.bytes*
-   * - 
-     -
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
@@ -1288,6 +1321,8 @@ with the arguments as a JSON string in the body::
 	[ "/reactor/collect.events?aggregate=true",
 	"/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
+.. rst2pdf: PageBreak
+
 Time Range
 ----------
 The time range of a metric query can be specified in various ways:
@@ -1303,16 +1338,18 @@ The time range of a metric query can be specified in various ways:
        You can apply simple math, using ``now`` for the current time, 
        ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days. 
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
-   * - ``start=1385625600&end=1385629200``
+   * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
-       both given as since the start of the Epoch.
-   * - ``start=1385625600&count=3600``
-     - The same as before, but with the count given as a number of seconds.
+       both given as since the start of the Epoch
+   * - ``start=1385625600&`` ``count=3600``
+     - The same as before, but with the count given as a number of seconds
 
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
 	GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
+
+.. rst2pdf: PageBreak
 
 Available Contexts
 ------------------
@@ -1320,7 +1357,7 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
 
 .. list-table::
    :header-rows: 1
-   :widths: 50 50
+   :widths: 30 70
 
    * - System Metric
      - Context
@@ -1351,7 +1388,7 @@ Stream metrics are only available at the Stream level and the only available con
 
 .. list-table::
    :header-rows: 1
-   :widths: 50 50
+   :widths: 30 70
 
    * - Stream Metric
      - Context
@@ -1363,7 +1400,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
-   :widths: 50 50
+   :widths: 30 70
 
    * - DataSet Metric
      - Context
@@ -1379,6 +1416,8 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - All DataSets across all Applications
      - ``/``
 
+.. rst2pdf: PageBreak
+
 Available Metrics
 -----------------
 For Continuuity Reactor metrics, the available metrics depend on the context.
@@ -1393,24 +1432,24 @@ These metrics are available in the Flowlet context:
    * - Flowlet Metric
      - Description
    * - ``process.busyness``
-     - A number from 0 to 100 indicating how “busy” the Flowlet is.
-       Note that you cannot aggregate over this metric.
+     - A number from 0 to 100 indicating how “busy” the Flowlet is;
+       note that you cannot aggregate over this metric
    * - ``process.errors``
-     - Number of errors while processing.
+     - Number of errors while processing
    * - ``process.events.processed``
-     - Number of events/data objects processed.
+     - Number of events/data objects processed
    * - ``process.events.in``
-     - Number of events read in by the Flowlet.
+     - Number of events read in by the Flowlet
    * - ``process.events.out``
-     - Number of events emitted by the Flowlet.
+     - Number of events emitted by the Flowlet
    * - ``store.bytes``
-     - Number of bytes written to DataSets.
+     - Number of bytes written to DataSets
    * - ``store.ops``
-     - Operations (writes and read) performed on DataSets.
+     - Operations (writes and read) performed on DataSets
    * - ``store.reads``
-     - Read operations performed on DataSets.
+     - Read operations performed on DataSets
    * - ``store.writes``
-     - Write operations performed on DataSets.
+     - Write operations performed on DataSets
 
 These metrics are available in the Mappers and Reducers context:
 
@@ -1421,11 +1460,11 @@ These metrics are available in the Mappers and Reducers context:
    * - Mappers and Reducers Metric
      - Description
    * - ``process.completion``
-     - A number from 0 to 100 indicating the progress of the Map or Reduce phase.
+     - A number from 0 to 100 indicating the progress of the Map or Reduce phase
    * - ``process.entries.in``
-     - Number of entries read in by the Map or Reduce phase.
+     - Number of entries read in by the Map or Reduce phase
    * - ``process.entries.out``
-     - Number of entries written out by the Map or Reduce phase.
+     - Number of entries written out by the Map or Reduce phase
 
 These metrics are available in the Procedures context:
 
@@ -1436,9 +1475,9 @@ These metrics are available in the Procedures context:
    * - Procedures Metric
      - Description
    * - ``query.requests``
-     - Number of requests made to the Procedure.
+     - Number of requests made to the Procedure
    * - ``query.failures``
-     - Number of failures seen by the Procedure.
+     - Number of failures seen by the Procedure
 
 These metrics are available in the Streams context:
 
@@ -1449,9 +1488,9 @@ These metrics are available in the Streams context:
    * - Streams Metric
      - Description
    * - ``collect.events``
-     - Number of events collected by the Stream.
+     - Number of events collected by the Stream
    * - ``collect.bytes``
-     - Number of bytes collected by the Stream.
+     - Number of bytes collected by the Stream
 
 These metrics are available in the DataSets context:
 
@@ -1462,13 +1501,15 @@ These metrics are available in the DataSets context:
    * - DataSets Metric
      - Description
    * - ``store.bytes``
-     - Number of bytes written.
+     - Number of bytes written
    * - ``store.ops``
-     - Operations (reads and writes) performed.
+     - Operations (reads and writes) performed
    * - ``store.reads``
-     - Read operations performed.
+     - Read operations performed
    * - ``store.writes``
-     - Write operations performed.
+     - Write operations performed
+
+.. rst2pdf: CutStart
 
 Where to Go Next
 ================
@@ -1478,14 +1519,6 @@ the last of our documentation is:
 - `Continuuity Reactor Javadocs <javadocs>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Operating a Continuuity Reactor <operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.
+.. rst2pdf: CutStop
+
 

@@ -4,15 +4,11 @@
 
 package com.continuuity.app.program;
 
-import com.continuuity.app.Id;
-import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.common.lang.jar.JarResources;
-import com.continuuity.internal.UserErrors;
-import com.continuuity.internal.UserMessages;
-import org.apache.twill.filesystem.Location;
+import com.continuuity.api.Application;
+import com.continuuity.common.lang.jar.ProgramClassLoader;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.jar.Manifest;
 
 /**
  * Represents the archive that is uploaded by the user using the deployment
@@ -20,34 +16,18 @@ import java.util.jar.Manifest;
  */
 public final class Archive {
   /**
-   * Class loader for holding
+   * Class loader for holding.
    */
-  private final ClassLoader jarClassLoader;
+  private final ClassLoader classLoader;
   private final String mainClassName;
-  private final Id.Account id;
 
-  public Archive(Id.Account id, Location location) throws IOException {
-    this(id, new JarResources(location));
+  public Archive(File unpackedJarFolder, String mainClassName) throws IOException {
+    this.classLoader = new ProgramClassLoader(unpackedJarFolder);
+    this.mainClassName = mainClassName;
   }
 
-  private Archive(Id.Account id, JarResources jarResources) throws IOException {
-    jarClassLoader = new JarClassLoader(jarResources);
-    this.id = id;
-
-    Manifest manifest = jarResources.getManifest();
-    check(manifest != null, UserMessages.getMessage(UserErrors.BAD_JAR_MANIFEST));
-
-    mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-    check(mainClassName != null, UserMessages.getMessage(UserErrors.BAD_JAR_ATTRIBUTE), ManifestFields.MAIN_CLASS);
-  }
-
-  public Class<?> getMainClass() throws ClassNotFoundException {
-    return jarClassLoader.loadClass(mainClassName);
-  }
-
-  private void check(boolean condition, String fmt, Object... objs) throws IOException {
-    if (!condition) {
-      throw new IOException(String.format(fmt, objs));
-    }
+  @SuppressWarnings("unchecked")
+  public Class<Application> getMainClass() throws ClassNotFoundException {
+    return (Class<Application>) classLoader.loadClass(mainClassName);
   }
 }

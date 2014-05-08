@@ -96,7 +96,7 @@ Full Development Lifecycle Support
 ----------------------------------
 Reactor supports developers through the entire application development lifecycle: 
 development, debugging, testing, continuous integration and production. Using familiar 
-development tools like *Eclipse* and *IntelliJ*, you can build, test and debug your 
+development tools like *IntelliJ* and *Eclipse*, you can build, test and debug your 
 application right on your laptop with a *Local Reactor*. Utilize the application unit 
 test framework for continuous integration. Deploy it to a development cloud (*Sandbox 
 Reactor*) or production cloud (*Enterprise Reactor*) with a push of a button.
@@ -114,12 +114,13 @@ Reactor Components
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four 
 basic abstractions:
 
-- Streams for real-time data collection from any external system;
-- Processors for performing elastically scalable, real-time stream
+- `Streams </developers/programming#streams>`__ for real-time data collection from any external system;
+- `Flows </developers/programming#flows>`__ for performing elastically scalable, real-time stream
   or batch processing;
-- DataSets for storing data in simple and scalable ways without worrying
-  about details of the storage schema; and
-- Procedures for exposing data to external systems through stored queries.
+- `DataSets </developers/programming#datasets>`__ for storing data in simple and scalable ways without
+  worrying about details of the storage schema; and
+- `Procedures </developers/programming#procedures>`__ for exposing data to external systems through
+  stored queries.
 
 These are grouped into Applications for configuring and packaging.
 
@@ -128,8 +129,7 @@ deployed and running, you can easily interact with it from virtually any externa
 by accessing the Streams, DataSets, and Procedures using the Java APIs, REST or other 
 network protocols.
 
-In the next section, we will compare three application architectures
-and their pros and cons.
+In the next section, we will compare three application architectures and their pros and cons.
 This will give you a good understanding of the benefit of architecting
 Big Data applications using Continuuity Reactor.
 
@@ -190,8 +190,11 @@ between infrastructure components and application code.
 
 Reactor functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
-by Streams, while Flows do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by Map Reduce jobs and Workflow components. Procedures provide
+by `Streams </developers/programming#streams>`__, while `Flows </developers/programming#flows>`__ 
+do basic aggregation and realtime analysis. Advanced, off-line
+aggregation is performed by `Map Reduce jobs </developers/programming#mapreduce>`__ and 
+`Workflow </developers/programming#workflows>`__ components. 
+`Procedures </developers/programming#procedures>`__ provide
 stored queries. The application can now be scaled independent of the underlying
 infrastructure.
 

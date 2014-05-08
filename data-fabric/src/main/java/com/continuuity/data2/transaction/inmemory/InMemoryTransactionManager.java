@@ -678,6 +678,8 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void doCommit(long writePointer, Set<ChangeId> changes, long commitPointer, boolean addToCommitted) {
+    // In case this method is called when loading a previous WAL, we need to remove the tx from these sets
+    committingChangeSets.remove(writePointer);
     if (addToCommitted && !changes.isEmpty()) {
       // No need to add empty changes to the committed change sets, they will never trigger any conflict
 

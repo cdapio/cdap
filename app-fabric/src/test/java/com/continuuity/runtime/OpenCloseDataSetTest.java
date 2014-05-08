@@ -17,11 +17,13 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.streamevent.DefaultStreamEvent;
-import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.common.stream.DefaultStreamEvent;
+import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -33,8 +35,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -45,11 +51,27 @@ import java.util.concurrent.TimeUnit;
  */
 public class OpenCloseDataSetTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
     TrackingTable.resetTracker();
 
-    ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class);
+    ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
+                                                                          TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 
@@ -101,7 +123,7 @@ public class OpenCloseDataSetTest {
       String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
 
     HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/%s",
+    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
                                                discoverable.getSocketAddress().getHostName(),
                                                discoverable.getSocketAddress().getPort(),
                                                "dummy",

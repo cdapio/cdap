@@ -57,4 +57,27 @@ public final class ConsumerConfig {
                   .add("hashKey", hashKey)
                   .toString();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ConsumerConfig other = (ConsumerConfig) o;
+
+    return groupId == other.groupId
+      && groupSize == other.groupSize
+      && instanceId == other.instanceId
+      && dequeueStrategy == other.dequeueStrategy
+      && Objects.equal(hashKey, other.hashKey);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(groupId, groupSize, instanceId, dequeueStrategy, hashKey);
+  }
 }

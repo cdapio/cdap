@@ -2,8 +2,7 @@ package com.continuuity.data2.util.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.utils.Dependencies;
+import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -22,6 +21,8 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,12 +177,16 @@ public abstract class HBaseTableUtil {
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
 
   public static byte[][] getSplitKeys(int splits) {
+    return getSplitKeys(splits, HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+  }
+
+  public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
     // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
     if (splits == 1) {
       return new byte[0][];
     }
 
-    byte[][] bucketSplits = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getAllDistributedKeys(Bytes.EMPTY_BYTE_ARRAY);
+    byte[][] bucketSplits = keyDistributor.getAllDistributedKeys(Bytes.EMPTY_BYTE_ARRAY);
     Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
                                 "Number of pre-splits should be in [1.." +
                                   MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
@@ -190,8 +195,7 @@ public abstract class HBaseTableUtil {
     // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
     // salt bucket bytes are usually sequential in which case we cannot insert any value in between them.
 
-    int splitsPerBucket =
-      (splits + HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS - 1) / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS;
+    int splitsPerBucket = (splits + buckets - 1) / buckets;
     splitsPerBucket = splitsPerBucket == 0 ? 1 : splitsPerBucket;
 
     byte[][] splitKeys = new byte[bucketSplits.length * splitsPerBucket - 1][];

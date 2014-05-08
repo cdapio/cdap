@@ -24,12 +24,40 @@ public final class BufferedEncoder implements Encoder {
     output.reset();
   }
 
+  /**
+   * Writes all the buffered bytes into the given OutputStream. If the write completed successfully, the
+   * internal buffered will be reset.
+   *
+   * @param out The output stream to write to.
+   */
   public void writeTo(OutputStream out) throws IOException {
     output.writeTo(out);
+    output.reset();
   }
 
   public int size() {
     return output.size();
+  }
+
+  /**
+   * Writes raw bytes to the buffer without encoding. Same as calling
+   *
+   * {@link #writeRaw(byte[], int, int) writeRaw(rawBytes, 0, rawBytes.length)}.
+   */
+  public Encoder writeRaw(byte[] rawBytes) throws IOException {
+    return writeRaw(rawBytes, 0, rawBytes.length);
+  }
+
+  /**
+   * Writes raw bytes to the buffer without encoding.
+   *
+   * @param rawBytes The bytes to write.
+   * @param off Offset to start in the byte array.
+   * @param len Number of bytes to write starting from the offset.
+   */
+  public Encoder writeRaw(byte[] rawBytes, int off, int len) throws IOException {
+    output.write(rawBytes, off, len);
+    return this;
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -18,15 +19,18 @@ import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.queue.hbase.HBaseStreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.hbase.HBaseStreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileAdmin;
+import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
-import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -36,7 +40,6 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.thrift.TException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,8 +108,12 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
-    bind(StreamAdmin.class).to(HBaseStreamAdmin.class).in(Singleton.class);
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
+
+    bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
+    bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);
+    bind(StreamConsumerFactory.class).to(HBaseStreamFileConsumerFactory.class).in(Singleton.class);
+    bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

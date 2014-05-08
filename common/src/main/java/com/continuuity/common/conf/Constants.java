@@ -1,5 +1,7 @@
 package com.continuuity.common.conf;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Constants used by different systems are all defined here.
  */
@@ -13,7 +15,9 @@ public final class Constants {
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
+    public static final String PROCEDURES = "procedures";
     public static final String GATEWAY = "gateway";
+    public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
@@ -306,6 +310,50 @@ public final class Constants {
   }
 
   /**
+   * Stream configurations.
+   */
+  public static final class Stream {
+    /* Begin CConfiguration keys */
+    public static final String BASE_DIR = "stream.base.dir";
+    public static final String PARTITION_DURATION = "stream.partition.duration";
+    public static final String INDEX_INTERVAL = "stream.index.interval";
+    public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
+
+    // Stream http service configurations.
+    public static final String ADDRESS = "stream.bind.address";
+    public static final String WORKER_THREADS = "stream.worker.threads";
+
+    // YARN container configurations.
+    public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "stream.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "stream.container.instances";
+    /* End CConfiguration keys */
+
+    /* Begin constants used by stream */
+
+    /** How often to check for new file when reading from stream in milliseconds. **/
+    public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
+    public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
+
+
+    /**
+     * Contains HTTP headers used by Stream handler.
+     */
+    public static final class Headers {
+      public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
+    }
+
+    // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.
+    public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
+
+    // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
+    public static final String HANDLER_CONSUMER_NS = "stream.handler";
+
+    /* End constants used by stream */
+  }
+
+  /**
    * Gateway Configurations.
    */
   public static final class Gateway {
@@ -357,7 +405,6 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
-    public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
@@ -438,18 +485,15 @@ public final class Constants {
   public static final class Security {
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
-    public static final String DEFAULT_TOKEN_DIGEST_ALGO = "HmacSHA256";
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
-    public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
 
-    /** Configuration for External Authentication Server */
+    /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
-    public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
+    /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
-    public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
+    /** Access token expiration time in milliseconds. */
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";

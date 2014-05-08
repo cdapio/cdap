@@ -1,6 +1,7 @@
 package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.logging.gateway.handlers.LogHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
@@ -33,5 +34,6 @@ public class MetricsHandlerModule extends PrivateModule {
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
     handlerBinder.addBinding().to(MetricsQueryHandler.class);
     handlerBinder.addBinding().to(LogHandler.class);
+    handlerBinder.addBinding().to(PingHandler.class);
   }
 }

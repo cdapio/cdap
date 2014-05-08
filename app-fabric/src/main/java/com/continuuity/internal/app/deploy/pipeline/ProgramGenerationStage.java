@@ -100,9 +100,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         futures.add(future);
       }
 
-      Futures.allAsList(futures).get();
-      for (ListenableFuture<Location> f : futures) {
-        programs.add(Programs.create(f.get()));
+      for (Location jarLocation : Futures.allAsList(futures).get()) {
+        programs.add(Programs.create(jarLocation));
       }
     } finally {
       executorService.shutdown();

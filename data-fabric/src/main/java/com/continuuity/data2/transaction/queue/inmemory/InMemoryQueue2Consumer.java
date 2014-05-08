@@ -20,6 +20,8 @@ import java.util.List;
  */
 public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware {
 
+  private static final DequeueResult<byte[]> EMPTY_RESULT = DequeueResult.Empty.result();
+
   private final QueueName queueName;
   private Transaction currentTx;
   private boolean committed = false;
@@ -66,7 +68,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     ImmutablePair<List<InMemoryQueue.Key>, List<byte[]>> result =
       getQueue().dequeue(currentTx, config, state, maxBatchSize);
     if (result == null) {
-      return DequeueResult.EMPTY_RESULT;
+      return EMPTY_RESULT;
     } else {
       dequeuedKeys = result.getFirst();
       return new InMemoryDequeueResult(result);
@@ -108,7 +110,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
     return true;
   }
 
-  private final class InMemoryDequeueResult implements DequeueResult {
+  private final class InMemoryDequeueResult implements DequeueResult<byte[]> {
 
     private final List<InMemoryQueue.Key> keys;
     private final List<byte[]> data;

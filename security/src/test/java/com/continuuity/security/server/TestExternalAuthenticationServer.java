@@ -55,7 +55,7 @@ public class TestExternalAuthenticationServer {
     configuration = injector.getInstance(CConfiguration.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
+    port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
   }
 
   /**
@@ -108,8 +108,7 @@ public class TestExternalAuthenticationServer {
 
     assertTrue(tokenType.equals(String.format("\"%s\"", ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY)));
 
-    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION,
-                                                    Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertTrue(expiration == expectedExpiration / 1000);
 

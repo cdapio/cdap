@@ -10,6 +10,8 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.ArchiveId;
@@ -28,16 +30,21 @@ import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,6 +54,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -60,6 +68,7 @@ import java.util.jar.Manifest;
  * </p>
  */
 public class TestHelper {
+  private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
   public static final AuthToken DUMMY_AUTH_TOKEN = new AuthToken("appFabricTest");
   public static final TempFolder TEMP_FOLDER = new TempFolder();
@@ -118,16 +127,30 @@ public class TestHelper {
                       "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass)
-                                                                                                      throws Exception {
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
+                                                                     final Supplier<File> folderSupplier)
+                                                                                        throws Exception {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
     try {
-      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
-      return (ApplicationWithPrograms) p.get();
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+
+      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+                                                                        new Function<Program, Program>() {
+        @Override
+        public Program apply(Program program) {
+          try {
+            return Programs.create(program.getJarLocation(), folderSupplier.get());
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }));
+      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
     } finally {
       deployedJar.delete(true);
     }
@@ -162,9 +185,10 @@ public class TestHelper {
                                            final AuthToken token,
                                            final String applicationId,
                                            final String fileName,
-                                           Class<? extends Application> applicationClz) throws Exception {
+                                           Class<? extends Application> applicationClz,
+                                           File...bundleEmbeddedJars) throws Exception {
     return deployApplication(appFabricServer, locationFactory, account.getId(), token, applicationId, fileName,
-                             applicationClz);
+                             applicationClz, bundleEmbeddedJars);
   }
 
     private static Location deployApplication(AppFabricService.Iface appFabricServer,
@@ -173,12 +197,15 @@ public class TestHelper {
                                           final AuthToken token,
                                           final String applicationId,
                                           final String fileName,
-                                          Class<? extends Application> applicationClz) throws Exception {
+                                          Class<? extends Application> applicationClz,
+                                          File...bundleEmbeddedJars) throws Exception {
       Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
       Application application = applicationClz.newInstance();
       ApplicationSpecification appSpec = Specifications.from(application.configure());
-      Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
+      Location deployedJar = locationFactory.create(
+        createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
+      LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
       ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
       archiveInfo.setApplicationId(applicationId);
@@ -209,7 +236,7 @@ public class TestHelper {
       return deployedJar;
   }
 
-  private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec) {
+  private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
     File testAppDir;
     File tmpDir;
     testAppDir = Files.createTempDir();
@@ -260,7 +287,7 @@ public class TestHelper {
         File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
         File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
                                            ".jar", tmpDir);
-        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec);
+        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec, bundleEmbeddedJars);
       } else {
         // return null if neither existing jar was found nor jar was built based on class file
         return null;
@@ -276,10 +303,11 @@ public class TestHelper {
    * @param manifest The Jar manifest content.
    * @param outputFile Location of the Jar file.
    * @param appSpec The {@link com.continuuity.app.ApplicationSpecification} of the deploying application.
+   * @param bundleEmbeddedJars
    */
-  private static File jarDir(File dir, File relativeBase, Manifest manifest,
-                             File outputFile, ApplicationSpecification appSpec) throws IOException,
-    ClassNotFoundException {
+  private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile,
+                             ApplicationSpecification appSpec, File...bundleEmbeddedJars)
+    throws IOException, ClassNotFoundException {
 
     JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile), manifest);
     Queue<File> queue = Lists.newLinkedList();
@@ -299,10 +327,18 @@ public class TestHelper {
       jarOut.closeEntry();
     }
 
+    for (File bundledEmbeddedJar : bundleEmbeddedJars) {
+      String entryName = bundledEmbeddedJar.getName();
+      jarOut.putNextEntry(new JarEntry(entryName));
+      Files.copy(bundledEmbeddedJar, jarOut);
+      jarOut.closeEntry();
+    }
+
     jarOut.close();
 
     return outputFile;
   }
+
   private static String pathToClassName(String path) {
     return path.replace('/', '.').substring(0, path.length() - ".class".length());
   }

@@ -7,9 +7,10 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
-import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
 import com.continuuity.gateway.handlers.ProcedureHandlerTest;
 import com.continuuity.gateway.handlers.dataset.ClearFabricHandlerTest;
@@ -18,20 +19,28 @@ import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
+import com.continuuity.gateway.router.NettyRouter;
+import com.continuuity.gateway.router.RouterPathTest;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.security.guice.InMemorySecurityModule;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -49,39 +58,45 @@ import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class,
-  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class, ProcedureHandlerTest.class,
+  TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
+  DataSetClientTest.class, StreamClientTest.class, NettyFlumeCollectorTest.class,
+  MetricsReporterHookTest.class, RouterPathTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static Gateway gateway;
+  private static final String WEBAPPSERVICE = "$HOST";
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
-
+  private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
+  private static MetricsQueryService metrics;
+  private static StreamHttpService streamHttpService;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
-
+      Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
       conf.setInt(Constants.Gateway.PORT, 0);
       conf.set(Constants.Gateway.ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
@@ -90,7 +105,8 @@ public class GatewayFastTestsSuite {
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
-
+      conf.set(Constants.Router.ADDRESS, hostname);
+      conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       injector = startGateway(conf);
     }
 
@@ -116,9 +132,18 @@ public class GatewayFastTestsSuite {
               }
             });
           }
+
+          @Provides
+          @Named(Constants.Router.ADDRESS)
+          public final InetAddress providesHostname(CConfiguration cConf) {
+            return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
+                                    new InetSocketAddress("localhost", 0).getAddress());
+          }
         },
+        new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
-        new AppFabricTestModule(conf)
+        new AppFabricTestModule(conf),
+        new StreamHttpModule()
       ).with(new AbstractModule() {
                @Override
                protected void configure() {
@@ -130,6 +155,7 @@ public class GatewayFastTestsSuite {
                  MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
                  bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
                  bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+
                }
              }
       ));
@@ -137,14 +163,24 @@ public class GatewayFastTestsSuite {
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    metrics = injector.getInstance(MetricsQueryService.class);
+    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
+    metrics.startAndWait();
+    streamHttpService.startAndWait();
     gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
     gateway.stopAndWait();
     gateway = injector.getInstance(Gateway.class);
     gateway.startAndWait();
-    port = gateway.getBindAddress().getPort();
+    router = injector.getInstance(NettyRouter.class);
+    router.startAndWait();
+    Map<String, Integer> serviceMap = Maps.newHashMap();
+    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
+      serviceMap.put(entry.getValue(), entry.getKey());
+    }
+    port = serviceMap.get(Constants.Service.GATEWAY);
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -158,6 +194,8 @@ public class GatewayFastTestsSuite {
   public static void stopGateway(CConfiguration conf) {
     gateway.stopAndWait();
     appFabricServer.stopAndWait();
+    metrics.stopAndWait();
+    streamHttpService.stopAndWait();
     conf.clear();
   }
 
@@ -194,7 +232,7 @@ public class GatewayFastTestsSuite {
     return client.execute(get);
   }
 
-  public static HttpResponse doPut(String resource) throws Exception {
+  public static org.apache.http.HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
     put.setHeader(AUTH_HEADER);

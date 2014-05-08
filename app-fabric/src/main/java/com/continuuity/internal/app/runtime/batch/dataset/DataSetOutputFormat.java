@@ -5,6 +5,7 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;

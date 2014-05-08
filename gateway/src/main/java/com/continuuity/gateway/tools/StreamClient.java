@@ -13,7 +13,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
-import com.continuuity.streamevent.DefaultStreamEvent;
+import com.continuuity.common.stream.DefaultStreamEvent;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -687,7 +687,7 @@ public class StreamClient {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(uri + "/dequeue");
-    post.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
+    post.addHeader(Constants.Stream.Headers.CONSUMER_ID, consumer);
     if (apikey != null) {
       post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }

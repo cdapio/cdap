@@ -506,9 +506,9 @@ public class TransactionManagerDebuggerMain {
         System.out.println("=====");
         System.out.println("Number of long transactions: " + longTxCount);
         System.out.println("Average age of long transactions: " + formatter.format(new Date(avgLongAge / longTxCount)));
-        System.out.println("Oldest long transaction" +
-                           "\tWritePtr " + txIdToString(oldestLong.getKey()) +
-                           "\tVisibility upper bound: " +
+        System.out.println("Oldest long transaction:" +
+                           "\n\tWritePtr " + txIdToString(oldestLong.getKey()) +
+                           "\n\tVisibility upper bound: " +
                            txIdToString(oldestLong.getValue().getVisibilityUpperBound()));
       }
       if (inProgress.size() - longTxCount > 0) {
@@ -517,11 +517,11 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Number of short transactions: " + (inProgress.size() - longTxCount));
         System.out.println("Average age of short transactions: " +
             formatter.format(new Date(avgShortAge / (inProgress.size() - longTxCount))));
-        System.out.println("Oldest short transaction" +
-                           "\tWritePtr " + txIdToString(oldestShort.getKey()) +
-                           "\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())));
-        System.out.println("\tVisibility upper bound: " +
-            txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
+        System.out.println("Oldest short transaction:" +
+                           "\n\tWritePtr " + txIdToString(oldestShort.getKey()) +
+                           "\n\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())) +
+                           "\n\tVisibility upper bound: " +
+                           txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
       }
     }
   }

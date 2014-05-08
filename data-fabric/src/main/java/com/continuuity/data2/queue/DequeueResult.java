@@ -11,8 +11,10 @@ import java.util.Iterator;
 
 /**
  * Represents result of an dequeue. The iterable gives dequeued data entries in the order of dequeue.
+ *
+ * @param <T> type of dequeue result
  */
-public interface DequeueResult extends Iterable<byte[]> {
+public interface DequeueResult<T> extends Iterable<T> {
 
   /**
    * Returns {@code true} if there is no data in the queue.
@@ -37,7 +39,7 @@ public interface DequeueResult extends Iterable<byte[]> {
    *
    *     // Skip the result.
    *     startTransaction();
-   *     result.skip;
+   *     result.reclaim();
    *     commitTransaction();
    *   }
    *
@@ -51,27 +53,31 @@ public interface DequeueResult extends Iterable<byte[]> {
   int size();
 
   /**
-   * An (immutable) empty dequeue result.
+   * Static helper class for creating empty result of different result type.
    */
-  static final DequeueResult EMPTY_RESULT = new DequeueResult() {
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
+  static final class Empty {
+    public static <T> DequeueResult<T> result() {
+      return new DequeueResult<T>() {
+        @Override
+        public boolean isEmpty() {
+          return true;
+        }
 
-    @Override
-    public void reclaim() {
-      // No-op
-    }
+        @Override
+        public void reclaim() {
+          // No-op
+        }
 
-    @Override
-    public int size() {
-      return 0;
-    }
+        @Override
+        public int size() {
+          return 0;
+        }
 
-    @Override
-    public Iterator<byte[]> iterator() {
-      return Iterators.emptyIterator();
+        @Override
+        public Iterator<T> iterator() {
+          return Iterators.emptyIterator();
+        }
+      };
     }
-  };
+  }
 }

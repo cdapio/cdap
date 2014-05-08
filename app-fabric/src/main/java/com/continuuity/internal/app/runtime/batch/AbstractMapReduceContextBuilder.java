@@ -6,10 +6,13 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.metrics.MapReduceMetrics;
+import com.continuuity.app.program.DefaultProgram;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.jar.BundleJarUtil;
+import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
@@ -23,11 +26,13 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -45,6 +50,7 @@ public abstract class AbstractMapReduceContextBuilder {
 
   /**
    * Build the instance of {@link BasicMapReduceContext}.
+   *
    * @param conf runtime configuration
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
@@ -68,14 +74,28 @@ public abstract class AbstractMapReduceContextBuilder {
                                      URI programLocation,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
-                                     @Nullable String outputDataSetName) {
+                                     @Nullable String outputDataSetName,
+                                     File destinationUnpackedJarDir) {
     Injector injector = createInjector();
 
     // Initializing Program
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Program program;
     try {
-      program = loadProgram(programLocation, locationFactory);
+      // TODO: remove HACK to make ProgramClassLoader check for classes in parent classloader first.
+      // Rather than checking its own classes first, ProgramClassLoader will now check the parent
+      // first. This is done because the InputFormat and OutputFormat classes of the MapReduce job
+      // exist in the system classloader (due to adding them in MapReduceProgramRunner.buildJobJar())
+      // AND the ProgramClassLoader created here, so the Mappers and Reducers load the
+      // InputFormat and OutputFormat classes from the ProgramClassLoader BUT MapReduce framework is using
+      // InputFormta and OutputFormat classes from the system classloader. This causes a class cast exception.
+      Location programJarLocation = locationFactory.create(programLocation);
+      if (destinationUnpackedJarDir != null) {
+        File unpackedJarDir = BundleJarUtil.unpackProgramJar(programJarLocation, destinationUnpackedJarDir);
+        program = new DefaultProgram(programJarLocation, new ProgramClassLoader(unpackedJarDir, null, true));
+      } else {
+        program = Programs.create(programJarLocation);
+      }
       // See if it is launched from Workflow, if it is, change the Program.
       if (workflowBatch != null) {
         MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);
@@ -142,8 +162,9 @@ public abstract class AbstractMapReduceContextBuilder {
     return context;
   }
 
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return Programs.create(locationFactory.create(programLocation));
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory,
+                                File destinationUnpackedJarDir, ClassLoader classLoader) throws IOException {
+    return Programs.create(locationFactory.create(programLocation), destinationUnpackedJarDir, classLoader);
   }
 
   /**

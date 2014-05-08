@@ -10,3 +10,13 @@ ext.runSphinx = { docsDir = "" ->
     assert proc.exitValue() == 0
 }
 
+ext.runSphinxPDF = { docsDir = "" ->
+    println docsDir 
+    sphinxCmd = "sphinx-build -b pdf "+ docsDir + "/source " + docsDir +"/build-pdf"
+    println sphinxCmd
+    def proc = sphinxCmd.execute()
+    proc.in.eachLine {line -> println line}
+    proc.err.eachLine {line -> println 'ERROR: ' + line}
+    proc.waitFor()
+    assert proc.exitValue() == 0
+}

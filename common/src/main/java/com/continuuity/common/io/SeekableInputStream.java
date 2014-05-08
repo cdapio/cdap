@@ -22,6 +22,9 @@ public abstract class SeekableInputStream extends FilterInputStream implements S
    * @throws java.io.IOException If the given input stream is not seekable.
    */
   public static SeekableInputStream create(InputStream input) throws IOException {
+    if (input instanceof SeekableInputStream) {
+      return (SeekableInputStream) input;
+    }
     if (input instanceof FileInputStream) {
       return create((FileInputStream) input);
     }

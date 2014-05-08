@@ -2,15 +2,11 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.common.utils.Networks;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -32,6 +28,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -69,15 +70,15 @@ public class NettyRouterTest {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTest.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private static final String gatewayService = Constants.Service.GATEWAY;
+  private static final String defaultService = Constants.Service.APP_FABRIC_HTTP;
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
 
-  private static final Supplier<String> gatewayServiceSupplier = new Supplier<String>() {
+  private static final Supplier<String> defaultServiceSupplier = new Supplier<String>() {
     @Override
     public String get() {
-      return gatewayService;
+      return defaultService;
     }
   };
 
@@ -118,13 +119,13 @@ public class NettyRouterTest {
   };
 
   public static final RouterResource router = new RouterResource(hostname, discoveryService,
-                                                                 ImmutableSet.of("0:" + gatewayService,
+                                                                 ImmutableSet.of("0:" + defaultService,
                                                                                  "0:" + webappService));
 
-  public static final ServerResource gatewayServer1 = new ServerResource(hostname, discoveryService,
-                                                                         gatewayServiceSupplier);
-  public static final ServerResource gatewayServer2 = new ServerResource(hostname, discoveryService,
-                                                                         gatewayServiceSupplier);
+  public static final ServerResource defaultServer1 = new ServerResource(hostname, discoveryService,
+                                                                         defaultServiceSupplier);
+  public static final ServerResource defaultServer2 = new ServerResource(hostname, discoveryService,
+                                                                         defaultServiceSupplier);
   public static final ServerResource webappServer = new ServerResource(hostname, discoveryService,
                                                                        webappServiceSupplier);
   public static final ServerResource defaultWebappServer1 = new ServerResource(hostname, discoveryService,
@@ -134,18 +135,18 @@ public class NettyRouterTest {
 
   @SuppressWarnings("UnusedDeclaration")
   @ClassRule
-  public static TestRule chain = RuleChain.outerRule(router).around(gatewayServer1)
-    .around(gatewayServer2).around(webappServer).around(defaultWebappServer1).around(defaultWebappServer2);
+  public static TestRule chain = RuleChain.outerRule(router).around(defaultServer1)
+    .around(defaultServer2).around(webappServer).around(defaultWebappServer1).around(defaultWebappServer2);
 
   @Before
   public void clearNumRequests() throws Exception {
-    gatewayServer1.clearNumRequests();
-    gatewayServer2.clearNumRequests();
+    defaultServer1.clearNumRequests();
+    defaultServer2.clearNumRequests();
     webappServer.clearNumRequests();
 
-    // Wait for both servers of gatewayService to be registered
+    // Wait for both servers of defaultService to be registered
     Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(
-      gatewayServiceSupplier.get());
+      defaultServiceSupplier.get());
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 2; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -171,9 +172,9 @@ public class NettyRouterTest {
 
   @Test
   public void testRouterSync() throws Exception {
-    testSync();
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    testSync(25);
+    // sticky endpoint strategy used so the sum should be 25
+    Assert.assertEquals(25, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
   }
 
   @Test
@@ -191,7 +192,7 @@ public class NettyRouterTest {
       final int elem = i;
       final Request request = new RequestBuilder("GET")
         .setUrl(String.format("http://%s:%d%s/%s-%d",
-                              hostname, router.getServiceMap().get(gatewayService), "/v1/ping", "async", i))
+                              hostname, router.getServiceMap().get(defaultService), "/v1/ping", "async", i))
         .build();
       asyncHttpClient.executeRequest(request,
                                      new AsyncCompletionHandler<Void>() {
@@ -218,50 +219,50 @@ public class NettyRouterTest {
     asyncHttpClient.close();
 
     Assert.assertEquals(NUM_ELEMENTS, numSuccessfulRequests.get());
-    Assert.assertTrue(gatewayServer1.getNumRequests() > 0);
-    Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+    // we use sticky endpoint strategy so the sum of requests from the two gateways should be NUM_ELEMENTS
+    Assert.assertTrue(NUM_ELEMENTS == (defaultServer1.getNumRequests() + defaultServer2.getNumRequests()));
   }
 
   @Test
   public void testRouterOneServerDown() throws Exception {
     try {
-      // Bring down gatewayServer1
-      gatewayServer1.cancelRegistration();
+      // Bring down defaultServer1
+      defaultServer1.cancelRegistration();
 
-      testSync();
+      testSync(25);
     } finally {
-      Assert.assertEquals(0, gatewayServer1.getNumRequests());
-      Assert.assertTrue(gatewayServer2.getNumRequests() > 0);
+      Assert.assertEquals(0, defaultServer1.getNumRequests());
+      Assert.assertTrue(defaultServer2.getNumRequests() > 0);
 
-      gatewayServer1.registerServer();
+      defaultServer1.registerServer();
     }
   }
 
-  @Test(expected = Exception.class)
+  @Test
   public void testRouterAllServersDown() throws Exception {
     try {
       // Bring down all servers
-      gatewayServer1.cancelRegistration();
-      gatewayServer2.cancelRegistration();
+      defaultServer1.cancelRegistration();
+      defaultServer2.cancelRegistration();
 
-      testSync();
+      testSyncServiceUnavailable();
     } finally {
-      Assert.assertEquals(0, gatewayServer1.getNumRequests());
-      Assert.assertEquals(0, gatewayServer2.getNumRequests());
+      Assert.assertEquals(0, defaultServer1.getNumRequests());
+      Assert.assertEquals(0, defaultServer2.getNumRequests());
 
-      gatewayServer1.registerServer();
-      gatewayServer2.registerServer();
+      defaultServer1.registerServer();
+      defaultServer2.registerServer();
     }
   }
 
   @Test
   public void testHostForward() throws Exception {
-    // Test gatewayService
+    // Test defaultService
     HttpResponse response = get(String.format("http://%s:%d%s/%s",
-                                              hostname, router.getServiceMap().get(gatewayService),
+                                              hostname, router.getServiceMap().get(defaultService),
                                               "/v1/ping", "sync"));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals(defaultServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
 
     // Test webappService
     response = get(String.format("http://%s:%d%s/%s",
@@ -301,7 +302,7 @@ public class NettyRouterTest {
 
     byte [] requestBody = generatePostData();
     final Request request = new RequestBuilder("POST")
-      .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(gatewayService), "/v1/upload"))
+      .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(defaultService), "/v1/upload"))
       .setContentLength(requestBody.length)
       .setBody(new ByteEntityWriter(requestBody))
       .build();
@@ -325,13 +326,23 @@ public class NettyRouterTest {
     Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
   }
 
-  private void testSync() throws Exception {
+  private void testSync(int numRequests) throws Exception {
+    for (int i = 0; i < numRequests; ++i) {
+      LOG.trace("Sending request " + i);
+      HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
+                                                hostname, router.getServiceMap().get(defaultService),
+                                                "/v1/ping", "sync", i));
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    }
+  }
+
+  private void testSyncServiceUnavailable() throws Exception {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending request " + i);
       HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
-                                                hostname, router.getServiceMap().get(gatewayService),
+                                                hostname, router.getServiceMap().get(defaultService),
                                                 "/v1/ping", "sync", i));
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.getCode(), response.getStatusLine().getStatusCode());
     }
   }
 
@@ -394,7 +405,8 @@ public class NettyRouterTest {
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                                                new RouterPathLookup(new NoAuthenticator())));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

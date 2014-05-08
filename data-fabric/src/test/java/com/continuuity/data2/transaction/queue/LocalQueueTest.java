@@ -2,6 +2,8 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -13,11 +15,14 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 
@@ -26,6 +31,9 @@ import java.io.IOException;
  */
 public class LocalQueueTest extends QueueTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   static CConfiguration conf;
 
   @BeforeClass
@@ -33,7 +41,11 @@ public class LocalQueueTest extends QueueTest {
     conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
-    Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(conf),
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new DataFabricLocalModule(conf));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();
@@ -47,7 +59,9 @@ public class LocalQueueTest extends QueueTest {
 
   @Test
   public void testInjection() throws IOException {
-    Injector injector = Guice.createInjector(new DataFabricModules().getSingleNodeModules(conf));
+    Injector injector = Guice.createInjector(
+      new LocationRuntimeModule().getSingleNodeModules(),
+      new DataFabricModules(conf).getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueue2Producer);

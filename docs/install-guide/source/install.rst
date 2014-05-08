@@ -1,9 +1,9 @@
 .. :author: Continuuity, Inc.
-   :version: 2.1.0
+   :version: 2.2.0
    :description: Installation guide for Continuuity Reactor on Linux systems
 
 =========================
-Continuuity Reactor 2.1.0
+Continuuity Reactor 2.2.0
 =========================
 
 ------------------------------------
@@ -11,15 +11,12 @@ Installation and Configuration Guide
 ------------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 .. rst2pdf: PageBreak
-
 .. rst2pdf: .. contents::
 
 .. rst2pdf: config _templates/pdf-config
-
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
 
 Introduction
@@ -37,16 +34,18 @@ the Continuuity Reactor components so they work with your existing Hadoop cluste
 
 These are the Continuuity Reactor components:
 
-- **Continuuity Web Cloud App**: User interface—the *Dashboard*—for managing 
+- **Continuuity Web Cloud App:** User interface—the *Dashboard*—for managing 
   Continuuity Reactor applications;
-- **Continuuity Gateway**: Service supporting REST endpoints for Continuuity Reactor; 
-- **Continuuity AppFabric**: Service for managing runtime, lifecycle and resources of
+- **Continuuity Gateway:** Service supporting REST endpoints for Continuuity Reactor; 
+- **Continuuity AppFabric:** Service for managing runtime, lifecycle and resources of
   Reactor applications;
-- **Continuuity DataFabric**: Service for managing data operations;
-- **Continuuity Watchdog**: Metrics and logging service; and
-- **Continuuity Kafka**: Metrics and logging transport service,
+- **Continuuity DataFabric:** Service for managing data operations;
+- **Continuuity Watchdog:** Metrics and logging service; and
+- **Continuuity Kafka:** Metrics and logging transport service,
   using an embedded version of *Kafka*.
   ``                                 ``
+
+.. literal above is used to force an extra line break after list
 
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
@@ -410,19 +409,21 @@ We provide pre-built ``.JAR`` files for convenience:
 #. You should be able to start the application, inject log entries,
    run the ``MapReduce`` job and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#stopping-the-app>`__.
+   `TrafficAnalytics example 
+   <http://continuuity.com/developers/examples/TrafficAnalytics#stopping-the-app>`__.
 
+.. rst2pdf: PageBreak
 
 Troubleshooting
----------------
+===============
 Here are some selected examples of potential problems and possible resolutions.
 
 Application Won't Start
-.......................
+-----------------------
 Check HDFS write permissions. It should show an obvious exception in the YARN logs.
  
 No Metrics/logs
-...............
+-----------------------
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
 On the initial startup, the number of available seed brokers must be greater than or equal to the
 *Kafka* default replication factor.
@@ -436,12 +437,12 @@ metrics will not show up though the application will still run::
 	             replication factor: 2 larger than available brokers: 1
  
 Only the First Flowlet Showing Activity
-.......................................
+---------------------------------------
 Check that YARN has the capacity to start any of the remaining containers.
  
  
 YARN Application Shows ACCEPTED For Some Time But Then Fails
-............................................................
+------------------------------------------------------------
 It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
 
@@ -451,7 +452,7 @@ Where to Go Next
 ================
 Now that you've installed Continuuity Reactor, take a look at:
  
-- `Introduction to Continuuity Reactor <intro>`__,
+- `Introduction to Continuuity Reactor <http://continuuity.com/developers/>`__,
   an introduction to Big Data and the Continuuity Reactor.
 
 .. rst2pdf: CutStop
@@ -466,7 +467,6 @@ their default values, descriptions and notes.
 .. list-table::
    :widths: 30 35 35
    :header-rows: 1
-
 
    * - Parameter name
      - Default Value

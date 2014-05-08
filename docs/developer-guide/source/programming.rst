@@ -9,9 +9,9 @@ Continuuity Reactor Programming Guide
 Introduction to Programming Applications for the Continuuity Reactor
 -----------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 Introduction
 ============
@@ -113,7 +113,7 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _application:
+.. _applications:
 
 Applications
 ------------
@@ -179,10 +179,12 @@ Collecting Data: Streams
 ------------------------
 **Streams** are the primary means for bringing data
 from external systems into the Reactor in realtime.
-You specify a Stream in your `Application`_ metadata::
+You specify a Stream in your `Application`__ metadata::
 
 	.withStreams()
 	  .add(new Stream("myStream")) ...
+
+__ Applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
@@ -196,11 +198,10 @@ which is comprised of a header (a map of strings for metadata) and a
 body (a blob of arbitrary binary data).
 
 Streams are uniquely identified by an ID string (a "name") and are
-explicitly created before being used. They can be created
-programmatically within your application, through the Management
-Dashboard, or by or using a command line tool. Data written to a Stream
-can be consumed by Flows and processed in real-time. Streams are shared
-between applications, so they require a unique name.
+explicitly created before being used. They can be created either
+programmatically within your application or by or using a command line tool.
+Data written to a Stream can be consumed by Flows and processed in real-time.
+Streams are shared between applications, so they require a unique name.
 
 .. _flows:
 
@@ -722,11 +723,7 @@ by using one Table for the data to index and a second Table for the
 index itself.
 
 You can implement your own data patterns as custom DataSets on top of
-Tables. Because a number of useful datasets, including key/value tables,
-indexed tables and time series are already included with the Reactor, we
-call them system datasets.
-
-A number of useful DataSets—we refer to them as system DataSets—are
+Tables. A number of useful DataSets—we refer to them as system DataSets—are
 included with Reactor, including key/value tables, indexed tables and
 time series.
 
@@ -836,5 +833,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
+- `Advanced Continuuity Reactor Features <advanced>`__,
   with details of the Flow, DataSet and Transaction systems.

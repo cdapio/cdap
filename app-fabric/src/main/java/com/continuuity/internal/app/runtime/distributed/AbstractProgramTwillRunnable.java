@@ -6,7 +6,6 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.app.guice.DataFabricFacadeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
-import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
@@ -23,7 +22,6 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
-import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
@@ -36,6 +34,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -47,7 +46,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -66,6 +64,7 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -164,7 +163,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       logAppenderInitializer.initialize();
 
       try {
-        program = injector.getInstance(ProgramFactory.class).create(cmdLine.getOptionValue(RunnableOptions.JAR));
+        program = injector.getInstance(ProgramFactory.class)
+          .create(cmdLine.getOptionValue(RunnableOptions.JAR));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -281,49 +281,41 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   // TODO(terence) make this works for different mode
   protected Module createModule(final TwillContext context) {
-    return Modules.combine(new ConfigModule(cConf, hConf),
-                           new IOModule(),
-                           new ZKClientModule(),
-                           new KafkaClientModule(),
-                           new MetricsClientRuntimeModule().getDistributedModules(),
-                           new LocationRuntimeModule().getDistributedModules(),
-                           new LoggingModules().getDistributedModules(),
-                           new DiscoveryRuntimeModule().getDistributedModules(),
-                           new DataFabricModules(cConf, hConf).getDistributedModules(),
-                           new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
-                               .toInstance(context.getHost());
-        // For program loading
-        install(createProgramFactoryModule());
+    return Modules.combine(
+      new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
+            .toInstance(context.getHost());
 
-        // For Binding queue reader stuff (for flowlets)
-        install(createFactoryModule(QueueReaderFactory.class,
-                                    QueueReader.class,
-                                    SingleQueue2Reader.class));
+          // For Binding queue stuff
+          bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
 
-        // For binding DataSet transaction stuff
-        install(new DataFabricFacadeModule());
+          // For program loading
+          install(createProgramFactoryModule());
 
-        bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-          @Override
-          public Cancellable announce(String serviceName, int port) {
-            return context.announce(serviceName, port);
-          }
-        });
+          // For binding DataSet transaction stuff
+          install(new DataFabricFacadeModule());
+
+          bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
+            @Override
+            public Cancellable announce(String serviceName, int port) {
+              return context.announce(serviceName, port);
+            }
+          });
+        }
       }
-    });
+    );
   }
-
-  private <T> Module createFactoryModule(final Class<?> factoryClass,
-                                         final Class<T> sourceClass,
-                                         final Class<? extends T> targetClass) {
-    return new FactoryModuleBuilder()
-      .implement(sourceClass, targetClass)
-      .build(factoryClass);
-  }
-
 
   private Module createProgramFactoryModule() {
     return new PrivateModule() {
@@ -352,7 +344,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
 
     public Program create(String path) throws IOException {
-      return Programs.create(locationFactory.create(path));
+      Location location = locationFactory.create(path);
+      return Programs.create(location, Files.createTempDir());
     }
   }
 }

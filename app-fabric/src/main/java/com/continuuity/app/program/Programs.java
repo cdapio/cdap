@@ -4,10 +4,10 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.common.lang.jar.JarResources;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
@@ -17,8 +17,21 @@ import java.util.Locale;
  */
 public final class Programs {
 
+  public static Program create(Location location, File destinationUnpackedJarDir,
+                               ClassLoader parentClassLoader) throws IOException {
+    return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
+  }
+
+  public static Program create(Location location, File destinationUnpackedJarDir) throws IOException {
+    return Programs.create(location, destinationUnpackedJarDir, null);
+  }
+
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * would not function from the program this method returns.
+   */
   public static Program create(Location location) throws IOException {
-    return new DefaultProgram(location, new JarResources(location));
+    return Programs.create(location, null);
   }
 
   /**
