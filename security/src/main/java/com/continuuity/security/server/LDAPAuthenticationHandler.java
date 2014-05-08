@@ -12,6 +12,13 @@ import java.util.HashMap;
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private final CConfiguration configuration;
+  private final String configBase = "security.authentication.method.";
+  private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
+                                                                                "userRdnAttribute", "userObjectClass" };
+  private static final String[] optionalConfigurables = new String[] { "bindDn", "bindPassword", "userIdAttribute",
+                                                                      "userPasswordAttribute", "roleBaseDn",
+                                                                      "roleNameAttribute", "roleMemberAttribute",
+                                                                      "roleObjectClass" };
 
   @Inject
   public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
@@ -28,12 +35,17 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         map.put("contextFactory", "com.sun.jndi.ldap.LdapCtxFactory");
         map.put("authenticationMethod", "simple");
         map.put("forceBindingLogin", "true");
-        map.put("debug", configuration.get("security.authentication.method.debug"));
-        map.put("hostname", configuration.get("security.authentication.method.hostname"));
-        map.put("port", configuration.get("security.authentication.method.port"));
-        map.put("userBaseDn", configuration.get("security.authentication.method.userBaseDn"));
-        map.put("userRdnAttribute", configuration.get("security.authentication.method.userRdnAttribute"));
-        map.put("userObjectClass", configuration.get("security.authentication.method.userObjectClass"));
+
+        for(String configurable : mandatoryConfigurables) {
+          map.put(configurable, configuration.get(configBase.concat(configurable)));
+        }
+
+        for(String configurable: optionalConfigurables) {
+          String value = configuration.get(configBase.concat(configurable));
+          if (value != null) {
+            map.put(configurable, value);
+          }
+        }
         return new AppConfigurationEntry[] {
           new AppConfigurationEntry(configuration.get("security.authentication.method.className"),
                                     AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
