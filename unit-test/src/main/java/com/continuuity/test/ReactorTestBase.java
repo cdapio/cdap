@@ -92,7 +92,8 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(), applicationClz, bundleEmbeddedJars);
+      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(),
+                                                                   applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),

@@ -35,6 +35,7 @@ import com.continuuity.pipeline.PipelineFactory;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultProcedureClient;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.google.common.base.Preconditions;
@@ -251,7 +252,8 @@ public final class PerformanceTestRunner {
   // Deploys a provided Continuuity Reactor App by the name of its class.
   @SuppressWarnings(value = "unchecked")
   public static ApplicationManager deployApplication(String applicationClass) {
-    Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass), "Application cannot be null or empty String.");
+    Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass),
+                                "Application cannot be null or empty String.");
 
     try {
       return deployApplication((Class<? extends Application>) Class.forName(applicationClass));
@@ -270,7 +272,8 @@ public final class PerformanceTestRunner {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(), applicationClz);
+      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory,
+                                                                   appSpec.getName(), applicationClz);
 
       BenchmarkManagerFactory bmf = injector.getInstance(BenchmarkManagerFactory.class);
       ApplicationManager am = bmf.create(accountId, appSpec.getName(), httpHandler,

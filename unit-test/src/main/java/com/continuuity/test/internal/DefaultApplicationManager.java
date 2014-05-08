@@ -20,7 +20,6 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -314,7 +313,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   private boolean isRunning(ProgramId programId) {
     try {
 
-      String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(), programId.getRunnableId(), programId.getRunnableType());
+      String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(),
+                                                    programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "RUNNING".equals(status);
     } catch (Exception e) {
