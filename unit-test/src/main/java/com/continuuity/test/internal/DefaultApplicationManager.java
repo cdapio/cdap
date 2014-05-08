@@ -2,7 +2,6 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.program.Type;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
@@ -21,7 +20,7 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -96,7 +95,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, flowName, "flows", arguments);
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -107,8 +106,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            AppFabricServiceWrapper.setFlowletInstances
-              (httpHandler, applicationId, flowName, flowletName, instances);
+            AppFabricTestHelper.setFlowletInstances(httpHandler, applicationId, flowName, flowletName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -118,7 +116,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(flowName, flowId)) {
-              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, flowName, "flows");
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, flowName, "flows");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -149,7 +147,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, jobName, "mapreduce", arguments);
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, jobName, "mapreduce", arguments);
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -160,7 +158,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(jobName, jobId)) {
-              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -197,7 +195,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        AppFabricServiceWrapper.startProgram(httpHandler, applicationId, procedureName , "procedures", arguments);
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, procedureName, "procedures", arguments);
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
@@ -208,7 +206,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(procedureName, procedureId)) {
-              AppFabricServiceWrapper.stopProgram(httpHandler, applicationId, procedureName , "procedures");
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, procedureName, "procedures");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -268,8 +266,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         // throw error when you stop smth that is not running.
         if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
-          AppFabricServiceWrapper.stopProgram(httpHandler, id.getApplicationId(),
-                                              id.getRunnableId(), id.getRunnableType());
+          AppFabricTestHelper.stopProgram(httpHandler, id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
         }
       }
     } catch (Exception e) {
@@ -317,8 +314,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private boolean isRunning(ProgramId programId) {
     try {
 
-      String status = AppFabricServiceWrapper.getStatus(httpHandler, programId.getApplicationId(),
-                                                        programId.getRunnableId(), programId.getRunnableType());
+      String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(), programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "RUNNING".equals(status);
     } catch (Exception e) {

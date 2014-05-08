@@ -12,13 +12,12 @@ import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,24 +121,23 @@ public class DeployRunStopTest {
 
   @Test
   public void testDeployRunStop() throws Exception {
-    AppFabricServiceWrapper.deployApplication(GenSinkApp.class);
-    AppFabricServiceWrapper.startProgram(server, "GenSinkApp", "GenSinkFlow", "flows",
-                                         ImmutableMap.<String, String>of());
+    AppFabricTestHelper.deployApplication(GenSinkApp.class);
+    AppFabricTestHelper.startProgram(server, "GenSinkApp", "GenSinkFlow", "flows", ImmutableMap.<String, String>of());
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
-    AppFabricServiceWrapper.setFlowletInstances(server, "GenSinkApp", "GenSinkFlow", "SinkFlowlet", (short) 3);
+    AppFabricTestHelper.setFlowletInstances(server, "GenSinkApp", "GenSinkFlow", "SinkFlowlet", (short) 3);
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
     // TODO: The flow test need to reform later using the new test framework.
     // Sleep one extra seconds to consume any unconsumed items (there shouldn't be, but this is for catching error).
     TimeUnit.SECONDS.sleep(1);
-    AppFabricServiceWrapper.stopProgram(server, "GenSinkApp", "GenSinkFlow", "flows");
+    AppFabricTestHelper.stopProgram(server, "GenSinkApp", "GenSinkFlow", "flows");
     Assert.assertEquals(9999, messageCount.get());
     Assert.assertEquals(3, instanceCount.get());
   }
 
   @BeforeClass
   public static void before() throws Exception {
-    final Injector injector = AppFabricServiceWrapper.getInjector();
+    final Injector injector = AppFabricTestHelper.getInjector();
 
     server = injector.getInstance(AppFabricHttpHandler.class);
 

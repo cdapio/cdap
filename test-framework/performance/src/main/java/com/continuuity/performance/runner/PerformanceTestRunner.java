@@ -37,7 +37,6 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.DefaultProcedureClient;
 import com.continuuity.test.internal.ProcedureClientFactory;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -252,8 +251,7 @@ public final class PerformanceTestRunner {
   // Deploys a provided Continuuity Reactor App by the name of its class.
   @SuppressWarnings(value = "unchecked")
   public static ApplicationManager deployApplication(String applicationClass) {
-    Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass),
-                                "Application cannot be null or empty String.");
+    Preconditions.checkArgument(StringUtils.isNotEmpty(applicationClass), "Application cannot be null or empty String.");
 
     try {
       return deployApplication((Class<? extends Application>) Class.forName(applicationClass));
@@ -272,8 +270,7 @@ public final class PerformanceTestRunner {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = AppFabricServiceWrapper.deployApplication(httpHandler, locationFactory,
-                                                                       appSpec.getName(), applicationClz);
+      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(), applicationClz);
 
       BenchmarkManagerFactory bmf = injector.getInstance(BenchmarkManagerFactory.class);
       ApplicationManager am = bmf.create(accountId, appSpec.getName(), httpHandler,
@@ -288,7 +285,7 @@ public final class PerformanceTestRunner {
   // Wipes out all applications and data for a given account in the Reactor.
   protected void clearAppFabric() {
     try {
-      AppFabricServiceWrapper.reset(httpHandler);
+      AppFabricTestHelper.reset(httpHandler);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -408,7 +405,8 @@ public final class PerformanceTestRunner {
         @Override
         public void configure(Binder binder) {
           binder.bind(new TypeLiteral<PipelineFactory<?>>() { })
-            .to(new TypeLiteral<SynchronousPipelineFactory<?>>() { });
+            .to(new TypeLiteral<SynchronousPipelineFactory<?>>() {
+            });
           binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
           binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);

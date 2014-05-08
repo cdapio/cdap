@@ -26,6 +26,7 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -34,7 +35,6 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -92,9 +92,7 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = AppFabricServiceWrapper.deployApplication(
-        httpHandler, locationFactory,
-        appSpec.getName(), applicationClz, bundleEmbeddedJars);
+      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
@@ -107,7 +105,7 @@ public class ReactorTestBase {
 
   protected void clear() {
     try {
-      AppFabricServiceWrapper.reset(httpHandler);
+      AppFabricTestHelper.reset(httpHandler);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -1,4 +1,4 @@
-package com.continuuity.test.internal.guice;
+package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
@@ -20,9 +20,7 @@ import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
-import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.MockResponder;
-import com.continuuity.test.internal.TempFolder;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -52,7 +50,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.channels.Channel;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -67,9 +64,9 @@ import java.util.jar.Manifest;
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
  */
-public class AppFabricServiceWrapper {
+public class AppFabricTestHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceWrapper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricTestHelper.class);
   private static final Gson GSON = new Gson();
   public static final TempFolder TEMP_FOLDER = new TempFolder();
   public static CConfiguration configuration;
@@ -159,7 +156,7 @@ public class AppFabricServiceWrapper {
    * Given a class generates a manifest file with main-class as class.
    *
    * @param klass to set as Main-Class in manifest file.
-   * @return An instance {@link Manifest}
+   * @return An instance {@link java.util.jar.Manifest}
    */
   public static Manifest getManifestWithMainClass(Class<?> klass) {
     Manifest manifest = new Manifest();
@@ -204,7 +201,7 @@ public class AppFabricServiceWrapper {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
-      JarFinder.getJar(appClass, AppFabricServiceWrapper.getManifestWithMainClass(appClass))
+      JarFinder.getJar(appClass, AppFabricTestHelper.getManifestWithMainClass(appClass))
     );
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
