@@ -92,7 +92,8 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
-    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()), handlerInfo.getMethodName());
+    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
+                         handlerInfo.getMethodName());
   }
 
   private String getSimpleName(String className) {
