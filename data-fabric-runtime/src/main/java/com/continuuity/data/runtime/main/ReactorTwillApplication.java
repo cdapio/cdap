@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
+import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
@@ -39,8 +40,9 @@ public class ReactorTwillApplication implements TwillApplication {
       addLogSaverService(
        addStreamService(
          addTransactionService(
-           addMetricsService(
-            TwillSpecification.Builder.with().setName(NAME).withRunnable()))))
+           addMetricsProcessor (
+             addMetricsService(
+              TwillSpecification.Builder.with().setName(NAME).withRunnable())))))
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
@@ -69,6 +71,30 @@ public class ReactorTwillApplication implements TwillApplication {
       .add("hConf.xml", hConfFile.toURI())
       .add("cConf.xml", cConfFile.toURI())
       .apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addMetricsProcessor(TwillSpecification.Builder.MoreRunnable
+                                                                          builder) {
+
+    int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES, 2);
+    int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB, 2048);
+    int instances = cConf.getInt(Constants.MetricsProcessor.NUM_INSTANCES, 2);
+
+
+    ResourceSpecification metricsProcessorSpec = ResourceSpecification.Builder
+      .with()
+      .setVirtualCores(numCores)
+      .setMemory(memoryMB, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
+      .build();
+
+    return builder.add(new MetricsProcessorTwillRunnable("metrics.processor", "cConf.xml", "hConf.xml"),
+                       metricsProcessorSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+
   }
 
   private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable

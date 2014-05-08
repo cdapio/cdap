@@ -479,6 +479,12 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
   }
 
+  public static final class MetricsProcessor {
+    public static final String NUM_INSTANCES = "metrics.processor.num.instances";
+    public static final String NUM_CORES = "metrics.processor.num.cores";
+    public static final String MEMORY_MB = "metrics.processor.memory.mb";
+  }
+
   /**
    * Security configuration.
    */

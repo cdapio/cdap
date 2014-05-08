@@ -630,6 +630,28 @@
     </property>
 
     <!--
+        Metrics processor configuration
+     -->
+
+    <property>
+        <name>metrics.processor.num.instances</name>
+        <value>2</value>
+        <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.num.cores</name>
+        <value>2</value>
+        <description>Number of cores for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.memory.mb</name>
+        <value>2048</value>
+        <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <!--
         Logging Configuration
     -->
     <property>
