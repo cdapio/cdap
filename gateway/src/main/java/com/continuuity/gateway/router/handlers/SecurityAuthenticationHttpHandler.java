@@ -90,7 +90,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
       } else {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
-                                                 "error_description=\"%s\"", realm, tokenState.getMsg()));
+                                                 " error_description=\"%s\"", realm, tokenState.getMsg()));
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.debug("Failed authentication due to invalid token, reason={};", tokenState);
@@ -147,9 +147,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
     } else if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
-        Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
+      Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
     } else {
-        return;
+      return;
     }
   }
 
