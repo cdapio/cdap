@@ -97,7 +97,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/{stream}/info")
-  public void info(HttpRequest request, HttpResponder responder,
+  public void getInfo(HttpRequest request, HttpResponder responder,
                    @PathParam("stream") String stream) throws Exception {
     String accountID = getAuthenticatedAccountId(request);
 
