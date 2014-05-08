@@ -71,7 +71,7 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 /**
  * Security Globals
  */
-var SECURITY_ENABLED, AUTH_SERVER_ADDR;
+var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
 WebAppServer.prototype.setSecurityStatus = function(setAddress) {
   // Hit any endpoint to check if authentication is enabled.
@@ -95,8 +95,7 @@ WebAppServer.prototype.setSecurityStatus = function(setAddress) {
       response.on('end', function () {
         if (response.statusCode === 401) {
           SECURITY_ENABLED = true;
-          json = JSON.parse(data);
-          AUTH_SERVER_ADDR = "http://" + json.auth_uri[0] + ":10009";
+          AUTH_SERVER_ADDRESSES = JSON.parse(data).auth_uri;
         } else {
           SECURITY_ENABLED = false;
         }
@@ -107,6 +106,16 @@ WebAppServer.prototype.setSecurityStatus = function(setAddress) {
   });
   req.end();
 };
+
+/**
+ * Randomly picks and returns an Authentication service to connect to.
+ */
+WebAppServer.prototype.getAuthServerAddress = function() {
+  if (AUTH_SERVER_ADDRESSES.length === 0) {
+    return null;
+  }
+  return "http://" + AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)] + ":10009";
+}
 
 /**
  * Sets version if a version file exists.
@@ -712,8 +721,8 @@ WebAppServer.prototype.bindRoutes = function() {
         });
 
         response.on('end', function () {
-          console.log(response.statusCode)
           if (response.statusCode === 401) {
+            AUTH_SERVER_ADDRESSES  = JSON.parse(data).auth_uri;
             token = '';
             res.clearCookie('token');
           }
@@ -725,44 +734,54 @@ WebAppServer.prototype.bindRoutes = function() {
   });
 
   this.app.post('/validatelogin', function (req, res) {
-      var post = req.body;
-      var options = {
-        url: AUTH_SERVER_ADDR,
-        auth: {
-          user: post.username,
-          password: post.password
-        }
-      }
-      request(options, function (nerr, nres, nbody) {
-        if (nerr || nres.statusCode !== 200) {
-          res.send(401);
-        } else {
-          res.send(200);
-        }
-      });
-   });
-
-   this.app.post('/login', function (req, res) {
-      req.session.regenerate(function () {
+      var auth_uri = self.getAuthServerAddress();
+      if (auth_uri === null) {
+        res.send(500, "No Authentication service to connect to was found.");
+      } else {
         var post = req.body;
         var options = {
-          url: AUTH_SERVER_ADDR,
+          url: auth_uri,
           auth: {
             user: post.username,
             password: post.password
           }
         }
-
         request(options, function (nerr, nres, nbody) {
           if (nerr || nres.statusCode !== 200) {
-            res.locals.errorMessage = "Please specify a valid username and password";
-            res.redirect('/#/login');
+            res.send(401);
           } else {
-            var nbody = JSON.parse(nbody);
-            res.cookie('token', nbody.access_token, { httpOnly: true } );
-            res.redirect('/#/overview');
+            res.send(200);
           }
         });
+      }
+   });
+
+   this.app.post('/login', function (req, res) {
+      req.session.regenerate(function () {
+        var auth_uri = self.getAuthServerAddress();
+        if (auth_uri === null) {
+          res.send(500, "No Authentication service to connect to was found.");
+        } else {
+          var post = req.body;
+          var options = {
+            url: auth_uri,
+            auth: {
+              user: post.username,
+              password: post.password
+            }
+          }
+
+          request(options, function (nerr, nres, nbody) {
+            if (nerr || nres.statusCode !== 200) {
+              res.locals.errorMessage = "Please specify a valid username and password";
+              res.redirect('/#/login');
+            } else {
+              var nbody = JSON.parse(nbody);
+              res.cookie('token', nbody.access_token, { httpOnly: true } );
+              res.redirect('/#/overview');
+            }
+          });
+        }
       });
    });
 
