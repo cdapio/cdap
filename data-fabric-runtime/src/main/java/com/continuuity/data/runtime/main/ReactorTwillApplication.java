@@ -3,7 +3,10 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
+import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
+import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -33,13 +36,39 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
-      addStreamService(
-      addTransactionService(
-      addMetricsService(
-        TwillSpecification.Builder.with().setName(NAME).withRunnable())))
-      .anyOrder()
-      .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
+      addLogSaverService(
+       addStreamService(
+         addTransactionService(
+           addMetricsService(
+            TwillSpecification.Builder.with().setName(NAME).withRunnable()))))
+        .anyOrder()
+        .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
+        .build();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addLogSaverService(TwillSpecification.Builder.MoreRunnable
+                                                                         builder) {
+
+    int numInstances = cConf.getInt(LoggingConfiguration.LOG_SAVER_NUM_INSTANCES,
+                                    LoggingConfiguration.DEFAULT_LOG_SAVER_NUM_INSTANCES);
+    Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
+                                numInstances);
+
+    int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
+    Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
+
+    ResourceSpecification spec = ResourceSpecification.Builder
+      .with()
+      .setVirtualCores(2)
+      .setMemory(memory, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(numInstances)
       .build();
+
+    return builder.add(new LogSaverTwillRunnable("saver", "hConf.xml", "cConf.xml"), spec)
+      .withLocalFiles()
+      .add("hConf.xml", hConfFile.toURI())
+      .add("cConf.xml", cConfFile.toURI())
+      .apply();
   }
 
   private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable
@@ -92,8 +121,8 @@ public class ReactorTwillApplication implements TwillApplication {
 
     return builder.add(new StreamHandlerRunnable("stream", "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
-        .add("cConf.xml", cConfFile.toURI())
-        .add("hConf.xml", hConfFile.toURI())
-        .apply();
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
   }
 }
