@@ -246,7 +246,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String prefix = stream + ".";
     for (Map.Entry<String, String> header : request.getHeaders()) {
       if (header.getKey().startsWith(prefix)) {
-        headers.put(header);
+        headers.put(header.getKey().substring(prefix.length()), header.getValue());
       }
     }
     return headers.build();

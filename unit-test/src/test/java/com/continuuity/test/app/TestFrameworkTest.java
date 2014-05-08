@@ -117,7 +117,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
                                                                      "WordCountFlow",
                                                                      "CountByField");
-      flowletMetrics.waitForProcessed(500, 5, TimeUnit.SECONDS);
+      flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
       Assert.assertEquals(0L, flowletMetrics.getException());
 
       // Query the result
@@ -151,6 +151,15 @@ public class TestFrameworkTest extends ReactorTestBase {
       long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
       // every event has 5 tokens
       Assert.assertEquals(5 * 100L, totalCount);
+
+      // Run mapreduce from stream
+      mrManager = applicationManager.startMapReduce("countFromStream");
+      mrManager.waitForFinish(120L, TimeUnit.SECONDS);
+
+      totalCount = Long.valueOf(procedureClient.query("stream_total", Collections.<String, String>emptyMap()));
+
+      // The stream MR only consume the body, not the header.
+      Assert.assertEquals(3 * 100L, totalCount);
 
     } finally {
       applicationManager.stopAll();

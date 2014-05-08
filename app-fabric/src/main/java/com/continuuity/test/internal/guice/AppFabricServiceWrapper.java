@@ -6,24 +6,21 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.BodyConsumer;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
+import com.continuuity.test.internal.MockResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
@@ -51,85 +46,6 @@ public class AppFabricServiceWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceWrapper.class);
   private static final Gson GSON = new Gson();
-
-  private static final class MockResponder implements HttpResponder {
-    private HttpResponseStatus status = null;
-
-    HttpResponseStatus getStatus() {
-      return status;
-    }
-
-    @Override
-    public void sendJson(HttpResponseStatus status, Object object) {
-      this.status = status;
-    }
-
-    @Override
-    public void sendJson(HttpResponseStatus status, Object object, Type type) {
-
-    }
-
-    @Override
-    public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
-
-    }
-
-    @Override
-    public void sendString(HttpResponseStatus status, String data) {
-      this.status = status;
-    }
-
-    @Override
-    public void sendStatus(HttpResponseStatus status) {
-
-    }
-
-    @Override
-    public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
-      this.status = status;
-    }
-
-    @Override
-    public void sendByteArray(HttpResponseStatus status, byte[] bytes, Multimap<String, String> headers) {
-
-    }
-
-    @Override
-    public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
-
-    }
-
-    @Override
-    public void sendError(HttpResponseStatus status, String errorMessage) {
-      this.status = status;
-    }
-
-    @Override
-    public void sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
-
-    }
-
-    @Override
-    public void sendChunk(ChannelBuffer content) {
-
-    }
-
-    @Override
-    public void sendChunkEnd() {
-
-    }
-
-    @Override
-    public void sendContent(HttpResponseStatus status,
-                            ChannelBuffer content, String contentType, Multimap<String, String> headers) {
-      this.status = status;
-    }
-
-    @Override
-    public void sendFile(File file, Multimap<String, String> headers) {
-
-    }
-  }
 
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                   String type, Map<String, String> args) {
