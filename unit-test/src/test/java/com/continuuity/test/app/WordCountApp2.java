@@ -329,7 +329,7 @@ public class WordCountApp2 implements Application {
     }
 
     /**
-     * Stream Mapper
+     * Mapper for the count from stream.
      */
     public static final class StreamMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
 
@@ -348,7 +348,7 @@ public class WordCountApp2 implements Application {
     }
 
     /**
-     * Stream Reducer
+     * Reducer for the count from stream.
      */
     public static final class StreamReducer extends Reducer<Text, LongWritable, byte[], byte[]> {
 
