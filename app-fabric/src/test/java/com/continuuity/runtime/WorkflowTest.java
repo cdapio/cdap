@@ -59,7 +59,8 @@ public class WorkflowTest {
 
   @Test
   public void testWorkflow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
@@ -96,7 +97,8 @@ public class WorkflowTest {
 
   @Test
   public void testOneActionWorkflow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 

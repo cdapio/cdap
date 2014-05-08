@@ -139,7 +139,8 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testWordCount() throws Exception {
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
@@ -193,7 +194,8 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void testSuccess(boolean frequentFlushing) throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
 
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
@@ -263,7 +265,8 @@ public class MapReduceProgramRunnerTest {
     // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
     //       here to be recognized by map tasks as a message to emulate failure
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
 
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 

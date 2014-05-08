@@ -6,9 +6,12 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -25,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nullable;
 
 /**
  * AppFabric Server that implements {@link AbstractExecutionThreadService}.
@@ -42,6 +46,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private NettyHttpService httpService;
   private ExecutorService executor;
   private Set<HttpHandler> handlers;
+  private MetricsCollectionService metricsCollectionService;
   private CConfiguration configuration;
 
   /**
@@ -51,13 +56,15 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   public AppFabricServer(CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named("appfabric.http.handler") Set<HttpHandler> handlers) {
+                         @Named("appfabric.http.handler") Set<HttpHandler> handlers,
+                         @Nullable MetricsCollectionService metricsCollectionService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handlers = handlers;
     this.configuration = configuration;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -91,6 +98,8 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                Constants.Service.APP_FABRIC_HTTP)))
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                                  Constants.Gateway.DEFAULT_BACKLOG))

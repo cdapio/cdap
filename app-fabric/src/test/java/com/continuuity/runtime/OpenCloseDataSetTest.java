@@ -69,7 +69,8 @@ public class OpenCloseDataSetTest {
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
     TrackingTable.resetTracker();
-    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class, TEMP_FOLDER_SUPPLIER);
+    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
+                                                                                   TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 

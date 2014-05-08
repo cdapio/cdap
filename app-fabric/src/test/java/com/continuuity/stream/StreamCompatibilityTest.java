@@ -89,7 +89,8 @@ public class StreamCompatibilityTest {
     StreamEventEncoder oldEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("old")));
     StreamEventEncoder newEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("new")));
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(StreamApp.class, TEMP_DIR_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(StreamApp.class,
+                                                                                         TEMP_DIR_SUPPLIER);
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner flowRunner = runnerFactory.create(ProgramRunnerFactory.Type.FLOW);

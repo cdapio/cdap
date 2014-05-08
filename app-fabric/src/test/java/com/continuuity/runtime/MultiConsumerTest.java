@@ -152,7 +152,8 @@ public class MultiConsumerTest {
   @Test
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(MultiApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(MultiApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();

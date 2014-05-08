@@ -13,6 +13,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
 import com.continuuity.gateway.handlers.ProcedureHandlerTest;
+import com.continuuity.gateway.handlers.StreamHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
@@ -67,9 +68,18 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, ProcedureHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, NettyFlumeCollectorTest.class,
-  MetricsReporterHookTest.class, RouterPathTest.class})
+
+@Suite.SuiteClasses(value = {
+  PingHandlerTest.class,
+  ProcedureHandlerTest.class,
+  DataSetClientTest.class,
+  StreamClientTest.class,
+  NettyFlumeCollectorTest.class,
+  MetricsReporterHookTest.class,
+  RouterPathTest.class,
+  StreamHandlerTest.class
+})
+
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";

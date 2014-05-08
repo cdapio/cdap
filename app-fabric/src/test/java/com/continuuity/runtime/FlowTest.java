@@ -81,7 +81,8 @@ public class FlowTest {
 
   @Test
   public void testAppWithArgs() throws Exception {
-   final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(ArgumentCheckApp.class, TEMP_FOLDER_SUPPLIER);
+   final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
+                                                                                        TEMP_FOLDER_SUPPLIER);
    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
@@ -120,7 +121,8 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
@@ -191,7 +193,8 @@ public class FlowTest {
 
   @Test
   public void testCountRandomApp() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(TestCountRandomApp.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(TestCountRandomApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
                                                       .toJson(app.getAppSpecLoc().getSpecification()));
 
@@ -209,7 +212,8 @@ public class FlowTest {
 
   @Test
   public void testCountAndFilterWord() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(CountAndFilterWord.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(CountAndFilterWord.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getType() == Type.FLOW) {

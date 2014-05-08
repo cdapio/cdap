@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,8 @@ public class StreamClientTest {
 
   }
 
+  // TODO: (REACTOR-87) Temporarily disable.
+  @Ignore
   @Test
   public void testStreamTruncate() throws OperationException {
     String streamId = "truncate-stream";
