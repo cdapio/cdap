@@ -92,6 +92,7 @@ public class StreamCache {
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
   }
+
   private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("type", "Stream");
