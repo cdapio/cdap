@@ -24,6 +24,8 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
@@ -59,6 +61,17 @@ public class MapReduceProgramRunnerTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   @BeforeClass
   public static void beforeClass() {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
@@ -87,7 +100,8 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
 
     dataSetInstantiator.setDataSets(new AppWithMapReduceUsingObjectStore().configure().getDataSets().values());
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
@@ -120,13 +134,12 @@ public class MapReduceProgramRunnerTest {
 
         }
       });
-
-
   }
 
   @Test
   public void testWordCount() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
 
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
@@ -181,7 +194,8 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void testSuccess(boolean frequentFlushing) throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
@@ -250,7 +264,8 @@ public class MapReduceProgramRunnerTest {
     // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
     //       here to be recognized by map tasks as a message to emulate failure
 
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class,
+                                                                                TEMP_FOLDER_SUPPLIER);
     dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()

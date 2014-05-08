@@ -10,6 +10,8 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.ArchiveId;
@@ -28,11 +30,14 @@ import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -49,6 +54,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -121,16 +127,30 @@ public class TestHelper {
                       "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass)
-                                                                                                      throws Exception {
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
+                                                                     final Supplier<File> folderSupplier)
+                                                                                        throws Exception {
     LocalLocationFactory lf = new LocalLocationFactory();
 
     Location deployedJar = lf.create(
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
     try {
-      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
-      return (ApplicationWithPrograms) p.get();
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+
+      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+                                                                        new Function<Program, Program>() {
+        @Override
+        public Program apply(Program program) {
+          try {
+            return Programs.create(program.getJarLocation(), folderSupplier.get());
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }));
+      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
     } finally {
       deployedJar.delete(true);
     }

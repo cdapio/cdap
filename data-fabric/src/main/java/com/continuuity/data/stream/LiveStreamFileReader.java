@@ -3,11 +3,11 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.LiveFileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -117,8 +117,8 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
                        implements FileReader<PositionStreamEvent, StreamFileOffset> {
 
     private final FileReader<PositionStreamEvent, Long> reader;
-    private final StreamFileOffset offset;
     private final Location partitionLocation;
+    private StreamFileOffset offset;
 
     private StreamPositionTransformFileReader(Location streamLocation, StreamFileOffset offset) throws IOException {
       this.reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(offset.getEventLocation()),
@@ -136,8 +136,14 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     @Override
     public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
                     long timeout, TimeUnit unit) throws IOException, InterruptedException {
-      int eventCount = reader.read(events, maxEvents, timeout, unit);
-      offset.setOffset(reader.getPosition());
+      return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);
+    }
+
+    @Override
+    public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
+                    long timeout, TimeUnit unit, ReadFilter readFilter) throws IOException, InterruptedException {
+      int eventCount = reader.read(events, maxEvents, timeout, unit, readFilter);
+      offset = new StreamFileOffset(offset, reader.getPosition());
       return eventCount;
     }
 

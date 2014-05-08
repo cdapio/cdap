@@ -13,11 +13,15 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.stream.service.StreamHandler;
+import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
-import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -33,16 +37,20 @@ import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.util.Modules;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -68,6 +76,8 @@ public class ReactorTestBase {
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
+  private static AppFabricService appFabricServiceWrapper;
+  private static AppFabricHttpHandler httpHandler;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -87,9 +97,9 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
-                                                          applicationClz, bundleEmbeddedJars);
+      Location deployedJar = AppFabricServiceWrapper.deployApplication(
+        httpHandler, locationFactory,
+        appSpec.getName(), applicationClz, bundleEmbeddedJars);
 
       return
         injector.getInstance(ApplicationManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,
@@ -136,7 +146,7 @@ public class ReactorTestBase {
       System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
-    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+    injector = Guice.createInjector(createDataFabricModule(configuration),
                                     new ConfigModule(configuration),
                                     new IOModule(),
                                     new AuthModule(),
@@ -144,6 +154,14 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
+                                    new StreamHttpModule() {
+                                      @Override
+                                      protected void configure() {
+                                        super.configure();
+                                        bind(StreamHandler.class).in(Scopes.SINGLETON);
+                                        expose(StreamHandler.class);
+                                      }
+                                    },
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
@@ -171,6 +189,19 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
+    httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+  }
+
+  private static Module createDataFabricModule(CConfiguration cConf) {
+    return Modules.override(new DataFabricModules(cConf).getSingleNodeModules())
+      .with(new AbstractModule() {
+
+        @Override
+        protected void configure() {
+          // Use in memory dataset instead
+          bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
+        }
+      });
   }
 
   private static void copyTempFile (String infileName, File outDir) {

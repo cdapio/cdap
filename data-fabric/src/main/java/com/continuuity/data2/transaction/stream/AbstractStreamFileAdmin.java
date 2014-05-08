@@ -45,11 +45,17 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
 
+  // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
+  // TODO: Remove usage of this when no longer needed
+  private final StreamAdmin oldStreamAdmin;
+
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                                    StreamConsumerStateStoreFactory stateStoreFactory) {
+                                    StreamConsumerStateStoreFactory stateStoreFactory,
+                                    StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
     this.stateStoreFactory = stateStoreFactory;
+    this.oldStreamAdmin = oldStreamAdmin;
   }
 
   @Override
@@ -70,28 +76,28 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       Set<StreamConsumerState> states = Sets.newHashSet();
       stateStore.getByGroup(groupId, states);
 
-      int oldInstances = states.size();
-
-      // Nothing to do if size doesn't change
-      if (oldInstances == instances) {
-        return;
-      }
-
       Set<StreamConsumerState> newStates = Sets.newHashSet();
       Set<StreamConsumerState> removeStates = Sets.newHashSet();
       mutateStates(groupId, instances, states, newStates, removeStates);
 
       // Save the states back
-      stateStore.save(newStates);
-      stateStore.remove(removeStates);
-
-      LOG.info("Configure instances new states: {} {} {}", groupId, instances, newStates);
-      LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
+      if (!newStates.isEmpty()) {
+        stateStore.save(newStates);
+        LOG.info("Configure instances new states: {} {} {}", groupId, instances, newStates);
+      }
+      if (!removeStates.isEmpty()) {
+        stateStore.remove(removeStates);
+        LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
+      }
 
     } finally {
       stateStore.close();
     }
 
+    // Also configure the old stream if it exists
+    if (oldStreamAdmin.exists(name.toURI().toString())) {
+      oldStreamAdmin.configureInstances(name, groupId, instances);
+    }
   }
 
   @Override
@@ -99,7 +105,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Preconditions.checkArgument(name.isStream(), "The {} is not stream.", name);
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    LOG.info("Configure groups: {}", groupInfo);
+    LOG.info("Configure groups for {}: {}", name, groupInfo);
 
     StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
@@ -130,20 +136,29 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       }
 
       // Save the states back
-      stateStore.save(newStates);
-      stateStore.remove(removeStates);
-
-      LOG.info("Configure groups new states: {} {}", groupInfo, newStates);
-      LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
+      if (!newStates.isEmpty()) {
+        stateStore.save(newStates);
+        LOG.info("Configure groups new states: {} {}", groupInfo, newStates);
+      }
+      if (!removeStates.isEmpty()) {
+        stateStore.remove(removeStates);
+        LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
+      }
 
     } finally {
       stateStore.close();
+    }
+
+    // Also configure the old stream if it exists
+    if (oldStreamAdmin.exists(name.toURI().toString())) {
+      oldStreamAdmin.configureGroups(name, groupInfo);
     }
   }
 
   @Override
   public void upgrade() throws Exception {
     // No-op
+    oldStreamAdmin.upgrade();
   }
 
   @Override
@@ -164,7 +179,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     try {
-      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();
+      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists()
+        || oldStreamAdmin.exists(QueueName.fromStream(name).toURI().toString());
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -209,20 +225,38 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public void truncate(String name) throws Exception {
     // TODO: How to support it properly with opened stream writer?
+    String streamName = QueueName.fromStream(name).toURI().toString();
+    if (oldStreamAdmin.exists(streamName)) {
+      oldStreamAdmin.truncate(streamName);
+    }
   }
 
   @Override
   public void drop(String name) throws Exception {
   // TODO: How to support it properly with opened stream writer?
+    String streamName = QueueName.fromStream(name).toURI().toString();
+    if (oldStreamAdmin.exists(streamName)) {
+      oldStreamAdmin.drop(streamName);
+    }
   }
 
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
     // No-op
+    String streamName = QueueName.fromStream(name).toURI().toString();
+    if (oldStreamAdmin.exists(streamName)) {
+      oldStreamAdmin.upgrade(streamName, properties);
+    }
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
                             Set<StreamConsumerState> newStates, Set<StreamConsumerState> removeStates) {
+    int oldInstances = states.size();
+    if (oldInstances == instances) {
+      // If number of instances doesn't changed, no need to mutate any states
+      return;
+    }
+
     // Collects smallest offsets across all existing consumers
     // Map from event file location to file offset.
     // Use tree map to maintain ordering consistency in the offsets.
@@ -240,7 +274,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     // Constructs smallest offsets
     Collection<StreamFileOffset> smallestOffsets = fileOffsets.values();
-    int oldInstances = states.size();
 
     // When group size changed, reset all existing instances states to have smallest files offsets constructed above.
     for (StreamConsumerState state : states) {

@@ -14,10 +14,13 @@ import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.google.common.collect.Maps;
@@ -41,8 +44,9 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   @Inject
   LevelDBStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                   CConfiguration cConf, LevelDBOcTableService tableService) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory);
+                                   CConfiguration cConf, LevelDBOcTableService tableService,
+                                   QueueClientFactory queueClientFactory, LevelDBStreamAdmin oldStreamAdmin) {
+    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
     this.cConf = cConf;
     this.tableService = tableService;
     this.dbLocks = Maps.newConcurrentMap();
@@ -50,15 +54,16 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
 
   @Override
-  protected StreamConsumer create(String tableName, StreamConfig streamConfig,
-                                  ConsumerConfig consumerConfig, StreamConsumerStateStore stateStore,
+  protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
 
     tableService.ensureTableExists(tableName);
 
     LevelDBOcTableCore tableCore = new LevelDBOcTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
-    return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader, stateStore, tableCore, dbLock);
+    return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader,
+                                         stateStore, beginConsumerState, tableCore, dbLock);
   }
 
   @Override

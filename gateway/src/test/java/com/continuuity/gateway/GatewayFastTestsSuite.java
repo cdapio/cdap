@@ -7,6 +7,8 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
@@ -88,6 +90,7 @@ public class GatewayFastTestsSuite {
   private static NettyRouter router;
   private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
+  private static StreamHttpService streamHttpService;
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
@@ -139,7 +142,8 @@ public class GatewayFastTestsSuite {
         },
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
-        new AppFabricTestModule(conf)
+        new AppFabricTestModule(conf),
+        new StreamHttpModule()
       ).with(new AbstractModule() {
                @Override
                protected void configure() {
@@ -160,8 +164,10 @@ public class GatewayFastTestsSuite {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metrics = injector.getInstance(MetricsQueryService.class);
+    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
     metrics.startAndWait();
+    streamHttpService.startAndWait();
     gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
@@ -189,6 +195,7 @@ public class GatewayFastTestsSuite {
     gateway.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
+    streamHttpService.stopAndWait();
     conf.clear();
   }
 

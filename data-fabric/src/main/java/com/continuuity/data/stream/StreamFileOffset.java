@@ -22,7 +22,8 @@ public final class StreamFileOffset {
   private final long partitionEnd;
   private final String namePrefix;
   private final int seqId;
-  private long offset;
+  private final long offset;
+  private final int generationId;
 
   /**
    * Clones from another {@link StreamFileOffset}.
@@ -30,6 +31,16 @@ public final class StreamFileOffset {
    */
   public StreamFileOffset(StreamFileOffset other) {
     this(other.getEventLocation(), other.getOffset());
+  }
+
+  /**
+   * Clones from another {@link StreamFileOffset} but with a different offset value.
+   *
+   * @param other The instance to clone from
+   * @param offset file offset
+   */
+  public StreamFileOffset(StreamFileOffset other, long offset) {
+    this(other.getEventLocation(), offset);
   }
 
   public StreamFileOffset(Location eventLocation) {
@@ -50,6 +61,9 @@ public final class StreamFileOffset {
 
     this.namePrefix = StreamUtils.getNamePrefix(eventLocation.getName());
     this.seqId = StreamUtils.getSequenceId(eventLocation.getName());
+
+    // TODO: This is plan for stream truncate implementation.
+    this.generationId = 0;
   }
 
   public final Location getEventLocation() {
@@ -62,10 +76,6 @@ public final class StreamFileOffset {
 
   public long getOffset() {
     return offset;
-  }
-
-  public void setOffset(long offset) {
-    this.offset = offset;
   }
 
   public final long getPartitionStart() {
@@ -84,11 +94,14 @@ public final class StreamFileOffset {
     return seqId;
   }
 
+  public int getGenerationId() {
+    return generationId;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("event", eventLocation.toURI())
-      .add("index", indexLocation == null ? null : indexLocation.toURI())
       .add("offset", getOffset())
       .toString();
   }

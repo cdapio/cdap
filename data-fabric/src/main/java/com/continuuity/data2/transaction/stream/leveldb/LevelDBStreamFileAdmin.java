@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.google.inject.Inject;
@@ -17,7 +18,7 @@ public final class LevelDBStreamFileAdmin extends AbstractStreamFileAdmin {
 
   @Inject
   LevelDBStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
-                         StreamConsumerStateStoreFactory stateStoreFactory) {
-    super(locationFactory, cConf, stateStoreFactory);
+                         StreamConsumerStateStoreFactory stateStoreFactory, LevelDBStreamAdmin oldStreamAdmin) {
+    super(locationFactory, cConf, stateStoreFactory, oldStreamAdmin);
   }
 }

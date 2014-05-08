@@ -687,7 +687,7 @@ public class StreamClient {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(uri + "/dequeue");
-    post.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
+    post.addHeader(Constants.Stream.Headers.CONSUMER_ID, consumer);
     if (apikey != null) {
       post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
