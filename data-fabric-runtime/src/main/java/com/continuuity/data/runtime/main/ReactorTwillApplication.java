@@ -3,7 +3,6 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
-import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
@@ -51,12 +50,11 @@ public class ReactorTwillApplication implements TwillApplication {
   private TwillSpecification.Builder.RunnableSetter addLogSaverService(TwillSpecification.Builder.MoreRunnable
                                                                          builder) {
 
-    int numInstances = cConf.getInt(LoggingConfiguration.LOG_SAVER_NUM_INSTANCES,
-                                    LoggingConfiguration.DEFAULT_LOG_SAVER_NUM_INSTANCES);
+    int numInstances = cConf.getInt(Constants.LogSaver.NUM_INSTANCES, 1);
     Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
                                 numInstances);
 
-    int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
+    int memory = cConf.getInt(Constants.LogSaver.MEMORY_MB, 1024);
     Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
 
     ResourceSpecification spec = ResourceSpecification.Builder
@@ -76,10 +74,9 @@ public class ReactorTwillApplication implements TwillApplication {
   private TwillSpecification.Builder.RunnableSetter addMetricsProcessor(TwillSpecification.Builder.MoreRunnable
                                                                           builder) {
 
-    int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES, 2);
-    int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB, 2048);
+    int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES, 1);
+    int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB, 512);
     int instances = cConf.getInt(Constants.MetricsProcessor.NUM_INSTANCES, 2);
-
 
     ResourceSpecification metricsProcessorSpec = ResourceSpecification.Builder
       .with()

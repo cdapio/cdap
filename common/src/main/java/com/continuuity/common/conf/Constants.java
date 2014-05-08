@@ -489,6 +489,14 @@ public final class Constants {
   }
 
   /**
+   * Configurations for log saver.
+   */
+  public static final class LogSaver {
+    public static final String NUM_INSTANCES = "log.saver.num.instances";
+    public static final String MEMORY_MB = "log.saver.run.memory.megs";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {
