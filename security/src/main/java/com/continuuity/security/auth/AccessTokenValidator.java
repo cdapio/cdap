@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-
 /**
  * This class validates the accessToken and returns the different states
  * of accessToken validation.
@@ -23,11 +22,6 @@ public class AccessTokenValidator implements TokenValidator {
     this.accessTokenCodec = accessTokenCodec;
   }
 
-  /**
-   *
-   * @param token The access token to be validated.
-   * @return The state after validation
-   */
   @Override
   public TokenState validate(String token) {
     AccessToken accessToken;

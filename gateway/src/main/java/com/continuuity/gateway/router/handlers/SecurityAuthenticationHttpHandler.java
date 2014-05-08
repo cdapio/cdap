@@ -149,7 +149,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     } else if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel())) {
         Channels.fireMessageReceived(ctx, msg, event.getRemoteAddress());
     } else {
-      return;
+        return;
     }
   }
 

@@ -8,7 +8,6 @@ package com.continuuity.security.auth;
  *   <li>EXPIRED - the token is past the expiration timestamp</li>
  *   <li>INTERNAL - another error occurred in processing (represented by the exception "cause")</li>
  *   <li>VALID - the token is valid</li>
- *   <li>UNAUTHORIZED - the token is valid but unauthorized for internal use</li>
  * </ul>
  */
 public enum TokenState {
@@ -25,10 +24,19 @@ public enum TokenState {
     this.msg = msg;
     this.valid = valid;
   }
+
+  /**
+   *
+   * @return the message associated with this token state describing the cause to be in this state
+   */
   public String getMsg() {
     return msg;
   }
 
+  /**
+   *
+   * @return {@code true} if this token state is valid, {@code false} otherwise
+   */
   public boolean isValid() {
     return valid;
   }
