@@ -338,16 +338,14 @@ public class MDTBasedStoreTest {
   }
 
 
-  private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws org.apache.thrift.TException {
+  private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
     Assert.assertEquals(1, stored.getDataSets().size());
     Assert.assertEquals(WordCountApp.WordCountFlow.class.getName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
   }
 
-  private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws org.apache.thrift.TException {
+  private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
     Assert.assertEquals(2, stored.getDataSets().size());
     Assert.assertEquals(FlowImpl.class.getName(),
