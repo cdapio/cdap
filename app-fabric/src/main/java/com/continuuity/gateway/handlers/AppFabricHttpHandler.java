@@ -761,6 +761,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
+      if (throwable instanceof FileNotFoundException) {
+        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
@@ -781,6 +784,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
         }
       } catch (Exception e) {
+        if (e instanceof FileNotFoundException) {
+          return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+        }
         return AppFabricServiceStatus.INTERNAL_ERROR;
       }
     }
@@ -1152,7 +1158,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
         case SUSPENDED:
-          responder.sendJson(HttpResponseStatus.OK, "Schedule already suspended");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
           break;
       }
     } catch (SecurityException e) {
@@ -1182,7 +1188,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
           break;
         case SCHEDULED:
-          responder.sendJson(HttpResponseStatus.OK, "Already resumed");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
           break;
         case SUSPENDED:
           scheduler.resumeSchedule(scheduleId);
