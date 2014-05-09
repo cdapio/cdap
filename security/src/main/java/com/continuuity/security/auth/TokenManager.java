@@ -59,15 +59,15 @@ public class TokenManager extends AbstractIdleService {
   public void validateSecret(AccessToken token) throws InvalidTokenException {
     long now = System.currentTimeMillis();
     if (token.getIdentifier().getExpireTimestamp() < now) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.EXPIRED, "Token is expired.");
+      throw new InvalidTokenException(TokenState.EXPIRED, "Token is expired.");
     }
 
     try {
       keyManager.validateMAC(identifierCodec, token);
     } catch (InvalidDigestException ide) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.INVALID, "Token signature is not valid!");
+      throw new InvalidTokenException(TokenState.INVALID, "Token signature is not valid!");
     } catch (InvalidKeyException ike) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.INTERNAL, "Invalid key for token.", ike);
+      throw new InvalidTokenException(TokenState.INTERNAL, "Invalid key for token.", ike);
     }
   }
 }

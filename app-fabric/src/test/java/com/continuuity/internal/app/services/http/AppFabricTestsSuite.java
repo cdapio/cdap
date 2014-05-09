@@ -120,7 +120,6 @@ public class AppFabricTestsSuite {
     app.start(TestHelper.DUMMY_AUTH_TOKEN, new ProgramDescriptor(id, ImmutableMap.<String, String>of()));
   }
 
-
   public static void stopProgram (ProgramId id) throws TException, AppFabricServiceException {
     app.stop(TestHelper.DUMMY_AUTH_TOKEN, id);
   }

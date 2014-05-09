@@ -5,7 +5,6 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -18,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -76,35 +76,33 @@ public class RouterServiceLookup {
    * @return instance of EndpointStrategy if available null otherwise.
    */
   public EndpointStrategy getDiscoverable(int port, HttpRequest httpRequest) {
+    //Get the service based on Port.
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
     }
 
-    String path = httpRequest.getUri();
+    // Normalize the path once and strip off any query string. Just keep the URI path.
+    String path = URI.create(httpRequest.getUri()).normalize().getPath();
     String host = httpRequest.getHeader(HttpHeaders.Names.HOST);
-    String httpMethod = httpRequest.getMethod().getName();
 
-    final HeaderDecoder.HeaderInfo headerInfo = new HeaderDecoder.HeaderInfo(path, host, httpMethod);
-
-    if (headerInfo == null) {
+    if (host == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
     }
 
     try {
-      String destService = routerPathLookup.getRoutingPath(headerInfo.getPath(), httpRequest);
-      CacheKey cacheKey;
-      if (destService != null) {
-        cacheKey = new CacheKey(destService, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), destService);
-      } else {
-        cacheKey = new CacheKey(service, headerInfo);
-        LOG.trace("Request was routed from {} to: {}", headerInfo.getPath(), service);
-      }
-      EndpointStrategy strategy = discoverableCache.get(cacheKey);
-      return strategy;
+      // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
+      // Otherwise the destination service will be other continuuity services.
+      // Path lookup can be skipped for requests to webapp.
+      String destService = service.contains("$HOST") ?
+                           service :
+                           routerPathLookup.getRoutingService(path, httpRequest);
+      CacheKey cacheKey = new CacheKey(destService, host, path);
+      LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
+
+      return discoverableCache.get(cacheKey);
     } catch (ExecutionException e) {
       return null;
     }
@@ -141,12 +139,12 @@ public class RouterServiceLookup {
   private EndpointStrategy discoverService(CacheKey key)
     throws UnsupportedEncodingException, ExecutionException {
     // First try with path routing
-    String lookupService = genLookupName(key.getService(), key.getHostHeaader(), key.getFirstPathPart());
+    String lookupService = genLookupName(key.getService(), key.getHost(), key.getFirstPathPart());
     EndpointStrategy endpointStrategy = discover(lookupService);
 
     if (endpointStrategy.pick() == null) {
       // Try without path routing
-      lookupService = genLookupName(key.getService(), key.getHostHeaader());
+      lookupService = genLookupName(key.getService(), key.getHost());
       endpointStrategy = discover(lookupService);
     }
 
@@ -182,31 +180,30 @@ public class RouterServiceLookup {
 
   private static final class CacheKey {
     private final String service;
-    private final String hostHeaader;
+    private final String host;
     private final String firstPathPart;
+    private final int hashCode;
 
-    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
+    private CacheKey(String service, String host, String path) {
       this.service = service;
-      this.hostHeaader = headerInfo.getHost();
-
-      String path = headerInfo.getPath().replaceAll("/+", "/");
+      this.host = host;
       int ind = path.indexOf('/', 1);
       this.firstPathPart = ind == -1 ? path : path.substring(0, ind);
+      this.hashCode = Objects.hashCode(service, host, firstPathPart);
     }
 
     public String getService() {
       return service;
     }
 
-    public String getHostHeaader() {
-      return hostHeaader;
+    public String getHost() {
+      return host;
     }
 
     public String getFirstPathPart() {
       return firstPathPart;
     }
 
-    @SuppressWarnings("RedundantIfStatement")
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -216,34 +213,22 @@ public class RouterServiceLookup {
         return false;
       }
 
-      CacheKey cacheKey = (CacheKey) o;
-
-      if (firstPathPart != null ? !firstPathPart.equals(cacheKey.firstPathPart) : cacheKey.firstPathPart != null) {
-        return false;
-      }
-      if (hostHeaader != null ? !hostHeaader.equals(cacheKey.hostHeaader) : cacheKey.hostHeaader != null) {
-        return false;
-      }
-      if (service != null ? !service.equals(cacheKey.service) : cacheKey.service != null) {
-        return false;
-      }
-
-      return true;
+      CacheKey other = (CacheKey) o;
+      return Objects.equal(service, other.service)
+        && Objects.equal(host, other.host)
+        && Objects.equal(firstPathPart, other.firstPathPart);
     }
 
     @Override
     public int hashCode() {
-      int result = service != null ? service.hashCode() : 0;
-      result = 31 * result + (hostHeaader != null ? hostHeaader.hashCode() : 0);
-      result = 31 * result + (firstPathPart != null ? firstPathPart.hashCode() : 0);
-      return result;
+      return hashCode;
     }
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("service", service)
-        .add("hostHeaader", hostHeaader)
+        .add("host", host)
         .add("firstPathPart", firstPathPart)
         .toString();
     }

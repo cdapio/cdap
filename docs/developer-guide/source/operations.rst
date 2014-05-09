@@ -106,7 +106,7 @@ The lower portion of the screen shows all the Apps along with their name, descri
 
 Busyness—the percentage of time spent processing events—is a concept that is used extensively in the Reactor Dashboard.
 
-Clicking on the name of an Application will take you to the `App's pane <#app-pane>`__, with details about the application.
+Clicking on the name of an Application will take you to the `App's pane <#application>`__, with details about the application.
 
 :Note: Because of the interconnections in the Dashboard, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
@@ -233,7 +233,7 @@ The **Query** pane shows all the Procedures currently specified in the Reactor, 
 of their request and error rates.
 
 
-.. _Application:
+.. _application:
 
 Application
 -----------
@@ -465,9 +465,9 @@ The log messages emitted by your Application code can be viewed in two different
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
-  This launches the `Log Explorer <#using-log-explorer>`__.
+  This launches the `Log Explorer <#log-explorer>`__.
 
-See the `Flow Log Explorer <#using-log-explorer>`__ in the
+See the `Flow Log Explorer <#log-explorer>`__ in the
 `Continuuity Reactor Dashboard <#dashboard>`__
 for details of using it to examine logs in the Reactor.
 In a similar fashion, `Procedure Logs <#procedure>`__ can be examined from within the Dashboard.

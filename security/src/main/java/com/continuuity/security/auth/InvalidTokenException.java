@@ -5,29 +5,20 @@ package com.continuuity.security.auth;
  * or an invalid token digest.
  */
 public class InvalidTokenException extends Exception {
-  /**
-   * Enum representing why a token was rejected.  Possible reasons are:
-   * <ul>
-   *   <li>INVALID - the token digest did not match the expected value</li>
-   *   <li>EXPIRED - the token is past the expiration timestamp</li>
-   *   <li>INTERNAL - another error occurred in processing (represented by the exception "cause")</li>
-   * </ul>
-   */
-  public enum Reason { INVALID, EXPIRED, INTERNAL };
 
-  private final Reason reason;
+  private final TokenState reason;
 
-  public InvalidTokenException(Reason reason, String message) {
+  public InvalidTokenException(TokenState reason, String message) {
     super(message);
     this.reason = reason;
   }
 
-  public InvalidTokenException(Reason reason, String message, Throwable cause) {
+  public InvalidTokenException(TokenState reason, String message, Throwable cause) {
     super(message, cause);
     this.reason = reason;
   }
 
-  public Reason getReason() {
+  public TokenState getReason() {
     return reason;
   }
 }

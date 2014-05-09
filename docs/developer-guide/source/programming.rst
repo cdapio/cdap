@@ -113,7 +113,7 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _application:
+.. _applications:
 
 Applications
 ------------
@@ -179,10 +179,12 @@ Collecting Data: Streams
 ------------------------
 **Streams** are the primary means for bringing data
 from external systems into the Reactor in realtime.
-You specify a Stream in your `Application`_ metadata::
+You specify a Stream in your `Application`__ metadata::
 
 	.withStreams()
 	  .add(new Stream("myStream")) ...
+
+__ Applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
