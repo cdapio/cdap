@@ -529,7 +529,6 @@ public final class Constants {
      * Hive server configuration.
      */
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
-    // public static final String SERVER_PORT = "hive.server.bind.port";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

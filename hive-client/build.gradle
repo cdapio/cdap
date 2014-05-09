@@ -17,10 +17,7 @@ dependencies {
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
     }
-//    compile libraries.continuuity_hive_exec
-    compile libraries.hadoop_mapreduce_client_core
-
-    compile files('/Users/julien/dev/continuuity/hive-exec-0.12.0.jar')
+    compile libraries.continuuity_hive_exec
     compile libraries.hive_metastore
 
     compile libraries.thrift
