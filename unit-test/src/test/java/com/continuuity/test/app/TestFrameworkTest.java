@@ -48,7 +48,6 @@ public class TestFrameworkTest extends ReactorTestBase {
       input.send("1");
       input.send("11");
 
-
       ProcedureManager queryManager = applicationManager.startProcedure("Count");
       ProcedureClient client = queryManager.getClient();
       Gson gson = new Gson();
