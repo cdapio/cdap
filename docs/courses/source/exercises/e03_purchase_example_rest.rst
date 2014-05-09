@@ -26,9 +26,9 @@ Exercise Objectives
 
 In this exercise, you will:
 
-- Run the Continuuity Reactor *Purchase* Example
-- An application that uses scheduled MapReduce Workflows to read from one 
-  ObjectStore DataSet and write to another
+- Work with the Continuuity Reactor *Purchase* Example
+- Run an application that uses scheduled MapReduce Workflows to read from one 
+  ``ObjectStore`` DataSet and write to another
 - Use shell commands to install Applications and interact with Reactor
 
 ----
