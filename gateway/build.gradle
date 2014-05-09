@@ -3,10 +3,6 @@ apply plugin: 'java'
 apply plugin: 'application'
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
-tasks.withType(Compile) { 
-    options.compilerArgs << "-Xlint:unchecked"
-}
-
 dependencies {
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
