@@ -6,7 +6,6 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
-import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -41,7 +40,6 @@ public class GatewayModule extends RuntimeModule {
       @Override
       protected void configure() {
         install(new GatewayCommonHandlerModule());
-        install(new AppFabricGatewayModule());
 
         bind(Gateway.class);
         expose(Gateway.class);

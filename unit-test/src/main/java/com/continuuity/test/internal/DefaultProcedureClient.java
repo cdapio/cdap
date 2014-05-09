@@ -1,8 +1,6 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.test.ProcedureClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
@@ -10,6 +8,8 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

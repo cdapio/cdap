@@ -4,8 +4,6 @@
 
 package com.continuuity.internal.app.deploy;
 
-import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.DeployStatus;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
@@ -48,8 +46,6 @@ public final class SessionInfo {
    */
   private transient OutputStream stream = null;
 
-  private transient ArchiveId identifier;
-
   /**
    * Status of deployment.
    */
@@ -71,16 +67,6 @@ public final class SessionInfo {
     this.status = status;
     this.applicationId = appId;
   }
-
-  public SessionInfo(ArchiveId identifier, ArchiveInfo info, Location archive, DeployStatus status) {
-    this.identifier = identifier;
-    this.regtime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    this.filename = info.getFilename();
-    this.archive = archive;
-    this.status = status;
-    this.applicationId = info.getApplicationId();
-  }
-
 
   /**
    * Returns registration time of the resource.
@@ -109,13 +95,6 @@ public final class SessionInfo {
     return filename;
   }
 
-  /**
-   * Returs the resource identifier associated with the resource.
-   * @return resource identifier.
-   */
-  public ArchiveId getArchiveId() {
-    return identifier;
-  }
 
   /**
    * Returns location of the resource.

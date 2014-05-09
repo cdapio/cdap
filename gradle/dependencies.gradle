@@ -16,8 +16,8 @@ versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
 versions.quartzVersion = '2.2.0'
 versions.slf4jVersion = '1.7.5'
-versions.continuuityNettyHttp='0.2.0-SNAPSHOT'
 versions.hiveVersion = '0.12.0'
+versions.continuuityNettyHttp='0.2.0'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
