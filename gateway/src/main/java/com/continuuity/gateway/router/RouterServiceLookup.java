@@ -96,9 +96,7 @@ public class RouterServiceLookup {
       // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
       // Otherwise the destination service will be other continuuity services.
       // Path lookup can be skipped for requests to webapp.
-      String destService = service.contains("$HOST") ?
-                           service :
-                           routerPathLookup.getRoutingService(path, httpRequest);
+      String destService = routerPathLookup.getRoutingService(service, path, httpRequest);
       CacheKey cacheKey = new CacheKey(destService, host, path);
       LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
 
