@@ -16,6 +16,7 @@ import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
@@ -26,9 +27,9 @@ import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,13 +52,20 @@ public class KafkaMetricsCollectionServiceTest {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionServiceTest.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static TemporaryFolder tmpFolder1 = new TemporaryFolder();
+  @ClassRule
+  public static TemporaryFolder tmpFolder2 = new TemporaryFolder();
 
-  private static InMemoryZKServer zkServer;
-  private static EmbeddedKafkaServer kafkaServer;
+  private InMemoryZKServer zkServer;
+  private EmbeddedKafkaServer kafkaServer;
 
   @Test
-  public void testKafkaPublish() throws UnsupportedTypeException, InterruptedException {
+  public void testKafkaPublish() throws UnsupportedTypeException, InterruptedException, IOException {
+
+    Properties kafkaConfig = generateKafkaConfig(tmpFolder1);
+    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
+    kafkaServer.startAndWait();
+
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
     zkClient.startAndWait();
 
@@ -122,25 +130,108 @@ public class KafkaMetricsCollectionServiceTest {
 
     // Finished on the callback should get called.
     Assert.assertTrue(semaphore.tryAcquire(1, 5, TimeUnit.SECONDS));
-  }
 
-  @BeforeClass
-  public static void init() throws IOException {
-    zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
-
-    Properties kafkaConfig = generateKafkaConfig();
-    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
-    kafkaServer.startAndWait();
-  }
-
-  @AfterClass
-  public static void finish() {
     kafkaServer.stopAndWait();
     zkServer.stopAndWait();
   }
 
-  private static Properties generateKafkaConfig() throws IOException {
+  @Test
+  public void testRecoverFromStoppedKafkaServerAtStartUp() throws InterruptedException, UnsupportedTypeException,
+    IOException {
+    // start the metrics collection service
+    ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    zkClient.startAndWait();
+
+    KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
+    kafkaClient.startAndWait();
+
+    final TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
+    final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
+    DatumWriter<MetricsRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+      .create(metricRecordType, schema);
+
+    MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
+                                                                                   metricRecordDatumWriter);
+    collectionService.startAndWait();
+
+    // start the kafka server
+    Properties kafkaConfig = generateKafkaConfig(tmpFolder2);
+    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
+    kafkaServer.startAndWait();
+
+    // Sleep to make sure brokers get populated
+    TimeUnit.SECONDS.sleep(5);
+
+    // public a metric
+    collectionService.getCollector(MetricsScope.REACTOR, "test.context", "runId").gauge("metric", 5);
+
+    // Sleep to make sure metrics get published
+    TimeUnit.SECONDS.sleep(2);
+
+    collectionService.stopAndWait();
+
+    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, ImmutableMap.of("test.context", 5));
+  }
+
+  private void assertMetricsFromKafka(KafkaClientService kafkaClient, final Schema schema,
+                                      final TypeToken<MetricsRecord> metricRecordType,
+                                      Map<String, Integer> expected) throws InterruptedException {
+
+    // Consume from kafka
+    final Map<String, MetricsRecord> metrics = Maps.newHashMap();
+    final Semaphore semaphore = new Semaphore(0);
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.REACTOR.name().toLowerCase(), 0)
+                                       .consume(new KafkaConsumer.MessageCallback() {
+
+      ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
+
+      @Override
+      public void onReceived(Iterator<FetchedMessage> messages) {
+        try {
+          while (messages.hasNext()) {
+            ByteBuffer payload = messages.next().getPayload();
+            MetricsRecord metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
+            metrics.put(metricsRecord.getContext(), metricsRecord);
+            semaphore.release();
+          }
+        } catch (Exception e) {
+          LOG.error("Error in consume", e);
+        }
+      }
+
+      @Override
+      public void finished() {
+        semaphore.release();
+        LOG.info("Finished");
+      }
+    });
+
+    Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
+
+    Assert.assertEquals(expected.size(), metrics.size());
+    for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
+      Assert.assertEquals(expectedEntry.getValue().intValue(), metrics.get(expectedEntry.getKey()).getValue());
+    }
+
+    kafkaClient.stopAndWait();
+
+    // Finished on the callback should get called.
+    Assert.assertTrue(semaphore.tryAcquire(1, 5, TimeUnit.SECONDS));
+  }
+
+  @Before
+  public void init() throws IOException {
+    zkServer = InMemoryZKServer.builder().build();
+    zkServer.startAndWait();
+  }
+
+  @After
+  public void finish() {
+    kafkaServer.stopAndWait();
+    zkServer.stopAndWait();
+  }
+
+  private Properties generateKafkaConfig(TemporaryFolder tmpFolder) throws IOException {
     int port = Networks.getRandomPort();
     Preconditions.checkState(port > 0, "Failed to get random port.");
 
