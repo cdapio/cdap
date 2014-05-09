@@ -63,7 +63,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   public void init() throws InterruptedException {
     this.watcher = new ZKWatcher();
     try {
-      LOG.info("Checking for parent znode {}", parentZnode);
+      LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
       if (zookeeper.exists(parentZnode).get() == null) {
         // may be created in parallel by another instance
         ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL),
@@ -82,7 +82,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     ZKOperations.watchChildren(zookeeper, parentZnode, new ZKOperations.ChildrenCallback() {
       @Override
       public void updated(NodeChildren nodeChildren) {
-        LOG.info("Listing existing children for node " + parentZnode);
+        LOG.info("Listing existing children for node {}", parentZnode);
         List<String> children = nodeChildren.getChildren();
         for (String child : children) {
           OperationFuture<NodeData> dataFuture = zookeeper.getData(joinZNode(parentZnode, child), watcher);
@@ -90,7 +90,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
           Futures.addCallback(dataFuture, new FutureCallback<NodeData>() {
             @Override
             public void onSuccess(NodeData result) {
-              LOG.info("Got data for child " + nodeName);
+              LOG.debug("Got data for child {}", nodeName);
               try {
                 final T resource = codec.decode(result.getData());
                 loaded.put(nodeName, resource);
@@ -102,11 +102,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
             @Override
             public void onFailure(Throwable t) {
-              LOG.error("Failed to get data for child node " + nodeName, t);
+              LOG.error("Failed to get data for child node {}", nodeName, t);
               listeners.notifyError(nodeName, t);
             }
           });
-          LOG.info("Added future for " + child);
+          LOG.debug("Added future for {}", child);
         }
       }
     });
@@ -150,20 +150,20 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     final String znode = joinZNode(parentZnode, name);
     try {
       final byte[] encoded = codec.encode(instance);
-      LOG.debug("Setting value for node " + znode);
+      LOG.debug("Setting value for node {}", znode);
       ListenableFuture<String> future = ZKExtOperations.createOrSet(zookeeper, znode, encoded, znode,
                                                                     MAX_RETRIES, znodeACL);
 
       Futures.addCallback(future, new FutureCallback<String>() {
         @Override
         public void onSuccess(String result) {
-          LOG.info("Created node " + znode);
+          LOG.debug("Created or set node {}", znode);
           resources.put(name, instance);
         }
 
         @Override
         public void onFailure(Throwable t) {
-          LOG.error("Failed to set value for node " + znode);
+          LOG.error("Failed to set value for node {}", znode, t);
           listeners.notifyError(name, t);
         }
       });
@@ -189,13 +189,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     Futures.addCallback(future, new FutureCallback<String>() {
       @Override
       public void onSuccess(String result) {
-        LOG.info("Removed value for node {}", znode);
+        LOG.debug("Removed value for node {}", znode);
         resources.remove(name);
       }
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.error("Failed to remove znode {}", znode);
+        LOG.error("Failed to remove znode {}", znode, t);
         listeners.notifyError(name, t);
       }
     });
@@ -243,7 +243,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   }
 
   private void notifyCreated(final String path) {
-    LOG.info("Got created event on " + path);
+    LOG.debug("Got created event on {}", path);
     final String name = getZNode(path);
     getResource(path, new FutureCallback<T>() {
       @Override
@@ -254,23 +254,23 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.error("Failed updating resource for created znode " + path);
+        LOG.error("Failed updating resource for created znode {}", path, t);
         listeners.notifyError(name, t);
       }
     });
   }
 
   private void notifyDeleted(String path) {
-    LOG.info("Got deleted event on " + path);
+    LOG.debug("Got deleted event on {}", path);
     String name = getZNode(path);
     resources.remove(name);
     listeners.notifyDelete(name);
   }
 
   private void notifyChildrenChanged(String path) {
-    LOG.info("Got childrenChanged event on " + path);
+    LOG.debug("Got childrenChanged event on {}", path);
     if (!path.equals(parentZnode)) {
-      LOG.warn("Ignoring children change on znode " + path);
+      LOG.warn("Ignoring children change on znode {}", path);
       return;
     }
     resources = reloadAll();
@@ -278,7 +278,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   }
 
   private void notifyDataChanged(final String path) {
-    LOG.info("Got dataChanged event on " + path);
+    LOG.debug("Got dataChanged event on {}", path);
     final String name = getZNode(path);
     getResource(path, new FutureCallback<T>() {
       @Override
@@ -289,7 +289,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.error("Failed updating resource for data change on znode " + path);
+        LOG.error("Failed updating resource for data change on znode {}", path, t);
         listeners.notifyError(name, t);
       }
     });
@@ -319,7 +319,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private class ZKWatcher implements Watcher {
     @Override
     public void process(WatchedEvent event) {
-      LOG.info("Watcher got event " + event);
+      LOG.debug("Watcher got event {}", event);
       switch (event.getType()) {
         case None:
           // connection change event
@@ -365,7 +365,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             try {
               listener.onUpdate();
             } catch (Throwable t) {
-              LOG.error("Exception notifying listener " + listener, t);
+              LOG.error("Exception notifying listener {}", listener, t);
               Throwables.propagateIfInstanceOf(t, Error.class);
             }
           }
@@ -381,7 +381,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             try {
               listener.onResourceUpdate(name, resource);
             } catch (Throwable t) {
-              LOG.error("Exception notifying listener " + listener, t);
+              LOG.error("Exception notifying listener {}", listener, t);
               Throwables.propagateIfInstanceOf(t, Error.class);
             }
           }
@@ -397,7 +397,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             try {
               listener.onResourceDelete(name);
             } catch (Throwable t) {
-              LOG.error("Exception notifying listener " + listener, t);
+              LOG.error("Exception notifying listener {}", listener, t);
               Throwables.propagateIfInstanceOf(t, Error.class);
             }
           }
@@ -413,7 +413,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             try {
               listener.onError(name, throwable);
             } catch (Throwable t) {
-              LOG.error("Exception notifying listener " + listener, t);
+              LOG.error("Exception notifying listener {}", listener, t);
               Throwables.propagateIfInstanceOf(t, Error.class);
             }
           }

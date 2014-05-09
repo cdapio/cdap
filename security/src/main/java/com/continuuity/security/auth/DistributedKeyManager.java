@@ -113,6 +113,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyIdent : keyCache.getResources()) {
       // we can only remove keys that expired prior to the oldest non-expired token
       if (keyIdent.getExpiration() < (now - tokenExpiration)) {
+        LOG.info("Removing expired key: id={}, expiration={}", keyIdent.getKeyId(), keyIdent.getExpiration());
         keyCache.remove(Integer.toString(keyIdent.getKeyId()));
       }
     }
@@ -140,7 +141,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyEntry : keyCache.getResources()) {
       if (currentKey == null || keyEntry.getExpiration() > currentKey.getExpiration()) {
         currentKey = keyEntry;
-        LOG.debug("Set current key to {}", currentKey.getKeyId());
+        LOG.info("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
       }
     }
   }
@@ -150,13 +151,13 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     LOG.debug("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;
-      LOG.debug("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
+      LOG.info("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
     }
   }
 
   @Override
   public void onResourceDelete(String name) {
-    // nothing to update
+    LOG.info("Removed key: leader={}, key={}", leader, name);
   }
 
   @Override
