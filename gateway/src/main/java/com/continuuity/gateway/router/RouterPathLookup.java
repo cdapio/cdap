@@ -21,7 +21,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   /**
    * Returns the reactor service which will handle the HttpRequest
-   * @param fallbackService WebApp service to which we fall back to for serving static files
+   * @param fallbackService service to which we fall back to if we can't determine the destination from the URI path
    * @param requestPath Normalized (and query string removed) URI path
    * @param httpRequest HttpRequest used to get the Http method and account id
    * @return destination service
