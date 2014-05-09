@@ -6,11 +6,11 @@ import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.AccessTokenValidator;
-import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.io.Codec;
 import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
@@ -58,6 +58,7 @@ public abstract class SecurityModule extends PrivateModule {
     expose(TokenValidator.class);
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
+    expose(new TypeLiteral<Codec<KeyIdentifier>>() { });
   }
 
   private static final class HandlerListProvider implements Provider<HandlerList> {

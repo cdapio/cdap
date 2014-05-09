@@ -5,6 +5,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.io.Codec;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -19,6 +20,7 @@ public class TestInMemoryTokenManager extends TestTokenManager {
     Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
   }

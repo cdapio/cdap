@@ -9,6 +9,7 @@ import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.security.io.Codec;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
