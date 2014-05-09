@@ -22,6 +22,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.guice.InMemoryHiveModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -30,6 +33,7 @@ import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -37,6 +41,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
@@ -68,6 +73,9 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private final HiveServer hiveServer;
+  private final HiveCommandExecutor hiveCommandExecutor;
+
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -85,6 +93,9 @@ public class SingleNodeMain {
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
+
+    hiveServer = injector.getInstance(HiveServer.class);
+    hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -130,10 +141,20 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+    hiveServer.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
+
+    // TODO remove that
+    hiveCommandExecutor.sendCommand("drop table if exists test;");
+    hiveCommandExecutor.sendCommand("create table test (first INT, second STRING) ROW FORMAT " +
+        "DELIMITED FIELDS TERMINATED BY '\\t';");
+    hiveCommandExecutor.sendCommand("show tables;");
+    hiveCommandExecutor.sendCommand("describe test;");
+    hiveCommandExecutor.sendCommand("select first, second from test;");
+    hiveCommandExecutor.sendCommand("drop table test;");
   }
 
   /**
@@ -152,6 +173,7 @@ public class SingleNodeMain {
     transactionManager.stopAndWait();
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
+    hiveServer.stopAndWait();
   }
 
   /**
@@ -266,7 +288,8 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
-      new StreamHttpModule()
+      new StreamHttpModule(),
+      new InMemoryHiveModule()
     );
   }
 
@@ -311,6 +334,8 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule());
+      new StreamHttpModule(),
+      new InMemoryHiveModule()
+    );
   }
 }

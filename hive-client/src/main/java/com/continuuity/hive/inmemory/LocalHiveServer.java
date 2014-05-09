@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
  */
 public class LocalHiveServer extends AbstractIdleService implements HiveServer {
 
-  // TODO now implement service discovery
-
   private static final Logger LOG = LoggerFactory.getLogger(LocalHiveServer.class);
 
   private HiveServer2 hiveServer2;
@@ -209,15 +207,5 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
         socket.close();
       }
     }
-  }
-
-  @Override
-  public int getHiveMetaStorePort() {
-    return hiveMetaStorePort;
-  }
-
-  @Override
-  public int getHiveServerPort() {
-    return hiveServerPort;
   }
 }
