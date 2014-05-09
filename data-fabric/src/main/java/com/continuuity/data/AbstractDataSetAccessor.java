@@ -27,6 +27,7 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
   protected abstract <T> T getMetricsTableClient(String name) throws Exception;
   protected abstract DataSetManager getMetricsTableManager() throws Exception;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected  final <T> T getDataSetClient(String name,
                                           Class<? extends T> type,
