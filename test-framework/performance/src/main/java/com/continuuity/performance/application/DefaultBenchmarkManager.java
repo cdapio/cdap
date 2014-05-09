@@ -5,8 +5,6 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
@@ -42,18 +40,16 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
                                  TransactionSystemClient txSystemClient,
                                  BenchmarkStreamWriterFactory streamWriterFactory,
                                  ProcedureClientFactory procedureClientFactory,
-                                 @Assisted AuthToken token,
                                  @Assisted("accountId") String accountId,
                                  @Assisted("applicationId") String applicationId,
-                                 @Assisted AppFabricService.Iface appFabricServer,
                                  @Assisted Location deployedJar,
                                  @Assisted ApplicationSpecification appSpec,
                                  AppFabricHttpHandler handler) {
     super(locationFactory,
           dataSetAccessor, txSystemClient,
           streamWriterFactory, procedureClientFactory,
-          token, accountId, applicationId,
-          appFabricServer, deployedJar, appSpec, handler);
+          accountId, applicationId,
+          deployedJar, appSpec, handler);
     benchmarkStreamWriterFactory = streamWriterFactory;
     streamWriters = Sets.newHashSet();
   }

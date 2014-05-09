@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -23,7 +23,7 @@ public class AppFabricServerTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    Injector injector = TestHelper.getInjector();
+    Injector injector = AppFabricTestHelper.getInjector();
     server = injector.getInstance(AppFabricServer.class);
   }
 

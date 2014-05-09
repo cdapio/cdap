@@ -9,7 +9,6 @@ smartyFacts {
     enableJavadoc()
     enableSourceJar()
   }
-  thrift
 }
 
 /**
@@ -67,10 +66,6 @@ dependencies {
   compile libraries.quartz
   compile libraries.quartz_jobs
 
-  // Thrift related stuff.
-  thriftCompile libraries.thrift
-  thriftCompile libraries.slf4j_api
-
   // Test dependencies
   testCompile libraries.junit
   compile libraries.continuuity_netty_http
@@ -82,15 +77,11 @@ dependencies {
 sourceSets {
   main {
     compileClasspath += api.output
-    compileClasspath += thrift.output
-    runtimeClasspath += api.output 
-    runtimeClasspath += thrift.output
+    runtimeClasspath += api.output
   }
   test {
     compileClasspath += api.output
-    compileClasspath += thrift.output
     runtimeClasspath += api.output
-    runtimeClasspath += thrift.output
   }
 }
 
@@ -102,7 +93,7 @@ test {
  * Generates API javadoc.
  */
 javadoc {
-  classpath += (sourceSets.api.output + sourceSets.thrift.output)
+  classpath += (sourceSets.api.output)
 }
 
 /**
@@ -124,12 +115,6 @@ sonar {
 checkstyleMain {
   source = sourceSets.main.allJava.matching {
     exclude '**/LocalJobRunnerWithFix*'
-  }
-}
-
-checkstyleThrift {
-  source = sourceSets.main.allJava.matching {
-    exclude '**'
   }
 }
 

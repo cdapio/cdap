@@ -56,8 +56,8 @@ main() {
   ensure_environment
   build_jars
   pushd $example_dir/$application 2>&1 >/dev/null
-  bin/$application stop 2>/dev/null >/dev/null
   bin/$application deploy
+  bin/$application stop 2>/dev/null >/dev/null
   bin/$application start
   popd 2>&1 >/dev/null
 }

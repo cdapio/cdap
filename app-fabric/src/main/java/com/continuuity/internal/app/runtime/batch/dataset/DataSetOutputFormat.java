@@ -40,7 +40,7 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
     // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
     // pass in the stage here instead of hardcoding reducer.
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    BasicMapReduceContext mrContext = contextProvider.get(Files.createTempDir());
+    BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     @SuppressWarnings("unchecked")
     BatchWritable<KEY, VALUE> dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());

@@ -20,8 +20,10 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -33,8 +35,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -45,12 +51,27 @@ import java.util.concurrent.TimeUnit;
  */
 public class OpenCloseDataSetTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
     TrackingTable.resetTracker();
-
-    ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class);
-    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
+                                                                                   TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 
     // start the flow and procedure
@@ -63,10 +84,11 @@ public class OpenCloseDataSetTest {
     }
 
     // write some data to queue
-    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
+      getInstance(TransactionSystemClient.class);
 
     QueueName queueName = QueueName.fromStream("xx");
-    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
@@ -96,7 +118,8 @@ public class OpenCloseDataSetTest {
 
     // now send a request to the procedure
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
+      getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
 
