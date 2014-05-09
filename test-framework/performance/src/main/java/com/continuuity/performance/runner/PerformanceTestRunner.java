@@ -53,12 +53,6 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.apache.commons.lang.StringUtils;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -308,13 +302,6 @@ public final class PerformanceTestRunner {
     config.set("app.output.dir", outputDir.getAbsolutePath());
     config.set("app.tmp.dir", tmpDir.getAbsolutePath());
 
-  /*  try {
-      appFabricServer = getAppFabricClient(config);
-    } catch (TTransportException e) {
-      LOG.error("Error when trying to open connection with remote AppFabric.");
-      Throwables.propagate(e);
-    }*/
-
     List<Module> modules = Lists.newArrayList();
 
     try {
@@ -437,29 +424,6 @@ public final class PerformanceTestRunner {
     } catch (Exception e) {
       zkClientService = null;
     }
-  }
-
-  // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.
-  /*private static AppFabricService.Client getAppFabricClient(CConfiguration config) throws TTransportException  {
-    String  appFabricServerHost = config.get(Constants.AppFabric.SERVER_ADDRESS,
-                                             Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
-    int  appFabricServerPort = config.getInt(Constants.AppFabric.SERVER_PORT,
-                                             Constants.AppFabric.DEFAULT_SERVER_PORT);
-    LOG.debug("Connecting with AppFabric Server at {}:{}", appFabricServerHost, appFabricServerPort);
-    return new AppFabricService.Client(getThriftProtocol(appFabricServerHost, appFabricServerPort));
-  }*/
-
-  private static TProtocol getThriftProtocol(String serviceHost, int servicePort) throws TTransportException {
-    TTransport transport = new TFramedTransport(new TSocket(serviceHost, servicePort));
-    try {
-      transport.open();
-    } catch (TTransportException e) {
-      String message = String.format("Unable to connect to thrift service at %s:%d. Reason: %s", serviceHost,
-                                     servicePort, e.getMessage());
-      LOG.error(message);
-      throw e;
-    }
-    return new TBinaryProtocol(transport);
   }
 
   // Gets executed once before running all the test methods of the current performance test class.
