@@ -24,7 +24,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
    * @param fallbackService WebApp service to which we fall back to for serving static files
    * @param requestPath Normalized (and query string removed) URI path
    * @param httpRequest HttpRequest used to get the Http method and account id
-   * @return
+   * @return destination service
    */
   public String getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
     try {
