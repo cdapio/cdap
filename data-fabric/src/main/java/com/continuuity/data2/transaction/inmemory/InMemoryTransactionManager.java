@@ -11,7 +11,6 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import com.continuuity.internal.io.ByteBufferInputStream;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -169,6 +168,10 @@ public class InMemoryTransactionManager extends AbstractService {
     lastSnapshotTime = 0;
   }
 
+  private boolean isStopping() {
+    return State.STOPPING.equals(state());
+  }
+
   @Override
   public synchronized void doStart() {
     LOG.info("Starting transaction manager.");
@@ -298,7 +301,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public synchronized TransactionSnapshot getSnapshot() throws IOException {
     TransactionSnapshot snapshot = null;
-    if (!isRunning()) {
+    if (!isRunning() && !isStopping()) {
       return null;
     }
 
@@ -347,12 +350,14 @@ public class InMemoryTransactionManager extends AbstractService {
       }
 
       // save snapshot
-      persistor.writeSnapshot(snapshot);
-      lastSnapshotTime = snapshotTime;
+      if (snapshot != null) {
+        persistor.writeSnapshot(snapshot);
+        lastSnapshotTime = snapshotTime;
 
-      // clean any obsoleted snapshots and WALs
-      long oldestRetainedTimestamp = persistor.deleteOldSnapshots(snapshotRetainCount);
-      persistor.deleteLogsOlderThan(oldestRetainedTimestamp);
+        // clean any obsoleted snapshots and WALs
+        long oldestRetainedTimestamp = persistor.deleteOldSnapshots(snapshotRetainCount);
+        persistor.deleteLogsOlderThan(oldestRetainedTimestamp);
+      }
     } catch (IOException ioe) {
       abortService("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
     }

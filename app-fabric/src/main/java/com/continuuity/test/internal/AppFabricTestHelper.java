@@ -1,7 +1,3 @@
-/*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
- */
-
 package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
@@ -12,24 +8,20 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
-import com.continuuity.app.program.Type;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.ArchiveId;
-import com.continuuity.app.services.ArchiveInfo;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.http.BodyConsumer;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
-import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -38,11 +30,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,26 +50,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-/**
- * This is a test helper for our internal test.
- * <p>
- *   <i>Note: please don't include this in the developer test</i>
- * </p>
- */
-public class TestHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
-  public static final AuthToken DUMMY_AUTH_TOKEN = new AuthToken("appFabricTest");
+/**
+ * This is helper class to make calls to AppFabricHttpHandler methods directly.
+ */
+public class AppFabricTestHelper {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricTestHelper.class);
+  private static final Gson GSON = new Gson();
   public static final TempFolder TEMP_FOLDER = new TempFolder();
   public static CConfiguration configuration;
   private static Injector injector;
@@ -87,6 +84,7 @@ public class TestHelper {
       configuration.set(Constants.AppFabric.TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
 
@@ -96,11 +94,69 @@ public class TestHelper {
     return injector;
   }
 
+  public static void reset(AppFabricHttpHandler httpHandler) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/unrecoverable/reset");
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    httpHandler.resetReactor(request, responder);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
+  }
+
+
+  public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                  String type, Map<String, String> args) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    String argString = GSON.toJson(args);
+    if (argString != null) {
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+    }
+    httpHandler.startProgram(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
+  }
+
+  public static void stopProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                 String type) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    httpHandler.stopProgram(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+  }
+
+
+  public static String getStatus(AppFabricHttpHandler httpHandler, String appId, String flowId,
+                                 String type) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    httpHandler.getStatus(request, responder, appId, type, flowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+    return responder.getResponse();
+  }
+
+  public static void setFlowletInstances(AppFabricHttpHandler httpHandler, String applicationId,
+                                         String flowId, String flowletName, int instances) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances/%s",
+                               applicationId, flowId, flowletName, instances);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
+  }
   /**
    * Given a class generates a manifest file with main-class as class.
    *
    * @param klass to set as Main-Class in manifest file.
-   * @return An instance {@link Manifest}
+   * @return An instance {@link java.util.jar.Manifest}
    */
   public static Manifest getManifestWithMainClass(Class<?> klass) {
     Manifest manifest = new Manifest();
@@ -110,50 +166,22 @@ public class TestHelper {
   }
 
   /**
-   * @return Returns an instance of {@link LocalManager}
+   * @return Returns an instance of {@link com.continuuity.internal.app.deploy.LocalManager}
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
     return factory.create(new ProgramTerminator() {
       @Override
-      public void stop(Id.Account id, Id.Program programId, Type type) throws Exception {
+      public void stop(Id.Account id, Id.Program programId, com.continuuity.app.program.Type type) throws Exception {
         //No-op
       }
     });
   }
 
+
   public static void deployApplication(Class<? extends Application> application) throws Exception {
     deployApplication(application,
                       "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
-  }
-
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
-                                                                     final Supplier<File> folderSupplier)
-                                                                                        throws Exception {
-    LocalLocationFactory lf = new LocalLocationFactory();
-
-    Location deployedJar = lf.create(
-      JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
-    );
-    try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
-      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
-
-      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
-                                                                        new Function<Program, Program>() {
-        @Override
-        public Program apply(Program program) {
-          try {
-            return Programs.create(program.getJarLocation(), folderSupplier.get());
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      }));
-      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
-    } finally {
-      deployedJar.delete(true);
-    }
   }
 
   /**
@@ -161,79 +189,80 @@ public class TestHelper {
    */
   public static void deployApplication(Class<? extends Application> applicationClz, String fileName) throws Exception {
     Location deployedJar =
-      deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
-                        getInjector().getInstance(LocationFactory.class), DefaultId.ACCOUNT,
-                        DUMMY_AUTH_TOKEN, null, fileName, applicationClz);
+      deployApplication(getInjector().getInstance(AppFabricHttpHandler.class),
+                        getInjector().getInstance(LocationFactory.class),
+                        fileName, applicationClz);
     deployedJar.delete(true);
   }
 
-  /**
-   *
-   */
-  public static void deployApplication(final Id.Account account, final AuthToken token,
-                                       Class<? extends Application> applicationClz, String fileName) throws Exception {
-    Location deployedJar =
-      deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
-                        getInjector().getInstance(LocationFactory.class), account, token,
-                        null, fileName, applicationClz);
-    deployedJar.delete(true);
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
+                                                                     final Supplier<File> folderSupplier)
+    throws Exception {
+    LocalLocationFactory lf = new LocalLocationFactory();
+
+    Location deployedJar = lf.create(
+      JarFinder.getJar(appClass, AppFabricTestHelper.getManifestWithMainClass(appClass))
+    );
+    try {
+      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+
+      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+                                                                        new Function<Program, Program>() {
+            @Override
+            public Program apply(Program program) {
+              try {
+                return Programs.create(program.getJarLocation(), folderSupplier.get());
+              } catch (IOException e) {
+                throw Throwables.propagate(e);
+              }
+            }
+          }
+      ));
+      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
+    } finally {
+      deployedJar.delete(true);
+    }
   }
 
-  public static Location deployApplication(AppFabricService.Iface appFabricServer,
-                                           LocationFactory locationFactory,
-                                           final Id.Account account,
-                                           final AuthToken token,
-                                           final String applicationId,
-                                           final String fileName,
-                                           Class<? extends Application> applicationClz,
-                                           File...bundleEmbeddedJars) throws Exception {
-    return deployApplication(appFabricServer, locationFactory, account.getId(), token, applicationId, fileName,
-                             applicationClz, bundleEmbeddedJars);
-  }
+  public static Location deployApplication(AppFabricHttpHandler httpHandler,
+                                    LocationFactory locationFactory,
+                                    final String applicationId,
+                                    Class<? extends Application> applicationClz,
+                                    File...bundleEmbeddedJars) throws Exception {
 
-    private static Location deployApplication(AppFabricService.Iface appFabricServer,
-                                          LocationFactory locationFactory,
-                                          final String account,
-                                          final AuthToken token,
-                                          final String applicationId,
-                                          final String fileName,
-                                          Class<? extends Application> applicationClz,
-                                          File...bundleEmbeddedJars) throws Exception {
-      Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-      Application application = applicationClz.newInstance();
-      ApplicationSpecification appSpec = Specifications.from(application.configure());
-      Location deployedJar = locationFactory.create(
-        createDeploymentJar(applicationClz, appSpec, bundleEmbeddedJars).toURI());
-      LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
+    Application application = applicationClz.newInstance();
+    ApplicationSpecification appSpec = Specifications.from(application.configure());
+    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz,
+                                                                      appSpec, bundleEmbeddedJars).toURI());
+    LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-      ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
-      archiveInfo.setApplicationId(applicationId);
-      ArchiveId id = appFabricServer.init(token, archiveInfo);
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader("X-Archive-Name", applicationId + ".jar");
+    MockResponder mockResponder = new MockResponder();
+    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder);
 
-      // Upload the jar file to remote location.
-      BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
-      try {
-        byte[] chunk = is.read();
-        while (chunk.length > 0) {
-          appFabricServer.chunk(token, id, ByteBuffer.wrap(chunk));
-          chunk = is.read();
-          DeploymentStatus status = appFabricServer.dstatus(token, id);
-          Preconditions.checkState(status.getOverall() == 2, "Fail to deploy app.");
-        }
-      } finally {
-        is.close();
+    BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
+    try {
+      byte[] chunk = is.read();
+      while (chunk.length > 0) {
+        mockResponder = new MockResponder();
+        bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(chunk), mockResponder);
+        Preconditions.checkState(mockResponder.getStatus() == null, "failed to deploy app");
+        chunk = is.read();
       }
-
-      // Deploy the app
-      appFabricServer.deploy(token, id);
-      int status = appFabricServer.dstatus(token, id).getOverall();
-      while (status == 3) {
-        status = appFabricServer.dstatus(token, id).getOverall();
-        TimeUnit.MILLISECONDS.sleep(100);
-      }
-      Preconditions.checkState(status == 5, "Fail to deploy app: %s", status);
-      return deployedJar;
+      mockResponder = new MockResponder();
+      bodyConsumer.finished(mockResponder);
+      Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    } finally {
+      is.close();
+    }
+    return deployedJar;
   }
 
   private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
@@ -296,15 +325,7 @@ public class TestHelper {
       throw Throwables.propagate(e);
     }
   }
-  /**
-   * Creates a jar of a directory and rewrite Flowlet and Procedure bytecodes to emit metrics.
-   *
-   * @param dir Directory root for creating jar entries.
-   * @param manifest The Jar manifest content.
-   * @param outputFile Location of the Jar file.
-   * @param appSpec The {@link com.continuuity.app.ApplicationSpecification} of the deploying application.
-   * @param bundleEmbeddedJars
-   */
+
   private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile,
                              ApplicationSpecification appSpec, File...bundleEmbeddedJars)
     throws IOException, ClassNotFoundException {
@@ -339,7 +360,6 @@ public class TestHelper {
     return outputFile;
   }
 
-  private static String pathToClassName(String path) {
-    return path.replace('/', '.').substring(0, path.length() - ".class".length());
-  }
+
 }
+

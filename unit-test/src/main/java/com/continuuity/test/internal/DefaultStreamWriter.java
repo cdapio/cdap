@@ -1,22 +1,21 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data2.OperationException;
-import com.continuuity.data2.queue.Queue2Producer;
-import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.queue.QueueEntry;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.common.stream.DefaultStreamEvent;
-import com.continuuity.common.stream.StreamEventCodec;
+import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.test.StreamWriter;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,22 +26,18 @@ import java.util.Map;
  */
 public final class DefaultStreamWriter implements StreamWriter {
 
-  private final Queue2Producer producer;
-  private final TransactionSystemClient txSystemClient;
-  private final QueueName queueName;
-  private final StreamEventCodec codec;
+  private final String accountId;
+  private final QueueName streamName;
+  private final StreamHandler streamHandler;
 
   @Inject
-  public DefaultStreamWriter(QueueClientFactory queueClientFactory,
-                             TransactionSystemClient txSystemClient,
-                             @Assisted QueueName queueName,
-                             @Assisted("accountId") String accountId,
-                             @Assisted("applicationId") String applicationId) throws IOException {
+  public DefaultStreamWriter(StreamHandler streamHandler,
+                             @Assisted QueueName streamName,
+                             @Assisted("accountId") String accountId) throws IOException {
 
-    this.producer = queueClientFactory.createProducer(queueName);
-    this.txSystemClient = txSystemClient;
-    this.queueName = queueName;
-    this.codec = new StreamEventCodec();
+    this.streamHandler = streamHandler;
+    this.streamName = streamName;
+    this.accountId = accountId;
   }
 
   @Override
@@ -82,26 +77,30 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    StreamEvent event = new DefaultStreamEvent(ImmutableMap.copyOf(headers), buffer);
-    TransactionAware txAware = (TransactionAware) producer;
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                     "/v2/streams/" + streamName.getSimpleName());
 
-    // start tx to write in queue in tx
-    Transaction tx = txSystemClient.startShort();
-    txAware.startTx(tx);
-    try {
-      producer.enqueue(new QueueEntry(codec.encodePayload(event)));
-      if (!txSystemClient.canCommit(tx, txAware.getTxChanges()) || !txAware.commitTx() || !txSystemClient.commit(tx)) {
-        throw new OperationException(StatusCode.TRANSACTION_CONFLICT, "Fail to commit");
-      }
-      txAware.postTxCommit();
-    } catch (Exception e) {
-      try {
-        txAware.rollbackTx();
-        txSystemClient.abort(tx);
-      } catch (Exception ex) {
-        throw new IOException(ex);
-      }
-      throw new IOException(e);
+    for (Map.Entry<String, String> entry : headers.entrySet()) {
+      httpRequest.setHeader(streamName.getSimpleName() + "." + entry.getKey(), entry.getValue());
     }
+    ChannelBuffer content = ChannelBuffers.wrappedBuffer(buffer);
+    httpRequest.setContent(content);
+    httpRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
+
+    MockResponder responder = new MockResponder();
+    try {
+      streamHandler.enqueue(httpRequest, responder, streamName.getSimpleName());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+    if (responder.getStatus() != HttpResponseStatus.OK) {
+      throw new IOException("Failed to write to stream. Status = " + responder.getStatus());
+    }
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
   }
 }
