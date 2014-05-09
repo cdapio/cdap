@@ -1,15 +1,20 @@
 package com.continuuity.hive.inmemory;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveServer;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.ConnectException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -17,6 +22,8 @@ import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hive.service.server.HiveServer2;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +42,16 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
 
   private MiniMRCluster miniMR;
   private MiniDFSCluster miniDFS;
+
+  private final DiscoveryService discoveryService;
+  private final InetAddress hostname;
+
+  @Inject
+  public LocalHiveServer(DiscoveryService discoveryService,
+                         @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
+    this.discoveryService = discoveryService;
+    this.hostname = hostname;
+  }
 
   private void writeYarnConf() throws Exception {
     URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
@@ -73,8 +90,28 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     hiveServerPort = PortDetector.findFreePort();
     hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
+    // Register with discovery service.
+    InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
+    InetAddress address = socketAddress.getAddress();
+    if (address.isAnyLocalAddress()) {
+      address = InetAddress.getLocalHost();
+    }
+    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
+
+    discoveryService.register(new Discoverable() {
+      @Override
+      public String getName() {
+        return Constants.Service.HIVE;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return finalSocketAddress;
+      }
+    });
+
     hiveMetaStorePort = PortDetector.findFreePort();
-    hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
+    hiveConf.set("hive.metastore.uris", "thrift://" + finalSocketAddress.getHostName() + ":" + hiveMetaStorePort);
 
     File newHiveConf = new File(confDir, "hive-site.xml");
     hiveConf.writeXml(new FileOutputStream(newHiveConf));
@@ -86,8 +123,8 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
   @Override
   protected void startUp() throws Exception {
     String javaHome = System.getenv("JAVA_HOME");
-    Assert.assertNotNull("JAVA_HOME is not set", javaHome);
-    Assert.assertFalse("JAVA_HOME is not set", javaHome.isEmpty());
+    Preconditions.checkNotNull(javaHome, "JAVA_HOME is not set");
+    Preconditions.checkArgument(!javaHome.isEmpty(), "JAVA_HOME is not set");
 
     writeYarnConf();
 
@@ -112,17 +149,17 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     // Start Hive MetaStore
     LOG.info("Starting hive metastore on port {}...", hiveMetaStorePort);
     Thread metaStoreRunner = new Thread(
-        new Runnable() {
-          @Override
-          public void run() {
-            try {
-              HiveMetaStore.main(new String[]{"-v", "-p", Integer.toString(hiveMetaStorePort),
-                  "--hiveconf", hiveConfFile.getAbsolutePath()});
-            } catch (Throwable throwable) {
-              LOG.error("Exception while starting Hive MetaStore: ", throwable);
-            }
+      new Runnable() {
+        @Override
+        public void run() {
+          try {
+            HiveMetaStore.main(new String[]{"-v", "-p", Integer.toString(hiveMetaStorePort),
+                "--hiveconf", hiveConfFile.getAbsolutePath()});
+          } catch (Throwable throwable) {
+            LOG.error("Exception while starting Hive MetaStore: ", throwable);
           }
-        });
+        }
+      });
     metaStoreRunner.setDaemon(true);
     metaStoreRunner.start();
     waitForPort(hiveMetaStorePort);

@@ -1,11 +1,15 @@
 package com.continuuity.hive;
 
-import com.continuuity.common.hive.HiveClient;
 import com.google.inject.Inject;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hive.HiveClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Iterator;
 import org.apache.hive.beeline.BeeLine;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,18 +19,29 @@ import org.slf4j.LoggerFactory;
 public class HiveCommandExecutor implements HiveClient {
   private static final Logger LOG = LoggerFactory.getLogger(HiveCommandExecutor.class);
 
-  HiveServer hiveServer;
+  public final DiscoveryServiceClient discoveryClient;
 
   @Inject
-  public HiveCommandExecutor(HiveServer hiveServer) {
-    // todo startAndWait and stopAndWait in singleNodeMain or whatever that is
-    this.hiveServer = hiveServer;
+  public HiveCommandExecutor(DiscoveryServiceClient discoveryClient) {
+    this.discoveryClient = discoveryClient;
   }
 
   @Override
   public void sendCommand(String cmd) throws IOException {
+
+    Iterable<Discoverable> hiveDiscoverables = discoveryClient.discover(Constants.Service.HIVE);
+    Iterator<Discoverable> iterator = hiveDiscoverables.iterator();
+    if (!iterator.hasNext()) {
+      // todo throw some exception I guess
+      return;
+    }
+    // There should only be one hive discoverable
+    Discoverable hiveDiscoverable = iterator.next();
+
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
-        "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL + "localhost:" + hiveServer.getHiveServerPort() +
+        "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
+        hiveDiscoverable.getSocketAddress().getHostName() +
+        ":" + hiveDiscoverable.getSocketAddress().getPort() +
         "/default;auth=noSasl",
         "-n", "poorna",
         "-e", cmd};
@@ -45,6 +60,5 @@ public class HiveCommandExecutor implements HiveClient {
 
     LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
     LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
-    LOG.info(out.toString("UTF-8"));
   }
 }
