@@ -129,7 +129,7 @@ public final class AggregatesTable {
     if (metricPrefix == null) {
       delete(contextPrefix);
     } else {
-      delete(contextPrefix, metricPrefix, "0", null);
+      delete(contextPrefix, metricPrefix, "0", (String[]) null);
     }
   }
 
