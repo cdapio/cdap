@@ -55,11 +55,11 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     this.tokenExpiration = conf.getLong(Constants.Security.TOKEN_EXPIRATION);
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
     this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys");
-    this.keyCache.addListener(this);
   }
 
   @Override
   protected void doInit() throws IOException {
+    this.keyCache.addListener(this);
     try {
       keyCache.init();
     } catch (InterruptedException ie) {
