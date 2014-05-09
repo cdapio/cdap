@@ -56,7 +56,6 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     // Parent guarantees the publish method would not get called concurrently, hence safe to reuse the same instances.
     this.encoderOutputStream = new ByteArrayOutputStream(1024);
     this.encoder = new BinaryEncoder(encoderOutputStream);
-    this.publisher = null;
   }
 
   @Override
