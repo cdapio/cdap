@@ -25,8 +25,8 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
-import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
@@ -162,7 +162,6 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Test
   public void testHTablePreSplitted() throws Exception {
     testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
-    testHTablePreSplitted((HBaseQueueAdmin) streamAdmin, QueueName.fromStream("teststream"));
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
@@ -265,10 +264,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Test
   public void testPrefix() {
     String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix();
-    String streamTableName = ((HBaseQueueAdmin) streamAdmin).getTableNamePrefix();
     Assert.assertTrue(queueTablename.startsWith("test."));
-    Assert.assertTrue(streamTableName.startsWith("test."));
-    Assert.assertNotEquals(queueTablename, streamTableName);
   }
 
   @Override

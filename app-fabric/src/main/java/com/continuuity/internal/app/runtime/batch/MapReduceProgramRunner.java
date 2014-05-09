@@ -25,6 +25,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.stream.StreamInputFormat;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -44,6 +45,7 @@ import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -67,13 +69,14 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Runs {@link MapReduce} programs.
@@ -534,9 +537,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    List<Class<?>> classes = Lists.newArrayList(MapReduce.class,
-                                                DataSetOutputFormat.class, DataSetInputFormat.class,
-                                                MapperWrapper.class, ReducerWrapper.class);
+    Set<Class<?>> classes = Sets.newHashSet(MapReduce.class,
+                                            DataSetOutputFormat.class, DataSetInputFormat.class,
+                                            TextStreamInputFormat.class,
+                                            MapperWrapper.class, ReducerWrapper.class);
 
     Job jobConf = context.getHadoopJob();
     try {

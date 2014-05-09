@@ -12,7 +12,6 @@ import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
@@ -91,9 +90,12 @@ public abstract class AbstractMapReduceContextBuilder {
       // InputFormat and OutputFormat classes from the ProgramClassLoader BUT MapReduce framework is using
       // InputFormta and OutputFormat classes from the system classloader. This causes a class cast exception.
       Location programJarLocation = locationFactory.create(programLocation);
-      File unpackedJarDir = BundleJarUtil.unpackProgramJar(programJarLocation, destinationUnpackedJarDir);
-      program = new DefaultProgram(programJarLocation, new JarResources(programJarLocation),
-                                   new ProgramClassLoader(unpackedJarDir, null, true));
+      if (destinationUnpackedJarDir != null) {
+        File unpackedJarDir = BundleJarUtil.unpackProgramJar(programJarLocation, destinationUnpackedJarDir);
+        program = new DefaultProgram(programJarLocation, new ProgramClassLoader(unpackedJarDir, null, true));
+      } else {
+        program = Programs.create(programJarLocation);
+      }
       // See if it is launched from Workflow, if it is, change the Program.
       if (workflowBatch != null) {
         MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);

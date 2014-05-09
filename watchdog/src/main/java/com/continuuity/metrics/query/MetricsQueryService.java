@@ -44,7 +44,8 @@ public class MetricsQueryService extends AbstractIdleService {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
-    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.METRICS)));
 
     builder.setHost(address);
 

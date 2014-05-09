@@ -4,12 +4,14 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -26,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nullable;
 
 /**
  * AppFabric Server that implements {@link AbstractExecutionThreadService}.
@@ -34,34 +37,34 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
   private static final int THREAD_COUNT = 2;
 
-  private final AppFabricService.Iface service;
+
   private final int port;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
 
-  private TThreadedSelectorServer server;
   private NettyHttpService httpService;
   private ExecutorService executor;
   private Set<HttpHandler> handlers;
+  private MetricsCollectionService metricsCollectionService;
   private CConfiguration configuration;
 
   /**
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
    */
   @Inject
-  public AppFabricServer(AppFabricServiceFactory serviceFactory,
-                         CConfiguration configuration, DiscoveryService discoveryService,
+  public AppFabricServer(CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named("appfabric.http.handler") Set<HttpHandler> handlers) {
+                         @Named("appfabric.http.handler") Set<HttpHandler> handlers,
+                         @Nullable MetricsCollectionService metricsCollectionService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
-    this.service = serviceFactory.create(schedulerService);
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handlers = handlers;
     this.configuration = configuration;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -72,6 +75,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
+
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
     InetAddress address = socketAddress.getAddress();
@@ -92,19 +96,10 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       }
     });
 
-
-    TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(socketAddress))
-      .executorService(executor)
-      .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
-      .workerThreads(THREAD_COUNT);
-    options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
-    server = new TThreadedSelectorServer(options);
-    for (HttpHandler handler : handlers) {
-      LOG.info("AppFabric Handler name: {}", handler.getClass().getSimpleName());
-    }
-
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                Constants.Service.APP_FABRIC_HTTP)))
       .addHttpHandlers(handlers)
       .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                                  Constants.Gateway.DEFAULT_BACKLOG))
@@ -143,7 +138,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
         return finalHttpSocketAddress;
       }
     });
-    server.serve();
   }
 
   /**
@@ -152,12 +146,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   protected void triggerShutdown() {
     schedulerService.stopAndWait();
     executor.shutdownNow();
-    server.stop();
     httpService.stopAndWait();
-  }
-
-  public AppFabricService.Iface getService() {
-    return service;
   }
 
 }
