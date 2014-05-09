@@ -1,6 +1,5 @@
 package com.continuuity.test.app;
 
-import com.continuuity.AppWithWorkflow;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
@@ -61,7 +60,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   @Test
-  public void testDeployWorkflowApp() throws Exception {
+  public void testDeployWorkflowApp() {
     deployApplication(AppWithWorkflow.class);
   }
 

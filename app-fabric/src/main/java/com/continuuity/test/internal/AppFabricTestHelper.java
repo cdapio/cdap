@@ -257,8 +257,8 @@ public class AppFabricTestHelper {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
-    } catch (Exception ex) {
-      ex.printStackTrace();
+    } catch (Exception e) {
+      throw e;
     } finally {
       is.close();
     }
