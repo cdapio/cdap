@@ -24,8 +24,6 @@ public class LocalHiveServerTest extends HiveServerTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
     Configuration hConf = new Configuration();
-//    hConf.addResource("mapred-site-local.xml");
-//    hConf.reloadConfiguration();
 
     Injector injector = Guice.createInjector(new ConfigModule(conf, hConf),
         new InMemoryHiveModule(),

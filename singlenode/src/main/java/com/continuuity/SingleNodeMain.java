@@ -146,15 +146,6 @@ public class SingleNodeMain {
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
-
-    // TODO remove that - needs other thrift version
-//    hiveCommandExecutor.sendCommand("drop table if exists test;");
-//    hiveCommandExecutor.sendCommand("create table test (first INT, second STRING) ROW FORMAT " +
-//        "DELIMITED FIELDS TERMINATED BY '\\t';");
-//    hiveCommandExecutor.sendCommand("show tables;");
-//    hiveCommandExecutor.sendCommand("describe test;");
-//    hiveCommandExecutor.sendCommand("select first, second from test;");
-//    hiveCommandExecutor.sendCommand("drop table test;");
   }
 
   /**
