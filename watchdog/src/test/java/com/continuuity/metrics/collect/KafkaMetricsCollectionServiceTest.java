@@ -91,48 +91,11 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    // Consumer from kafka
-    final Map<String, MetricsRecord> metrics = Maps.newHashMap();
-    final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name().toLowerCase(), 0)
-                                       .consume(new KafkaConsumer.MessageCallback() {
-
-      ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
-
-      @Override
-      public void onReceived(Iterator<FetchedMessage> messages) {
-        try {
-          while (messages.hasNext()) {
-            ByteBuffer payload = messages.next().getPayload();
-            MetricsRecord metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
-            metrics.put(metricsRecord.getContext(), metricsRecord);
-            semaphore.release();
-          }
-        } catch (Exception e) {
-          LOG.error("Error in consume", e);
-        }
-      }
-
-      @Override
-      public void finished() {
-        semaphore.release();
-        LOG.info("Finished");
-      }
-    });
-
-    Assert.assertTrue(semaphore.tryAcquire(3, 5, TimeUnit.SECONDS));
-
-    for (int i = 1; i <= 3; i++) {
-      Assert.assertEquals(i, metrics.get("test.context." + i).getValue());
-    }
-
-    kafkaClient.stopAndWait();
-
-    // Finished on the callback should get called.
-    Assert.assertTrue(semaphore.tryAcquire(1, 5, TimeUnit.SECONDS));
-
-    kafkaServer.stopAndWait();
-    zkServer.stopAndWait();
+    assertMetricsFromKafka(kafkaClient, schema, metricRecordType,
+                           ImmutableMap.of(
+                             "test.context.1", 1,
+                             "test.context.2", 2,
+                             "test.context.3", 3));
   }
 
   @Test
@@ -163,7 +126,7 @@ public class KafkaMetricsCollectionServiceTest {
     TimeUnit.SECONDS.sleep(5);
 
     // public a metric
-    collectionService.getCollector(MetricsScope.REACTOR, "test.context", "runId").gauge("metric", 5);
+    collectionService.getCollector(MetricsScope.USER, "test.context", "runId").gauge("metric", 5);
 
     // Sleep to make sure metrics get published
     TimeUnit.SECONDS.sleep(2);
@@ -180,7 +143,7 @@ public class KafkaMetricsCollectionServiceTest {
     // Consume from kafka
     final Map<String, MetricsRecord> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.REACTOR.name().toLowerCase(), 0)
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name().toLowerCase(), 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
       ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
