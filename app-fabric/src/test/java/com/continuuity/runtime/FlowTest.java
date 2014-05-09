@@ -139,7 +139,7 @@ public class FlowTest {
     TimeUnit.SECONDS.sleep(1);
 
     TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
-      getInstance(TransactionSystemClient.class);
+                                             getInstance(TransactionSystemClient.class);
 
     QueueName queueName = QueueName.fromStream("text");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
