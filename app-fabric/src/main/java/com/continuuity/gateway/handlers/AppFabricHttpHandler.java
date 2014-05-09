@@ -709,9 +709,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-
   /**
    * Starts a Program.
    */

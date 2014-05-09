@@ -102,6 +102,18 @@ public class AppFabricTestHelper {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
   }
 
+  public static void setRuntimeArgs(AppFabricHttpHandler httpHandler, String appId, String programName, String type,
+                                        Map<String, String> args) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/%s/%s/runtimeargs", appId, type, programName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    String argString = GSON.toJson(args);
+    if (argString != null) {
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+    }
+    httpHandler.saveRunnableRuntimeArgs(request, responder, appId, type, programName);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runtimeargs " + programName + " failed");
+  }
 
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                   String type, Map<String, String> args) {

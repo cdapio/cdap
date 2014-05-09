@@ -37,26 +37,50 @@ public class TestFrameworkTest extends ReactorTestBase {
 
 
   @Test
-  public void testFlowRuntimeArguments() throws  Exception {
-
+  public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("threshold", "10");
-    applicationManager.startFlow("FilterFlow", args);
+    try {
+      Map<String, String> args = Maps.newHashMap();
+      args.put("threshold", "10");
+      FlowManager filterFlowManager = applicationManager.startFlow("FilterFlow", args);
 
-    StreamWriter input = applicationManager.getStreamWriter("input");
-    input.send("1");
-    input.send("11");
+      StreamWriter input = applicationManager.getStreamWriter("input");
+      input.send("1");
+      input.send("11");
 
 
-    ProcedureManager queryManager = applicationManager.startProcedure("Count");
-    ProcedureClient client = queryManager.getClient();
-    Gson gson = new Gson();
+      ProcedureManager queryManager = applicationManager.startProcedure("Count");
+      ProcedureClient client = queryManager.getClient();
+      Gson gson = new Gson();
 
-    Assert.assertEquals("1",
-                        gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+      Assert.assertEquals("1",
+                          gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
 
-    applicationManager.stopAll();
+      args.put("threshold", "50");
+      applicationManager.setFlowRuntimeArgs("FilterFlow", args);
+      filterFlowManager.stop();
+      TimeUnit.SECONDS.sleep(1);
+      filterFlowManager = applicationManager.startFlow("FilterFlow");
+      input.send("45");
+      input.send("60");
+
+      Assert.assertEquals("2",
+                          gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+      filterFlowManager.stop();
+      TimeUnit.SECONDS.sleep(1);
+      args.put("threshold", "100");
+      applicationManager.startFlow("FilterFlow", args);
+
+      input.send("95");
+      input.send("105");
+
+      Assert.assertEquals("3",
+                          gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+    } finally {
+      applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
+      clear();
+    }
   }
 
   @Test(timeout = 240000)
