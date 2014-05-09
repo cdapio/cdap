@@ -1,5 +1,6 @@
 package com.continuuity.test.app;
 
+import com.continuuity.AppWithWorkflow;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
@@ -57,6 +58,11 @@ public class TestFrameworkTest extends ReactorTestBase {
                         gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
 
     applicationManager.stopAll();
+  }
+
+  @Test
+  public void testDeployWorkflowApp() throws Exception {
+    deployApplication(AppWithWorkflow.class);
   }
 
   @Test(timeout = 240000)

@@ -21,6 +21,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
@@ -73,6 +74,8 @@ public class ReactorTestBase {
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricHttpHandler httpHandler;
+  private static SchedulerService schedulerService;
+
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -183,6 +186,8 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+    schedulerService = injector.getInstance(SchedulerService.class);
+    schedulerService.startAndWait();
   }
 
   private static Module createDataFabricModule(CConfiguration cConf) {
@@ -223,6 +228,7 @@ public class ReactorTestBase {
   @AfterClass
   public static final void finish() {
     metricsQueryService.stopAndWait();
+    schedulerService.stopAndWait();
     logAppenderInitializer.close();
     cleanDir(testAppDir);
   }
