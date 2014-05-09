@@ -21,6 +21,7 @@ public final class Constants {
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
+    public static final String HIVE = "hive.server";
   }
 
   /**
@@ -518,6 +519,17 @@ public final class Constants {
     public static final String CFG_SECURITY_ENABLED = "security.enabled";
     /**Configuration for security realm */
     public static final String CFG_REALM = "security.realm";
+  }
+
+  /**
+   * Hive configuration.
+   */
+  public static final class Hive {
+    /**
+     * Hive server configuration.
+     */
+    public static final String SERVER_ADDRESS = "hive.server.bind.address";
+    // public static final String SERVER_PORT = "hive.server.bind.port";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
