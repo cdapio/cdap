@@ -5,8 +5,7 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AuthToken;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.filesystem.Location;
 
@@ -15,10 +14,9 @@ import org.apache.twill.filesystem.Location;
  */
 public interface BenchmarkManagerFactory {
 
-  DefaultBenchmarkManager create(AuthToken token,
-                                 @Assisted("accountId") String accountId,
+  DefaultBenchmarkManager create(@Assisted("accountId") String accountId,
                                  @Assisted("applicationId") String applicationId,
-                                 AppFabricService.Iface appFabricServer,
+                                 AppFabricHttpHandler httpHandler,
                                  Location deployedJar,
                                  ApplicationSpecification appSpec);
 }

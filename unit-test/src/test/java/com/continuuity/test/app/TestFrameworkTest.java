@@ -146,7 +146,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       // Run mapreduce job
       MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
-      mrManager.waitForFinish(120L, TimeUnit.SECONDS);
+      mrManager.waitForFinish(180L, TimeUnit.SECONDS);
 
       long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
       // every event has 5 tokens

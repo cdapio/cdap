@@ -4,7 +4,6 @@ import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
-import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -22,12 +21,12 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
-import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -35,9 +34,7 @@ import com.continuuity.test.internal.DefaultProcedureClient;
 import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
-import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-import com.continuuity.test.internal.guice.AppFabricServiceWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -70,13 +67,11 @@ public class ReactorTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static File testAppDir;
-  private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
-  private static AppFabricService appFabricServiceWrapper;
   private static AppFabricHttpHandler httpHandler;
 
   /**
@@ -97,14 +92,12 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec =
         Specifications.from(applicationClz.newInstance().configure());
 
-      Location deployedJar = AppFabricServiceWrapper.deployApplication(
-        httpHandler, locationFactory,
-        appSpec.getName(), applicationClz, bundleEmbeddedJars);
+      Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(),
+                                                                   applicationClz, bundleEmbeddedJars);
 
       return
-        injector.getInstance(ApplicationManagerFactory.class).create(TestHelper.DUMMY_AUTH_TOKEN,
-                                                                     DefaultId.ACCOUNT.getId(), appSpec.getName(),
-                                                                     appFabricServer, deployedJar, appSpec);
+        injector.getInstance(ApplicationManagerFactory.class).create(DefaultId.ACCOUNT.getId(), appSpec.getName(),
+                                                                     deployedJar, appSpec);
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -113,7 +106,7 @@ public class ReactorTestBase {
 
   protected void clear() {
     try {
-      appFabricServer.reset(TestHelper.DUMMY_AUTH_TOKEN, DefaultId.ACCOUNT.getId());
+      AppFabricTestHelper.reset(httpHandler);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -133,6 +126,7 @@ public class ReactorTestBase {
     configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
+    configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -181,7 +175,6 @@ public class ReactorTestBase {
                                     }
                                     );
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class).getService();
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
