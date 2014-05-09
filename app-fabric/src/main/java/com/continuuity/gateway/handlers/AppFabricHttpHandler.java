@@ -728,11 +728,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
-      BasicArguments userArguments = new BasicArguments(store.getRunArguments(id));
+      Map<String, String> userArgs = store.getRunArguments(id);
+
       if (overrides != null && overrides.size() != 0) {
-        userArguments = new BasicArguments(overrides);
+        for (Map.Entry<String, String> entry : overrides.entrySet()) {
+          userArgs.put(entry.getKey(), entry.getValue());
+        }
       }
 
+      BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
