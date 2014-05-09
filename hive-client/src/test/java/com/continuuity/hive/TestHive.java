@@ -1,13 +1,14 @@
 package com.continuuity.hive;
 
+import com.continuuity.hive.guice.InMemoryHiveModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import junit.framework.Assert;
-import org.apache.hive.beeline.BeeLine;
-import org.junit.ClassRule;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
 import java.net.URL;
 
 /**
@@ -15,31 +16,20 @@ import java.net.URL;
  */
 public class TestHive {
 
-  @ClassRule
-  public static final EmbeddedHiveServer embeddedHiveServer = new EmbeddedHiveServer();
+  private HiveServer embeddedHiveServer;
+  private HiveCommandExecutor hiveCommandExecutor;
 
-  private String runHiveCommand(String cmd) throws Exception {
-    String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
-      "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL + "localhost:" + embeddedHiveServer.getHiveServerPort() +
-      "/default;auth=noSasl",
-      "-n", "poorna",
-      "-e", cmd};
+  @Before
+  public void before() {
+    Injector injector = Guice.createInjector(new InMemoryHiveModule());
+    embeddedHiveServer = injector.getInstance(HiveServer.class);
+    hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
+    embeddedHiveServer.startAndWait();
+  }
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream pout = new PrintStream(out);
-
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-    PrintStream perr = new PrintStream(err);
-
-    BeeLine beeLine = new BeeLine();
-    beeLine.setOutputStream(pout);
-    beeLine.setErrorStream(perr);
-    beeLine.begin(args, null);
-    beeLine.close();
-
-    System.out.println("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
-    System.out.println("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
-    return out.toString("UTF-8");
+  @After
+  public void after() {
+    embeddedHiveServer.stopAndWait();
   }
 
   @Test
@@ -47,13 +37,13 @@ public class TestHive {
     URL loadFileUrl = getClass().getResource("/test_table.dat");
     Assert.assertNotNull(loadFileUrl);
 
-    runHiveCommand("drop table if exists test;");
-    runHiveCommand("create table test (first INT, second STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t';");
-    runHiveCommand("show tables;");
-    runHiveCommand("describe test;");
-    runHiveCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() + "' INTO TABLE test;");
-    runHiveCommand("select first, second from test;");
-    runHiveCommand("drop table test;");
+    hiveCommandExecutor.sendCommand("drop table if exists test;");
+    hiveCommandExecutor.sendCommand("create table test (first INT, second STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t';");
+    hiveCommandExecutor.sendCommand("show tables;");
+    hiveCommandExecutor.sendCommand("describe test;");
+    hiveCommandExecutor.sendCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() + "' INTO TABLE test;");
+    hiveCommandExecutor.sendCommand("select first, second from test;");
+    hiveCommandExecutor.sendCommand("drop table test;");
   }
 
 //  @Test
