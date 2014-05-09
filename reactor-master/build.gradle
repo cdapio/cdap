@@ -46,13 +46,9 @@ configurations {
 packaging {
   dependencies.add('continuuity-hbase-compat-0.94')
   dependencies.add('continuuity-hbase-compat-0.96')
-  extraOptions['--replaces'] = "watchdog" 
-  extraOptions['--replaces'] = "data-fabric" 
 }
 rpm {
   dependencies.add('continuuity-hbase-compat-0.94')
   dependencies.add('continuuity-hbase-compat-0.96')
-  packaging.extraOptions['--replaces'] = "watchdog"
-  packaging.extraOptions['--replaces'] = "data-fabric"
 }
 
