@@ -153,7 +153,7 @@ libraries.continuuity_netty_http="com.continuuity:http:$versions.continuuityNett
 // hive
 libraries.hive_beeline = "org.apache.hive:hive-beeline:$versions.hiveVersion"
 libraries.hive_contrib = "org.apache.hive:hive-contrib:$versions.hiveVersion"
-libraries.hive_metastore = "com.continuuity.hive:hive-metastore:$versions.hiveVersion"
+libraries.hive_metastore = "org.apache.hive:hive-metastore:$versions.hiveVersion"
 libraries.continuuity_hive_exec = "com.continuuity.hive:hive-exec:$versions.hiveVersion"
 libraries.hive_hcatalog = "org.apache.hive.hcatalog:hcatalog:$versions.hiveVersion"
 libraries.hive_hcatalog_core = "org.apache.hive.hcatalog:hcatalog-core:$versions.hiveVersion"
