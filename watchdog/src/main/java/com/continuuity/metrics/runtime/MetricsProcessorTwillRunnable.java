@@ -12,9 +12,11 @@ import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.migrate.MetricsTableMigrator_2_0_to_2_1;
 import com.continuuity.internal.migrate.TableMigrator;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
+import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
@@ -23,8 +25,11 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -101,6 +106,26 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
 
       expose(TableMigrator.class);
       expose(KafkaMetricsProcessorServiceFactory.class);
+    }
+    @Provides
+    @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
+    public int providesConsumerPersistThreshold(CConfiguration cConf) {
+      return cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD,
+                          MetricsConstants.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
+    }
+
+    @Provides
+    @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
+    public String providesKafkaTopicPrefix(CConfiguration cConf) {
+      return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX,
+                       MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
+    }
+
+    @Provides
+    @Singleton
+    public KafkaConsumerMetaTable providesKafkaConsumerMetaTable(MetricsTableFactory
+                                                                   tableFactory) {
+      return tableFactory.createKafkaConsumerMeta("default");
     }
   }
 }
