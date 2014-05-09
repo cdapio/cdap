@@ -6,6 +6,7 @@ package com.continuuity.metrics.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.OperationException;
 import com.continuuity.metrics.MetricsConstants;
@@ -116,6 +117,7 @@ public class TimeSeriesCleanupTest {
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
+      new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(cConf),
       new ConfigModule(cConf),
       new PrivateModule() {
