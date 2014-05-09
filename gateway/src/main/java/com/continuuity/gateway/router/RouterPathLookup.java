@@ -19,11 +19,21 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     GET, PUT, POST, DELETE
   }
 
-  public String getRoutingService(String requestPath, HttpRequest httpRequest) {
+  public String getRoutingService(String service, String requestPath, HttpRequest httpRequest) {
     try {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
+
+      //Check if the call should go to webapp
+      //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
+      //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
+      //But procedure/stream calls issued by the UI should be routed to the appropriate reactor service
+      if (service.contains("$HOST") && (uriParts.length >= 1) &&
+        (!(("/" + uriParts[0]).equals(Constants.Gateway.GATEWAY_VERSION)))) {
+        return service;
+      }
+
       if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
       } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
