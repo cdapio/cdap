@@ -72,6 +72,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
   private long currentTimestamp;
   private long position;
   private long nextIndexTime;
+  private boolean synced;
   private boolean closed;
 
   /**
@@ -116,6 +117,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
       throw new IOException("Writer already closed.");
     }
 
+    synced = false;
     long eventTimestamp = event.getTimestamp();
     if (eventTimestamp < currentTimestamp) {
       throw closeWithException(new IOException("Out of order events written."));
@@ -202,6 +204,11 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
    */
   private void flushBlock(boolean sync) throws IOException {
     if (encoder.size() == 0) {
+      if (sync && !synced) {
+        sync(eventOutput);
+        sync(indexOutput);
+        synced = true;
+      }
       return;
     }
 
@@ -235,10 +242,13 @@ public final class StreamDataFileWriter implements Closeable, Flushable, FileWri
       }
 
       nextIndexTime = currentTimestamp + indexInterval;
+    } else if (sync) {
+      sync(indexOutput);
     }
 
     // Reset the current timestamp so that a data block will start.
     currentTimestamp = -1L;
+    synced = sync;
   }
 
   private void sync(OutputStream output) throws IOException {

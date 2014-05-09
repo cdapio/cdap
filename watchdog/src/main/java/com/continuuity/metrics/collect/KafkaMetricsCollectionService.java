@@ -15,6 +15,8 @@ import com.google.inject.name.Named;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaClient;
 import org.apache.twill.kafka.client.KafkaPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -26,6 +28,7 @@ import java.util.Iterator;
  */
 @Singleton
 public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionService.class);
 
   private final KafkaClient kafkaClient;
   private final String topicPrefix;
@@ -57,11 +60,16 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void startUp() throws Exception {
-    publisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
+    getPublisher();
   }
 
   @Override
   protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+    KafkaPublisher publisher = getPublisher();
+    if (publisher == null) {
+      LOG.warn("Unable to get kafka publisher, will not be able to publish metrics.");
+      return;
+    }
     encoderOutputStream.reset();
 
     KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name().toLowerCase());
@@ -74,5 +82,18 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     }
 
     preparer.send();
+  }
+
+  private KafkaPublisher getPublisher() {
+    if (publisher != null) {
+      return publisher;
+    }
+    try {
+      publisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
+    } catch (IllegalStateException e) {
+      // can happen if there are no kafka brokers because the kafka server is down.
+      publisher = null;
+    }
+    return publisher;
   }
 }

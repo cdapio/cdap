@@ -34,7 +34,7 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -84,12 +84,13 @@ public class StreamCompatibilityTest {
 
   @Test
   public void decodeOldStream() throws Exception {
-    Injector injector = TestHelper.getInjector().createChildInjector(new StreamWriterModule());
+    Injector injector = AppFabricTestHelper.getInjector().createChildInjector(new StreamWriterModule());
     StreamWriter writer = injector.getInstance(StreamWriterFactory.class).create(QueueName.fromStream("stream"));
     StreamEventEncoder oldEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("old")));
     StreamEventEncoder newEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("new")));
 
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(StreamApp.class, TEMP_DIR_SUPPLIER);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(StreamApp.class,
+                                                                                         TEMP_DIR_SUPPLIER);
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner flowRunner = runnerFactory.create(ProgramRunnerFactory.Type.FLOW);

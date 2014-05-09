@@ -1855,7 +1855,10 @@ textarea {
 	line-height: 20px;
 	font-size: 1em;
 	border-radius: 2px;
-	border-bottom: 1px solid #f0f0f0;
+}
+
+.single-config {
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .config-editor-key input, .config-editor-value input {
@@ -1868,7 +1871,7 @@ textarea {
 
 .config-editor-key.editing input, .config-editor-value.editing input {
 	display: block;
-	font-size: 16px;
+	font-size: 12px;
 	padding-left: 7px !important;
 	font-family: sans-serif;
 }
@@ -1920,9 +1923,10 @@ textarea {
 }
 
 .config-text {
-	font-size: 16px;
+	font-size: 12px;
 	font-family: sans-serif;
 	padding: 4px 8px;
+	word-wrap: break-word;
 }
 
 .config-text:hover {

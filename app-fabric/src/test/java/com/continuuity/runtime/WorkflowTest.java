@@ -14,7 +14,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -59,9 +59,9 @@ public class WorkflowTest {
 
   @Test
   public void testWorkflow() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WorkflowApp.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
@@ -97,10 +97,9 @@ public class WorkflowTest {
 
   @Test
   public void testOneActionWorkflow() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
-
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {

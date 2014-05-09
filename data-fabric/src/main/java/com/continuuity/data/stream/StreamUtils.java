@@ -202,6 +202,7 @@ public final class StreamUtils {
    * @param offset The offset object to encode
    */
   public static void encodeOffset(DataOutput out, StreamFileOffset offset) throws IOException {
+    out.writeInt(offset.getGenerationId());
     out.writeLong(offset.getPartitionStart());
     out.writeLong(offset.getPartitionEnd());
     out.writeUTF(offset.getNamePrefix());
@@ -218,6 +219,8 @@ public final class StreamUtils {
    * @return A new instance of {@link StreamFileOffset}
    */
   public static StreamFileOffset decodeOffset(Location baseLocation, DataInput in) throws IOException {
+    // TODO: Currently not in use, plan for truncate implementation.
+    int generationId = in.readInt();
     long partitionStart = in.readLong();
     long duration = in.readLong() - partitionStart;
     String prefix = in.readUTF();

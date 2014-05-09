@@ -7,26 +7,34 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.app.program.ManifestFields;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -35,15 +43,24 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
-import java.net.URLEncoder;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.lang.reflect.Type;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 import static com.continuuity.gateway.GatewayFastTestsSuite.doGet;
 import static com.continuuity.gateway.GatewayFastTestsSuite.doPost;
@@ -288,7 +305,8 @@ public class ProcedureHandlerTest  {
                         EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
-    AppFabricServiceHandlerTest.deploy(ProcedureTestApp.class);
+    response = deploy(ProcedureTestApp.class, null);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     response =
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +
@@ -334,6 +352,62 @@ public class ProcedureHandlerTest  {
     Assert.assertEquals("Router cannot forward this request to any service",
                         EntityUtils.toString(response.getEntity()));
   }
+
+  private static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
+    final String pkgName = application.getPackage().getName();
+
+    // Grab every classes under the application class package.
+    try {
+      ClassLoader classLoader = application.getClassLoader();
+      if (classLoader == null) {
+        classLoader = ClassLoader.getSystemClassLoader();
+      }
+      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          try {
+            if (className.startsWith(pkgName)) {
+              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+              InputStream in = classUrl.openStream();
+              try {
+                ByteStreams.copy(in, jarOut);
+              } finally {
+                in.close();
+              }
+              return true;
+            }
+            return false;
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }, application.getName());
+
+      // Add webapp
+      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
+      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
+    } finally {
+      jarOut.close();
+    }
+
+    HttpEntityEnclosingRequestBase request;
+    if (appName == null) {
+      request = GatewayFastTestsSuite.getPost("/v2/apps");
+    } else {
+      request = GatewayFastTestsSuite.getPut("/v2/apps/" + appName);
+    }
+    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return GatewayFastTestsSuite.execute(request);
+  }
+
 
   /**
    * Handler for test server.
