@@ -11,9 +11,17 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
 
-    compile libraries.hive_beeline
-    compile libraries.hive_jdbc
+    compile (libraries.hive_beeline) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+    }
+    compile (libraries.hive_jdbc) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+    }
+//    compile libraries.continuuity_hive_exec
     compile libraries.hadoop_mapreduce_client_core
+
+    compile files('/Users/julien/dev/continuuity/hive-exec-0.12.0.jar')
+    compile files('/Users/julien/dev/continuuity/hive-metastore-0.12.0.jar')
 
     testCompile libraries.junit
     testCompile libraries.hadoop_minicluster
