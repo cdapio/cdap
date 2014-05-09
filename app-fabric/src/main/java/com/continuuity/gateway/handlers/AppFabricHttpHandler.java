@@ -730,7 +730,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       Map<String, String> userArgs = store.getRunArguments(id);
 
-      if (overrides != null && overrides.size() != 0) {
+      if (overrides != null) {
         for (Map.Entry<String, String> entry : overrides.entrySet()) {
           userArgs.put(entry.getKey(), entry.getValue());
         }
