@@ -22,8 +22,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -34,7 +32,7 @@ import java.util.Map;
  * concrete implementations.
  */
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
-  private static final Logger LOG = LoggerFactory.getLogger(VerificationStage.class);
+
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
 
   public VerificationStage() {
@@ -89,6 +87,7 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
     emit(input);
   }
 
+  @SuppressWarnings("unchecked")
   private <T> Verifier<T> getVerifier(Class<? extends T> clz) {
     if (verifiers.containsKey(clz)) {
       return (Verifier<T>) verifiers.get(clz);

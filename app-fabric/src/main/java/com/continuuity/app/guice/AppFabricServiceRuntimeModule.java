@@ -30,7 +30,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -76,7 +75,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(new TypeLiteral<PipelineFactory<?>>() { }).to(new TypeLiteral<SynchronousPipelineFactory<?>>() { });
+      bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
       bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);

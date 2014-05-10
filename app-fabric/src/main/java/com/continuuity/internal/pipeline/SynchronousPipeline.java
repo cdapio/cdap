@@ -30,6 +30,7 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
    *
    * @param o argument to run the pipeline.
    */
+  @SuppressWarnings("unchecked")
   @Override
   public ListenableFuture<T> execute(Object o) {
     try {
