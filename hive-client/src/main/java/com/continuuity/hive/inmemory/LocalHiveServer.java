@@ -2,11 +2,20 @@ package com.continuuity.hive.inmemory;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveServer;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hive.service.server.HiveServer2;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.ConnectException;
@@ -15,13 +24,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
-import org.apache.hive.service.server.HiveServer2;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -35,15 +37,29 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
   private int hiveMetaStorePort;
 
   private final DiscoveryService discoveryService;
+  private static DiscoveryServiceClient discoveryServiceClient;
+  private static InMemoryTransactionManager inMemoryTransactionManager;
   private final InetAddress hostname;
 
   @Inject
-  public LocalHiveServer(DiscoveryService discoveryService,
+  public LocalHiveServer(DiscoveryService discoveryService, InMemoryTransactionManager inMemoryTransactionManager,
+                         DiscoveryServiceClient discoveryServiceClient,
                          @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
     this.discoveryService = discoveryService;
+    LocalHiveServer.discoveryServiceClient = discoveryServiceClient;
+    LocalHiveServer.inMemoryTransactionManager = inMemoryTransactionManager;
     this.hostname = hostname;
   }
 
+  public static DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
+  }
+
+  public static InMemoryTransactionManager getInMemoryTransactionManager() {
+    return inMemoryTransactionManager;
+  }
+
+  // TODO: do we still need to write to a file and then read the conf?
   private File writeHiveConf() throws Exception {
     URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
     assert url != null;
@@ -57,6 +73,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     hiveConf.set("hive.exec.mode.local.auto", "true");
     hiveConf.set("hive.exec.submitviachild", "false");
     hiveConf.set("mapreduce.framework.name", "local");
+    // TODO: get local data dir from CConf
     hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
     hiveServerPort = PortDetector.findFreePort();
@@ -94,10 +111,6 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
 
   @Override
   protected void startUp() throws Exception {
-    String javaHome = System.getenv("JAVA_HOME");
-    Preconditions.checkNotNull(javaHome, "JAVA_HOME is not set");
-    Preconditions.checkArgument(!javaHome.isEmpty(), "JAVA_HOME is not set");
-
     final File hiveConfFile = writeHiveConf();
 
     // Start Hive MetaStore
@@ -143,6 +156,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
       do {
         TimeUnit.MILLISECONDS.sleep(500);
         try {
+          // TODO: change it to hive.server.bind.address
           socket = new Socket("localhost", port);
         } catch (ConnectException e) {
           if (++tries > maxTries) {
