@@ -53,7 +53,7 @@ public final class MensaMetricsReporter  {
   }
 
   private static List<Metric> getMetricsInstances(List<String> metricPaths) {
-    List metricInstances = new ArrayList(metricPaths.size());
+    List<Metric> metricInstances = new ArrayList<Metric>(metricPaths.size());
     for (String metricPath : metricPaths) {
       metricInstances.add(new Metric(metricPath));
     }
