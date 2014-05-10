@@ -102,7 +102,6 @@ public class AppFabricTestHelper {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
   }
 
-
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                   String type, Map<String, String> args) {
 

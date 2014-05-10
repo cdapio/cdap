@@ -37,26 +37,28 @@ public class TestFrameworkTest extends ReactorTestBase {
 
 
   @Test
-  public void testFlowRuntimeArguments() throws  Exception {
-
+  public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("threshold", "10");
-    applicationManager.startFlow("FilterFlow", args);
+    try {
+      Map<String, String> args = Maps.newHashMap();
+      args.put("threshold", "10");
+      applicationManager.startFlow("FilterFlow", args);
 
-    StreamWriter input = applicationManager.getStreamWriter("input");
-    input.send("1");
-    input.send("11");
+      StreamWriter input = applicationManager.getStreamWriter("input");
+      input.send("1");
+      input.send("11");
 
+      ProcedureManager queryManager = applicationManager.startProcedure("Count");
+      ProcedureClient client = queryManager.getClient();
+      Gson gson = new Gson();
 
-    ProcedureManager queryManager = applicationManager.startProcedure("Count");
-    ProcedureClient client = queryManager.getClient();
-    Gson gson = new Gson();
-
-    Assert.assertEquals("1",
-                        gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
-
-    applicationManager.stopAll();
+      Assert.assertEquals("1",
+                          gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+    } finally {
+      applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
+      clear();
+    }
   }
 
   @Test(timeout = 240000)
