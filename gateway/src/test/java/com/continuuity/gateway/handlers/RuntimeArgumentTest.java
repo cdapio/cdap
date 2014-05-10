@@ -14,7 +14,7 @@ import org.junit.Test;
  */
 public class RuntimeArgumentTest {
   @Test
-  public void testCurlRuntimeArgs() throws Exception {
+  public void testFlowRuntimeArgs() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.deploy(HighPassFilterApp.class, "HighPassFilterApp");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     //Set flow runtime arg threshold to 30
