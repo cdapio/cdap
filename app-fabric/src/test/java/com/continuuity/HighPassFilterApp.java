@@ -86,7 +86,6 @@ public class HighPassFilterApp implements Application {
     }
   }
 
-
   /**
    * return counts.
    */
