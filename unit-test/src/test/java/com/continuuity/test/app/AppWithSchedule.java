@@ -3,6 +3,7 @@ package com.continuuity.test.app;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -12,15 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * App with workflow.
+ * Application with workflow scheduling.
  */
-public class AppWithWorkflow implements Application {
+public class AppWithSchedule implements Application {
 
   @Override
   public ApplicationSpecification configure() {
     try {
       return ApplicationSpecification.Builder.with()
-        .setName("AppWithWorkflow")
+        .setName("AppWithSchedule")
         .setDescription("Sample application")
         .noStream()
         .withDataSets()
@@ -38,7 +39,7 @@ public class AppWithWorkflow implements Application {
   }
 
   /**
-   * Sample workflow. has a dummy action.
+   * Sample workflow. Schedules a dummy MR job.
    */
   public static class SampleWorkflow implements Workflow {
 
@@ -49,6 +50,8 @@ public class AppWithWorkflow implements Application {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
+        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
+                                  Schedule.Action.START))
         .build();
     }
   }
@@ -64,4 +67,3 @@ public class AppWithWorkflow implements Application {
     }
   }
 }
-

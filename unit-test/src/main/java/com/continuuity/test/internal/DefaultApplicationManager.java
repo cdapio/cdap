@@ -19,7 +19,9 @@ import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.ScheduleManager;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +33,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -216,6 +219,80 @@ public class DefaultApplicationManager implements ApplicationManager {
         public ProcedureClient getClient() {
           return procedureClientFactory.create(accountId, applicationId, procedureName);
         }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+
+
+  @Override
+  public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
+    try {
+      final ProgramId workflowId = new ProgramId(applicationId, workflowName, "workflows");
+      Preconditions.checkState(runningProcessses.putIfAbsent(workflowName, workflowId) == null,
+                               "Workflow %s is already running", workflowName);
+
+      // currently we are using it for schedule, so not starting the workflow
+
+      return new WorkflowManager() {
+        @Override
+        public List<String> getSchedules() {
+          List<String> schedules = null;
+          try {
+            schedules = AppFabricTestHelper.getSchedules(httpHandler, applicationId, workflowName);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+          return schedules;
+        }
+
+        @Override
+        public List<Map<String, String>> getHistory() {
+          List<Map<String, String>> history = null;
+          try {
+            history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+          return history;
+        }
+
+        public ScheduleManager getSchedule(final String schedName) {
+
+          return new ScheduleManager() {
+            @Override
+            public void suspend() {
+              try {
+                AppFabricTestHelper.suspend(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+            }
+
+            @Override
+            public void resume() {
+              try {
+                AppFabricTestHelper.resume(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+            }
+
+            @Override
+            public String status() {
+              String status = null;
+              try {
+                status = AppFabricTestHelper.scheduleStatus(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+              return status;
+            }
+          };
+        }
+
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);
