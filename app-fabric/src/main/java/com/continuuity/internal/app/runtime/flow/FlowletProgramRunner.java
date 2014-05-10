@@ -214,13 +214,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
       if (disableTransaction) {
         LOG.info("Transaction disabled for flowlet {}", flowletContext);
       }
+
+      FlowletProgramController controller = new FlowletProgramController(program.getName(), flowletName,
+                                                                         flowletContext, driver, consumerSuppliers);
       LOG.info("Starting flowlet: {}", flowletContext);
       driver.start();
       LOG.info("Flowlet started: {}", flowletContext);
 
-
-      return new FlowletProgramController(program.getName(), flowletName,
-                                          flowletContext, driver, consumerSuppliers);
+      return controller;
 
     } catch (Exception e) {
       // something went wrong before the flowlet even started. Make sure we release all resources (datasets, ...)
