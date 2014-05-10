@@ -37,7 +37,8 @@ public class KeyIdentifierCodec implements Codec<KeyIdentifier> {
     Encoder encoder = new BinaryEncoder(bos);
 
     encoder.writeInt(KeyIdentifier.Schemas.getVersion());
-    DatumWriter writer = writerFactory.create(KEY_IDENTIFIER_TYPE, KeyIdentifier.Schemas.getCurrentSchema());
+    DatumWriter<KeyIdentifier> writer = writerFactory.create(KEY_IDENTIFIER_TYPE,
+                                                             KeyIdentifier.Schemas.getCurrentSchema());
     writer.encode(keyIdentifier, encoder);
     return bos.toByteArray();
   }
