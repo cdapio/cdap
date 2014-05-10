@@ -110,6 +110,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
     consumer = null;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T get() {
     return (T) consumer;

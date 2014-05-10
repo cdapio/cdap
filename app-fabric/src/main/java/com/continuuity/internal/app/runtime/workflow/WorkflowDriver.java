@@ -140,6 +140,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   /**
    * Instantiates and initialize a WorkflowAction.
    */
+  @SuppressWarnings("unchecked")
   private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
                                     ClassLoader classLoader, InstantiatorFactory instantiator) throws Exception {
     Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);

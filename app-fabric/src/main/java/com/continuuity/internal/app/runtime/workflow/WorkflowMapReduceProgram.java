@@ -26,6 +26,7 @@ public final class WorkflowMapReduceProgram extends ForwardingProgram {
     this.mapReduceSpec = mapReduceSpec;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> Class<T> getMainClass() throws ClassNotFoundException {
     return (Class<T>) Class.forName(mapReduceSpec.getClassName(), true, getClassLoader());

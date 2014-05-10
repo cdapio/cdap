@@ -39,6 +39,7 @@ public final class PropertyFieldSetter extends FieldVisitor {
    * Sets the value of the field in the given instance by converting the value from String to the field type.
    * Currently only allows primitive types, boxed types, String and Enum.
    */
+  @SuppressWarnings("unchecked")
   private void setValue(Object instance, Field field, String value) throws IllegalAccessException {
     if (!field.isAccessible()) {
       field.setAccessible(true);

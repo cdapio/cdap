@@ -94,12 +94,14 @@ public class RuntimeDataSetTest extends DataSetTestBase {
       dataSets = Lists.newArrayList(context.getDataSet("kv"), context.getDataSet("stringStore"));
     }
 
+    @SuppressWarnings("unchecked")
     public void put(String key, String value) {
       byte[] byteKey = Bytes.toBytes(key);
       ((KeyValueTable) dataSets.get(0)).write(byteKey, Bytes.toBytes(value));
       ((ObjectStore<String>) dataSets.get(1)).write(byteKey, value);
     }
 
+    @SuppressWarnings("unchecked")
     public String get(String key) {
       byte[] byteKey = Bytes.toBytes(key);
       String value = Bytes.toString(((KeyValueTable) dataSets.get(0)).read(byteKey)) + '.' +

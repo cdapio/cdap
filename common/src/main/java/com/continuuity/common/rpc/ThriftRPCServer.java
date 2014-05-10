@@ -121,6 +121,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
    * @param workerThreads Number of worker threads.
    * @param serviceHandler Handler for handling client requests.
    */
+  @SuppressWarnings("unchecked")
   private ThriftRPCServer(InetSocketAddress bindAddress, int ioThreads,
                           int workerThreads, int maxReadBufferBytes,
                           T serviceHandler, Class<I> serviceType, String name) {
@@ -195,6 +196,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     server.serve();
   }
 
+  @SuppressWarnings("unchecked")
   private TProcessor createProcessor(final Class<T> handlerType, Class<I> serviceType) {
     // Pick the Iface inner interface and the Processor class
     Class<? extends TProcessor> processorType = null;

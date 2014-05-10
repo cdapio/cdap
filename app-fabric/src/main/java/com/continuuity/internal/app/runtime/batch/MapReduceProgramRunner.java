@@ -25,7 +25,6 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.stream.StreamInputFormat;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -72,7 +71,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -482,6 +480,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
+  @SuppressWarnings("unchecked")
   private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws Exception {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
@@ -537,10 +536,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    Set<Class<?>> classes = Sets.newHashSet(MapReduce.class,
-                                            DataSetOutputFormat.class, DataSetInputFormat.class,
-                                            TextStreamInputFormat.class,
-                                            MapperWrapper.class, ReducerWrapper.class);
+    Set<Class<?>> classes = Sets.newHashSet();
+    classes.add(MapReduce.class);
+    classes.add(DataSetOutputFormat.class);
+    classes.add(DataSetInputFormat.class);
+    classes.add(TextStreamInputFormat.class);
+    classes.add(MapperWrapper.class);
+    classes.add(ReducerWrapper.class);
 
     Job jobConf = context.getHadoopJob();
     try {

@@ -67,7 +67,7 @@ public class IndexedObjectStore<T> extends DataSet {
    * @return List of Objects matching the secondaryKey.
    */
   public List<T> readAllByIndex(byte[] secondaryKey) {
-    ImmutableList.Builder resultList = new ImmutableList.Builder();
+    ImmutableList.Builder<T> resultList = ImmutableList.builder();
     //Lookup the secondaryKey and get all the keys in primary
     //Each row with secondaryKey as rowKey contains column named as the primary key
     // of every object that can be looked up using the secondaryKey

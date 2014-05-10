@@ -41,8 +41,8 @@ public class FieldAccessorTest {
     Child c = new Child();
     c.integer = 10;
     c.str = "child value";
-    ((Parent) c).value = "string value";
-    ((Parent) c).b = true;
+    ((Parent<String>) c).value = "string value";
+    ((Parent<String>) c).b = true;
 
     Assert.assertEquals(c.integer, accessor.getInt(c));
     Assert.assertSame(c.str, factory.getFieldAccessor(type, "str").get(c));
@@ -59,8 +59,8 @@ public class FieldAccessorTest {
     Child c = new Child();
     c.integer = 10;
     c.str = "child value";
-    ((Parent) c).value = "string value";
-    ((Parent) c).b = true;
+    ((Parent<String>) c).value = "string value";
+    ((Parent<String>) c).b = true;
 
     Child c2 = new Child();
 
