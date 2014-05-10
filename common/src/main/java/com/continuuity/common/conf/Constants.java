@@ -529,6 +529,14 @@ public final class Constants {
      * Hive server configuration.
      */
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
+
+    /**
+     * Twill Runnable configuration.
+     */
+    public static final class Container {
+      public static final String NUM_CORES = "hive.server.num.cores";
+      public static final String MEMORY_MB = "hive.server.memory.mb";
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
