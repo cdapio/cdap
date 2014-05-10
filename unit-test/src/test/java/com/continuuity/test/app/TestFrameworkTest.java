@@ -42,7 +42,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     try {
       Map<String, String> args = Maps.newHashMap();
       args.put("threshold", "10");
-      FlowManager filterFlowManager = applicationManager.startFlow("FilterFlow", args);
+      applicationManager.startFlow("FilterFlow", args);
 
       StreamWriter input = applicationManager.getStreamWriter("input");
       input.send("1");

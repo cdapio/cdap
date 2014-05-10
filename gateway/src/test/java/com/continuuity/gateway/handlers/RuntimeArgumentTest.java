@@ -10,7 +10,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Test;
 
 /**
- *
+ * Tests the runtime args - setting it through runtimearg API and Program start API
  */
 public class RuntimeArgumentTest {
   @Test
