@@ -72,13 +72,6 @@ public interface ApplicationManager {
   <T extends DataSet> DataSetManager<T> getDataSet(String dataSetName);
 
   /**
-   * Sets Runtime Arguemtns of a flow
-   * @param flowName Name of the flow for which runtime args needs to be set
-   * @param runtimeArgs Map of Runtime arguments
-   */
-  void setFlowRuntimeArgs(String flowName, Map<String, String> runtimeArgs);
-
-  /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.
    */
   void stopAll();

@@ -258,15 +258,6 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public void setFlowRuntimeArgs(String flowName, Map<String, String> runtimeArgs) {
-    try {
-      AppFabricTestHelper.setRuntimeArgs(httpHandler, applicationId, flowName, "flows", runtimeArgs);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
   public void stopAll() {
     try {
       for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
