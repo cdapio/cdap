@@ -1,4 +1,4 @@
-package com.continuuity;
+package com.continuuity.gateway.apps;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;

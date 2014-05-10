@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.HighPassFilterApp;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.apps.HighPassFilterApp;
 import com.google.gson.JsonObject;
 import junit.framework.Assert;
 import org.apache.http.HttpResponse;
