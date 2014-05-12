@@ -15,7 +15,7 @@ public interface ScheduleManager {
   public void resume();
 
   /**
-   * Status of the workflow schedule
+   * returns the status of the workflow schedule
    */
   public String status();
 }
