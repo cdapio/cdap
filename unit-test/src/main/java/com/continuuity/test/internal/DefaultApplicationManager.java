@@ -252,7 +252,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public List<RunRecord> getHistory() {
-          List<RunRecord> history = null;
+          List<RunRecord> history = Lists.newArrayList();
           try {
             history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
           } catch (Exception e) {

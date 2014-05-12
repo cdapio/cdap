@@ -3,7 +3,6 @@ package com.continuuity.test;
 import com.continuuity.app.program.RunRecord;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Workflow manager interface for managing the workflow and its schedules

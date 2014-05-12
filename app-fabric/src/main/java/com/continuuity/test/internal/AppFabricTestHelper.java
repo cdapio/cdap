@@ -46,7 +46,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.tools.nsc.Global;
 
 import java.io.File;
 import java.io.FileOutputStream;
