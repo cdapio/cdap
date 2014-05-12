@@ -3,6 +3,7 @@ package com.continuuity.test.app;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.data2.OperationException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -73,7 +74,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     TimeUnit.SECONDS.sleep(5);
 
-    List<Map<String, String>> history = wfmanager.getHistory();
+    List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
     Assert.assertTrue(workflowRuns >= 1);
 

@@ -1,5 +1,7 @@
 package com.continuuity.test;
 
+import com.continuuity.app.program.RunRecord;
+
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +25,7 @@ public interface WorkflowManager {
 
   /**
    * Get the history of the workflow
-   * @return list of map of the workflow run history
+   * @return list of {@link RunRecord} workflow history
    */
-  public List<Map<String, String>> getHistory();
+  public List<RunRecord> getHistory();
 }

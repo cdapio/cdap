@@ -8,6 +8,7 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
@@ -45,6 +46,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.tools.nsc.Global;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -164,14 +166,20 @@ public class AppFabricTestHelper {
     return schedules;
   }
 
-  public static List<Map<String, String>> getHistory(AppFabricHttpHandler httpHandler, String appId, String wflowId) {
+  public static List<RunRecord> getHistory(AppFabricHttpHandler httpHandler, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/history", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    return new Gson().fromJson(responder.getResponseContent().toString(),
+    List<Map<String, String>> runList = new Gson().fromJson(responder.getResponseContent().toString(),
                                new TypeToken<List<Map<String, String>>>() { }.getType());
+    List<RunRecord> runRecords = Lists.newArrayList();
+    for(Map<String,String> run : runList) {
+      runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
+                                       Long.parseLong(run.get("end")), run.get("status")));
+    }
+    return runRecords;
   }
 
   public static void suspend(AppFabricHttpHandler httpHandler, String appId, String wflowId,

@@ -2,6 +2,7 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
@@ -250,8 +251,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public List<Map<String, String>> getHistory() {
-          List<Map<String, String>> history = null;
+        public List<RunRecord> getHistory() {
+          List<RunRecord> history = null;
           try {
             history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
           } catch (Exception e) {
