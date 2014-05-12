@@ -394,8 +394,8 @@ public final class PerformanceTestRunner {
       modules.add(new Module() {
         @Override
         public void configure(Binder binder) {
-          binder.bind(new TypeLiteral<PipelineFactory<?>>() { })
-            .to(new TypeLiteral<SynchronousPipelineFactory<?>>() {
+          binder.bind(new TypeLiteral<PipelineFactory>() { })
+            .to(new TypeLiteral<SynchronousPipelineFactory>() {
             });
           binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
 

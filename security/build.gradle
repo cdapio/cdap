@@ -13,6 +13,16 @@ dependencies {
     compile libraries.google_guava
 
     testCompile libraries.junit
+    testCompile(libraries.hbase94) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    testCompile(libraries.hbase94_test) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
 }
 
 test {

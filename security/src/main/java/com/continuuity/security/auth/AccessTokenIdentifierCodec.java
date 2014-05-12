@@ -9,6 +9,7 @@ import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.security.io.Codec;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
@@ -38,8 +39,8 @@ public class AccessTokenIdentifierCodec implements Codec<AccessTokenIdentifier> 
     Encoder encoder = new BinaryEncoder(bos);
 
     encoder.writeInt(AccessTokenIdentifier.Schemas.getVersion());
-    DatumWriter writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                              AccessTokenIdentifier.Schemas.getCurrentSchema());
+    DatumWriter<AccessTokenIdentifier> writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
+                                                                     AccessTokenIdentifier.Schemas.getCurrentSchema());
     writer.encode(identifier, encoder);
     return bos.toByteArray();
   }

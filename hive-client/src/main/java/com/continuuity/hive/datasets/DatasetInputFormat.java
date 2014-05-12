@@ -8,13 +8,19 @@ import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -32,10 +38,15 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
     RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME));
 
+    Job job = new Job(jobConf);
+    JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
+    // TODO: figure out the significance of table paths
+    Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
+
     List<Split> dsSplits = rowScannable.getSplits();
     InputSplit[] inputSplits = new InputSplit[dsSplits.size()];
     for (int i = 0; i < dsSplits.size(); i++) {
-      inputSplits[i] = new DatasetInputSplit(dsSplits.get(i));
+      inputSplits[i] = new DatasetInputSplit(dsSplits.get(i), tablePaths[0]);
     }
     return inputSplits;
   }
@@ -156,15 +167,17 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
    * {@link com.continuuity.internal.app.runtime.batch.dataset.DataSetInputSplit}, but implements
    * {@link org.apache.hadoop.mapred.InputSplit} instead of {@link org.apache.hadoop.mapreduce.InputSplit}.
    */
-  public static class DatasetInputSplit implements InputSplit {
+  public static class DatasetInputSplit extends FileSplit {
     private Split dataSetSplit;
+    private Path dummyPath;
 
     // for Writable
     public DatasetInputSplit() {
     }
 
-    public DatasetInputSplit(Split dataSetSplit) {
+    public DatasetInputSplit(Split dataSetSplit, Path dummyPath) {
       this.dataSetSplit = dataSetSplit;
+      this.dummyPath = dummyPath;
     }
 
     public Split getDataSetSplit() {
@@ -183,10 +196,16 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     }
 
     @Override
+    public Path getPath() {
+      return dummyPath;
+    }
+
+    @Override
     public void write(DataOutput out) throws IOException {
       Text.writeString(out, dataSetSplit.getClass().getName());
       String ser = new Gson().toJson(dataSetSplit);
       Text.writeString(out, ser);
+      Text.writeString(out, dummyPath.toUri().toString());
     }
 
     @Override
@@ -198,6 +217,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
         }
         Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
         dataSetSplit = new Gson().fromJson(Text.readString(in), splitClass);
+        dummyPath = new Path(Text.readString(in));
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }

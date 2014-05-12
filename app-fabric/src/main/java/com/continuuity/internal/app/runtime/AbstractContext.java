@@ -41,6 +41,7 @@ public abstract class AbstractContext implements DataSetContext {
                          getAccountId(), getApplicationId(), getProgramName(), runId);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T extends DataSet> T getDataSet(String name) {
     T dataSet = (T) datasets.get(name);

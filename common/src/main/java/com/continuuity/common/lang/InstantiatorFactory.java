@@ -29,6 +29,7 @@ import java.util.SortedSet;
 /**
  * InstantiatorFactory
  */
+@SuppressWarnings("unchecked")
 public final class InstantiatorFactory {
 
   private static final Unsafe UNSAFE;

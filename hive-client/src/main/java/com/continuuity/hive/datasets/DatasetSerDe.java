@@ -19,7 +19,7 @@ import java.util.Properties;
 public class DatasetSerDe extends AbstractSerDe {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
 
-  static final String DATASET_ROW_TYPE = "dataset.row.type";
+  static final String DATASET_ROW_TYPE = "reactor.dataset.row.type";
   private Class<?> rowType;
 
   @Override

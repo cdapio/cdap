@@ -1,6 +1,8 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -9,15 +11,25 @@ import java.security.InvalidKeyException;
 /**
  * Provides a simple interface to generate and validate {@link AccessToken}s.
  */
-public class TokenManager {
+public class TokenManager extends AbstractIdleService {
 
-  private final KeyManager keyManager;
+  protected final KeyManager keyManager;
   private final Codec<AccessTokenIdentifier> identifierCodec;
 
   @Inject
   public TokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
     this.keyManager = keyManager;
     this.identifierCodec = identifierCodec;
+  }
+
+  @Override
+  public void startUp() {
+    this.keyManager.startAndWait();
+  }
+
+  @Override
+  public void shutDown() {
+    this.keyManager.stopAndWait();
   }
 
   /**

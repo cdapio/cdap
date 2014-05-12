@@ -15,12 +15,12 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * A factory class for creating {@link DatumWriter} instance for different data type and schema.
@@ -48,6 +48,7 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
    * @param <T> Type of the data type.
    * @return A {@link DatumWriter} instance.
    */
+  @SuppressWarnings("unchecked")
   @Override
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
@@ -66,12 +67,13 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
     private final Map<TypeToken<?>, ByteCodeClassLoader> classloaders = Maps.newIdentityHashMap();
 
+    @SuppressWarnings("unchecked")
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
       ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(), key.getSchema());
 
       ClassLoader typeClassloader = getClassLoader(key.getType());
-      ByteCodeClassLoader classloader = classloaders.get(typeClassloader);
+      ByteCodeClassLoader classloader = classloaders.get(key.getType());
       if (classloader == null) {
         classloader = new ByteCodeClassLoader(typeClassloader);
         classloaders.put(key.getType(), classloader);
