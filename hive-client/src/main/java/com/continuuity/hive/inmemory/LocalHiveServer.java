@@ -4,18 +4,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveServer;
-import com.continuuity.test.internal.TempFolder;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hive.service.server.HiveServer2;
@@ -25,6 +17,15 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.ConnectException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
 /**
  *
  */
@@ -32,9 +33,11 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalHiveServer.class);
 
+  private static File hiveConfFile = createHiveConf();
+  private static int hiveServerPort;
+  private static int hiveMetaStorePort;
+
   private HiveServer2 hiveServer2;
-  private int hiveServerPort;
-  private int hiveMetaStorePort;
 
   private final DiscoveryService discoveryService;
   private static DiscoveryServiceClient discoveryServiceClient;
@@ -59,68 +62,44 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     return inMemoryTransactionManager;
   }
 
-  private HiveConf createHiveConf() throws Exception {
-    URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
-    assert url != null;
-    File confDir = new File(url.toURI()).getParentFile();
+  private static File createHiveConf() {
+    try {
+      URL url = LocalHiveServer.class.getClassLoader().getResource("hive-site-placeholder.xml");
+      assert url != null;
+      File confDir = new File(url.toURI()).getParentFile();
 
-    HiveConf hiveConf = new HiveConf();
-    hiveConf.clear();
-    hiveConf.set("hive.server2.authentication", "NOSASL");
-    hiveConf.set("hive.metastore.sasl.enabled", "false");
-    hiveConf.set("hive.server2.enable.doAs", "false");
-    hiveConf.set("hive.exec.mode.local.auto", "true");
-    hiveConf.set("hive.exec.submitviachild", "false");
-    hiveConf.set("mapreduce.framework.name", "local");
-    // TODO: get local data dir from CConf
-    hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
+      Configuration configuration = new Configuration();
+      configuration.clear();
+      configuration.set("hive.server2.authentication", "NOSASL");
+      configuration.set("hive.metastore.sasl.enabled", "false");
+      configuration.set("hive.server2.enable.doAs", "false");
+      configuration.set("hive.exec.mode.local.auto", "true");
+      configuration.set("hive.exec.submitviachild", "false");
+      configuration.set("mapreduce.framework.name", "local");
+      // TODO: get local data dir from CConf
+      configuration.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
-    hiveServerPort = PortDetector.findFreePort();
-    hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
+      hiveServerPort = PortDetector.findFreePort();
+      configuration.setInt("hive.server2.thrift.port", hiveServerPort);
 
-    // Register with discovery service.
-    InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
-    InetAddress address = socketAddress.getAddress();
-    if (address.isAnyLocalAddress()) {
-      address = InetAddress.getLocalHost();
+      hiveMetaStorePort = PortDetector.findFreePort();
+      configuration.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
+
+      File newHiveConf = new File(confDir, "hive-site.xml");
+      configuration.writeXml(new FileOutputStream(newHiveConf));
+      newHiveConf.deleteOnExit();
+      LOG.info("Wrote hive conf into {}", newHiveConf.getAbsolutePath());
+
+      return newHiveConf;
+    } catch (Exception e) {
+      LOG.error("Got exception while trying to create hive-site.xml", e);
+      throw new RuntimeException(e);
     }
-    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
-
-    discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.HIVE;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalSocketAddress;
-      }
-    });
-
-    hiveMetaStorePort = PortDetector.findFreePort();
-    hiveConf.set("hive.metastore.uris", "thrift://" + finalSocketAddress.getHostName() + ":" + hiveMetaStorePort);
-
-    File newHiveConf = new File(confDir, "hive-site.xml");
-    hiveConf.writeXml(new FileOutputStream(newHiveConf));
-    LOG.info("Wrote hive conf into {}", newHiveConf.getAbsolutePath());
-
-    return hiveConf;
-  }
-
-  private File writeConf(HiveConf hiveConf) throws Exception {
-    TempFolder tempFolder = new TempFolder();
-
-    File hiveConfFile = (tempFolder.newFile("temp-hive-site.xml"));
-    hiveConf.writeXml(new FileOutputStream(hiveConfFile));
-    LOG.info("Wrote hive conf into {}", hiveConfFile.getAbsolutePath());
-    return hiveConfFile;
   }
 
   @Override
   protected void startUp() throws Exception {
-    HiveConf hiveConf = createHiveConf();
-    final File hiveConfFile = writeConf(hiveConf);
+    HiveConf hiveConf = new HiveConf();
 
     // Start Hive MetaStore
     LOG.info("Starting hive metastore on port {}...", hiveMetaStorePort);
@@ -146,6 +125,26 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     hiveServer2.init(hiveConf);
     hiveServer2.start();
     waitForPort(hiveServerPort);
+
+    // Register with discovery service.
+    InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
+    InetAddress address = socketAddress.getAddress();
+    if (address.isAnyLocalAddress()) {
+      address = InetAddress.getLocalHost();
+    }
+    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
+
+    discoveryService.register(new Discoverable() {
+      @Override
+      public String getName() {
+        return Constants.Service.HIVE;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return finalSocketAddress;
+      }
+    });
   }
 
   @Override
