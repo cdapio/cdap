@@ -24,7 +24,7 @@ The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 - **Reactor:** deploying and managing Applications.
 - **Logs:** retrieving Application logs.
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
-- **Monitor:** checking the status of various reactor services
+- **Monitor:** checking the status of various Reactor services.
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -71,7 +71,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 8 30 64
+   :widths: 5 24 71
    :header-rows: 1
 
    * - Code
@@ -97,7 +97,7 @@ Status Codes
      - A request was received with a method not supported for the URI
    * - ``409``
      - ``Conflict``
-     - A request could not be completed due to a conflict with resource state
+     - A request could not be completed due to a conflict with the current resource state
    * - ``500``
      - ``Internal Server Error``
      - An internal error occurred while processing the request
@@ -1520,11 +1520,11 @@ Reactor internally uses a variety of services that are critical to its functiona
 
 	GET <base-url>/monitor/<endpoint>
 
-The status of the following Reactor services can be checked.
+The status of these Reactor services can be checked.
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 80
+   :widths: 20 20 60
    
    * - Service Name
      - Endpoint
