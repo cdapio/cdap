@@ -14,7 +14,7 @@ import java.net.URL;
 /**
  *
  */
-public class HiveCommandExecutorTest {
+  public class HiveCommandExecutorTest {
   private static final Logger LOG = LoggerFactory.getLogger(HiveCommandExecutorTest.class);
 
   @Test
@@ -37,11 +37,13 @@ public class HiveCommandExecutorTest {
     sendCommand("create external table purchase (customer STRING, quantity int) " +
                   "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
                   "with serdeproperties (\"reactor.dataset.name\"=\"purchases\", " +
-                  "\"dataset.row.type\" = \"com.continuuity.examples.purchase.Purchase\") ;");
+                  "\"reactor.dataset.row.type\" = \"com.continuuity.examples.purchase.Purchase\") ;");
     sendCommand("show tables;");
     sendCommand("describe purchase;");
     sendCommand("select customer, quantity from purchase;");
     sendCommand("select * from purchase;");
+    sendCommand("select customer, quantity from purchase where customer = \"Tom\";");
+    sendCommand("select * from purchase where customer = \"George\";");
     sendCommand("drop table purchase");
   }
 
@@ -49,7 +51,7 @@ public class HiveCommandExecutorTest {
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
       "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
       "localhost" +
-      ":" + "56525" +
+      ":" + "51119" +
       "/default;auth=noSasl",
       "-n", "poorna",
       "-e", cmd};
