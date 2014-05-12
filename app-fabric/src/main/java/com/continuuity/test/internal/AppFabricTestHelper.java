@@ -174,7 +174,7 @@ public class AppFabricTestHelper {
     List<Map<String, String>> runList = new Gson().fromJson(responder.getResponseContent().toString(),
                                new TypeToken<List<Map<String, String>>>() { }.getType());
     List<RunRecord> runRecords = Lists.newArrayList();
-    for(Map<String,String> run : runList) {
+    for (Map<String, String> run : runList) {
       runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
                                        Long.parseLong(run.get("end")), run.get("status")));
     }
