@@ -36,8 +36,7 @@ import java.net.URL;
     sendCommand("drop table if exists purchase");
     sendCommand("create external table purchase (customer STRING, quantity int) " +
                   "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
-                  "with serdeproperties (\"reactor.dataset.name\"=\"purchases\", " +
-                  "\"reactor.dataset.row.type\" = \"com.continuuity.examples.purchase.Purchase\") ;");
+                  "with serdeproperties (\"reactor.dataset.name\"=\"purchases\") ;");
     sendCommand("show tables;");
     sendCommand("describe purchase;");
     sendCommand("select customer, quantity from purchase;");
@@ -51,7 +50,7 @@ import java.net.URL;
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
       "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
       "localhost" +
-      ":" + "51119" +
+      ":" + "54216" +
       "/default;auth=noSasl",
       "-n", "poorna",
       "-e", cmd};

@@ -1,5 +1,6 @@
 package com.continuuity.hive.datasets;
 
+import com.continuuity.api.data.batch.RowScannable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -11,6 +12,8 @@ import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Properties;
 
 /**
@@ -19,20 +22,16 @@ import java.util.Properties;
 public class DatasetSerDe extends AbstractSerDe {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
 
-  static final String DATASET_ROW_TYPE = "reactor.dataset.row.type";
-  private Class<?> rowType;
+  private Type rowType;
 
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
-    String className = properties.getProperty(DATASET_ROW_TYPE);
-    if (className == null) {
-      throw new SerDeException(DATASET_ROW_TYPE + " property not defined.");
-    }
-
+    String datasetName = properties.getProperty(DatasetInputFormat.DATASET_NAME);
     try {
-      rowType = Class.forName(className);
-    } catch (ClassNotFoundException e) {
-      LOG.error("Got exception while trying to lookup class {}: ", rowType, e);
+      RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName);
+      rowType = rowScannable.getRowType();
+    } catch (IOException e) {
+      LOG.error("Got exception while trying to instantiate dataset {}", datasetName);
       throw new SerDeException(e);
     }
   }

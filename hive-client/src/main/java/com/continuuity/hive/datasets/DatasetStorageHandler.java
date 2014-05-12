@@ -1,6 +1,5 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.api.data.batch.RowScannable;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -31,12 +30,6 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
   public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
     String datasetName = tableDesc.getProperties().getProperty(DatasetInputFormat.DATASET_NAME);
     jobProperties.put(DatasetInputFormat.DATASET_NAME, datasetName);
-
-    try {
-      RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName);
-      jobProperties.put(DatasetSerDe.DATASET_ROW_TYPE, rowScannable.getRowType().toString());
-    } catch (Exception e) {
-      LOG.error("Got exception while instantiating dataset {}", datasetName, e);
-    }
+    LOG.debug("Got dataset {} for external table {}", datasetName, tableDesc.getTableName());
   }
 }
