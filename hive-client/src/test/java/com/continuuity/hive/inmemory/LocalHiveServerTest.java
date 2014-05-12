@@ -4,10 +4,14 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.HiveServerTest;
 import com.continuuity.hive.guice.InMemoryHiveModule;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -25,7 +29,15 @@ public class LocalHiveServerTest extends HiveServerTest {
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
     Configuration hConf = new Configuration();
 
-    Injector injector = Guice.createInjector(new ConfigModule(conf, hConf),
+    Injector injector = Guice.createInjector(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(TransactionStateStorage.class).to(InMemoryTransactionStateStorage.class);
+            bind(InMemoryTransactionManager.class);
+          }
+        },
+        new ConfigModule(conf, hConf),
         new InMemoryHiveModule(),
         new DiscoveryRuntimeModule().getInMemoryModules());
     hiveServer = injector.getInstance(HiveServer.class);
