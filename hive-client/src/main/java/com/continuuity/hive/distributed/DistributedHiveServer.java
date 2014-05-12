@@ -53,10 +53,10 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
     hiveConf.set("hive.server2.authentication", "NOSASL");
     hiveConf.set("hive.metastore.sasl.enabled", "false");
     hiveConf.set("hive.server2.enable.doAs", "false");
-    hiveConf.set("hive.exec.mode.local.auto", "true");
-    hiveConf.set("hive.exec.submitviachild", "true");
+//    hiveConf.set("hive.exec.mode.local.auto", "true");
+//    hiveConf.set("hive.exec.submitviachild", "true");
     hiveConf.set("mapreduce.framework.name", "yarn");
-    hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
+//    hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
     hiveServerPort = PortDetector.findFreePort();
     hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
@@ -83,7 +83,7 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
 
     // todo find how to retrieve the hive meta store port
 //    hiveMetaStorePort = PortDetector.findFreePort();
-    hiveConf.set("hive.metastore.uris", "thrift://" + finalSocketAddress.getHostName() + ":" + hiveMetaStorePort);
+    hiveConf.set("hive.metastore.uris", "thrift://hive-distributed728-1001.dev.continuuity.net:" + finalSocketAddress.getHostName() + ":" + hiveMetaStorePort);
 
     File newHiveConf = new File(confDir, "hive-site.xml");
     hiveConf.writeXml(new FileOutputStream(newHiveConf));
