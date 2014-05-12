@@ -49,7 +49,7 @@ public class HiveCommandExecutorTest {
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
       "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
       "localhost" +
-      ":" + "56525" +
+      ":" + "63091" +
       "/default;auth=noSasl",
       "-n", "poorna",
       "-e", cmd};
