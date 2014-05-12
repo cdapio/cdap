@@ -1218,6 +1218,7 @@ The output is formatted as HTML-embeddable text; that is, characters that have a
 
 Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
+
 Metrics HTTP API
 ================
 As Applications process data, the Continuuity Reactor collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
@@ -1511,6 +1512,7 @@ These metrics are available in the DataSets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
 
 Monitor HTTP API
 ================
