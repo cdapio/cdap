@@ -8,7 +8,6 @@ import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextConfig;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -49,6 +48,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     return list;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public RecordReader<KEY, VALUE> createRecordReader(final InputSplit split,
                                                      final TaskAttemptContext context)
@@ -60,11 +60,10 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
     // pass in the stage here instead of hardcoding mapper.
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    BasicMapReduceContext mrContext = contextProvider.get(Files.createTempDir());
+    BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
-    @SuppressWarnings("unchecked")
     String dataSetName = getInputDataSetSpec(conf).getName();
-    BatchReadable<KEY, VALUE> dataset = (BatchReadable) mrContext.getDataSet(dataSetName);
+    BatchReadable<KEY, VALUE> dataset = (BatchReadable<KEY, VALUE>) mrContext.getDataSet(dataSetName);
     SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it

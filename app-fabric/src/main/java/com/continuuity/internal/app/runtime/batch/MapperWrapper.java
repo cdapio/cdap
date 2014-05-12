@@ -32,6 +32,7 @@ public class MapperWrapper extends Mapper {
 
   private File unpackedJarDir;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
     super.cleanup(context);
@@ -45,12 +46,14 @@ public class MapperWrapper extends Mapper {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     unpackedJarDir = Files.createTempDir();
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get(unpackedJarDir);
+    context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     // now that the context is created, we need to make sure to properly close all datasets of the context

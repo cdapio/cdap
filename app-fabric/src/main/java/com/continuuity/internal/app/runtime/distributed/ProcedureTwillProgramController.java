@@ -21,6 +21,7 @@ final class ProcedureTwillProgramController extends AbstractTwillProgramControll
     super(programName, controller);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void doCommand(String name, Object value) throws Exception {
 

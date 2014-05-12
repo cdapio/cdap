@@ -12,6 +12,7 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.data.stream.StreamBatchReadable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * This is a sample word count app that is used in testing in
@@ -66,10 +69,12 @@ public class WordCountApp2 implements Application {
       .setName("WordCountApp")
       .setDescription("Application for counting words")
       .withStreams().add(new Stream("text"))
-      .withDataSets().add(new MyKeyValueTable("mydataset")).add(new MyKeyValueTable("totals"))
+      .withDataSets().add(new MyKeyValueTable("mydataset"))
+                     .add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency())
       .withMapReduce().add(new CountTotal())
+                      .add(new CountFromStream())
       .noWorkflow()
       .build();
   }
@@ -239,6 +244,12 @@ public class WordCountApp2 implements Application {
       long result = Bytes.toLong(this.totals.read(Bytes.toBytes("total_words_count")));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }
+
+    @Handle("stream_total")
+    public void streamTotal(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      long result = Bytes.toLong(this.totals.read(Bytes.toBytes("stream_total_words_count")));
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+    }
   }
 
   /**
@@ -288,6 +299,67 @@ public class WordCountApp2 implements Application {
         }
 
         context.write(Bytes.toBytes("total_words_count"), Bytes.toBytes(total));
+      }
+    }
+  }
+
+  /**
+   * Performs word count from stream data directly.
+   */
+  public static final class CountFromStream extends AbstractMapReduce {
+
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("countFromStream")
+        .setDescription("Word count from stream")
+        .useOutputDataSet("totals")
+        .build();
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      context.setInput(new StreamBatchReadable("text"), null);
+
+      Job job = context.getHadoopJob();
+      job.setMapperClass(StreamMapper.class);
+      job.setMapOutputKeyClass(Text.class);
+      job.setMapOutputValueClass(LongWritable.class);
+      job.setReducerClass(StreamReducer.class);
+    }
+
+    /**
+     * Mapper for the count from stream.
+     */
+    public static final class StreamMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
+
+      private static final Text TOTAL = new Text("total");
+
+      @Override
+      protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        StringTokenizer itr = new StringTokenizer(value.toString());
+        long total = 0;
+        while (itr.hasMoreTokens()) {
+          total++;
+          itr.nextToken();
+        }
+        context.write(TOTAL, new LongWritable(total));
+      }
+    }
+
+    /**
+     * Reducer for the count from stream.
+     */
+    public static final class StreamReducer extends Reducer<Text, LongWritable, byte[], byte[]> {
+
+      @Override
+      protected void reduce(Text key, Iterable<LongWritable> values,
+                            Context context) throws IOException, InterruptedException {
+        long sum = 0;
+        for (LongWritable val : values) {
+          sum += val.get();
+        }
+        context.write(Bytes.toBytes("stream_total_words_count"), Bytes.toBytes(sum));
       }
     }
   }

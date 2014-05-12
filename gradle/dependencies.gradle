@@ -16,7 +16,7 @@ versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
 versions.quartzVersion = '2.2.0'
 versions.slf4jVersion = '1.7.5'
-versions.continuuityNettyHttp='0.2.0-SNAPSHOT'
+versions.continuuityNettyHttp='0.2.0'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -43,7 +43,7 @@ libraries.google_guice_assistedinject = "com.google.inject.extensions:guice-assi
 libraries.google_guice_multibindings = "com.google.inject.extensions:guice-multibindings:$versions.googleGuice"
 
 // Thrift
-libraries.thrift = "org.apache.thrift:libthrift:0.8.0"
+libraries.thrift = "org.apache.thrift:libthrift:0.9.0"
 
 // ASM
 libraries.asm = "org.ow2.asm:asm-all:4.0"

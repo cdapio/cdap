@@ -5,10 +5,13 @@ import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.AccessTokenIdentifierCodec;
-import com.continuuity.security.auth.Codec;
+import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.AccessTokenValidator;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
+import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.io.Codec;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.inject.Binder;
@@ -52,9 +55,13 @@ public abstract class SecurityModule extends PrivateModule {
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(AuthenticationHandlerListProvider.class)
                            .in(Scopes.SINGLETON);
-
+    bind(TokenValidator.class).to(AccessTokenValidator.class);
+    bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
+    expose(AccessTokenTransformer.class);
+    expose(TokenValidator.class);
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
+    expose(new TypeLiteral<Codec<KeyIdentifier>>() { });
   }
 
   @Provides

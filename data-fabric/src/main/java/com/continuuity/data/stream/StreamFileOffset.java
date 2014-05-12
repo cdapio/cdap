@@ -5,7 +5,6 @@ package com.continuuity.data.stream;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -15,7 +14,7 @@ import java.net.URI;
  * Represents offset information for single stream file. The comparison of offset instance
  * is done by comparing event location path followed by offset.
  */
-public final class StreamFileOffset implements Comparable<StreamFileOffset> {
+public final class StreamFileOffset {
 
   private final Location eventLocation;
   private final Location indexLocation;
@@ -23,7 +22,8 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
   private final long partitionEnd;
   private final String namePrefix;
   private final int seqId;
-  private long offset;
+  private final long offset;
+  private final int generationId;
 
   /**
    * Clones from another {@link StreamFileOffset}.
@@ -31,6 +31,16 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
    */
   public StreamFileOffset(StreamFileOffset other) {
     this(other.getEventLocation(), other.getOffset());
+  }
+
+  /**
+   * Clones from another {@link StreamFileOffset} but with a different offset value.
+   *
+   * @param other The instance to clone from
+   * @param offset file offset
+   */
+  public StreamFileOffset(StreamFileOffset other, long offset) {
+    this(other.getEventLocation(), offset);
   }
 
   public StreamFileOffset(Location eventLocation) {
@@ -51,6 +61,9 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
 
     this.namePrefix = StreamUtils.getNamePrefix(eventLocation.getName());
     this.seqId = StreamUtils.getSequenceId(eventLocation.getName());
+
+    // TODO: This is plan for stream truncate implementation.
+    this.generationId = 0;
   }
 
   public final Location getEventLocation() {
@@ -63,10 +76,6 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
 
   public long getOffset() {
     return offset;
-  }
-
-  public void setOffset(long offset) {
-    this.offset = offset;
   }
 
   public final long getPartitionStart() {
@@ -85,11 +94,14 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
     return seqId;
   }
 
+  public int getGenerationId() {
+    return generationId;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("event", eventLocation.toURI())
-      .add("index", indexLocation == null ? null : indexLocation.toURI())
       .add("offset", getOffset())
       .toString();
   }
@@ -127,11 +139,5 @@ public final class StreamFileOffset implements Comparable<StreamFileOffset> {
     return factory.create(URI.create(String.format("%s%s",
                                                    eventPath.substring(0, eventPath.length() - extLength),
                                                    StreamFileType.INDEX.getSuffix())));
-  }
-
-  @Override
-  public int compareTo(StreamFileOffset other) {
-    int cmp = eventLocation.toURI().compareTo(other.getEventLocation().toURI());
-    return cmp == 0 ? Longs.compare(offset, other.getOffset()) : cmp;
   }
 }

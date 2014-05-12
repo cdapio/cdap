@@ -334,6 +334,21 @@ public final class Constants {
 
     /** How often to check for new file when reading from stream in milliseconds. **/
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
+    public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
+
+
+    /**
+     * Contains HTTP headers used by Stream handler.
+     */
+    public static final class Headers {
+      public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
+    }
+
+    // Time for a stream consumer to timeout in StreamHandler for REST API dequeue.
+    public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
+
+    // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
+    public static final String HANDLER_CONSUMER_NS = "stream.handler";
 
     /* End constants used by stream */
   }
@@ -390,7 +405,6 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
-    public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
@@ -466,6 +480,23 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics processor.
+   */
+  public static final class MetricsProcessor {
+    public static final String NUM_INSTANCES = "metrics.processor.num.instances";
+    public static final String NUM_CORES = "metrics.processor.num.cores";
+    public static final String MEMORY_MB = "metrics.processor.memory.mb";
+  }
+
+  /**
+   * Configurations for log saver.
+   */
+  public static final class LogSaver {
+    public static final String NUM_INSTANCES = "log.saver.num.instances";
+    public static final String MEMORY_MB = "log.saver.run.memory.megs";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {
@@ -473,6 +504,10 @@ public final class Constants {
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
+    /** Time duration in milliseconds after which an active secret key should be retired. */
+    public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
+    /** Parent znode used for secret key distribution in ZooKeeper. */
+    public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
 
     /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
@@ -483,6 +518,10 @@ public final class Constants {
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
+    /** Configuration for enabling the security */
+    public static final String CFG_SECURITY_ENABLED = "security.enabled";
+    /**Configuration for security realm */
+    public static final String CFG_REALM = "security.realm";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

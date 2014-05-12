@@ -1,20 +1,22 @@
 package com.continuuity.gateway.handlers.stream;
 
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.DataType;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.common.conf.Constants;
+import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.app.Id;
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.mina.util.ConcurrentHashSet;
-import org.apache.thrift.protocol.TProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Cache for Stream meta data lookups.
@@ -22,13 +24,16 @@ import org.slf4j.LoggerFactory;
 public class StreamCache {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamCache.class);
+  private static final Gson GSON = new Gson();
 
   private EndpointStrategy endpointStrategy;
   private ConcurrentHashSet<ImmutablePair<String, String>> knownStreams;
+  private Store store;
 
   @Inject
-  public StreamCache() {
+  public StreamCache(StoreFactory factory) {
     this.knownStreams = new ConcurrentHashSet<ImmutablePair<String, String>>();
+    this.store = factory.create();
   }
 
   /**
@@ -41,19 +46,9 @@ public class StreamCache {
 
   private boolean streamExists(String accountId, String name) throws Exception {
     Preconditions.checkNotNull(endpointStrategy, "StreamCache was not initialized - endPointStrategy is null.");
-    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-    AppFabricService.Client client = new AppFabricService.Client(protocol);
-    try {
-      String result = client.getDataEntity(new ProgramId(accountId, "", ""), DataType.STREAM, name);
+      StreamSpecification spec = store.getStream(new Id.Account(accountId), name);
+      String result = spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
       return result != null && !result.isEmpty();
-    } finally {
-      if (client.getInputProtocol().getTransport().isOpen()) {
-        client.getInputProtocol().getTransport().close();
-      }
-      if (client.getOutputProtocol().getTransport().isOpen()) {
-        client.getOutputProtocol().getTransport().close();
-      }
-    }
   }
 
   public boolean validateStream(String account, String name)
@@ -97,4 +92,16 @@ public class StreamCache {
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
   }
+
+  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Stream");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
 }

@@ -50,7 +50,6 @@ import java.util.List;
  *   1   6   8   8   6   6   8   9
  */
 public class TimeValueAggregator implements Iterable<TimeValue> {
-  private static final Logger LOG = LoggerFactory.getLogger(TimeValueAggregator.class);
 
   private final Collection<? extends Iterable<TimeValue>> allTimeseries;
   private final Interpolator interpolator;
@@ -153,7 +152,7 @@ public class TimeValueAggregator implements Iterable<TimeValue> {
     PeekingIterator<TimeValue> iter;
     TimeValue lastValue;
 
-    public BiDirectionalPeekingIterator(PeekingIterator iter) {
+    public BiDirectionalPeekingIterator(PeekingIterator<TimeValue> iter) {
       this.iter = iter;
       this.lastValue = null;
     }

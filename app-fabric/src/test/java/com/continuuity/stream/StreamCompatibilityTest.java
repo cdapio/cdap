@@ -34,8 +34,10 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -44,11 +46,14 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -60,16 +65,32 @@ import javax.inject.Inject;
  */
 public class StreamCompatibilityTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  public static final Supplier<File> TEMP_DIR_SUPPLIER = new Supplier<File>() {
+
+    @Override
+    public File get() {
+      try {
+        return tmpFolder.newFolder();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+  };
+
   private static final BlockingQueue<String> MESSAGE_QUEUE = new ArrayBlockingQueue<String>(2);
 
   @Test
   public void decodeOldStream() throws Exception {
-    Injector injector = TestHelper.getInjector().createChildInjector(new StreamWriterModule());
+    Injector injector = AppFabricTestHelper.getInjector().createChildInjector(new StreamWriterModule());
     StreamWriter writer = injector.getInstance(StreamWriterFactory.class).create(QueueName.fromStream("stream"));
     StreamEventEncoder oldEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("old")));
     StreamEventEncoder newEncoder = injector.getInstance(Key.get(StreamEventEncoder.class, Names.named("new")));
 
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(StreamApp.class);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(StreamApp.class,
+                                                                                         TEMP_DIR_SUPPLIER);
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner flowRunner = runnerFactory.create(ProgramRunnerFactory.Type.FLOW);

@@ -21,9 +21,8 @@ package org.apache.hadoop.mapred;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.common.lang.jar.BundleJarUtil;
-import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
+import com.continuuity.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -86,6 +85,7 @@ class LocalDistributedCacheManagerWithFix {
   private List<String> localArchives = new ArrayList<String>();
   private List<String> localFiles = new ArrayList<String>();
   private List<String> localClasspaths = new ArrayList<String>();
+  private List<File> jarExpandDirs = new ArrayList<File>();
 
   private List<File> symlinksCreated = new ArrayList<File>();
 
@@ -264,8 +264,9 @@ class LocalDistributedCacheManagerWithFix {
           @Override
           public ClassLoader run() {
             try {
-              return new ProgramClassLoader(
-                BundleJarUtil.unpackProgramJar(lf.create(uri), Files.createTempDir()), parent);
+              File expandDir = Files.createTempDir();
+              jarExpandDirs.add(expandDir);
+              return new ProgramClassLoader(BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir), parent);
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }
@@ -306,6 +307,13 @@ class LocalDistributedCacheManagerWithFix {
     }
     for (String file : localFiles) {
       localFSFileContext.delete(new Path(file), true);
+    }
+    for (File dir : jarExpandDirs) {
+      try {
+        DirUtils.deleteDirectoryContents(dir);
+      } catch (IOException e) {
+        LOG.warn("Failed to delete jar directory " + dir);
+      }
     }
   }
 }

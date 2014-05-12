@@ -35,7 +35,7 @@ import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -57,10 +57,10 @@ public class MDTBasedStoreTest {
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    store = TestHelper.getInjector().getInstance(MDTBasedStore.class);
+    store = AppFabricTestHelper.getInjector().getInstance(MDTBasedStore.class);
 
     // clean up data
-    MetaDataTable mds = TestHelper.getInjector().getInstance(MetaDataTable.class);
+    MetaDataTable mds = AppFabricTestHelper.getInjector().getInstance(MetaDataTable.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);
     }
@@ -68,7 +68,7 @@ public class MDTBasedStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    TestHelper.deployApplication(ToyApp.class);
+    AppFabricTestHelper.deployApplication(ToyApp.class);
     Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"), Type.FLOW);
     Assert.assertNotNull(program);
   }
@@ -338,16 +338,14 @@ public class MDTBasedStoreTest {
   }
 
 
-  private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws org.apache.thrift.TException {
+  private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
     Assert.assertEquals(1, stored.getDataSets().size());
     Assert.assertEquals(WordCountApp.WordCountFlow.class.getName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
   }
 
-  private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws org.apache.thrift.TException {
+  private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
     Assert.assertEquals(2, stored.getDataSets().size());
     Assert.assertEquals(FlowImpl.class.getName(),
@@ -356,7 +354,7 @@ public class MDTBasedStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    TestHelper.deployApplication(WordCountApp.class);
+    AppFabricTestHelper.deployApplication(WordCountApp.class);
 
     ApplicationSpecification spec = getSpec(new WordCountApp().configure());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
@@ -381,7 +379,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testProcedureInstances() throws Exception {
 
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
@@ -513,7 +511,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs () throws Exception {
     //Deploy program with all types of programs.
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
@@ -549,7 +547,7 @@ public class MDTBasedStoreTest {
   @Test
   public void testCheckDeletedProceduresAndWorkflow () throws Exception {
     //Deploy program with all types of programs.
-    TestHelper.deployApplication(AllProgramsApp.class);
+    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = getSpec(new AllProgramsApp().configure());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();

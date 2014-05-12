@@ -11,11 +11,15 @@ import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -27,15 +31,25 @@ import java.util.List;
  */
 public abstract class AbstractStreamFileConsumerFactory implements StreamConsumerFactory {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumerFactory.class);
+
   private final StreamAdmin streamAdmin;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final String tablePrefix;
 
+  // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
+  // TODO: Remove usage of this when no longer needed
+  private final QueueClientFactory queueClientFactory;
+  private final StreamAdmin oldStreamAdmin;
+
   protected AbstractStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
-                                              StreamConsumerStateStoreFactory stateStoreFactory) {
+                                              StreamConsumerStateStoreFactory stateStoreFactory,
+                                              QueueClientFactory queueClientFactory, StreamAdmin oldStreamAdmin) {
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
     this.tablePrefix = dataSetAccessor.namespace(QueueConstants.STREAM_TABLE_PREFIX, DataSetAccessor.Namespace.SYSTEM);
+    this.queueClientFactory = queueClientFactory;
+    this.oldStreamAdmin = oldStreamAdmin;
   }
 
   /**
@@ -49,8 +63,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    * @return A new instance of {@link StreamConsumer}
    */
   protected abstract StreamConsumer create(
-    String tableName, StreamConfig streamConfig,
-    ConsumerConfig consumerConfig, StreamConsumerStateStore stateStore,
+    String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException;
 
   /**
@@ -71,7 +85,25 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
-    return create(tableName, streamConfig, consumerConfig, stateStore, createReader(streamConfig, consumerState));
+    StreamConsumer newConsumer = create(tableName, streamConfig, consumerConfig,
+                                        stateStore, consumerState, createReader(streamConfig, consumerState));
+
+    try {
+      // The old stream admin uses full URI of queue name as the name for checking existence
+      if (!oldStreamAdmin.exists(streamName.toURI().toString())) {
+        return newConsumer;
+      }
+
+      // For old stream consumer, the group size doesn't matter in queue based stream.
+      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamName, consumerConfig,
+                                                             queueClientFactory.createConsumer(streamName,
+                                                                                               consumerConfig, -1)
+      );
+      return new CombineStreamConsumer(oldConsumer, newConsumer);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    }
   }
 
   private String getTableName(QueueName streamName, String namespace) {
@@ -84,6 +116,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
 
     if (!Iterables.isEmpty(consumerState.getState())) {
+      LOG.info("Create file reader with consumer state: {}", consumerState);
       // Has existing offsets, just resume from there.
       return new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
     }
@@ -114,6 +147,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                                                      startTime, streamConfig.getPartitionDuration());
     List<StreamFileOffset> fileOffsets = Lists.newArrayList();
     getFileOffsets(partitionLocation, fileOffsets);
+
+    LOG.info("Empty consumer state. Create file reader with file offsets: groupId={}, instanceId={} states={}",
+             consumerState.getGroupId(), consumerState.getInstanceId(), fileOffsets);
 
     return new MultiLiveStreamFileReader(streamConfig, fileOffsets);
   }

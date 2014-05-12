@@ -21,8 +21,9 @@ public interface ConsumerStateStore<S extends ConsumerState<T>, T> extends Close
   void getByGroup(long groupId, Collection<? super S> result) throws IOException;
 
   /**
-   * Returns the consumer state for the given groupId and instanceId. If no state is found, a state object with empty
-   * state info will be returned.
+   * @returns the consumer state for the given groupId and instanceId.
+   *          If no state is found, a state object with empty state info will be returned.
+   *          If no such consumer exists in the state store, {@code null} will be returned.
    */
   S get(long groupId, int instanceId) throws IOException;
 

@@ -27,6 +27,7 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
   protected abstract <T> T getMetricsTableClient(String name) throws Exception;
   protected abstract DataSetManager getMetricsTableManager() throws Exception;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected  final <T> T getDataSetClient(String name,
                                           Class<? extends T> type,
@@ -43,7 +44,7 @@ public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor
         String levelProperty = props.getProperty("conflict.level");
         level = levelProperty == null ? null : ConflictDetection.valueOf(levelProperty);
         String ttlProperty = props.getProperty(TxConstants.PROPERTY_TTL);
-        ttl = ttlProperty == null ? null : Integer.valueOf(ttlProperty);
+        ttl = ttlProperty == null ? -1 : Integer.valueOf(ttlProperty);
       }
       // using ROW by default
       level = level == null ? ConflictDetection.ROW : level;

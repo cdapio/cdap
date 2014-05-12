@@ -6,6 +6,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.FileBasedSecurityTestModule;
+import com.continuuity.security.io.Codec;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -30,6 +31,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
                                              new FileBasedSecurityTestModule(temporaryFolder),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
   }
@@ -49,6 +51,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
                                              new FileBasedSecurityTestModule(temporaryFolder),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
+    tokenManager2.startAndWait();
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);
 

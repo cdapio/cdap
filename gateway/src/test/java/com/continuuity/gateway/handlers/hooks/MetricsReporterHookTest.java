@@ -1,5 +1,6 @@
 package com.continuuity.gateway.handlers.hooks;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.google.inject.Injector;
@@ -23,7 +24,7 @@ public class MetricsReporterHookTest {
 
   @Test
   public void testMetricsSuccess() throws Exception {
-    String context = "gateway.PingHandler.ping";
+    String context = Constants.Service.APP_FABRIC_HTTP + ".PingHandler.ping";
     int received = mockMetricsCollectionService.getMetrics(context, "request.received");
     int successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     int clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
@@ -40,7 +41,7 @@ public class MetricsReporterHookTest {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String context = "gateway.StreamHandler.getInfo";
+    String context = Constants.Service.STREAM_HANDLER + ".StreamHandler.getInfo";
     int received = mockMetricsCollectionService.getMetrics(context, "request.received");
     int successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     int clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");

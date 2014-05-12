@@ -7,6 +7,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -19,7 +20,7 @@ public class InMemorySecurityModule extends SecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(InMemoryKeyManagerProvider.class);
+    binder.bind(KeyManager.class).toProvider(InMemoryKeyManagerProvider.class).in(Scopes.SINGLETON);
   }
 
   private static final class InMemoryKeyManagerProvider implements Provider<KeyManager> {
@@ -32,15 +33,7 @@ public class InMemorySecurityModule extends SecurityModule {
 
     @Override
     public KeyManager get() {
-      InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
-      try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new InMemoryKeyManager(cConf);
     }
   };
 }

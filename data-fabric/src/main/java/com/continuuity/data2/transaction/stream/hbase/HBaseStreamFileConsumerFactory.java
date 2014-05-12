@@ -13,13 +13,16 @@ import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamFileType;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import com.continuuity.data2.transaction.queue.hbase.HBaseStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
+import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -49,8 +52,9 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Inject
   HBaseStreamFileConsumerFactory(DataSetAccessor dataSetAccessor, StreamAdmin streamAdmin,
                                  StreamConsumerStateStoreFactory stateStoreFactory,
-                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
-    super(dataSetAccessor, streamAdmin, stateStoreFactory);
+                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
+                                 QueueClientFactory queueClientFactory, HBaseStreamAdmin oldStreamAdmin) {
+    super(dataSetAccessor, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;
@@ -58,7 +62,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Override
   protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
-                                  StreamConsumerStateStore stateStore,
+                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
 
     String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
@@ -75,8 +79,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
     HTable hTable = new HTable(hConf, hBaseTableName);
-    return new HBaseStreamFileConsumer(streamConfig, consumerConfig,
-                                       hTable, reader, stateStore, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
+    hTable.setAutoFlush(false);
+    return new HBaseStreamFileConsumer(streamConfig, consumerConfig, hTable, reader,
+                                       stateStore, beginConsumerState, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
   }
 
   @Override

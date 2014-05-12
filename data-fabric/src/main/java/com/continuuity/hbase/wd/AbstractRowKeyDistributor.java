@@ -42,6 +42,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
    * @param originalStopKey stop key
    * @return array[Pair(startKey, stopKey)]
    */
+  @SuppressWarnings("unchecked")
   public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey, byte[] originalStopKey) {
     byte[][] startKeys = getAllDistributedKeys(originalStartKey);
     byte[][] stopKeys;

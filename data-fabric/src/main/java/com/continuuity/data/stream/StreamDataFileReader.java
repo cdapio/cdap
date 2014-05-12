@@ -11,6 +11,7 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Stopwatch;
@@ -140,6 +141,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   @Override
   public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
+    return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);
+  }
+
+  @Override
+  public int read(Collection<? super PositionStreamEvent> events, int maxEvents,
+                  long timeout, TimeUnit unit, ReadFilter readFilter) throws IOException, InterruptedException {
     if (closed) {
       throw new IOException("Reader already closed.");
     }
@@ -157,12 +164,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
             doOpen();
           }
 
-          PositionStreamEvent event = nextStreamEvent(false);
-          if (event == null) {
+          PositionStreamEvent event = nextStreamEvent(readFilter);
+          if (event != null) {
+            events.add(event);
+            eventCount++;
+          } else if (eof) {
             break;
           }
-          events.add(event);
-          eventCount++;
 
           position = eventInput.getPos();
 
@@ -296,40 +304,47 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   private void skipUntil(SkipCondition condition) throws IOException {
     long positionBound = position = eventInput.getPos();
 
-    while (!eof) {
-      positionBound = eventInput.getPos();
+    try {
+      while (!eof) {
+        positionBound = eventInput.getPos();
 
-      // Read timestamp
-      long timestamp = readTimestamp();
+        // Read timestamp
+        long timestamp = readTimestamp();
 
-      // If EOF or condition match, upper bound found. Break the loop.
-      if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
-        break;
+        // If EOF or condition match, upper bound found. Break the loop.
+        if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
+          break;
+        }
+
+        int len = readLength();
+        position = positionBound;
+
+        // Jump to next timestamp
+        eventInput.seek(eventInput.getPos() + len);
       }
 
-      int len = readLength();
-      position = positionBound;
-
-      // Jump to next timestamp
-      eventInput.seek(eventInput.getPos() + len);
-    }
-
-    if (eof) {
-      position = positionBound;
-      return;
-    }
-
-    // search for the exact StreamData position within the bound.
-    eventInput.seek(position);
-    while (position < positionBound) {
-      if (timestamp < 0) {
-        timestamp = readTimestamp();
+      if (eof) {
+        position = positionBound;
+        return;
       }
-      if (condition.apply(position, timestamp)) {
-        break;
+
+      // search for the exact StreamData position within the bound.
+      eventInput.seek(position);
+      while (position < positionBound) {
+        if (timestamp < 0) {
+          timestamp = readTimestamp();
+        }
+        if (condition.apply(position, timestamp)) {
+          break;
+        }
+        nextStreamEvent(ReadFilter.ALWAYS_REJECT);
+        position = eventInput.getPos();
       }
-      nextStreamEvent(true);
-      position = eventInput.getPos();
+    } catch (IOException e) {
+      // It's ok if hitting EOF, meaning it's could be a live stream file or closed by a dead stream handler.
+      if (!(e instanceof EOFException)) {
+        throw e;
+      }
     }
   }
 
@@ -376,10 +391,10 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   /**
    * Reads or skips a {@link StreamEvent}.
    *
-   * @param skip If true, a StreamEvent will be skipped. Otherwise, read and return the StreamEvent
-   * @return The next StreamEvent or {@code null} if skip is {@code true} or no more StreamEvent.
+   * @param filter to determine to accept or skip a stream event.
+   * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
-  private PositionStreamEvent nextStreamEvent(boolean skip) throws IOException {
+  private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
     // Data block is <timestamp> <length> <stream_data>+
     PositionStreamEvent event = null;
     boolean done = false;
@@ -401,10 +416,10 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
       if (length > 0) {
         long startPos = eventInput.getPos();
-        if (skip) {
-          skipStreamData();
-        } else {
+        if (filter.acceptOffset(startPos)) {
           event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
+        } else {
+          skipStreamData();
         }
         long endPos = eventInput.getPos();
         done = true;

@@ -2,25 +2,25 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.hooks.MetricsReporterHook;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Gateway implemented using the common http netty framework.
@@ -40,7 +40,8 @@ public class Gateway extends AbstractIdleService {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
-    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.GATEWAY)));
 
     builder.setHost(hostname.getCanonicalHostName());
     builder.setPort(cConf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT));

@@ -1,13 +1,8 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.ProgramDescriptor;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.ProgramStatus;
+import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
@@ -17,6 +12,7 @@ import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -24,18 +20,22 @@ import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.ScheduleManager;
 import com.continuuity.test.StreamWriter;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -47,14 +47,14 @@ import java.util.concurrent.TimeoutException;
 public class DefaultApplicationManager implements ApplicationManager {
 
   private final ConcurrentMap<String, ProgramId> runningProcessses = Maps.newConcurrentMap();
-  private final AuthToken token;
   private final String accountId;
   private final String applicationId;
-  private final AppFabricService.Iface appFabricServer;
   private final TransactionSystemClient txSystemClient;
   private final DataSetInstantiator dataSetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
+  private final AppFabricHttpHandler httpHandler;
+
 
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
@@ -62,19 +62,17 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
-                                   @Assisted AuthToken token,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
-                                   @Assisted AppFabricService.Iface appFabricServer,
                                    @Assisted Location deployedJar,
-                                   @Assisted ApplicationSpecification appSpec) {
-    this.token = token;
+                                   @Assisted ApplicationSpecification appSpec,
+                                   AppFabricHttpHandler httpHandler) {
     this.accountId = accountId;
     this.applicationId = applicationId;
-    this.appFabricServer = appFabricServer;
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
     this.txSystemClient = txSystemClient;
+    this.httpHandler = httpHandler;
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
 
@@ -97,11 +95,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     try {
-      final ProgramId flowId = new ProgramId(accountId, applicationId, flowName);
+      final ProgramId flowId = new ProgramId(applicationId, flowName, "flows");
       Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(flowId, arguments));
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
         runningProcessses.remove(flowName);
         throw Throwables.propagate(e);
@@ -112,7 +110,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            appFabricServer.setFlowletInstances(token, flowId, flowletName, (short) instances);
+            AppFabricTestHelper.setFlowletInstances(httpHandler, applicationId, flowName, flowletName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -122,7 +120,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(flowName, flowId)) {
-              appFabricServer.stop(token, flowId);
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, flowName, "flows");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -142,8 +140,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
     try {
-      final ProgramId jobId = new ProgramId(accountId, applicationId, jobName);
-      jobId.setType(EntityType.MAPREDUCE);
+
+      final ProgramId jobId = new ProgramId(applicationId, jobName, "mapreduce");
 
       // mapreduce job can stop by itself, so refreshing info about its state
       if (!isRunning(jobId)) {
@@ -153,7 +151,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(jobId, arguments));
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, jobName, "mapreduce", arguments);
       } catch (Exception e) {
         runningProcessses.remove(jobName);
         throw Throwables.propagate(e);
@@ -164,7 +162,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(jobName, jobId)) {
-              appFabricServer.stop(token, jobId);
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -197,12 +195,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
     try {
-      final ProgramId procedureId = new ProgramId(accountId, applicationId, procedureName);
-      procedureId.setType(EntityType.PROCEDURE);
+      final ProgramId procedureId = new ProgramId(applicationId, procedureName, "procedures");
       Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
-        appFabricServer.start(token, new ProgramDescriptor(procedureId, arguments));
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, procedureName, "procedures", arguments);
       } catch (Exception e) {
         runningProcessses.remove(procedureName);
         throw Throwables.propagate(e);
@@ -213,7 +210,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(procedureName, procedureId)) {
-              appFabricServer.stop(token, procedureId);
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, procedureName, "procedures");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);
@@ -224,6 +221,80 @@ public class DefaultApplicationManager implements ApplicationManager {
         public ProcedureClient getClient() {
           return procedureClientFactory.create(accountId, applicationId, procedureName);
         }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+
+
+  @Override
+  public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
+    try {
+      final ProgramId workflowId = new ProgramId(applicationId, workflowName, "workflows");
+      Preconditions.checkState(runningProcessses.putIfAbsent(workflowName, workflowId) == null,
+                               "Workflow %s is already running", workflowName);
+
+      // currently we are using it for schedule, so not starting the workflow
+
+      return new WorkflowManager() {
+        @Override
+        public List<String> getSchedules() {
+          List<String> schedules = Lists.newArrayList();
+          try {
+            schedules = AppFabricTestHelper.getSchedules(httpHandler, applicationId, workflowName);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+          return schedules;
+        }
+
+        @Override
+        public List<RunRecord> getHistory() {
+          List<RunRecord> history = Lists.newArrayList();
+          try {
+            history = AppFabricTestHelper.getHistory(httpHandler, applicationId, workflowName);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+          return history;
+        }
+
+        public ScheduleManager getSchedule(final String schedName) {
+
+          return new ScheduleManager() {
+            @Override
+            public void suspend() {
+              try {
+                AppFabricTestHelper.suspend(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+            }
+
+            @Override
+            public void resume() {
+              try {
+                AppFabricTestHelper.resume(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+            }
+
+            @Override
+            public String status() {
+              String status = null;
+              try {
+                status = AppFabricTestHelper.scheduleStatus(httpHandler, applicationId, workflowName, schedName);
+              } catch (Exception e) {
+                throw Throwables.propagate(e);
+              }
+              return status;
+            }
+          };
+        }
+
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -272,7 +343,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop smth that is not running.
         if (isRunning(entry.getValue())) {
-          appFabricServer.stop(token, entry.getValue());
+          ProgramId id = entry.getValue();
+          AppFabricTestHelper.stopProgram(httpHandler, id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
         }
       }
     } catch (Exception e) {
@@ -296,11 +368,34 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private boolean isRunning(ProgramId flowId) {
+  private class ProgramId {
+    private final String appId;
+    private final String runnableId;
+    private final String runnableType;
+
+    private ProgramId(String applicationId, String runnableId, String runnableType) {
+      this.appId = applicationId;
+      this.runnableId = runnableId;
+      this.runnableType = runnableType;
+    }
+    public String getApplicationId() {
+      return this.appId;
+    }
+    public String getRunnableId() {
+      return this.runnableId;
+    }
+    public String getRunnableType() {
+      return this.runnableType;
+    }
+  }
+
+  private boolean isRunning(ProgramId programId) {
     try {
-      ProgramStatus status = appFabricServer.status(token, flowId);
+
+      String status = AppFabricTestHelper.getStatus(httpHandler, programId.getApplicationId(),
+                                                    programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
-      return "RUNNING".equals(status.getStatus());
+      return "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

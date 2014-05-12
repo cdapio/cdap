@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
-import com.continuuity.security.auth.Codec;
+import com.continuuity.security.io.Codec;
 import com.continuuity.security.auth.TokenManager;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
@@ -13,12 +13,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Generate and grant access token to authorized users.
@@ -35,6 +35,16 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
     this.cConf = cConfiguration;
+  }
+
+  @Override
+  protected void doStart() {
+    tokenManager.start();
+  }
+
+  @Override
+  protected void doStop() {
+    tokenManager.stop();
   }
 
   @Override

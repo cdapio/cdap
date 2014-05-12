@@ -104,13 +104,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,6 +123,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -366,21 +366,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Ping: responds with an OK message.
-   */
-  @Path("/ping")
-  @GET
-  public void Get(HttpRequest request, HttpResponder response) {
-    response.sendString(HttpResponseStatus.OK, "OK");
-  }
-
-  @Path("/status")
-  @GET
-  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendString(HttpResponseStatus.OK, "OK.\n");
-  }
-
-  /**
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
    */
   @GET
@@ -392,8 +377,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      Type type = RUNNABLE_TYPE_MAP.get(runnableType);
+      final Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      final Type type = RUNNABLE_TYPE_MAP.get(runnableType);
 
       if (type == Type.MAPREDUCE) {
         String workflowName = getWorkflowName(id.getId());
@@ -406,10 +391,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                 JsonObject reply = new JsonObject();
                 if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
                   reply.addProperty("status", "RUNNING");
+                  responder.sendJson(HttpResponseStatus.OK, reply);
                 } else {
-                  reply.addProperty("status", "STOPPED");
+                  //mapreduce name might follow the same format even when its not part of the workflow.
+                  runnableStatus(responder, id, type);
                 }
-                responder.sendJson(HttpResponseStatus.OK, reply);
               }
             }
           );
@@ -723,13 +709,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> overrides, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -742,11 +725,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
-      BasicArguments userArguments = new BasicArguments();
-      if (arguments != null) {
-        userArguments = new BasicArguments(arguments);
+      Map<String, String> userArgs = store.getRunArguments(id);
+      if (overrides != null) {
+        for (Map.Entry<String, String> entry : overrides.entrySet()) {
+          userArgs.put(entry.getKey(), entry.getValue());
+        }
       }
 
+      BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
@@ -775,6 +761,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
+      if (throwable instanceof FileNotFoundException) {
+        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
@@ -795,6 +784,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
         }
       } catch (Exception e) {
+        if (e instanceof FileNotFoundException) {
+          return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+        }
         return AppFabricServiceStatus.INTERNAL_ERROR;
       }
     }
@@ -1166,7 +1158,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
         case SUSPENDED:
-          responder.sendJson(HttpResponseStatus.OK, "Schedule already suspended");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
           break;
       }
     } catch (SecurityException e) {
@@ -1196,7 +1188,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
           break;
         case SCHEDULED:
-          responder.sendJson(HttpResponseStatus.OK, "Already resumed");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
           break;
         case SUSPENDED:
           scheduler.resumeSchedule(scheduleId);
@@ -1318,7 +1310,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           request.readBytes(os, request.readableBytes());
         } catch (IOException e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
-          e.printStackTrace();
+          LOG.error("Failed to write deploy jar", e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
       }
@@ -1330,10 +1322,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           deploy(accountId, appId, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-        } catch (Exception ex) {
+        } catch (Exception e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
-          ex.printStackTrace();
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, ex.getMessage());
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
@@ -1346,7 +1338,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           sessionInfo.setStatus(DeployStatus.FAILED);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
         } catch (IOException e) {
-          e.printStackTrace();
+          LOG.error("Error while saving deploy jar.", e);
         } finally {
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);

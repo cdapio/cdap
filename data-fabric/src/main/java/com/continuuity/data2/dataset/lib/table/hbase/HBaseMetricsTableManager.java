@@ -22,7 +22,7 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
 
   @Inject
   public HBaseMetricsTableManager(Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
-    super(new HBaseAdmin(hConf), tableUtil);
+    super(hConf, tableUtil);
   }
 
   @Override
@@ -32,7 +32,7 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
 
   @Override
   public boolean exists(String name) throws Exception {
-    return admin.tableExists(getHBaseTableName(name));
+    return getHBaseAdmin().tableExists(getHBaseTableName(name));
   }
 
   @Override
@@ -60,12 +60,13 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
-    tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
+    tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, tableDescriptor);
   }
 
   @Override
   public void truncate(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(getHBaseTableName(name));
+    HBaseAdmin admin = getHBaseAdmin();
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
@@ -75,6 +76,7 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
   @Override
   public void drop(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(getHBaseTableName(name));
+    HBaseAdmin admin = getHBaseAdmin();
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }

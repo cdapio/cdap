@@ -198,12 +198,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void run() {
         for (FlowletProcessEntry<?> entry : processList) {
-          if (!entry.shouldProcess()) {
+          if (!handleProcessEntry(entry, processQueue)) {
             processQueue.offer(entry);
-            continue;
           }
-
-          handleProcessEntry(entry, processQueue);
         }
       }
     };
@@ -216,9 +213,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    * @param entry Contains information about the process method and queue.
    * @param processQueue The queue for queuing up all process input methods in a flowlet instance.
    * @param <T> Type of input of the process method accepted.
+   *
+   * @return {@code true} if the entry is handled completely (regardless of process result), {@code false} otherwise.
    */
-  private <T> void handleProcessEntry(FlowletProcessEntry<T> entry,
+  private <T> boolean handleProcessEntry(FlowletProcessEntry<T> entry,
                                       BlockingQueue<FlowletProcessEntry<?>> processQueue) {
+    if (!entry.shouldProcess()) {
+      return false;
+    }
+
     ProcessMethod<T> processMethod = entry.getProcessSpec().getProcessMethod();
     if (processMethod.needsInput()) {
       flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
@@ -229,44 +232,62 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     try {
       txContext.start();
 
-      InputDatum<T> input = entry.getProcessSpec().getQueueReader().dequeue(0, TimeUnit.MILLISECONDS);
-      if (!input.needProcess()) {
-        entry.backOff();
-        // End the transaction if nothing in the queue
-        txContext.finish();
-        processQueue.offer(entry);
-        return;
-      }
-      // Resetting back-off time to minimum back-off time,
-      // since an entry to process was de-queued and most likely more entries will follow.
-      entry.resetBackOff();
-
-      if (!entry.isRetry()) {
-        // Only increment the inflight count for non-retry entries.
-        // The inflight would get decrement when the transaction committed successfully or input get ignored.
-        // See the processMethodCallback function.
-        inflight.getAndIncrement();
-      }
-
-      // Call the process method and commit the transaction. The current process entry will put
-      // back to queue in the postProcess method (either a retry copy or itself).
-      ProcessMethod.ProcessResult<?> result = processMethod.invoke(input);
-      postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
-
-    } catch (Throwable t) {
-      LOG.error("Unexpected exception: {}", flowletContext, t);
       try {
-        txContext.abort();
-      } catch (TransactionFailureException e) {
-        LOG.error("Fail to abort transaction: {}", flowletContext, e);
+        InputDatum<T> input = entry.getProcessSpec().getQueueReader().dequeue(0, TimeUnit.MILLISECONDS);
+        if (!input.needProcess()) {
+          entry.backOff();
+          // End the transaction if nothing in the queue
+          txContext.finish();
+          return false;
+        }
+        // Resetting back-off time to minimum back-off time,
+        // since an entry to process was de-queued and most likely more entries will follow.
+        entry.resetBackOff();
+
+        if (!entry.isRetry()) {
+          // Only increment the inflight count for non-retry entries.
+          // The inflight would get decrement when the transaction committed successfully or input get ignored.
+          // See the processMethodCallback function.
+          inflight.getAndIncrement();
+        }
+
+        try {
+          // Call the process method and commit the transaction. The current process entry will put
+          // back to queue in the postProcess method (either a retry copy or itself).
+          ProcessMethod.ProcessResult<?> result = processMethod.invoke(input);
+          postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
+          return true;
+        } catch (Throwable t) {
+          // If exception thrown from invoke or postProcess, the inflight count would not be touched.
+          // hence need to decrements here
+          if (!entry.isRetry()) {
+            inflight.decrementAndGet();
+          }
+        }
+
+      } catch (Throwable t) {
+        LOG.error("System failure: {}", flowletContext, t);
+        try {
+          txContext.abort();
+        } catch (Throwable e) {
+          LOG.error("Fail to abort transaction: {}", flowletContext, e);
+        }
       }
+    } catch (Throwable t) {
+      LOG.error("Failed to start transaction.", t);
     }
+
+    return false;
   }
 
+  /**
+   * Process the process result. This method never throws.
+   */
   private void postProcess(ProcessMethodCallback callback, TransactionContext txContext,
                            InputDatum input, ProcessMethod.ProcessResult result) {
     InputContext inputContext = input.getInputContext();
     Throwable failureCause = null;
+    FailureReason.Type failureType = FailureReason.Type.IO_ERROR;
     try {
       if (result.isSuccess()) {
         // If it is a retry input, force the dequeued entries into current transaction.
@@ -276,26 +297,34 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         txContext.finish();
       } else {
         failureCause = result.getCause();
+        failureType = FailureReason.Type.USER;
         txContext.abort();
       }
-    } catch (TransactionFailureException e) {
+    } catch (Throwable e) {
       LOG.error("Transaction operation failed: {}", e.getMessage(), e);
-      failureCause = e;
+      failureType = FailureReason.Type.IO_ERROR;
+      if (failureCause == null) {
+        failureCause = e;
+      }
       try {
         if (result.isSuccess()) {
           txContext.abort();
         }
-      } catch (TransactionFailureException ex) {
+      } catch (Throwable ex) {
         LOG.error("Fail to abort transaction: {}", inputContext, ex);
       }
     }
 
-    if (failureCause == null) {
-      callback.onSuccess(result.getEvent(), inputContext);
-    } else {
-      callback.onFailure(result.getEvent(), inputContext,
-                         new FailureReason(FailureReason.Type.USER, failureCause.getMessage(), failureCause),
-                         createInputAcknowledger(input));
+    try {
+      if (failureCause == null) {
+        callback.onSuccess(result.getEvent(), inputContext);
+      } else {
+        callback.onFailure(result.getEvent(), inputContext,
+                           new FailureReason(failureType, failureCause.getMessage(), failureCause),
+                           createInputAcknowledger(input));
+      }
+    } catch (Throwable t) {
+      LOG.error("Failed to invoke callback.", t);
     }
   }
 
@@ -401,8 +430,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           try {
             gaugeEventProcessed(input.getQueueName());
             inputAcknowledger.ack();
-          } catch (TransactionFailureException e) {
-            LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
+          } catch (Throwable t) {
+            LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, t);
           } finally {
             enqueueEntry();
             inflight.decrementAndGet();

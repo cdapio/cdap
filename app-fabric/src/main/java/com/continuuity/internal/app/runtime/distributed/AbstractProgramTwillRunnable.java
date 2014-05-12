@@ -19,7 +19,6 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -232,12 +231,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       @Override
       public void error(Throwable cause) {
         LOG.error("Program runner error out.", cause);
-        state.set(ProgramController.State.ERROR);
+        state.setException(cause);
       }
     }, MoreExecutors.sameThreadExecutor());
 
     runlatch.countDown();
-    LOG.info("Program stopped. State: {}", Futures.getUnchecked(state));
+    try {
+      state.get();
+      LOG.info("Program stopped.");
+    } catch (Throwable t) {
+      LOG.error("Program terminated due to error.", t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override

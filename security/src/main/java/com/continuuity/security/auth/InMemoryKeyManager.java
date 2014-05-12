@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Maintains secret keys in memory and uses them to sign and validate authentication tokens.
  */
-public class InMemoryKeyManager extends AbstractKeyManager {
+public class InMemoryKeyManager extends MapBackedKeyManager {
 
   /**
    * Create an InMemoryKeyManager that stores keys in memory only.
@@ -20,5 +20,10 @@ public class InMemoryKeyManager extends AbstractKeyManager {
   @Override
   public void doInit() throws IOException {
     generateKey();
+  }
+
+  @Override
+  public void shutDown() {
+    // nothing to do
   }
 }

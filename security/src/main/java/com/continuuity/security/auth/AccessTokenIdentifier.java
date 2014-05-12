@@ -98,4 +98,14 @@ public class AccessTokenIdentifier {
                             getIssueTimestamp(),
                             getExpireTimestamp());
   }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("username", username)
+      .add("groups", groups)
+      .add("issueTimestamp", issueTimestamp)
+      .add("expireTimestamp", expireTimestamp)
+      .toString();
+  }
 }

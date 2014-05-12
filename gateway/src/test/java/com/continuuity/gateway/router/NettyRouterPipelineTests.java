@@ -4,6 +4,8 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.NoAuthenticator;
@@ -11,6 +13,11 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
+import com.continuuity.security.auth.AccessTokenTransformer;
+import com.continuuity.security.auth.TokenState;
+import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.guice.InMemorySecurityModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -19,6 +26,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.net.InetAddresses;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -45,6 +54,8 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -58,8 +69,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Manifest;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * Verify the ordering of events in the RouterPipeline.
@@ -69,7 +78,7 @@ public class NettyRouterPipelineTests {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTests.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private static final String gatewayService = Constants.Service.GATEWAY;
+  private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
@@ -191,12 +200,22 @@ public class NettyRouterPipelineTests {
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
+      Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+                                               new DiscoveryRuntimeModule().getInMemoryModules());
+      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+      AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                        new RouterPathLookup(new NoAuthenticator())));
+                                                new RouterPathLookup(new NoAuthenticator())),
+                        new TokenValidator() {
+                          @Override
+                          public TokenState validate(String token) {
+                            return TokenState.VALID;
+                          }
+                        }, accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
