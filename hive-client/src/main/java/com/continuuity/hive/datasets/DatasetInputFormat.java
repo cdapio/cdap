@@ -169,15 +169,14 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
    */
   public static class DatasetInputSplit extends FileSplit {
     private Split dataSetSplit;
-    private Path dummyPath;
 
     // for Writable
     public DatasetInputSplit() {
     }
 
     public DatasetInputSplit(Split dataSetSplit, Path dummyPath) {
+      super(dummyPath, 0, 0, (String[]) null);
       this.dataSetSplit = dataSetSplit;
-      this.dummyPath = dummyPath;
     }
 
     public Split getDataSetSplit() {
@@ -196,20 +195,16 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     }
 
     @Override
-    public Path getPath() {
-      return dummyPath;
-    }
-
-    @Override
     public void write(DataOutput out) throws IOException {
+      super.write(out);
       Text.writeString(out, dataSetSplit.getClass().getName());
       String ser = new Gson().toJson(dataSetSplit);
       Text.writeString(out, ser);
-      Text.writeString(out, dummyPath.toUri().toString());
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
+      super.readFields(in);
       try {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader == null) {
@@ -217,7 +212,6 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
         }
         Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
         dataSetSplit = new Gson().fromJson(Text.readString(in), splitClass);
-        dummyPath = new Path(Text.readString(in));
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }
