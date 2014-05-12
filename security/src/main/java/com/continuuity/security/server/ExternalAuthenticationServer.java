@@ -141,7 +141,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   public static void main(String[] args) {
-    Injector injector = Guice.createInjector(new DiscoveryRuntimeModule().getInMemoryModules(), new IOModule(), new ConfigModule(), new SecurityModules().getInMemoryModules());
+    Injector injector = Guice.createInjector(new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new IOModule(), new ConfigModule(),
+                                             new SecurityModules().getInMemoryModules());
     ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
     server.startAndWait();
   }

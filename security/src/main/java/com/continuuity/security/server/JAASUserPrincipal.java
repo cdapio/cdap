@@ -14,16 +14,14 @@ import java.security.Principal;
  * @version $Id: JAASUserPrincipal.java 4780 2009-03-17 15:36:08Z jesse $
  *
  */
-public class JAASUserPrincipal implements Principal
-{
+public class JAASUserPrincipal implements Principal {
   private final String _name;
   private final Subject _subject;
   private final LoginContext _loginContext;
 
     /* ------------------------------------------------ */
 
-  public JAASUserPrincipal(String name, Subject subject, LoginContext loginContext)
-  {
+  public JAASUserPrincipal(String name, Subject subject, LoginContext loginContext) {
     this._name = name;
     this._subject = subject;
     this._loginContext = loginContext;
@@ -32,8 +30,7 @@ public class JAASUserPrincipal implements Principal
     /* ------------------------------------------------ */
   /** Get the name identifying the user
    */
-  public String getName ()
-  {
+  public String getName () {
     return _name;
   }
 
@@ -42,18 +39,15 @@ public class JAASUserPrincipal implements Principal
   /** Provide access to the Subject
    * @return subject
    */
-  public Subject getSubject ()
-  {
+  public Subject getSubject () {
     return this._subject;
   }
 
-  public LoginContext getLoginContext ()
-  {
+  public LoginContext getLoginContext () {
     return this._loginContext;
   }
 
-  public String toString()
-  {
+  public String toString() {
     return getName();
   }
 

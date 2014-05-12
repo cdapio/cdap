@@ -52,8 +52,7 @@ import java.util.Set;
  *
  * @org.apache.xbean.XBean element="jaasUserRealm" description="Creates a UserRealm suitable for use with JAAS"
  */
-public class JAASLoginService extends AbstractLifeCycle implements LoginService
-{
+public class JAASLoginService extends AbstractLifeCycle implements LoginService {
   private static final Logger LOG = Log.getLogger(JAASLoginService.class);
 
   public static String DEFAULT_ROLE_CLASS_NAME = "org.eclipse.jetty.plus.jaas.JAASRole";
@@ -72,8 +71,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
    * Constructor.
    *
    */
-  public JAASLoginService()
-  {
+  public JAASLoginService() {
   }
 
 
@@ -83,8 +81,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
    *
    * @param name the name of the realm
    */
-  public JAASLoginService(String name)
-  {
+  public JAASLoginService(String name) {
     this();
     _realmName = name;
     _loginModuleName = name;
@@ -97,8 +94,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
    *
    * @return name or null if not set.
    */
-  public String getName()
-  {
+  public String getName() {
     return _realmName;
   }
 
@@ -109,8 +105,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
    *
    * @param name a <code>String</code> value
    */
-  public void setName (String name)
-  {
+  public void setName (String name) {
     _realmName = name;
   }
 
@@ -118,8 +113,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
   /** Get the identityService.
    * @return the identityService
    */
-  public IdentityService getIdentityService()
-  {
+  public IdentityService getIdentityService() {
     return _identityService;
   }
 
@@ -127,8 +121,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
   /** Set the identityService.
    * @param identityService the identityService to set
    */
-  public void setIdentityService(IdentityService identityService)
-  {
+  public void setIdentityService(IdentityService identityService) {
     _identityService = identityService;
   }
 
@@ -139,8 +132,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
    *
    * @param name a <code>String</code> value
    */
-  public void setLoginModuleName (String name)
-  {
+  public void setLoginModuleName (String name) {
     _loginModuleName = name;
   }
 
@@ -149,27 +141,26 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
   }
 
   /* ------------------------------------------------------------ */
-  public void setCallbackHandlerClass (String classname)
-  {
+  public void setCallbackHandlerClass (String classname) {
     _callbackHandlerClass = classname;
   }
 
   /* ------------------------------------------------------------ */
-  public void setRoleClassNames (String[] classnames)
-  {
+  public void setRoleClassNames (String[] classnames) {
     ArrayList<String> tmp = new ArrayList<String>();
 
-    if (classnames != null)
+    if (classnames != null) {
       tmp.addAll(Arrays.asList(classnames));
+    }
 
-    if (!tmp.contains(DEFAULT_ROLE_CLASS_NAME))
+    if (!tmp.contains(DEFAULT_ROLE_CLASS_NAME)) {
       tmp.add(DEFAULT_ROLE_CLASS_NAME);
+    }
     _roleClassNames = tmp.toArray(new String[tmp.size()]);
   }
 
   /* ------------------------------------------------------------ */
-  public String[] getRoleClassNames()
-  {
+  public String[] getRoleClassNames() {
     return _roleClassNames;
   }
 
@@ -177,62 +168,47 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
   /**
    * @see org.eclipse.jetty.util.component.AbstractLifeCycle#doStart()
    */
-  protected void doStart() throws Exception
-  {
-    if (_identityService==null)
-      _identityService=new DefaultIdentityService();
+  protected void doStart() throws Exception {
+    if (_identityService == null) {
+      _identityService = new DefaultIdentityService();
+    }
     super.doStart();
   }
 
   /* ------------------------------------------------------------ */
-  public UserIdentity login(final String username,final Object credentials)
-  {
-    try
-    {
+  public UserIdentity login(final String username, final Object credentials) {
+    try {
       CallbackHandler callbackHandler = null;
 
 
-      if (_callbackHandlerClass == null)
-      {
-        callbackHandler = new CallbackHandler()
-        {
+      if (_callbackHandlerClass == null) {
+        callbackHandler = new CallbackHandler() {
           public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException
           {
-            for (Callback callback: callbacks)
-            {
-              if (callback instanceof NameCallback)
-              {
-                ((NameCallback)callback).setName(username);
-              }
-              else if (callback instanceof PasswordCallback)
-              {
-                ((PasswordCallback)callback).setPassword((char[]) credentials.toString().toCharArray());
-              }
-              else if (callback instanceof ObjectCallback)
-              {
-                ((ObjectCallback)callback).setObject(credentials);
-              }
-              else if (callback instanceof RequestParameterCallback)
-              {
+            for (Callback callback: callbacks) {
+              if (callback instanceof NameCallback) {
+                ((NameCallback) callback).setName(username);
+              } else if (callback instanceof PasswordCallback) {
+                ((PasswordCallback) callback).setPassword((char[]) credentials.toString().toCharArray());
+              } else if (callback instanceof ObjectCallback) {
+                ((ObjectCallback) callback).setObject(credentials);
+              } else if (callback instanceof RequestParameterCallback) {
                 AbstractHttpConnection connection = AbstractHttpConnection.getCurrentConnection();
-                Request request = (connection == null? null : connection.getRequest());
+                Request request = (connection == null ? null : connection.getRequest());
 
-                if (request != null)
-                {
-                  RequestParameterCallback rpc = (RequestParameterCallback)callback;
+                if (request != null) {
+                  RequestParameterCallback rpc = (RequestParameterCallback) callback;
                   rpc.setParameterValues(Arrays.asList(request.getParameterValues(rpc.getParameterName())));
                 }
-              }
-              else
+              } else {
                 throw new UnsupportedCallbackException(callback);
+              }
             }
           }
         };
-      }
-      else
-      {
+      } else {
         Class clazz = Loader.loadClass(getClass(), _callbackHandlerClass);
-        callbackHandler = (CallbackHandler)clazz.newInstance();
+        callbackHandler = (CallbackHandler) clazz.newInstance();
       }
       //set up the login context
       //TODO jaspi requires we provide the Configuration parameter
@@ -246,34 +222,22 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
       JAASUserPrincipal userPrincipal = new JAASUserPrincipal(getUserName(callbackHandler), subject, loginContext);
       subject.getPrincipals().add(userPrincipal);
 
-      return _identityService.newUserIdentity(subject,userPrincipal,getGroups(subject));
-    }
-    catch (LoginException e)
-    {
+      return _identityService.newUserIdentity(subject, userPrincipal, getGroups(subject));
+    } catch (LoginException e) {
       LOG.debug(e);
-    }
-    catch (IOException e)
-    {
+    } catch (IOException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);
-    }
-    catch (UnsupportedCallbackException e)
-    {
+    } catch (UnsupportedCallbackException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);
-    }
-    catch (InstantiationException e)
-    {
+    } catch (InstantiationException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);
-    }
-    catch (IllegalAccessException e)
-    {
+    } catch (IllegalAccessException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);
-    }
-    catch (ClassNotFoundException e)
-    {
+    } catch (ClassNotFoundException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);
     }
@@ -281,31 +245,25 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
   }
 
   /* ------------------------------------------------------------ */
-  public boolean validate(UserIdentity user)
-  {
+  public boolean validate(UserIdentity user) {
     // TODO optionally check user is still valid
     return true;
   }
 
   /* ------------------------------------------------------------ */
-  private String getUserName(CallbackHandler callbackHandler) throws IOException, UnsupportedCallbackException
-  {
+  private String getUserName(CallbackHandler callbackHandler) throws IOException, UnsupportedCallbackException {
     NameCallback nameCallback = new NameCallback("foo");
     callbackHandler.handle(new Callback[] {nameCallback});
     return nameCallback.getName();
   }
 
   /* ------------------------------------------------------------ */
-  public void logout(UserIdentity user)
-  {
+  public void logout(UserIdentity user) {
     Set<JAASUserPrincipal> userPrincipals = user.getSubject().getPrincipals(JAASUserPrincipal.class);
     LoginContext loginContext = userPrincipals.iterator().next().getLoginContext();
-    try
-    {
+    try {
       loginContext.logout();
-    }
-    catch (LoginException e)
-    {
+    } catch (LoginException e) {
       LOG.warn(e);
     }
   }
@@ -313,27 +271,21 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
 
   /* ------------------------------------------------------------ */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  private String[] getGroups (Subject subject)
-  {
+  private String[] getGroups (Subject subject) {
     //get all the roles of the various types
     String[] roleClassNames = getRoleClassNames();
     Collection<String> groups = new LinkedHashSet<String>();
-    try
-    {
-      for (String roleClassName : roleClassNames)
-      {
+    try {
+      for (String roleClassName : roleClassNames) {
         Class load_class = Thread.currentThread().getContextClassLoader().loadClass(roleClassName);
         Set<Principal> rolesForType = subject.getPrincipals(load_class);
-        for (Principal principal : rolesForType)
-        {
+        for (Principal principal : rolesForType) {
           groups.add(principal.getName());
         }
       }
 
       return groups.toArray(new String[groups.size()]);
-    }
-    catch (ClassNotFoundException e)
-    {
+    } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
   }
