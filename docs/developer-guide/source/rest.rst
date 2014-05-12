@@ -1534,15 +1534,15 @@ The status of these Reactor services can be checked.
      - Service that handles metrics related requests
    * - ``Transaction``
      - ``transaction``
-     - Provides transaction service
+     - Service handling transactions 
    * - ``Streams``
      - ``streams``
-     - Handles requests related to stream management
+     - Service handling Stream management 
    * - ``App Fabric``
      - ``appfabric``
      - Application Fabric requests are handled by this service
 
-Note that the service status checks are more useful when the reactor is running in a distributed cluster mode and some of the status checks may not work in the Local Reactor mode.
+Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
 
 Example
 -------
