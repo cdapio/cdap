@@ -709,13 +709,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> overrides, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -728,11 +725,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
-      BasicArguments userArguments = new BasicArguments();
-      if (arguments != null) {
-        userArguments = new BasicArguments(arguments);
+      Map<String, String> userArgs = store.getRunArguments(id);
+      if (overrides != null) {
+        for (Map.Entry<String, String> entry : overrides.entrySet()) {
+          userArgs.put(entry.getKey(), entry.getValue());
+        }
       }
 
+      BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
