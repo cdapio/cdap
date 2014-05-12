@@ -3,6 +3,7 @@ package com.continuuity.test.app;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.data2.OperationException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -14,6 +15,7 @@ import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -26,6 +28,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -59,6 +62,58 @@ public class TestFrameworkTest extends ReactorTestBase {
       TimeUnit.SECONDS.sleep(1);
       clear();
     }
+  }
+
+  @Test
+  public void testDeployWorkflowApp() throws InterruptedException {
+    ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
+    WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
+    List<String> schedules = wfmanager.getSchedules();
+    Assert.assertEquals(1, schedules.size());
+    String scheduleId = schedules.get(0);
+    Assert.assertNotNull(scheduleId);
+    Assert.assertFalse(scheduleId.isEmpty());
+
+    TimeUnit.SECONDS.sleep(5);
+
+    List<RunRecord> history = wfmanager.getHistory();
+    int workflowRuns = history.size();
+    Assert.assertTrue(workflowRuns >= 1);
+
+    String status = wfmanager.getSchedule(scheduleId).status();
+    Assert.assertEquals("SCHEDULED", status);
+
+    wfmanager.getSchedule(scheduleId).suspend();
+    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
+
+    history = wfmanager.getHistory();
+    workflowRuns = history.size();
+
+    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    TimeUnit.SECONDS.sleep(10);
+    int workflowRunsAfterSuspend = wfmanager.getHistory().size();
+    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
+
+    wfmanager.getSchedule(scheduleId).resume();
+    TimeUnit.SECONDS.sleep(3);
+    int workflowRunsAfterResume = wfmanager.getHistory().size();
+
+    //Verify there is atleast one run after the pause
+    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+
+    //check scheduled state
+    Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
+
+    //check status of non-existent schedule
+    Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status());
+
+    //suspend the schedule
+    wfmanager.getSchedule(scheduleId).suspend();
+    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
+
+    TimeUnit.SECONDS.sleep(2);
+    applicationManager.stopAll();
+
   }
 
   @Test(timeout = 240000)
