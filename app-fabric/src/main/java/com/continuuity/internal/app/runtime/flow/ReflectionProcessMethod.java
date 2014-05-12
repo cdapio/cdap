@@ -96,7 +96,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
         return new ReflectionProcessResult<T>(event, false, t.getCause());
       }
     } catch (Exception e) {
-      // If it reaches here, something very wrong.
+      // System error if we reached here. E.g. failed to dequeue/decode event
       LOG.error("Fail to process input: {}", method, e);
       throw Throwables.propagate(e);
     }

@@ -8,6 +8,7 @@ import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
@@ -32,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -126,7 +128,6 @@ public class AppFabricTestHelper {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
   }
 
-
   public static String getStatus(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                  String type) {
 
@@ -135,7 +136,9 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.getStatus(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
-    return responder.getResponse();
+    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
+                                             new TypeToken<Map<String, String>>() { }.getType());
+    return json.get("status");
   }
 
   public static void setFlowletInstances(AppFabricHttpHandler httpHandler, String applicationId,
@@ -151,6 +154,63 @@ public class AppFabricTestHelper {
     httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
   }
+
+  public static List<String> getSchedules(AppFabricHttpHandler httpHandler, String appId, String wflowId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    httpHandler.workflowSchedules(request, responder, appId, wflowId);
+    List<String> schedules = (List<String>) responder.getResponseContent();
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    return schedules;
+  }
+
+  public static List<RunRecord> getHistory(AppFabricHttpHandler httpHandler, String appId, String wflowId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/workflows/%s/history", appId, wflowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    List<Map<String, String>> runList = new Gson().fromJson(responder.getResponseContent().toString(),
+                               new TypeToken<List<Map<String, String>>>() { }.getType());
+    List<RunRecord> runRecords = Lists.newArrayList();
+    for (Map<String, String> run : runList) {
+      runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
+                                       Long.parseLong(run.get("end")), run.get("status")));
+    }
+    return runRecords;
+  }
+
+  public static void suspend(AppFabricHttpHandler httpHandler, String appId, String wflowId,
+                                                     String schedId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/suspend", appId, wflowId, schedId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    httpHandler.workflowScheduleSuspend(request, responder, appId, wflowId, schedId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+  }
+
+  public static void resume(AppFabricHttpHandler httpHandler, String appId, String wflowId,
+                             String schedId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/resume", appId, wflowId, schedId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    httpHandler.workflowScheduleResume(request, responder, appId, wflowId, schedId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+  }
+
+  public static String scheduleStatus(AppFabricHttpHandler httpHandler, String appId, String wflowId,
+                             String schedId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
+                                             new TypeToken<Map<String, String>>() { }.getType());
+    return json.get("status");
+  }
+
   /**
    * Given a class generates a manifest file with main-class as class.
    *
@@ -176,7 +236,6 @@ public class AppFabricTestHelper {
       }
     });
   }
-
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
     deployApplication(application,
@@ -256,8 +315,8 @@ public class AppFabricTestHelper {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
-    } catch (Exception ex) {
-      ex.printStackTrace();
+    } catch (Exception e) {
+        throw Throwables.propagate(e);
     } finally {
       is.close();
     }
@@ -358,7 +417,5 @@ public class AppFabricTestHelper {
 
     return outputFile;
   }
-
-
 }
 

@@ -6,29 +6,26 @@ package com.continuuity.test.internal;
 import com.continuuity.http.HttpResponder;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
  * A mock implementation of {@link HttpResponder} that only record the response status.
  */
 public final class MockResponder implements HttpResponder {
   private HttpResponseStatus status = null;
-  private String response = null;
-  private static final Gson GSON = new Gson();
+  private Object content = null;
 
   public HttpResponseStatus getStatus() {
     return status;
   }
 
-  public String getResponse() {
-    return response;
+  public Object getResponseContent() {
+    return content;
   }
 
   @Override
@@ -44,8 +41,7 @@ public final class MockResponder implements HttpResponder {
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
     this.status = status;
-    Map<String, String> o = GSON.fromJson(object.toString(), new TypeToken<Map<String, String>>() { }.getType());
-    this.response = o.get("status");
+    this.content = object;
   }
 
   @Override
