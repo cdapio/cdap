@@ -42,6 +42,7 @@ public final class AsynchronousPipeline<T> extends AbstractPipeline<T> {
    *
    * @param o argument to run the pipeline.
    */
+  @SuppressWarnings("unchecked")
   @Override
   public ListenableFuture<T> execute(final Object o) {
     return service.submit(new Callable<T>() {

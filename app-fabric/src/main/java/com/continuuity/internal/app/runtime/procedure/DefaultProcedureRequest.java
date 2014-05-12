@@ -39,6 +39,7 @@ final class DefaultProcedureRequest implements ProcedureRequest {
     return arguments.get(key);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getArgument(String key, Class<T> type) {
     Preconditions.checkNotNull(type, "Type cannnot be null.");

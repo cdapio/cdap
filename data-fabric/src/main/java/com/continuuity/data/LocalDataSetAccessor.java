@@ -28,6 +28,7 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
     this.service = service;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception {
     // ttl is ignored in local mode
@@ -39,6 +40,7 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
     return new LevelDBOcTableManager(service);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getMetricsTableClient(String name) throws Exception {
     return (T) new LevelDBMetricsTableClient(name, service);

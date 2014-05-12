@@ -3,6 +3,7 @@ package com.continuuity.io;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
 import com.continuuity.internal.io.DatumWriter;
@@ -11,7 +12,6 @@ import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.common.stream.DefaultStreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +59,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testShort() throws UnsupportedTypeException, IOException {
-    TypeToken<Short> type = new TypeToken<Short>() {};
+    TypeToken<Short> type = new TypeToken<Short>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<Short> writer = getWriter(type);
@@ -73,7 +73,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testInt() throws UnsupportedTypeException, IOException {
-    TypeToken<Integer> type = new TypeToken<Integer>() {};
+    TypeToken<Integer> type = new TypeToken<Integer>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<Integer> writer = getWriter(type);
@@ -87,7 +87,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testDouble() throws UnsupportedTypeException, IOException {
-    TypeToken<Double> type = new TypeToken<Double>() {};
+    TypeToken<Double> type = new TypeToken<Double>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<Double> writer = getWriter(type);
@@ -101,7 +101,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testString() throws UnsupportedTypeException, IOException {
-    TypeToken<String> type = new TypeToken<String>() {};
+    TypeToken<String> type = new TypeToken<String>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<String> writer = getWriter(type);
@@ -115,7 +115,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testUUID() throws UnsupportedTypeException, IOException {
-    TypeToken<UUID> type = new TypeToken<UUID>() {};
+    TypeToken<UUID> type = new TypeToken<UUID>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<UUID> writer = getWriter(type);
@@ -131,7 +131,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testEnum() throws UnsupportedTypeException, IOException {
-    TypeToken<TestEnum> type = new TypeToken<TestEnum>() {};
+    TypeToken<TestEnum> type = new TypeToken<TestEnum>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
     DatumWriter<TestEnum> writer = getWriter(type);
@@ -154,7 +154,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testPrimitiveArray() throws IOException, UnsupportedTypeException {
-    TypeToken<int[]> type = new TypeToken<int[]>() {};
+    TypeToken<int[]> type = new TypeToken<int[]>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -170,7 +170,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testReferenceArray() throws IOException, UnsupportedTypeException {
-    TypeToken<String[]> type = new TypeToken<String[]>() {};
+    TypeToken<String[]> type = new TypeToken<String[]>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -186,7 +186,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testList() throws IOException, UnsupportedTypeException {
-    TypeToken<List<Long>> type = new TypeToken<List<Long>>() {};
+    TypeToken<List<Long>> type = new TypeToken<List<Long>>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -202,7 +202,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testMap() throws IOException, UnsupportedTypeException {
-    TypeToken<Map<String, List<String>>> type = new TypeToken<Map<String, List<String>>>() {};
+    TypeToken<Map<String, List<String>>> type = new TypeToken<Map<String, List<String>>>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -219,7 +219,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testURI() throws IOException, UnsupportedTypeException {
-    TypeToken<List<URI>> type = new TypeToken<List<URI>>() {};
+    TypeToken<List<URI>> type = new TypeToken<List<URI>>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -266,7 +266,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testRecord() throws IOException, UnsupportedTypeException {
-    TypeToken<Record> type = new TypeToken<Record>() {};
+    TypeToken<Record> type = new TypeToken<Record>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -282,7 +282,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testRecordContainer() throws IOException, UnsupportedTypeException {
-    TypeToken<List<Record>> type = new TypeToken<List<Record>>() {};
+    TypeToken<List<Record>> type = new TypeToken<List<Record>>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -299,7 +299,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testRecordArray() throws IOException, UnsupportedTypeException {
-    TypeToken<Record[][]> type = new TypeToken<Record[][]>() {};
+    TypeToken<Record[][]> type = new TypeToken<Record[][]>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -351,7 +351,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testTree() throws IOException, UnsupportedTypeException {
-    TypeToken<Node> type = new TypeToken<Node>() {};
+    TypeToken<Node> type = new TypeToken<Node>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -367,7 +367,7 @@ public class ASMDatumCodecTest {
 
   @Test
   public void testStreamEvent() throws IOException, UnsupportedTypeException {
-    TypeToken<StreamEvent> type = new TypeToken<StreamEvent>() {};
+    TypeToken<StreamEvent> type = new TypeToken<StreamEvent>() { };
     PipedOutputStream os = new PipedOutputStream();
     PipedInputStream is = new PipedInputStream(os);
 
@@ -386,13 +386,14 @@ public class ASMDatumCodecTest {
   @Ignore
   @Test
   public void testSpeed() throws UnsupportedTypeException, IOException {
-    TypeToken<Node> type = new TypeToken<Node>() {};
+    TypeToken<Node> type = new TypeToken<Node>() { };
     ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
 
     long startTime;
     long endTime;
 
-    Node writeValue = new Node(1, new Node(2, null, new Node(3, null, null)), new Node(4, new Node(5, null, null), null));
+    Node writeValue = new Node(1, new Node(2, null, new Node(3, null, null)),
+                               new Node(4, new Node(5, null, null), null));
 
     DatumWriter<Node> writer = getWriter(type);
     startTime = System.nanoTime();
@@ -403,7 +404,7 @@ public class ASMDatumCodecTest {
     endTime = System.nanoTime();
     System.out.println("Time spent: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS));
 
-    ReflectionDatumWriter datumWriter = new ReflectionDatumWriter(getSchema(type));
+    ReflectionDatumWriter<Node> datumWriter = new ReflectionDatumWriter<Node>(getSchema(type));
     startTime = System.nanoTime();
     for (int i = 0; i < 100000; i++) {
       os.reset();
@@ -421,7 +422,7 @@ public class ASMDatumCodecTest {
     endTime = System.nanoTime();
     System.out.println("Time spent: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS));
 
-    datumWriter = new ReflectionDatumWriter(getSchema(type));
+    datumWriter = new ReflectionDatumWriter<Node>(getSchema(type));
     startTime = System.nanoTime();
     for (int i = 0; i < 100000; i++) {
       os.reset();

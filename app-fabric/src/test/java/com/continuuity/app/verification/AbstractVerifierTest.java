@@ -18,7 +18,7 @@ public class AbstractVerifierTest {
    */
   @Test
   public void testId() throws Exception {
-    AbstractVerifier v = new AbstractVerifier<String>() {
+    AbstractVerifier<String> v = new AbstractVerifier<String>() {
 
       @Override
       protected String getName(String input) {

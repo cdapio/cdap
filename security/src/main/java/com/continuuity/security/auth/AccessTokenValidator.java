@@ -1,5 +1,6 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.security.io.Codec;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;

@@ -21,3 +21,9 @@ allprojects { p ->
     p.apply(plugin: com.continuuity.gradle.ContinuuityPlugin)
     p.apply(plugin: com.continuuity.gradle.ContinuuityCloverPlugin)
 }
+
+allprojects {
+    project.tasks.withType(Compile) {
+        options.compilerArgs << "-Xlint:unchecked"
+    }
+}

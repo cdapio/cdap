@@ -1,6 +1,5 @@
 package com.continuuity.security.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -25,9 +24,7 @@ public class AuthenticationServerMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    CConfiguration cConf = CConfiguration.create();
-
-    Injector injector = Guice.createInjector(new ConfigModule(cConf),
+    Injector injector = Guice.createInjector(new ConfigModule(),
                                              new IOModule(),
                                              new SecurityModules().getDistributedModules(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
