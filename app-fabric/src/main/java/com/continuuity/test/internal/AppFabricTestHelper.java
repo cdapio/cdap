@@ -103,7 +103,6 @@ public class AppFabricTestHelper {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
   }
 
-
   public static void startProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                   String type, Map<String, String> args) {
 
@@ -127,7 +126,6 @@ public class AppFabricTestHelper {
     httpHandler.stopProgram(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
   }
-
 
   public static String getStatus(AppFabricHttpHandler httpHandler, String appId, String flowId,
                                  String type) {
@@ -166,7 +164,6 @@ public class AppFabricTestHelper {
     return schedules;
   }
 
-
   public static List<Map<String, String>> getHistory(AppFabricHttpHandler httpHandler, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/history", appId, wflowId);
@@ -176,7 +173,6 @@ public class AppFabricTestHelper {
     return new Gson().fromJson(responder.getResponseContent().toString(),
                                new TypeToken<List<Map<String, String>>>() { }.getType());
   }
-
 
   public static void suspend(AppFabricHttpHandler httpHandler, String appId, String wflowId,
                                                      String schedId) {
@@ -207,6 +203,7 @@ public class AppFabricTestHelper {
                                              new TypeToken<Map<String, String>>() { }.getType());
     return json.get("status");
   }
+
   /**
    * Given a class generates a manifest file with main-class as class.
    *
@@ -232,7 +229,6 @@ public class AppFabricTestHelper {
       }
     });
   }
-
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {
     deployApplication(application,
@@ -414,7 +410,5 @@ public class AppFabricTestHelper {
 
     return outputFile;
   }
-
-
 }
 

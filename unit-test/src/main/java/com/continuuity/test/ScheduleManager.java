@@ -18,5 +18,4 @@ public interface ScheduleManager {
    * Status of the workflow schedule
    */
   public String status();
-
 }
