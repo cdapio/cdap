@@ -1,8 +1,5 @@
 apply plugin:'java'
 
-// set project component name for packaging, and apply packaging plugin
-project.ext.componentName = "data-fabric"
-
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 smartyFacts {

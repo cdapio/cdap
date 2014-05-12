@@ -47,9 +47,4 @@ if [ "x$action" != "xdeploy" ] && [ "x$action" != "xstart" ] && [ "x$action" != 
   exit 1
 fi
 
-if [ "x$action" == "xdeploy" ]; then
-  stop
-fi
-
-
 $action
