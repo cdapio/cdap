@@ -9,10 +9,8 @@ import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.jaspi.JaspiAuthenticatorFactory;
 import org.eclipse.jetty.util.security.Constraint;
 
-import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import java.net.URL;
-import java.util.HashMap;
 
 /**
  *
@@ -60,29 +58,6 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
   }
 
   protected Configuration getConfiguration() {
-    return new Configuration() {
-      @Override
-      public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-        HashMap<String, String> map = new HashMap<String, String>();
-        map.put("contextFactory", "com.sun.jndi.ldap.LdapCtxFactory");
-        map.put("authenticationMethod", "simple");
-        map.put("forceBindingLogin", "true");
-
-        for(String configurable : mandatoryConfigurables) {
-          map.put(configurable, configuration.get(configBase.concat(configurable)));
-        }
-
-        for(String configurable : optionalConfigurables) {
-          String value = configuration.get(configBase.concat(configurable));
-          if (value != null) {
-            map.put(configurable, value);
-          }
-        }
-        return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(configuration.get("security.authentication.method.className"),
-                                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
-        };
-      }
-    };
+    return null;
   }
 }

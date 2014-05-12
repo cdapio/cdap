@@ -787,7 +787,7 @@
     -->
     <property>
         <name>security.authentication.handler.className</name>
-        <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
+        <value>com.continuuity.security.server.JASPIAuthenticationHandler</value>
     </property>
 
     <property>

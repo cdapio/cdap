@@ -49,7 +49,11 @@ public class TestExternalAuthenticationServer {
 
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(),
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set("security.authentication.handler.className",
+              "com.continuuity.security.server.BasicAuthenticationHandler");
+
+    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(cConf),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     configuration = injector.getInstance(CConfiguration.class);
