@@ -4,18 +4,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveServer;
+import com.continuuity.test.internal.TempFolder;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
-import org.apache.hive.service.server.HiveServer2;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.ConnectException;
@@ -24,6 +16,14 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hive.service.server.HiveServer2;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -59,8 +59,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     return inMemoryTransactionManager;
   }
 
-  // TODO: do we still need to write to a file and then read the conf?
-  private File writeHiveConf() throws Exception {
+  private HiveConf createHiveConf() throws Exception {
     URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
     assert url != null;
     File confDir = new File(url.toURI()).getParentFile();
@@ -106,12 +105,22 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     hiveConf.writeXml(new FileOutputStream(newHiveConf));
     LOG.info("Wrote hive conf into {}", newHiveConf.getAbsolutePath());
 
-    return newHiveConf;
+    return hiveConf;
+  }
+
+  private File writeConf(HiveConf hiveConf) throws Exception {
+    TempFolder tempFolder = new TempFolder();
+
+    File hiveConfFile = (tempFolder.newFile("temp-hive-site.xml"));
+    hiveConf.writeXml(new FileOutputStream(hiveConfFile));
+    LOG.info("Wrote hive conf into {}", hiveConfFile.getAbsolutePath());
+    return hiveConfFile;
   }
 
   @Override
   protected void startUp() throws Exception {
-    final File hiveConfFile = writeHiveConf();
+    HiveConf hiveConf = createHiveConf();
+    final File hiveConfFile = writeConf(hiveConf);
 
     // Start Hive MetaStore
     LOG.info("Starting hive metastore on port {}...", hiveMetaStorePort);
@@ -132,7 +141,6 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     waitForPort(hiveMetaStorePort);
 
     // Start Hive Server2
-    HiveConf hiveConf = new HiveConf();
     LOG.error("Starting hive server on port {}...", hiveServerPort);
     hiveServer2 = new HiveServer2();
     hiveServer2.init(hiveConf);
