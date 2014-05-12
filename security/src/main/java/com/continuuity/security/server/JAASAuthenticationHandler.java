@@ -1,5 +1,6 @@
 package com.continuuity.security.server;
 
+import com.google.inject.Inject;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.DefaultIdentityService;
@@ -13,6 +14,7 @@ import javax.security.auth.login.Configuration;
  */
 public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandler {
 
+  @Inject
   public JAASAuthenticationHandler(String loginModuleName) throws Exception {
     super();
 
