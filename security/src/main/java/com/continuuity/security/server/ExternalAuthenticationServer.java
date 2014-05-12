@@ -15,11 +15,13 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,11 +104,16 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
+      WebAppContext context = new WebAppContext();
+      context.setContextPath("*");
+      context.setResourceBase(".");
+      context.setSecurityHandler((SecurityHandler) handlers.getHandlers()[0]);
+
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
       server.setConnectors(new Connector[]{connector});
 
-      server.setHandler(handlers);
+      server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());

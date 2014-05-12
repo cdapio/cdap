@@ -15,7 +15,9 @@ dependencies {
     compile libraries.jetty8_util
     compile libraries.jetty8_security
     compile libraries.jetty8_plus
+    compile libraries.jetty8_jaspi
     compile libraries.servlet_api
+    compile libraries.geronimo_jaspi
 
     testCompile libraries.junit
 }

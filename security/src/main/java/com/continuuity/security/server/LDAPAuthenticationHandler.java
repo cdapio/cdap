@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private final CConfiguration configuration;
-  private final String configBase = "security.authentication.method.";
+  private final static String configBase = "security.authentication.method.";
   private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
                                                                                 "userRdnAttribute", "userObjectClass" };
   private static final String[] optionalConfigurables = new String[] { "bindDn", "bindPassword", "userIdAttribute",

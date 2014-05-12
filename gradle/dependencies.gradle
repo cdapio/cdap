@@ -111,6 +111,8 @@ libraries.jetty8 = "org.eclipse.jetty:jetty-server:8.1.15.v20140411"
 libraries.jetty8_util = "org.eclipse.jetty:jetty-util:8.1.15.v20140411"
 libraries.jetty8_security = "org.eclipse.jetty:jetty-security:8.1.15.v20140411"
 libraries.jetty8_plus = "org.eclipse.jetty:jetty-plus:8.1.15.v20140411"
+libraries.jetty8_jaspi = "org.eclipse.jetty:jetty-jaspi:8.1.15.v20140411"
+libraries.geronimo_jaspi = 'org.apache.geronimo.components:geronimo-jaspi:2.0.0'
 libraries.servlet_api = "javax.servlet:javax.servlet-api:3.0.1"
 
 //Yammer
