@@ -24,6 +24,7 @@ The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 - **Reactor:** deploying and managing Applications.
 - **Logs:** retrieving Application logs.
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
+- **Monitor:** checking the status of various reactor services
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -70,7 +71,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 8 30 62
+   :widths: 8 30 64
    :header-rows: 1
 
    * - Code
@@ -94,6 +95,9 @@ Status Codes
    * - ``405``
      - ``Method Not Allowed``
      - A request was received with a method not supported for the URI
+   * - ``409``
+     - ``Conflict``
+     - A request could not be completed due to a conflict with resource state
    * - ``500``
      - ``Internal Server Error``
      - An internal error occurred while processing the request
@@ -1214,7 +1218,6 @@ The output is formatted as HTML-embeddable text; that is, characters that have a
 
 Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
-
 Metrics HTTP API
 ================
 As Applications process data, the Continuuity Reactor collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
@@ -1508,6 +1511,60 @@ These metrics are available in the DataSets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
+Monitor HTTP API
+================
+Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
+
+	GET <base-url>/monitor/<endpoint>
+
+The status of the following Reactor services can be checked.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 80
+   
+   * - Service Name
+     - Endpoint
+     - Description of the Service
+   * - ``Metrics``
+     - ``metrics``
+     - Service that handles metrics related requests
+   * - ``Transaction``
+     - ``transaction``
+     - Provides transaction service
+   * - ``Streams``
+     - ``streams``
+     - Handles requests related to stream management
+   * - ``App Fabric``
+     - ``appfabric``
+     - Application Fabric requests are handled by this service
+
+Note that the service status checks are more useful when the reactor is running in a distributed cluster mode and some of the status checks may not work in the Local Reactor mode.
+
+Example
+-------
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+   
+   * - HTTP Method
+     - ``GET <base-url>/monitor/metrics``
+   * - Description
+     - Returns the status of the Metrics Service
+
+HTTP Responses
+--------------
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The service is up and running
+   * - ``404 Not Found``
+     - The service is not running or not found
 
 .. rst2pdf: CutStart
 
