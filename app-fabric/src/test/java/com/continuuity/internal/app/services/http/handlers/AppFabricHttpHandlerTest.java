@@ -1371,7 +1371,7 @@ public class AppFabricHttpHandlerTest {
   }
 
 
-   final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
 
    void createStream(String name) throws Exception {
     // create stream

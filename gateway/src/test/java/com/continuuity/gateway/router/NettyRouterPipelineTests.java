@@ -91,20 +91,20 @@ public class NettyRouterPipelineTests {
     }
   };
 
-  public static final RouterResource router = new RouterResource(hostname, discoveryService,
+  public static final RouterResource ROUTER = new RouterResource(hostname, discoveryService,
                                                                  ImmutableSet.of("0:" + gatewayService,
                                                                                  "0:" + webappService));
 
-  public static final ServerResource gatewayServer = new ServerResource(hostname, discoveryService,
-                                                                        gatewayServiceSupplier);
+  public static final ServerResource GATEWAY_SERVER = new ServerResource(hostname, discoveryService,
+                                                                         gatewayServiceSupplier);
 
   @SuppressWarnings("UnusedDeclaration")
   @ClassRule
-  public static TestRule chain = RuleChain.outerRule(router).around(gatewayServer);
+  public static TestRule chain = RuleChain.outerRule(ROUTER).around(GATEWAY_SERVER);
 
   @Before
   public void clearNumRequests() throws Exception {
-    gatewayServer.clearNumRequests();
+    GATEWAY_SERVER.clearNumRequests();
 
     // Wait for both servers of gatewayService to be registered
     Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(
@@ -125,7 +125,7 @@ public class NettyRouterPipelineTests {
 
     byte [] requestBody = generatePostData();
     final Request request = new RequestBuilder("POST")
-      .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(gatewayService), "/v1/upload"))
+      .setUrl(String.format("http://%s:%d%s", hostname, ROUTER.getServiceMap().get(gatewayService), "/v1/upload"))
       .setContentLength(requestBody.length)
       .setBody(new ByteEntityWriter(requestBody))
       .build();
@@ -160,7 +160,7 @@ public class NettyRouterPipelineTests {
 
     String path = String.format("http://%s:%d/v1/deploy",
                                 hostname,
-                                router.getServiceMap().get(gatewayService));
+                                ROUTER.getServiceMap().get(gatewayService));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, WordCount.class.getName());
@@ -255,7 +255,7 @@ public class NettyRouterPipelineTests {
 
     @Override
     protected void before() throws Throwable {
-      gatewayServer.clearNumRequests();
+      GATEWAY_SERVER.clearNumRequests();
 
       NettyHttpService.Builder builder = NettyHttpService.builder();
       builder.addHttpHandlers(ImmutableSet.of(new ServerHandler()));
@@ -306,7 +306,7 @@ public class NettyRouterPipelineTests {
      * Simple handler for server.
      */
     public class ServerHandler extends AbstractHttpHandler {
-      private final Logger LOG = LoggerFactory.getLogger(ServerHandler.class);
+      private final Logger log = LoggerFactory.getLogger(ServerHandler.class);
       @POST
       @Path("/v1/upload")
       public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {

@@ -32,9 +32,9 @@ public abstract class TransactionSystemTest {
     Transaction tx1 = client1.startShort();
     Transaction tx2 = client2.startShort();
 
-    Assert.assertTrue(client1.canCommit(tx1, $(C1, C2)));
+    Assert.assertTrue(client1.canCommit(tx1, asList(C1, C2)));
     // second one also can commit even thought there are conflicts with first since first one hasn't committed yet
-    Assert.assertTrue(client2.canCommit(tx2, $(C2, C3)));
+    Assert.assertTrue(client2.canCommit(tx2, asList(C2, C3)));
 
     Assert.assertTrue(client1.commit(tx1));
 
@@ -59,16 +59,16 @@ public abstract class TransactionSystemTest {
     Transaction tx4 = client4.startShort();
     Transaction tx5 = client5.startShort();
 
-    Assert.assertTrue(client1.canCommit(tx1, $(C1)));
+    Assert.assertTrue(client1.canCommit(tx1, asList(C1)));
     Assert.assertTrue(client1.commit(tx1));
 
-    Assert.assertTrue(client2.canCommit(tx2, $(C2)));
+    Assert.assertTrue(client2.canCommit(tx2, asList(C2)));
     Assert.assertTrue(client2.commit(tx2));
 
     // verifying conflicts detection
-    Assert.assertFalse(client3.canCommit(tx3, $(C1)));
-    Assert.assertFalse(client4.canCommit(tx4, $(C2)));
-    Assert.assertTrue(client5.canCommit(tx5, $(C3)));
+    Assert.assertFalse(client3.canCommit(tx3, asList(C1)));
+    Assert.assertFalse(client4.canCommit(tx4, asList(C2)));
+    Assert.assertTrue(client5.canCommit(tx5, asList(C3)));
   }
 
   @Test
@@ -76,7 +76,7 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
-    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.canCommit(tx, asList(C1, C2)));
     Assert.assertTrue(client.commit(tx));
     // cannot commit twice same tx
     try {
@@ -92,7 +92,7 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
-    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.canCommit(tx, asList(C1, C2)));
     client.abort(tx);
     // abort of not active tx has no affect
     client.abort(tx);
@@ -103,11 +103,11 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
-    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.canCommit(tx, asList(C1, C2)));
     Assert.assertTrue(client.commit(tx));
     // can't re-use same tx again
     try {
-      client.canCommit(tx, $(C3, C4));
+      client.canCommit(tx, asList(C3, C4));
       Assert.fail();
     } catch (TransactionNotInProgressException e) {
       // expected
@@ -133,7 +133,7 @@ public abstract class TransactionSystemTest {
     Transaction txOld = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() - 1,
                                         new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
     try {
-      Assert.assertFalse(client.canCommit(txOld, $(C3, C4)));
+      Assert.assertFalse(client.canCommit(txOld, asList(C3, C4)));
       Assert.fail();
     } catch (TransactionNotInProgressException e) {
       // expected
@@ -151,7 +151,7 @@ public abstract class TransactionSystemTest {
     Transaction txNew = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() + 1,
                                         new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
     try {
-      Assert.assertFalse(client.canCommit(txNew, $(C3, C4)));
+      Assert.assertFalse(client.canCommit(txNew, asList(C3, C4)));
       Assert.fail();
     } catch (TransactionNotInProgressException e) {
       // expected
@@ -171,7 +171,7 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
-    Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
+    Assert.assertTrue(client.canCommit(tx, asList(C1, C2)));
     Assert.assertTrue(client.commit(tx));
     // abort of not active tx has no affect
     client.abort(tx);
@@ -183,11 +183,11 @@ public abstract class TransactionSystemTest {
     TransactionSystemClient client = getClient();
     // Invalidate an in-progress tx
     Transaction tx1 = client.startShort();
-    client.canCommit(tx1, $(C1, C2));
+    client.canCommit(tx1, asList(C1, C2));
     Assert.assertTrue(client.invalidate(tx1.getWritePointer()));
     // Cannot invalidate a committed tx
     Transaction tx2 = client.startShort();
-    client.canCommit(tx2, $(C3, C4));
+    client.canCommit(tx2, asList(C3, C4));
     client.commit(tx2);
     Assert.assertFalse(client.invalidate(tx2.getWritePointer()));
   }
@@ -201,9 +201,9 @@ public abstract class TransactionSystemTest {
 
     Transaction tx1 = client.startShort();
     Transaction tx2 = client.startShort();
-    client.canCommit(tx1, $(C1, C2));
+    client.canCommit(tx1, asList(C1, C2));
     client.commit(tx1);
-    client.canCommit(tx2, $(C3, C4));
+    client.canCommit(tx2, asList(C3, C4));
 
     long currentTs = System.currentTimeMillis();
     client.resetState();
@@ -216,7 +216,7 @@ public abstract class TransactionSystemTest {
     Assert.assertEquals(0, snapshot.getCommittedChangeSets().size());
   }
 
-  private Collection<byte[]> $(byte[]... val) {
+  private Collection<byte[]> asList(byte[]... val) {
     return Arrays.asList(val);
   }
 }

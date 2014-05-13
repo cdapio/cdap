@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  *
  */
-public class MetricsTableMigrator_2_0_to_2_1Test {
+public class MetricsTableMigrator20to21Test {
   private static MetricsTableFactory tableFactory;
   private static MetricsTableMigrator_2_0_to_2_1 upgrader;
   private static HBaseTestBase testHBase;
