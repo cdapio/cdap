@@ -1,0 +1,54 @@
+apply plugin:'java'
+
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
+
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+}
+
+javadoc {
+    classpath += sourceSets.api.output
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+}
+
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+}
+
+// Data-fabric additional package dependencies
+packaging {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+rpm {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+

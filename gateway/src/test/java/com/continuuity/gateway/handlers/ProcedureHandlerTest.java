@@ -288,7 +288,8 @@ public class ProcedureHandlerTest  {
                         EntityUtils.toString(response.getEntity()));
 
     // Deploy procedure, but do not start it.
-    AppFabricServiceHandlerTest.deploy(ProcedureTestApp.class);
+    response = GatewayFastTestsSuite.deploy(ProcedureTestApp.class, null);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     response =
       GatewayFastTestsSuite.doGet("/v2/apps/ProcedureTestApp/procedures/TestProcedure/methods/TestMethod?" +

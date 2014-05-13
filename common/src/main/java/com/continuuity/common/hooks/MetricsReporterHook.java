@@ -1,11 +1,11 @@
 package com.continuuity.common.hooks;
 
-import com.continuuity.http.AbstractHandlerHook;
-import com.continuuity.http.HandlerInfo;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.http.AbstractHandlerHook;
+import com.continuuity.http.HandlerInfo;
+import com.continuuity.http.HttpResponder;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -15,8 +15,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Records gateway requests/response metrics.
@@ -26,11 +26,14 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final MetricsCollectionService metricsCollectionService;
 
+  private final String serviceName;
+
   private final LoadingCache<String, MetricsCollector> collectorCache;
 
   @Inject
-  public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService) {
+  public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
+    this.serviceName = serviceName;
 
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
@@ -89,7 +92,8 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
-    return String.format("gateway.%s.%s", getSimpleName(handlerInfo.getHandlerName()), handlerInfo.getMethodName());
+    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
+                         handlerInfo.getMethodName());
   }
 
   private String getSimpleName(String className) {

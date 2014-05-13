@@ -44,6 +44,7 @@ import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -67,13 +68,13 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Runs {@link MapReduce} programs.
@@ -479,6 +480,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
+  @SuppressWarnings("unchecked")
   private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws Exception {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
@@ -534,9 +536,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    List<Class<?>> classes = Lists.newArrayList(MapReduce.class,
-                                                DataSetOutputFormat.class, DataSetInputFormat.class,
-                                                MapperWrapper.class, ReducerWrapper.class);
+    Set<Class<?>> classes = Sets.newHashSet();
+    classes.add(MapReduce.class);
+    classes.add(DataSetOutputFormat.class);
+    classes.add(DataSetInputFormat.class);
+    classes.add(TextStreamInputFormat.class);
+    classes.add(MapperWrapper.class);
+    classes.add(ReducerWrapper.class);
 
     Job jobConf = context.getHadoopJob();
     try {

@@ -33,8 +33,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final boolean needContext;
   private final int maxRetries;
 
-  public static ReflectionProcessMethod create(Flowlet flowlet, Method method, int maxRetries) {
-    return new ReflectionProcessMethod(flowlet, method, maxRetries);
+  public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, Method method, int maxRetries) {
+    return new ReflectionProcessMethod<T>(flowlet, method, maxRetries);
   }
 
   private ReflectionProcessMethod(Flowlet flowlet, Method method, int maxRetries) {
@@ -62,6 +62,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
     return maxRetries;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ProcessResult<T> invoke(InputDatum<T> input) {
     try {
@@ -72,7 +73,6 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
         Iterator<T> dataIterator = input.iterator();
 
         if (needsBatch) {
-          //noinspection unchecked
           event = (T) dataIterator;
         } else {
           event = dataIterator.next();
@@ -96,7 +96,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
         return new ReflectionProcessResult<T>(event, false, t.getCause());
       }
     } catch (Exception e) {
-      // If it reaches here, something very wrong.
+      // System error if we reached here. E.g. failed to dequeue/decode event
       LOG.error("Fail to process input: {}", method, e);
       throw Throwables.propagate(e);
     }

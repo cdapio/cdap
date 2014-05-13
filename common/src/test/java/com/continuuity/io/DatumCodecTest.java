@@ -139,7 +139,7 @@ public class DatumCodecTest {
     Schema sourceSchema = new ReflectionSchemaGenerator().generate(Record1.class);
     Schema targetSchema = new ReflectionSchemaGenerator().generate(Record2.class);
 
-    new ReflectionDatumWriter(sourceSchema).encode(r1, new BinaryEncoder(output));
+    new ReflectionDatumWriter<Record1>(sourceSchema).encode(r1, new BinaryEncoder(output));
     Record2 r2 = new ReflectionDatumReader<Record2>(targetSchema, TypeToken.of(Record2.class))
                             .read(new BinaryDecoder(input), sourceSchema);
 
@@ -164,22 +164,22 @@ public class DatumCodecTest {
   @Test
   public void testCollection() throws UnsupportedTypeException, IOException {
     List<String> list = Lists.newArrayList("1", "2", "3");
-    Schema sourceSchema = new ReflectionSchemaGenerator().generate(new TypeToken<List<String>>() {}.getType());
-    Schema targetSchema = new ReflectionSchemaGenerator().generate(new TypeToken<Set<String>>() {}.getType());
+    Schema sourceSchema = new ReflectionSchemaGenerator().generate(new TypeToken<List<String>>() { }.getType());
+    Schema targetSchema = new ReflectionSchemaGenerator().generate(new TypeToken<Set<String>>() { }.getType());
 
     PipedOutputStream output = new PipedOutputStream();
     PipedInputStream input = new PipedInputStream(output);
 
-    new ReflectionDatumWriter(sourceSchema).encode(list, new BinaryEncoder(output));
-    Set<String> set = new ReflectionDatumReader<Set<String>>(targetSchema, new TypeToken<Set<String>>() {})
+    new ReflectionDatumWriter<List<String>>(sourceSchema).encode(list, new BinaryEncoder(output));
+    Set<String> set = new ReflectionDatumReader<Set<String>>(targetSchema, new TypeToken<Set<String>>() { })
                         .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertEquals(Sets.newHashSet("1", "2", "3"), set);
 
 
     targetSchema = new ReflectionSchemaGenerator().generate(String[].class);
-    new ReflectionDatumWriter(sourceSchema).encode(list, new BinaryEncoder(output));
-    String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() {})
+    new ReflectionDatumWriter<List<String>>(sourceSchema).encode(list, new BinaryEncoder(output));
+    String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() { })
                         .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertArrayEquals(new String[]{"1", "2", "3"}, array);
@@ -202,7 +202,7 @@ public class DatumCodecTest {
     head.next.next = head;
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    new ReflectionDatumWriter(schema).encode(head, new BinaryEncoder(output));
+    new ReflectionDatumWriter<Node>(schema).encode(head, new BinaryEncoder(output));
   }
 
 
@@ -257,7 +257,7 @@ public class DatumCodecTest {
     Schema targetSchema = new ReflectionSchemaGenerator().generate(LessFields.class);
 
     MoreFields moreFields = new MoreFields(10, 20.2, "30", ImmutableList.of("1", "2"));
-    new ReflectionDatumWriter(sourceSchema).encode(moreFields, new BinaryEncoder(output));
+    new ReflectionDatumWriter<MoreFields>(sourceSchema).encode(moreFields, new BinaryEncoder(output));
     LessFields lessFields = new ReflectionDatumReader<LessFields>(targetSchema, TypeToken.of(LessFields.class))
                                             .read(new BinaryDecoder(input), sourceSchema);
 
@@ -278,7 +278,7 @@ public class DatumCodecTest {
     PipedInputStream input = new PipedInputStream(output);
 
     Schema schema = new ReflectionSchemaGenerator().generate(TestEnum.class);
-    ReflectionDatumWriter writer = new ReflectionDatumWriter(schema);
+    ReflectionDatumWriter<TestEnum> writer = new ReflectionDatumWriter<TestEnum>(schema);
     BinaryEncoder encoder = new BinaryEncoder(output);
     writer.encode(TestEnum.VALUE1, encoder);
     writer.encode(TestEnum.VALUE3, encoder);

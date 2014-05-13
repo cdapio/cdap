@@ -1,6 +1,8 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -9,15 +11,25 @@ import java.security.InvalidKeyException;
 /**
  * Provides a simple interface to generate and validate {@link AccessToken}s.
  */
-public class TokenManager {
+public class TokenManager extends AbstractIdleService {
 
-  private final KeyManager keyManager;
+  protected final KeyManager keyManager;
   private final Codec<AccessTokenIdentifier> identifierCodec;
 
   @Inject
   public TokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
     this.keyManager = keyManager;
     this.identifierCodec = identifierCodec;
+  }
+
+  @Override
+  public void startUp() {
+    this.keyManager.startAndWait();
+  }
+
+  @Override
+  public void shutDown() {
+    this.keyManager.stopAndWait();
   }
 
   /**
@@ -47,15 +59,15 @@ public class TokenManager {
   public void validateSecret(AccessToken token) throws InvalidTokenException {
     long now = System.currentTimeMillis();
     if (token.getIdentifier().getExpireTimestamp() < now) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.EXPIRED, "Token is expired.");
+      throw new InvalidTokenException(TokenState.EXPIRED, "Token is expired.");
     }
 
     try {
       keyManager.validateMAC(identifierCodec, token);
     } catch (InvalidDigestException ide) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.INVALID, "Token signature is not valid!");
+      throw new InvalidTokenException(TokenState.INVALID, "Token signature is not valid!");
     } catch (InvalidKeyException ike) {
-      throw new InvalidTokenException(InvalidTokenException.Reason.INTERNAL, "Invalid key for token.", ike);
+      throw new InvalidTokenException(TokenState.INTERNAL, "Invalid key for token.", ike);
     }
   }
 }

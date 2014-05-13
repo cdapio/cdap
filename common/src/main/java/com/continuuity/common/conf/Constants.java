@@ -480,6 +480,23 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics processor.
+   */
+  public static final class MetricsProcessor {
+    public static final String NUM_INSTANCES = "metrics.processor.num.instances";
+    public static final String NUM_CORES = "metrics.processor.num.cores";
+    public static final String MEMORY_MB = "metrics.processor.memory.mb";
+  }
+
+  /**
+   * Configurations for log saver.
+   */
+  public static final class LogSaver {
+    public static final String NUM_INSTANCES = "log.saver.num.instances";
+    public static final String MEMORY_MB = "log.saver.run.memory.megs";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {
@@ -487,6 +504,10 @@ public final class Constants {
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
+    /** Time duration in milliseconds after which an active secret key should be retired. */
+    public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
+    /** Parent znode used for secret key distribution in ZooKeeper. */
+    public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
 
     /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
@@ -497,6 +518,10 @@ public final class Constants {
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
+    /** Configuration for enabling the security */
+    public static final String CFG_SECURITY_ENABLED = "security.enabled";
+    /**Configuration for security realm */
+    public static final String CFG_REALM = "security.realm";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

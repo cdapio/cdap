@@ -100,6 +100,7 @@ public class BenchmarkRunner {
     return count;
   }
 
+  @SuppressWarnings("unchecked")
   private BenchmarkResult run(BenchmarkResult result) throws Exception {
     // 1. initialize benchmark
     LOG.debug("Executing benchmark.initialize()");

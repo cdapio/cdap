@@ -30,6 +30,7 @@ public abstract class AbstractStage<T> implements Stage {
    *
    * @param ctx of processing.
    */
+  @SuppressWarnings("unchecked")
   public final void process(Context ctx) throws Exception {
     this.ctx = ctx;
     Object upStream = ctx.getUpStream();

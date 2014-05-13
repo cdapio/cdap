@@ -2,10 +2,10 @@ package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.FileBasedKeyManager;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyManager;
+import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -46,15 +46,7 @@ public class FileBasedSecurityTestModule extends SecurityModule {
       cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH,
                 temporaryFolder.getRoot().getAbsolutePath().concat("/keyfile"));
 
-      FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf, keyIdentifierCodec);
-      try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-      return keyManager;
+      return new FileBasedKeyManager(cConf, keyIdentifierCodec);
     }
   };
 }

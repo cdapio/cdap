@@ -630,6 +630,28 @@
     </property>
 
     <!--
+        Metrics processor configuration
+     -->
+
+    <property>
+        <name>metrics.processor.num.instances</name>
+        <value>2</value>
+        <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.num.cores</name>
+        <value>1</value>
+        <description>Number of cores for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.memory.mb</name>
+        <value>512</value>
+        <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <!--
         Logging Configuration
     -->
     <property>
@@ -672,6 +694,12 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.run.memory.megs</name>
+        <value>1024</value>
+        <description>Memory in MB for log saver instances to run in yarn</description>
     </property>
 
     <!--
@@ -782,4 +810,31 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <property>
+        <name>security.token.digest.key.expiration.ms</name>
+        <value>3600000</value>
+        <description>Time duration (in milliseconds) after which an active secret key used
+        for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.token.distributed.parent.znode</name>
+        <value>/${reactor.namespace}/security/auth</value>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
+    </property>
+
+    <!--
+        Security enabled flag
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>false</value>
+        <description>If this is set to true, security layer will be up and active in reactor</description>
+    </property>
+
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
+    </property>
 </configuration>

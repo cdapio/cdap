@@ -17,6 +17,7 @@ public final class KeyIdentifier {
   private final byte[] encodedKey;
   private final String algorithm;
   private final int keyId;
+  private final long expiration;
 
   static final class Schemas {
     private static final int VERSION = 1;
@@ -25,7 +26,8 @@ public final class KeyIdentifier {
       schemas.put(1, Schema.recordOf("KeyIdentifier",
                                      Schema.Field.of("algorithm", Schema.of(Schema.Type.STRING)),
                                      Schema.Field.of("encodedKey", Schema.of(Schema.Type.BYTES)),
-                                     Schema.Field.of("keyId", Schema.of(Schema.Type.INT))));
+                                     Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+                                     Schema.Field.of("expiration", Schema.of(Schema.Type.LONG))));
     }
 
     public static int getVersion() {
@@ -41,11 +43,12 @@ public final class KeyIdentifier {
     }
   }
 
-  public KeyIdentifier(SecretKey key, int id) {
+  public KeyIdentifier(SecretKey key, int id, long expiration) {
     this.encodedKey = key.getEncoded();
     this.algorithm = key.getAlgorithm();
     this.key = key;
     this.keyId = id;
+    this.expiration = expiration;
   }
 
   public SecretKey getKey() {
@@ -59,19 +62,32 @@ public final class KeyIdentifier {
     return keyId;
   }
 
+  public long getExpiration() {
+    return expiration;
+  }
+
   @Override
   public boolean equals(Object object) {
     if (object instanceof KeyIdentifier) {
       KeyIdentifier other = (KeyIdentifier) object;
       return Arrays.equals(encodedKey, other.encodedKey) &&
         keyId == other.keyId && algorithm.equals(other.algorithm)
-        && Objects.equal(getKey(), other.getKey());
+        && Objects.equal(getKey(), other.getKey())
+        && Objects.equal(expiration, other.expiration);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getKey(), getKeyId(), encodedKey, algorithm);
+    return Objects.hashCode(getKey(), getKeyId(), encodedKey, algorithm, expiration);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("keyId", keyId)
+      .add("expiration", expiration)
+      .toString();
   }
 }
