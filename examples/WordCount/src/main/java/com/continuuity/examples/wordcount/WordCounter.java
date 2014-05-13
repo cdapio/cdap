@@ -1,20 +1,18 @@
-/*
- * Copyright (c) 2013, Continuuity Inc
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
  *
- * All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- * Redistribution and use in source and binary forms,
- * with or without modification, are not permitted
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-
 package com.continuuity.examples.wordcount;
 
 
@@ -29,17 +27,17 @@ import com.continuuity.api.flow.FlowSpecification;
  * of words seen, unique words seen, and also tracks the words most often
  * associated with each other word.
  * <p>
- * The first flowlet is the WordSplitter, which splits the sentence into
+ * The first Flowlet is the WordSplitter, which splits the sentence into
  * individual words, cleans up non-alpha characters, and then sends the
  * sentences to the WordAssociater and the words on to the WordCounter.
  * <p>
- * The next flowlet is the WordAssociater that will track word associations
+ * The next Flowlet is the WordAssociater that will track word associations
  * between all of the words within the input string.
  * <p>
- * The next flowlet is the WordCounter, which performs the necessary data
+ * The next Flowlet is the WordCounter, which performs the necessary data
  * operations to do the word count and count other word statistics.
  * <p>
- * The last flowlet is the UniqueCounter, which calculates and updates the
+ * The last Flowlet is the UniqueCounter, which calculates and updates the
  * unique number of words seen.
  */
 public class WordCounter implements Flow {
@@ -50,13 +48,13 @@ public class WordCounter implements Flow {
         .setDescription("Example Word Count Flow")
         .withFlowlets()
             .add("splitter", new WordSplitter())
-            .add("counter", new Counter())
             .add("associator", new WordAssociator())
+            .add("counter", new Counter())
             .add("unique", new UniqueCounter())
         .connect()
             .fromStream("wordStream").to("splitter")
-            .from("splitter").to("counter")
             .from("splitter").to("associator")
+            .from("splitter").to("counter")
             .from("counter").to("unique")
         .build();
   }

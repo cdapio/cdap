@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.trafficAnalytics;
 
 import com.continuuity.api.Application;
@@ -43,8 +58,10 @@ import java.util.regex.Pattern;
  * the number of HTTP requests each hour over the last 24 hours.
  */
 public class TrafficAnalyticsApp implements Application {
+  
   // The row key of SimpleTimeseriesTable.
   private static final byte[] ROW_KEY = Bytes.toBytes("f");
+  
   // The time window of 1 day converted into milliseconds.
   private static final long TIME_WINDOW = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 
@@ -95,20 +112,24 @@ public class TrafficAnalyticsApp implements Application {
    * Parse time field of log data and store in a SimpleTimeseriesTable.
    */
   public static class LogEventStoreFlowlet extends AbstractFlowlet {
+    
     // The regular expression pattern for parsing Apache access logs.
     private static final Pattern ACCESS_LOG_PATTERN = Pattern.compile(
+                                                                      
     //   IP       id    user      date          request     code     size    referrer    user agent
     "^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"");
+    
     // The date format of log data.
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss");
 
-    // A table to store the log data for MapReduce to process.
+    // A Table to store the log data for MapReduce to process.
     @UseDataSet("logEventTable")
     private SimpleTimeseriesTable logs;
 
     // Annotation indicates that this method can process incoming data.
     @ProcessInput
     public void processFromStream(StreamEvent event) throws CharacterCodingException, ParseException {
+      
       // Get a log in String format from a StreamEvent instance.
       String log = Charsets.UTF_8.decode(event.getBody()).toString();
 
@@ -116,8 +137,10 @@ public class TrafficAnalyticsApp implements Application {
       Matcher matcher = ACCESS_LOG_PATTERN.matcher(log);
       if (matcher.matches() && matcher.groupCount() >= 4) {
         String time = matcher.group(4);
+        
         // Convert human readable time to Epoch time in millisecond.
         long timestamp = DATE_FORMAT.parse(time).getTime();
+        
         // Store logs in one row. A log is kept in the value of an table entry.
         // MD5 hash code of the log is used as tag to distinguish logs with the same timestamp.
         logs.write(new TimeseriesTable.Entry(ROW_KEY, Bytes.toBytes(log), timestamp, MD5Hash.digest(log).getDigest()));
@@ -129,6 +152,7 @@ public class TrafficAnalyticsApp implements Application {
    * A MapReduce job that aggregate log data by hour.
    */
   public static class LogCountMapReduce extends AbstractMapReduce {
+    
     // Annotation indicates the DataSet used in this MapReduce.
     @UseDataSet("logEventTable")
     private SimpleTimeseriesTable logs;
@@ -138,8 +162,10 @@ public class TrafficAnalyticsApp implements Application {
       return MapReduceSpecification.Builder.with()
         .setName("RequestCountMapReduce")
         .setDescription("Apache access log count MapReduce job")
+      
         // Specify the DataSet for Mapper to read.
         .useInputDataSet("logEventTable")
+      
         // Specify the DataSet for Reducer to write.
         .useOutputDataSet("countTable")
         .build();
@@ -155,14 +181,19 @@ public class TrafficAnalyticsApp implements Application {
       Job job = context.getHadoopJob();
       long endTime = System.currentTimeMillis();
       long startTime = endTime - TIME_WINDOW;
+      
       // A Mapper processes log data for the last 24 hours in logs table by 2 splits.
       context.setInput(logs, logs.getInput(2, ROW_KEY, startTime, endTime));
+      
       // Set the Mapper class.
       job.setMapperClass(LogMapper.class);
+      
       // Set the output key of the Reducer class.
       job.setMapOutputKeyClass(LongWritable.class);
+      
       // Set the output value of the Reducer class.
       job.setMapOutputValueClass(IntWritable.class);
+      
       // Set the Reducer class.
       job.setReducerClass(LogReducer.class);
     }
@@ -194,9 +225,11 @@ public class TrafficAnalyticsApp implements Application {
       @Override
       public void map(byte[] key, TimeseriesTable.Entry entry, Context context)
         throws IOException, InterruptedException {
+          
         // Convert timestamp to the hour scale.
         long timestampByHour = entry.getTimestamp() - entry.getTimestamp() % AGGREGATION_INTERVAL;
         timestamp.set(timestampByHour);
+          
         // Send the key value pair to Reducer.
         context.write(timestamp, ONE);
       }
@@ -217,6 +250,7 @@ public class TrafficAnalyticsApp implements Application {
       public void reduce(LongWritable key, Iterable<IntWritable> values, Context context)
         throws IOException, InterruptedException {
         int count = 0;
+          
         // Get the count of logs sent in one hour.
         for (IntWritable val : values) {
           count += val.get();
@@ -243,9 +277,11 @@ public class TrafficAnalyticsApp implements Application {
     @Handle("getCounts")
     public void getAllCounts(ProcedureRequest request, ProcedureResponder responder)
       throws IOException, InterruptedException{
+        
       // Get the end time of the time range from the query parameters. By default, end time is now.
       String endTs = request.getArgument("endTs");
       long endTime = (endTs == null) ? System.currentTimeMillis() : Long.parseLong(endTs);
+        
       // Get the start time of the time range from the query parameters.
       // By default, start time is 24 hours ago from now.
       String startTs = request.getArgument("startTs");
