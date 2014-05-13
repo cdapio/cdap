@@ -7,7 +7,6 @@ define([], function () {
   var Controller = Em.Controller.extend({
 
     load: function () {
-      //pass
       this.set('warning', '')
     },
 
