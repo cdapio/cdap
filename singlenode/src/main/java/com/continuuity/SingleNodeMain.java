@@ -88,7 +88,7 @@ public class SingleNodeMain {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    boolean securityEnabled = configuration.getBoolean(Constants.Security.SECURITY_ENABLED);
+    boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
@@ -160,11 +160,11 @@ public class SingleNodeMain {
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
-    zookeeper.stopAndWait();
-    logAppenderInitializer.close();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
+    zookeeper.stopAndWait();
+    logAppenderInitializer.close();
   }
 
   /**
