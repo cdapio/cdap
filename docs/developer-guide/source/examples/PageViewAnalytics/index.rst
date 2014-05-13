@@ -110,7 +110,7 @@ Building and Running the Application and Example
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
 example code that is running on it as an "Application".
 
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
+We show the Windows prompt as ``>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you can either build the app from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
@@ -143,7 +143,7 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 On Windows::
 
-	~SDK> bin\reactor start
+	> bin\reactor start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
@@ -155,8 +155,8 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
-#. To start the App, run ``~SDK> bin\appManager start``
+#. To deploy the App JAR file, run ``> bin\appManager deploy``
+#. To start the App, run ``> bin\appManager start``
 
 Running the Example
 -------------------
@@ -174,7 +174,7 @@ to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
 On Windows::
 
-	~SDK> bin\inject-data
+	> bin\inject-data
 
 Querying the Results
 ....................
@@ -225,7 +225,7 @@ Either:
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
-  On Windows, run ``~SDK> bin\appManager stop``
+  On Windows, run ``> bin\appManager stop``
 
 
 Downloading the Example

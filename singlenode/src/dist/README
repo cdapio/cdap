@@ -22,7 +22,7 @@ prerequisites:
 Once you have installed the prerequisites, unzip the Developer Suite
 distribution to a suitable directory:
 
-  %> cd ~/Projects
+  %> cd <path to SDK>
   %> unzip /tmp/continuuity-sdk-2.2.0.zip
 
 
@@ -32,12 +32,12 @@ Starting Continuuity Reactor
 You are now ready to start Reactor. Do so by running the 'reactor' 
 script in the $CONTINUUITY/bin folder:
 
-  %> cd ~/Projects/continuuity-sdk-2.2.0
+  %> cd ~/<path to SDK>/continuuity-sdk-2.2.0
   %> ./bin/reactor.sh start
   
 or on Windows:
   
-  > cd ~\Projects\continuuity-sdk-2.2.0
+  > cd ~\<path to SDK>\continuuity-sdk-2.2.0
   > bin\reactor.bat start
   
 
