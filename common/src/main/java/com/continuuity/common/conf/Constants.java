@@ -500,6 +500,8 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
+    /** Flag to enable security */
+    public static final String SECURITY_ENABLED = "security.enabled";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
