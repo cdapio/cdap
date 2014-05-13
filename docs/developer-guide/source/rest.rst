@@ -3,7 +3,7 @@
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
-Continuuity Reactor HTTP REST API
+REST API
 =================================
 
 .. reST Editor: .. section-numbering::
@@ -1225,7 +1225,7 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-`Continuuity Reactor Operations Guide <operations>`_.
+:doc:`Continuuity Reactor Operations Guide </operations>`.
 
 Metrics Requests
 ----------------
@@ -1575,7 +1575,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs>`__,
+- `Continuuity Reactor Javadocs <http://continuuity.com/developers/javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop

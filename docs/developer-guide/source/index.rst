@@ -1,24 +1,3 @@
-:orphan:
-
-.. _index_toplevel:
-
-.. toctree::
-   :hidden:
-   
-   intro
-   examples/index
-   examples/ResponseCodeAnalytics/index
-   examples/PageViewAnalytics/index
-   examples/TrafficAnalytics/index
-   quickstart
-   programming
-   operations
-   advanced
-   debugging
-   rest
-   faq
-
-   
 =====================
 Reactor Documentation
 =====================
@@ -26,21 +5,19 @@ Reactor Documentation
 Documentation
 ===============
 
-:doc:`advanced <advanced>`
+.. toctree::
+   :maxdepth: 2
+   
+   /intro
+   /examples/index
+   /quickstart
+   /programming
+   /operations
+   /advanced
+   /debugging
+   /rest
+   /faq
 
-:doc:`debugging <debugging>`
-
-:doc:`faq <faq>`
-
-:doc:`intro <intro>`
-
-:doc:`operations <operations>`
-
-:doc:`programming <programming>`
-
-:doc:`quickstart <quickstart>`
-
-:doc:`rest <rest>`
 
 
 Examples

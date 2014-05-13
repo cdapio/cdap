@@ -17,7 +17,7 @@ Overview
 This example demonstrates an application of streaming log analysis. 
 It computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data. 
-The application expands on the other `examples <http://continuuity.com/developers/examples>`__
+The application expands on the other :doc:`examples <http://continuuity.com/developers/examples>`
 to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
@@ -34,7 +34,7 @@ Let's look at some of these elements, and then run the application and see the r
 
 The TrafficAnalytics Application
 --------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
+As in the other :doc:`examples <http://continuuity.com/developers/examples>`, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 	public class TrafficAnalyticsApp implements Application {

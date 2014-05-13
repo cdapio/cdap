@@ -2,7 +2,7 @@
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
 ===============================================
-Continuuity Reactor Testing and Debugging Guide
+Debugging Guide
 ===============================================
 
 -------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
+found under :doc:`TrafficAnalytics </developers/examples/TrafficAnalytics/>`.
 
 The ``TrafficAnalyticsTest`` class should extend from
 ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
@@ -200,7 +200,7 @@ an HTTP request to the element’s URL. For example, the following will start a 
 
 Note that this URL differs from the URL for starting the Flow only by the last path
 component (``debug`` instead of ``start``; see 
-`Reactor Client HTTP API <developer/rest#reactor-client-http-api>`_). You can pass in 
+:doc:`Reactor Client HTTP API <developer/rest#reactor-client-http-api>`). You can pass in 
 runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container
@@ -308,7 +308,7 @@ Debugging with Eclipse
 Debugging the Transaction Manager (Advanced Use)
 ------------------------------------------------
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the `Advanced Features <advanced>`__ guide.
+Transactions are introduced in the :doc:`Advanced Features <advanced>` guide.
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
@@ -453,5 +453,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Operating a Continuuity Reactor <operations>`__,
+- :doc:`Operating a Continuuity Reactor </operations>`,
   which covers putting Continuuity Reactor into production.

@@ -1,8 +1,12 @@
 .. :Author: John Jackson
    :Description: Introduction to Continuuity Reactor
 
+.. index::
+   single: Intro
+.. _index_toplevel:
+
 ===================================
-Introduction to Continuuity Reactor
+Introduction
 ===================================
 
 .. reST Editor: .. section-numbering::
@@ -114,12 +118,12 @@ Reactor Components
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four 
 basic abstractions:
 
-- `Streams </developers/programming#streams>`__ for real-time data collection from any external system;
-- `Flows </developers/programming#flows>`__ for performing elastically scalable, real-time stream
+- :doc:`Streams </developers/programming#streams>` for real-time data collection from any external system;
+- :doc:`Flows </developers/programming#flows>` for performing elastically scalable, real-time stream
   or batch processing;
-- `DataSets </developers/programming#datasets>`__ for storing data in simple and scalable ways without
+- :doc:`DataSets </developers/programming#datasets>` for storing data in simple and scalable ways without
   worrying about details of the storage schema; and
-- `Procedures </developers/programming#procedures>`__ for exposing data to external systems through
+- :doc:`Procedures </developers/programming#procedures>` for exposing data to external systems through
   stored queries.
 
 These are grouped into Applications for configuring and packaging.
@@ -190,11 +194,11 @@ between infrastructure components and application code.
 
 Reactor functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
-by `Streams </developers/programming#streams>`__, while `Flows </developers/programming#flows>`__ 
+by :doc:`Streams </developers/programming#streams>`, while :doc:`Flows </developers/programming#flows>`
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by `Map Reduce jobs </developers/programming#mapreduce>`__ and 
-`Workflow </developers/programming#workflows>`__ components. 
-`Procedures </developers/programming#procedures>`__ provide
+aggregation is performed by :doc:`Map Reduce jobs </developers/programming#mapreduce>` and 
+:doc:`Workflow </developers/programming#workflows>` components. 
+:doc:`Procedures </developers/programming#procedures>` provide
 stored queries. The application can now be scaled independent of the underlying
 infrastructure.
 
@@ -211,5 +215,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Developer Examples <examples>`__,
+- :doc:`Developer Examples </examples/index>`,
   three different examples to run and experiment with.

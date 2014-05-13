@@ -2,7 +2,7 @@
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
 ===================================================
-Continuuity Reactor Programming Guide
+Programming Guide
 ===================================================
 
 -----------------------------------------------------------------------
@@ -25,8 +25,8 @@ For a high-level view of the concepts of the Continuuity Reactor Java
 APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
 
 For more information beyond this document, see both the
-`Javadocs </developers/javadocs/index.html>`_  and the code in the
-`examples </developers/examples>`_ directory, both of which are on the
+`Javadocs <http://continuuity.com/developers/javadocs/index.html>`_  and the code in the
+:doc:`examples </developers/examples>` directory, both of which are on the
 Continuuity.com `Developers website </developers>`_ as well as in your
 Reactor installation directory.
 
@@ -190,7 +190,7 @@ specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API </developers/rest>`_
+using either the :doc:`Continuuity Reactor HTTP REST API </developers/rest>`
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -833,5 +833,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features <advanced>`__,
+- :doc:`Advanced Continuuity Reactor Features </advanced>`,
   with details of the Flow, DataSet and Transaction systems.
