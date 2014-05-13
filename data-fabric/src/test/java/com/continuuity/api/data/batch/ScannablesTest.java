@@ -9,6 +9,9 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ *
+ */
 public class ScannablesTest {
 
   enum Enum { FOO, BAR }
@@ -43,14 +46,14 @@ public class ScannablesTest {
     Assert.assertEquals("(value:INT)", Scannables.hiveSchemaFor(Int.class));
     Assert.assertEquals("(value:BIGINT)", Scannables.hiveSchemaFor(Longg.class));
     Assert.assertEquals("(first:INT,second:STRING)",
-                        Scannables.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() {}.getType()));
+                        Scannables.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() { }.getType()));
     Assert.assertEquals("(a:INT,b:BIGINT,c:BOOLEAN,d:FLOAT,e:DOUBLE,f:STRING,g:BINARY," +
                           "h:ARRAY<STRING>,i:ARRAY<BOOLEAN>,j:MAP<INT,STRING>)",
                         Scannables.hiveSchemaFor(Record.class));
 
     Assert.assertEquals("(first:INT,second:STRING)",
                         Scannables.hiveSchemaFor(new ObjectStore<ImmutablePair<Integer, String>>("dummy",
-                          new TypeToken<ImmutablePair<Integer, String>>() {}.getType())));
+                          new TypeToken<ImmutablePair<Integer, String>>() { }.getType())));
 
   }
 }

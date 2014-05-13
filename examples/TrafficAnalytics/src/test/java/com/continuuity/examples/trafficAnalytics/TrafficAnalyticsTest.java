@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.trafficAnalytics;
 
 import com.continuuity.test.ApplicationManager;
@@ -33,10 +48,11 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
 
   @Test
   public void test() throws Exception {
-    // Deploy an app.
+    
+    // Deploy an Application.
     ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
-    // Start a flow.
+    // Start a Flow.
     FlowManager flowManager = appManager.startFlow("RequestCountFlow");
     MapReduceManager mrManager = null;
 
@@ -45,7 +61,7 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
     try {
       sendData(appManager, now);
 
-      // Wait for the last flowlet processing 3 events, or at most 5 seconds.
+      // Wait for the last Flowlet processing 3 events, or at most 5 seconds.
       RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
@@ -56,7 +72,7 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
       flowManager.stop();
     }
 
-    // Verify data processed well
+    // Verify data processed well.
     verifyCountProcedure(appManager);
   }
 
@@ -67,6 +83,7 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
    * @throws IOException
    */
   private void sendData(ApplicationManager appManager, long now) throws IOException {
+    
     // Define a StreamWriter to send Apache log events.
     StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
@@ -88,15 +105,17 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
 
   private void verifyCountProcedure(ApplicationManager appManager)
     throws IOException {
-    // Start a procedure.
+      
+    // Start a Procedure.
     ProcedureManager procedureManager = appManager.startProcedure(TrafficAnalyticsApp.LogCountProcedure.class.getSimpleName());
 
     try {
-      // Call the procedure
+      // Call the Procedure
       ProcedureClient client = procedureManager.getClient();
 
       // Verify the query get-counts.
       String response = client.query("getCounts", Collections.<String, String>emptyMap());
+      
       // Deserialize the Json string.
       Map<Long, Integer> result = GSON.fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
       Long nowByHour = NOW - NOW % AGGREGATION_INTERVAL;

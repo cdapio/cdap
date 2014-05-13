@@ -34,6 +34,7 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
+import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -76,6 +77,7 @@ public class SingleNodeMain {
   private final HiveServer hiveServer;
   private final HiveCommandExecutor hiveCommandExecutor;
 
+  private ExternalAuthenticationServer externalAuthenticationServer;
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -96,6 +98,10 @@ public class SingleNodeMain {
 
     hiveServer = injector.getInstance(HiveServer.class);
     hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
+    boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    if (securityEnabled) {
+      externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -142,6 +148,9 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
     hiveServer.startAndWait();
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.startAndWait();
+    }
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
@@ -162,6 +171,9 @@ public class SingleNodeMain {
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.stopAndWait();
+    }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
     hiveServer.stopAndWait();
@@ -280,7 +292,9 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new StreamHttpModule(),
-      new InMemoryHiveModule()
+      new InMemoryHiveModule(),
+      new SecurityModules().getSingleNodeModules(),
+      new StreamHttpModule()
     );
   }
 

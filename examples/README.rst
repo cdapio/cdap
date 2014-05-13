@@ -10,7 +10,7 @@ in their compiled forms as JAR files in this release.
 Building
 ========
 
-Each example comes with Maven ``.pom`` file. To build, install Maven, and from your
+Each example comes with Maven ``.pom`` file. To build, install Maven, and from the
 ``/examples`` directory prompt, enter::
 
 	mvn clean package
@@ -22,15 +22,15 @@ List of Example Apps
 CountAndFilterWords
 -------------------
 - A variation of CountTokens that illustrates that a flowlet's output can
-  be consumed by multiple downstream flowlets.
+  be consumed by multiple downstream Flowlets.
 - In addition to counting all tokens, also sends all tokens to a filter that
-  drops all tokens that are not upper case
-- The upper case tokens are then counted by a separate flowlet
+  drops all tokens that are not upper case.
+- The upper case tokens are then counted by a separate Flowlet.
 
 CountCounts
 -----------
-- A very simple flow that counts counts.
-- Reads input stream 'text' and tokenizes it. Instead of counting words, it
+- A very simple Flow that counts "counts".
+- Reads input Stream 'text' and tokenizes it. Instead of counting words, it
   counts the number of inputs with the same number of tokens.
 
 CountOddAndEven
@@ -39,30 +39,31 @@ CountOddAndEven
 
 CountRandom
 -----------
-- Generates random numbers between 0 and 9999
-- For each number *i*, generates i%10000, i%1000, i%100, i%10
+- Generates random numbers between 0 and 9999.
+- For each number *i*, generates i%10000, i%1000, i%100, i%10.
 - Increments the counter for each number.
  
 CountTokens
 -----------
 - Reads events (``= byte[] body, Map<String,String>`` headers) from input
-  stream 'text'.
+  Stream 'text'.
 - Tokenizes the text in the body and in the header named 'title', ignores
   all other headers.
 - Each token is cloned into two tokens:
 
-  #. the upper cased version of the token
-  #. the original token with a field prefix ('title', or if the token is from
-     the body of the event, 'text')
+  1. the upper cased version of the token; and
+  2. the original token with a field prefix ('title', or if the token is from
+     the body of the event, 'text').
 
 - All of the cloned tokens are counted using increment operations.
 
 HelloWorld
 ----------
-- This is a simple HelloWorld example that uses one stream, one DataSet, one flow and one procedure.
-- A stream to send names to.
-- A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable.
-- A procedure that reads the name from the KeyValueTable and prints Hello [Name]!
+- This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one
+  Procedure.
+- A Stream to send names to.
+- A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
+- A Procedure that reads the name from the KeyValueTable and prints "Hello [Name]!"
 
 PageViewAnalytics
 -----------------
@@ -73,7 +74,7 @@ PageViewAnalytics
 
 Purchase
 --------
-- An app that uses scheduled MapReduce workflows to read from one ObjectStore DataSet
+- An app that uses scheduled MapReduce Workflows to read from one ObjectStore DataSet
   and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
@@ -82,16 +83,16 @@ Purchase
   - When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce job
     reads the purchases DataSet, creates a purchase history,
     and stores the purchase history in the history DataSet every morning at 4:00 A.M.
-    You can manually (in the Process screen in the Reactor Dashboard) or programmatically execute 
-    the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history
-    DataSet.
-  - Execute the PurchaseQuery procedure to query the history DataSet to discover
+    You can manually (in the Process screen in the Reactor Dashboard) or programmatically
+    execute the PurchaseHistoryBuilder MapReduce job to store customers' purchase history
+    in the history DataSet.
+  - Execute the PurchaseQuery Procedure to query the history DataSet to discover
     the purchase history of each user.
 
 - Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M.,
   you'll have to wait until the next day (or manually or programmatically execute the
-  PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery will
-  return a "not found" error.
+  PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
+  will return a "not found" error.
 
 ResourceSpammer
 ---------------
@@ -108,18 +109,36 @@ SentimentAnalysis
 
 SimpleWriteAndRead
 ------------------
-- A simple example to illustrate how to read and write key/values in a flow.
+- A simple example to illustrate how to read and write key/values in a Flow.
 
-TrafficAnalytics
+Ticker
 ----------------
 - This application pulls in stock market activity data and stores it in 
   DataSets that allow querying for that data with various filters.
 
+TrafficAnalytics
+----------------
+- This example demonstrates an application of streaming log analysis using a MapReduce job.
+  It computes the aggregate number of HTTP requests on an hourly basis in each hour of the
+  last twenty-four hours, processing in real-time Apache access log data. 
+
 WordCount
 ---------
-- A simple application that counts words 
-  and tracks word associations and unique words seen on the stream. It 
-  demonstrates the power of using DataSets and how they can be used to simplify 
-  storing complex data.
+- A simple application that counts words and tracks word associations and unique words
+  seen on the Stream. It demonstrates the power of using DataSets and how they can be used
+  to simplify storing complex data.
 
-.. include:: includes/footer.rst
+
+Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc.
+
+Copyright 2013-2014 Continuuity, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+except in compliance with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+either express or implied. See the License for the specific language governing permissions
+and limitations under the License.

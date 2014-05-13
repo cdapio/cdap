@@ -13,7 +13,7 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
-    compile elastic([group: 'com.continuuity', name: 'hive-client', version: "${version}", changing: true], "watchdog")
+    compile elastic([group: 'com.continuuity', name: 'hive-client', version: "${version}", changing: true], "hive-client")
 
     compile libraries.slf4j_api
     compile libraries.logback_core

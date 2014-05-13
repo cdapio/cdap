@@ -1,4 +1,19 @@
-package com.continuuity;
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.continuuity.examples.sentimentAnalysis;
 
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -14,8 +29,8 @@ import java.io.InputStream;
 public class Unzipper {
 
   /**
-   * Unzip an input stream of a zip archive.
-   * @param inputStream input stream of zip archive.
+   * Unzip an input Stream of a zip archive.
+   * @param inputStream input Stream of zip archive.
    * @param destDir directory to unzip the inputStream to. The directory is created if it does not exist.
    * @throws IOException
    */
