@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.pageViewAnalytics;
 
 import com.continuuity.api.Application;
@@ -60,9 +75,9 @@ public class PageViewAnalyticsApp implements Application {
 
   /**
    * Flows are used to perform real-time processing on Apache log events.
-   * Flowlets are the building blocks of the flow.
+   * Flowlets are the building blocks of the Flow.
    * Flowlets are wired into a Directed Acyclic graph. 
-   * LogAnalyticsFlow consists of two flowlets:
+   * LogAnalyticsFlow consists of two Flowlets:
    * - parser: a LogEventParseFlowlet that parses the referrer page URI
    *           and the requested page URI from a log event.
    * - pageCount: a PageCountFlowlet that increments the count of the
@@ -96,14 +111,17 @@ public class PageViewAnalyticsApp implements Application {
     private static final Pattern ACCESS_LOG_PATTERN = Pattern.compile(
       //   IP       id    user      date          request     code     size    referrer    user agent
       "^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"");
-     // Emitter for emitting a PageView instance to the next Flowlet
+    
+    // Emitter for emitting a PageView instance to the next Flowlet
     private OutputEmitter<PageView> output;
+    
     // Declare a user-defined metric
     Metrics metrics;
 
-    // Annotation indicates that this method can process incoming data.
+    // Annotation indicates that this method can process incoming data
     @ProcessInput
     public void processFromStream(StreamEvent event) throws CharacterCodingException {
+      
       // Get a log event in String format from a StreamEvent instance
       String log = Charsets.UTF_8.decode(event.getBody()).toString();
 
@@ -113,9 +131,11 @@ public class PageViewAnalyticsApp implements Application {
         // Grab the referrer page URI from a log event
         String referrer = matcher.group(8);
         if (referrer.equals("-")) {
+          
           // A Metric counts those log events without the referrer page URI field
           metrics.count("logs.noreferrer ", 1);
         } else {
+          
           // Grab the requested page URI from the log event
           String request = matcher.group(5);
           int startIndex = request.indexOf(" ");
@@ -133,14 +153,17 @@ public class PageViewAnalyticsApp implements Application {
    * Aggregate the counts of the requested pages viewed from the referrer pages.
    */
   public static class PageCountFlowlet extends AbstractFlowlet {
+    
     // UseDataSet annotation indicates the page-views DataSet is used in the Flowlet
     @UseDataSet("pageViewCDS")
     private PageViewStore pageViews;
 
     // Batch annotation indicates processing a batch of data objects to increase throughput
     @Batch(10)
+    
     // HashPartition annotation indicates using hash partition to distribute data in multiple Flowlet instances
     @HashPartition("referrerHash")
+    
     // ProcessInput annotation indicates that this method can process incoming data
     @ProcessInput
     public void count(Iterator<PageView> trackIterator) {
@@ -158,6 +181,7 @@ public class PageViewAnalyticsApp implements Application {
    */
   public static class PageViewProcedure extends AbstractProcedure {
     private static final Logger LOG = LoggerFactory.getLogger(PageViewProcedure.class);
+    
     // Annotation indicates that the pageViewCDS custom DataSet is used in the Procedure
     @UseDataSet("pageViewCDS")
     private PageViewStore pageViews;
@@ -170,6 +194,7 @@ public class PageViewAnalyticsApp implements Application {
      */
     @Handle("getDistribution")
     public void getPageDistribution(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      
       // A URI of the referrer page is passed by a runtime argument {"page": page-uri} in the request
       String referrer = request.getArgument("page");
 
@@ -192,8 +217,10 @@ public class PageViewAnalyticsApp implements Application {
       Map<String, Double> pageDistribution = new HashMap<String, Double>();
 
       for (Map.Entry<String, Long> entry : viewCount.entrySet()) {
+        
         // Log the requested page URI and its count
         LOG.info("page URI:{}, count:{}", entry.getKey(), entry.getValue());
+        
         // Create a map of the requested page URI to its distribution
         pageDistribution.put(entry.getKey(), entry.getValue() / (double) counts);
       }
