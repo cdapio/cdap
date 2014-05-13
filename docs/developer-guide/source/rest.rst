@@ -1575,7 +1575,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <http://continuuity.com/developers/javadocs/index.html>`__,
+- `Continuuity Reactor Javadocs </developers/javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop

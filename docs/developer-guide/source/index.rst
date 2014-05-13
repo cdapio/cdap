@@ -2,9 +2,6 @@
 Reactor Documentation
 =====================
 
-Documentation
-===============
-
 .. toctree::
    :maxdepth: 2
    

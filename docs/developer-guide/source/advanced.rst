@@ -329,7 +329,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <http://continuuity.com/developers/javadocs/index.html>`__ for these classes and :doc:`the examples </examples/index>`
+See the `Javadocs </developers/javadocs/index.html>`__ for these classes and :doc:`the examples </examples/index>`
 to learn more about these DataSets.
 
 Custom DataSets

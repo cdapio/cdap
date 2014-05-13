@@ -25,7 +25,7 @@ For a high-level view of the concepts of the Continuuity Reactor Java
 APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
 
 For more information beyond this document, see both the
-`Javadocs <http://continuuity.com/developers/javadocs/index.html>`_  and the code in the
+`Javadocs </developers/javadocs/index.html>`_  and the code in the
 :doc:`examples </examples/index>` directory, both of which are on the
 Continuuity.com `Developers website </developers>`_ as well as in your
 Reactor installation directory.
