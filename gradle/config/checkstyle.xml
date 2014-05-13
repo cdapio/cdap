@@ -71,7 +71,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <!-- Checks for out of order import statements. -->
       <property name="severity" value="warning"/>
       <property name="ordered" value="true"/>
-      <property name="groups" value="com,org,junit,net,/^javax?\./"/>
+      <property name="groups" value="com.continuuity,/([^j]|.[^a]|..[^v]|...[^a])/,/^javax?\./"/>
       <!-- This ensures that static imports go to the end. -->
       <property name="option" value="bottom"/>
       <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
@@ -350,4 +350,9 @@ page at http://checkstyle.sourceforge.net/config.html -->
     </module>
 
   </module>
+
+  <module name="SuppressionFilter">
+    <property name="file" value="gradle/config/suppressions.xml"/>
+  </module>
+
 </module>

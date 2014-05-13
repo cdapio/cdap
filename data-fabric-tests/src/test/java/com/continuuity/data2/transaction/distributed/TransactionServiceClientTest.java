@@ -17,9 +17,9 @@ import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.io.InputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -30,6 +30,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import java.io.InputStream;
 
 /**
  * HBase queue tests.

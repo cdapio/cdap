@@ -10,12 +10,13 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
+
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
 import java.util.Collections;

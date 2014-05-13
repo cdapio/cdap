@@ -16,8 +16,8 @@ import com.continuuity.http.NettyHttpService;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
-import com.continuuity.security.guice.InMemorySecurityModule;
 import com.continuuity.security.guice.SecurityModules;
+
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -54,8 +54,6 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +67,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Manifest;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
  * Verify the ordering of events in the RouterPipeline.

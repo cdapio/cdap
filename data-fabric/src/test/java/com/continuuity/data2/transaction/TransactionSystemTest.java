@@ -1,10 +1,9 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import java.io.InputStream;
+
 import org.junit.Assert;
 import org.junit.Test;
 

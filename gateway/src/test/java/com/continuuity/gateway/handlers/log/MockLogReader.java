@@ -1,12 +1,13 @@
 package com.continuuity.gateway.handlers.log;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.LoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.LogReader;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;

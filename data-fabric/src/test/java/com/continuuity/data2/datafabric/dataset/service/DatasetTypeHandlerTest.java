@@ -11,6 +11,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -26,12 +27,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Unit-test for {@link DatasetTypeHandler}
