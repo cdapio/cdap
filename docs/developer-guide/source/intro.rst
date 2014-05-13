@@ -118,12 +118,12 @@ Reactor Components
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four 
 basic abstractions:
 
-- :doc:`Streams </developers/programming#streams>` for real-time data collection from any external system;
-- :doc:`Flows </developers/programming#flows>` for performing elastically scalable, real-time stream
+- `Streams <programming.html#streams>`__ for real-time data collection from any external system;
+- `Flows </programming.html#flows>`__ for performing elastically scalable, real-time stream
   or batch processing;
-- :doc:`DataSets </developers/programming#datasets>` for storing data in simple and scalable ways without
+- `DataSets </programming.html#datasets>`__ for storing data in simple and scalable ways without
   worrying about details of the storage schema; and
-- :doc:`Procedures </developers/programming#procedures>` for exposing data to external systems through
+- `Procedures </programming.html#procedures>`__ for exposing data to external systems through
   stored queries.
 
 These are grouped into Applications for configuring and packaging.
@@ -194,11 +194,11 @@ between infrastructure components and application code.
 
 Reactor functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
-by :doc:`Streams </developers/programming#streams>`, while :doc:`Flows </developers/programming#flows>`
+by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by :doc:`Map Reduce jobs </developers/programming#mapreduce>` and 
-:doc:`Workflow </developers/programming#workflows>` components. 
-:doc:`Procedures </developers/programming#procedures>` provide
+aggregation is performed by `Map Reduce jobs <programming.html#mapreduce>`__ and 
+`Workflow <programming.html#workflows>`__ components. 
+`Procedures <programming.html#procedures>`__ provide
 stored queries. The application can now be scaled independent of the underlying
 infrastructure.
 

@@ -1,6 +1,8 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
+:orphan:
+
 ============================
 PageViewAnalytics Example
 ============================
@@ -47,7 +49,7 @@ Let's look at some of these elements, and then run the Application and see the r
 
 The PageViewAnalytics Application
 ---------------------------------
-As in the other :doc:`examples <http://continuuity.com/developers/examples>`, the components
+As in the other :doc:`examples </examples/index>`, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {

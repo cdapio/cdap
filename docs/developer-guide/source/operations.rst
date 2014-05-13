@@ -199,9 +199,9 @@ Process
    :width: 600px
 
 The **Process** pane shows all the
-:doc:`Flows <#flow>`,
-:doc:`MapReduce <#mapreduce>` and
-:doc:`Workflows <#workflow>` in the Reactor
+`Flows <#flow>`__,
+`MapReduce <#mapreduce>`__ and
+`Workflows <#workflow>`__ in the Reactor
 with their name and status (either *Running* or *Stopped*).
 Each name links to the individual elements detail pane.
 Graphs show statistics based on the sampling rate menu setting.
@@ -434,7 +434,7 @@ Procedure
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
 
 For details of making requests and using Procedures, including configuring the parameters and calling methods,
-see the `Continuuity Reactor HTTP REST API Guide </developers/rest>`__.
+see the `Continuuity Reactor HTTP REST API Guide </rest>`__.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -460,8 +460,8 @@ For instance, in a Flowlet you can write::
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
-- Using the :doc:`Continuuity Reactor HTTP REST interface </developers/rest>`.
-  The :doc:`REST interface </developers/rest#logging-http-api>` details all the available contexts that
+- Using the :doc:`Continuuity Reactor HTTP REST interface </rest>`.
+  The `REST interface <rest.html#logging-http-api>`__ details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
@@ -480,7 +480,7 @@ As applications process data, the Continuuity Reactor collects metrics about the
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
 details on available system metrics in the
-:doc:`Continuuity Reactor HTTP REST API Guide </developers/rest#metrics-http-api>`.
+`Continuuity Reactor HTTP REST API Guide <rest.html#metrics-http-api>`__.
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them
@@ -509,9 +509,9 @@ For example, to add metrics to a Flowlet *NameSaver*::
 	  }
 	}
 
-An example of user-defined metrics is in the :doc:`PageViewAnalytics example <example/PageViewAnalytics>`.
+An example of user-defined metrics is in the :doc:`PageViewAnalytics example </examples/PageViewAnalytics/index>`.
 
-For details on available system metrics, see the :doc:`Metrics section </rest#metrics>`
+For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
 in the :doc:`Continuuity Reactor HTTP REST API Guide </rest>`.
 
 Using Metrics Explorer

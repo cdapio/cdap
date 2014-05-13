@@ -1,6 +1,8 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Apache Log Event Logger
 
+:orphan:
+
 =============================
 ResponseCodeAnalytics Example
 =============================

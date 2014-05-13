@@ -1,6 +1,8 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
 
+:orphan:
+
 ==========================
 TrafficAnalytics Example
 ==========================
@@ -17,7 +19,7 @@ Overview
 This example demonstrates an application of streaming log analysis. 
 It computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data. 
-The application expands on the other :doc:`examples <http://continuuity.com/developers/examples>`
+The application expands on the other :doc:`examples </examples/index>`
 to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
@@ -34,7 +36,7 @@ Let's look at some of these elements, and then run the application and see the r
 
 The TrafficAnalytics Application
 --------------------------------
-As in the other :doc:`examples <http://continuuity.com/developers/examples>`, the components 
+As in the other :doc:`examples </examples/index>`, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 	public class TrafficAnalyticsApp implements Application {

@@ -34,7 +34,7 @@ For the batch example above, up to 100 data objects can be read from the input a
 Flowlets and Instances
 ----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
-:doc:`REST interfaces </developers/rest>` or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+:doc:`REST interfaces </rest>` or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
 In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be improved. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
@@ -329,7 +329,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <http://continuuity.com/developers/javadocs/index.html>`__ for these classes and :doc:`the examples </developers/examples>`
+See the `Javadocs <http://continuuity.com/developers/javadocs/index.html>`__ for these classes and :doc:`the examples </examples/index>`
 to learn more about these DataSets.
 
 Custom DataSets
@@ -368,7 +368,7 @@ Finally, we write a method to retrieve the number of unique words seen::
 	}
 
 A complete application demonstrating use of a Custom DataSet is included in our
-:doc:`PageViewAnalytics <examples/PageViewAnalytics>` example.
+:doc:`PageViewAnalytics </examples/PageViewAnalytics/index>` example.
 
 DataSets & MapReduce
 --------------------

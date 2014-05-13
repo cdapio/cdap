@@ -26,7 +26,7 @@ APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
 
 For more information beyond this document, see both the
 `Javadocs <http://continuuity.com/developers/javadocs/index.html>`_  and the code in the
-:doc:`examples </developers/examples>` directory, both of which are on the
+:doc:`examples </examples/index>` directory, both of which are on the
 Continuuity.com `Developers website </developers>`_ as well as in your
 Reactor installation directory.
 
@@ -190,7 +190,7 @@ specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the :doc:`Continuuity Reactor HTTP REST API </developers/rest>`
+using either the :doc:`Continuuity Reactor HTTP REST API </rest>`
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
