@@ -21,7 +21,7 @@ List of Example Apps
 
 CountAndFilterWords
 -------------------
-- A variation of CountTokens that illustrates that a flowlet's output can
+- A variation of CountTokens that illustrates that a Flowlet's output can
   be consumed by multiple downstream Flowlets.
 - In addition to counting all tokens, also sends all tokens to a filter that
   drops all tokens that are not upper case.
@@ -129,7 +129,7 @@ WordCount
   to simplify storing complex data.
 
 
-Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc.
+Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc. All rights reserved.
 
 Copyright 2013-2014 Continuuity, Inc.
 
