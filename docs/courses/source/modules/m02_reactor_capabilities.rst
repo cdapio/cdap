@@ -17,9 +17,28 @@ Module Objectives
 
 In this module, you will learn:
 
-- Continuuity Reactor APIs
+- What is Continuuity Reactor?
+- Continuuity Reactor's APIs
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
+
+----
+
+What is Continuuity Reactor?
+============================
+
+Continuuity Reactor is an application server
+
+- for modern data architecture
+- deployed within the enterprise or
+- deployed within the cloud
+
+Provides a robust platform for:
+
+- development
+- deployment
+- management of data applications
+- management of data
 
 ----
 

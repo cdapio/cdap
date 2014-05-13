@@ -1,5 +1,5 @@
 ===========================================================
-placeholder
+Building An Application using MapReduce and Workflows
 ===========================================================
 
 .. reST Editor: .. section-numbering::
@@ -11,11 +11,11 @@ placeholder
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br| raw:: html
+.. |br_e00| raw:: html
 
    <br />
 
-.. |br2| raw:: html
+.. |br2_e00| raw:: html
 
    <br /><br />
 

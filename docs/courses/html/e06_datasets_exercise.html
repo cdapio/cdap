@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Continuuity Reactor Capabilities</title>
+    <title>Building An Application Using DataSets</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1722,15 +1722,16 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Continuuity Reactor Capabilities</h1></header>
+            <header><h1>Building An Application Using DataSets</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
+            <section><!-- .. reST Editor: .. section-numbering:: -->
+<!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1743,30 +1744,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/8
+              1/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Module Objectives</h1></header>
+            <header><h1>Exercise Objectives</h1></header>
             
             
-            <section><p>In this module, you will learn:</p>
+            <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>What is Continuuity Reactor?</li>
-<li>Continuuity Reactor's APIs</li>
-<li>Reactor as an integrated platform</li>
-<li>Reactor's application lifecycle support</li>
+<li>Download and install the SDK</li>
+<li>Basic Continuuity Reactor operations Start and Stop</li>
+<li>Run the Quick Start tour</li>
 </ul></section>
             
           </div>
@@ -1779,77 +1779,35 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/8
+              2/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>What is Continuuity Reactor?</h1></header>
-            
-            
-            <section><p>Continuuity Reactor is an application server</p>
-<ul class="simple">
-<li>for modern data architecture</li>
-<li>deployed within the enterprise or</li>
-<li>deployed within the cloud</li>
-</ul>
-<p>Provides a robust platform for:</p>
-<ul class="simple">
-<li>development</li>
-<li>deployment</li>
-<li>management of data applications</li>
-<li>management of data</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/8
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Continuuity Reactor APIs</h1></header>
+            <header><h1>Exercise Steps</h1></header>
             
             
             <section><ul class="simple">
-<li>A set of powerful yet simple APIs:<ul>
-<li>Java API</li>
-<li>REST API</li>
+<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
+<li>Register for free account</li>
+<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
+<li>Unzip the download</li>
+<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
+<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
+<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
+<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
 </ul>
-</li>
-<li>Aim is to reduce the time to create and implement applications</li>
-<li>Provides a scalable, highly-available system architecture</li>
-<li>Hides the complexity of distributed technologies</li>
-<li>Hides low-level Hadoop and HBase APIs</li>
-</ul></section>
+<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1861,38 +1819,32 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/8
+              3/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reactor as an Integrated Platform</h1></header>
+            <header><h1>Exercise Summary</h1></header>
             
             
-            <section><p>Without a Big Data middleware layer, a developer has to piece together
-multiple open source frameworks and runtimes to assemble a complete
-Big Data infrastructure stack</p>
+            <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Reactor eases creation of these elements of Big Data applications:<ul>
-<li>Collecting</li>
-<li>Processing</li>
-<li>Storing</li>
-<li>Querying data</li>
-</ul>
-</li>
-<li>Data collected and stored in both structured and unstructured forms</li>
-<li>Processed in real-time and in batch</li>
-<li>Results available for retrieval, visualization, and further analysis</li>
+<li>Perform basic Reactor operations of Start and Stop</li>
+<li>Taken the Quick Start tour</li>
+<li>Use the Dashboard for basic operations</li>
+<li>Inject and Query Data through the Dashboard</li>
+<li>Modify an Application</li>
+<li>Redeploy and restart an Application</li>
 </ul></section>
             
           </div>
@@ -1905,36 +1857,25 @@ Big Data infrastructure stack</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/8
+              4/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Reactor's Application Lifecycle Support</h1></header>
+            <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p>Reactor supports developers through the entire application development lifecycle:</p>
-<ul class="simple">
-<li><strong>Development:</strong> Maven archetype, Java API, REST API</li>
-<li><strong>Debugging:</strong> local Reactor running on a laptop</li>
-<li><strong>Testing:</strong> Application unit test framework</li>
-<li><strong>Continuous integration:</strong></li>
-<li><strong>Production deployment:</strong><ul>
-<li>Development cloud (Sandbox Reactor)</li>
-<li>Production cloud (Enterprise Reactor)</li>
-</ul>
-</li>
-</ul></section>
+            <section><p><a class="reference external" href="return.html#e06">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1946,76 +1887,11 @@ Big Data infrastructure stack</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/8
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Module Summary</h1></header>
-            
-            
-            <section><p>You have now:</p>
-<ul class="simple">
-<li>Seen Continuuity Reactor's simple APIs</li>
-<li>Looked at Reactor as an integrated platform</li>
-<li>Reviewed Reactor's application lifecycle support</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              7/8
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Module Completed</h1></header>
-            
-            
-            <section><p><a class="reference external" href="return.html#m02">Chapter Index</a></p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m02_reactor_capabilities.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              8/8
+              5/5
             </aside>
           </footer>
         </div>
@@ -2030,50 +1906,32 @@ Big Data infrastructure stack</p>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Continuuity Reactor Capabilities</a></th>
+        <th><a href="#slide1">Building An Application Using DataSets</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Module Objectives</a></th>
+        <th><a href="#slide2">Exercise Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">What is Continuuity Reactor?</a></th>
+        <th><a href="#slide3">Exercise Steps</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Continuuity Reactor APIs</a></th>
+        <th><a href="#slide4">Exercise Summary</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Reactor as an Integrated Platform</a></th>
+        <th><a href="#slide5">Exercise Completed</a></th>
         <td><a href="#slide5">5</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-6">
-        <th><a href="#slide6">Reactor's Application Lifecycle Support</a></th>
-        <td><a href="#slide6">6</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-7">
-        <th><a href="#slide7">Module Summary</a></th>
-        <td><a href="#slide7">7</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-8">
-        <th><a href="#slide8">Module Completed</a></th>
-        <td><a href="#slide8">8</a></td>
       </tr>
       
       

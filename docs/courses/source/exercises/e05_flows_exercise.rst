@@ -1,5 +1,5 @@
 =====================================
-Building An Application Using Streams
+Building An Application Using Flows
 =====================================
 
 .. .. reST Editor: .. section-numbering::

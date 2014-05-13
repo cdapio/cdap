@@ -18,19 +18,26 @@ Module Objectives
 
 In this module, you will learn:
 
+- Continuuity Reactor as an application server
 - Continuuity Reactor architecture
 - Basic functions of Reactor
 - Basic elements of Reactor
 
 ----
 
-Continuuity Reactor Architecture
-================================
+Continuuity Reactor Application Server
+======================================
 
-.. image:: ../_images/Architecture.png
+.. image:: ../_images/Reactor_02.png
    :height: 500px
 
-.. [DOCNOTE: FIXME! Graphic content/shape or size]
+----
+
+Continuuity Reactor Architecture 
+================================
+
+.. image:: ../_images/hadoop_chart_01.png
+   :height: 500px
 
 ----
 
@@ -177,7 +184,7 @@ You should now:
 
 - Have a basic understanding of Continuuity Reactor's architecture
 - Know the four basic functions of Continuuity Reactor
-- Know the eight elements of Continuuity Reactor and their functions
+- Know the main elements of Continuuity Reactor and their functions
 - Be able to describe the functions of each element
 
 ----

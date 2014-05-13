@@ -191,7 +191,7 @@ Visualizing Results
 
 .. sourcecode:: java
 
-	class MyVisulization extends AbstractProcedure {
+	class MyVisualization extends AbstractProcedure {
 
 	  @Handle("visualizer")
 	  public void wave(ProcedureRequest request,
