@@ -13,6 +13,7 @@ import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.lib.table.TableSplit;
 import com.google.common.base.Function;

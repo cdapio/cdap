@@ -1,8 +1,8 @@
 package com.continuuity.data2.util.hbase;
 
-import org.apache.twill.internal.utils.Instances;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import org.apache.twill.internal.utils.Instances;
 
 /**
  * Common class factory behavior for classes which need specific implementations depending on HBase versions.

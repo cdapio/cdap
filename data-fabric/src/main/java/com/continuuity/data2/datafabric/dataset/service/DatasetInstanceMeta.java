@@ -1,7 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 
 /**
  * Dataset instance metadata.

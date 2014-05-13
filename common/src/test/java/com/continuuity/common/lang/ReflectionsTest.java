@@ -20,9 +20,9 @@ public class ReflectionsTest {
   @Test
   public void testResolved() throws Exception {
     Assert.assertTrue(Reflections.isResolved(String.class));
-    Assert.assertTrue(Reflections.isResolved(new TypeToken<Map<String, Set<Integer>>>() {}.getType()));
+    Assert.assertTrue(Reflections.isResolved(new TypeToken<Map<String, Set<Integer>>>() { }.getType()));
 
-    TypeToken<Record<Set<Integer>>> typeToken = new TypeToken<Record<Set<Integer>>>() {};
+    TypeToken<Record<Set<Integer>>> typeToken = new TypeToken<Record<Set<Integer>>>() { };
     Type arrayType = Record.class.getMethod("getArray").getGenericReturnType();
     Assert.assertFalse(Reflections.isResolved(arrayType));
     Assert.assertTrue(Reflections.isResolved(typeToken.resolveType(arrayType).getType()));

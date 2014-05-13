@@ -1,18 +1,15 @@
 package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.security.io.Codec;
 import com.continuuity.security.auth.FileBasedKeyManager;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyManager;
-import com.google.common.base.Throwables;
+import com.continuuity.security.io.Codec;
+
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Guice bindings for FileBasedKeyManagers. This extends {@code SecurityModule} to provide

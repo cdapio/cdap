@@ -1,14 +1,15 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -17,13 +18,13 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 /**
  * Handles dataset instance management calls.

@@ -134,27 +134,27 @@ public class MapReduceMetricsWriter {
       // mapred counters are running counters whereas our metrics timeseries and aggregates make more
       // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
       // emitting to the metrics system.
-      int emit_value = calcDiffAndSetTableValue(previousStats, scope, counter.getName(), counter.getValue());
+      int emitValue = calcDiffAndSetTableValue(previousStats, scope, counter.getName(), counter.getValue());
 
       // json object with "metric":[metricname] and optionally "tag":[tagname]
       JsonObject counterObj = (JsonObject) parser.parse(counter.getName());
       String metric = counterObj.get("metric").getAsString();
       if (counterObj.has("tag")) {
         String tag = counterObj.get("tag").getAsString();
-        collector.gauge(metric, emit_value, tag);
+        collector.gauge(metric, emitValue, tag);
         int tagCountSoFar = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
-        metricTagValues.put(metric, tagCountSoFar + emit_value);
+        metricTagValues.put(metric, tagCountSoFar + emitValue);
       } else {
-        metricUntaggedValues.put(metric, emit_value);
+        metricUntaggedValues.put(metric, emitValue);
       }
     }
 
     // emit adjusted counts for the untagged metrics.
     for (Map.Entry<String, Integer> untaggedEntry : metricUntaggedValues.entrySet()) {
       String metric = untaggedEntry.getKey();
-      int tag_value_sum = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
-      int adjusted_value = untaggedEntry.getValue() - tag_value_sum;
-      collector.gauge(metric, adjusted_value);
+      int tagValueSum = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
+      int adjustedValue = untaggedEntry.getValue() - tagValueSum;
+      collector.gauge(metric, adjustedValue);
     }
   }
 

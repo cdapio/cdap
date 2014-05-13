@@ -20,19 +20,19 @@ public interface DatasetAdmin extends Closeable {
   boolean exists() throws IOException;
 
   /**
-   * Creates dataset
+   * Creates dataset.
    * @throws IOException
    */
   void create() throws IOException;
 
   /**
-   * Drops dataset
+   * Drops dataset.
    * @throws IOException
    */
   void drop() throws IOException;
 
   /**
-   * Deletes all data of the dataset
+   * Deletes all data of the dataset.
    * @throws IOException
    */
   void truncate() throws IOException;
