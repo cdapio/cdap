@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.logger;
 
 import com.continuuity.test.ApplicationManager;
@@ -25,7 +40,7 @@ public class ResponseCodeAnalyticsTest extends ReactorTestBase {
   
   @Test
   public void test() throws Exception {
-    // Deploy an App
+    // Deploy an Application
     ApplicationManager appManager = deployApplication(ResponseCodeAnalyticsApp.class);
 
     // Start a Flow
@@ -55,7 +70,7 @@ public class ResponseCodeAnalyticsTest extends ReactorTestBase {
    */
   private void sendData(ApplicationManager appManager, long now)
     throws IOException {
-    // Define a StreamWriter to send Apache log events in String to the App.
+    // Define a StreamWriter to send Apache log events in String to the Application.
     StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
