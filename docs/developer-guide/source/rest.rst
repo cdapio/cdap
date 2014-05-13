@@ -654,7 +654,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/tables/mytable/rows/status``
+     - ``DELETE <base-url>/tables/mytable/rows/status``
    * - Description
      - Deletes from an existing Table named *mytable*, a row identified as *status*
 
