@@ -4,9 +4,13 @@
 package com.continuuity.data2.dataset.lib.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.twill.filesystem.Location;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -45,12 +49,20 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
     }
   };
 
-  protected final HBaseAdmin admin;
+  protected final Configuration hConf;
   protected final HBaseTableUtil tableUtil;
+  private HBaseAdmin admin;
 
-  protected AbstractHBaseDataSetManager(HBaseAdmin admin, HBaseTableUtil tableUtil) {
-    this.admin = admin;
+  protected AbstractHBaseDataSetManager(Configuration hConf, HBaseTableUtil tableUtil) {
+    this.hConf = hConf;
     this.tableUtil = tableUtil;
+  }
+
+  protected final synchronized HBaseAdmin getHBaseAdmin() throws IOException {
+    if (admin == null) {
+      admin = new HBaseAdmin(hConf);
+    }
+    return admin;
   }
 
   @Override
@@ -67,7 +79,7 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
   protected void upgradeTable(String tableNameStr, Properties properties) throws Exception {
     byte[] tableName = Bytes.toBytes(tableNameStr);
 
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+    HTableDescriptor tableDescriptor = getHBaseAdmin().getTableDescriptor(tableName);
 
     // Get the continuuity version from the table
     ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CONTINUUITY_VERSION));
@@ -124,15 +136,15 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
     LOG.info("Upgrading table '{}'...", tableNameStr);
     boolean enableTable = false;
     try {
-      admin.disableTable(tableName);
+      getHBaseAdmin().disableTable(tableName);
       enableTable = true;
     } catch (TableNotEnabledException e) {
       LOG.debug("Table '{}' not enabled when try to disable it.", tableNameStr);
     }
 
-    admin.modifyTable(tableName, tableDescriptor);
+    getHBaseAdmin().modifyTable(tableName, tableDescriptor);
     if (enableTable) {
-      admin.enableTable(tableName);
+      getHBaseAdmin().enableTable(tableName);
     }
 
     LOG.info("Table '{}' upgrade completed.", tableNameStr);

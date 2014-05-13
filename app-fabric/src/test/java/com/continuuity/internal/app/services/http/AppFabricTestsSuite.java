@@ -1,9 +1,5 @@
 package com.continuuity.internal.app.services.http;
 
-import com.continuuity.app.services.AppFabricService;
-import com.continuuity.app.services.AppFabricServiceException;
-import com.continuuity.app.services.ProgramDescriptor;
-import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -17,9 +13,7 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
 import com.continuuity.metrics.query.MetricsQueryService;
-import com.continuuity.test.internal.TestHelper;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,12 +27,12 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.apache.thrift.TException;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,19 +46,15 @@ public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
-
   //private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
+
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
-
   private static Injector injector;
   private static AppFabricServer appFabricServer;
-
   private static EndpointStrategy endpointStrategy;
-  private static AppFabricService.Iface app;
   private static MetricsQueryService metrics;
-
   private static TransactionSystemClient txClient;
 
   @ClassRule
@@ -91,7 +81,6 @@ public class AppFabricTestsSuite {
         Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
       injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
-      app =  appFabricServer.getService();
       txClient = injector.getInstance(TransactionSystemClient.class);
       metrics = injector.getInstance(MetricsQueryService.class);
       metrics.startAndWait();
@@ -116,13 +105,6 @@ public class AppFabricTestsSuite {
     return injector;
   }
 
-  public static void startProgram (ProgramId id) throws TException, AppFabricServiceException {
-    app.start(TestHelper.DUMMY_AUTH_TOKEN, new ProgramDescriptor(id, ImmutableMap.<String, String>of()));
-  }
-
-  public static void stopProgram (ProgramId id) throws TException, AppFabricServiceException {
-    app.stop(TestHelper.DUMMY_AUTH_TOKEN, id);
-  }
 
   public static void stopAppFabricServer(CConfiguration conf) {
     appFabricServer.stopAndWait();

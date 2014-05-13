@@ -480,6 +480,23 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics processor.
+   */
+  public static final class MetricsProcessor {
+    public static final String NUM_INSTANCES = "metrics.processor.num.instances";
+    public static final String NUM_CORES = "metrics.processor.num.cores";
+    public static final String MEMORY_MB = "metrics.processor.memory.mb";
+  }
+
+  /**
+   * Configurations for log saver.
+   */
+  public static final class LogSaver {
+    public static final String NUM_INSTANCES = "log.saver.num.instances";
+    public static final String MEMORY_MB = "log.saver.run.memory.megs";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {

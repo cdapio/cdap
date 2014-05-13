@@ -630,6 +630,28 @@
     </property>
 
     <!--
+        Metrics processor configuration
+     -->
+
+    <property>
+        <name>metrics.processor.num.instances</name>
+        <value>2</value>
+        <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.num.cores</name>
+        <value>1</value>
+        <description>Number of cores for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.memory.mb</name>
+        <value>512</value>
+        <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <!--
         Logging Configuration
     -->
     <property>
@@ -672,6 +694,12 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.run.memory.megs</name>
+        <value>1024</value>
+        <description>Memory in MB for log saver instances to run in yarn</description>
     </property>
 
     <!--

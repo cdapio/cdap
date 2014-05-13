@@ -18,24 +18,30 @@ import java.nio.ByteBuffer;
  */
 public final class MockResponder implements HttpResponder {
   private HttpResponseStatus status = null;
+  private Object content = null;
 
   public HttpResponseStatus getStatus() {
     return status;
   }
 
+  public Object getResponseContent() {
+    return content;
+  }
+
   @Override
   public void sendJson(HttpResponseStatus status, Object object) {
-    this.status = status;
+    sendJson(status, object, null, null);
   }
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type) {
-    this.status = status;
+    sendJson(status, object, type, null);
   }
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
     this.status = status;
+    this.content = object;
   }
 
   @Override

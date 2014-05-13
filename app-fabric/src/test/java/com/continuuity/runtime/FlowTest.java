@@ -29,7 +29,7 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.test.internal.DefaultId;
-import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -81,9 +81,9 @@ public class FlowTest {
 
   @Test
   public void testAppWithArgs() throws Exception {
-   final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
-                                                                               TEMP_FOLDER_SUPPLIER);
-   ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+   final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
+                                                                                        TEMP_FOLDER_SUPPLIER);
+   ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
     // load on procedure.
@@ -97,7 +97,8 @@ public class FlowTest {
     TimeUnit.SECONDS.sleep(1);
 
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
+                                                    getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
@@ -120,9 +121,9 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(WordCountApp.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
 
@@ -137,10 +138,11 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(1);
 
-    TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
+                                             getInstance(TransactionSystemClient.class);
 
     QueueName queueName = QueueName.fromStream("text");
-    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
@@ -163,7 +165,8 @@ public class FlowTest {
 
     // Procedure
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
+      getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency")).iterator().next();
@@ -190,16 +193,15 @@ public class FlowTest {
 
   @Test
   public void testCountRandomApp() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(TestCountRandomApp.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
-
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(TestCountRandomApp.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
                                                       .toJson(app.getAppSpecLoc().getSpecification()));
 
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getType() == Type.FLOW) {
-        ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
+        ProgramRunner runner = AppFabricTestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }
@@ -210,13 +212,12 @@ public class FlowTest {
 
   @Test
   public void testCountAndFilterWord() throws Exception {
-    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(CountAndFilterWord.class,
-                                                                                TEMP_FOLDER_SUPPLIER);
-
+    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(CountAndFilterWord.class,
+                                                                                         TEMP_FOLDER_SUPPLIER);
     ProgramController controller = null;
     for (final Program program : app.getPrograms()) {
       if (program.getType() == Type.FLOW) {
-        ProgramRunner runner = TestHelper.getInjector().getInstance(FlowProgramRunner.class);
+        ProgramRunner runner = AppFabricTestHelper.getInjector().getInstance(FlowProgramRunner.class);
         controller = runner.run(program, new SimpleProgramOptions(program));
       }
     }
@@ -224,11 +225,11 @@ public class FlowTest {
     TimeUnit.SECONDS.sleep(1);
 
     QueueName queueName = QueueName.fromStream("text");
-    QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     final Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
     TransactionExecutorFactory txExecutorFactory =
-      TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
+      AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
     TransactionExecutor txExecutor =
       txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer));
 
@@ -255,7 +256,7 @@ public class FlowTest {
   @Test (expected = IllegalArgumentException.class)
   public void testInvalidOutputEmitter() throws Throwable {
     try {
-      TestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class, TEMP_FOLDER_SUPPLIER);
     } catch (Exception e) {
       throw Throwables.getRootCause(e);
     }

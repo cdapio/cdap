@@ -709,13 +709,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-
-
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> overrides, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -728,11 +725,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
-      BasicArguments userArguments = new BasicArguments();
-      if (arguments != null) {
-        userArguments = new BasicArguments(arguments);
+      Map<String, String> userArgs = store.getRunArguments(id);
+      if (overrides != null) {
+        for (Map.Entry<String, String> entry : overrides.entrySet()) {
+          userArgs.put(entry.getKey(), entry.getValue());
+        }
       }
 
+      BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
@@ -761,6 +761,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
+      if (throwable instanceof FileNotFoundException) {
+        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
@@ -781,6 +784,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
         }
       } catch (Exception e) {
+        if (e instanceof FileNotFoundException) {
+          return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+        }
         return AppFabricServiceStatus.INTERNAL_ERROR;
       }
     }
@@ -1152,7 +1158,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendJson(HttpResponseStatus.OK, "OK");
           break;
         case SUSPENDED:
-          responder.sendJson(HttpResponseStatus.OK, "Schedule already suspended");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
           break;
       }
     } catch (SecurityException e) {
@@ -1182,7 +1188,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
           break;
         case SCHEDULED:
-          responder.sendJson(HttpResponseStatus.OK, "Already resumed");
+          responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
           break;
         case SUSPENDED:
           scheduler.resumeSchedule(scheduleId);

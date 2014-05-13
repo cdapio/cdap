@@ -14,8 +14,6 @@ import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
@@ -57,7 +55,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -75,6 +72,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import javax.annotation.Nullable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
 
@@ -665,42 +663,33 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //start flow and check the status
-    ProgramId flowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WordCountApp", "WordCountFlow");
-    AppFabricTestsSuite.startProgram(flowId);
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //stop the flow and check the status
-    AppFabricTestsSuite.stopProgram(flowId);
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //check the status for procedure
-    ProgramId procedureId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WordCountApp", "WordFrequency");
-    procedureId.setType(EntityType.PROCEDURE);
-    AppFabricTestsSuite.startProgram(procedureId);
+    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
-    AppFabricTestsSuite.stopProgram(procedureId);
+    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
 
     //start map-reduce and check status and stop the map-reduce job and check the status ..
-    deploy(DummyAppWithTrackingTable.class);
-    ProgramId mapreduceId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "dummy", "dummy-batch");
-    mapreduceId.setType(EntityType.MAPREDUCE);
-    AppFabricTestsSuite.startProgram(mapreduceId);
+    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
 
     //stop the mapreduce program and check the status
-    AppFabricTestsSuite.stopProgram(mapreduceId);
+    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
     Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
 
     //deploy and check status of a workflow
     deploy(SleepingWorkflowApp.class);
-    ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "SleepWorkflowApp", "SleepWorkflow");
-    workflowId.setType(EntityType.WORKFLOW);
-    AppFabricTestsSuite.startProgram(workflowId);
+    Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
     while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
       TimeUnit.MILLISECONDS.sleep(10);
     }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
-    AppFabricTestsSuite.stopProgram(workflowId);
   }
 
   private String getWebappStatus(String appId) throws Exception {
@@ -734,13 +723,13 @@ public class AppFabricHttpHandlerTest {
   /**
    * Deploys and application.
    */
-  static HttpResponse deploy(Class<?> application) throws Exception {
+  public static HttpResponse deploy(Class<?> application) throws Exception {
     return deploy(application, null);
   }
   /**
    * Deploys and application with (optionally) defined app name
    */
-  static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+  public static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -1041,6 +1030,21 @@ public class AppFabricHttpHandlerTest {
     json = EntityUtils.toString(response.getEntity());
     output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
+
+    response = AppFabricTestsSuite.doPost(scheduleSuspend);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //check paused state
+    response = AppFabricTestsSuite.doGet(scheduleStatus);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+    Assert.assertEquals("SUSPENDED", output.get("status"));
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+
+    response = AppFabricTestsSuite.doDelete("/v2/apps/AppWithSchedule");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test

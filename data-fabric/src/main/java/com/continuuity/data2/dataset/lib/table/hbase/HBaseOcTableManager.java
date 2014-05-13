@@ -6,8 +6,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset.lib.hbase.AbstractHBaseDataSetManager;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -15,6 +13,8 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -32,7 +32,7 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
   @Inject
   public HBaseOcTableManager(CConfiguration conf, Configuration hConf,
                              LocationFactory locationFactory, HBaseTableUtil tableUtil) throws IOException {
-    super(new HBaseAdmin(hConf), tableUtil);
+    super(hConf, tableUtil);
     this.conf = conf;
     this.locationFactory = locationFactory;
   }
@@ -76,7 +76,7 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
 
   @Override
   public boolean exists(String name) throws Exception {
-    return admin.tableExists(getHBaseTableName(name));
+    return getHBaseAdmin().tableExists(getHBaseTableName(name));
   }
 
   @Override
@@ -111,12 +111,13 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
       addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
     }
-    tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
+    tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, tableDescriptor);
   }
 
   @Override
   public void truncate(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(getHBaseTableName(name));
+    HBaseAdmin admin = getHBaseAdmin();
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
@@ -126,6 +127,7 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
   @Override
   public void drop(String name) throws Exception {
     byte[] tableName = Bytes.toBytes(getHBaseTableName(name));
+    HBaseAdmin admin = getHBaseAdmin();
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
   }

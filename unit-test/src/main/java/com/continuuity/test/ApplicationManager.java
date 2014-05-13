@@ -75,4 +75,12 @@ public interface ApplicationManager {
    * Stops all processors managed by this manager and clear all associated runtime metrics.
    */
   void stopAll();
+
+  /**
+   * Starts a workflow.
+   * @param workflowName
+   * @param arguments
+   * @return {@link WorkflowManager} for controlling the started workflow.
+   */
+  WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
 }

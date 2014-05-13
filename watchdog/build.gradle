@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 smartyFacts {
     api {
@@ -96,13 +95,4 @@ idea {
       }
 }
 
-// Watchdog additional package dependencies
-packaging {
-  dependencies.add('continuuity-hbase-compat-0.94')
-  dependencies.add('continuuity-hbase-compat-0.96')
-}
-rpm {
-  dependencies.add('continuuity-hbase-compat-0.94')
-  dependencies.add('continuuity-hbase-compat-0.96')
-}
 

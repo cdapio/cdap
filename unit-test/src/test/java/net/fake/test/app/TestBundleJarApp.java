@@ -2,7 +2,6 @@ package net.fake.test.app;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
-import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
@@ -17,7 +16,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**

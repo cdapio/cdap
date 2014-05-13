@@ -10,7 +10,7 @@ in their compiled forms as JAR files in this release.
 Building
 ========
 
-Each example comes with Maven ``.pom`` file. To build, install Maven, and from each
+Each example comes with Maven ``.pom`` file. To build, install Maven, and from the
 ``/examples`` directory prompt, enter::
 
 	mvn clean package
@@ -21,8 +21,8 @@ List of Example Apps
 
 CountAndFilterWords
 -------------------
-- A variation of CountTokens that illustrates that a Flowlet's output can
-  be consumed by multiple downStream Flowlets.
+- A variation of CountTokens that illustrates that a flowlet's output can
+  be consumed by multiple downstream Flowlets.
 - In addition to counting all tokens, also sends all tokens to a filter that
   drops all tokens that are not upper case.
 - The upper case tokens are then counted by a separate Flowlet.
@@ -59,11 +59,11 @@ CountTokens
 
 HelloWorld
 ----------
-- This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one 
+- This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one
   Procedure.
 - A Stream to send names to.
 - A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
-- A Procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'
+- A Procedure that reads the name from the KeyValueTable and prints "Hello [Name]!"
 
 PageViewAnalytics
 -----------------
@@ -74,8 +74,8 @@ PageViewAnalytics
 
 Purchase
 --------
-- An app that uses scheduled MapReduce workFlows to read from one ObjectStore DataSet
-  and write to another:
+- An app that uses scheduled MapReduce Workflows to read from one ObjectStore DataSet
+  and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
@@ -91,8 +91,8 @@ Purchase
 
 - Note: Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
   you'll have to wait until the next day (or manually or programmatically execute the
-  PurcaseHistoryBuilder) after entering the first customers' purchases or the 
-  PurchaseQuery will return a "not found" error.
+  PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
+  will return a "not found" error.
 
 ResourceSpammer
 ---------------
@@ -111,10 +111,16 @@ SimpleWriteAndRead
 ------------------
 - A simple example to illustrate how to read and write key/values in a Flow.
 
-TrafficAnalytics
+Ticker
 ----------------
 - This application pulls in stock market activity data and stores it in DataSets that 
   allow querying for that data with various filters.
+
+TrafficAnalytics
+----------------
+- This example demonstrates an application of streaming log analysis using a MapReduce job.
+  It computes the aggregate number of HTTP requests on an hourly basis in each hour of the
+  last twenty-four hours, processing in real-time Apache access log data. 
 
 WordCount
 ---------
@@ -123,5 +129,16 @@ WordCount
   to simplify storing complex data.
 
 
-Copyright © 2014 Continuuity, Inc.
-Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc. All rights reserved.
+Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc.
+
+Copyright 2013-2014 Continuuity, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+except in compliance with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+either express or implied. See the License for the specific language governing permissions
+and limitations under the License.

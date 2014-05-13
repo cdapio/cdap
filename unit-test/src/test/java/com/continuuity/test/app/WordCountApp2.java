@@ -42,12 +42,12 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import java.util.StringTokenizer;
-import javax.annotation.Nullable;
 
 /**
  * This is a sample word count app that is used in testing in
@@ -328,6 +328,9 @@ public class WordCountApp2 implements Application {
       job.setReducerClass(StreamReducer.class);
     }
 
+    /**
+     * Mapper for the count from stream.
+     */
     public static final class StreamMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
 
       private static final Text TOTAL = new Text("total");
@@ -344,6 +347,9 @@ public class WordCountApp2 implements Application {
       }
     }
 
+    /**
+     * Reducer for the count from stream.
+     */
     public static final class StreamReducer extends Reducer<Text, LongWritable, byte[], byte[]> {
 
       @Override
