@@ -17,6 +17,13 @@ import java.util.concurrent.TimeUnit;
 public interface FileReader<T, P> extends Closeable, PositionReporter<P> {
 
   /**
+   * Initialize the file reader.
+   *
+   * @throws IOException If initialization failed.
+   */
+  void initialize() throws IOException;
+
+  /**
    * Reads as much data as possible until maxEvents.
    *
    * @param events Collection for storing data read.
