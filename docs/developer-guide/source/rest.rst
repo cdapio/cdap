@@ -359,7 +359,7 @@ Data HTTP API
 =============
 
 The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
-You can create Tables and read, write, modify, or delete data.
+You can create Tables, truncate Tables, and read, write, modify, or delete data.
 
 For DataSets other than Tables, you can truncate the DataSet using this API.
 
@@ -654,9 +654,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/tables/mytable/rows/status``
+     - ``DELETE <base-url>/tables/mytable/rows/status``
    * - Description
-     - Read from an existing Table named *mytable*, a row identified as *status*
+     - Deletes from an existing Table named *mytable*, a row identified as *status*
 
 Comments
 ........
@@ -669,7 +669,7 @@ See the examples under `Reading Data from a Table`_.
 Deleting Data from a DataSet
 ----------------------------
 
-To clear a dataset from all data, submit an HTTP POST request::
+To clear a DataSet of all data, submit an HTTP POST request::
 
 	POST <base-url>/datasets/<dataset-name>/truncate
 
@@ -799,7 +799,7 @@ This allows you to specify values as numeric strings while using a different enc
 Procedure HTTP API
 ==================
 
-This interface supports sending queries to the methods of an Application’s procedures.
+This interface supports sending queries to the methods of an Application’s Procedures.
 
 Executing Procedures
 --------------------
