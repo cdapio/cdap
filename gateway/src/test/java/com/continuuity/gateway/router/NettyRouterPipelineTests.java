@@ -14,8 +14,6 @@ import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.security.auth.AccessTokenTransformer;
-import com.continuuity.security.auth.TokenState;
-import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.guice.SecurityModules;
 
 import com.google.common.base.Supplier;
@@ -210,12 +208,7 @@ public class NettyRouterPipelineTests {
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
-                        new TokenValidator() {
-                          @Override
-                          public TokenState validate(String token) {
-                            return TokenState.VALID;
-                          }
-                        }, accessTokenTransformer, discoveryServiceClient);
+                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
