@@ -10,6 +10,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
 <module name="Checker">
 
   <module name="FileTabCharacter">
+    <property name="severity" value="error"/>
     <!-- Checks that there are no tab characters in the file.
     -->
   </module>
@@ -47,19 +48,24 @@ page at http://checkstyle.sourceforge.net/config.html -->
   <module name="JavadocPackage">
     <!-- Checks that each Java package has a Javadoc file used for commenting.
       Only allows a package-info.java, not package.html. -->
-    <property name="severity" value="warning"/>
+    <property name="severity" value="error"/>
   </module>
 
   <!-- All Java AST specific tests live under TreeWalker module. -->
   <module name="TreeWalker">
+
+    <!-- required for SupressionCommentFilter and SuppressWithNearbyCommentFilter -->
+    <module name="FileContentsHolder"/>
 
     <!--
 
     IMPORT CHECKS
 
     -->
+
     <module name="AvoidStarImport">
       <property name="allowClassImports" value="false"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="RedundantImport">
@@ -69,9 +75,9 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
     <module name="ImportOrder">
       <!-- Checks for out of order import statements. -->
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
       <property name="ordered" value="true"/>
-      <property name="groups" value="com,org,junit,net,/^javax?\./"/>
+      <property name="groups" value="com.continuuity,/([^j]|.[^a]|..[^v]|...[^a])/,/^javax?\./"/>
       <!-- This ensures that static imports go to the end. -->
       <property name="option" value="bottom"/>
       <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
@@ -100,7 +106,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html -->
     <module name="JavadocMethod">
       <property name="scope" value="protected"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
       <property name="allowMissingJavadoc" value="true"/>
       <property name="allowMissingParamTags" value="true"/>
       <property name="allowMissingReturnTag" value="true"/>
@@ -115,7 +121,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
     </module>
 
     <module name="JavadocStyle">
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <!--
@@ -133,14 +139,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
         seven characters, this is not in line with common practice at Google.
       -->
       <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]{1,})*$"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="TypeNameCheck">
       <!-- Validates static, final fields against the
       expression "^[A-Z][a-zA-Z0-9]*$". -->
       <metadata name="altname" value="TypeName"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="ConstantNameCheck">
@@ -154,7 +160,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="format" value="^([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|FLAG_.*)$"/>
       <message key="name.invalidPattern"
                value="Variable ''{0}'' should be in ALL_CAPS (if it is a constant) or be private (otherwise)."/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="StaticVariableNameCheck">
@@ -166,7 +172,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="applyToPackage" value="true"/>
       <property name="applyToPrivate" value="true"/>
       <property name="format" value="^[a-z][a-zA-Z0-9]*_?$"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="MemberNameCheck">
@@ -177,32 +183,32 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="applyToPackage" value="true"/>
       <property name="applyToPrivate" value="true"/>
       <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="MethodNameCheck">
       <!-- Validates identifiers for method names. -->
       <metadata name="altname" value="MethodName"/>
       <property name="format" value="^[a-z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)*$"/>
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="ParameterName">
       <!-- Validates identifiers for method parameters against the
         expression "^[a-z][a-zA-Z0-9]*$". -->
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="LocalFinalVariableName">
       <!-- Validates identifiers for local final variables against the
         expression "^[a-z][a-zA-Z0-9]*$". -->
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="LocalVariableName">
       <!-- Validates identifiers for local variables against the
         expression "^[a-z][a-zA-Z0-9]*$". -->
-      <property name="severity" value="warning"/>
+      <property name="severity" value="error"/>
     </module>
 
 
@@ -321,6 +327,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
            whitespace.
       -->
       <property name="tokens" value="COMMA, SEMI, TYPECAST"/>
+      <property name="severity" value="error"/>
     </module>
 
     <module name="NoWhitespaceAfter">
@@ -350,4 +357,16 @@ page at http://checkstyle.sourceforge.net/config.html -->
     </module>
 
   </module>
+
+  <module name="SuppressionFilter">
+    <property name="file" value="gradle/config/suppressions.xml"/>
+  </module>
+
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="CHECKSTYLE OFF: (.+)" />
+    <property name="onCommentFormat" value="CHECKSTYLE ON" />
+    <property name="checkFormat" value="Javadoc.*"/>
+    <property name="messageFormat" value="$1"/>
+  </module>
+
 </module>

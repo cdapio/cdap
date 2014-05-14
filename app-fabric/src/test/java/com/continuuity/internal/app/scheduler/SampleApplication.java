@@ -60,7 +60,7 @@ public class SampleApplication implements Application {
    * DummyAction
    */
   public static class DummyAction extends AbstractWorkflowAction {
-    private static Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
     public void run() {
       LOG.info("Ran dummy action");

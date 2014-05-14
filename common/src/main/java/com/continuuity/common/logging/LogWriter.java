@@ -8,7 +8,7 @@ import java.io.IOException;
 public interface LogWriter {
 
   /**
-   * Configures this writer
+   * Configures this writer.
    * @param config specifies what log to write to
    */
   public void configure(LogConfiguration config) throws IOException;

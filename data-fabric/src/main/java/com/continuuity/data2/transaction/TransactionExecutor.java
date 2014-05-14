@@ -35,6 +35,12 @@ public interface TransactionExecutor {
     void apply() throws Exception;
   }
 
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unable to get class information for @throws tag '<exn>' (...)".
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: @throws
+
   /**
    * Execute a function under transactional semantics. A transaction is started  and all datasets
    * are initialized with the transaction. Then the passed function is executed, the transaction
@@ -51,6 +57,8 @@ public interface TransactionExecutor {
    * @throws TransactionFailureException if any exception is caught, be it from the function or from the datasets.
    */
   <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException;
+
+  // CHECKSTYLE ON
 
   /**
    * Like {@link #execute(Function, Object)} but without a return value.

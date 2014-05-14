@@ -9,8 +9,8 @@ import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 import com.continuuity.data2.transaction.TxConstants;
 
-import javax.annotation.Nullable;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * TODO: Having this class is a bad design: we want to add more dataset types to a system without changing core code.

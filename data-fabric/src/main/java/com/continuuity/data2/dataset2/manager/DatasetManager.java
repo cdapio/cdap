@@ -5,8 +5,8 @@ import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Provides access to the Datasets System.
@@ -27,12 +27,19 @@ import java.io.IOException;
  * </tt>
  */
 public interface DatasetManager {
+
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unable to get class information for @throws tag '<exn>' (...)".
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: @throws
+
   /**
    * Registers dataset types by adding dataset module to the system.
    * @param moduleName dataset module name
    * @param moduleClass dataset module class
    * @throws ModuleConflictException when module with same name is already registered
-   * @throws DatasetManagementException
+   * @throws DatasetManagementException in case of problems
    */
   void register(String moduleName, Class<? extends DatasetModule> moduleClass)
     throws DatasetManagementException;
@@ -75,6 +82,8 @@ public interface DatasetManager {
    * @throws DatasetManagementException
    */
   void deleteInstance(String datasetInstanceName) throws DatasetManagementException;
+
+  // CHECKSTYLE ON
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.

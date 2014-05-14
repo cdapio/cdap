@@ -3,12 +3,13 @@ package com.continuuity.data2.datafabric.dataset.type;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.datafabric.dataset.AbstractObjectsStore;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+
 import com.google.common.collect.Lists;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Dataset types and modules metadata store

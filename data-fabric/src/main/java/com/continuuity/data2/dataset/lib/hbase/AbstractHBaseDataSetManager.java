@@ -4,24 +4,22 @@
 package com.continuuity.data2.dataset.lib.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.twill.filesystem.Location;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

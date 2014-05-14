@@ -25,7 +25,7 @@ public interface DataSetManager {
   /**
    * Creates dataset if doesn't exist. If dataset exists does nothing.
    * @param name name of the dataset to create
-   * @param name additional properties
+   * @param props additional properties
    * @throws Exception if creation fails
    */
   void create(String name, @Nullable Properties props) throws Exception;

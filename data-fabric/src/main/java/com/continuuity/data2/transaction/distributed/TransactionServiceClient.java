@@ -14,12 +14,12 @@ import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
+
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
-import java.io.InputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.thrift.TException;
@@ -27,6 +27,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 
