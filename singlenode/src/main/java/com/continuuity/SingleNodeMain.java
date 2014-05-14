@@ -30,6 +30,7 @@ import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
+import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -68,6 +69,7 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private ExternalAuthenticationServer externalAuthenticationServer;
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -85,6 +87,11 @@ public class SingleNodeMain {
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
+
+    boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    if (securityEnabled) {
+      externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -130,6 +137,9 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.startAndWait();
+    }
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
@@ -150,6 +160,9 @@ public class SingleNodeMain {
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.stopAndWait();
+    }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
   }
@@ -266,6 +279,7 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
+      new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
   }
