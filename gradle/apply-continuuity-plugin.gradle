@@ -25,5 +25,6 @@ allprojects { p ->
 allprojects {
     project.tasks.withType(Compile) {
         options.compilerArgs << "-Xlint:unchecked"
+        options.compilerArgs << "-Xlint:deprecation"
     }
 }
