@@ -200,18 +200,23 @@ Upon completion of this course you should be able to:
 .. chapter 8
 .. landslide: chapter: Testing and Debugging Applications With Reactor
 .. ................................................
-.. landslide: module: Testing with Local Reactor
-.. landslide: module: Testing with Distributed Reactor
-.. landslide: module: Debugging Strategies
+.. landslide: module: Testing Reactor Applications
+.. landslide: module link: ../modules/m26_testing_reactor_applications.rst
+.. landslide: module: Debugging Reactor Applications
+.. landslide: module link: ../modules/m27_debugging_reactor_applications.rst
 .. landslide: exercise: Testing and Debugging An Application
+.. landslide: exercise link: ../exercises/e09_testing_debugging_exercise.rst
 
 .. chapter 9
 .. landslide: chapter: Operational Considerations For Reactor
 .. ................................................
 .. landslide: module: Instrumenting Application Health via Metrics
+.. landslide: module link: ../modules/m28.rst
 .. landslide: module: Collecting Critical Application Information via Logs
+.. landslide: module link: ../modules/m.rst
 .. landslide: module: Scaling Instances
 .. landslide: exercise: Monitoring and Logging An Application
+.. landslide: exercise link:  ../exercises/e10_monitoring_logging_exercise.rst
 
 .. chapter 10
 .. landslide: chapter: Controlling Application Lifecycle using REST APIs
@@ -220,6 +225,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Flow Management API
 .. landslide: module: Procedure Management APIs
 .. landslide: exercise: Controlling Your Reactor Application
+.. landslide: exercise link: ../exercises/e11_controlling_application_exercise.rst
 
 
 .. landslide: CUT START
