@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Hooks executed in Hive driver before and after executing any command.
  */
+// todo TransactionSystemClient should be retrieved differently/won't work in distributed mode.
 public class TransactionHook implements ExecuteWithHookContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHook.class);
