@@ -15,23 +15,23 @@ import javax.security.auth.login.LoginContext;
  *
  */
 public class JAASUserPrincipal implements Principal {
-  private final String _name;
-  private final Subject _subject;
-  private final LoginContext _loginContext;
+  private final String name;
+  private final Subject subject;
+  private final LoginContext loginContext;
 
     /* ------------------------------------------------ */
 
   public JAASUserPrincipal(String name, Subject subject, LoginContext loginContext) {
-    this._name = name;
-    this._subject = subject;
-    this._loginContext = loginContext;
+    this.name = name;
+    this.subject = subject;
+    this.loginContext = loginContext;
   }
 
     /* ------------------------------------------------ */
   /** Get the name identifying the user
    */
   public String getName () {
-    return _name;
+    return name;
   }
 
 
@@ -40,11 +40,11 @@ public class JAASUserPrincipal implements Principal {
    * @return subject
    */
   public Subject getSubject () {
-    return this._subject;
+    return this.subject;
   }
 
   public LoginContext getLoginContext () {
-    return this._loginContext;
+    return this.loginContext;
   }
 
   public String toString() {

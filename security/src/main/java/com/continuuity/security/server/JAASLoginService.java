@@ -55,14 +55,14 @@ import javax.security.auth.login.LoginException;
 public class JAASLoginService extends AbstractLifeCycle implements LoginService {
   private static final Logger LOG = Log.getLogger(JAASLoginService.class);
 
-  public static String DEFAULT_ROLE_CLASS_NAME = "org.eclipse.jetty.plus.jaas.JAASRole";
-  public static String[] DEFAULT_ROLE_CLASS_NAMES = {DEFAULT_ROLE_CLASS_NAME};
+  public static String defaultRoleClassName = "org.eclipse.jetty.plus.jaas.JAASRole";
+  public static String[] defaultRoleClassNames = {defaultRoleClassName};
 
-  protected String[] roleClassNames = DEFAULT_ROLE_CLASS_NAMES;
+  protected String[] roleClassNames = defaultRoleClassNames;
   protected String callbackHandlerClass;
   protected String realmName;
   protected String loginModuleName;
-  protected JAASUserPrincipal _defaultUser = new JAASUserPrincipal(null, null, null);
+  protected JAASUserPrincipal defaultUser = new JAASUserPrincipal(null, null, null);
   protected IdentityService identityService;
   protected Configuration configuration;
 
@@ -153,8 +153,8 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
       tmp.addAll(Arrays.asList(classnames));
     }
 
-    if (!tmp.contains(DEFAULT_ROLE_CLASS_NAME)) {
-      tmp.add(DEFAULT_ROLE_CLASS_NAME);
+    if (!tmp.contains(defaultRoleClassName)) {
+      tmp.add(defaultRoleClassName);
     }
     roleClassNames = tmp.toArray(new String[tmp.size()]);
   }
@@ -277,8 +277,8 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
     Collection<String> groups = new LinkedHashSet<String>();
     try {
       for (String roleClassName : roleClassNames) {
-        Class load_class = Thread.currentThread().getContextClassLoader().loadClass(roleClassName);
-        Set<Principal> rolesForType = subject.getPrincipals(load_class);
+        Class loadClass = Thread.currentThread().getContextClassLoader().loadClass(roleClassName);
+        Set<Principal> rolesForType = subject.getPrincipals(loadClass);
         for (Principal principal : rolesForType) {
           groups.add(principal.getName());
         }
