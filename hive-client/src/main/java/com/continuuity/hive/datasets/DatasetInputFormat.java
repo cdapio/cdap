@@ -40,7 +40,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
     String txJson = jobConf.get(Constants.Hive.TX_QUERY);
-    Preconditions.checkNotNull(jobConf.get(Constants.Hive.TX_QUERY), "Transaction ID not set for Hive query.");
+    Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");
     Transaction tx = new Gson().fromJson(txJson, Transaction.class);
 
     RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME), tx);
