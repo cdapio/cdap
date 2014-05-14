@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Driver class for starting all reactor master services.
  * AppFabricHttpService
- * TwillRunnables: MetricsProcessor, MetricsHttp, LogSaver, TransactionService.
+ * TwillRunnables: MetricsProcessor, MetricsHttp, LogSaver, TransactionService, StreamHandler.
  */
 public class ReactorServiceMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(ReactorServiceMain.class);
