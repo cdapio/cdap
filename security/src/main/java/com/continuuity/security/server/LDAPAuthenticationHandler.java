@@ -36,7 +36,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
    * @return
    */
   @Override
-  protected Configuration getConfiguration() {
+  protected Configuration getLoginModuleConfiguration() {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {

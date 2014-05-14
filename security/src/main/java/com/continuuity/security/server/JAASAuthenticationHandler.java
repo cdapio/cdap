@@ -28,7 +28,7 @@ public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandle
 
     JAASLoginService jaasLoginService = new JAASLoginService();
     jaasLoginService.setLoginModuleName(loginModuleName);
-    jaasLoginService.setConfiguration(getConfiguration());
+    jaasLoginService.setConfiguration(getLoginModuleConfiguration());
 
     this.setStrict(false);
     this.setIdentityService(new DefaultIdentityService());
@@ -37,5 +37,5 @@ public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandle
     this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
   }
 
-  protected abstract Configuration getConfiguration();
+  protected abstract Configuration getLoginModuleConfiguration();
 }

@@ -54,7 +54,7 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
 
     JAASLoginService loginService = new JAASLoginService();
     loginService.setLoginModuleName("JASPI");
-    loginService.setConfiguration(getConfiguration());
+    loginService.setConfiguration(getLoginModuleConfiguration());
 
     DefaultIdentityService identityService = new DefaultIdentityService();
 
@@ -87,7 +87,7 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
    * Dynamically load the configuration properties set by the user for a JASPI plugin.
    * @return Configuration
    */
-  protected Configuration getConfiguration() {
+  protected Configuration getLoginModuleConfiguration() {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
