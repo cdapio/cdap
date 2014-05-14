@@ -156,6 +156,9 @@ public class ReactorServiceMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
+    if (isLeader.get() && twillController != null) {
+      twillController.stopAndWait();
+    }
     leaderElection.cancel();
     zkClientService.stopAndWait();
   }
