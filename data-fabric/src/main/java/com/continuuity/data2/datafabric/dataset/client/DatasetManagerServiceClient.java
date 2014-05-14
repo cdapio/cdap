@@ -1,28 +1,28 @@
 package com.continuuity.data2.datafabric.dataset.client;
 
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.data2.dataset2.manager.DatasetManagementException;
+import com.continuuity.data2.dataset2.manager.InstanceConflictException;
+import com.continuuity.data2.dataset2.manager.ModuleConflictException;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.

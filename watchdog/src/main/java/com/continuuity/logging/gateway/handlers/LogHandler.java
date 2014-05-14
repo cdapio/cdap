@@ -2,16 +2,17 @@ package com.continuuity.logging.gateway.handlers;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.LogReader;
+
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -19,12 +20,12 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Handler to serve log requests.

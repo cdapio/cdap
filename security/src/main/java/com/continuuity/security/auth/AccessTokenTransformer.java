@@ -7,7 +7,7 @@ import org.apache.commons.codec.binary.Base64;
 import java.io.IOException;
 
 /**
- * It takes the access token and transforms it to Access Token Identifier
+ * It takes the access token and transforms it to Access Token Identifier.
  */
 public class AccessTokenTransformer {
   private final Codec<AccessToken> accessTokenCodec;

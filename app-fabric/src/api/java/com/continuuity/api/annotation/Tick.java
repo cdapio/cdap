@@ -35,6 +35,12 @@ import java.util.concurrent.TimeUnit;
 @Target(ElementType.METHOD)
 public @interface Tick {
 
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unused Javadoc tag (line:col)" for each of the default clauses.
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: Unused Javadoc tag
+
   /**
    * Initial delay before calling the tick method for the first time. Default is {@code 0}.
    * @return Time for the initial delay.
@@ -58,4 +64,6 @@ public @interface Tick {
    * Defaults to 0 (no retry).
    */
   int maxRetries() default 0;
+
+  // CHECKSTYLE ON
 }

@@ -34,6 +34,12 @@ public interface NonceDAO {
    */
   public int getNonce(String id, NONCE_TYPE type);
 
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unable to get class information for @throws tag '<exn>' (...)".
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: @throws
+
   /**
    * Get Id for nonce.
    * @param nonce nonce
@@ -43,4 +49,7 @@ public interface NonceDAO {
    * @throws StaleNonceException on time elapsed greater than expiration time set
    */
   public String getId(int nonce, NONCE_TYPE type) throws StaleNonceException;
+
+  // CHECKSTYLE ON
+
 }

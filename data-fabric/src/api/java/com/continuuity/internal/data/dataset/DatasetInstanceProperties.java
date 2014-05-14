@@ -14,7 +14,7 @@ import java.util.SortedMap;
 public final class DatasetInstanceProperties {
 
   /**
-   * Empty properties
+   * Empty properties.
    */
   public static final DatasetInstanceProperties EMPTY =
     new DatasetInstanceProperties();

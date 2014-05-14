@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
+import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 
 import java.io.IOException;
 

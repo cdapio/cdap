@@ -5,9 +5,9 @@ import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClie
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * A table client based on LevelDB.

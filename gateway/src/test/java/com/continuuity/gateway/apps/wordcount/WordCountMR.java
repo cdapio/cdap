@@ -83,7 +83,7 @@ public class WordCountMR {
     String inputPath = otherArgs[0];
     String outputPath = otherArgs[1];
 
-    Job job = new Job(conf, "word count");
+    Job job = Job.getInstance(conf, "word count");
     configureJob(job, inputPath, outputPath);
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
