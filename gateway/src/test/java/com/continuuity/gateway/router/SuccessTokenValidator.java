@@ -11,12 +11,12 @@ import com.google.common.util.concurrent.AbstractService;
 public class SuccessTokenValidator extends AbstractService implements TokenValidator {
   @Override
   protected void doStart() {
-    // no-op
+    notifyStarted();
   }
 
   @Override
   protected void doStop() {
-    // no-op
+    notifyStopped();
   }
 
   @Override
