@@ -4,9 +4,9 @@
 package com.continuuity.data.stream;
 
 import com.google.common.collect.Lists;
-import junit.framework.Assert;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
