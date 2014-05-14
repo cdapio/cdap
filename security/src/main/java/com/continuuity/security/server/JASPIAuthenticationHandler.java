@@ -17,16 +17,16 @@ import org.eclipse.jetty.security.jaspi.ServletCallbackHandler;
 import org.eclipse.jetty.security.jaspi.modules.BasicAuthModule;
 import org.eclipse.jetty.util.security.Constraint;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.message.config.ServerAuthConfig;
 import javax.security.auth.message.config.ServerAuthContext;
 import javax.security.auth.message.module.ServerAuthModule;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * An Authentication handler that supports JASPI plugins for External Authentication.

@@ -4,9 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 
+import java.util.HashMap;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-import java.util.HashMap;
 
 /**
  * An Authentication handler that authenticates against a LDAP server instance for External Authentication.

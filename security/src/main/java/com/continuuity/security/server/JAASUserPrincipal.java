@@ -1,8 +1,8 @@
 package com.continuuity.security.server;
 
+import java.security.Principal;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
-import java.security.Principal;
 
 
 
