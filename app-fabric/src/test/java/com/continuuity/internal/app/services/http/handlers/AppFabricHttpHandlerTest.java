@@ -189,7 +189,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
 
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs", argString);
+    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/" +
+                                            runnableId + "/runtimeargs", argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = AppFabricTestService.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
@@ -205,7 +206,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
     }
 
     //test empty runtime args
-    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs", "");
+    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
+                                            + runnableId + "/runtimeargs", "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = AppFabricTestService.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
@@ -215,10 +217,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
-    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs", null);
+    response = AppFabricTestService.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
+                                            + runnableId + "/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = AppFabricTestService.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    response = AppFabricTestService.doGet("/v2/apps/" + appId + "/" + runnableType + "/"
+                                            + runnableId + "/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
@@ -300,7 +304,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
 
   private int changeFlowletStreamInput(String app, String flow, String flowlet,
                                                 String oldStream, String newStream) throws Exception {
-    return AppFabricTestService.doPut(String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream), String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
+    return AppFabricTestService.doPut(String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s",
+                                                    app, flow, flowlet, newStream),
+                                      String.format("{\"oldStreamId\":\"%s\"}", oldStream)).
+                                                    getStatusLine().getStatusCode();
   }
 
 
@@ -313,8 +320,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //web-app, start, stop and status check.
-    Assert.assertEquals(200, AppFabricTestService.doPost("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode()
-    );
+    Assert.assertEquals(200,
+                        AppFabricTestService.doPost("/v2/apps/WordCountApp/webapp/start",
+                                                    null).getStatusLine().getStatusCode());
+
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
     Assert.assertEquals(200,
                         AppFabricTestService.doPost("/v2/apps/WordCountApp/webapp/stop", null)
