@@ -20,6 +20,11 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
                                                                       "roleNameAttribute", "roleMemberAttribute",
                                                                       "roleObjectClass" };
 
+  /**
+   * Create a new Authentication handler to use LDAP for external authentication.
+   * @param configuration
+   * @throws Exception
+   */
   @Inject
   public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
     super("ldaploginmodule");
