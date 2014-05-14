@@ -815,42 +815,12 @@
     -->
     <property>
         <name>security.authentication.handlerClassName</name>
-        <value>com.continuuity.security.server.JASPIAuthenticationHandler</value>
+        <value></value>
     </property>
 
     <property>
         <name>security.authentication.loginmodule.className</name>
-        <value>org.eclipse.jetty.plus.jaas.spi.LdapLoginModule</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.debug</name>
-        <value>true</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.hostname</name>
-        <value>crowd.continuuity.com</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.port</name>
-        <value>389</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.userBaseDn</name>
-        <value>ou=people,dc=continuuity,dc=com</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.userRdnAttribute</name>
-        <value>cn</value>
-    </property>
-
-    <property>
-        <name>security.authentication.handler.userObjectClass</name>
-        <value>inetorgperson</value>
+        <value></value>
     </property>
 
     <property>

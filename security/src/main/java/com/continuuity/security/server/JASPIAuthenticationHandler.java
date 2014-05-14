@@ -1,6 +1,7 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthConfigImpl;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthContextImpl;
@@ -10,7 +11,6 @@ import org.apache.geronimo.components.jaspi.model.ServerAuthContextType;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.DefaultIdentityService;
-import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.jaspi.JaspiAuthenticator;
 import org.eclipse.jetty.security.jaspi.JaspiAuthenticatorFactory;
 import org.eclipse.jetty.security.jaspi.ServletCallbackHandler;
@@ -23,19 +23,22 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.message.config.ServerAuthConfig;
 import javax.security.auth.message.config.ServerAuthContext;
 import javax.security.auth.message.module.ServerAuthModule;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * An Authentication handler that supports JASPI plugins for External Authentication.
  */
 public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
   private final CConfiguration configuration;
-  private static final String configBase = "security\\.authentication\\.handler\\.";
 
+  /**
+   * Create a new Authentication handler to interface with JASPI plugins.
+   * @param configuration
+   * @throws Exception
+   */
   @Inject
   public JASPIAuthenticationHandler(CConfiguration configuration) throws Exception {
     super();
@@ -49,10 +52,9 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
     constraintMapping.setConstraint(constraint);
     constraintMapping.setPathSpec("/*");
 
-    URL realmFile = getClass().getResource("/realm.properties");
-    HashLoginService loginService = new HashLoginService();
-    loginService.setConfig(realmFile.toExternalForm());
-    loginService.loadUsers();
+    JAASLoginService loginService = new JAASLoginService();
+    loginService.setLoginModuleName("JASPI");
+    loginService.setConfiguration(getConfiguration());
 
     DefaultIdentityService identityService = new DefaultIdentityService();
 
@@ -83,7 +85,7 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
 
   /**
    * Dynamically load the configuration properties set by the user for a JASPI plugin.
-   * @return
+   * @return Configuration
    */
   protected Configuration getConfiguration() {
     return new Configuration() {
@@ -91,7 +93,9 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
         HashMap<String, String> map = new HashMap<String, String>();
 
-        HashMap<String, String> configurables = (HashMap<String, String>) configuration.getValByRegex(configBase.concat("."));
+
+        String configRegex = Constants.Security.AUTH_HANDLER_CONFIG_BASE.replace(".", "\\.").concat(".");
+        HashMap<String, String> configurables = (HashMap<String, String>) configuration.getValByRegex(configRegex);
 
         Iterator it = configurables.entrySet().iterator();
         while (it.hasNext()) {
@@ -102,7 +106,7 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
         }
 
         return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(configuration.get("security.authentication.loginmodule.className"),
+          new AppConfigurationEntry(configuration.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
                                     AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
         };
       }

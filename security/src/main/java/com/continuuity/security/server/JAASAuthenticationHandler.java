@@ -10,7 +10,7 @@ import org.eclipse.jetty.util.security.Constraint;
 import javax.security.auth.login.Configuration;
 
 /**
- *
+ * An abstract authentication handler that supports the JAAS interface for external authentication.
  */
 public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandler {
 
