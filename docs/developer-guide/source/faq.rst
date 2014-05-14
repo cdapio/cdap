@@ -1,7 +1,7 @@
 .. _faq_toplevel:
 
 ==========================
-Frequently Asked Questions
+FAQ
 ==========================
 
 .. contents::

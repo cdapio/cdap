@@ -2,7 +2,7 @@
    :Description: HTTP Interface to the Continuuity Reactor
 
 =================================
-Continuuity Reactor HTTP REST API
+REST API
 =================================
 
 .. reST Editor: section-numbering::
@@ -1475,7 +1475,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs>`__,
+- `Continuuity Reactor Javadocs </developers/javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. - `Introduction to Continuuity Reactor <intro>`__,

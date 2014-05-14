@@ -2,7 +2,7 @@
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
 ===================================================
-Continuuity Reactor Programming Guide
+Programming Guide
 ===================================================
 
 -----------------------------------------------------------------------
@@ -22,12 +22,12 @@ and Workflows—and how you work with them in Java to build a Big Data
 application.
 
 For a high-level view of the concepts of the Continuuity Reactor Java
-APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
+APIs, please see the :doc:`Introduction to Continuuity Reactor </intro>`.
 
 For more information beyond this document, see both the
 `Javadocs </developers/javadocs/index.html>`_  and the code in the
-`examples </developers/examples>`_ directory, both of which are on the
-Continuuity.com `Developers website </developers>`_ as well as in your
+:doc:`examples </examples>` directory, both of which are on the
+Continuuity.com `Developers website </intro>` as well as in your
 Reactor installation directory.
 
 
@@ -188,7 +188,7 @@ specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API </developers/rest>`_
+using either the :doc:`Continuuity Reactor HTTP REST API </rest>`
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -757,8 +757,8 @@ table *myCounters* from the metadata store and injects a functional
 instance of the DataSet class into the Application.
 
 You can also implement custom DataSets by extending the ``DataSet`` base
-class or by extending existing DataSet types. See the `PageViewAnalytics
-<examples/PageViewAnalytics>`__ example for an implementation of a
+class or by extending existing DataSet types. See the :doc:`PageViewAnalytics
+</examples/PageViewAnalytics/index>` example for an implementation of a
 Custom DataSet.
 
 .. _Procedures:
@@ -929,7 +929,7 @@ Strategies in Testing MapReduce
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
+found under :doc:`TrafficAnalytics </examples/TrafficAnalytics/index>`.
 
 The ``TrafficAnalyticsTest`` class should extend from
 ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
@@ -1054,5 +1054,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
+- :doc:`Advanced Continuuity Reactor Features </advanced>`,
   with details of the Flow, DataSet and Transaction systems.

@@ -2,7 +2,7 @@
    :Description: Operating a Continuuity Reactor and its Dashboard
 
 ===================================
-Operating a Continuuity Reactor
+Operations Guide
 ===================================
 
 -----------------------------
@@ -434,7 +434,7 @@ Procedure
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
 
 For details of making requests and using Procedures, including configuring the parameters and calling methods,
-see the `Continuuity Reactor HTTP REST API Guide </developers/rest>`__.
+see the :doc:`Continuuity Reactor HTTP REST API Guide </rest>`.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -460,8 +460,8 @@ For instance, in a Flowlet you can write::
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
-- Using the `Continuuity Reactor HTTP REST interface </developers/rest>`__ .
-  The `REST interface </developers/rest#logging-http-api>`__ details all the available contexts that
+- Using the :doc:`Continuuity Reactor HTTP REST interface </rest>`.
+  The `REST interface <rest.html#logging-http-api>`__ details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
@@ -485,7 +485,7 @@ details on available system metrics in the
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them
 (along with system metrics) via the `Metrics Explorer`_ in the Dashboard or
-via the Continuuity Reactor’s `REST interfaces <rest.html>`__.
+via the Continuuity Reactor’s :doc:`REST interfaces </rest>`.
 
 For example, to add metrics to a Flowlet *NameSaver*::
 
@@ -509,10 +509,10 @@ For example, to add metrics to a Flowlet *NameSaver*::
 	  }
 	}
 
-An example of user-defined metrics is in the `PageViewAnalytics example <example/PageViewAnalytics>`__.
+An example of user-defined metrics is in the :doc:`PageViewAnalytics example </examples/PageViewAnalytics/index>`.
 
 For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
-in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
+in the :doc:`Continuuity Reactor HTTP REST API Guide </rest>`.
 
 Using Metrics Explorer
 ----------------------
@@ -636,7 +636,7 @@ Now that you've seen how to operate a Continuuity Reactor, take a look at:
 .. - `Advanced Continuuity Reactor Features <advanced>`__,
 ..   with details of the Flow, DataSet and Transaction systems; and
 
-- `Continuuity Reactor HTTP REST API <rest>`__,
+- :doc:`Continuuity Reactor HTTP REST API </rest>`,
   a guide to programming Continuuity Reactor's HTTP interface.
 
 .. - `Introduction to Continuuity Reactor <intro>`__,

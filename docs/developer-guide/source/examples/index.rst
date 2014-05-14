@@ -2,7 +2,7 @@
    :Description: Continuuity Reactor Examples
 
 ============================
-Continuuity Reactor Examples
+Examples
 ============================
 
 ---------------------------------------------------------------
@@ -35,14 +35,14 @@ Additional examples are included with our
 `software development kit </download>`__.
 
 
-`ResponseCodeAnalytics </developers/examples/ResponseCodeAnalytics>`__
+:doc:`ResponseCodeAnalytics </examples/ResponseCodeAnalytics/index>`
 ======================================================================
 This is a simple application for real-time streaming log analysis—computing 
 the number of occurrences of each HTTP status code by processing Apache access log data. 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
 **Applications**, **Streams**, **Flows**, **Flowlets**, **Procedures** and **DataSets**.
 
-`PageViewAnalytics </developers/examples/PageViewAnalytics>`__
+:doc:`PageViewAnalytics </examples/PageViewAnalytics/index>`
 ==============================================================
 This example demonstrates use of **custom DataSets** and **batch processing** in an Application.
 It takes data from Apache access logs,
@@ -54,7 +54,7 @@ By doing so, the DataSet does more than just store or convert data—it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
-`TrafficAnalytics </developers/examples/TrafficAnalytics/index.html>`__
+:doc:`TrafficAnalytics </examples/TrafficAnalytics/index>`
 =======================================================================
 This example shows another application of streaming log analysis, but this time it
 computes the aggregate number of HTTP requests on an hourly basis
@@ -66,17 +66,6 @@ Where to Go Next
 ================
 Now that you've seen some examples using Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Quick Start  </developers/quickstart>`__,
+- :doc:`Continuuity Reactor Quick Start  </quickstart>`,
   which guides you through installing Continuuity Reactor and
   running and modifying an example that counts HTTP status codes.
-
-.. - `Introduction to Continuuity Reactor </developers/intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Continuuity Reactor Programming Guide </developers/programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Continuuity Reactor HTTP REST API </developers/rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-.. - `Operating a Continuuity Reactor </developers/operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features </developers/advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.

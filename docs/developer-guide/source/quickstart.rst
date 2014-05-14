@@ -2,7 +2,7 @@
    :Description: Introducing new developers to Continuuity Reactor
 
 ===============================
-Continuuity Reactor Quick Start
+Quick Start
 ===============================
 
 .. reST Editor: section-numbering::
@@ -189,5 +189,5 @@ Where to Go Next
 ----------------
 Now that you've had a look at Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Programming Guide <programming>`__,
+- :doc:`Continuuity Reactor Programming Guide </programming>`,
   an introduction to programming applications for the Continuuity Reactor.

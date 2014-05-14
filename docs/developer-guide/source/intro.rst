@@ -2,7 +2,7 @@
    :Description: Introduction to Continuuity Reactor
 
 ===================================
-Introduction to Continuuity Reactor
+Introduction
 ===================================
 
 .. reST Editor: section-numbering::
@@ -208,5 +208,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Developer Examples <examples>`__,
+- :doc:`Developer Examples </examples/index>`,
   three different examples to run and experiment with.

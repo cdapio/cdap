@@ -1,8 +1,10 @@
 .. :Author: John Jackson
    :Description: Installation guide for Continuuity Reactor on Linux systems
 
+:orphan:
+
 ==============================================================
-Continuuity Reactor 2.1.0 Installation and Configuration Guide
+Installation and Configuration
 ==============================================================
 
 .. reST Editor: section-numbering::
@@ -388,11 +390,11 @@ We provide pre-built ``.JAR`` files for convenience:
 #. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
    ``CONTINUUITY_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
 #. Once the application is deployed, instructions on running the example can be found at the 
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#running-the-example>`__.
+   `TrafficAnalytics example <examples/TrafficAnalytics.html#running-the-example>`__.
 #. You should be able to start the application, inject log entries,
    run the ``MapReduce`` job and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#stopping-the-app>`__.
+   `TrafficAnalytics example <examples/TrafficAnalytics.html#stopping-the-app>`__.
 
 Troubleshooting
 ---------------
@@ -431,7 +433,7 @@ Where to Go Next
 ================
 Now that you've installed Continuuity Reactor, take a look at:
 
-- `Introduction to Continuuity Reactor <intro>`__,
+- :doc:`Introduction to Continuuity Reactor </intro>`,
   an introduction to Big Data and the Continuuity Reactor.
 
 Appendix: ``continuuity-site.xml``
