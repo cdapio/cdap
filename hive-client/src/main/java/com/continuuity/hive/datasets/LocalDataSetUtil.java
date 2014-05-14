@@ -45,8 +45,7 @@ public class LocalDataSetUtil {
   public LocalDataSetUtil(CConfiguration conf) {
     this.configuration = conf;
     this.locationFactory = new LocalLocationFactory(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)));
-    // todo tx system client should be injected
-    this.txClient = new InMemoryTxSystemClient(LocalHiveServer.getInMemoryTransactionManager());
+    this.txClient = LocalHiveServer.getTransactionSystemClient();
     this.discoveryClient = LocalHiveServer.getDiscoveryServiceClient();
   }
 
@@ -74,14 +73,13 @@ public class LocalDataSetUtil {
     return instantiator.getDataSetSpecification(datasetName, opContext);
   }
 
-  public DataSet getDataSetInstance(DataSetSpecification spec) throws IOException {
+  public DataSet getDataSetInstance(DataSetSpecification spec, Transaction tx) throws IOException {
     DataSetAccessor accessor = new LocalDataSetAccessor(configuration, LevelDBOcTableService.getInstance());
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, accessor);
 
     DataSetInstantiator instantiator = new DataSetInstantiator(dataFabric, this.getClass().getClassLoader());
     instantiator.addDataSet(spec);
     DataSet ds = instantiator.getDataSet(spec.getName());
-    Transaction tx = txClient.startLong();
     for (TransactionAware txAware : instantiator.getTransactionAware()) {
       txAware.startTx(tx);
     }

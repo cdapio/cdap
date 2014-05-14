@@ -2,6 +2,7 @@ package com.continuuity.hive.inmemory;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveServer;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -41,16 +42,16 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
 
   private final DiscoveryService discoveryService;
   private static DiscoveryServiceClient discoveryServiceClient;
-  private static InMemoryTransactionManager inMemoryTransactionManager;
+  private static TransactionSystemClient txClient;
   private final InetAddress hostname;
 
   @Inject
-  public LocalHiveServer(DiscoveryService discoveryService, InMemoryTransactionManager inMemoryTransactionManager,
+  public LocalHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
                          DiscoveryServiceClient discoveryServiceClient,
                          @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
     this.discoveryService = discoveryService;
     LocalHiveServer.discoveryServiceClient = discoveryServiceClient;
-    LocalHiveServer.inMemoryTransactionManager = inMemoryTransactionManager;
+    LocalHiveServer.txClient = txClient;
     this.hostname = hostname;
   }
 
@@ -58,8 +59,8 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     return discoveryServiceClient;
   }
 
-  public static InMemoryTransactionManager getInMemoryTransactionManager() {
-    return inMemoryTransactionManager;
+  public static TransactionSystemClient getTransactionSystemClient() {
+    return txClient;
   }
 
   private static File createHiveConf() {
@@ -78,6 +79,9 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
       configuration.set("mapreduce.framework.name", "local");
       // TODO: get local data dir from CConf
       configuration.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
+
+      configuration.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionHook");
+      configuration.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionHook");
 
       hiveServerPort = PortDetector.findFreePort();
       configuration.setInt("hive.server2.thrift.port", hiveServerPort);

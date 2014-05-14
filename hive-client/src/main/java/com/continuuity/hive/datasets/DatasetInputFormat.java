@@ -6,6 +6,9 @@ import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
@@ -36,7 +39,11 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-    RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME));
+    String txJson = jobConf.get(Constants.Hive.TX_QUERY);
+    Preconditions.checkNotNull(jobConf.get(Constants.Hive.TX_QUERY), "Transaction ID not set for Hive query.");
+    Transaction tx = new Gson().fromJson(txJson, Transaction.class);
+
+    RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME), tx);
 
     Job job = new Job(jobConf);
     JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
@@ -54,7 +61,11 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   @Override
   public RecordReader<Void, ObjectWritable> getRecordReader(final InputSplit split, JobConf jobConf, Reporter reporter)
     throws IOException {
-    final RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME));
+    String txJson = jobConf.get(Constants.Hive.TX_QUERY);
+    Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");
+    Transaction tx = new Gson().fromJson(txJson, Transaction.class);
+
+    final RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME), tx);
 
     if (!(split instanceof DatasetInputSplit)) {
       throw new IOException("Invalid type for InputSplit: " + split.getClass().getName());
@@ -137,7 +148,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     };
   }
 
-  static RowScannable getDataset(String datasetName)
+  static RowScannable getDataset(String datasetName, Transaction tx)
     throws IOException {
     if (datasetName == null) {
       throw new IOException(String.format("Dataset name property %s not defined.", DATASET_NAME));
@@ -148,7 +159,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
       LocalDataSetUtil localDataSetUtil = new LocalDataSetUtil(conf);
 
       DataSetSpecification spec = localDataSetUtil.getDataSetSpecification("developer", datasetName);
-      DataSet dataset = localDataSetUtil.getDataSetInstance(spec);
+      DataSet dataset = localDataSetUtil.getDataSetInstance(spec, tx);
       if (!(dataset instanceof RowScannable)) {
         throw new IOException(
           String.format("Dataset %s does not implement RowScannable, and hence cannot be queried in Hive.",

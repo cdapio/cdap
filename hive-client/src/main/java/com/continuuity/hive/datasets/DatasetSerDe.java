@@ -28,7 +28,8 @@ public class DatasetSerDe extends AbstractSerDe {
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
     String datasetName = properties.getProperty(DatasetInputFormat.DATASET_NAME);
     try {
-      RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName);
+      // todo put the rowType in some dataset metadata
+      RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName, null);
       rowType = rowScannable.getRowType();
     } catch (IOException e) {
       LOG.error("Got exception while trying to instantiate dataset {}", datasetName);
