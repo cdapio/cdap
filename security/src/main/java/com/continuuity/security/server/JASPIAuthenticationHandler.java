@@ -62,16 +62,16 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
     JaspiAuthenticatorFactory jaspiAuthenticatorFactory = new JaspiAuthenticatorFactory();
     jaspiAuthenticatorFactory.setLoginService(loginService);
 
-    HashMap<String, ServerAuthContext> serverAuthContextMap= new HashMap<String, ServerAuthContext>();
+    HashMap<String, ServerAuthContext> serverAuthContextMap = new HashMap<String, ServerAuthContext>();
     ServletCallbackHandler callbackHandler = new ServletCallbackHandler(loginService);
     ServerAuthModule authModule = new BasicAuthModule(callbackHandler, "JAASRealm");
-    serverAuthContextMap.put("authenticationContextID", new ServerAuthContextImpl(Collections.singletonList(authModule)));
+    serverAuthContextMap.put("authContextID", new ServerAuthContextImpl(Collections.singletonList(authModule)));
 
     ServerAuthContextType serverAuthContextType = new ServerAuthContextType("HTTP", "server *",
-                                                                            "authenticationContextID",
+                                                                            "authContextID",
                                                                             new AuthModuleType<ServerAuthModule>());
     ServerAuthConfigType serverAuthConfigType = new ServerAuthConfigType(serverAuthContextType, true);
-    ServerAuthConfig serverAuthConfig = new ServerAuthConfigImpl(serverAuthConfigType,serverAuthContextMap);
+    ServerAuthConfig serverAuthConfig = new ServerAuthConfigImpl(serverAuthConfigType, serverAuthContextMap);
     JaspiAuthenticator jaspiAuthenticator = new JaspiAuthenticator(serverAuthConfig, null, callbackHandler,
                                                                    new Subject(), true, identityService);
 
@@ -99,7 +99,7 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
 
         Iterator it = configurables.entrySet().iterator();
         while (it.hasNext()) {
-          Map.Entry pairs = (Map.Entry)it.next();
+          Map.Entry pairs = (Map.Entry) it.next();
           String key = pairs.getKey().toString();
           String value = pairs.getValue().toString();
           map.put(key.substring(key.lastIndexOf('.') + 1).trim(), value);
