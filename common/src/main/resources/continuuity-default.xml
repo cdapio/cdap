@@ -814,42 +814,42 @@
      External Authentication login module settings
     -->
     <property>
-        <name>security.authentication.handler.className</name>
-        <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
+        <name>security.authentication.handlerClassName</name>
+        <value>com.continuuity.security.server.JASPIAuthenticationHandler</value>
     </property>
 
     <property>
-        <name>security.authentication.method.className</name>
+        <name>security.authentication.loginmodule.className</name>
         <value>org.eclipse.jetty.plus.jaas.spi.LdapLoginModule</value>
     </property>
 
     <property>
-        <name>security.authentication.method.debug</name>
+        <name>security.authentication.handler.debug</name>
         <value>true</value>
     </property>
 
     <property>
-        <name>security.authentication.method.hostname</name>
+        <name>security.authentication.handler.hostname</name>
         <value>crowd.continuuity.com</value>
     </property>
 
     <property>
-        <name>security.authentication.method.port</name>
+        <name>security.authentication.handler.port</name>
         <value>389</value>
     </property>
 
     <property>
-        <name>security.authentication.method.userBaseDn</name>
+        <name>security.authentication.handler.userBaseDn</name>
         <value>ou=people,dc=continuuity,dc=com</value>
     </property>
 
     <property>
-        <name>security.authentication.method.userRdnAttribute</name>
+        <name>security.authentication.handler.userRdnAttribute</name>
         <value>cn</value>
     </property>
 
     <property>
-        <name>security.authentication.method.userObjectClass</name>
+        <name>security.authentication.handler.userObjectClass</name>
         <value>inetorgperson</value>
     </property>
 

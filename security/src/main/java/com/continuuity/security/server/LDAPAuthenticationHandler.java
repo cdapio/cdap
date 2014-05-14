@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private final CConfiguration configuration;
-  private static final String configBase = "security.authentication.method.";
+  private static final String configBase = "security.authentication.handler.";
   private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
                                                                                 "userRdnAttribute", "userObjectClass" };
   private static final String[] optionalConfigurables = new String[] { "bindDn", "bindPassword", "userIdAttribute",
@@ -47,7 +47,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
           }
         }
         return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(configuration.get("security.authentication.method.className"),
+          new AppConfigurationEntry(configuration.get("security.authentication.loginmodule.className"),
                                     AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
         };
       }

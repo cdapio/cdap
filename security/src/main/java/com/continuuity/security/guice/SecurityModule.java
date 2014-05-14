@@ -1,6 +1,7 @@
 package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -66,7 +67,7 @@ public abstract class SecurityModule extends PrivateModule {
 
   @Provides
   private Class<Handler> provideHandlerClass(CConfiguration configuration) throws ClassNotFoundException {
-    return (Class<Handler>) configuration.getClass("security.authentication.handler.className", null, Handler.class);
+    return (Class<Handler>) configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
   }
 
   private static final class AuthenticationHandlerProvider implements  Provider<Handler> {
