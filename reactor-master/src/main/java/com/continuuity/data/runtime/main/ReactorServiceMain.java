@@ -24,7 +24,6 @@ import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -40,7 +39,6 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
-import org.apache.twill.common.Services;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -131,7 +129,7 @@ public class ReactorServiceMain extends DaemonMain {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
         appFabricServer = injector.getInstance(AppFabricServer.class);
-        Futures.getUnchecked(Services.chainStart(appFabricServer));
+        appFabricServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -143,8 +141,11 @@ public class ReactorServiceMain extends DaemonMain {
       @Override
       public void follower() {
         LOG.info("Became follower.");
-        if (twillRunnerService != null && twillRunnerService.isRunning()) {
+        if (twillRunnerService != null) {
           twillRunnerService.stopAndWait();
+        }
+        if (appFabricServer != null) {
+          appFabricServer.stopAndWait();
         }
         isLeader.set(false);
       }
@@ -155,16 +156,6 @@ public class ReactorServiceMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
-
-    if (isLeader.get() && appFabricServer != null) {
-      LOG.info("Follower: Stopping app fabric server.");
-      Futures.getUnchecked(Services.chainStop(appFabricServer));
-    }
-
-    if (isLeader.get() && twillController != null && twillController.isRunning()) {
-      twillController.stopAndWait();
-    }
-
     leaderElection.cancel();
     zkClientService.stopAndWait();
   }
