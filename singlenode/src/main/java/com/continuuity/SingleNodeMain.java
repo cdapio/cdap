@@ -33,11 +33,7 @@ import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
-<<<<<<< HEAD
-import com.google.common.base.Throwables;
-=======
 import com.continuuity.security.server.ExternalAuthenticationServer;
->>>>>>> develop
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -45,7 +41,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
-import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
