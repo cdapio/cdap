@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * Defines the way row keys are distributed
+ * Defines the way row keys are distributed.
  */
 public abstract class AbstractRowKeyDistributor implements Parametrizable {
   public abstract byte[] getDistributedKey(byte[] originalKey);

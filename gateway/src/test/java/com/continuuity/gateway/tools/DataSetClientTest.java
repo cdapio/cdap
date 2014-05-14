@@ -11,8 +11,8 @@ import org.junit.Test;
  * Data set client.
  */
 public class DataSetClientTest {
-  private static String hostname = "127.0.0.1";
-  private static String API_KEY = GatewayFastTestsSuite.getAuthHeader().getValue();
+  private static final String HOSTNAME = "127.0.0.1";
+  private static final String API_KEY = GatewayFastTestsSuite.getAuthHeader().getValue();
 
   @Test
   public void testValueAsCounter() throws OperationException {
@@ -23,15 +23,15 @@ public class DataSetClientTest {
     final String row = "myRow";
     final String column = "myCounter";
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[] {
-      "create", "--table", table, "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "create", "--table", table, "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[] {
       "write", "--table", table, "--row", row, "--column", column, "--value", "41", "--counter",
-      "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
     Assert.assertEquals("42", new DataSetClient().disallowSSL().execute(new String[] {
       "increment", "--table", table, "--row", row, "--column", column, "--value", "1",
-      "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
 
-    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.ADDRESS, HOSTNAME);
     configuration.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
     Assert.assertEquals("42", new DataSetClient().disallowSSL().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter", "--apikey", API_KEY}, configuration));
@@ -51,15 +51,15 @@ public class DataSetClientTest {
     final String row = "myRow";
     final String column = "myCounter";
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[] {
-      "create", "--table", table, "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "create", "--table", table, "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[] {
       "write", "--table", table, "--row", row, "--column", column, "--value", "41", "--counter",
-      "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
     Assert.assertEquals("42", new DataSetClient().disallowSSL().execute(new String[] {
       "increment", "--table", table, "--row", row, "--column", column, "--value", "1",
-      "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
+      "--host", HOSTNAME, "--port", port, "--apikey", API_KEY }, configuration));
 
-    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.ADDRESS, HOSTNAME);
     configuration.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY);
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[]{
       "clear", "--table", table, "--apikey", API_KEY}, configuration));

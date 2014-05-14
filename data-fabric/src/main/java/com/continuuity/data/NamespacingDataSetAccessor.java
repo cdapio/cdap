@@ -3,13 +3,14 @@ package com.continuuity.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
+
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Holds namespacing logic.

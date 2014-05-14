@@ -40,7 +40,7 @@ public abstract class AbstractStage<T> implements Stage {
   }
 
   /**
-   * Emits the object to send to next {@link Stage} in processing
+   * Emits the object to send to next {@link Stage} in processing.
    *
    * @param o to be emitted to downstream
    */

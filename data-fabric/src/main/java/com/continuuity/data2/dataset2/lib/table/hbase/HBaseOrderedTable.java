@@ -1,11 +1,12 @@
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
-import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -17,11 +18,11 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Dataset client for HBase tables.

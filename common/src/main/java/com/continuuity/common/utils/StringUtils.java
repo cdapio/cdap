@@ -7,7 +7,7 @@ import java.util.Collection;
  * General string utils.
  */
 public class StringUtils {
-  public static final  String[] emptyStringArray = {};
+  public static final  String[] EMPTY_STRING_ARRAY = {};
 
   /**
    * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on each value.
@@ -25,7 +25,7 @@ public class StringUtils {
    */
   public static String[] getTrimmedStrings(String str) {
     if (null == str || "".equals(str.trim())) {
-      return emptyStringArray;
+      return EMPTY_STRING_ARRAY;
     }
     return str.trim().split("\\s*,\\s*");
   }

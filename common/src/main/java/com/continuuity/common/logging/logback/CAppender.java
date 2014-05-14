@@ -4,15 +4,15 @@
 
 package com.continuuity.common.logging.logback;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.core.AppenderBase;
-import ch.qos.logback.core.Layout;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.HumanReadableLogMessageFormat;
 import com.continuuity.common.logging.common.LogMessageFormat;
 import com.continuuity.common.logging.common.LogWriter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.Layout;
 
 /**
  * Handles emitted log messages and delegates the actual writing to provided LogWriter.

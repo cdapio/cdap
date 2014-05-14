@@ -7,17 +7,18 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.io.InputStream;
-import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -66,7 +67,6 @@ public abstract class AbstractSnapshotCodec {
    * Encodes a given {@code TransactionSnapshot} instance into a byte array output stream.
    * Can be reversed by calling {@link #decodeState(java.io.InputStream)}.
    * @param snapshot snapshot state to be serialized.
-   * @return a byte array output stream containing the serialized {@code TransactionSnapshot} state.
    */
   public void encodeState(OutputStream out, TransactionSnapshot snapshot) {
     Encoder encoder = new BinaryEncoder(out);

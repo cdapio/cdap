@@ -7,13 +7,14 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Implements the metrics table API in-memory.

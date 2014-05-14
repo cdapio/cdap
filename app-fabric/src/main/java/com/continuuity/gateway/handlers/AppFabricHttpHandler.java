@@ -827,7 +827,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
 
   /**
-   * Sets number of instances for a procedure
+   * Sets number of instances for a procedure.
    */
   @PUT
   @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
@@ -1233,7 +1233,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns specification of procedure
+   * Returns specification of procedure.
    */
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}")
@@ -1244,7 +1244,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns specification of mapreduce
+   * Returns specification of mapreduce.
    */
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
@@ -1255,7 +1255,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns specification of workflow
+   * Returns specification of workflow.
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}")
@@ -1569,7 +1569,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Delete an application specified by appId
+   * Delete an application specified by appId.
    */
   @DELETE
   @Path("/apps/{app-id}")
@@ -1610,7 +1610,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deletes queues
+   * Deletes queues.
    */
   @DELETE
   @Path("/apps/{app-id}/flows/{flow-id}/queues")
@@ -3129,7 +3129,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * *DO NOT DOCUMENT THIS API*
+   * DO NOT DOCUMENT THIS API.
    */
   @POST
   @Path("/unrecoverable/reset")

@@ -4,19 +4,20 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Provides handy methods to manage objects in {@link OrderedTable}
+ * Provides handy methods to manage objects in {@link OrderedTable}.
  */
 // todo: review usage of OrderedTable after adding handy methods to it (operating on objects Get, Put, etc.)
 public abstract class AbstractObjectsStore implements Closeable {

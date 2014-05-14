@@ -4,13 +4,13 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * Stores the latest transaction snapshot and logs in memory.

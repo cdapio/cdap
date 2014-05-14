@@ -37,7 +37,7 @@ public class LogCleanupTest {
   private static final Logger LOG = LoggerFactory.getLogger(LogCleanupTest.class);
 
   @ClassRule
-  public static final TemporaryFolder tempFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final int RETENTION_DURATION_MS = 100000;
 
@@ -56,7 +56,7 @@ public class LogCleanupTest {
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
 
     // Create base dir
-    Location baseDir = locationFactory.create(tempFolder.newFolder().toURI());
+    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -125,7 +125,7 @@ public class LogCleanupTest {
     FileSystem fileSystem = FileSystem.get(new Configuration());
 
     // Create base dir
-    Location baseDir = locationFactory.create(tempFolder.newFolder().toURI());
+    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     // Create dirs with files
     Set<Location> files = Sets.newHashSet();
@@ -187,7 +187,7 @@ public class LogCleanupTest {
     FileSystem fileSystem = FileSystem.get(new Configuration());
 
     // Create base dir
-    Location baseDir = locationFactory.create(tempFolder.newFolder().toURI());
+    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     LogCleanup logCleanup = new LogCleanup(locationFactory, null, baseDir, RETENTION_DURATION_MS);
 
