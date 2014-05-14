@@ -56,7 +56,7 @@ public class SchemaTest {
 
   @Test
   public void testGenerateSchema() throws UnsupportedTypeException {
-    Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() {}).getType());
+    Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() { }).getType());
 
     Gson gson = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -81,7 +81,7 @@ public class SchemaTest {
     Assert.assertEquals(s1.getSchemaHash(), s2.getSchemaHash());
     Assert.assertEquals(s1, s2);
 
-    Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() {}).getType());
+    Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() { }).getType());
     Assert.assertNotEquals(s1.getSchemaHash(), schema.getSchemaHash());
   }
 

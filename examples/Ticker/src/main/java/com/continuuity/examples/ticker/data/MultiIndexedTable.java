@@ -1,20 +1,18 @@
-/*
- * Copyright (c) 2013, Continuuity Inc
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
  *
- * All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- * Redistribution and use in source and binary forms,
- * with or without modification, are not permitted
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-
 package com.continuuity.examples.ticker.data;
 
 import com.continuuity.api.annotation.Property;
@@ -36,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Stores raw data in an table, along with a separate table indexing the origin data by all individual values.
+ * Stores raw data in an Table, along with a separate Table indexing the origin data by all individual values.
  * Index rows are keyed by the combination of [key qualifier]-[key value]-[timestamp]-[origin rowkey].
  *
  * Note that <em>all key-values for a single row must be written with the same timestamp</em> in order for
@@ -44,21 +42,23 @@ import java.util.Set;
  */
 public class MultiIndexedTable extends DataSet {
   private static final Logger LOG = LoggerFactory.getLogger(MultiIndexedTable.class);
-  // use a null value as separator for multiple field in the row key
+  
+  // Use a null value as separator for multiple field in the row key
   private static final byte NULL_BYTE = (byte) 0x0;
   private static final byte[] KEY_SEP = new byte[]{ NULL_BYTE };
 
-  // column qualifier used to store the origin table row key
+  // Column qualifier used to store the origin Table row key
   private static final byte[] ROW_KEY_COL = Bytes.toBytes("r");
 
-  // meta key prefix used to store a record of the index rows created for each origin row
+  // Meta key prefix used to store a record of the index rows created for each origin row
   private static final byte[] META_ROW_PREFIX = Bytes.toBytes("_meta_");
 
-  // The index table matching the primary data table will be named by adding this suffix
+  // The index table matching the primary data Table will be named by adding this suffix
   private static final String INDEX_SUFFIX = "-idx";
 
   private final Table table;
   private final Table indexTable;
+  
   // String representation of the field storing timestamp values
   @Property
   private String timestampFieldName;
@@ -86,22 +86,23 @@ public class MultiIndexedTable extends DataSet {
   }
 
   /**
-   * Adds a {@link Put} to the origin table, while adding index entries for all of the Put's values to
-   * the index table.
-   * @param put The Put to add to the origin table.
+   * Adds a {@link Put} to the origin Table, while adding index entries for all of the Put's values to
+   * the index Table.
+   * @param put The Put to add to the origin Table.
    */
   public void put(Put put) {
     Map<byte[], byte[]> values = put.getValues();
     logValues(values);
     byte[] timestampValue = values.get(timestampField);
-    // used to add a record of index keys to the origin row, so we can handle deletes
+    
+    // Used to add a record of index keys to the origin row, so we can handle deletes
     Put metaRow = new Put(Bytes.add(META_ROW_PREFIX, KEY_SEP, put.getRow()));
     for (Map.Entry<byte[], byte[]> entry : put.getValues().entrySet()) {
       if (Bytes.equals(entry.getKey(), timestampField) ||
           (ignoreIndexing != null && ignoreIndexing.contains(entry.getKey()))) {
         continue;
       }
-      // construct index key as: column (type) + value + timestamp + rowkey
+      // Construct index key as: column (type) + value + timestamp + rowkey
       byte[] indexKey = Bytes.add(entry.getKey(), KEY_SEP,
           Bytes.add(entry.getValue(), KEY_SEP,
               Bytes.add(timestampValue, KEY_SEP, put.getRow())));
@@ -120,17 +121,18 @@ public class MultiIndexedTable extends DataSet {
   }
 
   /**
-   * Deletes a full row or specific columns from a row in the origin table, plus any associated index rows.
-   * @param delete The Delete request for the origin table.
+   * Deletes a full row or specific columns from a row in the origin Table, plus any associated index rows.
+   * @param delete The Delete request for the origin Table.
    */
   public void delete(Delete delete) {
-    // retrieve the record of any stored index rows
+    // Retrieve the record of any stored index rows
     byte[] metaRowKey = Bytes.add(META_ROW_PREFIX, KEY_SEP, delete.getRow());
     Row metaRow = indexTable.get(metaRowKey);
 
     List<byte[]> columnsToDelete = delete.getColumns();
     if (columnsToDelete != null && !columnsToDelete.isEmpty()) {
-      // only delete index rows matching the deleted columns
+      
+      // Only delete index rows matching the deleted columns
       for (byte[] col : columnsToDelete) {
         for (byte[] metaKey : metaRow.getColumns().keySet()) {
           if (Bytes.startsWith(metaKey, Bytes.add(col, KEY_SEP))) {
@@ -140,7 +142,8 @@ public class MultiIndexedTable extends DataSet {
         }
       }
     } else {
-      // all index rows should be deleted
+      
+      // All index rows should be deleted
       for (byte[] key : metaRow.getColumns().keySet()) {
         indexTable.delete(key);
       }
@@ -153,7 +156,8 @@ public class MultiIndexedTable extends DataSet {
    */
   public List<Row> readBy(Map<byte[], byte[]> indexValues, long startTime, long endTime) {
     List<Row> results = Lists.newArrayList();
-    // open a separate scanner for each requested index value
+    
+    // Open a separate scanner for each requested index value
     List<PeekableScanner> scanners = Lists.newArrayListWithCapacity(indexValues.size());
     for (Map.Entry<byte[], byte[]> val : indexValues.entrySet()) {
       byte[] startKey = Bytes.add(val.getKey(), KEY_SEP,
@@ -164,8 +168,8 @@ public class MultiIndexedTable extends DataSet {
       scanners.add(new PeekableScanner(indexTable.scan(startKey, stopKey)));
     }
 
-    // merge together the results
-    // only row keys that appear in all scanners are valid
+    // Merge together the results
+    // Only row keys that appear in all scanners are valid
     byte[] lastTimestampedRow = null;
     byte[] matchedRow = null;
     List<byte[]> matchedRowKeys = Lists.newArrayList();
@@ -176,7 +180,8 @@ public class MultiIndexedTable extends DataSet {
         LOG.debug("Last timestamped row = " + Bytes.toStringBinary(lastTimestampedRow));
         PeekableScanner scanner = scanners.get(i);
         Row nextRow = scanner.peek();
-        // if we hit the end of any scanner, we're done
+        
+        // If we hit the end of any scanner, we're done
         if (nextRow == null) {
           break outer;
         }
@@ -191,29 +196,34 @@ public class MultiIndexedTable extends DataSet {
         }
         int order = Bytes.compareTo(lastTimestampedRow, nextTimestampedRow);
         if (order < 0) {
-          // no possible match on this scanner
+          
+          // No possible match on this scanner
           matchedRow = null;
           lastTimestampedRow = nextTimestampedRow;
           break;
         } else if (order > 0) {
-          // this row doesn't exist in other scanners, so advance until we catch up
+          
+          // This row doesn't exist in other scanners, so advance until we catch up
           while (Bytes.compareTo(nextTimestampedRow, lastTimestampedRow) < 0) {
             scanner.next();
             nextRow = scanner.peek();
             if (nextRow == null) {
-              // done with this scanner, no more matches
+              
+              // Done with this scanner, no more matches
               break outer;
             }
             nextTimestampedRow = getTimestampedRowkey(nextRow.getRow());
           }
           int newOrder = Bytes.compareTo(nextTimestampedRow, lastTimestampedRow);
           if (newOrder > 0) {
-            // passed the last seen without a match
+            
+            // Passed the last seen without a match
             matchedRow = null;
             lastTimestampedRow = nextTimestampedRow;
             break;
           } else if (newOrder == 0) {
-            // matched the current
+            
+            // Matched the current
             matchedRow = nextRow.get(ROW_KEY_COL);
           }
         }
@@ -221,16 +231,16 @@ public class MultiIndexedTable extends DataSet {
       if (matchedRow != null) {
         LOG.debug("Adding row " + Bytes.toStringBinary(matchedRow));
         matchedRowKeys.add(matchedRow);
-        // remove from all scanners
+        // Remove from all scanners
         for (int i = 0; i < scanners.size(); i++) {
           scanners.get(i).next();
         }
-        // reset last timestamp
+        // Reset last timestamp
         lastTimestampedRow = null;
       }
     } while (lastTimestampedRow != null || matchedRow != null);
 
-    // get the origin rows
+    // Get the origin rows
     if (!matchedRowKeys.isEmpty()) {
       for (byte[] key : matchedRowKeys) {
         Row originRow = table.get(key);

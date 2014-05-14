@@ -2,14 +2,15 @@ package com.continuuity.watchdog.election;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import org.apache.twill.common.Threads;
-import org.apache.twill.zookeeper.ZKClient;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.twill.common.Threads;
+import org.apache.twill.zookeeper.ZKClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

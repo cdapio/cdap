@@ -35,7 +35,7 @@ public final class Constants {
   }
 
   /**
-   * HBase configurations
+   * HBase configurations.
    */
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
@@ -82,12 +82,12 @@ public final class Constants {
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
 
     /**
-     * query parameter to indicate start time
+     * Query parameter to indicate start time.
      */
     public static final String QUERY_PARAM_START_TIME = "before";
 
     /**
-     * query parameter to indicate end time
+     * Query parameter to indicate end time.
      */
     public static final String QUERY_PARAM_END_TIME = "after";
 
@@ -111,7 +111,7 @@ public final class Constants {
   }
 
   /**
-   * Transactions
+   * Transactions.
    */
   public static final class Transaction {
     /**
@@ -285,7 +285,7 @@ public final class Constants {
   }
 
   /**
-   * Datasets
+   * Datasets.
    */
   public static final class Dataset {
     /**
@@ -412,12 +412,12 @@ public final class Constants {
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
 
     /**
-     * query parameter to indicate start time
+     * Query parameter to indicate start time.
      */
     public static final String QUERY_PARAM_START_TIME = "before";
 
     /**
-     * query parameter to indicate end time
+     * Query parameter to indicate end time.
      */
     public static final String QUERY_PARAM_END_TIME = "after";
 
@@ -519,9 +519,9 @@ public final class Constants {
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
-    /** Configuration for enabling the security */
+    /** Configuration for enabling the security. */
     public static final String CFG_SECURITY_ENABLED = "security.enabled";
-    /**Configuration for security realm */
+    /** Configuration for security realm. */
     public static final String CFG_REALM = "security.realm";
   }
 

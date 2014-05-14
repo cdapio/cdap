@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.common.metrics.MetricsCollector;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -29,7 +30,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * This class dispatch HTTP requests to HandlerMethod. It uses thread local to control

@@ -51,7 +51,7 @@ public class TestCountRandomApp implements Application {
   }
 
   private static class NumberCounter extends AbstractFlowlet {
-    static final byte[] column = { 'c', 'o', 'u', 'n', 't' };
+    static final byte[] COLUMN = { 'c', 'o', 'u', 'n', 't' };
 
     @UseDataSet("counters")
     Table counters;
@@ -62,7 +62,7 @@ public class TestCountRandomApp implements Application {
 
     @ProcessInput
     public void process(Integer number) {
-      counters.increment(number.toString().getBytes(), column, 1L);
+      counters.increment(number.toString().getBytes(), COLUMN, 1L);
     }
 
   }

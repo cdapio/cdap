@@ -57,12 +57,12 @@ public final class Networks {
   }
 
   /**
-   * Normalizes the name by doing the following -
+   * Normalizes the name by doing the following:
    * <ul>
-   *   <li>Remove trailing slashes</li>
-   *   <li>Remove :80 from end of the host part if any</li>
-   *   <li>Replace '.', ':', '/' and '-' with '_'</li>
-   *   <li>URL encode the name</li>
+   *   <li>Remove trailing slashes.</li>
+   *   <li>Remove :80 from end of the host part if any.</li>
+   *   <li>Replace '.', ':', '/' and '-' with '_'.</li>
+   *   <li>URL encode the name.</li>
    * </ul>
    * @param name discovery name that needs to be normalized.
    * @return the normalized discovery name.

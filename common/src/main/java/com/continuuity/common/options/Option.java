@@ -9,6 +9,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+// Due to a bug in checkstyle, it would emit false positives here of the form
+// "Unused Javadoc tag (line:col)" for each of the default clauses.
+// This comment disables that check up to the corresponding ON comments below
+
+// CHECKSTYLE OFF: Unused Javadoc tag
+
 /**
  * Options for command line.
  */
@@ -45,3 +51,5 @@ public @interface Option {
    */
   String envVar() default "";
 }
+
+// CHECKSTYLE ON

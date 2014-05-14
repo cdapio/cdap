@@ -24,8 +24,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import junit.framework.Assert;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -35,9 +35,9 @@ import java.util.Set;
 /**
  *
  */
-public class MetricsTableMigrator_2_0_to_2_1Test {
+public class MetricsTableMigrator20to21Test {
   private static MetricsTableFactory tableFactory;
-  private static MetricsTableMigrator_2_0_to_2_1 upgrader;
+  private static MetricsTableMigrator20to21 upgrader;
   private static HBaseTestBase testHBase;
 
   @Test
@@ -162,7 +162,7 @@ public class MetricsTableMigrator_2_0_to_2_1Test {
     );
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);
-    upgrader = new MetricsTableMigrator_2_0_to_2_1(tableFactory);
+    upgrader = new MetricsTableMigrator20to21(tableFactory);
   }
 
   @AfterClass

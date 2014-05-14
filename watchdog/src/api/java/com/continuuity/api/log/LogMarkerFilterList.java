@@ -13,11 +13,11 @@ package com.continuuity.api.log;
  * Defaults to {@link Operator#MUST_PASS_ALL}.
  */
 public class LogMarkerFilterList implements LogMarkerFilter {
-  /** set operator */
+  /** Set operator. */
   public static enum Operator {
-    /** !AND */
+    /* !AND */
     MUST_PASS_ALL,
-    /** !OR */
+    /* !OR */
     MUST_PASS_ONE
   }
 

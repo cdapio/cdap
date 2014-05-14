@@ -4,17 +4,17 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *

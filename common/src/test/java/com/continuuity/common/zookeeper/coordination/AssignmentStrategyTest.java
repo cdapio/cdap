@@ -86,7 +86,7 @@ public class AssignmentStrategyTest {
     // Create a new assigner with invalid partitions removed.
     Multimap<String, PartitionReplica> oldAssignments = assigner.get();
     assignments = HashMultimap.create(oldAssignments);
-    Iterator<Map.Entry<String,PartitionReplica>> iterator = assignments.entries().iterator();
+    Iterator<Map.Entry<String, PartitionReplica>> iterator = assignments.entries().iterator();
     while (iterator.hasNext()) {
       Map.Entry<String, PartitionReplica> entry = iterator.next();
       if (Integer.parseInt(entry.getValue().getName().substring(1)) >= 6) {

@@ -5,11 +5,11 @@
 package com.continuuity.common.logging.common;
 
 /**
- * Defines log writer interface
+ * Defines log writer interface.
  */
 public interface LogWriter {
   /**
-   * Write a log message with a given log level
+   * Write a log message with a given log level.
    * @param tag   tag
    * @param level log level
    * @param message log message

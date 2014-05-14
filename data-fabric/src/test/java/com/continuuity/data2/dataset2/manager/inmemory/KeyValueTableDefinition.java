@@ -1,14 +1,15 @@
 package com.continuuity.data2.dataset2.manager.inmemory;
 
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
+import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
+
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;

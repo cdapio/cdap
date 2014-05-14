@@ -62,7 +62,7 @@ public abstract class DaemonMain {
   public abstract void stop();
 
   /**
-   * Invoked by jsvc for resource cleanup
+   * Invoked by jsvc for resource cleanup.
    */
   public abstract void destroy();
 }

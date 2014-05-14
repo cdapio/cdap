@@ -1,20 +1,19 @@
-/*
- * Copyright (c) 2013, Continuuity Inc
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
  *
- * All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- * Redistribution and use in source and binary forms,
- * with or without modification, are not permitted
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-package com.continuuity;
+package com.continuuity.examples.sentimentAnalysis;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -44,36 +43,36 @@ public class SentimentAnalysisTest extends ReactorTestBase {
     try {
       ApplicationManager appManager = deployApplication(SentimentAnalysis.class);
 
-      // Starts a flow
+      // Starts a Flow
       FlowManager flowManager = appManager.startFlow("analysis");
 
       try {
-        // Write a message to stream
+        // Write a message to Stream
         StreamWriter streamWriter = appManager.getStreamWriter("sentence");
         streamWriter.send("i love movie");
         streamWriter.send("i hate movie");
         streamWriter.send("i am neutral to movie");
         streamWriter.send("i am happy today that I got this working.");
 
-        // Wait for the last flowlet processed all tokens.
+        // Wait for the last Flowlet processed all tokens
         RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
         countMetrics.waitForProcessed(4, 15, TimeUnit.SECONDS);
       } finally {
         flowManager.stop();
       }
 
-      // Start procedure and verify.
+      // Start procedure and verify
       ProcedureManager procedureManager = appManager.startProcedure("sentiment-query");
       try {
         String response = procedureManager.getClient().query("aggregates", Collections.<String, String>emptyMap());
 
-        // Verify the aggregates.
+        // Verify the aggregates
         Map<String, Long> result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
         Assert.assertEquals(2, result.get("positive").intValue());
         Assert.assertEquals(1, result.get("negative").intValue());
         Assert.assertEquals(1, result.get("neutral").intValue());
 
-        // Verify retrieval of sentiments.
+        // Verify retrieval of sentiments
         response = procedureManager.getClient().query("sentiments", ImmutableMap.of("sentiment", "positive"));
         result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
         Assert.assertEquals(ImmutableSet.of("i love movie", "i am happy today that I got this working."),
