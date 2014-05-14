@@ -3,14 +3,15 @@ package com.continuuity.data2.dataset2.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
+
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  *

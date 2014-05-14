@@ -16,9 +16,9 @@ import org.junit.Test;
 public class RouterPathTest {
 
   private static RouterPathLookup pathLookup;
-  private final String VERSION = "HTTP/1.1";
+  private static final String VERSION = "HTTP/1.1";
   private static final String API_KEY = "SampleTestApiKey";
-  private final String FALLBACKSERVICE = "gateway";
+  private static final String FALLBACKSERVICE = "gateway";
 
   @BeforeClass
   public static void init() throws Exception {

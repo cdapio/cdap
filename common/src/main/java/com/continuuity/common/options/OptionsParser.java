@@ -164,14 +164,15 @@ public final class OptionsParser {
     return parsedOptions;
   }
 
+  static final String NON_DEFAULT_FORMAT_STRING = " --%-20s %-20s %-20s\n";
+  static final String DEFAULT_FORMAT_STRING = " --%-20s %-20s %-50s\t(Default=%s)\n";
+
   /**
    * Prints the usage based on declared Options in the class.
    * @param options extracted options from introspecting a class
    * @param out Stream to output the usage.
    */
   private static void printUsage(Map<String, OptionSpec> options, String appName, String appVersion, PrintStream out) {
-    final String NON_DEFAULT_FORMAT_STRING = " --%-20s %-20s %-20s\n";
-    final String DEFAULT_FORMAT_STRING = " --%-20s %-20s %-50s\t(Default=%s)\n";
 
     out.print(String.format("%s - v%s\n", appName, appVersion));
     out.println("Options:");

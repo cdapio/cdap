@@ -3,6 +3,7 @@ package com.continuuity.internal.io;
 import com.continuuity.common.lang.Fields;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
+
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassWriter;
@@ -14,9 +15,9 @@ import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Generate a class bytecode that implements {@link FieldAccessor} for a given class field. The generated class

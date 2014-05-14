@@ -3,9 +3,9 @@
  */
 package com.continuuity.common.lang.jar;
 
+import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

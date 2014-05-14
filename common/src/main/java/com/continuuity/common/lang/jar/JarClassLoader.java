@@ -5,14 +5,15 @@
 package com.continuuity.common.lang.jar;
 
 import com.continuuity.common.lang.MultiClassLoader;
+
 import org.apache.twill.filesystem.Location;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.annotation.Nullable;
 
 /**
- * JarClassLoader extends {@link com.continuuity.common.lang.MultiClassLoader}
+ * JarClassLoader extends {@link com.continuuity.common.lang.MultiClassLoader}.
  */
 public class JarClassLoader extends MultiClassLoader {
   private Location jarLocation;
@@ -30,8 +31,8 @@ public class JarClassLoader extends MultiClassLoader {
   }
 
   /**
-   * Creates a ClassLoader with provided archive resources and uses context classloader as parent if available.
-   * Otherwise, the classloader of this class would be used as parent classloader.
+   * Creates a ClassLoader with provided archive resources and uses context class loader as parent if available.
+   * Otherwise, the class loader of this class would be used as parent class loader.
    * @param jarResources instance of archive resources
    */
   public JarClassLoader(JarResources jarResources) {
