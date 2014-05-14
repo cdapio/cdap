@@ -126,9 +126,3 @@ configurations {
     all*.exclude group: 'asm', module: 'asm'
 }
 
-/**
- * Excludes Tests that are part of test suite.
- */
-test {
-    exclude '**/handlers/**'
-}

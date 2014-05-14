@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
  * running the handler tests, this also gives the ability to run individual test cases.
  */
-public abstract class AppFabricTestsSuite {
+public abstract class AppFabricTestService {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
