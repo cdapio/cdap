@@ -496,7 +496,7 @@ simply write::
 	  .add(new RandomGenerator())
 	  .add(new RoundingFlowlet())
 	.connect()
-	  .fromStream("RandomGenerator").to(“RoundingFlowlet”)
+	  .from("RandomGenerator").to(“RoundingFlowlet”)
 
 If you have two Flowlets of the same class, you can give them explicit names::
 
@@ -505,7 +505,7 @@ If you have two Flowlets of the same class, you can give them explicit names::
 	  .add("generator", new RandomGenerator())
 	  .add("rounding", new RoundingFlowlet())
 	.connect()
-	  .fromStream("random").to("rounding")
+	  .from("random").to("rounding")
 
 .. _mapreduce:
 
