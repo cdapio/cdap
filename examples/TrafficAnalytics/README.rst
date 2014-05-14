@@ -9,9 +9,8 @@ TrafficAnalytics Example
 A Continuuity Reactor Application demonstrating MapReduce
 ----------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -34,7 +33,7 @@ send back a JSON-formatted result with all the hours for which HTTP requests wer
 Let's look at some of these elements, and then run the application and see the results.
 
 The TrafficAnalytics Application
-----------------------------------
+--------------------------------
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
@@ -49,7 +48,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
 	    return ApplicationSpecification.Builder.with()
 	      .setName("TrafficAnalytics")
 	      .setDescription("HTTP request counts on an hourly basis")
-	      // Ingest data into the app via Streams.
+	      // Ingest data into the Application via Streams.
 	      .withStreams()
 	        .add(new Stream("logEventStream"))
 	      // Store processed data in Datasets.
@@ -72,7 +71,7 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
 Many elements are similar, but there are a few new entries.
 
 ``SimpleTimeseriesTable``: Data Storage
----------------------------------------------------
+---------------------------------------
 The processed data is stored in SimpleTimeseriesTable DataSets:
 
 - All entries are logically partitioned into time intervals of the same size based on the entry timestamp.
@@ -148,36 +147,37 @@ from now until 24 hours previous. You could pass in parameters to search for a d
 and in an actual application that would be common.
 
 
-Building and Running the App and Example
+Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
-example code that is running on it as an "app".
+In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
-In this example, you can either build the app from source or deploy the already-compiled JAR file.
-In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
-injecting Apache access log entries from an example file into the app. 
+In this example, you can either build the Application from source or deploy the already-compiled JAR file.
+In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
+injecting Apache access log entries from an example file into the Application. 
 
-As you do so, you can query the app to see the results
+As you do so, you can query the Application to see the results
 of its processing the log entries.
 
-When finished, stop the app as described below.
+When finished, stop the Application as described below.
 
 Building the AccessLogApp
 -------------------------
-From the project root, build ``TrafficAnalytics`` app with the
+From the project root, build ``TrafficAnalytics`` Application with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
 
-(If you modify the code and would like to rebuild the app, you can
+(If you modify the code and would like to rebuild the Application, you can
 skip the tests by using the command::
 
 	$ mvn -Dmaven.test.skip=true clean package
 
-Deploying and Starting the App
-------------------------------
+
+Deploying and Starting the Application
+--------------------------------------
 Make sure an instance of the Continuuity Reactor is running and available. 
 From within the SDK root directory, this command will start Reactor in local mode::
 
@@ -189,15 +189,15 @@ On Windows::
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the App .JAR file (``target/TrafficAnalytics-1.0.jar``) onto your browser window.
-	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select the ``TrafficAnalytics`` app from the list.
-	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+#. Drag and drop the Application .JAR file (``target/TrafficAnalytics-1.0.jar``) onto your browser window.
+   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+#. Once loaded, select the ``TrafficAnalytics`` Application from the list.
+   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy --gateway <hostname>``
-#. To start the App, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy --gateway <hostname>``
+#. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
 
 :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
 
@@ -230,12 +230,12 @@ Start the MapReduce job by:
 
 - In the Continuuity Reactor Dashboard:
 
-	#. Click the *Process* button.
-	#. Click on the *RequestCountMapReduce* MapReduce.
-	#. If its status is not **Running**, click the *Start* button.
-	#. You should see the results change in the *Map* and *Reduce* icons, in the values
-	   shown for *In* and *Out*.
-	#. If you check the *countTable* DataSet, you should find that its storage has changed from 0.
+  #. Click the *Process* button.
+  #. Click on the *RequestCountMapReduce* MapReduce.
+  #. If its status is not **Running**, click the *Start* button.
+  #. You should see the results change in the *Map* and *Reduce* icons, in the values
+     shown for *In* and *Out*.
+  #. If you check the *countTable* DataSet, you should find that its storage has changed from 0.
 
 Querying the Results
 ....................
@@ -249,30 +249,27 @@ There are two ways to query the *countTable* DataSet:
 
 	libexec\curl...
 
-- Type a procedure method name, in this case ``getCounts``, in the Query page of the Reactor Dashboard:
+- Type a Procedure method name, in this case ``getCounts``, in the Query page of the Reactor Dashboard:
 
-	In the Continuuity Reactor Dashboard:
+  In the Continuuity Reactor Dashboard:
 
-	#. Click the *Query* button.
-	#. Click on the *LogCountProcedure* procedure.
-	#. Type ``getCounts`` in the *Method* text box.
-	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
-	   in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
-	   For example:
+  #. Click the *Query* button.
+  #. Click on the *LogCountProcedure* Procedure.
+  #. Type ``getCounts`` in the *Method* text box.
+  #. Click the *Execute* button.
+  #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+     in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
+     For example::
 
-	::
-	   
-		   {"1391706000000":3,"1391691600000":2,"1391702400000":2,
-		    "1391688000000":2,"1391698800000":3,"1391695200000":4,
-		    "1391684400000":1,"1391709600000":2,"1391680800000":2}
-	   
+	{"1391706000000":3,"1391691600000":2,"1391702400000":2,
+	 "1391688000000":2,"1391698800000":3,"1391695200000":4,
+	 "1391684400000":1,"1391709600000":2,"1391680800000":2}
 
-Stopping the App
-----------------
+Stopping the Application
+------------------------
 Either:
 
-- On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
@@ -282,4 +279,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-TrafficAnalytics-2.1.0.zip>`_
+`Download the example </developers/examples-files/continuuity-TrafficAnalytics-2.2.0.zip>`_

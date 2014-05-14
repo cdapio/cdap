@@ -100,7 +100,7 @@ public final class KafkaMetricsProcessorService extends AbstractIdleService {
           if (service != null) {
             service.stopAndWait();
           }
-          if (partitions.isEmpty() || !multiElection.isRunning()) {
+          if (partitions.isEmpty()) {
             service = null;
           } else {
             service = factory.create(partitions);

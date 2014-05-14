@@ -25,6 +25,13 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
   private FileReader<T, P> nextReader;
 
   @Override
+  public void initialize() throws IOException {
+    if (currentReader == null) {
+      currentReader = renewReader();
+    }
+  }
+
+  @Override
   public int read(Collection<? super T> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
     return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);

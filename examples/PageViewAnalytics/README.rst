@@ -9,9 +9,8 @@ PageViewAnalytics Example
 A Continuuity Reactor Application demonstrating Custom DataSets and Metrics
 ---------------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-	
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -44,12 +43,12 @@ Finally, you can query the *pageViewCDS* for a specified URI by using the ``getD
 method of the *PageViewProcedure*. It will
 send back a JSON-formatted result with the percentage of the requested pages viewed from the referrer page.
 
-Let's look at some of these elements, and then run the application and see the results.
+Let's look at some of these elements, and then run the Application and see the results.
 
 The PageViewAnalytics Application
--------------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
-of the application are tied together by the class ``PageViewAnalyticsApp``::
+---------------------------------
+As in the other `examples <http://continuuity.com/developers/examples>`__, the components
+of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {
 	
@@ -58,7 +57,7 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 	    return ApplicationSpecification.Builder.with()
 	      .setName("PageViewAnalytics")
 	      .setDescription("Page view analysis")
-	      // Ingest data into the app via Streams
+	      // Ingest data into the Application via Streams
 	      .withStreams()
 	        .add(new Stream("logEventStream"))
 	      // Store processed data in DataSets
@@ -75,9 +74,9 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 	      .build();
 	  }
 
-	
+
 ``PageViewStore``: Custom Data Storage
----------------------------------------
+--------------------------------------
 The processed data is stored in a custom DataSet, ``PageViewStore``, with these
 methods defined:
 
@@ -106,10 +105,10 @@ counts those log events without a referrer page URI field.
 The query (*getDistribution*) used to obtain results.
 
 
-Building and Running the App and Example
+Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
-example code that is running on it as an "app".
+In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
@@ -120,7 +119,7 @@ injecting Apache access log entries from an example file into the app.
 As you do so, you can query the app to see the results
 of its processing the log entries.
 
-When finished, stop the app as described below.
+When finished, stop the Application as described below.
 
 Building the PageViewAnalyticsApp
 ----------------------------------
@@ -129,14 +128,15 @@ From the project root, build ``PageViewAnalytics`` with the
 
 	$ mvn clean package
 
-(If you modify the code and would like to rebuild the app, you can
+(If you modify the code and would like to rebuild the Application, you can
 skip the tests by using the command::
 
 	$ mvn -Dmaven.test.skip=true clean package
 
-Deploying and Starting the App
-------------------------------
-Make sure an instance of the Continuuity Reactor is running and available. 
+
+Deploying and Starting the Application
+--------------------------------------
+Make sure an instance of the Continuuity Reactor is running and available.
 From within the SDK root directory, this command will start Reactor in local mode::
 
 	$ ./bin/reactor.sh start
@@ -147,17 +147,11 @@ On Windows::
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the App .JAR file (``target/PageViewAnalytics-1.0.jar``) onto your browser window.
-	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select the ``PageViewAnalytics`` app from the list.
-	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-	
-Command line tools are also available to deploy and manage apps. From within the project root:
-
-#. To deploy the App JAR file, run ``$ ./bin/appManager.sh --action deploy``
-#. To start the App, run ``$ ./bin/appManager.sh --action start [--gateway <hostname>]``
-
-:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+#. Drag and drop the Application .JAR file (``target/PageViewAnalytics-1.0.jar``)
+   onto your browser window.
+   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+#. Once loaded, select the ``PageViewAnalytics`` Application from the list.
+   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 
 On Windows:
 
@@ -194,12 +188,12 @@ There are two ways to query the *pageViewCDS* custom DataSet:
 
 	libexec\curl...
 
-- Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
+- Type a Procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
 
 	In the Continuuity Reactor Dashboard:
 
 	#. Click the *Query* button.
-	#. Click on the *PageViewProcedure* procedure.
+	#. Click on the *PageViewProcedure* Procedure.
 	#. Type ``getDistribution`` in the *Method* text box.
 	#. Type the parameters required for this method, a JSON string with the name *page* and
 	   value of a URI, ``"http://www.continuuity.com"``:
@@ -222,11 +216,11 @@ There are two ways to query the *pageViewCDS* custom DataSet:
 		"https://accounts.continuuity.com/login":0.15,"/products":0.2}
 
 
-Stopping the App
-----------------
+Stopping the Application
+------------------------
 Either:
 
-- On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
   :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
@@ -236,4 +230,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.1.0.zip>`_
+`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.0.zip>`_

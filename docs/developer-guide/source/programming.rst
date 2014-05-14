@@ -615,7 +615,7 @@ from a DataSet or write to a DataSet similar to the way a Flowlet or
 Procedure can.
 
 To access a DataSet directly in Mapper or Reducer, you need (1) a
-declaration and (2) an injection :
+declaration and (2) an injection:
 
 #. Declare the DataSet in the MapReduce job’s configure() method.
    For example, to have access to a DataSet named *catalog*::
@@ -773,7 +773,7 @@ post-processing can include filtering, aggregating, or joins over
 multiple DataSets—in fact, a Procedure can perform all the same
 operations as a Flowlet with the same consistency and durability
 guarantees. They are deployed into the same pool of application
-containers as flows, and you can run multiple instances to increase the
+containers as Flows, and you can run multiple instances to increase the
 throughput of requests.
 
 A Procedure implements and exposes a very simple API: a method name
