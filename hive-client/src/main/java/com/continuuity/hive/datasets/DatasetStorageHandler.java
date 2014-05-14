@@ -32,4 +32,9 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
     jobProperties.put(DatasetInputFormat.DATASET_NAME, datasetName);
     LOG.debug("Got dataset {} for external table {}", datasetName, tableDesc.getTableName());
   }
+
+  @Override
+  public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+    LOG.debug("do nothing");
+  }
 }

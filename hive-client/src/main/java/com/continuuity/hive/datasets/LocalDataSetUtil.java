@@ -45,6 +45,7 @@ public class LocalDataSetUtil {
   public LocalDataSetUtil(CConfiguration conf) {
     this.configuration = conf;
     this.locationFactory = new LocalLocationFactory(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)));
+    // todo tx system client should be injected
     this.txClient = new InMemoryTxSystemClient(LocalHiveServer.getInMemoryTransactionManager());
     this.discoveryClient = LocalHiveServer.getDiscoveryServiceClient();
   }
