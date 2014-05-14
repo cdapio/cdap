@@ -20,6 +20,7 @@ import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Charsets;
@@ -34,11 +35,13 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -89,6 +93,7 @@ public class AppFabricTestHelper {
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+      injector.getInstance(SchedulerService.class).startAndWait();
 
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
@@ -132,11 +137,14 @@ public class AppFabricTestHelper {
                                  String type) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.getStatus(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
-    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status" + " " + type + "failed");
+    JsonReader jsonReader = new JsonReader(new InputStreamReader
+                                          (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
+                                          (responder.getResponseContent())), Charsets.UTF_8));
+    Map<String, String> json = GSON.fromJson(jsonReader,
                                              new TypeToken<Map<String, String>>() { }.getType());
     return json.get("status");
   }
@@ -160,7 +168,11 @@ public class AppFabricTestHelper {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.workflowSchedules(request, responder, appId, wflowId);
-    List<String> schedules = (List<String>) responder.getResponseContent();
+    JsonReader jsonReader = new JsonReader(new InputStreamReader
+                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
+                                               (responder.getResponseContent())), Charsets.UTF_8));
+    List<String> schedules = GSON.fromJson(jsonReader,
+                                             new TypeToken<List<String>>() { }.getType());
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
     return schedules;
   }
@@ -171,8 +183,12 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    List<Map<String, String>> runList = new Gson().fromJson(responder.getResponseContent().toString(),
-                               new TypeToken<List<Map<String, String>>>() { }.getType());
+    JsonReader jsonReader = new JsonReader(new InputStreamReader
+                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
+                                               (responder.getResponseContent())), Charsets.UTF_8));
+    List<Map<String, String>> runList = GSON.fromJson(jsonReader,
+                                         new TypeToken<List<Map<String, String>>>() { }.getType());
+
     List<RunRecord> runRecords = Lists.newArrayList();
     for (Map<String, String> run : runList) {
       runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
@@ -206,7 +222,10 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
+    JsonReader jsonReader = new JsonReader(new InputStreamReader
+                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
+                                               (responder.getResponseContent())), Charsets.UTF_8));
+    Map<String, String> json = GSON.fromJson(jsonReader,
                                              new TypeToken<Map<String, String>>() { }.getType());
     return json.get("status");
   }
