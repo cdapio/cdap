@@ -10,14 +10,18 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -27,7 +31,8 @@ import java.nio.ByteBuffer;
  */
 public final class MockResponder implements HttpResponder {
   private HttpResponseStatus status = null;
-  private byte[] content = null;
+  private ChannelBuffer content = null;
+  private static final Gson GSON = new Gson();
 
   private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
     @Override
@@ -40,8 +45,11 @@ public final class MockResponder implements HttpResponder {
     return status;
   }
 
-  public byte[] getResponseContent() {
-    return content;
+  public <T> T decodeResponseContent(TypeToken<T> type) {
+    JsonReader jsonReader = new JsonReader(new InputStreamReader
+                                             (new ChannelBufferInputStream(content), Charsets.UTF_8));
+    T response = GSON.fromJson(jsonReader, type.getType());
+    return response;
   }
 
   @Override
@@ -125,7 +133,7 @@ public final class MockResponder implements HttpResponder {
   public void sendContent(HttpResponseStatus status,
                           ChannelBuffer content, String contentType, Multimap<String, String> headers) {
     if (content != null) {
-      this.content = content.array();
+      this.content = content;
     }
     this.status = status;
   }

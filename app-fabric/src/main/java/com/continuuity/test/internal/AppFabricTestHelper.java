@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -141,11 +142,7 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.getStatus(request, responder, appId, type, flowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status" + " " + type + "failed");
-    JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                          (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
-                                          (responder.getResponseContent())), Charsets.UTF_8));
-    Map<String, String> json = GSON.fromJson(jsonReader,
-                                             new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
   }
 
@@ -168,11 +165,8 @@ public class AppFabricTestHelper {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.workflowSchedules(request, responder, appId, wflowId);
-    JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
-                                               (responder.getResponseContent())), Charsets.UTF_8));
-    List<String> schedules = GSON.fromJson(jsonReader,
-                                             new TypeToken<List<String>>() { }.getType());
+
+    List<String> schedules = responder.decodeResponseContent(new TypeToken<List<String>>() { });
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
     return schedules;
   }
@@ -183,12 +177,8 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
-                                               (responder.getResponseContent())), Charsets.UTF_8));
-    List<Map<String, String>> runList = GSON.fromJson(jsonReader,
-                                         new TypeToken<List<Map<String, String>>>() { }.getType());
 
+    List<Map<String, String>> runList = responder.decodeResponseContent(new TypeToken<List<Map<String, String>>>() { });
     List<RunRecord> runRecords = Lists.newArrayList();
     for (Map<String, String> run : runList) {
       runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
@@ -222,11 +212,7 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                             (new ChannelBufferInputStream(ChannelBuffers.wrappedBuffer
-                                               (responder.getResponseContent())), Charsets.UTF_8));
-    Map<String, String> json = GSON.fromJson(jsonReader,
-                                             new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
   }
 
