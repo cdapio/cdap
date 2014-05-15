@@ -10,6 +10,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
@@ -34,19 +35,21 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
   private final CConfiguration configuration;
   private final Store store;
   private final ProgramTerminator programTerminator;
+  private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
-                      ProgramTerminator programTerminator, QueueAdmin queueAdmin,
-                      DiscoveryServiceClient discoveryServiceClient) {
+                      ProgramTerminator programTerminator, StreamConsumerFactory streamConsumerFactory,
+                      QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = storeFactory.create();
     this.programTerminator = programTerminator;
+    this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
   }
 
@@ -63,7 +66,8 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
-    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
+                                                    queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);

@@ -86,6 +86,15 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   }
 
   @Override
+  protected void dropTable(String tableName) throws IOException {
+    HBaseAdmin admin = getAdmin();
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
+  }
+
+  @Override
   protected void getFileOffsets(Location partitionLocation,
                                 Collection<? super StreamFileOffset> fileOffsets) throws IOException {
     // TODO: Support dynamic writer instances discovery

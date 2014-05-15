@@ -67,6 +67,11 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   }
 
   @Override
+  protected void dropTable(String tableName) throws IOException {
+    tableService.dropTable(tableName);
+  }
+
+  @Override
   protected void getFileOffsets(Location partitionLocation,
                                 Collection<? super StreamFileOffset> fileOffsets) throws IOException {
     // Assumption is it's used in local mode, hence only one instance
