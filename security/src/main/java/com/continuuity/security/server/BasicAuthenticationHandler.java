@@ -1,5 +1,6 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -16,7 +17,7 @@ import java.net.URL;
 public class BasicAuthenticationHandler extends ConstraintSecurityHandler {
 
   @Inject
-  public BasicAuthenticationHandler() throws Exception {
+  public BasicAuthenticationHandler(CConfiguration configuration) throws Exception {
     super();
 
     String[] roles = Constants.Security.BASIC_USER_ROLES;
@@ -24,6 +25,10 @@ public class BasicAuthenticationHandler extends ConstraintSecurityHandler {
     constraint.setName(Constraint.__BASIC_AUTH);
     constraint.setRoles(roles);
     constraint.setAuthenticate(true);
+
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+      constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
+    }
 
     ConstraintMapping constraintMapping = new ConstraintMapping();
     constraintMapping.setConstraint(constraint);

@@ -815,7 +815,7 @@
     -->
     <property>
         <name>security.authentication.handlerClassName</name>
-        <value></value>
+        <value>com.continuuity.security.server.BasicAuthenticationHandler</value>
     </property>
 
     <property>
@@ -841,7 +841,7 @@
     -->
     <property>
         <name>security.enabled</name>
-        <value>false</value>
+        <value>true</value>
         <description>If this is set to true, security layer will be up and active in reactor</description>
     </property>
 
@@ -849,5 +849,14 @@
         <name>security.realm</name>
         <value>continuuity</value>
         <description>Security realm used for authentication</description>
+    </property>
+
+    <property>
+      <name>security.server.ssl.enabled</name>
+      <value>true</value>
+    </property>
+    <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
     </property>
 </configuration>

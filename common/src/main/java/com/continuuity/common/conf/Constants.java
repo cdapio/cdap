@@ -528,6 +528,10 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
+    /** Configuration for enabling SSL */
+    public static final String SSL_ENABLED = "security.server.ssl.enabled";
+    /** SSL port for External Authentication Server. */
+    public static final String SSL_PROTECTED_PORT = "security.server.ssl.port";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

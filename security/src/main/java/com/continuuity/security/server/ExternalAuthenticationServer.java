@@ -2,9 +2,15 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -14,6 +20,8 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +40,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final int maxThreads;
   private final HandlerList handlers;
   private final DiscoveryService discoveryService;
+  private final CConfiguration configuration;
   private Cancellable serviceCancellable;
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
@@ -54,6 +63,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
+    this.configuration = configuration;
   }
 
   /**
@@ -103,7 +113,22 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
-      server.setConnectors(new Connector[]{connector});
+
+      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        sslContextFactory.setKeyStorePath("/Users/gandu/workspace/keystore");
+        sslContextFactory.setKeyStorePassword("realtime");
+
+        SslSelectChannelConnector sslSelectChannelConnector = new SslSelectChannelConnector(sslContextFactory);
+        int confidentialPort = configuration.getInt(Constants.Security.SSL_PROTECTED_PORT);
+        sslSelectChannelConnector.setPort(port);
+//        sslSelectChannelConnector.setPort(confidentialPort);
+//        connector.setConfidentialPort(confidentialPort);
+
+        server.setConnectors(new Connector[]{sslSelectChannelConnector});
+      } else {
+        server.setConnectors(new Connector[]{connector});
+      }
 
       server.setHandler(context);
     } catch (Exception e) {
@@ -132,5 +157,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
     }
+  }
+
+  public static void main(String[] args) {
+    Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(), new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new ConfigModule());
+    ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
+    server.startAndWait();
   }
 }
