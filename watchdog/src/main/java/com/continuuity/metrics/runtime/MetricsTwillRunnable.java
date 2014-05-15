@@ -43,8 +43,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
   }
 
   @Override
-  public void initialize(TwillContext context) {
-    super.initialize(context);
+  protected void doInit(TwillContext context) {
     LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
