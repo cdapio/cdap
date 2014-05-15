@@ -2,7 +2,7 @@ package com.continuuity.api.data.batch;
 
 
 /**
- * Handy adaptor for {@link SplitReader} to convert types
+ * Handy adaptor for {@link SplitReader} to convert types.
  * @param <KEY1>
  * @param <KEY>
  * @param <VALUE1>

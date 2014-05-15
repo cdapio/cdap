@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -8,6 +7,7 @@ import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;

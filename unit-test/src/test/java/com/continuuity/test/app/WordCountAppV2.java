@@ -41,12 +41,12 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import java.util.StringTokenizer;
+import javax.annotation.Nullable;
 
 /**
  * This is a sample word count app that is used in testing in

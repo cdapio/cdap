@@ -51,7 +51,7 @@ public interface ApplicationConfigurer {
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Adds a dataset instance to be created automatically (if not exists) by application components
+   * Adds a dataset instance to be created automatically (if not exists) by application components.
    * @param datasetInstanceName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties

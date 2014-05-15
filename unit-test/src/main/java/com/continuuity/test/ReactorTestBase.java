@@ -19,24 +19,24 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.service.StreamHandler;
+import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
-import com.continuuity.data.stream.service.StreamHandler;
-import com.continuuity.data.stream.service.StreamHttpModule;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
@@ -307,7 +307,8 @@ public class ReactorTestBase {
    * @throws Exception
    */
   @Beta
-  protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule) throws Exception {
+  protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
+    throws Exception {
     datasetManager.register(moduleName, datasetModule);
   }
 

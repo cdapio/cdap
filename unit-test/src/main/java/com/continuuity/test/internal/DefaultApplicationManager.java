@@ -310,6 +310,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public <T> DataSetManager<T> getDataSet(String dataSetName) {
+    @SuppressWarnings("unchecked")
     final T dataSet = (T) dataSetInstantiator.getDataSet(dataSetName);
 
     try {
