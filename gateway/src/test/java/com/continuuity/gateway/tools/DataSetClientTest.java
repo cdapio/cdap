@@ -4,20 +4,21 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.GatewayTestService;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Data set client.
  */
-public class DataSetClientTest {
+public class DataSetClientTest extends GatewayTestService {
   private static final String HOSTNAME = "127.0.0.1";
-  private static final String API_KEY = GatewayFastTestsSuite.getAuthHeader().getValue();
+  private static final String API_KEY = GatewayTestService.getAuthHeader().getValue();
 
   @Test
   public void testValueAsCounter() throws OperationException {
     CConfiguration configuration = CConfiguration.create();
-    String port = Integer.toString(GatewayFastTestsSuite.getPort());
+    String port = Integer.toString(GatewayTestService.getPort());
 
     final String table = "tVAC";
     final String row = "myRow";
@@ -45,7 +46,7 @@ public class DataSetClientTest {
   @Test
   public void testClearDataset() throws OperationException {
     CConfiguration configuration = CConfiguration.create();
-    String port = Integer.toString(GatewayFastTestsSuite.getPort());
+    String port = Integer.toString(GatewayTestService.getPort());
 
     final String table = "tVACLr";
     final String row = "myRow";

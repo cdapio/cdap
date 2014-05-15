@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.services.http.handlers;
 
 import com.continuuity.internal.app.services.http.AppFabricTestService;
+import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
@@ -11,13 +12,13 @@ import org.junit.Test;
 public class PingHandlerTest extends AppFabricTestService {
   @Test
   public void testPing() throws Exception {
-    HttpResponse response = AppFabricTestService.doGet("/ping");
+    HttpResponse response = AppFabricTestsSuite.doGet("/ping");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   @Test
   public void testStatus() throws Exception {
-    HttpResponse response = AppFabricTestService.doGet("/status");
+    HttpResponse response = AppFabricTestsSuite.doGet("/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 

@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.GatewayTestService;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,9 +16,9 @@ import java.util.Arrays;
 /**
  * Tests the stream client.
  */
-public class StreamClientTest {
+public class StreamClientTest extends GatewayTestService {
   private static final String hostname = "127.0.0.1";
-  private static final String AUTH_KEY = GatewayFastTestsSuite.getAuthHeader().getValue();
+  private static final String AUTH_KEY = GatewayTestService.getAuthHeader().getValue();
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
 
@@ -33,7 +34,7 @@ public class StreamClientTest {
   @Test
   public void testUsage() throws Exception {
     CConfiguration configuration = CConfiguration.create();
-    String port = Integer.toString(GatewayFastTestsSuite.getPort());
+    String port = Integer.toString(GatewayTestService.getPort());
 
     // argument combinations that should return success
     String[][] goodArgsList = {
@@ -131,7 +132,7 @@ public class StreamClientTest {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.Router.ADDRESS, hostname);
     configuration.set(Constants.Router.FORWARD,
-                      GatewayFastTestsSuite.getPort() + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
+                      GatewayTestService.getPort() + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
 
     if (streamId != null) {
       args = Arrays.copyOf(args, args.length + 4);
