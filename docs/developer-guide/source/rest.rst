@@ -24,6 +24,7 @@ The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 - **Reactor:** deploying and managing Applications.
 - **Logs:** retrieving Application logs.
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
+- **Monitor:** checking the status of various Reactor services.
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -70,7 +71,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 8 30 62
+   :widths: 5 24 71
    :header-rows: 1
 
    * - Code
@@ -94,6 +95,9 @@ Status Codes
    * - ``405``
      - ``Method Not Allowed``
      - A request was received with a method not supported for the URI
+   * - ``409``
+     - ``Conflict``
+     - A request could not be completed due to a conflict with the current resource state
    * - ``500``
      - ``Internal Server Error``
      - An internal error occurred while processing the request
@@ -359,7 +363,7 @@ Data HTTP API
 =============
 
 The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
-You can create Tables and read, write, modify, or delete data.
+You can create Tables, truncate Tables, and read, write, modify, or delete data.
 
 For DataSets other than Tables, you can truncate the DataSet using this API.
 
@@ -654,9 +658,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/tables/mytable/rows/status``
+     - ``DELETE <base-url>/tables/mytable/rows/status``
    * - Description
-     - Read from an existing Table named *mytable*, a row identified as *status*
+     - Deletes from an existing Table named *mytable*, a row identified as *status*
 
 Comments
 ........
@@ -669,7 +673,7 @@ See the examples under `Reading Data from a Table`_.
 Deleting Data from a DataSet
 ----------------------------
 
-To clear a dataset from all data, submit an HTTP POST request::
+To clear a DataSet of all data, submit an HTTP POST request::
 
 	POST <base-url>/datasets/<dataset-name>/truncate
 
@@ -799,7 +803,7 @@ This allows you to specify values as numeric strings while using a different enc
 Procedure HTTP API
 ==================
 
-This interface supports sending queries to the methods of an Application’s procedures.
+This interface supports sending queries to the methods of an Application’s Procedures.
 
 Executing Procedures
 --------------------
@@ -1508,6 +1512,61 @@ These metrics are available in the DataSets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
+
+Monitor HTTP API
+================
+Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
+
+	GET <base-url>/monitor/<endpoint>
+
+The status of these Reactor services can be checked.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
+   
+   * - Service Name
+     - Endpoint
+     - Description of the Service
+   * - ``Metrics``
+     - ``metrics``
+     - Service that handles metrics related requests
+   * - ``Transaction``
+     - ``transaction``
+     - Service handling transactions 
+   * - ``Streams``
+     - ``streams``
+     - Service handling Stream management 
+   * - ``App Fabric``
+     - ``appfabric``
+     - Service handling Application Fabric requests
+
+Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
+
+Example
+-------
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+   
+   * - HTTP Method
+     - ``GET <base-url>/monitor/metrics``
+   * - Description
+     - Returns the status of the Metrics Service
+
+HTTP Responses
+--------------
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The service is up and running
+   * - ``404 Not Found``
+     - The service is not running or not found
 
 .. rst2pdf: CutStart
 

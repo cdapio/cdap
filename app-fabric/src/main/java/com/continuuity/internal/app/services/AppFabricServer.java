@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app.services;
 
+import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
@@ -42,6 +43,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
+  private final ProgramRuntimeService programRuntimeService;
 
   private NettyHttpService httpService;
   private ExecutorService executor;
@@ -57,7 +59,8 @@ public class AppFabricServer extends AbstractExecutionThreadService {
                          SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
-                         @Nullable MetricsCollectionService metricsCollectionService) {
+                         @Nullable MetricsCollectionService metricsCollectionService,
+                         ProgramRuntimeService programRuntimeService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -65,6 +68,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.handlers = handlers;
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
+    this.programRuntimeService = programRuntimeService;
   }
 
   /**
@@ -75,6 +79,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
+    programRuntimeService.start();
 
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
@@ -144,6 +149,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Invoked during shutdown of the thread.
    */
   protected void triggerShutdown() {
+    programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     executor.shutdownNow();
     httpService.stopAndWait();

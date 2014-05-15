@@ -118,7 +118,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     if (!Iterables.isEmpty(consumerState.getState())) {
       LOG.info("Create file reader with consumer state: {}", consumerState);
       // Has existing offsets, just resume from there.
-      return new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
+      MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
+      reader.initialize();
+      return reader;
     }
 
     // TODO: Support starting from some time rather then from beginning.
@@ -151,6 +153,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     LOG.info("Empty consumer state. Create file reader with file offsets: groupId={}, instanceId={} states={}",
              consumerState.getGroupId(), consumerState.getInstanceId(), fileOffsets);
 
-    return new MultiLiveStreamFileReader(streamConfig, fileOffsets);
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamConfig, fileOffsets);
+    reader.initialize();
+    return reader;
   }
 }
