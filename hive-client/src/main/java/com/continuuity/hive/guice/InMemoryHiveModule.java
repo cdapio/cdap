@@ -28,6 +28,6 @@ public class InMemoryHiveModule extends AbstractModule {
   @Named(Constants.Hive.SERVER_ADDRESS)
   public final InetAddress providesHostname(CConfiguration cConf) {
     return Networks.resolve(cConf.get(Constants.Hive.SERVER_ADDRESS),
-        new InetSocketAddress("localhost", 0).getAddress());
+                            new InetSocketAddress("localhost", 0).getAddress());
   }
 }

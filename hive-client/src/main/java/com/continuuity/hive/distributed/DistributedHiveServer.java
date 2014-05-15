@@ -3,7 +3,6 @@ package com.continuuity.hive.distributed;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveServer;
-import com.continuuity.hive.inmemory.LocalHiveServer;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -30,8 +29,8 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedHiveServer.class);
 
-  private static File hiveConfFile = createHiveConf();
-  private static int hiveServerPort;
+//  private static File hiveConfFile = createHiveConf();
+  private static int hiveServerPort = 55045;
 
   private HiveServer2 hiveServer2;
 
@@ -47,9 +46,10 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
 
   private static File createHiveConf() {
     try {
-      URL url = LocalHiveServer.class.getClassLoader().getResource("hive-site-placeholder.xml");
-      assert url != null;
-      File confDir = new File(url.toURI()).getParentFile();
+      // todo find a way to fix this
+//      URL url = LocalHiveServer.class.getClassLoader().getResourceAsStream("hive-site-placeholder.xml");
+//      assert url != null;
+      File confDir = new File("/etc/continuuity/conf/continuuity-site.xml").getParentFile();
 
       Configuration configuration = new Configuration();
       configuration.clear();
@@ -62,7 +62,7 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
       // TODO: get local data dir from CConf
 //      configuration.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
-      hiveServerPort = PortDetector.findFreePort();
+//      hiveServerPort = PortDetector.findFreePort();
       configuration.setInt("hive.server2.thrift.port", hiveServerPort);
 
       // todo temporary hard coded address
@@ -85,12 +85,16 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
     HiveConf hiveConf = new HiveConf();
 
     // Start Hive Server2
-    LOG.error("Starting hive server on port {}...", hiveServerPort);
+    LOG.error("Starting hive server on port {}, code version {}...", hiveServerPort, 1.2);
     hiveServer2 = new HiveServer2();
+    LOG.error("Hive server new instance...");
     hiveServer2.init(hiveConf);
+    LOG.error("Hive server initiated with hive conf {}...", hiveConf);
     hiveServer2.start();
+    LOG.error("Hive server started...");
     waitForPort(hostname.getHostName(), hiveServerPort);
 
+    LOG.error("Hive server discovery service about to happen...");
     // Register hive server with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
     InetAddress address = socketAddress.getAddress();
@@ -110,6 +114,8 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
         return finalSocketAddress;
       }
     });
+
+    LOG.error("Hive server start up call done...");
   }
 
   @Override

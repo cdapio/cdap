@@ -162,6 +162,7 @@ public class ReactorTwillApplication implements TwillApplication {
         .setInstances(cConf.getInt(Constants.Hive.Container.NUM_INSTANCES, 1))
         .build();
 
+    // todo add a hive-site.xml configuration and pass it to hive service twill runnable
     return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml"), hiveSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())

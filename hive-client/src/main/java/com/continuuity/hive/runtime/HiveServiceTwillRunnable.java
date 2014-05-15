@@ -32,6 +32,7 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
 
   public HiveServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
+    // todo save hive-site.xml to the local disk somewhere
   }
 
   @Override
