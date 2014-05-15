@@ -2,11 +2,10 @@ package com.continuuity.watchdog.election;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.common.Threads;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handles leader election for multiple partitions.
  */
-public class MultiLeaderElection extends AbstractIdleService {
+public class MultiLeaderElection extends AbstractExecutionThreadService {
+
   private static final Logger LOG = LoggerFactory.getLogger(MultiLeaderElection.class);
   private static final Random RANDOM = new Random(System.nanoTime());
 
@@ -36,7 +37,7 @@ public class MultiLeaderElection extends AbstractIdleService {
   private final PartitionChangeHandler handler;
   private final Set<Integer> leaderPartitions;
   private final List<LeaderElection> electionCancels;
-  private final CountDownLatch latch;
+  private final CountDownLatch stopLatch;
 
   private Set<Integer> prevLeaderPartitions;
   private int leaderElectionSleepMs = 8 * 1000;
@@ -51,12 +52,24 @@ public class MultiLeaderElection extends AbstractIdleService {
     this.leaderPartitions = Sets.newCopyOnWriteArraySet();
     this.electionCancels = Lists.newArrayList();
     this.prevLeaderPartitions = ImmutableSet.of();
-    this.latch = new CountDownLatch(1);
+    this.stopLatch = new CountDownLatch(1);
   }
 
   @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting leader election...");
+  protected Executor executor() {
+    return new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        Thread t = new Thread(command, getServiceName());
+        t.setDaemon(true);
+        t.start();
+      }
+    };
+  }
+
+  @Override
+  protected void run() throws Exception {
+    LOG.info("Starting multi leader election...");
 
     // Divide the set of partitions into 2 and run leader election on them separately.
     Set<Integer> partitions1 = Sets.newHashSet();
@@ -80,8 +93,8 @@ public class MultiLeaderElection extends AbstractIdleService {
     TimeUnit.MILLISECONDS.sleep(ms);
     runElection(partitions2);
 
-    latch.countDown();
-    LOG.info("Leader election started.");
+    LOG.info("Multi leader election started.");
+    stopLatch.await();
   }
 
   @Override
@@ -100,6 +113,11 @@ public class MultiLeaderElection extends AbstractIdleService {
       executor.awaitTermination(10, TimeUnit.SECONDS);
       LOG.info("Leader election stopped.");
     }
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    stopLatch.countDown();
   }
 
   public void setLeaderElectionSleepMs(int leaderElectionSleepMs) {
@@ -131,13 +149,6 @@ public class MultiLeaderElection extends AbstractIdleService {
   private final Runnable runHandler = new Runnable() {
     @Override
     public void run() {
-      try {
-        LOG.debug("Waiting for multi leader to finish starting before handling partition change");
-        latch.await();
-      } catch (InterruptedException e) {
-        LOG.error("Interrupted waiting for multi leader to finish starting before handling partition change");
-        Throwables.propagate(e);
-      }
       Set<Integer> newLeaders = ImmutableSet.copyOf(leaderPartitions);
       if (!newLeaders.equals(prevLeaderPartitions)) {
         LOG.info("Leader partitions changed - {}", newLeaders);

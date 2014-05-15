@@ -42,9 +42,7 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
   }
 
   @Override
-  public void initialize(TwillContext context) {
-    super.initialize(context);
-
+  protected void doInit(TwillContext context) {
     try {
       CConfiguration cConf = getCConfiguration();
       Configuration hConf = getConfiguration();
