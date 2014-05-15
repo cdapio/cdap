@@ -37,6 +37,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -230,7 +232,9 @@ public class AppFabricTestHelper {
    * @return Returns an instance of {@link com.continuuity.internal.app.deploy.LocalManager}
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
+    ManagerFactory<Location, ApplicationWithPrograms> factory =
+      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { }));
+
     return factory.create(new ProgramTerminator() {
       @Override
       public void stop(Id.Account id, Id.Program programId, com.continuuity.app.program.Type type) throws Exception {

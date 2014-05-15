@@ -7,6 +7,7 @@ package com.continuuity.performance.runner;
 import com.continuuity.api.Application;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.authorization.AuthorizationFactory;
+import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.store.StoreFactory;
@@ -22,7 +23,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
-import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.deploy.LocalManager;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.metrics.MetricsConstants;
@@ -44,7 +46,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -391,16 +392,19 @@ public final class PerformanceTestRunner {
                     .build(ProcedureClientFactory.class));
         }
       });
-      modules.add(new Module() {
+      modules.add(new AbstractModule() {
         @Override
-        public void configure(Binder binder) {
-          binder.bind(new TypeLiteral<PipelineFactory>() { })
-            .to(new TypeLiteral<SynchronousPipelineFactory>() {
-            });
-          binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
+        public void configure() {
+          bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
+          install(
+            new FactoryModuleBuilder()
+              .implement(new TypeLiteral<Manager<Location, ApplicationWithPrograms>>() { },
+                         new TypeLiteral<LocalManager<Location, ApplicationWithPrograms>>() { })
+              .build(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { })
+          );
 
-          binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-          binder.bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
+          bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
+          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
         }
         @Provides
         @Named(Constants.AppFabric.SERVER_ADDRESS)

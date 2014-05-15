@@ -19,6 +19,8 @@ import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -35,23 +37,25 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final LocationFactory locationFactory;
   private final CConfiguration configuration;
   private final Store store;
-  private final ProgramTerminator programTerminator;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ProgramTerminator programTerminator;
 
+  @Inject
   public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
-                      ProgramTerminator programTerminator, StreamConsumerFactory streamConsumerFactory,
-                      QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
+                      StreamConsumerFactory streamConsumerFactory,
+                      QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
+                      @Assisted ProgramTerminator programTerminator) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = storeFactory.create();
-    this.programTerminator = programTerminator;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
+    this.programTerminator = programTerminator;
   }
 
   @Override

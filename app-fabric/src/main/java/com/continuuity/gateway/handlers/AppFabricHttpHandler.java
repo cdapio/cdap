@@ -234,7 +234,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final String archiveDir;
 
-  private final ManagerFactory managerFactory;
+  private final ManagerFactory<Location, ApplicationWithPrograms> managerFactory;
   private final Scheduler scheduler;
 
 
@@ -282,7 +282,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
-                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
+                              StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
