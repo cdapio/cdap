@@ -20,14 +20,12 @@ Instrumenting Application Health via Metrics
 Module Objectives
 =================
 
-In this module, you will look at:
+In this module, you will learn:
 
-- Overview
-- Collect
-- Process
-- Store
-- Query
-
+- How to use metrics to instrument Applications and monitor their health
+- How to make a metrics request
+- What are the available contexts and metrics
+- How to use the Metrics Explorer
 
 ----
 
@@ -209,8 +207,6 @@ Metrics Requests: Time Range
 
 The time range of a metric query can be specified in different ways:
 
-
-
 .. list-table::
    :header-rows: 1
    :widths: 35 65
@@ -244,8 +240,8 @@ For the total number of input objects processed since the Application *CountRand
 
 ----
 
-Available Contexts
-==================
+Available Contexts (1 of 2)
+===========================
 
 The context of a metric is typically enclosed into a hierarchy of contexts
 
@@ -287,8 +283,8 @@ The context of a metric is typically enclosed into a hierarchy of contexts
 
 ----
 
-Available Contexts
-==================
+Available Contexts (2 of 2)
+===========================
 
 Stream metrics are only available at the Stream level and the only available context is:
 
@@ -323,8 +319,8 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 ----
 
-Available Metrics
-=================
+Available Metrics (1 of 3)
+==========================
 
 - For Continuuity Reactor metrics, the available metrics depend on the context
 - User-defined metrics will be available at whatever context that they are emitted from
@@ -359,8 +355,8 @@ These metrics are available in the Flowlet context:
 
 ----
 
-Available Metrics
-=================
+Available Metrics (2 of 3)
+==========================
 
 Metrics available in the Mappers and Reducers context:
 
@@ -392,8 +388,8 @@ Metrics available in the Procedures context:
 
 ----
 
-Available Metrics
-=================
+Available Metrics (3 of 3)
+==========================
 
 Metrics available in the Streams context:
 
@@ -471,30 +467,63 @@ Example of user-defined metrics: **PageViewAnalytics** example
 
 ----
 
-Using Metrics Explorer
-======================
+Metrics Explorer
+================
 
+Use the Continuuity Reactor Dashboard to view metrics
+
+In the top portion of the Overview you can see the **Metrics** button
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
+   :width: 600px
+
+This takes you to the *Metrics Explorer*
 
 ----
 
-Using REST Interfaces
-=====================
+Using the Metrics Explorer (1 of 3)
+===================================
 
+Monitor a variety of different statistics for elements of the Reactor
 
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_18_metrics_explorer1.png
+   :width: 600px
+
+----
+
+Using the Metrics Explorer (2 of 3)
+===================================
+
+- Add a metric by clicking the *Add* button
+- Gives a dialog where you specify an element and then pick from a list of appropriate metrics.
+- As with other Dashboard realtime graphs, specify the sampling rate through a pop-down menu 
+  in the upper-right
+- *Pause* the sampling to prevent excessive load on the Reactor
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_20_metrics_explorer3.png
+   :width: 200px
+
+----
+
+Using the Metrics Explorer (3 of 3)
+===================================
+
+As you mouse over the graph, you will get detailed information about the statistics presented
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_19_metrics_explorer2.png
+   :width: 600px
 
 ----
 
 Module Summary
 ==============
 
-You should be able describe:
+You should be able to:
 
-- Streams
-- Flows
-- DataSets
-- Procedures
-- MapReduce Jobs
-- Workflows
+- Use metrics to instrument Applications and monitor their health
+- Make a metrics request
+- Select from the available contexts and metrics
+- Use the Metrics Explorer
 
 ----
 

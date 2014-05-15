@@ -211,10 +211,11 @@ Upon completion of this course you should be able to:
 .. landslide: chapter: Operational Considerations For Reactor
 .. ................................................
 .. landslide: module: Instrumenting Application Health via Metrics
-.. landslide: module link: ../modules/m28.rst
+.. landslide: module link: ../modules/m28_instrumenting_via_metrics.rst
 .. landslide: module: Collecting Critical Application Information via Logs
-.. landslide: module link: ../modules/m.rst
-.. landslide: module: Scaling Instances
+.. landslide: module link: ../modules/m29_collecting_via_logs.rst
+.. landslide: module: Runtime Arguments and Scaling Instances
+.. landslide: module link: ../modules/m30_runtime_arguments_scaling_instances.rst
 .. landslide: exercise: Monitoring and Logging An Application
 .. landslide: exercise link:  ../exercises/e10_monitoring_logging_exercise.rst
 

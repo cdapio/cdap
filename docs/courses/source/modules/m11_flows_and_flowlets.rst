@@ -146,14 +146,14 @@ when building the Flow specification you can simply write:
 	  .add(new RandomGenerator())
 	  .add(new RoundingFlowlet())
 	.connect()
-	  .fromStream("RandomGenerator").to("RoundingFlowlet")
+	  .from("RandomGenerator").to("RoundingFlowlet")
 
 ----
 
 Connecting Flowlets in a Flow 2/2
 =================================
 
-With two Flowlets of the same class, give them explicit names:
+With multiple Flowlets of the same class, give them explicit names:
 
 .. sourcecode:: java
 
@@ -162,7 +162,7 @@ With two Flowlets of the same class, give them explicit names:
 	  .add("generator", new RandomGenerator())
 	  .add("rounding", new RoundingFlowlet())
 	.connect()
-	  .fromStream("random").to("rounding")
+	  .from("random").to("rounding")
 
 ----
 
