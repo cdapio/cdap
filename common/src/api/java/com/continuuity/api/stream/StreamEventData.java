@@ -3,9 +3,9 @@
  */
 package com.continuuity.api.stream;
 
-import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Represents data in one stream event.

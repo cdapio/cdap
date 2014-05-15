@@ -7,8 +7,11 @@ public class CollectorTest {
 
 
   private Integer[] collect(Collector<Integer> collector, int n) {
-    for (int i = 0; i < n; i++)
-      if (!collector.addElement(i)) break;
+    for (int i = 0; i < n; i++) {
+      if (!collector.addElement(i)) {
+        break;
+      }
+    }
     return collector.finish();
   }
 

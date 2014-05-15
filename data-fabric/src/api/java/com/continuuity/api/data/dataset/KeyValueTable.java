@@ -13,9 +13,9 @@ import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * This class implements a key/value map on top of Table. Supported

@@ -3,15 +3,15 @@ package com.continuuity.common.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.ConnectionEvent;
-import javax.sql.ConnectionEventListener;
-import javax.sql.ConnectionPoolDataSource;
-import javax.sql.PooledConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import javax.sql.ConnectionEvent;
+import javax.sql.ConnectionEventListener;
+import javax.sql.ConnectionPoolDataSource;
+import javax.sql.PooledConnection;
 
 /**
  * Implementation of very light-weight simple JDBC connection pool
@@ -139,6 +139,12 @@ public class DBConnectionPoolManager {
     }
   }
 
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unable to get class information for @throws tag '<exn>' (...)".
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: @throws
+
   /**
    * Retrieves a connection from the connection pool.
    *
@@ -155,6 +161,8 @@ public class DBConnectionPoolManager {
   public Connection getConnection() throws SQLException {
     return getConnection2(timeoutMs);
   }
+
+  // CHECKSTYLE ON
 
   private Connection getConnection2 (long timeoutMs) throws SQLException {
 
@@ -216,6 +224,12 @@ public class DBConnectionPoolManager {
     return conn;
   }
 
+  // Due to a bug in checkstyle, it would emit false positives here of the form
+  // "Unable to get class information for @throws tag '<exn>' (...)".
+  // This comment disables that check up to the corresponding ON comments below
+
+  // CHECKSTYLE OFF: @throws
+
   /**
    * Retrieves a connection from the connection pool and ensures that it is valid
    * by calling {@link Connection#isValid(int)}.
@@ -236,7 +250,7 @@ public class DBConnectionPoolManager {
    *    when no valid connection becomes available within <code>timeout</code>
    *    seconds.
    */
-  public Connection getValidConnection() {
+  public Connection getValidConnection() throws TimeoutException {
     long time = System.currentTimeMillis();
     long timeoutTime = time + timeoutMs;
     int triesWithoutDelay = getInactiveConnections() + 1;
@@ -263,6 +277,8 @@ public class DBConnectionPoolManager {
       }
     }
   }
+
+  // CHECKSTYLE ON
 
   private Connection getValidConnection2 (long time, long timeoutTime) {
     long rtime = Math.max(1, timeoutTime - time);

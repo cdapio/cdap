@@ -16,8 +16,8 @@ Installation and Configuration Guide
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: config _templates/pdf-config
-.. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: config ../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../developer-guide/source/_templates/pdf-stylesheet
 
 Introduction
 ============
@@ -34,7 +34,7 @@ the Continuuity Reactor components so they work with your existing Hadoop cluste
 
 These are the Continuuity Reactor components:
 
-- **Continuuity Web Cloud App:** User interface—the *Dashboard*—for managing 
+- **Continuuity Web-App:** User interface—the *Dashboard*—for managing 
   Continuuity Reactor applications;
 - **Continuuity Gateway:** Service supporting REST endpoints for Continuuity Reactor; 
 - **Continuuity AppFabric:** Service for managing runtime, lifecycle and resources of
@@ -98,7 +98,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 ..    * - Continuuity Component
 ..      - Hardware Component
 ..      - Specifications
-..    * - **Continuuity Web Cloud App**
+..    * - **Continuuity Web-App**
 ..      - RAM
 ..      - 1 GB minimum, 2 GB recommended	
 ..    * - **Continuuity Gateway**
@@ -126,7 +126,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 +-------------------------------+--------------------+-----------------------------------------------+
 | Continuuity Component         | Hardware Component | Specifications                                |
 +===============================+====================+===============================================+
-| **Continuuity Web Cloud App** | RAM                | 1 GB minimum, 2 GB recommended                |
+| **Continuuity Web-App** | RAM                | 1 GB minimum, 2 GB recommended                |
 +-------------------------------+--------------------+-----------------------------------------------+
 | **Continuuity Gateway**       | RAM                | 2 GB minimum, 4 GB recommended                |
 +-------------------------------+--------------------+-----------------------------------------------+
@@ -156,11 +156,11 @@ For the best performance, Continuuity components should be located on the same L
 
 Software Prerequisites
 ----------------------
-You'll need this software installed on your system:
+You'll need this software installed:
 
-- Java runtime
-- Node.js runtime
-- Hadoop/HBase environment
+- Java runtime (on Reactor and Hadoop nodes)
+- Node.js runtime (on Reactor nodes)
+- Hadoop/HBase environment to run against
 
 Java Runtime
 ............
@@ -180,7 +180,7 @@ Using Yum::
 	$ sudo rpm -ivh epel-release-6-8.noarch.rpm
 	$ sudo yum install npm
 
-For APT::
+Using APT::
 
 	$ sudo apt-get install npm
  
@@ -241,6 +241,11 @@ For a distributed enterprise, you must install these Hadoop components:
 | **Zookeeper** |                   | Version 3.4.3 or later |
 +---------------+-------------------+------------------------+
 
+Reactor nodes require Hadoop and HBase client installation and configuration. No Hadoop
+services need to be running.
+
+Certain Continuuity components need to reference your *Hadoop*, *HBase*, and *YARN* cluster configurations by adding your configuration to their classpaths.
+
 .. rst2pdf: PageBreak
 
 Prepare the Cluster
@@ -250,7 +255,7 @@ create a top-level ``/continuuity`` directory in HDFS, owned by an HDFS user ``y
 
 	hadoop fs -mkdir /continuuity && hadoop fs -chown yarn /continuuity
 
-In the ``continuuity.com`` packages, the default HDFS namespace is ``/continuuity``
+In the Continuuity Reactor packages, the default HDFS namespace is ``/continuuity``
 and the default HDFS user is ``yarn``. If you set up your cluster as above, no further changes are 
 required.
 
@@ -290,15 +295,15 @@ If you want to use a different HDFS user than ``yarn``:
 
 ULIMIT Configuration
 ....................
-When you install the Continuuity packages, the ``ulimit`` settings for the Continuuity user are specified in the ``/etc/security/limits.d/continuuity.conf`` file. On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``. For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
+When you install the Continuuity Reactor packages, the ``ulimit`` settings for the Continuuity user are specified in the ``/etc/security/limits.d/continuuity.conf`` file. On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``. For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
 
 Packaging
 =========
 Continuuity components are available as either Yum ``.rpm`` or APT ``.deb`` packages. 
 There is one package for each Continuuity component, and each component may have multiple
-services. Additionally, there is a base Continuuity package installed which installs the base
-configuration and the ``continuuity`` user.
-Linux support is available for *Ubuntu 12* and *CentOS 6*.
+services. Additionally, there is a base Continuuity package with two utility packages 
+installed which creates the base configuration and the ``continuuity`` user.
+We provide packages for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
 
@@ -309,8 +314,6 @@ Available packaging types:
 Continuuity packages utilize a central configuration, stored by default in ``/etc/continuuity``.
 
 When you install the Continuuity base package, a default configuration is placed in ``/etc/continuuity/conf.dist``. The ``continuuity-site.xml`` file is a placeholder where you can define your specific configuration for all Continuuity components.
-
-Certain Continuuity components need to reference your *Hadoop*, *HBase*, and *YARN* cluster configurations by adding them to their classpaths.
 
 Similar to Hadoop, Continuuity utilizes the ``alternatives`` framework to allow you to easily switch between multiple configurations. The ``alternatives`` system is used for ease of
 management and allows you to to choose between different directories to fulfill the 
@@ -330,7 +333,7 @@ Create a file ``continuuity.repo`` at the location::
 The RPM packages are accessible using Yum at this authenticated URL::
 
 	[continuuity]
-	name=Continuuity Reactor 2.1. Packages
+	name=Continuuity Reactor Packages
 	baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
 	enabled=1
 	protect=0
@@ -342,6 +345,8 @@ The RPM packages are accessible using Yum at this authenticated URL::
 :where:
 	:<username>: Username provided by your Continuuity.com representative
 	:<password>: Password provided by your Continuuity.com representative
+
+.. rst2pdf: PageBreak
 
 Debian using APT
 ----------------
@@ -377,20 +382,25 @@ Using APT (on one line)::
 	sudo apt-get install continuuity-app-fabric continuuity-data-fabric continuuity-gateway
 	                     continuuity-kafka continuuity-watchdog continuuity-web-app
 
-Do this on each of the boxes that are being used for the Reactor components; at a minimum,
-this should be two boxes.
+Do this on each of the boxes that are being used for the Reactor components; our 
+recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of Continuuity Reactor
-with all of its dependencies.
-When all the packages and dependencies have been installed and all the services completed starting,
-the Continuuity Web Cloud App should then be accessible through a browser
-at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
-``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages.
+with all of its dependencies. When all the packages and dependencies have been installed,
+you can start the services on each of the Reactor boxes by running this command::
+
+	for i in `ls /etc/init.d/ | grep continuuity` ; do service $i restart ; done
+
+When all the services have completed starting, the Continuuity Web-App should then be
+accessible through a browser at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
+``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages
+and started the services.
 
 Verification
 ==========================
-To verify that the Continuuity software is successfully installed, run an example application.
-We provide pre-built ``.JAR`` files for convenience:
+To verify that the Continuuity software is successfully installed and you are able to use your
+Hadoop cluster, run an example application.
+We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Download and install the latest Continuuity Developer Suite from
    http://accounts.continuuity.com.
@@ -399,8 +409,8 @@ We provide pre-built ``.JAR`` files for convenience:
 #. Open a command prompt and navigate to ``CONTINUUITY_HOME/examples``.
 #. Each example folder has in its ``target`` directory a .JAR file.
    For verification, we will use the ``TrafficAnalytics`` example.
-#. Open a web browser to the Continuuity Reactor Dashboard (the management user interface).
-   It will be located on port ``9999`` of the box where you installed the `continuuity-web-app`.
+#. Open a web browser to the Continuuity Reactor Web-App ("Dashboard").
+   It will be located on port ``9999`` of the box where you installed Reactor.
 #. On the Dashboard, click the button *Load an App.*
 #. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
    ``CONTINUUITY_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``

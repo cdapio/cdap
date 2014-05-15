@@ -11,13 +11,20 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
+import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data2.transaction.distributed.TransactionService;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -43,8 +50,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   }
 
   @Override
-  public void initialize(TwillContext context) {
-    super.initialize(context);
+  protected void doInit(TwillContext context) {
     LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
@@ -84,11 +90,22 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      createDataFabricModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules()
     );
+  }
+
+  private static Module createDataFabricModule(CConfiguration cConf, Configuration hConf) {
+    return Modules.override(new DataFabricModules(cConf, hConf).getDistributedModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Bind to provider that create new instances of storage and tx manager every time.
+        bind(HDFSTransactionStateStorage.class).toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
+      }
+    });
   }
 }

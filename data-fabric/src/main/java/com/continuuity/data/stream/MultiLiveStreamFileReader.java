@@ -55,6 +55,13 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
   }
 
   @Override
+  public void initialize() throws IOException {
+    for (StreamEventSource source : allSources) {
+      source.initialize();
+    }
+  }
+
+  @Override
   public int read(Collection<? super StreamEventOffset> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
     return read(events, maxEvents, timeout, unit, ReadFilter.ALWAYS_ACCEPT);
@@ -150,6 +157,11 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       this.events = Lists.newArrayListWithCapacity(1);
       this.currentOffset = new StreamFileOffset(beginOffset);
       this.nextOffset = beginOffset;
+    }
+
+    void initialize() throws IOException {
+      reader.initialize();
+      currentOffset = reader.getPosition();
     }
 
     void read(Collection<? super StreamEventOffset> result) throws IOException, InterruptedException {

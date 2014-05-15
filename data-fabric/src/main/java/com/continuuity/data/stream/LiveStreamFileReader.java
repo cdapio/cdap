@@ -64,6 +64,7 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     // If no reader has yet opened, start with the beginning offset.
     if (reader == null) {
       reader = new StreamPositionTransformFileReader(streamConfig.getLocation(), beginOffset);
+      reader.initialize();
       return reader;
     }
 
@@ -109,7 +110,10 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
       return null;
     }
 
-    return new StreamPositionTransformFileReader(streamConfig.getLocation(), new StreamFileOffset(eventLocation));
+    StreamPositionTransformFileReader reader =
+      new StreamPositionTransformFileReader(streamConfig.getLocation(), new StreamFileOffset(eventLocation));
+    reader.initialize();
+    return reader;
   }
 
   @NotThreadSafe
@@ -131,6 +135,14 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
                                                                    offset.getPartitionStart(), duration);
 
       LOG.debug("Stream reader created for {}", offset.getEventLocation().toURI());
+    }
+
+    @Override
+    public void initialize() throws IOException {
+      LOG.info("Initialize stream reader {}", offset);
+      reader.initialize();
+      offset = new StreamFileOffset(offset, reader.getPosition());
+      LOG.info("Stream reader initialized {}", offset);
     }
 
     @Override

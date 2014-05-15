@@ -358,7 +358,7 @@ styles:
       float: none
       width: 100%
       parent: normal
-      backColor: beige
+      backColor: #D7E6FE
       borderColor: darkgray
       borderPadding: 8
       borderWidth: 0.5
@@ -368,7 +368,7 @@ styles:
       spaceBefore: 12
       spaceAfter: 6
       borderPadding: [16,16,16,16]
-      backColor: beige
+      backColor: #D7E6FE
       borderColor: darkgray
       borderWidth: 0.5
       commands:[]
@@ -452,7 +452,7 @@ styles:
       commands: []
              [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
              [INNERGRID, [ 0, 0 ], [ -1, -1 ], 0.25, black ]
-             [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E0E0E0]]
+             [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E8E9EE]]
              [BOX, [ 0, 0 ], [ -1, -1 ], 0.25, black ]
 
     table-title:
@@ -462,7 +462,7 @@ styles:
 
     table-heading:
       parent : heading
-      backColor : beige
+      backColor : #D7E6FE
       alignment : TA_CENTER
       valign : BOTTOM
       borderPadding : 0
@@ -487,7 +487,7 @@ styles:
       leftIndent: 0
       spaceBefore: 8
       spaceAfter: 8
-      backColor: beige
+      backColor: #D7E6FE
       borderColor: darkgray
       borderWidth: 0.5
       borderPadding: 6

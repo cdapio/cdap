@@ -5,7 +5,7 @@
 package com.continuuity.api.log;
 
 /**
- *
+ * This exception is thrown for logging errors.
  */
 public class LogServiceException extends Exception {
 }

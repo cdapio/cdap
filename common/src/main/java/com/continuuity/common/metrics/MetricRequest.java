@@ -83,7 +83,7 @@ public class MetricRequest {
   private String rawRequest;
 
   /**
-   * Constructor only exposed to the {@link Builder}
+   * Constructor only exposed to the {@link Builder}.
    */
   private MetricRequest() {
     valid = true;

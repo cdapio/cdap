@@ -26,6 +26,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteArrayDataOutput;
@@ -44,6 +45,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -84,6 +86,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileConsumer.class);
   private static final HashFunction ROUND_ROBIN_HASHER = Hashing.murmur3_32();
 
+  protected static final int MAX_SCAN_ROWS = 1000;
+
   // Persist state at most once per second.
   private static final long STATE_PERSIST_MIN_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 
@@ -92,6 +96,15 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     @Override
     public byte[] apply(PollStreamEvent input) {
       return input.getStateRow();
+    }
+  };
+  // Special comparator to only compare the row prefix, hence different row key can be used directly,
+  // reducing the need for byte[] array creation.
+  private static final Comparator<byte[]> ROW_PREFIX_COMPARATOR = new Comparator<byte[]>() {
+    @Override
+    public int compare(byte[] bytes1, byte[] bytes2) {
+      // Compare row keys without the offset part (last 8 bytes).
+      return Bytes.compareTo(bytes1, 0, bytes1.length - Longs.BYTES, bytes2, 0, bytes2.length - Longs.BYTES);
     }
   };
   private static final Function<PollStreamEvent, StreamEventOffset> CONVERT_STREAM_EVENT_OFFSET =
@@ -118,14 +131,15 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private final FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader;
   private final ReadFilter readFilter;
 
-  // Map from row key prefix (row key without last eight bytes offset) to
-  // a sorted map of row key to state value when first encountered a given row prefix.
+  // Map from row key prefix (row key without last eight bytes offset) to a sorted map of row key to state value
   // The rows are only needed for entries that are already in the state table when this consumer start.
   private final Map<byte[], SortedMap<byte[], byte[]>> entryStates;
+  private final Set<byte[]> entryStatesScanCompleted;
 
   private final StreamConsumerState consumerState;
   private final List<StreamEventOffset> eventCache;
   private Transaction transaction;
+  private long initWritePointer;
   private List<PollStreamEvent> polledEvents;
   private long nextPersistStateTime;
   private boolean committed;
@@ -153,20 +167,14 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.reader = reader;
     this.readFilter = createReadFilter(consumerConfig);
 
-    // Use a special comparator to only compare the row prefix, hence different row key can be used directly against
-    // this map, hence reduce the need for byte[] array creation.
-    this.entryStates = Maps.newTreeMap(new Comparator<byte[]>() {
-      @Override
-      public int compare(byte[] bytes1, byte[] bytes2) {
-        // Compare row keys without the offset part (last 8 bytes).
-        return Bytes.compareTo(bytes1, 0, bytes1.length - Longs.BYTES, bytes2, 0, bytes2.length - Longs.BYTES);
-      }
-    });
+    this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
+    this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
 
     this.eventCache = Lists.newArrayList();
     this.consumerState = beginConsumerState;
     this.lastPersistedState = new StreamConsumerState(beginConsumerState);
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
+    this.initWritePointer = -1L;
   }
 
   protected void doClose() throws IOException {
@@ -263,6 +271,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   @Override
   public final void startTx(Transaction tx) {
     transaction = tx;
+    if (initWritePointer < 0) {
+      initWritePointer = tx.getWritePointer();
+    }
+
     if (polledEvents == null) {
       polledEvents = Lists.newArrayList();
     } else {
@@ -456,8 +468,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   }
 
   /**
-   * Performs initial scan for the given entry key. Scan will perform from the given entry key till the
-   * end of entry represented by that stream file (i.e. offset = Long.MAX_VALUE).
+   * Returns the initial scanned states for the given entry key.
+   *
+   * Conceptually scan will perform from the given entry key till the end of entry represented
+   * by that stream file (i.e. offset = Long.MAX_VALUE) as indicated by the row prefix (row prefix uniquely identify
+   * the stream file).
+   * However, due to memory limit, scanning is done progressively until it sees an entry with state value
+   * written with transaction write pointer later than the this consumer starts.
    *
    * @param row the entry row key.
    */
@@ -465,21 +482,39 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     SortedMap<byte[], byte[]> rowStates = entryStates.get(row);
 
     if (rowStates != null) {
-      return rowStates;
+      // If scan is completed for this row prefix, simply return the cached entries.
+      // Or if the cached states is beyond current row, just return as the caller only use the cached state to do
+      // point lookup.
+      if (entryStatesScanCompleted.contains(row) || !rowStates.tailMap(row).isEmpty()) {
+        return rowStates;
+      }
+    } else {
+      rowStates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      entryStates.put(row, rowStates);
     }
 
-    // Scan till the end.
-    // TODO: Current assumption is that a given consumer instance shouldn't be too far behind.
-    byte[] stopRow = Arrays.copyOf(row, row.length);
-    rowStates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    entryStates.put(row, rowStates);
-
+    // Scan from the given row till to max file offset
     // Last 8 bytes are the file offset, make it max value so that it scans till last offset.
+    byte[] stopRow = Arrays.copyOf(row, row.length);
     Bytes.putLong(stopRow, stopRow.length - Longs.BYTES, Long.MAX_VALUE);
+
     StateScanner scanner = scanStates(row, stopRow);
     try {
-      while (scanner.nextStateRow()) {
-        storeInitState(scanner.getRow(), scanner.getState(), rowStates);
+      // Scan until MAX_SCAN_ROWS or it hits a state written later than this consumer starts
+      int rowCached = 0;
+      while (scanner.nextStateRow() && rowCached < MAX_SCAN_ROWS) {
+        int cached = storeInitState(scanner.getRow(), scanner.getState(), rowStates);
+        if (cached < 0) {
+          entryStatesScanCompleted.add(row);
+          break;
+        } else {
+          rowCached += cached;
+        }
+      }
+
+      // If no row is cached, no need to scan again, as they'll be inserted after this consumer starts
+      if (rowCached == 0) {
+        entryStatesScanCompleted.add(row);
       }
     } finally {
       scanner.close();
@@ -487,21 +522,38 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     return rowStates;
   }
 
-  private void storeInitState(byte[] row, byte[] stateValue, Map<byte[], byte[]> states) {
+  /**
+   * Determines if need to cache initial entry states.
+   *
+   * @param row Entry row key
+   * @param stateValue Entry state value
+   * @param cache The cache to fill it if the row key and state value needs to be cached.
+   * @return {@code 0} if the entry is not stored into cache, {@code 1} if the entry is stored.
+   *         Returning {@code -1} to indicate that's the end of the init cache phase, hence no further scanning
+   *         is needed for the given row prefix.
+   */
+  private int storeInitState(byte[] row, byte[] stateValue, Map<byte[], byte[]> cache) {
     // Logic is adpated from QueueEntryRow.canConsume(), with modification.
 
     if (stateValue == null) {
       // State value shouldn't be null, as the row is only written with state value.
-      return;
+      return 0;
+    }
+
+    long stateWritePointer = QueueEntryRow.getStateWritePointer(stateValue);
+
+    // The entry is written after this consumer started,
+    // hence no need to to cache the entry and no further scanning is needed.
+    if (stateWritePointer >= initWritePointer) {
+      return -1;
     }
 
     // If state is PROCESSED and committed, need to memorize it so that it can be skipped.
-    long stateWritePointer = QueueEntryRow.getStateWritePointer(stateValue);
     ConsumerEntryState state = QueueEntryRow.getState(stateValue);
     if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
       // No need to store the state value.
-      states.put(row, null);
-      return;
+      cache.put(row, null);
+      return 1;
     }
 
     // Special case for FIFO.
@@ -512,12 +564,15 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       // If the state was written by a consumer that is still live, and not by itself,
       // record the state value as null so that it'll get skipped in the claim entry logic.
       if (stateInstanceId < consumerConfig.getGroupSize() && stateInstanceId != consumerConfig.getInstanceId()) {
-        states.put(row, null);
+        cache.put(row, null);
       } else {
         // Otherwise memorize the value for checkAndPut operation in claim entry.
-        states.put(row, stateValue);
+        cache.put(row, stateValue);
       }
+      return 1;
     }
+
+    return 0;
   }
 
   /**

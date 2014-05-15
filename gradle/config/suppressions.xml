@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+
+  <suppress checks="Javadoc.*" files=".*/src/test/java/.*" />
+
+  <suppress checks="JavadocPackage" files=".*/src/(main|integration)/java/.*" />
+  <suppress checks="JavadocPackage" files=".*/src/.*/internal/.*" />
+
+  <suppress checks="JavadocStyle" files=".*/src/(main|integration)/java/.*" />
+  <suppress checks="JavadocStyle" files=".*/src/.*/internal/.*" />
+
+
+  <!-- copied from apache hadoop, won't fix style to keep diff minimal -->
+  <suppress checks=".*" files=".*/LocalJobRunnerWithFix.java" />
+
+  <!-- do not check thrift generated files -->
+  <suppress checks=".*" files=".*/transaction/distributed/thrift/.*" />
+
+
+
+</suppressions>
