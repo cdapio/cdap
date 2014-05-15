@@ -9,21 +9,22 @@ import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.data.dataset.lib.table.Delete;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Increment;
+import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.lib.table.TableSplit;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *

@@ -48,6 +48,7 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
             }
           }
 
+          @SuppressWarnings("unchecked")
           @Override
           public <T> T get(Object object) {
             try {

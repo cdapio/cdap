@@ -41,7 +41,7 @@ public interface StreamAdmin extends DataSetManager {
    * Returns the configuration of the given stream.
    * @param streamName Name of the stream.
    * @return A {@link StreamConfig} instance.
-   * @throws Exception If the stream doesn't exists.
+   * @throws IOException If the stream doesn't exists.
    */
   StreamConfig getConfig(String streamName) throws IOException;
 }

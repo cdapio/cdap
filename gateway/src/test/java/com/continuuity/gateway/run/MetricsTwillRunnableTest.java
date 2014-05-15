@@ -3,8 +3,8 @@ package com.continuuity.gateway.run;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import com.google.inject.Injector;
-import junit.framework.Assert;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**

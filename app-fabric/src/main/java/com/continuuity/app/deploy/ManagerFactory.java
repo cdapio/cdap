@@ -10,5 +10,5 @@ import com.continuuity.internal.app.deploy.ProgramTerminator;
  *
  */
 public interface ManagerFactory {
-  <U, V> Manager<U, V> create(ProgramTerminator handler);
+  <I, O> Manager<I, O> create(ProgramTerminator handler);
 }

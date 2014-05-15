@@ -34,7 +34,7 @@ public final class Constants {
   }
 
   /**
-   * HBase configurations
+   * HBase configurations.
    */
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
@@ -81,12 +81,12 @@ public final class Constants {
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
 
     /**
-     * query parameter to indicate start time
+     * Query parameter to indicate start time.
      */
     public static final String QUERY_PARAM_START_TIME = "before";
 
     /**
-     * query parameter to indicate end time
+     * Query parameter to indicate end time.
      */
     public static final String QUERY_PARAM_END_TIME = "after";
 
@@ -110,7 +110,7 @@ public final class Constants {
   }
 
   /**
-   * Transactions
+   * Transactions.
    */
   public static final class Transaction {
     /**
@@ -284,7 +284,7 @@ public final class Constants {
   }
 
   /**
-   * Datasets
+   * Datasets.
    */
   public static final class Dataset {
     /**
@@ -411,12 +411,12 @@ public final class Constants {
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
 
     /**
-     * query parameter to indicate start time
+     * Query parameter to indicate start time.
      */
     public static final String QUERY_PARAM_START_TIME = "before";
 
     /**
-     * query parameter to indicate end time
+     * Query parameter to indicate end time.
      */
     public static final String QUERY_PARAM_END_TIME = "after";
 
@@ -502,21 +502,26 @@ public final class Constants {
   public static final class Security {
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
-    public static final String DEFAULT_TOKEN_DIGEST_ALGO = "HmacSHA256";
     /** Key length for secret key used by token digest algorithm. */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
-    public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
+    /** Time duration in milliseconds after which an active secret key should be retired. */
+    public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
+    /** Parent znode used for secret key distribution in ZooKeeper. */
+    public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
 
-    /** Configuration for External Authentication Server */
+    /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
-    public static final int DEFAULT_AUTH_SERVER_PORT = 10009;
+    /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
-    public static final int DEFAULT_MAX_THREADS = 100;
-    public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
-    public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
+    /** Access token expiration time in milliseconds. */
+    public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
+    /** Configuration for enabling the security. */
+    public static final String CFG_SECURITY_ENABLED = "security.enabled";
+    /** Configuration for security realm. */
+    public static final String CFG_REALM = "security.realm";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

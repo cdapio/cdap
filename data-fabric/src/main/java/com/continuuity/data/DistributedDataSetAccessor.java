@@ -10,13 +10,14 @@ import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableManager;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import org.apache.twill.filesystem.LocationFactory;
+
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
     this.tableUtil = tableUtil;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception {
     return (T) new HBaseOcTableClient(name, level, ttl, hConf);
@@ -53,6 +55,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
     return new HBaseOcTableManager(cConf, hConf, locationFactory, tableUtil);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getMetricsTableClient(String name) throws Exception {
     return (T) new HBaseMetricsTableClient(name, hConf);

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Deque;
 
 /**
- * Copied from Google Guava as these methods are now deprecated
+ * Copied from Google Guava as these methods are now deprecated.
  */
 public final class DirUtils {
 
@@ -20,7 +20,7 @@ public final class DirUtils {
   private DirUtils(){}
 
   /**
-   * Wipes out all the a directory starting from a given directory
+   * Wipes out all the a directory starting from a given directory.
    * @param directory to be cleaned
    * @throws IOException
    */

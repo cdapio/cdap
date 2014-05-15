@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Abstract TwillRunnable class for Reactor YARN services
+ * Abstract TwillRunnable class for Reactor YARN services.
  */
 public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTwillRunnable.class);

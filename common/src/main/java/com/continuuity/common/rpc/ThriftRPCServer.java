@@ -4,7 +4,7 @@
 package com.continuuity.common.rpc;
 
 import com.continuuity.common.utils.Networks;
-import org.apache.twill.common.Threads;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -15,6 +15,7 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +122,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
    * @param workerThreads Number of worker threads.
    * @param serviceHandler Handler for handling client requests.
    */
+  @SuppressWarnings("unchecked")
   private ThriftRPCServer(InetSocketAddress bindAddress, int ioThreads,
                           int workerThreads, int maxReadBufferBytes,
                           T serviceHandler, Class<I> serviceType, String name) {
@@ -195,6 +197,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     server.serve();
   }
 
+  @SuppressWarnings("unchecked")
   private TProcessor createProcessor(final Class<T> handlerType, Class<I> serviceType) {
     // Pick the Iface inner interface and the Processor class
     Class<? extends TProcessor> processorType = null;

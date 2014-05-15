@@ -1371,7 +1371,7 @@ public class AppFabricHttpHandlerTest {
   }
 
 
-   final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
 
    void createStream(String name) throws Exception {
     // create stream
@@ -1480,14 +1480,14 @@ public class AppFabricHttpHandlerTest {
 
    void assertRead(String prefix, int start, int end, String query) throws Exception {
     HttpResponse response = AppFabricTestsSuite.doGet(prefix + query);
-    junit.framework.Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     Type stringMapType = MAP_STRING_STRING_TYPE;
     Map<String, String> map = new Gson().fromJson(reader, stringMapType);
-    junit.framework.Assert.assertEquals(end - start + 1, map.size());
+    Assert.assertEquals(end - start + 1, map.size());
     for (int i = start; i < end; i++) {
-      junit.framework.Assert.assertEquals("v" + i, map.get("c" + i));
+      Assert.assertEquals("v" + i, map.get("c" + i));
     }
   }
 

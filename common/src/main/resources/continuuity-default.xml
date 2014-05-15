@@ -780,6 +780,16 @@
         External Authentication Settings
     -->
     <property>
+        <name>security.token.digest.algorithm</name>
+        <value>HmacSHA256</value>
+    </property>
+
+    <property>
+        <name>security.token.digest.keylength</name>
+        <value>128</value>
+    </property>
+
+    <property>
         <name>security.server.port</name>
         <value>10009</value>
     </property>
@@ -791,8 +801,8 @@
 
     <property>
         <name>security.server.token.expiration.ms</name>
-        <description>AccessToken expiration time in milliseconds</description>
-        <value>10000</value>
+        <description>AccessToken expiration time in milliseconds (defaults to 24 hours)</description>
+        <value>86400000</value>
     </property>
 
     <property>
@@ -800,4 +810,31 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <property>
+        <name>security.token.digest.key.expiration.ms</name>
+        <value>3600000</value>
+        <description>Time duration (in milliseconds) after which an active secret key used
+        for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.token.distributed.parent.znode</name>
+        <value>/${reactor.namespace}/security/auth</value>
+        <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
+    </property>
+
+    <!--
+        Security enabled flag
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>false</value>
+        <description>If this is set to true, security layer will be up and active in reactor</description>
+    </property>
+
+    <property>
+        <name>security.realm</name>
+        <value>continuuity</value>
+        <description>Security realm used for authentication</description>
+    </property>
 </configuration>

@@ -20,7 +20,7 @@ import org.apache.twill.filesystem.LocationFactory;
  */
 public final class SyncManagerFactory implements ManagerFactory {
   private final CConfiguration configuration;
-  private final PipelineFactory<?> pFactory;
+  private final PipelineFactory pFactory;
   private final LocationFactory lFactory;
   private final StoreFactory sFactory;
   private final StreamConsumerFactory streamConsumerFactory;
@@ -28,7 +28,7 @@ public final class SyncManagerFactory implements ManagerFactory {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  public SyncManagerFactory(CConfiguration configuration, PipelineFactory<?> pFactory,
+  public SyncManagerFactory(CConfiguration configuration, PipelineFactory pFactory,
                             LocationFactory lFactory, StoreFactory sFactory,
                             StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                             DiscoveryServiceClient discoveryServiceClient) {
@@ -42,8 +42,8 @@ public final class SyncManagerFactory implements ManagerFactory {
   }
 
   @Override
-  public Manager<?, ?> create(ProgramTerminator programTerminator) {
-    return new LocalManager(configuration, pFactory, lFactory, sFactory, programTerminator,
+  public <I, O> Manager<I, O> create(ProgramTerminator programTerminator) {
+    return new LocalManager<I, O>(configuration, pFactory, lFactory, sFactory, programTerminator,
                             streamConsumerFactory, queueAdmin, discoveryServiceClient);
   }
 }

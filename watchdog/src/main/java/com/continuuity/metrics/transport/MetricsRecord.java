@@ -6,9 +6,9 @@ package com.continuuity.metrics.transport;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * Record class for carrying information about one metric.

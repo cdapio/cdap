@@ -8,16 +8,13 @@ import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
-import com.continuuity.metrics.transport.MetricsRecord;
-import com.continuuity.metrics.transport.TagMetric;
-import com.google.common.collect.Lists;
+
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,12 +28,12 @@ import java.util.Set;
  * survive the deletion of application metrics.  In order to make sure the metric is correct, existing values for
  * 'store.bytes' need to be copied over to 'dataset.store.bytes', which is what this class does.
  */
-public class MetricsTableMigrator_2_0_to_2_1 implements TableMigrator {
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsTableMigrator_2_0_to_2_1.class);
+public class MetricsTableMigrator20to21 implements TableMigrator {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsTableMigrator20to21.class);
   private final AggregatesTable aggregatesTable;
 
   @Inject
-  public MetricsTableMigrator_2_0_to_2_1(final MetricsTableFactory metricsTableFactory) {
+  public MetricsTableMigrator20to21(final MetricsTableFactory metricsTableFactory) {
     this.aggregatesTable = metricsTableFactory.createAggregates(MetricsScope.REACTOR.name());
   }
 

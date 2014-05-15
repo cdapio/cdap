@@ -2,17 +2,17 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.internal.data.dataset.lib.table.TableSplit;
 import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
-import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.TransactionAware;
+
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * An abstract {@link com.continuuity.data2.transaction.TransactionAware} implementation of

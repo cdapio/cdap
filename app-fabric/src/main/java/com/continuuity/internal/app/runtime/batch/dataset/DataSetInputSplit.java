@@ -43,6 +43,7 @@ class DataSetInputSplit extends InputSplit implements Writable {
     Text.writeString(out, ser);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void readFields(final DataInput in) throws IOException {
     try {

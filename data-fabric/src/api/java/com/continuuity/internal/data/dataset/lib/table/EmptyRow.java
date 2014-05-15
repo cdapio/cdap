@@ -1,8 +1,8 @@
 package com.continuuity.internal.data.dataset.lib.table;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents an empty row (a row with no columns).

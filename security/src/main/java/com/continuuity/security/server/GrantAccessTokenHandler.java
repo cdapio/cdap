@@ -4,8 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
-import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.TokenManager;
+import com.continuuity.security.io.Codec;
+
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -38,6 +39,16 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   }
 
   @Override
+  protected void doStart() {
+    tokenManager.start();
+  }
+
+  @Override
+  protected void doStop() {
+    tokenManager.stop();
+  }
+
+  @Override
   public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
     throws IOException, ServletException {
 
@@ -50,8 +61,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
       }
     }
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
-                                       Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.

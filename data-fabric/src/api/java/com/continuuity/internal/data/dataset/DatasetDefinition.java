@@ -31,7 +31,7 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
   String getName();
 
   /**
-   * Configures new instance of the dataset
+   * Configures new instance of the dataset.
    * @param instanceName name of the instance
    * @param properties instance configuration properties
    * @return instance of {@link DatasetInstanceSpec} that fully describes dataset instance.

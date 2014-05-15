@@ -7,6 +7,7 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.gson.Gson;
@@ -18,13 +19,13 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import javax.annotation.Nullable;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetManagerService}

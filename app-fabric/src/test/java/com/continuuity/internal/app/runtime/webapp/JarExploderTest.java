@@ -28,14 +28,14 @@ public class JarExploderTest {
   );
 
   @ClassRule
-  public static final TemporaryFolder tempFolder = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
   public void testExplodeA() throws Exception {
     URL jarUrl = getClass().getResource("/test_explode.jar");
     Assert.assertNotNull(jarUrl);
 
-    File dest = tempFolder.newFolder();
+    File dest = TEMP_FOLDER.newFolder();
 
     int numFiles = JarExploder.explode(new File(jarUrl.toURI()), dest, new Predicate<JarEntry>() {
       @Override

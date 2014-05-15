@@ -25,6 +25,7 @@ public class TransactionEditTest {
                                                                       3L, true));
   }
 
+  @SuppressWarnings("deprecation")
   private void verifyDecodingSupportsV1(TransactionEdit edit) throws IOException {
     TransactionEdit.TransactionEditCodecV1 v1Codec = new TransactionEdit.TransactionEditCodecV1();
     // encoding with codec of v1

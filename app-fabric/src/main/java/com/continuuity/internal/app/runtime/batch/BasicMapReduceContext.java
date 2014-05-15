@@ -128,6 +128,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.job = job;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHadoopJob() {
     return (T) job;

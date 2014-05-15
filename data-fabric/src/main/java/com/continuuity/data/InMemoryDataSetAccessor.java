@@ -23,6 +23,7 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
     super(conf);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception {
     // ttl is ignored in local mode
@@ -34,6 +35,7 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
     return new InMemoryOcTableManager();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected <T> T getMetricsTableClient(String name) throws Exception {
     return (T) new InMemoryMetricsTableClient(name);

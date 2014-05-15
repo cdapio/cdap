@@ -35,6 +35,7 @@ public abstract class RowColumns<T> {
     add(columns);
   }
 
+  @SuppressWarnings("unchecked")
   public T add(byte[]... columns) {
     Collections.addAll(this.columns, columns);
     return (T) this;
@@ -51,6 +52,7 @@ public abstract class RowColumns<T> {
     add(columns);
   }
 
+  @SuppressWarnings("unchecked")
   public T add(String... columns) {
     for (String col : columns) {
       this.columns.add(Bytes.toBytes(col));

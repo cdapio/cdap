@@ -5,16 +5,14 @@ import com.continuuity.pipeline.PipelineFactory;
 
 /**
  * A factory for providing asynchronous pipeline.
- *
- * @param <T> type of object returned by the pipeline created by this factory.
  */
-public class AsynchronousPipelineFactory<T> implements PipelineFactory<T> {
+public class AsynchronousPipelineFactory implements PipelineFactory {
 
   /**
    * @return A asynchronous pipeline.
    */
   @Override
-  public Pipeline<T> getPipeline() {
+  public <T> Pipeline<T> getPipeline() {
     return new AsynchronousPipeline<T>();
   }
 }

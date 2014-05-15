@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * Implements some of the methods in a generic way (not necessarily in most efficient way)
+ * Implements some of the methods in a generic way (not necessarily in most efficient way).
  */
 public abstract class AbstractOrderedTable implements OrderedTable {
   // empty immutable row's column->value map constant

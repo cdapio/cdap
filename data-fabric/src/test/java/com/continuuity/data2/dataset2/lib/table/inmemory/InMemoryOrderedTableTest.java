@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
+import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
 
 /**
  *

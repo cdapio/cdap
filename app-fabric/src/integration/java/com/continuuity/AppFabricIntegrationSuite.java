@@ -20,7 +20,7 @@ public class AppFabricIntegrationSuite {
    * This allows us to not duplicate resource management code in each
    * class, you can resue your code, but instead of putting this common
    * in superclass for your tests, you can abstract external resource
-   * management with {@link ExternalResource}
+   * management with {@link ExternalResource}.
    */
   @ClassRule
   public static ExternalResource testRule = new ExternalResource() {
