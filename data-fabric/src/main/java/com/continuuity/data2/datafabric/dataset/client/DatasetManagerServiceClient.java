@@ -202,7 +202,7 @@ public class DatasetManagerServiceClient {
           }
         }
         byte[] responseBody = null;
-        if (conn.getDoInput()) {
+        if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
           InputStream is = conn.getInputStream();
           try {
             responseBody = ByteStreams.toByteArray(is);

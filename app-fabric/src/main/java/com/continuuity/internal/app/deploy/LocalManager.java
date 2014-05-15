@@ -9,9 +9,11 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
+import com.continuuity.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
@@ -37,11 +39,13 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final ProgramTerminator programTerminator;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final DatasetManager datasetManager;
 
   public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
                       ProgramTerminator programTerminator, QueueAdmin queueAdmin,
-                      DiscoveryServiceClient discoveryServiceClient) {
+                      DiscoveryServiceClient discoveryServiceClient,
+                      DatasetManager datasetManager) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
@@ -49,6 +53,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.store = storeFactory.create();
     this.programTerminator = programTerminator;
     this.queueAdmin = queueAdmin;
+    this.datasetManager = datasetManager;
   }
 
   @Override
@@ -56,6 +61,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
+    pipeline.addLast(new DeployDatasetModulesStage(datasetManager));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));

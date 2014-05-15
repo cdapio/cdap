@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -12,6 +11,7 @@ import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;
 import org.apache.twill.api.RunId;
 
+import java.io.Closeable;
 import java.util.Map;
 
 /**
@@ -42,12 +42,11 @@ final class BasicProcedureContextFactory {
 
   BasicProcedureContext create(DataFabricFacade dataFabricFacade) {
     DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetContext,
+    Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetContext,
                                                             procedureSpec.getDataSets());
     BasicProcedureContext context = new BasicProcedureContext(program, runId, instanceId, instanceCount,
-                                                                            dataSets,
-                                                                            userArguments, procedureSpec,
-                                                                            collectionService);
+                                                              dataSets, userArguments,
+                                                              procedureSpec, collectionService);
 
     // hack for propagating metrics collector to datasets
     if (dataSetContext instanceof DataSetInstantiationBase) {

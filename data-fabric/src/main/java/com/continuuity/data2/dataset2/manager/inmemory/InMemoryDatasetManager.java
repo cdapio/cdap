@@ -14,6 +14,7 @@ import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,16 +25,9 @@ import java.util.Set;
  */
 public class InMemoryDatasetManager implements DatasetManager {
   private final Set<String> modules = Sets.newHashSet();
-  private final DatasetDefinitionRegistry registry;
+  @Inject(optional = true)
+  private final DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
   private final Map<String, DatasetInstanceSpec> instances = Maps.newHashMap();
-
-  public InMemoryDatasetManager() {
-    this(new InMemoryDatasetDefinitionRegistry());
-  }
-
-  public InMemoryDatasetManager(DatasetDefinitionRegistry registry) {
-    this.registry = registry;
-  }
 
   @Override
   public synchronized void register(String moduleName, Class<? extends DatasetModule> moduleClass)

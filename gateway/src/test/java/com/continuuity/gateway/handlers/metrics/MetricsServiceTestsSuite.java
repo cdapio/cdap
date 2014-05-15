@@ -129,7 +129,7 @@ public class MetricsServiceTestsSuite  {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
-    injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
+    injector.getInstance(DataSetInstantiatorFromMetaData.class);
 
     EndpointStrategy metricsEndPoints = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS)), 1L, TimeUnit.SECONDS);

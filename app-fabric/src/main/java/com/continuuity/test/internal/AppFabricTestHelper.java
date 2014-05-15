@@ -1,7 +1,6 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -17,7 +16,6 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.internal.app.BufferFileInputStream;
-import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
@@ -117,7 +115,7 @@ public class AppFabricTestHelper {
       request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
     httpHandler.startProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start" + " " + type + "failed");
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start " + type + " failed");
   }
 
   public static void stopProgram(AppFabricHttpHandler httpHandler, String appId, String flowId,
@@ -127,7 +125,7 @@ public class AppFabricTestHelper {
     String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.stopProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop " + type + " failed");
   }
 
   public static String getStatus(AppFabricHttpHandler httpHandler, String appId, String flowId,
@@ -137,7 +135,7 @@ public class AppFabricTestHelper {
     String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.getStatus(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop" + " " + type + "failed");
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop " + type + " failed");
     Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
                                              new TypeToken<Map<String, String>>() { }.getType());
     return json.get("status");
@@ -255,14 +253,11 @@ public class AppFabricTestHelper {
     deployedJar.delete(true);
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<? extends Application> appClass,
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
-    LocalLocationFactory lf = new LocalLocationFactory();
 
-    Location deployedJar = lf.create(
-      JarFinder.getJar(appClass, AppFabricTestHelper.getManifestWithMainClass(appClass))
-    );
+    Location deployedJar = createAppJar(appClass);
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
@@ -285,18 +280,20 @@ public class AppFabricTestHelper {
     }
   }
 
+  public static Location createAppJar(Class<?> appClass) {
+    LocalLocationFactory lf = new LocalLocationFactory();
+    return lf.create(JarFinder.getJar(appClass, getManifestWithMainClass(appClass)));
+  }
+
   public static Location deployApplication(AppFabricHttpHandler httpHandler,
                                     LocationFactory locationFactory,
                                     final String applicationId,
-                                    Class<? extends Application> applicationClz,
+                                    Class<?> applicationClz,
                                     File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-    Application application = applicationClz.newInstance();
-    ApplicationSpecification appSpec = Specifications.from(application.configure());
-    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz,
-                                                                      appSpec, bundleEmbeddedJars).toURI());
+    Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, bundleEmbeddedJars).toURI());
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
@@ -325,7 +322,7 @@ public class AppFabricTestHelper {
     return deployedJar;
   }
 
-  private static File createDeploymentJar(Class<?> clz, ApplicationSpecification appSpec, File...bundleEmbeddedJars) {
+  private static File createDeploymentJar(Class<?> clz, File...bundleEmbeddedJars) {
     File testAppDir;
     File tmpDir;
     testAppDir = Files.createTempDir();
@@ -376,7 +373,7 @@ public class AppFabricTestHelper {
         File relativeBase = new File(basePath.substring(0, basePath.length() - packagePath.length()));
         File jarFile = File.createTempFile(String.format("%s-%d", clz.getSimpleName(), System.currentTimeMillis()),
                                            ".jar", tmpDir);
-        return jarDir(baseDir, relativeBase, manifest, jarFile, appSpec, bundleEmbeddedJars);
+        return jarDir(baseDir, relativeBase, manifest, jarFile, bundleEmbeddedJars);
       } else {
         // return null if neither existing jar was found nor jar was built based on class file
         return null;
@@ -386,8 +383,7 @@ public class AppFabricTestHelper {
     }
   }
 
-  private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile,
-                             ApplicationSpecification appSpec, File...bundleEmbeddedJars)
+  private static File jarDir(File dir, File relativeBase, Manifest manifest, File outputFile, File...bundleEmbeddedJars)
     throws IOException, ClassNotFoundException {
 
     JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile), manifest);

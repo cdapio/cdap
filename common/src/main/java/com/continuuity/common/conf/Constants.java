@@ -291,9 +291,13 @@ public final class Constants {
      * DatasetManager service configuration.
      */
     public static final class Manager {
+      /** for the port of the dataset server. */
+      public static final String PORT = "data.dataset.service.bind.port";
+
+      /** for the address (hostname) of the dataset server. */
+      public static final String ADDRESS = "data.dataset.service.bind.address";
+
       public static final String VERSION = "v1";
-      public static final String ADDRESS = "dataset.manager.bind.address";
-      public static final String PORT = "dataset.manager.bind.port";
       public static final String BACKLOG_CONNECTIONS = "dataset.manager.connection.backlog";
       public static final String EXEC_THREADS = "dataset.manager.exec.threads";
       public static final String BOSS_THREADS = "dataset.manager.boss.threads";
@@ -301,7 +305,6 @@ public final class Constants {
       public static final String OUTPUT_DIR = "dataset.manager.output.dir";
 
       // Defaults
-      public static final int DEFAULT_PORT = 10009;
       public static final int DEFAULT_BACKLOG = 20000;
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;

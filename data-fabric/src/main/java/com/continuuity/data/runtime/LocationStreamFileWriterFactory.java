@@ -21,7 +21,7 @@ import java.io.IOException;
  * A {@link StreamFileWriterFactory} that provides {@link FileWriter} which writes to file location.
  * Use for both local and distributed mode.
  */
-final class LocationStreamFileWriterFactory implements StreamFileWriterFactory {
+public final class LocationStreamFileWriterFactory implements StreamFileWriterFactory {
 
   private final StreamAdmin streamAdmin;
   private final String filePrefix;

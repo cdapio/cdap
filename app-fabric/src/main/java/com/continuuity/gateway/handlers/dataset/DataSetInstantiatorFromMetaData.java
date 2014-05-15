@@ -6,13 +6,13 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
 import com.google.common.collect.ImmutableMap;
+import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -41,9 +41,6 @@ public final class DataSetInstantiatorFromMetaData {
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
 
-  // the strategy for discovering app-fabric thrift service
-  private EndpointStrategy endpointStrategy;
-
   /**
    * Json serializer.
    */
@@ -63,13 +60,6 @@ public final class DataSetInstantiatorFromMetaData {
     this.store = storeFactory.create();
   }
 
-  /**
-   * This must be called before the instantiator can be used.
-   */
-  public void init(EndpointStrategy endpointStrategy) {
-    this.endpointStrategy = endpointStrategy;
-  }
-
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
     throws DataSetInstantiationException {
 
@@ -81,7 +71,10 @@ public final class DataSetInstantiatorFromMetaData {
       // this just gets passed through to the data set instantiator
       // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
       // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
-      return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor));
+      return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor),
+                                          // NOTE: it is fine using "empty" ds manager here, we access datasets V2
+                                          //       differently (thru dataset manager that talks to ds service)
+                                          new InMemoryDatasetManager());
     }
   }
 

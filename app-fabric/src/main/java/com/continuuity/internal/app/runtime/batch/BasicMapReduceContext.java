@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -22,6 +21,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 
+import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +35,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceLoggingContext loggingContext;
   private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
   private final Map<MetricsScope, MetricsCollector> systemReducerMetrics;
+  private final Map<MetricsScope, MetricsCollector> systemMetrics;
   private final Arguments runtimeArguments;
   private final long logicalStartTime;
   private final String workflowBatch;
@@ -53,12 +54,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceMetrics.TaskType type,
                                RunId runId,
                                Arguments runtimeArguments,
-                               Map<String, DataSet> datasets,
+                               Map<String, Closeable> datasets,
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
                                String workflowBatch) {
-    this(program, type, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, workflowBatch, null);
+    this(program, type, runId, runtimeArguments, datasets,
+         spec, txAwares, logicalStartTime, workflowBatch, null);
   }
 
 
@@ -66,7 +68,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceMetrics.TaskType type,
                                RunId runId,
                                Arguments runtimeArguments,
-                               Map<String, DataSet> datasets,
+                               Map<String, Closeable> datasets,
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
@@ -81,11 +83,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (metricsCollectionService != null) {
       this.systemMapperMetrics = Maps.newHashMap();
       this.systemReducerMetrics = Maps.newHashMap();
+      this.systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
         this.systemMapperMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
                                                                 getMetricContext(MapReduceMetrics.TaskType.Mapper)));
         this.systemReducerMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
                                                                  getMetricContext(MapReduceMetrics.TaskType.Reducer)));
+        this.systemMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
+                                                                 getMetricContext()));
       }
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.
@@ -94,6 +99,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       this.systemMapperMetrics = null;
       this.systemReducerMetrics = null;
+      this.systemMetrics = null;
       this.mapredMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
@@ -157,6 +163,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                          getInstanceId());
   }
 
+  private String getMetricContext() {
+    return String.format("%s.b.%s.%d",
+                         getApplicationId(),
+                         getProgramName(),
+                         getInstanceId());
+  }
+
   @Override
   public Metrics getMetrics() {
     return mapredMetrics;
@@ -164,6 +177,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   public MetricsCollectionService getMetricsCollectionService() {
     return metricsCollectionService;
+  }
+
+  public MetricsCollector getSystemMetrics(MetricsScope scope) {
+    return systemMetrics.get(scope);
   }
 
   public MetricsCollector getSystemMapperMetrics() {

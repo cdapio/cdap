@@ -5,6 +5,12 @@ package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
+import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
@@ -12,11 +18,20 @@ import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
+import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.NavigableMap;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
@@ -57,6 +72,26 @@ public class DataFabricLocalModule extends AbstractModule {
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
+
+        try {
+          bind(InetAddress.class)
+            .annotatedWith(Names.named(Constants.Dataset.Manager.ADDRESS))
+            .toInstance(InetAddress.getByName("localhost"));
+        } catch (UnknownHostException e) {
+          throw Throwables.propagate(e);
+        }
+        bind(DatasetManager.class).to(DataFabricDatasetManager.class);
+
+        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
+        //       as long as the data is durably persisted
+        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
+        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
+        bind(new TypeLiteral<NavigableMap<String, Class<? extends DatasetModule>>>() { })
+          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
+          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
+            "orderedTable-memory", LevelDBTableModule.class,
+            "table", TableModule.class)
+        );
       }
     }));
   }

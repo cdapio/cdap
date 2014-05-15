@@ -79,7 +79,7 @@ public class AppFabricTestsSuite {
       DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
       endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
         Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
-      injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
+      injector.getInstance(DataSetInstantiatorFromMetaData.class);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       txClient = injector.getInstance(TransactionSystemClient.class);
       metrics = injector.getInstance(MetricsQueryService.class);

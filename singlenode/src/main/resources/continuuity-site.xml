@@ -39,6 +39,12 @@
         <description>Specifies cache size (in bytes)</description>
     </property>
 
+    <property>
+        <name>data.dataset.service.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>DataSet service hostname</description>
+    </property>
+
     <!--
         Router configuration
     -->
