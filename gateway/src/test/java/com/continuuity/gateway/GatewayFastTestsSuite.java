@@ -30,6 +30,7 @@ import org.apache.twill.internal.utils.Dependencies;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -38,8 +39,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-
-import javax.annotation.Nullable;
 /**
  * Test Suite for running all API tests.
  */
