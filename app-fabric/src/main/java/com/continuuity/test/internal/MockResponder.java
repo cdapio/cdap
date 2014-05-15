@@ -34,12 +34,6 @@ public final class MockResponder implements HttpResponder {
   private ChannelBuffer content = null;
   private static final Gson GSON = new Gson();
 
-  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
-    @Override
-    protected Gson initialValue() {
-      return new Gson();
-    }
-  };
 
   public HttpResponseStatus getStatus() {
     return status;
@@ -48,8 +42,7 @@ public final class MockResponder implements HttpResponder {
   public <T> T decodeResponseContent(TypeToken<T> type) {
     JsonReader jsonReader = new JsonReader(new InputStreamReader
                                              (new ChannelBufferInputStream(content), Charsets.UTF_8));
-    T response = GSON.fromJson(jsonReader, type.getType());
-    return response;
+    return GSON.fromJson(jsonReader, type.getType());
   }
 
   @Override
@@ -59,7 +52,7 @@ public final class MockResponder implements HttpResponder {
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type) {
-    sendJson(status, object, type, gson.get());
+    sendJson(status, object, type, GSON);
   }
 
   @Override
