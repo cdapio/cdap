@@ -159,7 +159,7 @@ public class ReactorTwillApplication implements TwillApplication {
         .with()
         .setVirtualCores(hiveNumCores)
         .setMemory(hiveMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-        .setInstances(1)
+        .setInstances(cConf.getInt(Constants.Hive.Container.NUM_INSTANCES, 1))
         .build();
 
     return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml"), hiveSpec)

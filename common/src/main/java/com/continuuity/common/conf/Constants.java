@@ -538,6 +538,7 @@ public final class Constants {
      * Twill Runnable configuration.
      */
     public static final class Container {
+      public static final String NUM_INSTANCES = "hive.server.num.instances";
       public static final String NUM_CORES = "hive.server.num.cores";
       public static final String MEMORY_MB = "hive.server.memory.mb";
     }
