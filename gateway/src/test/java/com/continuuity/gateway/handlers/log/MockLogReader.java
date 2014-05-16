@@ -1,5 +1,6 @@
 package com.continuuity.gateway.handlers.log;
 
+
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.Callback;
