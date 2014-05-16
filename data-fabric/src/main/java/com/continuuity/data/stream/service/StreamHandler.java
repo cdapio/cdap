@@ -64,6 +64,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
 
+  private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
 
@@ -80,9 +81,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
+    this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.dequeuerCache = createDequeuerCache(streamConsumerFactory, executorFactory);
+    this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
@@ -163,6 +165,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     try {
       dequeuer = dequeuerCache.get(new ConsumerCacheKey(stream, groupId));
     } catch (Exception e) {
+      LOG.trace("Failed to get consumer", e);
       responder.sendError(HttpResponseStatus.BAD_REQUEST, "Consumer not exists.");
       return;
     }
@@ -200,7 +203,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       .putLong(System.nanoTime())
       .hash().asLong();
 
-    streamAdmin.configureInstances(QueueName.fromStream(stream), groupId, 1);
+    streamAdmin.configureInstances(QueueName.fromStream(stream), groupId,
+                                   cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
 
     String consumerId = Long.toString(groupId);
     responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
@@ -221,6 +225,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Creates a loading cache for stream consumers. Used by the dequeue REST API.
    */
   private LoadingCache<ConsumerCacheKey, StreamDequeuer> createDequeuerCache(
+    final CConfiguration cConf,
     final StreamConsumerFactory consumerFactory, final TransactionExecutorFactory executorFactory) {
     return CacheBuilder
       .newBuilder()
@@ -240,7 +245,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }).build(new CacheLoader<ConsumerCacheKey, StreamDequeuer>() {
         @Override
         public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
-          ConsumerConfig config = new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null);
+          // TODO: Deal with dynamic resize of stream handler instances
+          int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
+          ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
+                                                     cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0),
+                                                     groupSize, DequeueStrategy.FIFO, null);
+
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
           return new StreamDequeuer(consumer, executorFactory);
@@ -329,8 +339,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
         @Override
         public StreamEvent call() throws Exception {
-          DequeueResult<StreamEvent> poll = consumer.poll(1, 0, TimeUnit.SECONDS);
-          return poll.isEmpty() ? null : poll.iterator().next();
+          synchronized (StreamDequeuer.this) {
+            DequeueResult<StreamEvent> poll = consumer.poll(1, 0, TimeUnit.SECONDS);
+            return poll.isEmpty() ? null : poll.iterator().next();
+          }
         }
       });
     }
