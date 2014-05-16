@@ -1,17 +1,18 @@
 package com.continuuity.hive;
 
-import com.google.inject.Inject;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hive.HiveClient;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Iterator;
+import com.google.inject.Inject;
 import org.apache.hive.beeline.BeeLine;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Iterator;
 
 /**
  *
