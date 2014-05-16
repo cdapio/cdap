@@ -41,7 +41,7 @@ import java.util.List;
  */
 public abstract class DefaultSchedulerService extends AbstractIdleService implements SchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSchedulerService.class);
   private final ProgramRuntimeService programRuntimeService;
   private final WrappedScheduler wrappedScheduler;
 
