@@ -134,16 +134,7 @@ public class DataFabricDistributedModule extends AbstractModule {
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
 
-    try {
-      bind(InetAddress.class)
-        .annotatedWith(Names.named(Constants.Dataset.Manager.ADDRESS))
-        // todo: put in config cluster templates, etc. - try to resolve, use "0.0.0.0" as default - see tx service
-        .toInstance(InetAddress.getByName(conf.get(Constants.Dataset.Manager.ADDRESS, "localhost")));
-    } catch (UnknownHostException e) {
-      throw Throwables.propagate(e);
-    }
     bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-
     bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
 
     // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode

@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.twill.TwillRunnerMain;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;

@@ -72,14 +72,6 @@ public class DataFabricLocalModule extends AbstractModule {
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
-
-        try {
-          bind(InetAddress.class)
-            .annotatedWith(Names.named(Constants.Dataset.Manager.ADDRESS))
-            .toInstance(InetAddress.getByName("localhost"));
-        } catch (UnknownHostException e) {
-          throw Throwables.propagate(e);
-        }
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
 
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode

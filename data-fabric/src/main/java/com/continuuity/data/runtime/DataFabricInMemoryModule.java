@@ -63,13 +63,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // Bind TxDs2 stuff
 
-    try {
-      bind(InetAddress.class)
-        .annotatedWith(Names.named(Constants.Dataset.Manager.ADDRESS))
-        .toInstance(InetAddress.getByName("localhost"));
-    } catch (UnknownHostException e) {
-      throw Throwables.propagate(e);
-    }
     bind(DatasetManager.class).to(DataFabricDatasetManager.class);
 
     // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode

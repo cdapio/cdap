@@ -36,12 +36,13 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
+      addDataSetService(
       addLogSaverService(
        addStreamService(
          addTransactionService(
            addMetricsProcessor (
              addMetricsService(
-              TwillSpecification.Builder.with().setName(NAME).withRunnable())))))
+              TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
@@ -129,6 +130,26 @@ public class ReactorTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(new TransactionServiceTwillRunnable("txservice", "cConf.xml", "hConf.xml"), transactionSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+  }
+
+
+  private TwillSpecification.Builder.RunnableSetter addDataSetService(TwillSpecification.Builder.MoreRunnable builder) {
+    int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 1);
+    int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 1024);
+    int txInstances = cConf.getInt(Constants.Transaction.Container.NUM_INSTANCES, 1);
+
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder
+      .with()
+      .setVirtualCores(txNumCores)
+      .setMemory(txMemoryMb, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(txInstances)
+      .build();
+
+    return builder.add(new DataSetServiceTwillRunnable("dsservice", "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
