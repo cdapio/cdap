@@ -6,7 +6,6 @@ import com.continuuity.common.conf.Constants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
@@ -17,7 +16,6 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -27,7 +25,6 @@ public final class DistributedSchedulerService extends DefaultSchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final ListeningExecutorService executorService;
   private final AtomicBoolean schedulerStarted = new AtomicBoolean(false);
   private Cancellable cancellable;
 
@@ -37,7 +34,6 @@ public final class DistributedSchedulerService extends DefaultSchedulerService {
                                      DiscoveryServiceClient discoveryServiceClient) {
     super(schedulerSupplier, storeFactory, programRuntimeService);
     this.discoveryServiceClient = discoveryServiceClient;
-    executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
   }
 
   @Override
