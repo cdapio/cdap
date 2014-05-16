@@ -48,16 +48,16 @@ public final class DistributedSchedulerService extends DefaultSchedulerService {
       new ServiceDiscovered.ChangeListener() {
       @Override
       public void onChange(ServiceDiscovered serviceDiscovered) {
-        if (!Iterables.isEmpty(serviceDiscovered)) { // && !schedulerStarted.get()) {
+        if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
             LOG.info("Starting scheduler, Discovered {} transaction service(s)",
                       Iterables.size(serviceDiscovered));
           try {
             scheduler.start();
+            schedulerStarted.set(true);
           } catch (SchedulerException e) {
             LOG.error("Error starting scheduler {}", e.getCause(), e);
             throw Throwables.propagate(e);
           }
-          schedulerStarted.set(true);
         }
       }
     }, MoreExecutors.sameThreadExecutor());
