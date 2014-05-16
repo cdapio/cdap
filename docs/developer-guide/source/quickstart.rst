@@ -47,13 +47,13 @@ When you first open the Dashboard, you'll be greeted with:
 .. image:: _images/quickstart/overview.png
    :width: 400px
 
-Click on the name of the application (**ResponseCodeAnalytics**) to view the running Application. The Application has each
+Click on the name of the Application (**ResponseCodeAnalytics**) to view the running Application. The Application has each
 of the Reactor's components:
 
-	* Collect: the *logEventStream* Stream
-	* Process: the *LogAnalyticsFlow* Flow
-	* Store: the *statusCodeTable* Table
-	* Query: the *StatusCodeProcedure* Procedure
+- Collect: a Stream *logEventStream*
+- Process: a Flow *LogAnalyticsFlow*
+- Store: a Table *statusCodeTable*
+- Query: a Procedure *StatusCodeProcedure*
 
 Notice that Collect and Store elements are named using "camel-case",
 while Process and Query elements are named using "leading-case"; the former indicates
@@ -62,7 +62,7 @@ while the latter indicates that the code is implementing a class.
 
 Step 3: Inject Data
 -------------------
-Click on the flow name (**LogAnalyticsFlow**), and you will be guided through clicking on a Stream icon
+Click on the Flow name (**LogAnalyticsFlow**), and you will be guided through clicking on a Stream icon
 to add an Event to the Flow. We've pre-populated the injector with an Apache log line such as::
 
 	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
@@ -93,7 +93,7 @@ and inject additional events. We'll test our modifications to the Procedure to s
 
 To build the example, we've included a `maven <http://maven.apache.org>`_ file. It's located in
 the Application's source code directory (``/examples/ResponseCodeAnalytics``). Run (from within the source
-code directory) the command::
+code directory ``/examples/ResponseCodeAnalytics``) the command::
 
 	mvn clean package
 
@@ -159,14 +159,18 @@ After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can bui
 Step 6: Redeploy and Restart
 ----------------------------
 We now need to stop the existing Application. Bring up the Application's Overview (by clicking on the
-*Overview* button in  the left sidebar, and selecting the Application's name from the list, or by clicking on the Application name *ResponseCodeAnalytics*, if it is in the top title bar,
-if you are in an Element Detail), and click the **Stop** buttons on the right side of the
-*Process* and *Query* sections. This will stop all Flows and Procedures.
+*Overview* button in  the left sidebar, and selecting the Application's name from the list, 
+or by clicking on the Application name *ResponseCodeAnalytics*, if it is in the top title bar,
+if you are in an Element detail). Click the **Stop** buttons on the right side of the
+*Process* and *Query* sections. This will stop the Flow and Procedure. You can tell by the
+labels underneath the names of the Flow and Procedures.
 
 Now, redeploy the Application. Return to the Reactor Overview (via the *Overview* button) and click the
-*Load An App* button. Browse for the .JAR file, and select it. The Application will be deployed.
+*Load An App* button. Browse for the .JAR file (located in 
+``/examples/ResponseCodeAnalytics/target``, and select it. The Application will be deployed.
 
-Restart the Flow and Procedure by clicking on the Application name to go to the Application's overview, and click the *Start* buttons for both the ``LogAnalyticsFlow`` and the ``StatusCodeProcedure``.
+Restart the Flow and Procedure by clicking on the Application name to return to the 
+Application's overview, and click the *Start* buttons for both the ``LogAnalyticsFlow`` and the ``StatusCodeProcedure``.
 
 Inject an event or two by following the practice described in `Step 3: Inject Data`_ to generate new entries with client IP
 addresses in the DataStore.

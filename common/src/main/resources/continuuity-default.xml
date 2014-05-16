@@ -238,7 +238,7 @@
 
     <property>
         <name>stream.index.interval</name>
-        <value>300000</value>
+        <value>10000</value>
         <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
     </property>
 
