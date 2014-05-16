@@ -25,6 +25,7 @@ import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -116,6 +117,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                      @PathParam("stream") String stream) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
+
+    // Verify stream name
+    if (!isValidName(stream)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+      return;
+    }
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
@@ -256,6 +264,16 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           return new StreamDequeuer(consumer, executorFactory);
         }
       });
+  }
+
+
+  private boolean isValidName(String streamName) {
+    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
