@@ -130,11 +130,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     void stop() throws SchedulerException {
-     scheduler.shutdown();
+      if (scheduler != null) {
+        scheduler.shutdown();
+      }
     }
 
     @Override
     public void schedule(Id.Program programId, Type programType, Iterable<Schedule> schedules) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       Preconditions.checkNotNull(schedules);
 
       String key = getJobKey(programId, programType);
@@ -173,6 +176,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, Type programType) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+
       List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
       String key = getJobKey(program, programType);
       try {
@@ -189,6 +194,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public List<String> getScheduleIds(Id.Program program, Type programType) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
+
       List<String> scheduleIds = Lists.newArrayList();
       String key = getJobKey(program, programType);
       try {
@@ -204,6 +211,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void suspendSchedule(String scheduleId) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         scheduler.pauseTrigger(new TriggerKey(scheduleId));
       } catch (SchedulerException e) {
@@ -213,6 +221,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void resumeSchedule(String scheduleId) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         scheduler.resumeTrigger(new TriggerKey(scheduleId));
       } catch (SchedulerException e) {
@@ -222,6 +231,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public void deleteSchedules(Id.Program program, Type programType, List<String> scheduleIds) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         for (String scheduleId : scheduleIds) {
           scheduler.pauseTrigger(new TriggerKey(scheduleId));
@@ -235,6 +245,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     @Override
     public ScheduleState scheduleState(String scheduleId) {
+      Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
       try {
         Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(scheduleId));
         // Map trigger state to schedule state.
