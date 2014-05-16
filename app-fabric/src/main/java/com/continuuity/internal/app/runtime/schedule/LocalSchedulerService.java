@@ -5,7 +5,6 @@ import com.continuuity.app.store.StoreFactory;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,23 +22,12 @@ public final class LocalSchedulerService extends DefaultSchedulerService {
   }
 
   @Override
-  protected void startScheduler(WrappedScheduler scheduler) {
-    try {
-      scheduler.start();
-      LOG.info("Scheduler started.");
-    } catch (SchedulerException e) {
-      LOG.error("Error starting scheduler {}", e.getCause(), e);
-    }
+  protected void startUp() throws Exception {
+    startScheduler();
   }
 
   @Override
-  protected void stopScheduler(WrappedScheduler scheduler) {
-    try {
-      scheduler.stop();
-      LOG.info("Scheduler stopped.");
-    } catch (SchedulerException e) {
-      LOG.error("Error stopping scheduler {}", e.getCause(), e);
-    }
+  protected void shutDown() throws Exception {
+    stopScheduler();
   }
-
 }

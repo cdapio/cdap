@@ -4,7 +4,6 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -12,7 +11,6 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,35 +35,28 @@ public final class DistributedSchedulerService extends DefaultSchedulerService {
   }
 
   @Override
-  protected void startScheduler(final WrappedScheduler scheduler) {
+  protected void startUp() throws Exception {
     //Wait till TransactionService is discovered then start the scheduler.
     ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.TRANSACTION);
     cancellable = discover.watchChanges(
       new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
+        @Override
+        public void onChange(ServiceDiscovered serviceDiscovered) {
+          if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
             LOG.info("Starting scheduler, Discovered {} transaction service(s)",
-                      Iterables.size(serviceDiscovered));
-          try {
-            scheduler.start();
+                     Iterables.size(serviceDiscovered));
+            startScheduler();
             schedulerStarted.set(true);
-          } catch (SchedulerException e) {
-            LOG.error("Error starting scheduler {}", e.getCause(), e);
-            throw Throwables.propagate(e);
           }
         }
-      }
-    }, MoreExecutors.sameThreadExecutor());
+      }, MoreExecutors.sameThreadExecutor());
   }
 
   @Override
-  protected void stopScheduler(WrappedScheduler scheduler) {
+  protected void shutDown() throws Exception {
     try {
       LOG.info("Stopping scheduler");
-      scheduler.stop();
-    } catch (SchedulerException e) {
-      LOG.debug("Error stopping scheduler {}", e.getCause(), e);
+      stopScheduler();
     } finally {
       schedulerStarted.set(false);
       if (cancellable != null) {
