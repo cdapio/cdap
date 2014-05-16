@@ -71,6 +71,7 @@ public final class DistributedSchedulerService extends DefaultSchedulerService {
     } catch (SchedulerException e) {
       LOG.debug("Error stopping scheduler {}", e.getCause(), e);
     } finally {
+      schedulerStarted.set(false);
       if (cancellable != null) {
         cancellable.cancel();
       }
