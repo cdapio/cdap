@@ -1,16 +1,13 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
-===================================================
+=================
 Programming Guide
-===================================================
+=================
 
------------------------------------------------------------------------
 Introduction to Programming Applications for the Continuuity Reactor
------------------------------------------------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 Introduction
@@ -22,12 +19,12 @@ and Workflows—and how you work with them in Java to build a Big Data
 application.
 
 For a high-level view of the concepts of the Continuuity Reactor Java
-APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
+APIs, please see the `Introduction to Continuuity Reactor <intro>`__.
 
-For more information beyond this document, see both the
-`Javadocs </developers/javadocs/index.html>`_  and the code in the
-:doc:`examples </examples/index>` directory, both of which are on the
-Continuuity.com `Developers website </developers>`_ as well as in your
+For more information beyond this document, see the
+`Javadocs <javadocs/index>`_  and the code in the
+`examples <examples/index>`_ directory, both of which are on the
+Continuuity.com `Developers website <http://continuuity.com/developers>`_ as well as in your
 Reactor installation directory.
 
 
@@ -113,8 +110,6 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _applications:
-
 Applications
 ------------
 
@@ -184,13 +179,13 @@ You specify a Stream in your `Application`__ metadata::
 	.withStreams()
 	  .add(new Stream("myStream")) ...
 
-__ Applications_
+__ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the :doc:`Continuuity Reactor HTTP REST API </rest>`
+using either the `Continuuity Reactor HTTP REST API <rest.html>`__
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -198,10 +193,11 @@ which is comprised of a header (a map of strings for metadata) and a
 body (a blob of arbitrary binary data).
 
 Streams are uniquely identified by an ID string (a "name") and are
-explicitly created before being used. They can be created either
-programmatically within your application or by or using a command line tool.
-Data written to a Stream can be consumed by Flows and processed in real-time.
-Streams are shared between applications, so they require a unique name.
+explicitly created before being used. They can be created
+programmatically within your application, through the Management
+Dashboard, or by or using a command line tool. Data written to a Stream
+can be consumed by Flows and processed in real-time. Streams are shared
+between applications, so they require a unique name.
 
 .. _flows:
 
@@ -755,7 +751,7 @@ instance of the DataSet class into the Application.
 
 You can also implement custom DataSets by extending the ``DataSet`` base
 class or by extending existing DataSet types. See the `PageViewAnalytics
-<examples/PageViewAnalytics>`__ example for an implementation of a
+<examples/PageViewAnalytics/index.html>`__ example for an implementation of a
 Custom DataSet.
 
 .. _Procedures:
@@ -833,5 +829,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- :doc:`Advanced Continuuity Reactor Features </advanced>`,
+- `Advanced Continuuity Reactor Features <advanced.html>`__,
   with details of the Flow, DataSet and Transaction systems.

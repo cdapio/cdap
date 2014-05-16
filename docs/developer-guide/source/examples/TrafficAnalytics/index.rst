@@ -1,15 +1,12 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
-
-:orphan:
 
 ==========================
 TrafficAnalytics Example
 ==========================
 
-----------------------------------------------------------
 A Continuuity Reactor Application demonstrating MapReduce
-----------------------------------------------------------
+=========================================================
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -281,4 +278,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-TrafficAnalytics-2.2.0.zip>`_
+Download the example: :download:`continuuity-TrafficAnalytics-2.2.0.zip </examples/TrafficAnalytics/continuuity-TrafficAnalytics-2.2.0.zip>`

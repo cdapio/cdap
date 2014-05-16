@@ -1,7 +1,5 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
-
-:orphan:
 
 ============================
 PageViewAnalytics Example
@@ -232,4 +230,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.0.zip>`_
+Download the example: :download:`continuuity-PageViewAnalytics-2.2.0.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.2.0.zip>`

@@ -1,16 +1,13 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Advanced Reactor Features
 
 =====================================
-Advanced Features
+Advanced Continuuity Reactor Features
 =====================================
 
-------------------------------
 Building Big Data Applications
-------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 
@@ -34,7 +31,7 @@ For the batch example above, up to 100 data objects can be read from the input a
 Flowlets and Instances
 ----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
-:doc:`REST interfaces </rest>` or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
 In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be improved. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
@@ -329,7 +326,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs </developers/javadocs/index.html>`__ for these classes and :doc:`the examples </examples/index>`
+See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
 to learn more about these DataSets.
 
 Custom DataSets
@@ -367,8 +364,7 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-A complete application demonstrating use of a Custom DataSet is included in our
-:doc:`PageViewAnalytics </examples/PageViewAnalytics/index>` example.
+A complete application demonstrating use of a Custom DataSet is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
 
 DataSets & MapReduce
 --------------------
@@ -562,5 +558,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- :doc:`Continuuity Reactor Testing and Debugging Guide <debugging>`,
+- `Continuuity Reactor Testing and Debugging Guide <debugging.html>`__,
   which covers both testing and debugging of Continuuity Reactor applications.

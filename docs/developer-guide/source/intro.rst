@@ -1,16 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Continuuity Reactor
-
-.. index::
-   single: Intro
-.. _index_toplevel:
 
 ===================================
 Introduction
 ===================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 The Challenge of Big Data Applications
@@ -119,11 +114,11 @@ Now, let’s talk about the components within Reactor. Continuuity Reactor provi
 basic abstractions:
 
 - `Streams <programming.html#streams>`__ for real-time data collection from any external system;
-- `Flows </programming.html#flows>`__ for performing elastically scalable, real-time stream
+- `Flows <programming.html#flows>`__ for performing elastically scalable, real-time stream
   or batch processing;
-- `DataSets </programming.html#datasets>`__ for storing data in simple and scalable ways without
+- `DataSets <programming.html#datasets>`__ for storing data in simple and scalable ways without
   worrying about details of the storage schema; and
-- `Procedures </programming.html#procedures>`__ for exposing data to external systems through
+- `Procedures <programming.html#procedures>`__ for exposing data to external systems through
   stored queries.
 
 These are grouped into Applications for configuring and packaging.
@@ -137,7 +132,7 @@ In the next section, we will compare three application architectures and their p
 This will give you a good understanding of the benefit of architecting
 Big Data applications using Continuuity Reactor.
 
-Architecture Comparison: Building a Big Data Application
+Architecture Comparison: Building A Big Data Application
 ============================================================
 Consider the problem of building a real-time log analytic application that takes access 
 logs from Apache™ web servers and computes simple analyses on the logs, such as computing 
@@ -215,5 +210,6 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- :doc:`Developer Examples </examples/index>`,
-  three different examples to run and experiment with.
+- `Continuuity Reactor Quick Start <quickstart.html>`_,
+  which guides you through installing Continuuity Reactor and
+  running and modifying an example application.

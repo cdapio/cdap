@@ -3,7 +3,7 @@
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
-REST API
+Continuuity Reactor HTTP REST API
 =================================
 
 .. reST Editor: .. section-numbering::
@@ -1191,9 +1191,9 @@ running in the Continuuity Reactor. To do that, send an HTTP GET request::
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
    * - ``<ts>``
-     - *Start* and *stop* time, given as seconds since the start of the Epoch
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 Example
 .......
@@ -1414,7 +1414,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - A single DataSet in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
    * - A single DataSet in the context of a specific Application
-     - ``/datasets/<dataset-id><any application context>``
+     - ``/datasets/<dataset-id>/<any application context>``
    * - A single DataSet across all Applications
      - ``/datasets/<dataset-id>``
    * - All DataSets across all Applications
@@ -1575,7 +1575,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs </developers/javadocs/index.html>`__,
+- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop

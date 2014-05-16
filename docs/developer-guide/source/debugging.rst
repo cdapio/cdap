@@ -1,16 +1,13 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
 ===============================================
-Debugging Guide
+Testing and Debugging Guide
 ===============================================
 
--------------------------------------------------------------------------------------
 Introduction to Testing and Troubleshooting Applications for the Continuuity Reactor
--------------------------------------------------------------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 Testing Reactor Applications
@@ -49,6 +46,7 @@ then we’ll start the Flow and the Procedure::
 
 	  // Deploy the Application
 	  ApplicationManager appManager = deployApplication(WordCount.class);
+	  
 	  // Start the Flow and the Procedure
 	  FlowManager flowManager = appManager.startFlow("WordCounter");
 	  ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
@@ -76,6 +74,7 @@ statistics::
 
 	  // Call the Procedure
 	  ProcedureClient client = procManager.getClient();
+	  
 	  // Query global statistics
 	  String response = client.query("getStats", Collections.EMPTY_MAP);
 
@@ -98,6 +97,7 @@ as a response, and the value types in the top-level map are not uniform::
 	  Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
 	  Assert.assertEquals("world", omap.get("word"));
 	  Assert.assertEquals(3.0, omap.get("count"));
+	  
 	  // The associations are a map within the map
 	  Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
 	  Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
@@ -134,6 +134,7 @@ Stream::
 	FlowManager flowManager = appManager.startFlow("RequestCountFlow");
 	// Send data to the Stream
 	sendData(appManager, now);
+	
 	// Wait for the last Flowlet to process 3 events or at most 5 seconds
 	RuntimeMetrics metrics = RuntimeStats.
 	    getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
@@ -153,6 +154,7 @@ the counts::
 
 	// Verify the query.
 	String response = client.query("getCounts", Collections.<String, String>emptyMap());
+	
 	// Deserialize the JSON string.
 	Map<Long, Integer> result = GSON.
 	    fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
@@ -453,5 +455,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- :doc:`Operating a Continuuity Reactor </operations>`,
+- `Operating a Continuuity Reactor <operations.html>`__,
   which covers putting Continuuity Reactor into production.

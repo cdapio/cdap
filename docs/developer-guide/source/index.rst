@@ -1,21 +1,20 @@
-=====================
-Reactor Documentation
-=====================
+=================================
+Continuuity Reactor Documentation
+=================================
 
 .. toctree::
    :maxdepth: 2
    
    /intro
-   /examples/index
    /quickstart
+   /examples/index
    /programming
-   /operations
-   /advanced
-   /debugging
-   /rest
+   Advanced Features </advanced>
+   Testing and Debugging </debugging>
+   Operations </operations>
+   REST API </rest>
+   /javadocs/index
    /faq
-
-
 
 Examples
 ==============
@@ -28,3 +27,9 @@ Examples
 
 :doc:`TrafficAnalytics <examples/TrafficAnalytics/index>`
 
+.. toctree::
+   :hidden:
+
+   /examples/PageViewAnalytics/index
+   /examples/ResponseCodeAnalytics/index
+   /examples/TrafficAnalytics/index
