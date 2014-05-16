@@ -1,17 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Operating a Continuuity Reactor and its Dashboard
 
 ===================================
-Operations Guide
+Operating a Continuuity Reactor
 ===================================
 
------------------------------
 Running Big Data Applications
------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Putting Continuuity Reactor into Production
 ===========================================
@@ -49,7 +46,7 @@ Hosted and Enterprise Continuuity Reactors
 The Hosted Continuuity Reactor and the Enterprise Continuuity Reactor both run in fully distributed mode. In addition to the system components of the Reactor, distributed and highly available deployments of the underlying Hadoop infrastructure are included. Production applications should always be run on either a Hosted Reactor or an Enterprise Reactor.
 
 To learn more about getting your own Hosted Reactor or Enterprise Reactor, see
-`Continuuity Products </products>`__.
+`Continuuity Products <http://continuuity.com/products>`__.
 
 
 .. _dashboard:
@@ -106,7 +103,7 @@ The lower portion of the screen shows all the Apps along with their name, descri
 
 Busyness—the percentage of time spent processing events—is a concept that is used extensively in the Reactor Dashboard.
 
-Clicking on the name of an Application will take you to the `App's pane <#app-pane>`__, with details about the application.
+Clicking on the name of an Application will take you to the `App's pane <#application>`__, with details about the application.
 
 :Note: Because of the interconnections in the Dashboard, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
@@ -147,7 +144,7 @@ Reactor, is irreversible, and returns the Reactor to an original state.
 Metrics Explorer
 ----------------
 
-In the top portion of the `Overview image <#dashboard>`__ you can see the **Metrics** button, which takes you to the *Metrics Explorer*:
+In the top portion of the `Overview image <#dashboard>`__ you can see the **Metrics** button, which takes you to the *Metrics Explorer:*
 
 .. image:: _images/dashboard/dashboard_18_metrics_explorer1.png
    :width: 600px
@@ -233,7 +230,7 @@ The **Query** pane shows all the Procedures currently specified in the Reactor, 
 of their request and error rates.
 
 
-.. _Application:
+.. _application:
 
 Application
 -----------
@@ -243,18 +240,18 @@ Application
 
 The Application pane shows details for an individual application deployed in the Reactor:
 
-- **Summary graphs**: across the top, left to right, a summary of events per second processed,
+- **Summary graphs:** across the top, left to right, a summary of events per second processed,
   `busyness`_ and storage;
 
-- **Collect**: Streams, with name (a link to details) and summary statistics;
+- **Collect:** Streams, with name (a link to details) and summary statistics;
 
-- **Process**: Flows, with name (a link to details), summary statistics,
+- **Process:** Flows, with name (a link to details), summary statistics,
   and a management button to start and stop all the Flows associated with this app;
 
-- **Store**: Datasets defined by this Application, with name (a link to details)
+- **Store:** Datasets defined by this Application, with name (a link to details)
   and summary statistics; and
 
-- **Query**: Procedures, with name (a link to details) and summary statistics.
+- **Query:** Procedures, with name (a link to details) and summary statistics.
 
 
 Deleting an Application
@@ -288,7 +285,7 @@ Start by looking at the status of a Flow:
 .. image:: _images/dashboard/dashboard_07_app_crawler_flow_rss.png
    :width: 600px
 
-It that shows all the Streams, and Flowlets, connections, and icons arranged in a
+It shows all of the Streams and Flowlets of the Flow with their connections and icons arranged in a
 directed acyclic graph or DAG.
 
 Across the top are two realtime graphs of processing rate and `busyness`_ with
@@ -336,7 +333,7 @@ and—in a small circle in the upper right of the icon—the number of instances
 DAG Icon Dialogs
 ................
 
-Clicking on a icon in the DAG brings up the icon's dialog. This dialog contains numerous buttons and panes,
+Clicking on an icon in the DAG brings up the icon's dialog. This dialog contains numerous buttons and panes,
 and allows you to traverse the DAG completely by selecting appropriate inputs and outputs.
 
 .. image:: _images/dashboard/dashboard_27_dag1.png
@@ -383,7 +380,7 @@ The current number of instances is shown for reference.
 Flow Log Explorer
 .................
 
-The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Others*:
+The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Others:*
 
 .. image:: _images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
    :width: 600px
@@ -434,7 +431,7 @@ Procedure
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
 
 For details of making requests and using Procedures, including configuring the parameters and calling methods,
-see the :doc:`Continuuity Reactor HTTP REST API Guide </rest>`.
+see the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -460,14 +457,14 @@ For instance, in a Flowlet you can write::
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
-- Using the :doc:`Continuuity Reactor HTTP REST interface </rest>`.
+- Using the `Continuuity Reactor HTTP REST interface <rest.html>`__.
   The `REST interface <rest.html#logging-http-api>`__ details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
-  This launches the `Log Explorer <#using-log-explorer>`__.
+  This launches the `Log Explorer <#log-explorer>`__.
 
-See the `Flow Log Explorer <#using-log-explorer>`__ in the
+See the `Flow Log Explorer <#log-explorer>`__ in the
 `Continuuity Reactor Dashboard <#dashboard>`__
 for details of using it to examine logs in the Reactor.
 In a similar fashion, `Procedure Logs <#procedure>`__ can be examined from within the Dashboard.
@@ -480,12 +477,12 @@ As applications process data, the Continuuity Reactor collects metrics about the
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
 details on available system metrics in the
-`Continuuity Reactor HTTP REST API Guide </developers/rest#metrics-http-api>`__.
+`Continuuity Reactor HTTP REST API Guide <rest.html#metrics-http-api>`__.
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them
 (along with system metrics) via the `Metrics Explorer`_ in the Dashboard or
-via the Continuuity Reactor’s :doc:`REST interfaces </rest>`.
+via the Continuuity Reactor’s `REST interfaces <rest.html>`__.
 
 For example, to add metrics to a Flowlet *NameSaver*::
 
@@ -509,10 +506,10 @@ For example, to add metrics to a Flowlet *NameSaver*::
 	  }
 	}
 
-An example of user-defined metrics is in the :doc:`PageViewAnalytics example </examples/PageViewAnalytics/index>`.
+An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
 
 For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
-in the :doc:`Continuuity Reactor HTTP REST API Guide </rest>`.
+in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 Using Metrics Explorer
 ----------------------
@@ -629,16 +626,5 @@ Where to Go Next
 ================
 Now that you've seen how to operate a Continuuity Reactor, take a look at:
 
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems; and
-
-- :doc:`Continuuity Reactor HTTP REST API </rest>`,
+- `Continuuity Reactor HTTP REST API <rest.hml>`__,
   a guide to programming Continuuity Reactor's HTTP interface.
-
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor.
-

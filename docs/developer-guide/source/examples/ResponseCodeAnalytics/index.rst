@@ -1,19 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Apache Log Event Logger
-
-:orphan:
 
 =============================
 ResponseCodeAnalytics Example
 =============================
 
----------------------------------------------------------------------------------------
 A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
----------------------------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -208,4 +203,4 @@ Either:
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/appManager.sh --action stop [--gateway <hostname>]``
 
-`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.1.0.zip>`_
+Download the example: :download:`continuuity-ResponseCodeAnalytics-2.1.0.zip </examples/ResponseCodeAnalytics/continuuity-ResponseCodeAnalytics-2.1.0.zip>`

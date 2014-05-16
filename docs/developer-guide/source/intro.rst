@@ -1,13 +1,12 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Continuuity Reactor
 
 ===================================
 Introduction
 ===================================
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 The Challenge of Big Data Applications
 ======================================
@@ -96,7 +95,7 @@ Full Development Lifecycle Support
 ----------------------------------
 Reactor supports developers through the entire application development lifecycle: 
 development, debugging, testing, continuous integration and production. Using familiar 
-development tools like *Eclipse* and *IntelliJ*, you can build, test and debug your 
+development tools like *IntelliJ* and *Eclipse*, you can build, test and debug your 
 application right on your laptop with a *Local Reactor*. Utilize the application unit 
 test framework for continuous integration. Deploy it to a development cloud (*Sandbox 
 Reactor*) or production cloud (*Enterprise Reactor*) with a push of a button.
@@ -128,12 +127,11 @@ deployed and running, you can easily interact with it from virtually any externa
 by accessing the Streams, DataSets, and Procedures using the Java APIs, REST or other 
 network protocols.
 
-In the next section, we will compare three application architectures
-and their pros and cons.
+In the next section, we will compare three application architectures and their pros and cons.
 This will give you a good understanding of the benefit of architecting
 Big Data applications using Continuuity Reactor.
 
-Architecture Comparison: Building a Big Data Application
+Architecture Comparison: Building A Big Data Application
 ============================================================
 Consider the problem of building a real-time log analytic application that takes access 
 logs from Apache™ web servers and computes simple analyses on the logs, such as computing 
@@ -208,5 +206,6 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- :doc:`Developer Examples </examples/index>`,
-  three different examples to run and experiment with.
+- `Continuuity Reactor Quick Start <quickstart.html>`_,
+  which guides you through installing Continuuity Reactor and
+  running and modifying an example application.
