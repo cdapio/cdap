@@ -15,7 +15,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -36,56 +35,46 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * Default Schedule service implementation.
+ * Abstract scheduler service common scheduling functionality. The extending classes should implement
+ * prestart and poststop hooks to perform any action before starting the quartz scheduler and after stopping
+ * the quartz scheduler.
  */
-public class DefaultSchedulerService extends AbstractIdleService implements SchedulerService {
+public abstract class DefaultSchedulerService extends AbstractIdleService implements SchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultSchedulerService.class);
-  private final Supplier<Scheduler> schedulerSupplier;
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
   private final ProgramRuntimeService programRuntimeService;
-  private final StoreFactory storeFactory;
-  private Scheduler scheduler;
+  private final WrappedScheduler wrappedScheduler;
 
-  @Inject
-  public DefaultSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
+  public DefaultSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
                                  ProgramRuntimeService programRuntimeService) {
-    this.schedulerSupplier = schedulerSupplier;
     this.programRuntimeService = programRuntimeService;
-    this.storeFactory = storeFactory;
+    this.wrappedScheduler = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService);
   }
 
-  private JobFactory createJobFactory(final Store store) {
-    return new JobFactory() {
+  /**
+   * Start the quartz scheduler service. Start function in the wrapped scheduler should be called after
+   * Transaction service is available
+   *
+   * @param scheduler instance of WrappedScheduler
+   */
+  protected abstract void startScheduler(WrappedScheduler scheduler);
 
-      @Override
-      public Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) throws SchedulerException {
-        Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
+  /**
+   * Stop the quartz scheduler service.
+   *
+   * @param scheduler instance of WrappedScheduler
+   */
+  protected abstract void stopScheduler(WrappedScheduler scheduler);
 
-        if (ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new ScheduledJob(store, programRuntimeService);
-        } else {
-          try {
-            return jobClass.newInstance();
-          } catch (Exception e) {
-            throw new SchedulerException("Failed to create instance of " + jobClass, e);
-          }
-        }
-      }
-    };
-  }
 
   @Override
   public void startUp() throws Exception {
-    scheduler = schedulerSupplier.get();
-    scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-    scheduler.start();
-    LOG.debug("Scheduler started!");
+    startScheduler(wrappedScheduler);
   }
 
   @Override
   public void shutDown() throws Exception {
-    scheduler.shutdown();
-    LOG.debug("Scheduler stopped!");
+    stopScheduler(wrappedScheduler);
   }
 
   @Override
@@ -98,7 +87,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
                               .storeDurably(true)
                               .build();
     try {
-      scheduler.addJob(job, true);
+      wrappedScheduler.getScheduler().addJob(job, true);
     } catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
@@ -113,13 +102,13 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
       Trigger trigger = TriggerBuilder.newTrigger()
-                                      .withIdentity(triggerKey)
-                                      .forJob(job)
-                                      .withSchedule(CronScheduleBuilder
-                                                      .cronSchedule(getQuartzCronExpression(cronEntry)))
-                                      .build();
+        .withIdentity(triggerKey)
+        .forJob(job)
+        .withSchedule(CronScheduleBuilder
+                        .cronSchedule(getQuartzCronExpression(cronEntry)))
+        .build();
       try {
-        scheduler.scheduleJob(trigger);
+        wrappedScheduler.getScheduler().scheduleJob(trigger);
       } catch (SchedulerException e) {
         throw Throwables.propagate(e);
       }
@@ -131,7 +120,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
     String key = getJobKey(program, programType);
     try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+      for (Trigger trigger : wrappedScheduler.getScheduler().getTriggersOfJob(new JobKey(key))) {
         ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
                                                         trigger.getNextFireTime().getTime());
         scheduledRuntimes.add(runtime);
@@ -147,7 +136,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     List<String> scheduleIds = Lists.newArrayList();
     String key = getJobKey(program, programType);
     try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(new JobKey(key))) {
+      for (Trigger trigger : wrappedScheduler.getScheduler().getTriggersOfJob(new JobKey(key))) {
         scheduleIds.add(trigger.getKey().getName());
       }
     }   catch (SchedulerException e) {
@@ -159,7 +148,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   @Override
   public void suspendSchedule(String scheduleId) {
     try {
-      scheduler.pauseTrigger(new TriggerKey(scheduleId));
+      wrappedScheduler.getScheduler().pauseTrigger(new TriggerKey(scheduleId));
     } catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
@@ -168,7 +157,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   @Override
   public void resumeSchedule(String scheduleId) {
     try {
-      scheduler.resumeTrigger(new TriggerKey(scheduleId));
+      wrappedScheduler.getScheduler().resumeTrigger(new TriggerKey(scheduleId));
     } catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
@@ -179,10 +168,10 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
                               List<String> scheduleIds) {
     try {
       for (String scheduleId : scheduleIds) {
-        scheduler.pauseTrigger(new TriggerKey(scheduleId));
+        wrappedScheduler.getScheduler().pauseTrigger(new TriggerKey(scheduleId));
       }
       String key = getJobKey(program, programType);
-      scheduler.deleteJob(new JobKey(key));
+      wrappedScheduler.getScheduler().deleteJob(new JobKey(key));
     } catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
@@ -191,7 +180,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
   @Override
   public ScheduleState scheduleState (String scheduleId) {
     try {
-      Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(scheduleId));
+      Trigger.TriggerState state = wrappedScheduler.getScheduler().getTriggerState(new TriggerKey(scheduleId));
       // Map trigger state to schedule state.
       // This method is only interested in returning if the scheduler is
       // Paused, Scheduled or NotFound.
@@ -242,7 +231,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
       LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
-                                                       context.getTrigger().getKey().toString());
+                context.getTrigger().getKey().toString());
 
       String key = context.getJobDetail().getKey().getName();
       String[] parts = key.split(":");
@@ -255,8 +244,8 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
       LOG.debug("Schedule execute {}", key);
       Arguments args = new BasicArguments(ImmutableMap.of(
-          ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
-          ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount())
+        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
+        ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount())
       ));
 
       taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
@@ -265,6 +254,62 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
 
   private String getJobKey(Id.Program program, Type programType) {
     return String.format("%s:%s:%s:%s", programType.name(), program.getAccountId(),
-                                        program.getApplicationId(), program.getId());
+                         program.getApplicationId(), program.getId());
   }
+
+  /**
+   * class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
+   * DefaultSchedulerService.
+   */
+  static final class WrappedScheduler {
+    private Scheduler scheduler;
+    private final StoreFactory storeFactory;
+    private final Supplier<Scheduler> schedulerSupplier;
+    private final ProgramRuntimeService programRuntimeService;
+
+    WrappedScheduler(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
+                     ProgramRuntimeService programRuntimeService) {
+      this.schedulerSupplier = schedulerSupplier;
+      this.storeFactory = storeFactory;
+      this.programRuntimeService = programRuntimeService;
+      this.scheduler = null;
+    }
+
+    void start() throws SchedulerException {
+      scheduler = schedulerSupplier.get();
+      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      scheduler.start();
+
+    }
+
+    void stop() throws SchedulerException {
+     scheduler.shutdown();
+    }
+
+    Scheduler getScheduler()  {
+      return this.scheduler;
+    }
+
+    private JobFactory createJobFactory(final Store store) {
+      return new JobFactory() {
+
+        @Override
+        public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler) throws SchedulerException {
+          Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
+
+          if (ScheduledJob.class.isAssignableFrom(jobClass)) {
+            return new ScheduledJob(store, programRuntimeService);
+          } else {
+            try {
+              return jobClass.newInstance();
+            } catch (Exception e) {
+              throw new SchedulerException("Failed to create instance of " + jobClass, e);
+            }
+          }
+        }
+      };
+    }
+
+  }
+
 }
