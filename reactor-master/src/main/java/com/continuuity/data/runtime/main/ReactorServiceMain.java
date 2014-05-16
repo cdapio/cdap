@@ -17,7 +17,6 @@ import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
