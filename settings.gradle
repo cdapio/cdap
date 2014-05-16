@@ -10,6 +10,7 @@ project(':singlenode').buildFileName = 'package.gradle'
 include 'hbase-compat-0.94', 'hbase-compat-0.96'
 
 include 'explore'
+include 'explore-client'
 
 include 'data-fabric-tests'
 include 'watchdog-tests'
