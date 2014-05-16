@@ -279,7 +279,6 @@ public abstract class DefaultSchedulerService extends AbstractIdleService implem
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
       scheduler.start();
-
     }
 
     void stop() throws SchedulerException {
@@ -309,7 +308,5 @@ public abstract class DefaultSchedulerService extends AbstractIdleService implem
         }
       };
     }
-
   }
-
 }
