@@ -42,7 +42,13 @@ define([], function () {
             }
         });
       });
-    }
+    },
+
+    login: function () {
+      var self = this;
+      var isValid = self.get('controller').checkValidity();
+    },
+
 
   });
 

@@ -79,7 +79,11 @@ WebAppServer.prototype.setSecurityStatus = function(setAddress) {
     host: this.config['gateway.server.address'],
     port: this.config['gateway.server.port'],
     path: '/' + this.API_VERSION + '/deploy/status',
-    method: 'GET'
+    method: 'GET',
+    headers: {
+      'X-Continuuity-ApiKey': '',
+      'Authorization': 'Bearer '
+    }
   };
 
   var req = this.lib.request(options, function (response) {

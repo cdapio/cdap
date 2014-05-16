@@ -152,12 +152,12 @@ function(Components, Embeddables, HTTP, Util) {
 			 */
 			HTTP.create().get('getsession', function (resp) {
 				if ('token' in resp) {
-					C.Env.set('auth_token', resp.token);
+					C.Env.set('auth', resp.token);
 				} else {
-					C.Env.set('auth_token', '');
+					C.Env.set('auth', '');
 				}
-				if (typeof routeHandler !== 'undefined') {
-  				routeHandler.transitionTo('Login');
+				if (!C.Env.get('auth') && 'routeName' in routeHandler) {
+					routeHandler.transitionTo('Login');
 				}
 			});
 		},
@@ -365,8 +365,8 @@ function(Components, Embeddables, HTTP, Util) {
 			C.deferReadiness();
 			var http = HTTP.create();
 			C.initialize(http);
-			if (C.Env.security_enabled) {
-			  C.setupAuth();
+			if (C.Env.security_enabled === true) {
+			  C.setupAuth(http);
 			}
 
 		}
