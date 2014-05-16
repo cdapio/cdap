@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * LocalSchedulerService - noop for pre and post hooks.
  */
-public final class LocalSchedulerService extends DefaultSchedulerService {
+public final class LocalSchedulerService extends AbstractSchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
 

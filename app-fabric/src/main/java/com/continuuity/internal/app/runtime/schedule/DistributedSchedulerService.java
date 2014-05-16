@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Scheduler service to run in distributed reactor. Waits for transaction service to be available.
  */
-public final class DistributedSchedulerService extends DefaultSchedulerService {
+public final class DistributedSchedulerService extends AbstractSchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
   private final DiscoveryServiceClient discoveryServiceClient;
