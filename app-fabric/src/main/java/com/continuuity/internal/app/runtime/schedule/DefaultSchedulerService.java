@@ -291,7 +291,6 @@ public abstract class DefaultSchedulerService extends AbstractIdleService implem
 
     private JobFactory createJobFactory(final Store store) {
       return new JobFactory() {
-
         @Override
         public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler) throws SchedulerException {
           Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
