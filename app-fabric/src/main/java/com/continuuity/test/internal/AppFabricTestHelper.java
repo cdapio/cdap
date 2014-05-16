@@ -132,12 +132,11 @@ public class AppFabricTestHelper {
                                  String type) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     httpHandler.getStatus(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop " + type + " failed");
-    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
-                                             new TypeToken<Map<String, String>>() { }.getType());
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status " + type + " failed");
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
   }
 
@@ -160,7 +159,8 @@ public class AppFabricTestHelper {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.workflowSchedules(request, responder, appId, wflowId);
-    List<String> schedules = (List<String>) responder.getResponseContent();
+
+    List<String> schedules = responder.decodeResponseContent(new TypeToken<List<String>>() { });
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
     return schedules;
   }
@@ -171,8 +171,8 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    List<Map<String, String>> runList = new Gson().fromJson(responder.getResponseContent().toString(),
-                               new TypeToken<List<Map<String, String>>>() { }.getType());
+
+    List<Map<String, String>> runList = responder.decodeResponseContent(new TypeToken<List<Map<String, String>>>() { });
     List<RunRecord> runRecords = Lists.newArrayList();
     for (Map<String, String> run : runList) {
       runRecords.add(new RunRecord(run.get("runid"), Long.parseLong(run.get("start")),
@@ -206,8 +206,7 @@ public class AppFabricTestHelper {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    Map<String, String> json = GSON.fromJson(responder.getResponseContent().toString(),
-                                             new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
   }
 
