@@ -155,7 +155,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @Path("/{stream}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
-    getAuthenticatedAccountId(request);
+    String accountId = getAuthenticatedAccountId(request);
 
     // Get the consumer Id
     String consumerId = request.getHeader(Constants.Stream.Headers.CONSUMER_ID);
@@ -164,17 +164,17 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       groupId = Long.parseLong(consumerId);
     } catch (Exception e) {
       LOG.trace("Invalid consumerId: {}", consumerId, e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid or missing consumer id");
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid or missing consumer id");
       return;
     }
 
     // See if the consumer id is valid
     StreamDequeuer dequeuer;
     try {
-      dequeuer = dequeuerCache.get(new ConsumerCacheKey(stream, groupId));
+      dequeuer = dequeuerCache.get(new ConsumerCacheKey(accountId, stream, groupId));
     } catch (Exception e) {
       LOG.trace("Failed to get consumer", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Consumer not exists.");
+      responder.sendError(HttpResponseStatus.NOT_FOUND, "Stream or consumer not exists.");
       return;
     }
 
@@ -253,6 +253,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }).build(new CacheLoader<ConsumerCacheKey, StreamDequeuer>() {
         @Override
         public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
+          if (!streamMetaStore.streamExists(key.getAccountId(), key.getStreamName())) {
+            throw new IllegalStateException("Stream not exists");
+          }
+
           // TODO: Deal with dynamic resize of stream handler instances
           int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
           ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
@@ -293,12 +297,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   private static final class ConsumerCacheKey {
+    private final String accountId;
     private final String streamName;
     private final long groupId;
 
-    private ConsumerCacheKey(String streamName, long groupId) {
+    private ConsumerCacheKey(String accountId, String streamName, long groupId) {
+      this.accountId = accountId;
       this.streamName = streamName;
       this.groupId = groupId;
+    }
+
+    public String getAccountId() {
+      return accountId;
     }
 
     public String getStreamName() {
