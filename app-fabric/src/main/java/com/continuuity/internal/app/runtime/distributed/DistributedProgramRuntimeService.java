@@ -456,6 +456,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   protected void startUp() throws Exception {
     resourceReporter.start();
+    LOG.debug("started distributed program runtime service");
   }
 
   @Override

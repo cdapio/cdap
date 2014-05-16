@@ -46,7 +46,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
     inputSplit = (StreamInputSplit) split;
     reader = createReader(FileSystem.get(context.getConfiguration()), inputSplit);
-    reader.open();
+    reader.initialize();
   }
 
   @Override

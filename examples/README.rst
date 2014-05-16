@@ -21,7 +21,7 @@ List of Example Apps
 
 CountAndFilterWords
 -------------------
-- A variation of CountTokens that illustrates that a flowlet's output can
+- A variation of CountTokens that illustrates that a Flowlet's output can
   be consumed by multiple downstream Flowlets.
 - In addition to counting all tokens, also sends all tokens to a filter that
   drops all tokens that are not upper case.
@@ -52,8 +52,8 @@ CountTokens
 - Each token is cloned into two tokens:
 
   1. the upper cased version of the token; and
-  2. the original token with a field prefix ('title', or if the token is from
-     the body of the event, 'text').
+  2. the original token with a field prefix ("title", or if the token is from
+     the body of the event, "text").
 
 - All of the cloned tokens are counted using increment operations.
 
@@ -80,16 +80,16 @@ Purchase
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
     Purchase object and stores the object in the purchases DataSet.
-  - When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce job
-    reads the purchases DataSet, creates a purchase history,
-    and stores the purchase history in the history DataSet every morning at 4:00 A.M.
-    You can manually (in the Process screen in the Reactor Dashboard) or programmatically
-    execute the PurchaseHistoryBuilder MapReduce job to store customers' purchase history
-    in the history DataSet.
-  - Execute the PurchaseQuery Procedure to query the history DataSet to discover
-    the purchase history of each user.
+  - When scheduled by the PurchaseHistoryWorkFlow, the PurchaseHistoryBuilder MapReduce
+    job reads the purchases DataSet, creates a purchase history, and stores the purchase
+    history in the history DataSet every morning at 4:00 A.M. You can manually (in the
+    Process screen in the Reactor Dashboard) or programmatically execute the 
+    PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the
+    history DataSet.
+  - Execute the PurchaseQuery procedure to query the history DataSet to discover the 
+    purchase history of each user.
 
-- Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M.,
+- Note: Because by default the PurchaseHistoryWorkFlow process doesn't run until 4:00 A.M.,
   you'll have to wait until the next day (or manually or programmatically execute the
   PurcaseHistoryBuilder) after entering the first customers' purchases or the PurchaseQuery
   will return a "not found" error.
@@ -100,8 +100,8 @@ ResourceSpammer
 
 ResponseCodeAnalytics
 ---------------------
-- A simple application for real-time streaming log analysis—computing 
-  the number of occurrences of each HTTP status code by processing Apache access log data. 
+- A simple application for real-time Streaming log analysis—computing the number of 
+  occurrences of each HTTP status code by processing Apache access log data. 
 
 SentimentAnalysis
 -----------------
@@ -113,8 +113,8 @@ SimpleWriteAndRead
 
 Ticker
 ----------------
-- This application pulls in stock market activity data and stores it in 
-  DataSets that allow querying for that data with various filters.
+- This application pulls in stock market activity data and stores it in DataSets that 
+  allow querying for that data with various filters.
 
 TrafficAnalytics
 ----------------
@@ -129,7 +129,7 @@ WordCount
   to simplify storing complex data.
 
 
-Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc.
+Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc. All rights reserved.
 
 Copyright 2013-2014 Continuuity, Inc.
 
