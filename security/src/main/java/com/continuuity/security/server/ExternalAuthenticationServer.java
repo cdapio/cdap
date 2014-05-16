@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.security.KeyStore;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -111,25 +112,21 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.setContextPath("*");
       context.setHandler(handlers);
 
-      SelectChannelConnector connector = new SelectChannelConnector();
-      connector.setPort(port);
+      SelectChannelConnector connector;
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
+        sslContextFactory.setKeyStore(new KeyStore());
         sslContextFactory.setKeyStorePath("/Users/gandu/workspace/keystore");
         sslContextFactory.setKeyStorePassword("realtime");
 
-        SslSelectChannelConnector sslSelectChannelConnector = new SslSelectChannelConnector(sslContextFactory);
-        int confidentialPort = configuration.getInt(Constants.Security.SSL_PROTECTED_PORT);
-        sslSelectChannelConnector.setPort(port);
-//        sslSelectChannelConnector.setPort(confidentialPort);
-//        connector.setConfidentialPort(confidentialPort);
-
-        server.setConnectors(new Connector[]{sslSelectChannelConnector});
+        connector = new SslSelectChannelConnector(sslContextFactory);
       } else {
-        server.setConnectors(new Connector[]{connector});
+        connector = new SelectChannelConnector();
       }
 
+      connector.setPort(port);
+      server.setConnectors(new Connector[]{connector});
       server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");

@@ -815,7 +815,7 @@
     -->
     <property>
         <name>security.authentication.handlerClassName</name>
-        <value>com.continuuity.security.server.BasicAuthenticationHandler</value>
+        <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
     </property>
 
     <property>

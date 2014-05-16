@@ -27,7 +27,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
    */
   @Inject
   public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
-    super("ldaploginmodule");
+    super("ldaploginmodule", configuration);
     this.configuration = configuration;
   }
 

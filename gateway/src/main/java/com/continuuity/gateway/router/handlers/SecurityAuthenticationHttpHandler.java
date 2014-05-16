@@ -29,9 +29,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.util.Date;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**

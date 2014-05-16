@@ -21,6 +21,9 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.util.ssl.KeyStoreKeyManager;
+import com.unboundid.util.ssl.SSLUtil;
+import com.unboundid.util.ssl.TrustStoreTrustManager;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -72,7 +75,7 @@ public class TestExternalAuthenticationServer {
   }
 
   /**
-   * Configure an LDAP server instance.
+   * LDAP server and related handler configurations.
    * @return
    */
   private static CConfiguration getConfiguration() {
@@ -91,9 +94,16 @@ public class TestExternalAuthenticationServer {
   }
 
   private static void startLDAPServer() throws Exception {
+    SSLUtil serverSSLUtil = new SSLUtil(
+                                new KeyStoreKeyManager("/Users/gandu/workspace/keystore-ldap", "realtime".toCharArray()),
+                                null
+                               );
+    SSLUtil clientSSLUtil = new SSLUtil(
+      new TrustStoreTrustManager("/Users/gandu/workspace/keystore-ldap"));
     InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
-    config.setListenerConfigs(InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
-                                                                      2344, null));
+    config.setListenerConfigs(InMemoryListenerConfig.createLDAPSConfig("LDAPS", InetAddress.getByName("127.0.0.1"),
+                                                                       2344, serverSSLUtil.createSSLServerSocketFactory(),
+                                                                       clientSSLUtil.createSSLSocketFactory()));
     Entry defaultEntry = new Entry(
                               "dn: dc=example,dc=com",
                               "objectClass: top",
@@ -132,7 +142,7 @@ public class TestExternalAuthenticationServer {
     server.startAndWait();
     ldapServer.startListening();
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/", port);
+    String uri = String.format("https://localhost:%d/", port);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
