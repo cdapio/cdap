@@ -83,6 +83,11 @@ public interface TransactionSystemClient {
   InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException;
 
   /**
+   *
+   */
+  String status();
+
+  /**
    * Resets the state of the transaction manager.
    */
   void resetState();

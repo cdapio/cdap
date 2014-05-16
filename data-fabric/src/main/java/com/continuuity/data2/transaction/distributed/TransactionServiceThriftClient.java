@@ -102,6 +102,8 @@ public class TransactionServiceThriftClient {
     return new ByteBufferInputStream(buffer);
   }
 
+  public String status() throws TException { return client.status(); }
+
   public void resetState() throws TException {
     client.resetState();
   }

@@ -83,6 +83,9 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
+  public String status() { return txManager.isRunning() ? "OK" : "NOTOK"; }
+
+  @Override
   public void resetState() {
     txManager.resetState();
   }

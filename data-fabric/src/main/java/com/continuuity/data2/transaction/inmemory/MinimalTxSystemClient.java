@@ -57,6 +57,11 @@ public class MinimalTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
+  public String status() {
+    return "OK";
+  }
+
+  @Override
   public void resetState() {
     // do nothing
   }
