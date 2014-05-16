@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Continuuity Reactor Purchase Example using REST</title>
+    <title>placeholder</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1732,16 +1732,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Continuuity Reactor Purchase Example using REST</h1></header>
+            <header><h1>placeholder</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
+            <section><!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1754,17 +1753,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/6
+              1/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1774,10 +1773,9 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Work with the Continuuity Reactor <em>Purchase</em> Example</li>
-<li>Run an application that uses scheduled MapReduce Workflows to read from one
-<tt class="docutils literal">ObjectStore</tt> DataSet and write to another</li>
-<li>Use shell commands to install Applications and interact with Reactor</li>
+<li>Download and install the SDK</li>
+<li>Basic Continuuity Reactor operations Start and Stop</li>
+<li>Run the Quick Start tour</li>
 </ul></section>
             
           </div>
@@ -1790,38 +1788,35 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/6
+              2/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Purchase Example and Steps</h1></header>
+            <header><h1>Exercise Steps</h1></header>
             
             
             <section><ul class="simple">
-<li>Install the Purchase Application using the shell scripts in the example in a running Reactor</li>
-<li>Send sentences of the form &quot;Tom bought 5 apples for $10&quot; to the purchaseStream using <tt class="docutils literal">curl</tt></li>
-<li>The PurchaseFlow reads the purchaseStream and converts every input String into a
-Purchase object and stores the object in the purchases DataSet</li>
-<li>When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce Job
-reads the purchases DataSet, creates a purchase history,
-and stores the purchase history in the history DataSet every morning at 4:00 A.M.</li>
-<li>Manually (in the Process screen in the Reactor Dashboard) execute
-the PurchaseHistoryBuilder MapReduce job to store customers' purchase history
-in the history DataSet.</li>
-<li>Execute the PurchaseQuery procedure using <tt class="docutils literal">curl</tt> to query the history DataSet and discover
-the purchase history of each customer</li>
-</ul></section>
+<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
+<li>Register for free account</li>
+<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
+<li>Unzip the download</li>
+<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
+<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
+<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
+<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
+</ul>
+<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1833,54 +1828,17 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/6
+              3/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Purchase Example Hints</h1></header>
-            
-            
-            <section><p>Send sentences using</p>
-<pre><span class="go">curl -X POST -d &quot;Tom bought 5 apples for $10&quot; \</span>
-<span class="go">  http://localhost:10000/v2/streams/purchaseStream</span>
-</pre>
-<p>Execute the PurchaseQuery procedure using</p>
-<pre><span class="go">curl -v -d &#39;{&quot;customer&quot;: &quot;Tom&quot;}&#39; -X POST \</span>
-<span class="go">  &#39;http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history&#39;</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/6
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1888,10 +1846,14 @@ the purchase history of each customer</li>
             <header><h1>Exercise Summary</h1></header>
             
             
-            <section><p>You are now able to:</p>
+            <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Install pre-compiled Applications using shell commands</li>
-<li>Interact with the Reactor with shell commands, both sending and receiving</li>
+<li>Perform basic Reactor operations of Start and Stop</li>
+<li>Taken the Quick Start tour</li>
+<li>Use the Dashboard for basic operations</li>
+<li>Inject and Query Data through the Dashboard</li>
+<li>Modify an Application</li>
+<li>Redeploy and restart an Application</li>
 </ul></section>
             
           </div>
@@ -1904,17 +1866,17 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/6
+              4/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1922,7 +1884,7 @@ the purchase history of each customer</li>
             <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e03">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#e11">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1934,11 +1896,11 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/6
+              5/5
             </aside>
           </footer>
         </div>
@@ -1953,7 +1915,7 @@ the purchase history of each customer</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Continuuity Reactor Purchase Example using REST</a></th>
+        <th><a href="#slide1">placeholder</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -1965,26 +1927,20 @@ the purchase history of each customer</li>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Purchase Example and Steps</a></th>
+        <th><a href="#slide3">Exercise Steps</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Purchase Example Hints</a></th>
+        <th><a href="#slide4">Exercise Summary</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Summary</a></th>
+        <th><a href="#slide5">Exercise Completed</a></th>
         <td><a href="#slide5">5</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-6">
-        <th><a href="#slide6">Exercise Completed</a></th>
-        <td><a href="#slide6">6</a></td>
       </tr>
       
       

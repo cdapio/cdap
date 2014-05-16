@@ -1495,19 +1495,29 @@ function main() {
                 }
                 break;
             case 33: // page up
-            case 38: // up arrow
+//            case 38: // up arrow
                 event.preventDefault();
                 firstSlide();
                 break;
             case 37: // left arrow
+            case 38: // up arrow
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
-                event.preventDefault();
-                nextSlide();
-                break;
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
                 lastSlide();
@@ -1722,7 +1732,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1743,7 +1753,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1753,7 +1763,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1779,7 +1789,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1789,7 +1799,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1827,7 +1837,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1837,7 +1847,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1887,7 +1897,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1897,7 +1907,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1928,7 +1938,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1938,7 +1948,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1968,7 +1978,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1978,7 +1988,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2010,7 +2020,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2020,7 +2030,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2048,7 +2058,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2058,7 +2068,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2090,7 +2100,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2100,7 +2110,7 @@ GET &lt;base-url&gt;/metrics/&lt;scope&gt;/&lt;context&gt;/&lt;metric&gt;?&lt;ti
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2146,7 +2156,7 @@ both given as since the start of the Epoch</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2156,7 +2166,7 @@ both given as since the start of the Epoch</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2180,7 +2190,7 @@ aggregate of a metric over time</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2190,7 +2200,7 @@ aggregate of a metric over time</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2262,7 +2272,7 @@ Application context</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2272,7 +2282,7 @@ Application context</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2338,7 +2348,7 @@ Flowlet, Procedure, Mapper, or Reducer level:</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2348,7 +2358,7 @@ Flowlet, Procedure, Mapper, or Reducer level:</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2413,7 +2423,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2423,7 +2433,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2485,7 +2495,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2495,7 +2505,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2560,7 +2570,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2570,7 +2580,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2598,7 +2608,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2608,7 +2618,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2648,7 +2658,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2658,7 +2668,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2681,7 +2691,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2691,7 +2701,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2712,7 +2722,7 @@ note that you cannot aggregate over this metric</td>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2722,7 +2732,7 @@ note that you cannot aggregate over this metric</td>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2749,7 +2759,7 @@ in the upper-right</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2759,7 +2769,7 @@ in the upper-right</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2780,7 +2790,7 @@ in the upper-right</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2790,7 +2800,7 @@ in the upper-right</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2816,7 +2826,7 @@ in the upper-right</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2826,7 +2836,7 @@ in the upper-right</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2846,7 +2856,7 @@ in the upper-right</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m28_instrumenting_via_metrics.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">

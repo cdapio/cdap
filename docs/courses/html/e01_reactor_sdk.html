@@ -1495,19 +1495,29 @@ function main() {
                 }
                 break;
             case 33: // page up
-            case 38: // up arrow
+//            case 38: // up arrow
                 event.preventDefault();
                 firstSlide();
                 break;
             case 37: // left arrow
+            case 38: // up arrow
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
-                event.preventDefault();
-                nextSlide();
-                break;
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
                 lastSlide();

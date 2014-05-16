@@ -1495,19 +1495,29 @@ function main() {
                 }
                 break;
             case 33: // page up
-            case 38: // up arrow
+//            case 38: // up arrow
                 event.preventDefault();
                 firstSlide();
                 break;
             case 37: // left arrow
+            case 38: // up arrow
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
-                event.preventDefault();
-                nextSlide();
-                break;
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
                 lastSlide();
@@ -1722,7 +1732,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1743,7 +1753,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1753,7 +1763,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1779,7 +1789,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1789,7 +1799,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1825,7 +1835,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1835,7 +1845,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1871,7 +1881,7 @@ by clicking the <em>Logs</em> button in the Flow, MapReduce or Procedure screens
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1881,7 +1891,7 @@ by clicking the <em>Logs</em> button in the Flow, MapReduce or Procedure screens
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1932,7 +1942,7 @@ running in the Continuuity Reactor can be downloaded using REST</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1942,7 +1952,7 @@ running in the Continuuity Reactor can be downloaded using REST</p>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1966,7 +1976,7 @@ beginning <tt class="docutils literal">Thu, 24 Oct 2013 01:00:00 GMT</tt> and en
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1976,7 +1986,7 @@ beginning <tt class="docutils literal">Thu, 24 Oct 2013 01:00:00 GMT</tt> and en
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2007,7 +2017,7 @@ to the request URL</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2017,7 +2027,7 @@ to the request URL</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2039,7 +2049,7 @@ to the request URL</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2049,7 +2059,7 @@ to the request URL</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2070,7 +2080,7 @@ to the request URL</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2080,7 +2090,7 @@ to the request URL</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2105,7 +2115,7 @@ to the request URL</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2115,7 +2125,7 @@ to the request URL</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2135,7 +2145,7 @@ to the request URL</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m29_collecting_via_logs.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m29_collecting_via_logs.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">

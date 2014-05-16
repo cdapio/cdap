@@ -65,10 +65,22 @@
                  case 'e08':
                     link = 'slide11'; // Chapter 7
                     break;
-                    
-                    link = 'slide12'; // Chapter 8 et al
+                 case 'm26':
+                 case 'm27':
+                 case 'e09':
+                    link = 'slide12'; // Chapter 8
                     break;
-
+                 case 'm28':
+                 case 'm29':
+                 case 'm30':
+                 case 'e10':
+                    link = 'slide13'; // Chapter 9
+                    break;
+                 case 'm31':
+                 case 'e11':
+                    link = 'slide14'; // Chapter 10 et al
+                    break;
+                    
             }
 //            alert(dest + '\n' + page + '#' + link);
             window.location.href = page + '#' + link;

@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Continuuity Reactor Purchase Example using REST</title>
+    <title>Lifecycle Management</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1732,16 +1732,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Continuuity Reactor Purchase Example using REST</h1></header>
+            <header><h1>Lifecycle Management</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
+            <section><!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1754,30 +1753,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/6
+              1/15
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Objectives</h1></header>
+            <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this exercise, you will:</p>
+            <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Work with the Continuuity Reactor <em>Purchase</em> Example</li>
-<li>Run an application that uses scheduled MapReduce Workflows to read from one
-<tt class="docutils literal">ObjectStore</tt> DataSet and write to another</li>
-<li>Use shell commands to install Applications and interact with Reactor</li>
+<li>Application lifecycle management</li>
+<li>Controlling Applications</li>
+<li>Controlling Application elements</li>
 </ul></section>
             
           </div>
@@ -1790,38 +1788,30 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/6
+              2/15
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Purchase Example and Steps</h1></header>
+            <header><h1>Continuuity Reactor Lifecycle Management</h1></header>
             
             
-            <section><ul class="simple">
-<li>Install the Purchase Application using the shell scripts in the example in a running Reactor</li>
-<li>Send sentences of the form &quot;Tom bought 5 apples for $10&quot; to the purchaseStream using <tt class="docutils literal">curl</tt></li>
-<li>The PurchaseFlow reads the purchaseStream and converts every input String into a
-Purchase object and stores the object in the purchases DataSet</li>
-<li>When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce Job
-reads the purchases DataSet, creates a purchase history,
-and stores the purchase history in the history DataSet every morning at 4:00 A.M.</li>
-<li>Manually (in the Process screen in the Reactor Dashboard) execute
-the PurchaseHistoryBuilder MapReduce job to store customers' purchase history
-in the history DataSet.</li>
-<li>Execute the PurchaseQuery procedure using <tt class="docutils literal">curl</tt> to query the history DataSet and discover
-the purchase history of each customer</li>
-</ul></section>
+            <section><p>Lifecycle management means:</p>
+<ul class="simple">
+<li>Deploying, updating, promoting or deleting Continuuity Reactor Applications; and</li>
+<li>Managing the lifecycle of Flows, Procedures, MapReduce jobs and Workflows</li>
+</ul>
+<p>Lifecycle management is performed using the Reactor Client HTTP API</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1833,31 +1823,35 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/6
+              3/15
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Purchase Example Hints</h1></header>
+            <header><h1>Deploy an Application</h1></header>
             
             
-            <section><p>Send sentences using</p>
-<pre><span class="go">curl -X POST -d &quot;Tom bought 5 apples for $10&quot; \</span>
-<span class="go">  http://localhost:10000/v2/streams/purchaseStream</span>
+            <section><p>To deploy an Application from your local file system, submit an HTTP POST request:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps
 </pre>
-<p>Execute the PurchaseQuery procedure using</p>
-<pre><span class="go">curl -v -d &#39;{&quot;customer&quot;: &quot;Tom&quot;}&#39; -X POST \</span>
-<span class="go">  &#39;http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history&#39;</span>
+<p>with the name of the JAR file as a header:</p>
+<pre class="literal-block">
+X-Archive-Name: &lt;JAR filename&gt;
+</pre>
+<p>and its content as the body of the request:</p>
+<pre class="literal-block">
+&lt;JAR binary content&gt;
 </pre></section>
             
           </div>
@@ -1870,28 +1864,36 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/6
+              4/15
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Summary</h1></header>
+            <header><h1>Updating an Application</h1></header>
             
             
-            <section><p>You are now able to:</p>
+            <section><p>Invoke the same command to update an Application to a newer version:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps
+</pre>
+<p>However, stop all of its Flows, Procedures and MapReduce jobs before updating the Application</p>
+<p>To list all of the deployed applications, issue an HTTP GET request:</p>
+<pre class="literal-block">
+GET &lt;base-url&gt;/apps
+</pre>
 <ul class="simple">
-<li>Install pre-compiled Applications using shell commands</li>
-<li>Interact with the Reactor with shell commands, both sending and receiving</li>
+<li>This will return a JSON String map that lists each Application with its name and description</li>
+<li>Can be pretty-printed using <tt class="docutils literal">json_reformat</tt></li>
 </ul></section>
             
           </div>
@@ -1904,25 +1906,45 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/6
+              5/15
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>List of Deployed Applications</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e03">Chapter Index</a></p></section>
+            <section><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;App&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;PurchaseHistory&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;PurchaseHistory&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Purchase history app&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;App&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;ResponseCodeAnalytics&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;ResponseCodeAnalytics&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;HTTP response code analytics&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;App&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;TrafficAnalytics&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;TrafficAnalytics&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;HTTP request counts on an hourly basis&quot;</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1934,11 +1956,392 @@ the purchase history of each customer</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e03_purchase_example_rest.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/6
+              6/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Promoting an Application</h1></header>
+            
+            
+            <section><p>Promote moves an Application from a local Continuuity Reactor to a Sandbox Continuuity Reactor</p>
+<ul class="simple">
+<li>Send a POST request with the host name of your Sandbox in the request body</li>
+<li>Must include the API key for the Sandbox in the request header</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Example of Promoting an Application</h1></header>
+            
+            
+            <section><p>Promote the Application <em>HelloWorld</em> from a Local Reactor to a Sandbox:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps/HelloWorld/promote
+</pre>
+<p>with the API Key in the header:</p>
+<pre class="literal-block">
+X-Continuuity-ApiKey: &lt;api-key&gt; {&quot;hostname&quot;:&quot;&lt;sandbox&gt;.continuuity.net&quot;}
+</pre>
+<dl class="docutils">
+<dt>Where:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name"><tt class="docutils literal"><span class="pre">&lt;api-key&gt;</span></tt>:</th><td class="field-body">Continuuity Reactor API key, obtained from an account at Continuuity Accounts <br /> (<a class="reference external" href="http://accounts.continuuity.com">http://accounts.continuuity.com</a>)</td>
+</tr>
+<tr class="field"><th class="field-name"><tt class="docutils literal">&lt;sandbox&gt;</tt>:</th><td class="field-body">Sandbox located on <tt class="docutils literal">continuuity.net</tt></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Deleting an Application</h1></header>
+            
+            
+            <section><p>To delete an Application together with all of its Flows, Procedures and MapReduce jobs,
+submit an HTTP DELETE:</p>
+<pre class="literal-block">
+DELETE &lt;base-url&gt;/apps/&lt;app-name&gt;
+</pre>
+<dl class="docutils">
+<dt>Where:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name"><tt class="docutils literal"><span class="pre">&lt;app-name&gt;</span></tt>:</th><td class="field-body">Name of the Application to be deleted</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">&lt;app-name&gt;</span></tt> in this URL is the name of the Application as configured by the
+Application Specification; this is not necessarily the same as the name of the JAR file that was used
+to deploy the Application</li>
+<li>This does not delete the Streams and DataSets associated with the Application
+because they belong to your account, not the Application</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Application Lifecycle Management</h1></header>
+            
+            
+            <section><p>After an Application is deployed, you can:</p>
+<ul class="simple">
+<li>Start and stop its Flows, Procedures, MapReduce jobs and Workflows</li>
+<li>Query for an element's status</li>
+</ul>
+<p>Use HTTP POST and GET methods:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps/&lt;app-id&gt;/&lt;element-type&gt;/&lt;element-id&gt;/&lt;operation&gt;
+
+GET &lt;base-url&gt;/apps/&lt;app-id&gt;/&lt;element-type&gt;/&lt;element-id&gt;/status
+</pre>
+<dl class="docutils">
+<dt>Where:</dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name"><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt>:</th><td class="field-body">Name of the Application being called</td>
+</tr>
+<tr class="field"><th class="field-name"><tt class="docutils literal"><span class="pre">&lt;element-type&gt;</span></tt>:</th><td class="field-body">Name of the element (<em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, or <em>WorkFlow</em>) being called</td>
+</tr>
+<tr class="field"><th class="field-name"><tt class="docutils literal">&lt;operation&gt;</tt>:</th><td class="field-body">One of <tt class="docutils literal">start</tt> or <tt class="docutils literal">stop</tt></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Lifecycle Management Examples</h1></header>
+            
+            
+            <section><p>Start a Flow <em>WhoFlow</em> in the Application <em>HelloWorld</em>:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/start
+</pre>
+<p>Stop the Procedure <em>RetrieveCounts</em> in the Application <em>WordCount</em>:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/stop
+</pre>
+<p>Get the status of the Flow <em>WhoFlow</em> in the Application <em>HelloWorld</em>:</p>
+<pre class="literal-block">
+GET &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/status
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              11/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Specifying Runtime Arguments</h1></header>
+            
+            
+            <section><p>When starting an element, you can optionally specify runtime arguments as a JSON map in the request body:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/start
+</pre>
+<p>with the arguments as a JSON string in the body:</p>
+<pre class="literal-block">
+{&quot;foo&quot;:&quot;bar&quot;,&quot;this&quot;:&quot;that&quot;}
+</pre>
+<p>These runtime arguments are used only for this single invocation of the element</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              12/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Saving and Retrieving Runtime Arguments</h1></header>
+            
+            
+            <section><p>To save the runtime arguments so that the Reactor will use them every time you start the element,
+issue an HTTP PUT with the parameter <tt class="docutils literal">runtimeargs</tt>:</p>
+<pre class="literal-block">
+PUT &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/runtimeargs
+</pre>
+<p>with the arguments as a JSON string in the body:</p>
+<pre class="literal-block">
+{&quot;foo&quot;:&quot;bar&quot;,&quot;this&quot;:&quot;that&quot;}
+</pre>
+<p>To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter <tt class="docutils literal">runtimeargs</tt>:</p>
+<pre class="literal-block">
+GET &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/runtimeargs
+</pre>
+<p>This will return the saved runtime arguments in JSON format</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              13/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
+            
+            
+            <section><p>You should now be able to:</p>
+<ul class="simple">
+<li>Describe Application lifecycle management</li>
+<li>Control a Reactor Application using the REST API</li>
+<li>Control Application elements using the REST API</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              14/15
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Completed</h1></header>
+            
+            
+            <section><p><a class="reference external" href="return.html#m31">Chapter Index</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m31_lifecycle_management.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              15/15
             </aside>
           </footer>
         </div>
@@ -1953,38 +2356,92 @@ the purchase history of each customer</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Continuuity Reactor Purchase Example using REST</a></th>
+        <th><a href="#slide1">Lifecycle Management</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Exercise Objectives</a></th>
+        <th><a href="#slide2">Module Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Purchase Example and Steps</a></th>
+        <th><a href="#slide3">Continuuity Reactor Lifecycle Management</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Purchase Example Hints</a></th>
+        <th><a href="#slide4">Deploy an Application</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Summary</a></th>
+        <th><a href="#slide5">Updating an Application</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Exercise Completed</a></th>
+        <th><a href="#slide6">List of Deployed Applications</a></th>
         <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Promoting an Application</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Example of Promoting an Application</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Deleting an Application</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Application Lifecycle Management</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Lifecycle Management Examples</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12">Specifying Runtime Arguments</a></th>
+        <td><a href="#slide12">12</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-13">
+        <th><a href="#slide13">Saving and Retrieving Runtime Arguments</a></th>
+        <td><a href="#slide13">13</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-14">
+        <th><a href="#slide14">Module Summary</a></th>
+        <td><a href="#slide14">14</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-15">
+        <th><a href="#slide15">Module Completed</a></th>
+        <td><a href="#slide15">15</a></td>
       </tr>
       
       

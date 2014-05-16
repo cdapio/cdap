@@ -1495,19 +1495,29 @@ function main() {
                 }
                 break;
             case 33: // page up
-            case 38: // up arrow
+//            case 38: // up arrow
                 event.preventDefault();
                 firstSlide();
                 break;
             case 37: // left arrow
+            case 38: // up arrow
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
-                event.preventDefault();
-                nextSlide();
-                break;
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
                 lastSlide();
@@ -2052,7 +2062,7 @@ when building the Flow specification you can simply write:</p>
   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">RoundingFlowlet</span><span class="o">())</span>
 <span class="o">.</span><span class="na">connect</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;RandomGenerator&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;RoundingFlowlet&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;RandomGenerator&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;RoundingFlowlet&quot;</span><span class="o">)</span>
 </pre></section>
             
           </div>
@@ -2083,13 +2093,13 @@ when building the Flow specification you can simply write:</p>
             <header><h1>Connecting Flowlets in a Flow 2/2</h1></header>
             
             
-            <section><p>With two Flowlets of the same class, give them explicit names:</p>
+            <section><p>With multiple Flowlets of the same class, give them explicit names:</p>
 <pre><span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;random&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;generator&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
   <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;rounding&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RoundingFlowlet</span><span class="o">())</span>
 <span class="o">.</span><span class="na">connect</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;random&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;rounding&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;random&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;rounding&quot;</span><span class="o">)</span>
 </pre></section>
             
           </div>

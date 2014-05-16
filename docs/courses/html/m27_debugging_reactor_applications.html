@@ -1495,19 +1495,29 @@ function main() {
                 }
                 break;
             case 33: // page up
-            case 38: // up arrow
+//            case 38: // up arrow
                 event.preventDefault();
                 firstSlide();
                 break;
             case 37: // left arrow
+            case 38: // up arrow
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
-                event.preventDefault();
-                nextSlide();
-                break;
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
                 lastSlide();
@@ -1722,7 +1732,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1743,7 +1753,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1753,7 +1763,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1777,7 +1787,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1787,7 +1797,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1823,7 +1833,7 @@ that the debugger was started on the requested port:</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1833,7 +1843,7 @@ that the debugger was started on the requested port:</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1859,7 +1869,7 @@ Dashboard</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1869,7 +1879,7 @@ Dashboard</li>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1897,7 +1907,7 @@ an HTTP request to the element’s URL</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1907,7 +1917,7 @@ an HTTP request to the element’s URL</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1943,7 +1953,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1953,7 +1963,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1997,7 +2007,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2007,7 +2017,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2040,7 +2050,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2050,7 +2060,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2081,7 +2091,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2091,7 +2101,7 @@ GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2119,7 +2129,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2129,7 +2139,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2153,7 +2163,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2163,7 +2173,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2187,7 +2197,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2197,7 +2207,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2220,7 +2230,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2230,7 +2240,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2259,7 +2269,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2269,7 +2279,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2296,7 +2306,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2306,7 +2316,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2329,7 +2339,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2339,7 +2349,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2367,7 +2377,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2377,7 +2387,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2401,7 +2411,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2411,7 +2421,7 @@ for all instances of the Procedure</p></section>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2431,7 +2441,7 @@ for all instances of the Procedure</p></section>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/modules/m27_debugging_reactor_applications.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m27_debugging_reactor_applications.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
