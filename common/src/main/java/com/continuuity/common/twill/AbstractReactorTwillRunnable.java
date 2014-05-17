@@ -3,6 +3,7 @@ package com.continuuity.common.twill;
 import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -45,11 +46,20 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
     this.hConfName = hConfName;
   }
 
+  protected Map<String, String> addExtraConfs() {
+    return ImmutableMap.<String, String>of();
+  }
+
   @Override
   public TwillRunnableSpecification configure() {
+    ImmutableMap.Builder<String, String> configsBuilder = ImmutableMap.builder();
+    configsBuilder.put("cConf", cConfName);
+    configsBuilder.put("hConf", hConfName);
+    configsBuilder.putAll(addExtraConfs());
+
     return TwillRunnableSpecification.Builder.with()
       .setName(name)
-      .withConfigs(ImmutableMap.of("cConf", cConfName, "hConf", hConfName))
+      .withConfigs(configsBuilder.build())
       .build();
   }
 

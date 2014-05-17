@@ -8,27 +8,36 @@ import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileReader;
+import java.util.Map;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
  */
 public class ReactorTwillApplication implements TwillApplication {
+  private static final Logger LOG = LoggerFactory.getLogger(ReactorTwillApplication.class);
+
   private static final String NAME = "reactor.services";
 
   private final CConfiguration cConf;
   private final File cConfFile;
 
   private final File hConfFile;
+  private final Map<String, File> extraConfs;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile) {
+  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, Map<String, File> extraConfs) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
+    this.extraConfs = ImmutableMap.copyOf(extraConfs);
   }
 
   @Override
@@ -152,6 +161,29 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addHiveService(TwillSpecification.Builder.MoreRunnable builder) {
+    File hiveConfFile = extraConfs.get("hive-site.xml");
+    LOG.info("hive-site.xml: {} name is {}", hiveConfFile.toURI(), hiveConfFile.getName());
+    FileReader reader = null;
+    try {
+      reader = new FileReader(hiveConfFile);
+      char[] content = new char[4096];
+      int read = reader.read(content, 0, 4096);
+      LOG.info("hive-site.xml content: {}", String.copyValueOf(content, 0, read));
+    } catch (Exception e) {
+      LOG.error("Exception when reading hive conf", e);
+    } finally {
+      try {
+        reader.close();
+      } catch (Exception e) {
+        // do nothing
+      }
+    }
+    // todo this should only make the current twill runnable not run, not the entire reactor-master
+//    if (hiveConfFile == null) {
+//
+//    }
+//    Preconditions.checkNotNull(extraConfs.get("hive-site.xml"), "Hive configuration not passed.");
+
     int hiveNumCores = cConf.getInt(Constants.Hive.Container.NUM_CORES, 2);
     int hiveMemoryMb = cConf.getInt(Constants.Hive.Container.MEMORY_MB, 2048);
 
@@ -163,10 +195,12 @@ public class ReactorTwillApplication implements TwillApplication {
         .build();
 
     // todo add a hive-site.xml configuration and pass it to hive service twill runnable
-    return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml"), hiveSpec)
+    return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml", "hive-site.xml"),
+                       hiveSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI())
+        .add("hive-site.xml", hiveConfFile.toURI())
         .apply();
   }
 }

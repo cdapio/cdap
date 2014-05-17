@@ -21,8 +21,12 @@ import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.test.internal.TempFolder;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -31,6 +35,7 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -44,11 +49,15 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -63,14 +72,17 @@ public class ReactorServiceMain extends DaemonMain {
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
-  public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
+  public ReactorServiceMain(CConfiguration cConf, Configuration hConf, Map<String, Configuration> extraConfs) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.extraConfs = ImmutableMap.copyOf(extraConfs);
   }
   private boolean stopFlag = false;
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
+  protected final Map<String, Configuration> extraConfs;
+  private final Set<URI> resources = Sets.newHashSet();
 
   private final AtomicBoolean isLeader = new AtomicBoolean(false);
 
@@ -89,7 +101,29 @@ public class ReactorServiceMain extends DaemonMain {
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
-    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
+    // todo move those lines somewhere else
+    HiveConf hiveConf = new HiveConf();
+    java.net.URL url = ReactorServiceMain.class.getClassLoader().getResource("hive-site.xml");
+    LOG.info("Hive resource URL: {}", (url != null) ? url.toURI() : null);
+//    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+//    PrintWriter printWriter = new PrintWriter(bout);
+//    hiveConf.writeXml(printWriter);
+//    LOG.info("Hiveconf = {}", bout.toString());
+    String metastoreUris = hiveConf.get("hive.metastore.uris");
+    LOG.info("Metastore URIs are: {}", metastoreUris);
+    // todo do this checking somewhere...
+    // Preconditions.checkNotNull(metastoreUris, "Metastore URIs not set in hive config.");
+    Configuration newConf = new Configuration();
+    newConf.clear();
+    newConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
+    newConf.set("hive.server2.thrift.port", "0");
+    newConf.set("mapreduce.framework.name", "yarn");
+//    newConf.set("hive.exec.local.scratchdir", "/tmp");
+//    newConf.set("hive.querylog.location", "/tmp");
+    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create(),
+                           ImmutableMap.of("hive-site.xml", newConf)).doMain(args);
+//    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create(),
+//                           ImmutableMap.<String, Configuration>of()).doMain(args);
   }
 
   @Override
@@ -167,9 +201,19 @@ public class ReactorServiceMain extends DaemonMain {
   public void destroy() {
   }
 
+  private void addResource(URI uri) {
+    resources.add(uri);
+  }
+
   private TwillApplication createTwillApplication() {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf());
+      ImmutableMap.Builder<String, File> extraConfFiles = ImmutableMap.builder();
+      for (Map.Entry<String, Configuration> extraConfEntry : extraConfs.entrySet()) {
+        File conf = getSavedExtraConf(extraConfEntry.getKey(), extraConfEntry.getValue());
+        extraConfFiles.put(extraConfEntry.getKey(), conf);
+        addResource(conf.toURI());
+      }
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), extraConfFiles.build());
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
@@ -239,6 +283,12 @@ public class ReactorServiceMain extends DaemonMain {
     return cConfFile;
   }
 
+  private File getSavedExtraConf(String confName, Configuration conf) throws IOException {
+    TempFolder tempFolder = new TempFolder();
+    File tFolder = tempFolder.newFolder("saved_confs");
+    return saveExtraConf(conf, new File(tFolder, confName));
+  }
+
   /**
    * Wait for sometime while looking up service in twill.
    */
@@ -265,7 +315,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillPreparer getPreparer() {
     return prepare(twillRunnerService.prepare(twillApplication)
-                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
+                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out))).withResources(resources)
     );
   }
 
@@ -306,6 +356,16 @@ public class ReactorServiceMain extends DaemonMain {
   }
 
   private File saveCConf(CConfiguration conf, File file) throws IOException {
+    Writer writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      conf.writeXml(writer);
+    } finally {
+      writer.close();
+    }
+    return file;
+  }
+
+  private File saveExtraConf(Configuration conf, File file) throws IOException {
     Writer writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       conf.writeXml(writer);

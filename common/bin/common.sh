@@ -130,7 +130,7 @@ set_classpath()
 
   # If Hive classpath is successfully determined, add it to classpath
   if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" ]; then
-    CP=$CP:$HIVE_CONF_DIR/*:$HIVE_HOME/lib/*
+    CP=$CP:$HIVE_CONF_DIR:$HIVE_HOME/lib/*
   else
     echo "WARN: Could not find Hive libraries"
   fi

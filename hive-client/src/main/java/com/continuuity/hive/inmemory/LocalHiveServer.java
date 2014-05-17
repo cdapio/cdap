@@ -47,7 +47,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
   @Inject
   public LocalHiveServer(DiscoveryService discoveryService, InMemoryTransactionManager inMemoryTransactionManager,
                          DiscoveryServiceClient discoveryServiceClient,
-                         @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
+                         @Named(Constants.Hive.Container.SERVER_ADDRESS) InetAddress hostname) {
     this.discoveryService = discoveryService;
     LocalHiveServer.discoveryServiceClient = discoveryServiceClient;
     LocalHiveServer.inMemoryTransactionManager = inMemoryTransactionManager;

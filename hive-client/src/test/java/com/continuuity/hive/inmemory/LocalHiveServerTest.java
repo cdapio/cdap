@@ -26,7 +26,7 @@ public class LocalHiveServerTest extends HiveServerTest {
 
   public LocalHiveServerTest() {
     CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
+    conf.set(Constants.Hive.Container.SERVER_ADDRESS, "localhost");
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(
