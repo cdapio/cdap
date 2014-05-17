@@ -17,8 +17,9 @@ import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
-import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
+import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
+import com.continuuity.internal.app.runtime.schedule.LocalSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
@@ -34,6 +35,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -56,19 +58,42 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new AppFabricServiceModule();
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return new AppFabricServiceModule();
+
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
   }
 
   @Override
   public Module getDistributedModules() {
-    return new AppFabricServiceModule();
-  }
 
+
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
+  }
   /**
    * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
@@ -82,9 +107,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
       bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
-
-      bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
-      bind(Scheduler.class).to(SchedulerService.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));
