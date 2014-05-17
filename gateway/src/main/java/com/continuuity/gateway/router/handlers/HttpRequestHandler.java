@@ -107,13 +107,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     Throwable cause = e.getCause();
 
     LOG.error("Exception raised in request handler", cause);
-    if (cause instanceof HandlerException) {
-      ctx.getChannel().write(((HandlerException) cause).createFailureResponse())
-        .addListener(ChannelFutureListener.CLOSE);
-    } else {
-      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
+    if (ctx.getChannel().isConnected()) {
+      HttpResponse response = (cause instanceof HandlerException) ?
+                              ((HandlerException) cause).createFailureResponse() :
+                              new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                                                       HttpResponseStatus.INTERNAL_SERVER_ERROR);
       ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+    } else {
+      ctx.getChannel().close();
     }
   }
 
@@ -132,6 +133,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   static void closeOnFlush(Channel ch) {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+    }  else {
+      LOG.error("Closing");
+      ch.close();
     }
   }
 
