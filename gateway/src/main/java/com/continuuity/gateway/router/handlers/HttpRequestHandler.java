@@ -113,8 +113,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                               new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                                                       HttpResponseStatus.INTERNAL_SERVER_ERROR);
       ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
-    } else {
-      ctx.getChannel().close();
     }
   }
 
@@ -133,9 +131,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   static void closeOnFlush(Channel ch) {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-    }  else {
-      LOG.error("Closing");
-      ch.close();
     }
   }
 
