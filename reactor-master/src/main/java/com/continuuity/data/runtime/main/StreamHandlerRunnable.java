@@ -51,9 +51,8 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
       cConf.set(Constants.Stream.ADDRESS, context.getHost().getHostName());
       // Set the worker threads to number of cores * 2 available
       cConf.setInt(Constants.Stream.WORKER_THREADS, Runtime.getRuntime().availableProcessors() * 2);
-      // Set the file prefix based on instance id
-      String prefix = cConf.get(Constants.Stream.FILE_PREFIX);
-      cConf.set(Constants.Stream.FILE_PREFIX, prefix + '.' + context.getInstanceId());
+      // Set the instance id
+      cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
 
       injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                       new IOModule(),

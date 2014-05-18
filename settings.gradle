@@ -9,8 +9,8 @@ project(':singlenode').buildFileName = 'package.gradle'
 // HBase compatibility modules
 include 'hbase-compat-0.94', 'hbase-compat-0.96'
 
-// Hive compatibility module
-include 'hive-client'
+include 'explore'
+include 'explore-client'
 
 include 'data-fabric-tests'
 include 'watchdog-tests'
