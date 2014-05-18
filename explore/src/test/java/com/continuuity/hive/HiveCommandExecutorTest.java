@@ -33,24 +33,24 @@ import java.net.URL;
 
   @Test
   public void testHive2() throws Exception {
-    sendCommand("drop table if exists purchase");
+//    sendCommand("drop table if exists purchase");
     sendCommand("create external table purchase (customer STRING, quantity int) " +
                   "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
                   "with serdeproperties (\"reactor.dataset.name\"=\"purchases\") ;");
-    sendCommand("show tables;");
-    sendCommand("describe purchase;");
-    sendCommand("select customer, quantity from purchase;");
-    sendCommand("select * from purchase;");
-    sendCommand("select customer, quantity from purchase where customer = \"Tom\";");
-    sendCommand("select * from purchase where customer = \"George\";");
-    sendCommand("drop table purchase");
+//    sendCommand("show tables;");
+//    sendCommand("describe purchase;");
+//    sendCommand("select customer, quantity from purchase;");
+//    sendCommand("select * from purchase;");
+//    sendCommand("select customer, quantity from purchase where customer = \"Tom\";");
+//    sendCommand("select * from purchase where customer = \"George\";");
+//    sendCommand("drop table purchase");
   }
 
   private void sendCommand(String cmd) throws Exception {
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
       "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
       "localhost" +
-      ":" + "53745" +
+      ":" + "53100" +
       "/default;auth=noSasl",
       "-n", "poorna",
       "-e", cmd};

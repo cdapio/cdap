@@ -21,7 +21,9 @@ dependencies {
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
     }
-    compile libraries.continuuity_hive_exec
+    compile (libraries.continuuity_hive_exec) {
+        exclude group: 'com.google.protobuf'
+    }
     compile libraries.hive_metastore
 
     compile libraries.thrift

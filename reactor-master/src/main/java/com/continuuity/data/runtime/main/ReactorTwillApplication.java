@@ -37,7 +37,7 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
-      addHiveService (
+      addHiveService(
         addLogSaverService(
          addStreamService(
            addTransactionService(

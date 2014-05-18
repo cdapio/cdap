@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.HiveServer;
@@ -33,7 +33,7 @@ public class LocalHiveServerTest extends HiveServerTest {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(TransactionStateStorage.class).to(InMemoryTransactionStateStorage.class);
+            bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
             bind(InMemoryTransactionManager.class);
           }
         },

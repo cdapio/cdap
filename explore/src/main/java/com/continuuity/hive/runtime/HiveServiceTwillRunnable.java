@@ -36,7 +36,7 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
   }
 
   @Override
-  public void initialize(TwillContext context) {
+  public void doInit(TwillContext context) {
     super.initialize(context);
     LOG.info("Initializing runnable {}", name);
     try {
