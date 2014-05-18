@@ -1,4 +1,5 @@
 apply plugin:'java'
+apply plugin: 'osgi'
 
 smartyFacts {
     api {
@@ -9,8 +10,6 @@ smartyFacts {
 
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
 
     compile (libraries.hive_beeline) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
@@ -18,9 +17,6 @@ dependencies {
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
     }
-    compile libraries.continuuity_hive_exec
-    compile libraries.hive_metastore
-
     compile libraries.thrift
 
     testCompile libraries.junit
@@ -44,6 +40,12 @@ javadoc {
 
 test {
     jvmArgs '-Xmx3048m'
+}
+
+jar {
+    into('lib') {
+        from configurations.compile
+    }
 }
 
 checkstyleMain {

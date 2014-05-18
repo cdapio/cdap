@@ -420,16 +420,28 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         break;
       }
 
-      if (length < 0) {
+      boolean isReadBlockLength = length < 0;
+      if (isReadBlockLength) {
         length = readLength();
       }
 
       if (length > 0) {
         long startPos = eventInput.getPos();
-        if (filter.acceptOffset(startPos)) {
-          event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
-        } else {
-          skipStreamData();
+
+        try {
+          if (filter.acceptOffset(startPos)) {
+            event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
+          } else {
+            skipStreamData();
+          }
+        } catch (IOException e) {
+          // If failed to read first event in the data block, reset the timestamp and length to -1
+          // This is because position hasn't been updated yet and retry will start from the timestamp position.
+          if (isReadBlockLength) {
+            timestamp = -1L;
+            length = -1;
+          }
+          throw e;
         }
         long endPos = eventInput.getPos();
         done = true;
