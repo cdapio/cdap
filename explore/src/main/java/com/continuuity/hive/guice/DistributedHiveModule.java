@@ -24,8 +24,6 @@ import java.net.InetSocketAddress;
  */
 public class DistributedHiveModule extends AbstractModule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedHiveModule.class);
-
   private final HiveConf hiveConf;
 
   public DistributedHiveModule(HiveConf hiveConf) {

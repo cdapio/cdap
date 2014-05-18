@@ -47,19 +47,16 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
     Preconditions.checkArgument(hiveServerPort != 0, "Hive server port must have been set.");
 
     // Start Hive Server2
-    LOG.error("Starting hive server on {}:{}, code version {}...", hostname, hiveServerPort, 2.1);
+    LOG.info("Starting hive server on {}:{}, code version {}...", hostname, hiveServerPort, 2.1);
     hiveServer2 = new HiveServer2();
-    LOG.error("Hive server new instance...");
     hiveServer2.init(hiveConf);
-    LOG.error("Hive server initiated with hive conf {}...", hiveConf);
     hiveServer2.start();
     waitForPort(hostname.getHostName(), hiveServerPort);
-    LOG.error("Hive server started...");
+    LOG.info("Hive server started...");
 
-    LOG.error("Hive server discovery service about to happen...");
     // Register hive server with discovery service.
     final InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
-    // todo are those lines necessary?
+    // todo are those lines necessary? - saw that in appfabric service
 //    InetAddress address = socketAddress.getAddress();
 //    if (address.isAnyLocalAddress()) {
 //      address = InetAddress.getLocalHost();
@@ -78,7 +75,7 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
       }
     });
 
-    LOG.error("Hive server start up registered with zookeeper...");
+    LOG.info("Hive server registered with zookeeper...");
   }
 
   @Override

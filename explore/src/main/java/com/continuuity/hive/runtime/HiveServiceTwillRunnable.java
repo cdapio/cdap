@@ -12,9 +12,7 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.guice.DistributedHiveModule;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -31,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * TwillRunnable to run Hive through twill.
  */
 public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(HiveServiceTwillRunnable.class);
@@ -39,40 +37,40 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
   private ZKClientService zkClient;
   private HiveServer hiveServer;
 
+  private String hiveConfName;
   private HiveConf hiveConf;
 
-  public HiveServiceTwillRunnable(String name, String cConfName, String hConfName, String hiveConf) {
+  public HiveServiceTwillRunnable(String name, String cConfName, String hConfName, String hiveConfName) {
     super(name, cConfName, hConfName);
+    this.hiveConfName = hiveConfName;
   }
 
   @Override
   protected Map<String, String> addExtraConfs() {
-    return ImmutableMap.of("hive-site.xml", "hive-site.xml");
+    return ImmutableMap.of(hiveConfName, hiveConfName);
   }
 
   @Override
   public void doInit(TwillContext context) {
     LOG.info("Initializing runnable {}", name);
-    LOG.info("Default tmp dir = {}", System.getProperty("java.io.tmpdir"));
+    // Hive needs this parameter to be an absolute path
     System.setProperty("java.io.tmpdir", new File(System.getProperty("java.io.tmpdir")).getAbsolutePath());
-    LOG.info("New tmp dir = {}", System.getProperty("java.io.tmpdir"));
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-      // TODO: verify
       getCConfiguration().set(Constants.Hive.Container.SERVER_ADDRESS, context.getHost().getCanonicalHostName());
 
       Map<String, String> configs = context.getSpecification().getConfigs();
-      LOG.info("Hive config present: {}", configs.get("hive-site.xml"));
       hiveConf = new HiveConf();
       hiveConf.clear();
-      hiveConf.addResource(new File(configs.get("hive-site.xml")).toURI().toURL());
-      // todo does it work? To modify the conf like that?
+      hiveConf.addResource(new File(configs.get(hiveConfName)).toURI().toURL());
+
       int hiveServerPort = PortDetector.findFreePort();
       LOG.info("Setting hive server port to {}...", hiveServerPort);
+
+      // The port number is a parameter that is directly read from the hiveConf passed to hive server,
+      // Contrary to most parameters which need to be in hive-site.xml in the classpath.
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
-      hiveConf.set("mapreduce.framework.name", "yarn");
-      // Preconditions.checkNotNull(getExtraConfiguration("hive-site.xml"), "Extra config hive not set.");
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration(), hiveConf);
 

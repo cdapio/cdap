@@ -26,6 +26,7 @@ import com.continuuity.test.internal.TempFolder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -72,16 +73,15 @@ public class ReactorServiceMain extends DaemonMain {
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
-  public ReactorServiceMain(CConfiguration cConf, Configuration hConf, Map<String, Configuration> extraConfs) {
+  public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.extraConfs = ImmutableMap.copyOf(extraConfs);
   }
   private boolean stopFlag = false;
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
-  protected final Map<String, Configuration> extraConfs;
+  protected final Map<String, Configuration> extraConfs = Maps.newHashMap();
   private final Set<URI> resources = Sets.newHashSet();
 
   private final AtomicBoolean isLeader = new AtomicBoolean(false);
@@ -101,33 +101,13 @@ public class ReactorServiceMain extends DaemonMain {
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
-    // todo move those lines somewhere else
-    HiveConf hiveConf = new HiveConf();
-    java.net.URL url = ReactorServiceMain.class.getClassLoader().getResource("hive-site.xml");
-    LOG.info("Hive resource URL: {}", (url != null) ? url.toURI() : null);
-//    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-//    PrintWriter printWriter = new PrintWriter(bout);
-//    hiveConf.writeXml(printWriter);
-//    LOG.info("Hiveconf = {}", bout.toString());
-    String metastoreUris = hiveConf.get("hive.metastore.uris");
-    LOG.info("Metastore URIs are: {}", metastoreUris);
-    // todo do this checking somewhere...
-    // Preconditions.checkNotNull(metastoreUris, "Metastore URIs not set in hive config.");
-    Configuration newConf = new Configuration();
-    newConf.clear();
-    newConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
-    newConf.set("hive.server2.thrift.port", "0");
-    newConf.set("mapreduce.framework.name", "yarn");
-//    newConf.set("hive.exec.local.scratchdir", "/tmp");
-//    newConf.set("hive.querylog.location", "/tmp");
-    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create(),
-                           ImmutableMap.of("hive-site.xml", newConf)).doMain(args);
-//    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create(),
-//                           ImmutableMap.<String, Configuration>of()).doMain(args);
+    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 
   @Override
   public void init(String[] args) {
+    initHiveService();
+
     twillApplication = createTwillApplication();
     if (twillApplication == null) {
       throw new IllegalArgumentException("TwillApplication cannot be null");
@@ -199,6 +179,22 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void destroy() {
+  }
+
+  private void initHiveService() {
+    HiveConf hiveConf = new HiveConf();
+    Configuration newConf = new Configuration();
+    newConf.clear();
+    newConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
+
+    // Port will be set once in the yarn container
+    newConf.set("hive.server2.thrift.port", "0");
+    newConf.set("mapreduce.framework.name", "yarn");
+    addExtraConf("hive-site.xml", newConf);
+  }
+
+  private void addExtraConf(String confName, Configuration conf) {
+    extraConfs.put(confName, conf);
   }
 
   private void addResource(URI uri) {

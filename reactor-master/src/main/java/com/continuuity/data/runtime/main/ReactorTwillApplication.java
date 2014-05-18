@@ -162,27 +162,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addHiveService(TwillSpecification.Builder.MoreRunnable builder) {
     File hiveConfFile = extraConfs.get("hive-site.xml");
-    LOG.info("hive-site.xml: {} name is {}", hiveConfFile.toURI(), hiveConfFile.getName());
-    FileReader reader = null;
-    try {
-      reader = new FileReader(hiveConfFile);
-      char[] content = new char[4096];
-      int read = reader.read(content, 0, 4096);
-      LOG.info("hive-site.xml content: {}", String.copyValueOf(content, 0, read));
-    } catch (Exception e) {
-      LOG.error("Exception when reading hive conf", e);
-    } finally {
-      try {
-        reader.close();
-      } catch (Exception e) {
-        // do nothing
-      }
-    }
-    // todo this should only make the current twill runnable not run, not the entire reactor-master
-//    if (hiveConfFile == null) {
-//
-//    }
-//    Preconditions.checkNotNull(extraConfs.get("hive-site.xml"), "Hive configuration not passed.");
+    LOG.info("Hive configuration URI: {}", hiveConfFile.toURI());
 
     int hiveNumCores = cConf.getInt(Constants.Hive.Container.NUM_CORES, 2);
     int hiveMemoryMb = cConf.getInt(Constants.Hive.Container.MEMORY_MB, 2048);
@@ -194,7 +174,6 @@ public class ReactorTwillApplication implements TwillApplication {
         .setInstances(cConf.getInt(Constants.Hive.Container.NUM_INSTANCES, 1))
         .build();
 
-    // todo add a hive-site.xml configuration and pass it to hive service twill runnable
     return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml", "hive-site.xml"),
                        hiveSpec)
         .withLocalFiles()
