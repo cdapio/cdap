@@ -8,6 +8,8 @@ import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -35,13 +37,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
+  private static final Gson GSON = new Gson();
   static final String DATASET_NAME = "reactor.dataset.name";
+  public static final String TX_QUERY = "hive.query.tx.id";
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-    String txJson = jobConf.get(Constants.Hive.TX_QUERY);
+    String txJson = jobConf.get(TX_QUERY);
     Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");
-    Transaction tx = new Gson().fromJson(txJson, Transaction.class);
+    Transaction tx = GSON.fromJson(txJson, Transaction.class);
 
     RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME), tx);
 
@@ -61,9 +65,9 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   @Override
   public RecordReader<Void, ObjectWritable> getRecordReader(final InputSplit split, JobConf jobConf, Reporter reporter)
     throws IOException {
-    String txJson = jobConf.get(Constants.Hive.TX_QUERY);
+    String txJson = jobConf.get(TX_QUERY);
     Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");
-    Transaction tx = new Gson().fromJson(txJson, Transaction.class);
+    Transaction tx = GSON.fromJson(txJson, Transaction.class);
 
     final RowScannable rowScannable = getDataset(jobConf.get(DATASET_NAME), tx);
 
@@ -209,7 +213,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     public void write(DataOutput out) throws IOException {
       super.write(out);
       Text.writeString(out, dataSetSplit.getClass().getName());
-      String ser = new Gson().toJson(dataSetSplit);
+      String ser = GSON.toJson(dataSetSplit);
       Text.writeString(out, ser);
     }
 
@@ -222,7 +226,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
           classLoader = getClass().getClassLoader();
         }
         Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
-        dataSetSplit = new Gson().fromJson(Text.readString(in), splitClass);
+        dataSetSplit = GSON.fromJson(Text.readString(in), splitClass);
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }

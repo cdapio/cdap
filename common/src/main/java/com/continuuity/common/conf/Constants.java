@@ -538,11 +538,6 @@ public final class Constants {
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
 
     /**
-     * Transaction ID used for the lifecycle of a query.
-     */
-    public static final String TX_QUERY = "hive.query.tx.id";
-
-    /**
      * Twill Runnable configuration.
      */
     public static final class Container {

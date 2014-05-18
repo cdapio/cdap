@@ -80,8 +80,8 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
       // TODO: get local data dir from CConf
       configuration.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
-      configuration.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionHook");
-      configuration.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionHook");
+      configuration.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionPreHook");
+      configuration.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionPostHook");
 
       hiveServerPort = PortDetector.findFreePort();
       configuration.setInt("hive.server2.thrift.port", hiveServerPort);

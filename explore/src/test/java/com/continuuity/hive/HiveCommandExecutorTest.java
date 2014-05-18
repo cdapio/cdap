@@ -50,7 +50,7 @@ import java.net.URL;
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
       "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
       "localhost" +
-      ":" + "57606" +
+      ":" + "53100" +
       "/default;auth=noSasl",
       "-n", "poorna",
       "-e", cmd};
