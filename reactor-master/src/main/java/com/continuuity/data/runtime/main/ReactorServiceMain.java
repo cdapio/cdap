@@ -50,7 +50,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -268,7 +267,7 @@ public class ReactorServiceMain extends DaemonMain {
   }
 
   private File getSavedHConf() throws IOException {
-    File hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
+    File hConfFile = saveConf(hConf, File.createTempFile("hConf", ".xml"));
     hConfFile.deleteOnExit();
     return hConfFile;
   }
@@ -282,7 +281,7 @@ public class ReactorServiceMain extends DaemonMain {
   private File getSavedExtraConf(String confName, Configuration conf) throws IOException {
     TempFolder tempFolder = new TempFolder();
     File tFolder = tempFolder.newFolder("saved_confs");
-    return saveExtraConf(conf, new File(tFolder, confName));
+    return saveConf(conf, new File(tFolder, confName));
   }
 
   /**
@@ -341,7 +340,7 @@ public class ReactorServiceMain extends DaemonMain {
     lastRunTimeMs = System.currentTimeMillis();
   }
 
-  private static File saveHConf(Configuration conf, File file) throws IOException {
+  private static File saveConf(Configuration conf, File file) throws IOException {
     Writer writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       conf.writeXml(writer);
@@ -360,15 +359,4 @@ public class ReactorServiceMain extends DaemonMain {
     }
     return file;
   }
-
-  private File saveExtraConf(Configuration conf, File file) throws IOException {
-    Writer writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
-      conf.writeXml(writer);
-    } finally {
-      writer.close();
-    }
-    return file;
-  }
-
 }
