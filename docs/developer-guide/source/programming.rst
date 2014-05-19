@@ -492,7 +492,7 @@ simply write::
 	  .add(new RandomGenerator())
 	  .add(new RoundingFlowlet())
 	.connect()
-	  .from("RandomGenerator").to(“RoundingFlowlet”)
+	  .fromStream("RandomGenerator").to("RoundingFlowlet")
 
 If you have multiple Flowlets of the same class, you can give them explicit names::
 
