@@ -48,6 +48,10 @@ public class JASPIAuthenticationHandler extends ConstraintSecurityHandler {
     constraint.setRoles(new String[] {"*"});
     constraint.setAuthenticate(true);
 
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+      constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
+    }
+
     ConstraintMapping constraintMapping = new ConstraintMapping();
     constraintMapping.setConstraint(constraint);
     constraintMapping.setPathSpec("/*");

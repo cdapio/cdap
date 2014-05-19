@@ -887,6 +887,11 @@
     </property>
 
     <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
+    </property>
+
+    <property>
       <name>security.server.ssl.keystore.path</name>
       <value>/Users/gandu/workspace/keystore</value>
     </property>

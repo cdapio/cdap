@@ -105,7 +105,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.setContextPath("*");
       context.setHandler(handlers);
 
-      SelectChannelConnector connector;
+      SelectChannelConnector connector = new SelectChannelConnector();
+      connector.setPort(port);
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
@@ -117,13 +118,15 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         sslContextFactory.setKeyStorePath(keystorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
 
-        connector = new SslSelectChannelConnector(sslContextFactory);
+        SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+        int sslPort = configuration.getInt(Constants.Security.SSL_PORT);
+        sslConnector.setPort(sslPort);
+        connector.setConfidentialPort(sslPort);
+        server.setConnectors(new Connector[]{connector, sslConnector});
       } else {
-        connector = new SelectChannelConnector();
+        server.setConnectors(new Connector[]{connector});
       }
 
-      connector.setPort(port);
-      server.setConnectors(new Connector[]{connector});
       server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
