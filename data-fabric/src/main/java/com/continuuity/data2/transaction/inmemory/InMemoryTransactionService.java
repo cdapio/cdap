@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.common.conf.Constants;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -20,15 +19,12 @@ public class InMemoryTransactionService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private Cancellable cancelDiscovery;
-  private final Provider<InMemoryTransactionManager> txManagerProvider;
   private InMemoryTransactionManager txManager;
 
   @Inject
-  public InMemoryTransactionService(DiscoveryService discoveryService,
-                                    Provider<InMemoryTransactionManager> txManagerProvider) {
+  public InMemoryTransactionService(DiscoveryService discoveryService, InMemoryTransactionManager txManager) {
     this.discoveryService = discoveryService;
-    this.txManagerProvider = txManagerProvider;
-    txManager = txManagerProvider.get();
+    this.txManager = txManager;
 
     LOG.info("Configuring TransactionService");
   }
