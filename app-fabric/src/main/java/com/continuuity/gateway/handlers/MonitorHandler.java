@@ -4,28 +4,32 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
-import static com.continuuity.data2.transaction.distributed.thrift.TTransactionServer.Client;
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -33,10 +37,10 @@ import static com.continuuity.data2.transaction.distributed.thrift.TTransactionS
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
-
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final static String STATUS_OK = "OK";
+  private final static String STATUS_NOTOK = "NOTOK";
 
   /**
    * Timeout to get response from discovered service.
@@ -70,6 +74,24 @@ public class MonitorHandler extends AbstractHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
+  @Path("/system/services/status")
+  @GET
+  public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
+    List<Map<String, String>> result = Lists.newArrayList();
+    String json;
+    for (Services service : Services.values()) {
+      String serviceName = String.valueOf(service);
+      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
+      Map<String, String> statusMap = new HashMap<String, String>();
+      statusMap.put(serviceName, status);
+      result.add(statusMap);
+    }
+
+    json = (new Gson()).toJson(result);
+    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+  }
+
   @Path("/system/services/{service-id}/status")
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
@@ -86,6 +108,11 @@ public class MonitorHandler extends AbstractHttpHandler {
 
   private boolean discoverService(String serviceName) {
     try {
+      //TODO: Return true until we make txService health check work in both SingleNode and DistributedMode
+      if (Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
+        return true;
+      }
+
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
@@ -97,16 +124,9 @@ public class MonitorHandler extends AbstractHttpHandler {
       }
 
       //Ping the discovered service to check its status.
-      //Use Thrift Client for Transaction and HTTP PingHandlers for other services
-      if (!Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
-        String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort());
-        return checkGetStatus(url).equals(HttpResponseStatus.OK);
-      } else {
-        TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.TRANSACTION, endpointStrategy);
-        Client client = new Client(protocol);
-        return client.status().equals("OK");
-      }
+      String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort());
+      return checkGetStatus(url).equals(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       return false;
     } catch (Exception e) {
