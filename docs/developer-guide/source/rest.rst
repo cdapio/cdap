@@ -290,6 +290,7 @@ Comments
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
+.. rst2pdf: PageBreak
 
 Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
