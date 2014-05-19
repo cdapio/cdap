@@ -106,20 +106,20 @@ public class MetricsServiceTestsSuite  {
       },
       new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
-                                  @Override
-                                  protected void configure() {
-                                    // It's a bit hacky to add it here. Need to refactor
-                                    // these bindings out as it overlaps with
-                                    // AppFabricServiceModule
-                                    bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-                                    bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+             @Override
+             protected void configure() {
+               // It's a bit hacky to add it here. Need to refactor
+               // these bindings out as it overlaps with
+               // AppFabricServiceModule
+               bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+               bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-                                    MockMetricsCollectionService metricsCollectionService =
-                                      new MockMetricsCollectionService();
-                                    bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-                                    bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-                                  }
-                                }
+               MockMetricsCollectionService metricsCollectionService =
+                 new MockMetricsCollectionService();
+               bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+               bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+             }
+           }
     ));
 
     metrics = injector.getInstance(MetricsQueryService.class);
