@@ -820,7 +820,37 @@
 
     <property>
         <name>security.authentication.loginmodule.className</name>
-        <value></value>
+        <value>org.eclipse.jetty.plus.jaas.spi.LdapLoginModule</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.debug</name>
+      <value>true</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.hostname</name>
+      <value>crowd.continuuity.com</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.port</name>
+      <value>389</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.userBaseDn</name>
+      <value>ou=people,dc=continuuity,dc=com</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.userRdnAttribute</name>
+      <value>cn</value>
+    </property>
+
+    <property>
+      <name>security.authentication.handler.userObjectClass</name>
+      <value>inetorgperson</value>
     </property>
 
     <property>
@@ -855,8 +885,14 @@
       <name>security.server.ssl.enabled</name>
       <value>true</value>
     </property>
+
     <property>
-      <name>security.server.ssl.port</name>
-      <value>10010</value>
+      <name>security.server.ssl.keystore.path</name>
+      <value>/Users/gandu/workspace/keystore</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.password</name>
+      <value>realtime</value>
     </property>
 </configuration>

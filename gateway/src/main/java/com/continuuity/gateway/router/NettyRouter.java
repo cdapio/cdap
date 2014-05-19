@@ -70,6 +70,7 @@ public class NettyRouter extends AbstractIdleService {
   private final boolean securityEnabled;
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
+  private final CConfiguration configuration;
   private final String realm;
 
   private ServerBootstrap serverBootstrap;
@@ -106,6 +107,7 @@ public class NettyRouter extends AbstractIdleService {
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.configuration = cConf;
   }
 
   @Override
@@ -177,6 +179,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
+                                                                                    configuration,
                                                                                     accessTokenTransformer,
                                                                                     discoveryServiceClient));
           }

@@ -1,7 +1,6 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -23,10 +22,6 @@ public abstract class JAASAuthenticationHandler extends ConstraintSecurityHandle
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[] {"*"});
     constraint.setAuthenticate(true);
-
-    if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
-      constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
-    }
 
     ConstraintMapping constraintMapping = new ConstraintMapping();
     constraintMapping.setConstraint(constraint);

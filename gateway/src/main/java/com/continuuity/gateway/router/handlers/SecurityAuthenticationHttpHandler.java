@@ -1,5 +1,6 @@
 package com.continuuity.gateway.router.handlers;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
@@ -40,17 +41,20 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
 
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
+  private final CConfiguration configuration;
   private DiscoveryServiceClient discoveryServiceClient;
   private Iterable<Discoverable> discoverables;
   private final String realm;
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
+                                           CConfiguration configuration,
                                            AccessTokenTransformer accessTokenTransformer,
                                            DiscoveryServiceClient discoveryServiceClient) {
     this.realm = realm;
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.configuration = configuration;
     discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
   }
 
@@ -126,9 +130,18 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelUpstreamHand
     boolean done = false;
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
+    String protocol;
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+      protocol = "https://";
+    } else {
+      protocol = "http://";
+    }
+    String port = configuration.get(Constants.Security.AUTH_SERVER_PORT);
+
     do {
       for (Discoverable d : discoverables)  {
-        externalAuthenticationURIs.add(new JsonPrimitive(d.getSocketAddress().getHostName()));
+        String url = protocol + d.getSocketAddress().getHostName() + ":" + port;
+        externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
       if (!done) {

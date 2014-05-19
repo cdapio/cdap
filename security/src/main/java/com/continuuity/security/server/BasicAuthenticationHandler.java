@@ -26,10 +26,6 @@ public class BasicAuthenticationHandler extends ConstraintSecurityHandler {
     constraint.setRoles(roles);
     constraint.setAuthenticate(true);
 
-    if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
-      constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
-    }
-
     ConstraintMapping constraintMapping = new ConstraintMapping();
     constraintMapping.setConstraint(constraint);
     constraintMapping.setPathSpec("/*");

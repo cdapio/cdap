@@ -2,6 +2,7 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import javax.security.auth.login.Configuration;
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private final CConfiguration configuration;
   private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
-                                                                                "userRdnAttribute", "userObjectClass" };
+                                                                     "userRdnAttribute", "userObjectClass" };
   private static final String[] optionalConfigurables = new String[] { "bindDn", "bindPassword", "userIdAttribute",
                                                                       "userPasswordAttribute", "roleBaseDn",
                                                                       "roleNameAttribute", "roleMemberAttribute",
@@ -46,7 +47,11 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         map.put("forceBindingLogin", "true");
 
         for (String configurable : mandatoryConfigurables) {
-          map.put(configurable, configuration.get(Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable)));
+          String value = configuration.get(Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable));
+          if (value == null) {
+            throw Throwables.propagate(new RuntimeException("Missing SSL configuration property."));
+          }
+          map.put(configurable, value);
         }
 
         for (String configurable: optionalConfigurables) {

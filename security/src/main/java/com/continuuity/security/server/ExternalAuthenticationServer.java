@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.security.KeyStore;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -116,9 +115,15 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        sslContextFactory.setKeyStore(new KeyStore());
-        sslContextFactory.setKeyStorePath("/Users/gandu/workspace/keystore");
-        sslContextFactory.setKeyStorePassword("realtime");
+        String keystorePath = configuration.get("security.server.ssl.keystore.path");
+        String keyStorePassword = configuration.get("security.server.ssl.keystore.password");
+        if (keystorePath == null || keyStorePassword == null) {
+          throw Throwables.propagate(new RuntimeException("Keystore not configured correctly"));
+        }
+        sslContextFactory.setKeyStorePath(keystorePath);
+        sslContextFactory.setKeyStorePassword(keyStorePassword);
+//        sslContextFactory.setTrustAll(true);
+//        sslContextFactory.setValidateCerts(false);
 
         connector = new SslSelectChannelConnector(sslContextFactory);
       } else {
