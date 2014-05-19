@@ -9,7 +9,6 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
@@ -23,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -78,14 +76,12 @@ public class MonitorHandler extends AbstractHttpHandler {
   @Path("/system/services/status")
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
-    List<Map<String, String>> result = Lists.newArrayList();
+    Map<String, String> result = new HashMap<String, String>();
     String json;
     for (Services service : Services.values()) {
       String serviceName = String.valueOf(service);
       String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
-      Map<String, String> statusMap = new HashMap<String, String>();
-      statusMap.put(serviceName, status);
-      result.add(statusMap);
+      result.put(serviceName, status);
     }
 
     json = (new Gson()).toJson(result);
