@@ -42,6 +42,7 @@ public class InMemoryTransactionService extends AbstractIdleService {
 
       @Override
       public InetSocketAddress getSocketAddress() {
+        //Dummy Socket Address since txManager is accessed directly in SingleNode
         return new InetSocketAddress(1);
       }
     });
