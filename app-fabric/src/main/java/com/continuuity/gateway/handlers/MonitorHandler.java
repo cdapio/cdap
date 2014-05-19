@@ -37,8 +37,8 @@ public class MonitorHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final static String STATUS_OK = "OK";
-  private final static String STATUS_NOTOK = "NOTOK";
+  private static final String STATUS_OK = "OK";
+  private static final String STATUS_NOTOK = "NOTOK";
 
   /**
    * Timeout to get response from discovered service.
