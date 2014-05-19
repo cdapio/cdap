@@ -50,7 +50,7 @@ public class MonitorHandler extends AbstractHttpHandler {
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
-  private enum Services {
+  private enum Service {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
     STREAMS (Constants.Service.STREAM_HANDLER),
@@ -58,13 +58,13 @@ public class MonitorHandler extends AbstractHttpHandler {
 
     private final String name;
 
-    private Services(String name) {
+    private Service(String name) {
       this.name = name;
     }
 
     public String getName() { return name; }
 
-    public static Services valueofName(String name) { return valueOf(name.toUpperCase()); }
+    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
   @Inject
@@ -78,7 +78,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Services service : Services.values()) {
+    for (Service service : Service.values()) {
       String serviceName = String.valueOf(service);
       String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
       result.put(serviceName, status);
@@ -106,11 +106,11 @@ public class MonitorHandler extends AbstractHttpHandler {
   private boolean discoverService(String serviceName) {
     try {
       //TODO: Return true until we make txService health check work in both SingleNode and DistributedMode
-      if (Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
+      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
         return true;
       }
 
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
