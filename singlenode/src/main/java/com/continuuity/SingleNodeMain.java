@@ -15,7 +15,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
@@ -67,7 +67,7 @@ public class SingleNodeMain {
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
-  private final InMemoryTransactionManager transactionManager;
+  private final InMemoryTransactionService txService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private InMemoryZKServer zookeeper;
@@ -77,7 +77,7 @@ public class SingleNodeMain {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -123,7 +123,7 @@ public class SingleNodeMain {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
-    transactionManager.startAndWait();
+    txService.startAndWait();
     metricsCollectionService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
@@ -159,7 +159,8 @@ public class SingleNodeMain {
     gatewayV2.stopAndWait();
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
-    transactionManager.stopAndWait();
+    //transactionManager.stopAndWait();
+    txService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }

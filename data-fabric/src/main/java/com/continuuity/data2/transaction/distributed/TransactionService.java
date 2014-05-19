@@ -71,7 +71,6 @@ public final class TransactionService extends AbstractService {
     ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
                             Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_IO_THREADS);
 
-
     maxReadBufferBytes = conf.getInt(com.continuuity.common.conf.Constants.Thrift.MAX_READ_BUFFER,
                                      com.continuuity.common.conf.Constants.Thrift.DEFAULT_MAX_READ_BUFFER);
 
