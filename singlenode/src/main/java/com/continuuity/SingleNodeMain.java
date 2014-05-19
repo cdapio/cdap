@@ -159,7 +159,6 @@ public class SingleNodeMain {
     gatewayV2.stopAndWait();
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
-    //transactionManager.stopAndWait();
     txService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
