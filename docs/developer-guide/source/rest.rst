@@ -1225,7 +1225,15 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-:doc:`Continuuity Reactor Operations Guide </operations>`.
+Continuuity Reactor Operations Guide.
+
+
+.. rst2pdf: CutStart
+
+(:doc:`Operations Guide </operations>`)
+
+.. rst2pdf: CutStop
+
 
 Metrics Requests
 ----------------

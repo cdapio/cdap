@@ -1,9 +1,9 @@
 .. :Author: Continuuity, Inc.
    :Description: Operating a Continuuity Reactor and its Dashboard
 
-===================================
-Operating a Continuuity Reactor
-===================================
+====================================
+Continuuity Reactor Operations Guide
+====================================
 
 Running Big Data Applications
 

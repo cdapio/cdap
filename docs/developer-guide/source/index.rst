@@ -5,27 +5,27 @@ Continuuity Reactor Documentation
 .. toctree::
    :maxdepth: 2
    
-   /intro
-   /quickstart
-   /examples/index
-   /programming
+   Introduction </intro>
+   Quick Start </quickstart>
+   Examples </examples/index>
+   Programming Guide </programming>
    Advanced Features </advanced>
    Testing and Debugging </debugging>
-   Operations </operations>
-   REST API </rest>
+   Operations Guide </operations>
+   HTTP REST API </rest>
    /javadocs/index
-   /faq
+   FAQ </faq>
 
 Examples
 ==============
 
-:doc:`Index <examples/index>`
+:doc:`Overview <examples/index>`
 
-:doc:`PageViewAnalytics <examples/PageViewAnalytics/index>`
+:doc:`PageViewAnalytics Example <examples/PageViewAnalytics/index>`
 
-:doc:`ResponseCodeAnalytics <examples/ResponseCodeAnalytics/index>`
+:doc:`ResponseCodeAnalytics Example <examples/ResponseCodeAnalytics/index>`
 
-:doc:`TrafficAnalytics <examples/TrafficAnalytics/index>`
+:doc:`TrafficAnalytics Example <examples/TrafficAnalytics/index>`
 
 .. toctree::
    :hidden:
