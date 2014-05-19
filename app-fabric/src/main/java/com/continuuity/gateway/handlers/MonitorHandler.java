@@ -10,9 +10,7 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -25,13 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -42,7 +40,8 @@ public class MonitorHandler extends AbstractHttpHandler {
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String STATUS_OK = "OK";
+  private static final String STATUS_NOTOK = "NOTOK";
 
   /**
    * Timeout to get response from discovered service.
@@ -54,7 +53,7 @@ public class MonitorHandler extends AbstractHttpHandler {
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 1;
 
-  private enum Services {
+  private enum Service {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
     STREAMS (Constants.Service.STREAM_HANDLER),
@@ -62,13 +61,13 @@ public class MonitorHandler extends AbstractHttpHandler {
 
     private final String name;
 
-    private Services(String name) {
+    private Service(String name) {
       this.name = name;
     }
 
     public String getName() { return name; }
 
-    public static Services valueofName(String name) { return valueOf(name.toUpperCase()); }
+    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
   @Inject
@@ -77,18 +76,16 @@ public class MonitorHandler extends AbstractHttpHandler {
     this.txClient = txClient;
   }
 
+  //Return the status of reactor services in JSON format
   @Path("/system/services/status")
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
-    List<Map<String, String>> result = Lists.newArrayList();
+    Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Services service : Services.values()) {
+    for (Service service : Service.values()) {
       String serviceName = String.valueOf(service);
-      LOG.warn("Checking status of {}", serviceName);
-      String status = discoverService(serviceName) ? "OK" : "NOTOK";
-      Map<String, String> statusMap = new HashMap<String, String>();
-      statusMap.put(serviceName, status);
-      result.add(statusMap);
+      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
+      result.put(serviceName, status);
     }
 
     json = (new Gson()).toJson(result);
@@ -112,7 +109,7 @@ public class MonitorHandler extends AbstractHttpHandler {
 
   private boolean discoverService(String serviceName) {
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -123,7 +120,7 @@ public class MonitorHandler extends AbstractHttpHandler {
       }
 
       //For Transaction Service use the TransactionSystemClient to check the txManager's status
-      if (Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
+      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
         return txClient.status().equals("OK");
       }
 
