@@ -230,12 +230,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final ManagerFactory managerFactory;
   private final Scheduler scheduler;
 
-
-
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
-
 
   private enum AppFabricServiceStatus {
 

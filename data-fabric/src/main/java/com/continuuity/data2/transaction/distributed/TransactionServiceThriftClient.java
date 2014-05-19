@@ -4,7 +4,6 @@ import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNot
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.internal.io.ByteBufferInputStream;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -12,6 +11,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
+import org.slf4j.Logger;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ import java.util.Collection;
  * This class also instruments the thrift calls with metrics.
  */
 public class TransactionServiceThriftClient {
-
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(TransactionServiceThriftClient.class);
   private static final Function<byte[], ByteBuffer> BYTES_WRAPPER = new Function<byte[], ByteBuffer>() {
     @Override
     public ByteBuffer apply(byte[] input) {
@@ -105,6 +105,7 @@ public class TransactionServiceThriftClient {
   public String status() throws TException { return client.status(); }
 
   public void resetState() throws TException {
+    LOG.warn("Got tx check status request at client side");
     client.resetState();
   }
 }

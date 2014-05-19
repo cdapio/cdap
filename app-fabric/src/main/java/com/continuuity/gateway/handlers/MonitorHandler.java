@@ -7,17 +7,26 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
@@ -33,6 +42,8 @@ public class MonitorHandler extends AbstractHttpHandler {
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
+  private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
   /**
    * Timeout to get response from discovered service.
    */
@@ -41,7 +52,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
+  private static final long DISCOVERY_TIMEOUT_SECONDS = 1;
 
   private enum Services {
     METRICS (Constants.Service.METRICS),
@@ -66,10 +77,23 @@ public class MonitorHandler extends AbstractHttpHandler {
     this.txClient = txClient;
   }
 
-  @Path("/monitor/bootstatus")
+  @Path("/system/services/status")
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
-    
+    List<Map<String, String>> result = Lists.newArrayList();
+    String json;
+    for (Services service : Services.values()) {
+      String serviceName = String.valueOf(service);
+      LOG.warn("Checking status of {}", serviceName);
+      String status = discoverService(serviceName) ? "OK" : "NOTOK";
+      Map<String, String> statusMap = new HashMap<String, String>();
+      statusMap.put(serviceName, status);
+      result.add(statusMap);
+    }
+
+    json = (new Gson()).toJson(result);
+    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
 
   @Path("/system/services/{service-id}/status")
@@ -88,10 +112,6 @@ public class MonitorHandler extends AbstractHttpHandler {
 
   private boolean discoverService(String serviceName) {
     try {
-      if (Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
-        return txClient.status().equals("OK");
-      }
-
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Services.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
@@ -100,6 +120,11 @@ public class MonitorHandler extends AbstractHttpHandler {
       //Transaction Service will return null discoverable in SingleNode mode
       if (discoverable == null) {
         return false;
+      }
+
+      //For Transaction Service use the TransactionSystemClient to check the txManager's status
+      if (Services.valueofName(serviceName).equals(Services.TRANSACTION)) {
+        return txClient.status().equals("OK");
       }
 
       //Ping the discovered service to check its status.
