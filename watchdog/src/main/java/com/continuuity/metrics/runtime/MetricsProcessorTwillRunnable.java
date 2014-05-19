@@ -1,7 +1,6 @@
 package com.continuuity.metrics.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -57,9 +56,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   protected void doInit(TwillContext context) {
     LOG.info("Initializing runnable {}", name);
     try {
-      // Set the hostname of the machine so that cConf can be used to start internal services
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-      getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       zkClientService = injector.getInstance(ZKClientService.class);

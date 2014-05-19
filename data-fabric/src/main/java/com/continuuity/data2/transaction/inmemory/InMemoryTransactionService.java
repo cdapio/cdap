@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.common.conf.Constants;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -12,19 +13,22 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- *
+ * Starts TxManager and also registers in discoveryService
  */
 public class InMemoryTransactionService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionService.class);
 
   private final DiscoveryService discoveryService;
   private Cancellable cancelDiscovery;
+  private final Provider<InMemoryTransactionManager> txManagerProvider;
   private InMemoryTransactionManager txManager;
 
   @Inject
-  public InMemoryTransactionService(DiscoveryService discoveryService, InMemoryTransactionManager txManager) {
+  public InMemoryTransactionService(DiscoveryService discoveryService,
+                                    Provider<InMemoryTransactionManager> txManagerProvider) {
     this.discoveryService = discoveryService;
-    this.txManager = txManager;
+    this.txManagerProvider = txManagerProvider;
+    txManager = txManagerProvider.get();
 
     LOG.info("Configuring TransactionService");
   }
