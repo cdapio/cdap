@@ -88,7 +88,10 @@ import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
+import org.apache.twill.api.Command;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -217,6 +220,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final StreamAdmin streamAdmin;
 
+  private final TwillRunnerService twillRunnerService;
+
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -279,7 +284,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator) {
+                              DataSetInstantiatorFromMetaData datasetInstantiator,
+                              TwillRunnerService twillRunnerService) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -298,6 +304,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.txClient = txClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
+    this.twillRunnerService = twillRunnerService;
   }
 
   /**
@@ -799,6 +806,51 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
+    }
+  }
+
+  /**
+   * Returns the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @GET
+  public void getInstance(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("service-name") String serviceName) {
+    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
+    int instances = 0;
+    if (twillControllerList != null) {
+      for (TwillController twillController : twillControllerList) {
+        LOG.info("RunID {} ", twillController.getRunId());
+        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
+      }
+      responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
+    } else {
+      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+    }
+  }
+
+  /**
+   * Sets the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @PUT
+  public void setInstance(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("service-name") String serviceName) {
+    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
+    try {
+      int instance = getInstances(request);
+      if (twillControllerList != null) {
+        for (TwillController twillController : twillControllerList) {
+          twillController.sendCommand(serviceName, Command.Builder.of("suspend").build());
+          twillController.changeInstances(serviceName, instance).get();
+          twillController.sendCommand(serviceName, Command.Builder.of("resume").build());
+        }
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+      }
+    } catch (Exception e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

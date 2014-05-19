@@ -19,6 +19,7 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String REACTOR_SERVICES = "reactor.services";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }

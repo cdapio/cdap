@@ -17,7 +17,7 @@ import java.io.File;
  * TwillApplication wrapper for Reactor YARN Services.
  */
 public class ReactorTwillApplication implements TwillApplication {
-  private static final String NAME = "reactor.services";
+  private static final String NAME = Constants.Service.REACTOR_SERVICES;
 
   private final CConfiguration cConf;
   private final File cConfFile;

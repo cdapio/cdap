@@ -5,6 +5,7 @@ package com.continuuity.app.guice;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
+import com.continuuity.app.services.DummyTwillRunnerService;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -35,6 +36,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import org.apache.twill.api.TwillRunnerService;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -63,6 +65,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+                               bind(TwillRunnerService.class).to(DummyTwillRunnerService.class);
                              }
                            });
   }
@@ -76,6 +79,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+                               bind(TwillRunnerService.class).to(DummyTwillRunnerService.class);
                              }
                            });
   }
