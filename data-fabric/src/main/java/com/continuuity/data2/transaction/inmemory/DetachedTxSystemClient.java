@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
@@ -82,7 +83,7 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
 
   @Override
   public String status() {
-    return "OK";
+    return Constants.Monitor.STATUS_OK;
   }
 
   @Override
