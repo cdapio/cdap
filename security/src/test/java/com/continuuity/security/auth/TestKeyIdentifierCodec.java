@@ -7,14 +7,15 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.FileBasedSecurityModule;
 import com.continuuity.security.io.Codec;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Random;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 

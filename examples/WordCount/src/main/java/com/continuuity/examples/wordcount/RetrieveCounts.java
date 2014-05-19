@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.annotation.Handle;
@@ -17,7 +32,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Retrieve count procedure.
+ * Retrieve count Procedure.
  */
 public class RetrieveCounts extends AbstractProcedure {
 
@@ -32,6 +47,7 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getStats")
   public void getStats(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    
     // First method is getStats(); returns all the global statistics, takes no arguments
     long totalWords = 0L, uniqueWords = 0L;
     double averageLength = 0.0;
@@ -39,18 +55,21 @@ public class RetrieveCounts extends AbstractProcedure {
     // Read the total_length and total_words to calculate average length
     Row result = this.wordStatsTable.get(new Get("totals", "total_length", "total_words"));
     if (!result.isEmpty()) {
+      
       // Extract the total sum of lengths
       long totalLength = result.getLong("total_length", 0);
+      
       // Extract the total count of words
       totalWords = result.getLong("total_words", 0);
+      
       // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
         averageLength = (double) totalLength / (double) totalWords;
+        
         // Read the unique word count
         uniqueWords = this.uniqueCountTable.readUniqueCount();
       }
     }
-
     // Return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
     results.put("totalWords", totalWords);
@@ -61,6 +80,7 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getCount")
   public void getCount(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    
     // Second method is getCount() with argument of word='', optional limit=#
     // Returns count of words and top words associated with that word,
     // up to the specified limit (default limit = 10 if not specified)
@@ -90,6 +110,7 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getAssoc")
   public void getAssoc(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    
     // Third method is getAssoc() with argument of word1, word2
     // returns number of times the two words co-occurred
     String word1 = request.getArgument("word1");
@@ -98,7 +119,6 @@ public class RetrieveCounts extends AbstractProcedure {
       responder.error(Code.CLIENT_ERROR, "Method 'getCount' requires arguments 'word1' and 'word2'");
       return;
     }
-
     // Read the top associated words
     long count = this.associationTable.getAssoc(word1, word2);
 

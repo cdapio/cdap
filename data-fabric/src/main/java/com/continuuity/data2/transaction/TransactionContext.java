@@ -60,6 +60,7 @@ public class TransactionContext {
   }
 
 
+  // CHECKSTYLE IGNORE "@throws" FOR 11 LINES
   /**
    * Aborts the given transaction, and rolls back all data set changes. If rollback fails,
    * the transaction is invalidated. If an exception is caught during rollback, the exception
@@ -68,7 +69,7 @@ public class TransactionContext {
    * case, whether the rollback is successful or not. In other words, this method always throws the
    * first exception that it encounters.
    * @param cause the original exception that caused the abort
-   * @throws com.continuuity.data2.transaction.TransactionFailureException for any exception that is encountered.
+   * @throws TransactionFailureException for any exception that is encountered.
    */
   public void abort(TransactionFailureException cause) throws TransactionFailureException {
     if (currentTx == null) {

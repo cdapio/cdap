@@ -1,37 +1,35 @@
-/*
- * Copyright (c) 2013, Continuuity Inc
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
  *
- * All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- * Redistribution and use in source and binary forms,
- * with or without modification, are not permitted
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-
 /**
  *
- * An app that uses scheduled MapReduce workflows to read from one ObjectStore dataset and write to another.
+ * An app that uses scheduled MapReduce Workflows to read from one ObjectStore DataSet and write to another.
  * <ul>
  *   <li>
  *     Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
  *   </li><li>
  *     The PurchaseFlow reads the purchaseStream and converts every input String into a Purchase object and stores
- *     the object in the purchases dataset.
+ *     the object in the purchases DataSet.
  *   </li><li>
  *     When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce job
- *     reads the purchases dataset, creates a purchase history,
- *     and stores the purchase history in the history dataset every morning at 4:00 A.M.
+ *     reads the purchases DataSet, creates a purchase history,
+ *     and stores the purchase history in the history DataSet every morning at 4:00 A.M.
  *     Or you can manually (in the Process screen in the Reactor Dashboard) or programmatically execute 
- *     the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history dataset.
+ *     the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history DataSet.
  *   </li><li>
- *     Execute the PurchaseQuery procedure to query the history dataset to discover the purchase history of each user.
+ *     Execute the PurchaseQuery procedure to query the history DataSet to discover the purchase history of each user.
  *     <p>
  *       Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M., you'll have to wait 
  *       until the next day (or manually or programmatically execute the PurcaseHistoryBuilder)

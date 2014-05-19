@@ -2,10 +2,10 @@ package com.continuuity.data;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * interface for getting dataset clients and managers.

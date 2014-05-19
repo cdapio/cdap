@@ -3,10 +3,10 @@ package com.continuuity.gateway.handlers;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.HighPassFilterApp;
 import com.google.gson.JsonObject;
-import junit.framework.Assert;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**

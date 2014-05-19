@@ -3,9 +3,9 @@ package com.continuuity.data2.dataset.lib.table;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationResult;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A table interface dedicated to our metrics system. It is non-transactional, hence does not implement read or write

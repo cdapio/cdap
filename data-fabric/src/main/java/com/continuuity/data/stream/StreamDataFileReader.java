@@ -114,13 +114,23 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   }
 
   /**
-   * Opens this reader to prepare for consumption.
+   * Opens this reader to prepare for consumption. Calling this method is optional as the
+   * {@link #read(java.util.Collection, int, long, java.util.concurrent.TimeUnit, com.continuuity.data.file.ReadFilter)}
+   * method would do the initialization if this method hasn't been called.
    *
-   * @throws IOException If there is error opening the file.
+   * @throws IOException If there is error initializing.
    */
-  public void open() throws IOException {
-    if (eventInput == null) {
-      doOpen();
+  @Override
+  public void initialize() throws IOException {
+    try {
+      if (eventInput == null) {
+        doOpen();
+      }
+    } catch (IOException e) {
+      if (!(e instanceof EOFException || e instanceof FileNotFoundException)) {
+        throw e;
+      }
+      // It's ok if the file doesn't exists or EOF. As that's the tailing behavior.
     }
   }
 
@@ -410,16 +420,28 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         break;
       }
 
-      if (length < 0) {
+      boolean isReadBlockLength = length < 0;
+      if (isReadBlockLength) {
         length = readLength();
       }
 
       if (length > 0) {
         long startPos = eventInput.getPos();
-        if (filter.acceptOffset(startPos)) {
-          event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
-        } else {
-          skipStreamData();
+
+        try {
+          if (filter.acceptOffset(startPos)) {
+            event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
+          } else {
+            skipStreamData();
+          }
+        } catch (IOException e) {
+          // If failed to read first event in the data block, reset the timestamp and length to -1
+          // This is because position hasn't been updated yet and retry will start from the timestamp position.
+          if (isReadBlockLength) {
+            timestamp = -1L;
+            length = -1;
+          }
+          throw e;
         }
         long endPos = eventInput.getPos();
         done = true;

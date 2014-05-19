@@ -4,12 +4,13 @@
 package com.continuuity.data.security;
 
 import com.continuuity.common.conf.Constants;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
 import org.apache.twill.yarn.YarnSecureStore;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.Credentials;
 
 import java.util.concurrent.TimeUnit;
 

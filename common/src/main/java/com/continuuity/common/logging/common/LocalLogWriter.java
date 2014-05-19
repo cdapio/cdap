@@ -10,7 +10,7 @@ import com.continuuity.common.logging.LogEvent;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Implementation of LogWriter that writes to log collector directly
+ * Implementation of LogWriter that writes to log collector directly.
  */
 public class LocalLogWriter implements LogWriter {
   private final LogCollector collector;

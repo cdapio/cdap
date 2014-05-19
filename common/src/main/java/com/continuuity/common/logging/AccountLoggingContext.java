@@ -11,7 +11,7 @@ public abstract class AccountLoggingContext extends AbstractLoggingContext {
   public static final String TAG_ACCOUNT_ID = ".accountId";
 
   /**
-   * Constructs AccountLoggingContext
+   * Constructs AccountLoggingContext.
    * @param accountId account id
    */
   public AccountLoggingContext(final String accountId) {

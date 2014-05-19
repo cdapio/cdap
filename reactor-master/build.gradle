@@ -10,6 +10,7 @@ smartyFacts {
 }
 
 dependencies {
+    compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
@@ -18,6 +19,8 @@ dependencies {
     compile libraries.logback_core
     compile libraries.logback_classic
     compile libraries.google_guice
+
+    testCompile libraries.junit
 }
 
 javadoc {

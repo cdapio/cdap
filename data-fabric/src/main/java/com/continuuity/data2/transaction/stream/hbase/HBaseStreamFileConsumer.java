@@ -105,6 +105,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     Scan scan = new Scan(startRow, stopRow);
     scan.setMaxVersions(1);
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+    scan.setCaching(MAX_SCAN_ROWS);
     // TODO: Add filter for getting committed processed rows only. Need to refactor HBaseQueue2Consumer to extract that.
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, keyDistributor, scanExecutor);
     return new StateScanner() {

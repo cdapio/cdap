@@ -1,7 +1,7 @@
 package com.continuuity.api.data.dataset.table;
 
-import javax.annotation.Nullable;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents one row in a table with a subset of columns.

@@ -4,10 +4,10 @@
 
 package com.continuuity.common.lang.jar;
 
-import org.apache.twill.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

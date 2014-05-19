@@ -10,6 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -45,6 +46,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionSystemClient txClient;
   private static InMemoryTransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
+  private static StreamFileWriterFactory fileWriterFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -74,6 +76,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
     txManager.startAndWait();
   }
@@ -105,7 +108,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   @Override
-  protected String getStreamFilePrefix() {
-    return cConf.get(Constants.Stream.FILE_PREFIX) + ".0";
+  protected StreamFileWriterFactory getFileWriterFactory() {
+    return fileWriterFactory;
   }
 }

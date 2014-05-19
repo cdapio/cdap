@@ -1,10 +1,11 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
+
 import com.google.common.base.Objects;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
+import javax.annotation.Nullable;
 
 /**
  * Describes a range of (row) keys.

@@ -9,8 +9,9 @@ import com.continuuity.WebCrawlApp;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.AppFabricTestHelper;
+import com.continuuity.test.internal.DefaultId;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

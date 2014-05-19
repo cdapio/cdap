@@ -17,8 +17,9 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
-import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TxConstants;
+
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -27,10 +28,10 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * Base class for runtime implementations of Table.

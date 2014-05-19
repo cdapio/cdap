@@ -2,6 +2,7 @@ package com.continuuity.security.zookeeper;
 
 import com.continuuity.common.zookeeper.ZKExtOperations;
 import com.continuuity.security.io.Codec;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.AbstractLoadingCache;
@@ -22,7 +23,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,7 +176,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   /**
    * Removes a resource from the shared cache.
    * @param key the name of the resource to remove
-   * @return the previously set resource
    */
   public void remove(Object key) {
     if (key == null) {

@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples.logger;
 
 import com.continuuity.api.Application;
@@ -45,7 +60,7 @@ public class ResponseCodeAnalyticsApp implements Application {
       // Ingest data into the app via Streams
       .withStreams()
         .add(new Stream("logEventStream"))
-      // Store processed data in Datasets
+      // Store processed data in DataSets
       .withDataSets()
         .add(new Table("statusCodeTable"))
       // Process log events in real-time using Flows
@@ -72,15 +87,15 @@ public class ResponseCodeAnalyticsApp implements Application {
       return FlowSpecification.Builder.with()
         .setName("LogAnalyticsFlow")
         .setDescription("Analyze Apache access log events")
-        // processing logic is written in Flowlets
+        // Processing logic is written in Flowlets
         .withFlowlets()
           .add("parser", new LogEventParseFlowlet())
           .add("counter", new LogCountFlowlet())
-        // wire the Flowlets into a DAG
+        // Wire the Flowlets into a DAG
         .connect()
-           // data that is sent to the Stream is sent to the parser Flowlet
+           // Data that is sent to the Stream is sent to the parser Flowlet
           .fromStream("logEventStream").to("parser")
-           // after parsing, the data is sent to the counter Flowlet
+           // After parsing, the data is sent to the counter Flowlet
           .from("parser").to("counter")
         .build();
     }

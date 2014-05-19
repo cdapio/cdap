@@ -10,7 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.internal.migrate.MetricsTableMigrator_2_0_to_2_1;
+import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
 import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
@@ -54,8 +54,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   }
 
   @Override
-  public void initialize(TwillContext context) {
-    super.initialize(context);
+  protected void doInit(TwillContext context) {
     LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
@@ -100,7 +99,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
         .in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
-      bind(TableMigrator.class).to(MetricsTableMigrator_2_0_to_2_1.class);
+      bind(TableMigrator.class).to(MetricsTableMigrator20to21.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
 

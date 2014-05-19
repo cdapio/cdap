@@ -1,7 +1,8 @@
 package com.continuuity.logging.write;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.primitives.Longs;
 import org.apache.avro.generic.GenericRecord;
 
