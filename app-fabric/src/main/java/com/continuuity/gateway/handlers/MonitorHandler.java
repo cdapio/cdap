@@ -74,6 +74,7 @@ public class MonitorHandler extends AbstractHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
+  //Return the status of reactor services in JSON format
   @Path("/system/services/status")
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
