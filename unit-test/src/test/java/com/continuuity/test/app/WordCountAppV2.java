@@ -58,12 +58,12 @@ public class WordCountAppV2 extends AbstractApplication {
     configurer.setName("WordCountApp");
     configurer.add(new Stream("text"));
     configurer.addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
-    configurer.add("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
-    configurer.add("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);
-    configurer.add(new WordCountFlow());
-    configurer.add(new WordFrequency());
-    configurer.add(new CountTotal());
-    configurer.add(new CountFromStream());
+    configurer.addDataSet("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
+    configurer.addDataSet("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);
+    configurer.addFlow(new WordCountFlow());
+    configurer.addProcedure(new WordFrequency());
+    configurer.addMapReduce(new CountTotal());
+    configurer.addMapReduce(new CountFromStream());
   }
 
   /**

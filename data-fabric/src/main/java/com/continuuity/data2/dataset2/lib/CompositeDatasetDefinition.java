@@ -20,16 +20,16 @@ import java.util.Map;
 public abstract class CompositeDatasetDefinition<D extends Dataset>
   extends AbstractDatasetDefinition<D, DatasetAdmin> {
 
-  private final Map<String, ? extends DatasetDefinition> underlying;
+  private final Map<String, ? extends DatasetDefinition> delegates;
 
   /**
    * Constructor that takes an info about underlying datasets
    * @param name this dataset type name
-   * @param underlying map of [dataset instance name] -> [dataset definition] to use for this instance name
+   * @param delegates map of [dataset instance name] -> [dataset definition] to use for this instance name
    */
-  protected CompositeDatasetDefinition(String name, Map<String, ? extends DatasetDefinition> underlying) {
+  protected CompositeDatasetDefinition(String name, Map<String, ? extends DatasetDefinition> delegates) {
     super(name);
-    this.underlying = underlying;
+    this.delegates = delegates;
   }
 
   /**
@@ -44,13 +44,13 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   protected final <T extends Dataset> T getDataset(String name, Class<T> type, DatasetInstanceSpec spec)
     throws IOException {
 
-    return (T) underlying.get(name).getDataset(spec);
+    return (T) delegates.get(name).getDataset(spec);
   }
 
   @Override
   public final DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
     List<DatasetInstanceSpec> specs = Lists.newArrayList();
-    for (Map.Entry<String, ? extends DatasetDefinition> impl : this.underlying.entrySet()) {
+    for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
       specs.add(impl.getValue().configure(impl.getKey(), properties.getProperties(impl.getKey())));
     }
 
@@ -63,7 +63,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   @Override
   public final DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
     List<DatasetAdmin> admins = Lists.newArrayList();
-    for (Map.Entry<String, ? extends DatasetDefinition> impl : this.underlying.entrySet()) {
+    for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
       admins.add(impl.getValue().getAdmin(spec));
     }
 

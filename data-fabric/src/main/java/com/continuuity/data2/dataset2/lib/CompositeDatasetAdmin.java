@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset2.lib;
 
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -18,7 +19,7 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
    * Constructor that takes list of dataset admins
    * @param admins list of dataset admins
    */
-  public CompositeDatasetAdmin(Collection<DatasetAdmin> admins) {
+  public CompositeDatasetAdmin(Collection<? extends DatasetAdmin> admins) {
     this.delegates = ImmutableList.copyOf(admins);
   }
 
@@ -62,8 +63,7 @@ public class CompositeDatasetAdmin implements DatasetAdmin {
   @Override
   public void close() throws IOException {
     for (DatasetAdmin admin : delegates) {
-      // todo: try to do best when closing, don't stop after exception
-      admin.close();
+      Closeables.closeQuietly(admin);
     }
   }
 }

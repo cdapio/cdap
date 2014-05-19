@@ -143,8 +143,7 @@ public final class ApplicationSpecificationAdapter {
       Class<?> rawType = type.getRawType();
       // note: we want ordered maps to remain ordered
       if (!Map.class.isAssignableFrom(rawType) ||
-        SortedMap.class.isAssignableFrom(rawType) ||
-        NavigableMap.class.isAssignableFrom(rawType)) {
+        SortedMap.class.isAssignableFrom(rawType)) {
         return null;
       }
       Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();

@@ -4,6 +4,8 @@ import com.continuuity.api.annotation.Beta;
 
 /**
  * Base class for Reactor Application.
+ *
+ * TODO: in future, it will be renamed to Application and be the only available API for application configuration
  */
 @Beta
 public abstract class AbstractApplication {

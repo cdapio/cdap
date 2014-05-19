@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,7 +44,7 @@ public class DatasetManagerService extends AbstractIdleService {
   private final DatasetTypeManager typeManager;
 
   private final DatasetManager mdsDatasetManager;
-  private final NavigableMap<String, Class<? extends DatasetModule>> defaultModules;
+  private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
 
   @Inject
   public DatasetManagerService(CConfiguration cConf,
@@ -52,7 +52,7 @@ public class DatasetManagerService extends AbstractIdleService {
                                DiscoveryService discoveryService,
                                @Named("datasetMDS") DatasetManager mdsDatasetManager,
                                @Named("defaultDatasetModules")
-                               NavigableMap<String, Class<? extends DatasetModule>> defaultModules,
+                               SortedMap<String, Class<? extends DatasetModule>> defaultModules,
                                TransactionSystemClient txSystemClient
   ) throws Exception {
 

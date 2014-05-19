@@ -41,7 +41,7 @@ public interface ApplicationConfigurer {
    * @param dataset The {@link DataSet} to be included in the Application.
    */
   @Deprecated
-  void add(DataSet dataset);
+  void addDataSet(DataSet dataset);
 
   /**
    * Adds a {@link DatasetModule} to be deployed automatically (if absent in a system) during application deploy.
@@ -52,24 +52,25 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components.
+   * See {@link com.continuuity.internal.data.dataset.DatasetDefinition} for more details.
    * @param datasetInstanceName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
-  void add(String datasetInstanceName, String typeName, DatasetInstanceProperties properties);
+  void addDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties);
 
   /**
    * Adds a {@link Flow} to the Application.
    * @param flow The {@link Flow} to be included in the Application.
    */
-  void add(Flow flow);
+  void addFlow(Flow flow);
 
   /**
    * Adds a {@link com.continuuity.api.procedure.Procedure} to the application with one instance.
    *
    * @param procedure The {@link com.continuuity.api.procedure.Procedure} to include in the application.
    */
-  void add(Procedure procedure);
+  void addProcedure(Procedure procedure);
 
   /**
    * Adds a {@link Procedure} to the application with the number of instances.
@@ -77,18 +78,18 @@ public interface ApplicationConfigurer {
    * @param procedure The {@link Procedure} to include in the application.
    * @param instances number of instances.
    */
-  void add(Procedure procedure, int instances);
+  void addProcedure(Procedure procedure, int instances);
 
   /**
    * Adds MapReduce job to the application. Use it when you need to re-use existing MapReduce jobs that rely on
    * Hadoop MapReduce APIs.
    * @param mapReduce The MapReduce job to add
    */
-  void add(MapReduce mapReduce);
+  void addMapReduce(MapReduce mapReduce);
 
   /**
    * Adds a {@link Workflow} to the Application.
    * @param workflow The {@link Workflow} to be included in the Application.
    */
-  void add(Workflow workflow);
+  void addWorkflow(Workflow workflow);
 }

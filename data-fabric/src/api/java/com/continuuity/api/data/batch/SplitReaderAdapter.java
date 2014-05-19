@@ -3,44 +3,55 @@ package com.continuuity.api.data.batch;
 
 /**
  * Handy adaptor for {@link SplitReader} to convert types.
- * @param <KEY1>
- * @param <KEY>
- * @param <VALUE1>
- * @param <VALUE>
+ * @param <FROM_KEY>
+ * @param <TO_KEY>
+ * @param <FROM_VALUE>
+ * @param <TO_VALUE>
  */
-public abstract class SplitReaderAdapter<KEY1, KEY, VALUE1, VALUE> extends SplitReader<KEY, VALUE> {
-  private final SplitReader<KEY1, VALUE1> delegate;
+public abstract class SplitReaderAdapter<FROM_KEY, TO_KEY, FROM_VALUE, TO_VALUE> extends SplitReader<TO_KEY, TO_VALUE> {
+  private final SplitReader<FROM_KEY, FROM_VALUE> delegate;
 
-  public SplitReaderAdapter(SplitReader<KEY1, VALUE1> delegate) {
+  public SplitReaderAdapter(SplitReader<FROM_KEY, FROM_VALUE> delegate) {
     this.delegate = delegate;
   }
 
-  protected abstract KEY convertKey(KEY1 key);
-  protected abstract VALUE convertValue(VALUE1 value);
+  protected abstract TO_KEY convertKey(FROM_KEY key);
+  protected abstract TO_VALUE convertValue(FROM_VALUE value);
+
+  private TO_KEY nextKey = null;
+  private TO_VALUE nextValue = null;
 
   @Override
   public void initialize(Split split) throws InterruptedException {
     delegate.initialize(split);
+    nextKey = null;
+    nextValue = null;
   }
 
   @Override
   public boolean nextKeyValue() throws InterruptedException {
-    return delegate.nextKeyValue();
+    boolean hasNext = delegate.nextKeyValue();
+    if (hasNext) {
+      nextKey = convertKey(delegate.getCurrentKey());
+      nextValue = convertValue(delegate.getCurrentValue());
+    }
+    return hasNext;
   }
 
-
   @Override
-  public KEY getCurrentKey() throws InterruptedException {
-    return convertKey(delegate.getCurrentKey());
+  public TO_KEY getCurrentKey() throws InterruptedException {
+    return nextKey;
   }
 
   @Override
-  public VALUE getCurrentValue() throws InterruptedException {
-    return convertValue(delegate.getCurrentValue());
+  public TO_VALUE getCurrentValue() throws InterruptedException {
+    return nextValue;
   }
 
   @Override
   public void close() {
     delegate.close();
+    nextKey = null;
+    nextValue = null;
   }
 }

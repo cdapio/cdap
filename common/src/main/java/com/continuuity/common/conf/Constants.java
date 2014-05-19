@@ -292,17 +292,17 @@ public final class Constants {
      */
     public static final class Manager {
       /** for the port of the dataset server. */
-      public static final String PORT = "data.dataset.service.bind.port";
+      public static final String PORT = "dataset.service.bind.port";
 
       /** for the address (hostname) of the dataset server. */
-      public static final String ADDRESS = "data.dataset.service.bind.address";
+      public static final String ADDRESS = "dataset.service.bind.address";
 
       public static final String VERSION = "v1";
-      public static final String BACKLOG_CONNECTIONS = "dataset.manager.connection.backlog";
-      public static final String EXEC_THREADS = "dataset.manager.exec.threads";
-      public static final String BOSS_THREADS = "dataset.manager.boss.threads";
-      public static final String WORKER_THREADS = "dataset.manager.worker.threads";
-      public static final String OUTPUT_DIR = "dataset.manager.output.dir";
+      public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.service.exec.threads";
+      public static final String BOSS_THREADS = "dataset.service.boss.threads";
+      public static final String WORKER_THREADS = "dataset.service.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
       // Defaults
       public static final int DEFAULT_BACKLOG = 20000;

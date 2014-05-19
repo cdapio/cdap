@@ -43,6 +43,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
@@ -134,18 +135,7 @@ public class DataFabricDistributedModule extends AbstractModule {
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
 
-    bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-    bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-
-    // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-    //       as long as the data is durably persisted
-    bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-    bind(new TypeLiteral<NavigableMap<String, Class<? extends DatasetModule>>>() { })
-      .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-      ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-        "orderedTable-hbase", HBaseTableModule.class,
-        "table", TableModule.class)
-    );
+    install(new DataSetsModules().getDistributedModule());
   }
 
   /**

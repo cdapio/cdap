@@ -33,7 +33,7 @@ public class AppsWithDataset {
   public static class AppWithExisting extends AbstractApplication {
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.add(new MyProcedure());
+      configurer.addProcedure(new MyProcedure());
     }
   }
 
@@ -43,8 +43,8 @@ public class AppsWithDataset {
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.add("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
-      configurer.add(new MyProcedure());
+      configurer.addDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      configurer.addProcedure(new MyProcedure());
     }
   }
 
@@ -54,9 +54,9 @@ public class AppsWithDataset {
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.add("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      configurer.addDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
       configurer.addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
-      configurer.add(new MyProcedure());
+      configurer.addProcedure(new MyProcedure());
     }
   }
 
@@ -105,7 +105,7 @@ public class AppsWithDataset {
   public static class AppUsesAnnotation extends AbstractApplication {
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.add(new MyProcedureWithUseDataSetAnnotation());
+      configurer.addProcedure(new MyProcedureWithUseDataSetAnnotation());
     }
   }
 

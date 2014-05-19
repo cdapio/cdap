@@ -72,18 +72,8 @@ public class DataFabricLocalModule extends AbstractModule {
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
-        bind(DatasetManager.class).to(DataFabricDatasetManager.class);
 
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(new TypeLiteral<NavigableMap<String, Class<? extends DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-memory", LevelDBTableModule.class,
-            "table", TableModule.class)
-        );
+        install(new DataSetsModules().getLocalModule());
       }
     }));
   }

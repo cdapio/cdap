@@ -121,11 +121,11 @@ public class MapReduceMetricsWriter {
     // also any other metrics (including dataset metrics)
     for (String group : counters.getGroupNames()) {
       if (group.startsWith("continuuity.")) {
-        String[] parsed = group.split("\\.");
+        String scopePart = group.substring(group.lastIndexOf(".") + 1);
         // last one should be scope
         MetricsScope scope;
         try {
-          scope = MetricsScope.valueOf(parsed[parsed.length - 1]);
+          scope = MetricsScope.valueOf(scopePart);
         } catch (IllegalArgumentException e) {
           // SHOULD NEVER happen, simply skip if happens
           continue;

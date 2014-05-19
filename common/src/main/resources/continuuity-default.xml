@@ -522,19 +522,19 @@
     </property>
 
     <property>
-        <name>data.dataset.service.output.dir</name>
+        <name>dataset.service.output.dir</name>
         <value>/datasets</value>
         <description>Directory where all dataset modules archives are stored.</description>
     </property>
 
     <property>
-        <name>data.dataset.service.bind.address</name>
+        <name>dataset.service.bind.address</name>
         <value>127.0.0.1</value>
         <description>DataSet service hostname</description>
     </property>
 
     <property>
-        <name>data.dataset.service.bind.port</name>
+        <name>dataset.service.bind.port</name>
         <value>45055</value>
         <description>DataSet service port</description>
     </property>

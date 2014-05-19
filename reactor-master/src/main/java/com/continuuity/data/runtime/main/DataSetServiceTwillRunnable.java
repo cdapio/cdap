@@ -30,6 +30,7 @@ import java.util.List;
 /**
  * TwillRunnable to run DataSet Service through twill.
  */
+// TODO: this functionality will be moved to ReactorMaster, once it starts spinning up user's YARN containers
 public class DataSetServiceTwillRunnable extends AbstractReactorTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetServiceTwillRunnable.class);
 

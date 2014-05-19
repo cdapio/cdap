@@ -88,6 +88,7 @@ public abstract class DatasetManagerServiceTestBase {
       "/" + Constants.Dataset.Manager.VERSION + resource;
   }
 
+  // todo: use HttpUrlConnection
   protected int deployModule(String moduleName, Class moduleClass) throws IOException {
     String jarPath = JarFinder.getJar(moduleClass);
 
@@ -101,12 +102,12 @@ public abstract class DatasetManagerServiceTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
+  // todo: use HttpUrlConnection
   protected int deleteModule(String moduleName) throws IOException {
     HttpDelete delete = new HttpDelete(getUrl("/datasets/modules/" + moduleName));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }
-
 
   @SuppressWarnings("unchecked")
   protected static <T> Response<T> parseResponse(HttpResponse response, Type typeOfT) throws IOException {

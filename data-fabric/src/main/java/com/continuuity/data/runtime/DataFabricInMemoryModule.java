@@ -63,18 +63,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // Bind TxDs2 stuff
 
-    bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-
-    // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-    //       as long as the data is durably persisted
-    bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-    bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-    bind(new TypeLiteral<NavigableMap<String, Class<? extends DatasetModule>>>() { })
-      .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-      ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-        "orderedTable-memory", InMemoryTableModule.class,
-        "table", TableModule.class)
-    );
+    install(new DataSetsModules().getInMemoryModule());
 
     bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
     bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
