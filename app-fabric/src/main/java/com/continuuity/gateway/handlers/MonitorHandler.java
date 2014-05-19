@@ -72,7 +72,7 @@ public class MonitorHandler extends AbstractHttpHandler {
     
   }
 
-  @Path("/monitor/{service-id}")
+  @Path("/system/services/{service-id}/status")
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
                       @PathParam("service-id") final String service) {
