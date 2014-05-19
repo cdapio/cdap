@@ -63,7 +63,7 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
       Map<String, String> configs = context.getSpecification().getConfigs();
       hiveConf = new HiveConf();
       hiveConf.clear();
-      hiveConf.addResource(new File(configs.get(hiveConfName)).toURI().toURL());
+      hiveConf.addResource(new File(configs.get("hive-site.xml")).toURI().toURL());
 
       int hiveServerPort = PortDetector.findFreePort();
       LOG.info("Setting hive server port to {}...", hiveServerPort);

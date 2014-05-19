@@ -47,7 +47,7 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
     Preconditions.checkArgument(hiveServerPort != 0, "Hive server port must have been set.");
 
     // Start Hive Server2
-    LOG.info("Starting hive server on {}:{}, code version {}...", hostname, hiveServerPort, 2.1);
+    LOG.info("Starting hive server on {}:{}...", hostname, hiveServerPort);
     hiveServer2 = new HiveServer2();
     hiveServer2.init(hiveConf);
     hiveServer2.start();
