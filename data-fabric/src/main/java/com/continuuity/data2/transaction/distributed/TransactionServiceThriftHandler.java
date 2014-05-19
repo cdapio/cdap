@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.rpc.RPCServiceHandler;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
@@ -12,8 +13,6 @@ import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,8 +36,6 @@ import java.util.Set;
  */
 public class TransactionServiceThriftHandler implements TTransactionServer.Iface, RPCServiceHandler {
   private InMemoryTransactionManager txManager;
-  private static final String STATUS_OK = "OK";
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceThriftHandler.class);
 
   public TransactionServiceThriftHandler(InMemoryTransactionManager txManager) {
     this.txManager = txManager;
@@ -129,7 +126,6 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
 
   @Override
   public String status() throws TException {
-    LOG.warn("Checking txManager status and returning it back");
-    return txManager.isRunning() ? STATUS_OK : "NOTOK";
+    return txManager.isRunning() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
   }
 }

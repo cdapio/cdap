@@ -500,6 +500,14 @@ public final class Constants {
   }
 
   /**
+   * Monitor constants
+   */
+  public static final class Monitor {
+    public static final String STATUS_OK = "OK";
+    public static final String STATUS_NOTOK = "NOTOK";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {

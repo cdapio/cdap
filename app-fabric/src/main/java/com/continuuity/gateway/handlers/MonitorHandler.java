@@ -30,18 +30,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-
 /**
  * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-  private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private static final String STATUS_OK = "OK";
-  private static final String STATUS_NOTOK = "NOTOK";
 
   /**
    * Timeout to get response from discovered service.
@@ -84,7 +80,7 @@ public class MonitorHandler extends AbstractHttpHandler {
     String json;
     for (Service service : Service.values()) {
       String serviceName = String.valueOf(service);
-      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
+      String status = discoverService(serviceName) ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       result.put(serviceName, status);
     }
 
@@ -121,7 +117,7 @@ public class MonitorHandler extends AbstractHttpHandler {
 
       //For Transaction Service use the TransactionSystemClient to check the txManager's status
       if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
-        return txClient.status().equals("OK");
+        return txClient.status().equals(Constants.Monitor.STATUS_OK);
       }
 
       //Ping the discovered service to check its status.
