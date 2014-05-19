@@ -152,11 +152,11 @@ function(Components, Embeddables, HTTP, Util) {
 			 */
 			HTTP.create().get('getsession', function (resp) {
 				if ('token' in resp) {
-					C.Env.set('auth', resp.token);
+					C.Env.set('auth_token', resp.token);
 				} else {
-					C.Env.set('auth', '');
+					C.Env.set('auth_token', '');
 				}
-				if (!C.Env.get('auth') && 'routeName' in routeHandler) {
+				if (routeHandler !== undefined && !C.Env.get('auth_token') && 'routeName' in routeHandler) {
 					routeHandler.transitionTo('Login');
 				}
 			});
@@ -365,8 +365,8 @@ function(Components, Embeddables, HTTP, Util) {
 			C.deferReadiness();
 			var http = HTTP.create();
 			C.initialize(http);
-			if (C.Env.security_enabled === true) {
-			  C.setupAuth(http);
+			if (C.Env.security_enabled) {
+			  C.setupAuth();
 			}
 
 		}
