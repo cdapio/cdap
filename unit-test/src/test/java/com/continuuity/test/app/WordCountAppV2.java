@@ -56,7 +56,7 @@ public class WordCountAppV2 extends AbstractApplication {
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
     configurer.setName("WordCountApp");
-    configurer.add(new Stream("text"));
+    configurer.addStream(new Stream("text"));
     configurer.addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
     configurer.addDataSet("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
     configurer.addDataSet("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);

@@ -61,7 +61,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void add(Stream stream) {
+  public void addStream(Stream stream) {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
     streams.put(spec.getName(), spec);

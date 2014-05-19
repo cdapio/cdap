@@ -34,7 +34,7 @@ public interface ApplicationConfigurer {
    *
    * @param stream The {@link Stream} to be included in the Application.
    */
-  void add(Stream stream);
+  void addStream(Stream stream);
 
   /**
    * Adds a {@link DataSet} to the Application.
