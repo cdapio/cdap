@@ -14,6 +14,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.handlers.log.MockLogReader;
