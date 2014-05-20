@@ -106,7 +106,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     HiveConf hiveConf = new HiveConf();
 
     // Start Hive MetaStore
-    LOG.info("Starting hive metastore on port {}...", hiveMetaStorePort);
+    LOG.debug("Starting hive metastore on port {}...", hiveMetaStorePort);
     Thread metaStoreRunner = new Thread(
       new Runnable() {
         @Override
@@ -124,7 +124,7 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
     waitForPort(hiveMetaStorePort);
 
     // Start Hive Server2
-    LOG.error("Starting hive server on port {}...", hiveServerPort);
+    LOG.debug("Starting hive server on port {}...", hiveServerPort);
     hiveServer2 = new HiveServer2();
     hiveServer2.init(hiveConf);
     hiveServer2.start();

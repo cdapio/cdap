@@ -16,7 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Hook executed in Hive driver after executing any command.
+ * Hook to retrieve the transaction a query has been wrapped in, and to terminate it - either by
+ * committing it or by aborting it.
  */
 public class TransactionPostHook implements ExecuteWithHookContext {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPostHook.class);

@@ -162,7 +162,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addHiveService(TwillSpecification.Builder.MoreRunnable builder) {
     File hiveConfFile = extraConfs.get("hive-site.xml");
-    LOG.info("Hive configuration URI: {}", hiveConfFile.toURI());
+    LOG.debug("Hive configuration URI: {}", hiveConfFile.toURI());
 
     int hiveNumCores = cConf.getInt(Constants.Hive.Container.NUM_CORES, 2);
     int hiveMemoryMb = cConf.getInt(Constants.Hive.Container.MEMORY_MB, 2048);

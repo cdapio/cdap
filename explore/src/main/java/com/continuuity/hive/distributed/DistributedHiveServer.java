@@ -57,13 +57,6 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
 
     // Register hive server with discovery service.
     final InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
-    // todo are those lines necessary? - saw that in appfabric service
-//    InetAddress address = socketAddress.getAddress();
-//    if (address.isAnyLocalAddress()) {
-//      address = InetAddress.getLocalHost();
-//    }
-//    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
-
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
@@ -76,7 +69,7 @@ public class DistributedHiveServer extends AbstractIdleService implements HiveSe
       }
     });
 
-    LOG.info("Hive server registered with zookeeper...");
+    LOG.debug("Hive server registered with zookeeper...");
   }
 
   @Override

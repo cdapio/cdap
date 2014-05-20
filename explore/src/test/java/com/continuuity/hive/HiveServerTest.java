@@ -1,5 +1,7 @@
 package com.continuuity.hive;
 
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -17,16 +19,20 @@ public abstract class HiveServerTest {
 
   protected abstract HiveCommandExecutor getHiveCommandExecutor();
 
+  protected abstract InMemoryTransactionManager getTransactionManager();
+
   @Before
   public void before() {
     // Start hive server
     getHiveServer().startAndWait();
+    getTransactionManager().startAndWait();
   }
 
   @After
   public void after() {
     // Stop hive server
     getHiveServer().stopAndWait();
+    getTransactionManager().stopAndWait();
   }
 
   @Test
@@ -43,17 +49,6 @@ public abstract class HiveServerTest {
                                          "' INTO TABLE test;");
     getHiveCommandExecutor().sendCommand("select first, second from test;");
     getHiveCommandExecutor().sendCommand("drop table test;");
+    // todo add assertions
   }
-
-//  @Test
-//  public void testExternalTable() throws Exception {
-//    runHiveCommand("drop table if exists employee");
-//    runHiveCommand("create external table employee (name STRING, id int) " +
-//                     "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler';");
-//    runHiveCommand("show tables;");
-//    runHiveCommand("describe employee;");
-//    runHiveCommand("select name, id from employee;");
-//    runHiveCommand("select * from employee;");
-//    runHiveCommand("drop table employee");
-//  }
 }

@@ -23,6 +23,7 @@ import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.guice.InMemoryHiveModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -287,7 +288,7 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new StreamHttpModule(),
-      new InMemoryHiveModule(),
+      new HiveRuntimeModule().getInMemoryModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
@@ -335,7 +336,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule(),
-      new InMemoryHiveModule()
+      new HiveRuntimeModule().getSingleNodeModules()
     );
   }
 }

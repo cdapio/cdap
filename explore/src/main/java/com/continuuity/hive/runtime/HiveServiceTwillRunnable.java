@@ -10,11 +10,12 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveServer;
-import com.continuuity.hive.guice.DistributedHiveModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -93,12 +94,18 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
     services.add(hiveServer);
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, final HiveConf hiveConf) {
     return Guice.createInjector(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(HiveConf.class).toInstance(hiveConf);
+          }
+        },
         new ConfigModule(cConf, hConf),
         new IOModule(),
         new ZKClientModule(),
-        new DistributedHiveModule(hiveConf),
+        new HiveRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
         new DiscoveryRuntimeModule().getDistributedModules()
     );

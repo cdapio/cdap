@@ -14,7 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Hook executed in Hive driver before executing any command.
+ * Hook to wrap a hive query in a transaction, which is passed along to all the datasets
+ * involved in the query.
  */
 public class TransactionPreHook implements ExecuteWithHookContext {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPreHook.class);

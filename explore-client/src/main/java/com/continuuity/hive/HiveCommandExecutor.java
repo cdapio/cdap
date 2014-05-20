@@ -45,7 +45,8 @@ public class HiveCommandExecutor implements HiveClient {
         hiveDiscoverable.getSocketAddress().getHostName() +
         ":" + hiveDiscoverable.getSocketAddress().getPort() +
         "/default;auth=noSasl",
-        "-n", "poorna",
+        "-n", "hive",
+        "--outputformat", "csv",
         "-e", cmd};
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -62,5 +63,7 @@ public class HiveCommandExecutor implements HiveClient {
 
     LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
     LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
+
+    // todo should return the string result
   }
 }
