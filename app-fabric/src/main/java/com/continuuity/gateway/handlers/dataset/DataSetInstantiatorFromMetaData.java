@@ -6,7 +6,6 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
@@ -41,9 +40,6 @@ public final class DataSetInstantiatorFromMetaData {
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
 
-  // the strategy for discovering app-fabric thrift service
-  private EndpointStrategy endpointStrategy;
-
   /**
    * Json serializer.
    */
@@ -61,13 +57,6 @@ public final class DataSetInstantiatorFromMetaData {
     this.locationFactory = locationFactory;
     this.dataSetAccessor = dataSetAccessor;
     this.store = storeFactory.create();
-  }
-
-  /**
-   * This must be called before the instantiator can be used.
-   */
-  public void init(EndpointStrategy endpointStrategy) {
-    this.endpointStrategy = endpointStrategy;
   }
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
@@ -91,9 +80,9 @@ public final class DataSetInstantiatorFromMetaData {
     String jsonSpec = null;
     try {
       DataSetSpecification spec = store.getDataSet(new Id.Account(context.getAccount()), name);
-      String json =  spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      String json =  spec == null ? "" : GSON.toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
       if (json != null) {
-        Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
+        Map<String, String> map = GSON.fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
         if (map != null) {
           jsonSpec = map.get("specification");
         }
@@ -102,7 +91,7 @@ public final class DataSetInstantiatorFromMetaData {
         throw new DataSetInstantiationException(
           "Data set '" + name + "' has no specification in meta data service.");
       }
-      return new Gson().fromJson(jsonSpec, DataSetSpecification.class);
+      return GSON.fromJson(jsonSpec, DataSetSpecification.class);
 
     } catch (JsonSyntaxException e) {
       throw new DataSetInstantiationException(
@@ -117,7 +106,7 @@ public final class DataSetInstantiatorFromMetaData {
 
   public void createDataSet(String accountId, String spec) throws Exception {
     try {
-      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      DataSetSpecification streamSpec = GSON.fromJson(spec, DataSetSpecification.class);
       store.addDataset(new Id.Account(accountId), streamSpec);
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);

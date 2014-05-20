@@ -6,7 +6,6 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.LogHandlerTest;
@@ -64,8 +63,6 @@ public class MetricsServiceTestsSuite  {
 
   private static Injector injector;
 
-  private static EndpointStrategy endpointStrategy;
-
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
     @Override
@@ -75,7 +72,6 @@ public class MetricsServiceTestsSuite  {
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
       conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
@@ -128,9 +124,6 @@ public class MetricsServiceTestsSuite  {
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
-    injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
 
     EndpointStrategy metricsEndPoints = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS)), 1L, TimeUnit.SECONDS);
@@ -155,10 +148,6 @@ public class MetricsServiceTestsSuite  {
 
   public static Header getAuthHeader() {
     return AUTH_HEADER;
-  }
-
-  public static EndpointStrategy getEndpointStrategy() {
-    return endpointStrategy;
   }
 
   public static HttpResponse doGet(String resource) throws Exception {

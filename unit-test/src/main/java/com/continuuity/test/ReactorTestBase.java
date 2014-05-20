@@ -126,7 +126,6 @@ public class ReactorTestBase {
     tmpDir.mkdirs();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
