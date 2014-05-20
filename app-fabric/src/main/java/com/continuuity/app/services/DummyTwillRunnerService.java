@@ -50,7 +50,8 @@ public final class DummyTwillRunnerService implements TwillRunnerService {
   }
 
   @Override
-  public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay, long delay, TimeUnit unit) {
+  public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay, long delay,
+                                               TimeUnit unit) {
     return null;
   }
 

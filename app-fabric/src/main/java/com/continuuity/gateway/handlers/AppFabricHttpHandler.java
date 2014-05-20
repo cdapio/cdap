@@ -88,7 +88,6 @@ import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
-import org.apache.twill.api.Command;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
@@ -841,9 +840,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       int instance = getInstances(request);
       if (twillControllerList != null) {
         for (TwillController twillController : twillControllerList) {
-          twillController.sendCommand(serviceName, Command.Builder.of("suspend").build());
+          //twillController.sendCommand(serviceName, Command.Builder.of("suspend").build());
           twillController.changeInstances(serviceName, instance).get();
-          twillController.sendCommand(serviceName, Command.Builder.of("resume").build());
+          //twillController.sendCommand(serviceName, Command.Builder.of("resume").build());
         }
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
