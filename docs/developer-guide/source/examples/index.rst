@@ -9,9 +9,8 @@ Continuuity Reactor Examples
 Example Applications demonstrating Continuuity Reactor Features
 ---------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-	
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -69,14 +68,3 @@ Now that you've seen some examples using Continuuity Reactor, take a look at:
 - `Continuuity Reactor Quick Start  </developers/quickstart>`__,
   which guides you through installing Continuuity Reactor and
   running and modifying an example that counts HTTP status codes.
-
-.. - `Introduction to Continuuity Reactor </developers/intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Continuuity Reactor Programming Guide </developers/programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Continuuity Reactor HTTP REST API </developers/rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-.. - `Operating a Continuuity Reactor </developers/operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features </developers/advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.
