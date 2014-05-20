@@ -12,6 +12,7 @@ import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
+import com.continuuity.internal.app.services.http.handlers.UserServiceHttpHandlerTest;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ObjectArrays;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class, UserServiceHttpHandlerTest.class})
 public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";

@@ -13,6 +13,8 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.LogReader;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -185,7 +187,40 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private static long parseTimestamp(List<String> parameter) {
+  private void sendMockLog(HttpResponder responder) {
+    final JsonArray logResults = new JsonArray();
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("log", "LOG.Info : Test log message");
+    jsonObject.addProperty("offset", 0);
+    logResults.add(jsonObject);
+    responder.sendJson(HttpResponseStatus.OK, logResults);
+  }
+  @GET
+  @Path("/user/{app-id}/logs")
+  public void list(HttpRequest request, HttpResponder responder,
+  @PathParam("app-id") String appId) {
+    // todo: set entity type as twill
+    sendMockLog(responder);
+  }
+
+  @GET
+  @Path("/user/{app-id}/prev")
+  public void prev(HttpRequest request, HttpResponder responder,
+                   @PathParam("app-id") String appId) {
+    // todo: set entity type as twill
+    sendMockLog(responder);
+  }
+
+  @GET
+  @Path("/user/{app-id}/next")
+  public void next(HttpRequest request, HttpResponder responder,
+                   @PathParam("app-id") String appId) {
+    // todo: set entity type as twill
+    sendMockLog(responder);
+  }
+
+
+    private static long parseTimestamp(List<String> parameter) {
     if (parameter == null || parameter.isEmpty()) {
       return -1;
     }
