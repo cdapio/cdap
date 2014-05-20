@@ -97,49 +97,47 @@ public abstract class GatewayTestService {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
-    injector = Guice.createInjector(Modules.override(new AbstractModule() {
-                                                       @Override
-                                                       protected void configure() {
-                                                         bind(PassportClient.class).toProvider(
-                                                           new Provider<PassportClient>() {
-                                                             @Override
-                                                             public PassportClient get() {
-                                                               return new MockedPassportClient(keysAndClusters);
-                                                             }
-                                                           });
-                                                       }
+    injector = Guice.createInjector
+      (Modules.override(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(PassportClient.class).toProvider(
+              new Provider<PassportClient>() {
+                @Override
+                public PassportClient get() {
+                  return new MockedPassportClient(keysAndClusters);
+                }
+              });
+          }
 
-                                                       @Provides
-                                                       @Named(Constants.Router.ADDRESS)
-                                                       public final InetAddress providesHostname(CConfiguration cConf) {
-                                                         return Networks.resolve(cConf.get
-                                                           (Constants.Router.ADDRESS), new InetSocketAddress
-                                                                                   ("localhost", 0).getAddress());
-                                                       }
-                                                     }, new InMemorySecurityModule(),
-                                                     new GatewayModule().getInMemoryModules(),
-                                                     new AppFabricTestModule(conf),
-                                                     new StreamHttpModule()
-                                    ).with(new AbstractModule() {
-                                             @Override
-                                             protected void configure() {
-                                               // It's a bit hacky to add it here. Need to refactor these
-                                               // bindings out as it overlaps with
-                                               // AppFabricServiceModule
-                                               bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-                                               bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+          @Provides
+          @Named(Constants.Router.ADDRESS)
+          public final InetAddress providesHostname(CConfiguration cConf) {
+            return Networks.resolve(cConf.get
+              (Constants.Router.ADDRESS), new InetSocketAddress
+                                      ("localhost", 0).getAddress());
+          }
+        },
+        new InMemorySecurityModule(),
+        new GatewayModule().getInMemoryModules(),
+        new AppFabricTestModule(conf),
+        new StreamHttpModule()
+      ).with(new AbstractModule() {
+               @Override
+               protected void configure() {
+                 // It's a bit hacky to add it here. Need to refactor these
+                 // bindings out as it overlaps with
+                 // AppFabricServiceModule
+                 bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+                 bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-                                               MockMetricsCollectionService metricsCollectionService =
-                                                 new MockMetricsCollectionService();
-                                               bind(MetricsCollectionService.class).
-                                                 toInstance(metricsCollectionService);
-                                               bind(MockMetricsCollectionService.class).
-                                                 toInstance(metricsCollectionService);
-
-                                             }
-                                           }
-                                    )
-    );
+                 MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+                 bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+                 bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+               }
+             }
+      ));
 
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();

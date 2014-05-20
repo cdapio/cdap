@@ -306,10 +306,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
 
   private int changeFlowletStreamInput(String app, String flow, String flowlet,
                                                 String oldStream, String newStream) throws Exception {
-    return AppFabricTestsSuite.doPut(String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s",
-                                                    app, flow, flowlet, newStream),
-                                      String.format("{\"oldStreamId\":\"%s\"}", oldStream)).
-                                                    getStatusLine().getStatusCode();
+    return AppFabricTestsSuite.doPut(
+       String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream),
+       String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
   }
 
 
@@ -322,9 +321,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestService {
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //web-app, start, stop and status check.
-    Assert.assertEquals(200,
-                        AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/start",
-                                                    null).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, AppFabricTestsSuite.doPost
+                          ("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode());
 
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
     Assert.assertEquals(200,
