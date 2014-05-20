@@ -46,7 +46,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   // Data structure is used to clean up the channel futures on connection close.
   private final Map<WrappedDiscoverable, MessageSender> discoveryLookup;
   private MessageSender chunkSender;
-  private AtomicBoolean exceptionRaised = new AtomicBoolean(false);
+  private AtomicBoolean channelClosed = new AtomicBoolean(false);
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             RouterServiceLookup serviceLookup) {
@@ -59,6 +59,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   public void messageReceived(ChannelHandlerContext ctx,
                               MessageEvent event) throws Exception {
 
+    if (channelClosed.get()) {
+      return;
+    }
     Channel inboundChannel = event.getChannel();
     Object msg = event.getMessage();
 
@@ -109,7 +112,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     Throwable cause = e.getCause();
 
     LOG.error("Exception raised in Request Handler {}", ctx.getChannel().getId(), cause);
-    if (ctx.getChannel().isConnected() && exceptionRaised.compareAndSet(false, true)) {
+    if (ctx.getChannel().isConnected() && !channelClosed.get()) {
       HttpResponse response = (cause instanceof HandlerException) ?
                               ((HandlerException) cause).createFailureResponse() :
                               new DefaultHttpResponse(HttpVersion.HTTP_1_1,
@@ -122,9 +125,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     // Close all event sender
+    LOG.trace("Channel closed {}", ctx.getChannel().getId());
     for (Closeable c : discoveryLookup.values()) {
       Closeables.closeQuietly(c);
     }
+    channelClosed.compareAndSet(false, true);
     super.channelClosed(ctx, e);
   }
 
