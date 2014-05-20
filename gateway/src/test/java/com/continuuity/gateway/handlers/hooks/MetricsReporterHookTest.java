@@ -41,7 +41,7 @@ public class MetricsReporterHookTest {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String context = Constants.Service.STREAM_HANDLER + ".StreamHandler.getInfo";
+    String context = Constants.Stream.STREAM_HANDLER + ".StreamHandler.getInfo";
     int received = mockMetricsCollectionService.getMetrics(context, "request.received");
     int successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
     int clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");

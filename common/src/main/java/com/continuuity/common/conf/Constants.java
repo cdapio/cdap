@@ -15,9 +15,10 @@ public final class Constants {
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
-    public static final String PROCEDURES = "procedures";
+    public static final String LOGSAVER = "saver";
+    public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String GATEWAY = "gateway";
-    public static final String STREAM_HANDLER = "stream.handler";
+    public static final String STREAMS = "streams";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String REACTOR_SERVICES = "reactor.services";
     public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
@@ -322,6 +323,7 @@ public final class Constants {
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
 
     // Stream http service configurations.
+    public static final String STREAM_HANDLER = "stream.handler";
     public static final String ADDRESS = "stream.bind.address";
     public static final String WORKER_THREADS = "stream.worker.threads";
 

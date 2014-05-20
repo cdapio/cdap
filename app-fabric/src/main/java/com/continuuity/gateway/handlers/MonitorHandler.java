@@ -53,7 +53,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   private enum Service {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
-    STREAMS (Constants.Service.STREAM_HANDLER),
+    STREAMS (Constants.Service.STREAMS),
     APPFABRIC (Constants.Service.APP_FABRIC_HTTP);
 
     private final String name;
@@ -66,6 +66,7 @@ public class MonitorHandler extends AbstractHttpHandler {
 
     public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
+  
 
   @Inject
   public MonitorHandler(DiscoveryServiceClient discoveryServiceClient) {

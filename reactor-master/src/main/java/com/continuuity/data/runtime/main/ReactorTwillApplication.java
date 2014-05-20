@@ -21,7 +21,6 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private final CConfiguration cConf;
   private final File cConfFile;
-
   private final File hConfFile;
 
   public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile) {
@@ -64,7 +63,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(numInstances)
       .build();
 
-    return builder.add(new LogSaverTwillRunnable("saver", "hConf.xml", "cConf.xml"), spec)
+    return builder.add(new LogSaverTwillRunnable(Constants.Service.LOGSAVER, "hConf.xml", "cConf.xml"), spec)
       .withLocalFiles()
       .add("hConf.xml", hConfFile.toURI())
       .add("cConf.xml", cConfFile.toURI())
@@ -85,13 +84,12 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(instances)
       .build();
 
-    return builder.add(new MetricsProcessorTwillRunnable("metrics.processor", "cConf.xml", "hConf.xml"),
+    return builder.add(new MetricsProcessorTwillRunnable(Constants.Service.METRICS_PROCESSOR, "cConf.xml", "hConf.xml"),
                        metricsProcessorSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
       .apply();
-
   }
 
   private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable
@@ -107,7 +105,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(metricsInstances)
       .build();
 
-    return builder.add(new MetricsTwillRunnable("metrics", "cConf.xml", "hConf.xml"), metricsSpec)
+    return builder.add(new MetricsTwillRunnable(Constants.Service.METRICS, "cConf.xml", "hConf.xml"), metricsSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -128,7 +126,8 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(txInstances)
       .build();
 
-    return builder.add(new TransactionServiceTwillRunnable("txservice", "cConf.xml", "hConf.xml"), transactionSpec)
+    return builder.add(new TransactionServiceTwillRunnable(Constants.Service.TRANSACTION, "cConf.xml", "hConf.xml"),
+                       transactionSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -142,7 +141,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 2))
       .build();
 
-    return builder.add(new StreamHandlerRunnable("stream", "cConf.xml", "hConf.xml"), resourceSpec)
+    return builder.add(new StreamHandlerRunnable(Constants.Service.STREAMS, "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

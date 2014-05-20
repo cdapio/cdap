@@ -146,32 +146,32 @@ public class RouterPathTest {
     flowPath = "//v2///streams/HelloStream//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "//v2///streams/HelloStream//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams//flows///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
 
     flowPath = "v2//streams/InvalidStreamName/info/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAM_HANDLER, result);
+    Assert.assertEquals(Constants.Service.STREAMS, result);
   }
 
   @Test
