@@ -32,6 +32,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -48,10 +49,10 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
-  private DiscoveryServiceClient discoveryServiceClient;
-  private Iterable<Discoverable> discoverables;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final Iterable<Discoverable> discoverables;
   private final String realm;
-  private DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+  private final DateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
 
 
   public SecurityAuthenticationHttpHandler(String realm, TokenValidator tokenValidator,
@@ -61,7 +62,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
-    discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    this.discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
   }
 
   /**
@@ -74,7 +75,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
    */
   private boolean validateSecuredInterception(ChannelHandlerContext ctx, HttpRequest msg,
                                       Channel inboundChannel, AuditLogEntry logEntry) throws Exception {
-    JsonObject jsonObject = new JsonObject();
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
@@ -91,12 +91,15 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       }
     }
 
-    logEntry.clientIP = ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress();
+    logEntry.clientIP = ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress();
     logEntry.requestLine = msg.getMethod() + " " + msg.getUri() + " " + msg.getProtocolVersion();
 
     TokenState tokenState = tokenValidator.validate(accessToken);
     if (!tokenState.isValid()) {
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+      logEntry.responseCode = HttpResponseStatus.UNAUTHORIZED.getCode();
+
+      JsonObject jsonObject = new JsonObject();
       if (tokenState == TokenState.MISSING) {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
                                  String.format("Bearer realm=\"%s\"", realm));
@@ -110,7 +113,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.debug("Authentication failed due to invalid token, reason={};", tokenState);
       }
-      logEntry.responseCode = "401";
       JsonArray externalAuthenticationURIs = new JsonArray();
 
       //Waiting for service to get discovered
@@ -123,7 +125,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       int contentLength = content.readableBytes();
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, contentLength);
       httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json;charset=UTF-8");
-      logEntry.responseContentLength = Integer.toString(contentLength);
+      logEntry.responseContentLength = new Long(contentLength);
       ChannelFuture writeFuture = Channels.future(inboundChannel);
       Channels.write(ctx, writeFuture, httpResponse);
       writeFuture.addListener(ChannelFutureListener.CLOSE);
@@ -183,17 +185,25 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     Object message = e.getMessage();
     if (message instanceof HttpResponse) {
       HttpResponse response = (HttpResponse) message;
-      logEntry.responseCode = Integer.toString(response.getStatus().getCode());
+      logEntry.responseCode = response.getStatus().getCode();
+      if (response.containsHeader(HttpHeaders.Names.CONTENT_LENGTH)) {
+        String lengthString = response.getHeader(HttpHeaders.Names.CONTENT_LENGTH);
+        try {
+          logEntry.responseContentLength = Long.valueOf(lengthString);
+        } catch (NumberFormatException nfe) {
+          LOG.warn("Invalid value for content length in HTTP response message: {}", lengthString, nfe);
+        }
+      }
     } else if (message instanceof ChannelBuffer) {
       // for chunked responses the response code will only be present on the first chunk
       // so we only look for it the first time around
       if (logEntry.responseCode == null) {
         ChannelBuffer channelBuffer = (ChannelBuffer) message;
-        ChannelBuffer sliced = channelBuffer.slice(channelBuffer.readerIndex(), channelBuffer.readableBytes());
-        logEntry.responseCode = findResponseCode(sliced);
+        logEntry.responseCode = findResponseCode(channelBuffer);
         if (logEntry.responseCode != null) {
-          // only expect content length if it's an initial HTTP response
-          logEntry.responseContentLength = findContentLength(sliced);
+          // we currently only look for a Content-Length header in the first buffer on an HTTP response
+          // this is a limitation of the implementation that simplifies header parsing
+          logEntry.responseContentLength = findContentLength(channelBuffer);
         }
       }
     } else {
@@ -211,21 +221,26 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     }
   }
 
-  private String findResponseCode(ChannelBuffer buffer) {
-    String responseCode = null;
+  private Integer findResponseCode(ChannelBuffer buffer) {
+    Integer responseCode = null;
 
     // we assume that the response code should follow the first space in the first line of the response
     int indx = buffer.indexOf(buffer.readerIndex(), buffer.writerIndex(), ChannelBufferIndexFinder.LINEAR_WHITESPACE);
     if (indx >= 0 && indx < buffer.writerIndex() - 4) {
-      responseCode = buffer.slice(indx, 4).toString(Charsets.UTF_8);
+      String codeString = buffer.toString(indx, 4, Charsets.UTF_8).trim();
+      try {
+        responseCode = Integer.valueOf(codeString);
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Invalid value for HTTP response code: {}", codeString, nfe);
+      }
     } else {
       LOG.debug("Invalid index for space in response: index={}, buffer size={}", indx, buffer.readableBytes());
     }
     return responseCode;
   }
 
-  private String findContentLength(ChannelBuffer buffer) {
-    String contentLength = null;
+  private Long findContentLength(ChannelBuffer buffer) {
+    Long contentLength = null;
     int bufferEnd = buffer.writerIndex();
     int index = buffer.indexOf(buffer.readerIndex(), bufferEnd, CONTENT_LENGTH_FINDER);
     if (index >= 0) {
@@ -233,7 +248,12 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       int colonIndex = buffer.indexOf(index, bufferEnd, HttpConstants.COLON);
       int eolIndex = buffer.indexOf(index, bufferEnd, ChannelBufferIndexFinder.CRLF);
       if (colonIndex > 0 && colonIndex < eolIndex) {
-        contentLength = buffer.slice(colonIndex + 1, eolIndex - (colonIndex + 1)).toString(Charsets.UTF_8).trim();
+        String lengthString = buffer.toString(colonIndex + 1, eolIndex - (colonIndex + 1), Charsets.UTF_8).trim();
+        try {
+          contentLength = Long.valueOf(lengthString);
+        } catch (NumberFormatException nfe) {
+          LOG.warn("Invalid value for content length in HTTP response message: {}", lengthString, nfe);
+        }
       }
     }
     return contentLength;
@@ -258,12 +278,12 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     /** Indicates whether this entry has already been logged. */
     private boolean logged;
 
-    private String clientIP;
+    private InetAddress clientIP;
     private String userName;
     private Date date;
     private String requestLine;
-    private String responseCode;
-    private String responseContentLength;
+    private Integer responseCode;
+    private Long responseContentLength;
 
     public AuditLogEntry() {
       this.date = new Date();
@@ -271,7 +291,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
     public String toString() {
       return String.format("%s %s [%s] \"%s\" %s %s",
-                           fieldOrDefault(clientIP),
+                           clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
                            fieldOrDefault(userName),
                            dateFormat.format(date),
                            fieldOrDefault(requestLine),
@@ -279,8 +299,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
                            fieldOrDefault(responseContentLength));
     }
 
-    private String fieldOrDefault(String field) {
-      return field == null ? DEFAULT_VALUE : field;
+    private String fieldOrDefault(Object field) {
+      return field == null ? DEFAULT_VALUE : field.toString();
     }
   }
 

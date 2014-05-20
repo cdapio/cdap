@@ -39,11 +39,11 @@ public class AccessTokenTransformer {
    * Access token identifier pair that has marshalled and unmarshalled
    * access token object
    */
-    public class AccessTokenIdentifierPair {
-    String accessTokenIdentifierStr;
-    AccessTokenIdentifier accessTokenIdentifierObj;
-    AccessTokenIdentifierPair(String accessTokenIdentifierStr,
-                              AccessTokenIdentifier accessTokenIdentifierObj) {
+  public class AccessTokenIdentifierPair {
+    private final String accessTokenIdentifierStr;
+    private final AccessTokenIdentifier accessTokenIdentifierObj;
+
+    public AccessTokenIdentifierPair(String accessTokenIdentifierStr, AccessTokenIdentifier accessTokenIdentifierObj) {
       this.accessTokenIdentifierObj = accessTokenIdentifierObj;
       this.accessTokenIdentifierStr = accessTokenIdentifierStr;
     }
