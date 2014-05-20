@@ -202,13 +202,11 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication() {
     try {
-      ImmutableMap.Builder<String, File> extraConfFiles = ImmutableMap.builder();
       for (Map.Entry<String, Configuration> extraConfEntry : extraConfs.entrySet()) {
         File conf = getSavedExtraConf(extraConfEntry.getKey(), extraConfEntry.getValue());
-        extraConfFiles.put(extraConfEntry.getKey(), conf);
         addResource(conf.toURI());
       }
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), extraConfFiles.build());
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf());
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

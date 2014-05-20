@@ -13,7 +13,6 @@ import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -27,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 /**
  * TwillRunnable to run Hive through twill.
@@ -38,17 +36,10 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
   private ZKClientService zkClient;
   private HiveServer hiveServer;
 
-  private String hiveConfName;
   private HiveConf hiveConf;
 
-  public HiveServiceTwillRunnable(String name, String cConfName, String hConfName, String hiveConfName) {
+  public HiveServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
-    this.hiveConfName = hiveConfName;
-  }
-
-  @Override
-  protected Map<String, String> addExtraConfs() {
-    return ImmutableMap.of(hiveConfName, hiveConfName);
   }
 
   @Override
@@ -61,10 +52,8 @@ public class HiveServiceTwillRunnable extends AbstractReactorTwillRunnable {
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
       getCConfiguration().set(Constants.Hive.Container.SERVER_ADDRESS, context.getHost().getCanonicalHostName());
 
-      Map<String, String> configs = context.getSpecification().getConfigs();
+      // The hive conf is already is the class path of the container, doing new HiveConf() will load it
       hiveConf = new HiveConf();
-      hiveConf.clear();
-      hiveConf.addResource(new File(configs.get("hive-site.xml")).toURI().toURL());
 
       int hiveServerPort = PortDetector.findFreePort();
       LOG.info("Setting hive server port to {}...", hiveServerPort);

@@ -31,13 +31,11 @@ public class ReactorTwillApplication implements TwillApplication {
   private final File cConfFile;
 
   private final File hConfFile;
-  private final Map<String, File> extraConfs;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, Map<String, File> extraConfs) {
+  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
-    this.extraConfs = ImmutableMap.copyOf(extraConfs);
   }
 
   @Override
@@ -50,7 +48,7 @@ public class ReactorTwillApplication implements TwillApplication {
         addLogSaverService(
          addStreamService(
            addTransactionService(
-             addMetricsProcessor (
+             addMetricsProcessor(
                addMetricsService(
                 TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
         .anyOrder()
@@ -161,9 +159,6 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addHiveService(TwillSpecification.Builder.MoreRunnable builder) {
-    File hiveConfFile = extraConfs.get("hive-site.xml");
-    LOG.debug("Hive configuration URI: {}", hiveConfFile.toURI());
-
     int hiveNumCores = cConf.getInt(Constants.Hive.Container.NUM_CORES, 2);
     int hiveMemoryMb = cConf.getInt(Constants.Hive.Container.MEMORY_MB, 2048);
 
@@ -174,12 +169,11 @@ public class ReactorTwillApplication implements TwillApplication {
         .setInstances(cConf.getInt(Constants.Hive.Container.NUM_INSTANCES, 1))
         .build();
 
-    return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml", "hive-site.xml"),
+    return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml"),
                        hiveSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI())
-        .add("hive-site.xml", hiveConfFile.toURI())
         .apply();
   }
 }
