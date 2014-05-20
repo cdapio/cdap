@@ -1,9 +1,7 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.Gateway;
-import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.GatewayTestService;
+import com.continuuity.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -19,8 +17,8 @@ import java.net.URL;
 /**
  * Test stream handler. This is not part of GatewayFastTestsSuite because it needs to start the gateway multiple times.
  */
-public class StreamHandlerTest extends GatewayTestService {
-  private static final String API_KEY = GatewayTestService.getAuthHeader().getValue();
+public class StreamHandlerTest extends GatewayTestBase {
+  private static final String API_KEY = GatewayTestBase.getAuthHeader().getValue();
   private static final String hostname = "127.0.0.1";
 
   private HttpURLConnection openURL(String location, HttpMethod method) throws IOException {
@@ -34,7 +32,7 @@ public class StreamHandlerTest extends GatewayTestService {
 
   @Test
   public void testStreamCreate() throws Exception {
-    int port = GatewayTestService.getPort();
+    int port = GatewayTestBase.getPort();
 
     // Try to get info on a non-existant stream
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream1/info", hostname, port),
@@ -57,7 +55,7 @@ public class StreamHandlerTest extends GatewayTestService {
 
   @Test
   public void testSimpleStreamEnqueue() throws Exception {
-    int port = GatewayTestService.getPort();
+    int port = GatewayTestBase.getPort();
 
     // Create new stream.
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_enqueue", hostname, port),
@@ -98,7 +96,7 @@ public class StreamHandlerTest extends GatewayTestService {
   }
 
   private String getStreamConsumer(String streamName) throws IOException {
-    int port = GatewayTestService.getPort();
+    int port = GatewayTestBase.getPort();
 
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s/consumer-id",
                                                       hostname, port, streamName), HttpMethod.POST);
@@ -114,7 +112,7 @@ public class StreamHandlerTest extends GatewayTestService {
   @Ignore
   @Test
   public void testStreamTruncate() throws Exception {
-    int port = GatewayTestService.getPort();
+    int port = GatewayTestBase.getPort();
 
     // Create new stream.
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/test_stream_truncate", hostname, port),

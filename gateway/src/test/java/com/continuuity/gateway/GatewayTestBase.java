@@ -39,6 +39,8 @@ import org.junit.rules.ExternalResource;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public abstract class GatewayTestService {
+public abstract class GatewayTestBase {
 
 
   private static final String API_KEY = "SampleTestApiKey";
@@ -76,8 +78,6 @@ public abstract class GatewayTestService {
       Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
       conf.setInt(Constants.Gateway.PORT, 0);
       conf.set(Constants.Gateway.ADDRESS, hostname);
-      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
@@ -189,6 +189,10 @@ public abstract class GatewayTestService {
 
   public static Header getAuthHeader() {
     return AUTH_HEADER;
+  }
+
+  public static URI getEndPoint(String path) throws URISyntaxException {
+    return new URI("http://" + hostname + ":" + port + path);
   }
 
 }

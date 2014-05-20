@@ -1,8 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.GatewayTestService;
+import com.continuuity.gateway.GatewayTestBase;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -14,7 +13,7 @@ import org.junit.Test;
 /**
  *  To test the RouterPathLookup regular expression tests.
  */
-public class RouterPathTest extends GatewayTestService {
+public class RouterPathTest extends GatewayTestBase {
 
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
@@ -23,7 +22,7 @@ public class RouterPathTest extends GatewayTestService {
 
   @BeforeClass
   public static void init() throws Exception {
-    pathLookup = GatewayTestService.getInjector().getInstance(RouterPathLookup.class);
+    pathLookup = GatewayTestBase.getInjector().getInstance(RouterPathLookup.class);
   }
 
   @Test

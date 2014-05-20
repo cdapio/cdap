@@ -20,13 +20,15 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
  * running the handler tests, this also gives the ability to run individual test cases.
  */
-public abstract class AppFabricTestService {
+public abstract class AppFabricTestBase {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
@@ -48,8 +50,6 @@ public abstract class AppFabricTestService {
       conf = CConfiguration.create();
       conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
-      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
@@ -98,5 +98,9 @@ public abstract class AppFabricTestService {
 
   public static int getPort() {
     return port;
+  }
+
+  public static URI getEndPoint(String path) throws URISyntaxException {
+    return new URI("http://" + hostname + ":" + port + path);
   }
 }

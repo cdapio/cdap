@@ -26,7 +26,6 @@ import org.junit.runners.Suite;
 public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
-  private static final String hostname = "127.0.0.1";
 
   public static HttpResponse doGet(String resource) throws Exception {
     return doGet(resource, null);
@@ -34,7 +33,7 @@ public class AppFabricTestsSuite {
 
   public static HttpResponse doGet(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+    HttpGet get = new HttpGet(AppFabricTestBase.getEndPoint(resource));
 
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
@@ -51,14 +50,14 @@ public class AppFabricTestsSuite {
     return client.execute(request);
   }
 
-  public static HttpPost getPost(String resource) {
-    HttpPost post = new HttpPost("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+  public static HttpPost getPost(String resource) throws Exception {
+    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
     post.setHeader(AUTH_HEADER);
     return post;
   }
 
-  public static HttpPut getPut(String resource) {
-    HttpPut put = new HttpPut("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+  public static HttpPut getPut(String resource) throws Exception {
+    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return put;
   }
@@ -73,7 +72,7 @@ public class AppFabricTestsSuite {
 
   public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
 
     if (body != null) {
       post.setEntity(new StringEntity(body));
@@ -96,14 +95,14 @@ public class AppFabricTestsSuite {
 
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
   }
 
   public static HttpResponse doPut(String resource, String body) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
     if (body != null) {
       put.setEntity(new StringEntity(body));
     }
@@ -113,7 +112,7 @@ public class AppFabricTestsSuite {
 
   public static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + AppFabricTestService.getPort() + resource);
+    HttpDelete delete = new HttpDelete(AppFabricTestBase.getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
   }

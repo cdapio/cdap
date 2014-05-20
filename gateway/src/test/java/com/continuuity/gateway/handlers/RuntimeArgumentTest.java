@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.GatewayTestService;
+import com.continuuity.gateway.GatewayTestBase;
 import com.continuuity.gateway.apps.HighPassFilterApp;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -13,7 +13,7 @@ import org.junit.Test;
 /**
  * Tests the runtime args - setting it through runtimearg API and Program start API
  */
-public class RuntimeArgumentTest extends GatewayTestService {
+public class RuntimeArgumentTest extends GatewayTestBase {
   @Test
   public void testFlowRuntimeArgs() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.deploy(HighPassFilterApp.class, "HighPassFilterApp");
