@@ -11,6 +11,14 @@ dependencies {
     compile libraries.google_guice
     compile libraries.google_guice_assistedinject
     compile libraries.google_guava
+    compile libraries.jetty8
+    compile libraries.jetty8_util
+    compile libraries.jetty8_security
+    compile libraries.jetty8_plus
+    compile libraries.jetty8_jaspi
+    compile libraries.servlet_api
+    compile libraries.geronimo_jaspi
+    compile libraries.unboundid
 
     testCompile libraries.junit
     testCompile(libraries.hbase94) {

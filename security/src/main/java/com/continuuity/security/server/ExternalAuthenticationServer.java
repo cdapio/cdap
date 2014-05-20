@@ -9,11 +9,12 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.HandlerList;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.thread.QueuedThreadPool;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,11 +97,15 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      Connector connector = new SelectChannelConnector();
+      ContextHandler context = new ContextHandler();
+      context.setContextPath("*");
+      context.setHandler(handlers);
+
+      SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
       server.setConnectors(new Connector[]{connector});
 
-      server.setHandler(handlers);
+      server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());
