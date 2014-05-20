@@ -1518,7 +1518,7 @@ Monitor HTTP API
 ================
 Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
 
-	GET <base-url>/monitor/<endpoint>
+	GET <base-url>/system/services/<service-id>/status
 
 The status of these Reactor services can be checked.
 
@@ -1527,7 +1527,7 @@ The status of these Reactor services can be checked.
    :widths: 20 20 60
    
    * - Service Name
-     - Endpoint
+     - Service-Id
      - Description of the Service
    * - ``Metrics``
      - ``metrics``
@@ -1551,7 +1551,7 @@ Example
    :stub-columns: 1
    
    * - HTTP Method
-     - ``GET <base-url>/monitor/metrics``
+     - ``GET <base-url>/system/services/metrics/status``
    * - Description
      - Returns the status of the Metrics Service
 

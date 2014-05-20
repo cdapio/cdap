@@ -29,7 +29,9 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   @Inject
   LocationStreamFileWriterFactory(CConfiguration cConf, StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
-    this.filePrefix = cConf.get(Constants.Stream.FILE_PREFIX);
+    this.filePrefix = String.format("%s.%d",
+                                    cConf.get(Constants.Stream.FILE_PREFIX),
+                                    cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0));
   }
 
   @Override

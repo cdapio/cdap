@@ -331,6 +331,9 @@ public final class Constants {
     public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
     public static final String CONTAINER_MEMORY_MB = "stream.container.memory.mb";
     public static final String CONTAINER_INSTANCES = "stream.container.instances";
+
+    // Tell the instance id of the YARN container. Set by the StreamHandlerRunnable only, not in default.xml
+    public static final String CONTAINER_INSTANCE_ID = "stream.container.instance.id";
     /* End CConfiguration keys */
 
     /* Begin constants used by stream */
@@ -351,7 +354,7 @@ public final class Constants {
     public static final long CONSUMER_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
 
     // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
-    public static final String HANDLER_CONSUMER_NS = "stream.handler";
+    public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
 
     /* End constants used by stream */
   }
