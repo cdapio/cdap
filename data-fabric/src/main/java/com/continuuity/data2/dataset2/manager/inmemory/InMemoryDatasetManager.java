@@ -25,9 +25,17 @@ import java.util.Set;
  */
 public class InMemoryDatasetManager implements DatasetManager {
   private final Set<String> modules = Sets.newHashSet();
-  @Inject(optional = true)
-  private final DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
+  private final DatasetDefinitionRegistry registry;
   private final Map<String, DatasetInstanceSpec> instances = Maps.newHashMap();
+
+  public InMemoryDatasetManager() {
+    this(new InMemoryDatasetDefinitionRegistry());
+  }
+
+  @Inject
+  public InMemoryDatasetManager(DatasetDefinitionRegistry registry) {
+    this.registry = registry;
+  }
 
   @Override
   public synchronized void register(String moduleName, Class<? extends DatasetModule> moduleClass)
