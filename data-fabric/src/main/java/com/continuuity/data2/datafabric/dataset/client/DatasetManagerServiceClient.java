@@ -227,7 +227,7 @@ public class DatasetManagerServiceClient {
   private String getDetails(HttpResponse response) throws DatasetManagementException {
     return String.format("Response code: %s, message:'%s', body: '%s'",
                          response.responseCode, response.responseMessage,
-                         new String(response.responseBody, Charsets.UTF_8));
+                         response.responseBody == null ? "null" : new String(response.responseBody, Charsets.UTF_8));
 
   }
 

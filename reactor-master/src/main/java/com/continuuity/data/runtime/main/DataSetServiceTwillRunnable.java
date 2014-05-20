@@ -45,7 +45,6 @@ public class DataSetServiceTwillRunnable extends AbstractReactorTwillRunnable {
 
   @Override
   public void doInit(TwillContext context) {
-    super.initialize(context);
     LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
