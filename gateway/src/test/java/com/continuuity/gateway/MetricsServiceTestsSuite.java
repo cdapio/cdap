@@ -1,4 +1,4 @@
-package com.continuuity.gateway.handlers.metrics;
+package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -8,13 +8,13 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.MockMetricsCollectionService;
-import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
+import com.continuuity.gateway.handlers.metrics.MetricsDeleteTest;
+import com.continuuity.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
+import com.continuuity.gateway.handlers.metrics.MetricsQueryTest;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
@@ -104,17 +104,18 @@ public class MetricsServiceTestsSuite  {
           });
         }
       },
-      new AppFabricTestModule(conf),
-      new MetricsHandlerModule()
+      new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
              @Override
              protected void configure() {
-               // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+               // It's a bit hacky to add it here. Need to refactor
+               // these bindings out as it overlaps with
                // AppFabricServiceModule
                bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
                bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-               MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+               MockMetricsCollectionService metricsCollectionService =
+                 new MockMetricsCollectionService();
                bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
                bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
              }
