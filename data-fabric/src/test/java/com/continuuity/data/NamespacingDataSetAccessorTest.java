@@ -53,7 +53,7 @@ public abstract class NamespacingDataSetAccessorTest {
 
   private String getRawName(DataSetClient dsClient) {
     if (dsClient instanceof OrderedColumnarTable) {
-      return ((BufferingOcTableClient) dsClient).getName();
+      return ((BufferingOcTableClient) dsClient).getTableName();
     }
 
     throw new RuntimeException("Unknown DataSetClient type: " + dsClient.getClass());
