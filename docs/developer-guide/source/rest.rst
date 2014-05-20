@@ -1,13 +1,13 @@
-.. :Author: John Jackson
-   :Description: HTTP Interface to the Continuuity Reactor
+.. :author: Continuuity, Inc.
+   :version: 2.1.0
+   :description: HTTP Interface to the Continuuity Reactor
 
 =================================
-REST API
+Continuuity Reactor HTTP REST API
 =================================
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 
 Introduction
@@ -15,12 +15,12 @@ Introduction
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
-- **Stream**: sending data events to a Stream, or to inspect the contents of a Stream.
-- **Data**: interacting with DataSets (currently limited to Tables).
-- **Procedure**: sending queries to a Procedure.
-- **Reactor**: deploying and managing Applications.
-- **Logs**: retrieving Application logs.
-- **Metrics**: retrieving metrics for system and user Applications (user-defined metrics).
+- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
+- **Data:** interacting with DataSets (currently limited to Tables).
+- **Procedure:** sending queries to a Procedure.
+- **Reactor:** deploying and managing Applications.
+- **Logs:** retrieving Application logs.
+- **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
 
 **Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
@@ -292,8 +292,8 @@ A read is performed as an HTTP POST method to the URL::
 
    * - Parameter
      - Description
-   * - ``<new-stream-id>``
-     - Name of the Stream to be read from
+   * - ``<stream-id>``
+     - Name of an existing Stream
 
 The request must pass the ``Consumer-ID`` in a header of the form::
 
@@ -1139,10 +1139,10 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
-To do that, send an HTTP GET request::
+You can download the logs that are emitted by any of the *Flows*, *Procedures*, or *MapReduce* jobs
+running in the Continuuity Reactor. To do that, send an HTTP GET request::
 
-	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&end=<ts>
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -1153,11 +1153,11 @@ To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
    * - ``<ts>``
-     - *Start* and *end* time, given as seconds since the start of the Epoch.
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 Example
 .......
@@ -1167,7 +1167,7 @@ Example
 
    * - HTTP Method
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
-       ``logs?start=1382576400&end=1382576700``
+       ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
@@ -1189,7 +1189,7 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-`Continuuity Reactor Operations Guide <operations>`_.
+:doc:`Continuuity Reactor Operations Guide </operations>`.
 
 Metrics Requests
 ----------------
@@ -1393,8 +1393,8 @@ These metrics are available in the Flowlet context:
    * - Flowlet Metric
      - Description
    * - ``process.busyness``
-     - A number from 0 to 100 indicating how “busy” the Flowlet is.
-       Note that you cannot aggregate over this metric.
+     - A number from 0 to 100 indicating how “busy” the Flowlet is;
+       note that you cannot aggregate over this metric.
    * - ``process.errors``
      - Number of errors while processing.
    * - ``process.events.processed``
@@ -1475,17 +1475,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs </developers/javadocs/index.html>`__,
+- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Operating a Continuuity Reactor <operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.
 

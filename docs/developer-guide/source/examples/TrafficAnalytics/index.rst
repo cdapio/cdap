@@ -1,19 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
-
-:orphan:
 
 ==========================
 TrafficAnalytics Example
 ==========================
 
-----------------------------------------------------------
 A Continuuity Reactor Application demonstrating MapReduce
-----------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -252,4 +247,4 @@ Either:
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
-`Download the example </developers/examples-files/continuuity-TrafficAnalytics-2.1.0.zip>`_
+Download the example: :download:`continuuity-TrafficAnalytics-2.1.0.zip </examples/TrafficAnalytics/continuuity-TrafficAnalytics-2.1.0.zip>`

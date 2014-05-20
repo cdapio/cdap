@@ -7,9 +7,9 @@
 Installation and Configuration
 ==============================================================
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 
 Introduction
@@ -39,7 +39,7 @@ These are the Continuuity Reactor components:
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
-`hardware requirements <#hardware-requirements>`__ are relatively modest, 
+`hardware requirements <#hardware-requirements>`_ are relatively modest, 
 as most of the work is done by the Hadoop cluster. These two
 boxes provide high availability; at any one time, one of them is the leader
 providing services while the other is a follower providing failover support. 
@@ -433,7 +433,7 @@ Where to Go Next
 ================
 Now that you've installed Continuuity Reactor, take a look at:
 
-- :doc:`Introduction to Continuuity Reactor </intro>`,
+- `Introduction to Continuuity Reactor <http://continuuity.com/developers/>`__,
   an introduction to Big Data and the Continuuity Reactor.
 
 Appendix: ``continuuity-site.xml``

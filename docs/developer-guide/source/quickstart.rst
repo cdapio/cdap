@@ -1,13 +1,12 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introducing new developers to Continuuity Reactor
 
 ===============================
 Quick Start
 ===============================
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 This Quick Start will guide you through installing Continuuity Reactor,
 running an example that counts HTTP status codes
@@ -20,9 +19,9 @@ We've pre-deployed one of the example applications to the Continuuity Reactor.
 When you startup the Reactor, you'll be guided through viewing the application,
 injecting an Event into a Flow and querying a Procedure to obtain results.
 
-The example code for the *AccessLogApp* that we'll be using is located in ``/examples/LogAnalytics``.
+The example code for the *ResponseCodeAnalytics* that we'll be using is located in ``/examples/ResponseCodeAnalytics``.
 
-Step 1 : Installation and Startup
+Step 1: Installation and Startup
 ---------------------------------
 Download and unpack the SDK from `Continuuity.com </download>`_.
 
@@ -40,7 +39,7 @@ View the Reactor Dashboard in a browser window::
 
 Take the tour: you will be guided through the Dashboard, injecting HTTP log events and querying a Procedure to get a count of status codes.
 
-Step 2 : The Dashboard
+Step 2: The Dashboard
 ----------------------
 When you first open the Dashboard, you'll be greeted with:
 
@@ -107,34 +106,33 @@ and make the following changes.
 
 After the line ``private OutputEmitter<Integer> output;`` insert this code::
 
-    // Emitter for emitting client IP address to the next Flowlet
-    @Output("clientIps")
-    private OutputEmitter<String> outputClientIP;
+	// Emitter for emitting client IP address to the next Flowlet
+	@Output("clientIps")
+	private OutputEmitter<String> outputClientIP;
 
 This will define an emitter *clientIps* that we'll send the client IPs out on.
 
-After the line ``output.emit(Integer.parseInt(matcher.group(6)));`` insert:
+After the line ``output.emit(Integer.parseInt(matcher.group(6)));`` insert::
 
-          output.emit(Integer.parseInt(matcher.group(6)));
-          // Emit the IP address to the next connected Flowlet
-          outputClientIP.emit(matcher.group(1));
+	// Emit the IP address to the next connected Flowlet
+	outputClientIP.emit(matcher.group(1));
 
 This will implement the emitter *clientIps* and send the client IP address to the
 downstream Flowlet.
 
-After the closing bracket after the line
-``statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);`` insert::
+Add to the class ``LogCountFlowlet`` the following ``count`` method::
 
     // Annotation indicates that this method can process incoming data
     @ProcessInput
     public void count(String ip) {
+    
       // Increment the number of occurrences of the client IP address by 1
       statusCodes.increment(Bytes.toBytes("clientIPKey"), Bytes.toBytes(ip), 1L);
     }
 
-This adds a new ``count`` method that will count IP address occurrences.
+This new method that will count IP address occurrences.
 
-After the closing bracket after the line ``responder.sendJson(statusCountMap);`` insert::
+To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` method::
 
     @Handle("getClientIPCounts")
     public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
@@ -143,6 +141,7 @@ After the closing bracket after the line ``responder.sendJson(statusCountMap);``
 
       // Get the row using the row key
       if (row != null) {
+      
         // Get the number of occurrences of each client IP address
         for (Map.Entry<byte[], byte[]> colValue : row.getColumns().entrySet()) {
           statusCountMap.put(Bytes.toString(colValue.getKey()), Bytes.toLong(colValue.getValue()));
@@ -152,7 +151,7 @@ After the closing bracket after the line ``responder.sendJson(statusCountMap);``
       responder.sendJson(statusCountMap);
     }
 
-This adds a new ``getClientIPCounts`` method that will query the DataSet (storage) for the IP address occurrences.
+The new ``getClientIPCounts`` method that will query the DataSet (storage) for the IP address occurrences.
 
 After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can build the .JAR file by running::
 
@@ -189,5 +188,5 @@ Where to Go Next
 ----------------
 Now that you've had a look at Continuuity Reactor, take a look at:
 
-- :doc:`Continuuity Reactor Programming Guide </programming>`,
-  an introduction to programming applications for the Continuuity Reactor.
+- `Developer Examples <examples/index.html>`__,
+  three different examples to run and experiment with.
