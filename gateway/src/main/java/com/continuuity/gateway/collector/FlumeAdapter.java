@@ -98,7 +98,12 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
 
         // Set headers
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-          urlConn.setRequestProperty(entry.getKey(), entry.getValue());
+          String key = entry.getKey();
+          if (!Constants.Gateway.CONTINUUITY_API_KEY.equals(key)
+            && !Constants.Gateway.HEADER_DESTINATION_STREAM.equals(key)) {
+            key = streamName + "." + key;
+          }
+          urlConn.setRequestProperty(key, entry.getValue());
         }
 
         // Write body
