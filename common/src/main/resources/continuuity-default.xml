@@ -221,7 +221,7 @@
 
     <property>
         <name>stream.flume.threads</name>
-        <value>20</value>
+        <value>100</value>
     </property>
 
     <property>
