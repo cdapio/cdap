@@ -310,6 +310,15 @@ public final class Constants {
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
     }
+
+    /**
+     * Twill Runnable configuration.
+     */
+    public static final class Container {
+      public static final String NUM_INSTANCES = "dataset.service.num.instances";
+      public static final String NUM_CORES = "dataset.service.num.cores";
+      public static final String MEMORY_MB = "dataset.service.memory.mb";
+    }
   }
 
   /**

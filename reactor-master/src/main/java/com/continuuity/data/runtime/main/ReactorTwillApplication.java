@@ -138,15 +138,15 @@ public class ReactorTwillApplication implements TwillApplication {
 
 
   private TwillSpecification.Builder.RunnableSetter addDataSetService(TwillSpecification.Builder.MoreRunnable builder) {
-    int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 1);
-    int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 1024);
-    int txInstances = cConf.getInt(Constants.Transaction.Container.NUM_INSTANCES, 1);
+    int numCores = cConf.getInt(Constants.Dataset.Container.NUM_CORES, 1);
+    int memoryMb = cConf.getInt(Constants.Dataset.Container.MEMORY_MB, 1024);
+    int instances = cConf.getInt(Constants.Dataset.Container.NUM_INSTANCES, 1);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder
       .with()
-      .setVirtualCores(txNumCores)
-      .setMemory(txMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(txInstances)
+      .setVirtualCores(numCores)
+      .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
       .build();
 
     return builder.add(new DataSetServiceTwillRunnable("dsservice", "cConf.xml", "hConf.xml"), resourceSpec)
