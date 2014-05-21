@@ -67,8 +67,8 @@ public class LocalDataSetUtil {
                                  }, accessor),
                                  locationFactory));
 
-    instantiator.init(new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
-      Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS));
+//    instantiator.init(new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
+//      Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS));
     return instantiator.getDataSetSpecification(datasetName, opContext);
   }
 
@@ -76,13 +76,14 @@ public class LocalDataSetUtil {
     DataSetAccessor accessor = new LocalDataSetAccessor(configuration, LevelDBOcTableService.getInstance());
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, accessor);
 
-    DataSetInstantiator instantiator = new DataSetInstantiator(dataFabric, this.getClass().getClassLoader());
-    instantiator.addDataSet(spec);
-    DataSet ds = instantiator.getDataSet(spec.getName());
-    for (TransactionAware txAware : instantiator.getTransactionAware()) {
-      txAware.startTx(tx);
-    }
-    return ds;
+//    DataSetInstantiator instantiator = new DataSetInstantiator(dataFabric, this.getClass().getClassLoader());
+//    instantiator.addDataSet(spec);
+//    DataSet ds = instantiator.getDataSet(spec.getName());
+//    for (TransactionAware txAware : instantiator.getTransactionAware()) {
+//      txAware.startTx(tx);
+//    }
+//    return ds;
+    return null;
   }
 
 }

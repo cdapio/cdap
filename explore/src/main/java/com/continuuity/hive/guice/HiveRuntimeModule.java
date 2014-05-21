@@ -10,6 +10,7 @@ import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -22,6 +23,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -31,16 +34,26 @@ import java.net.URL;
  */
 public class HiveRuntimeModule extends RuntimeModule {
 
+  /**
+   * Use the given file as hive-site.xml, instead of the one automatically retrieved from the classpath.
+   */
+  private void bypassHiveConfClasspath(Configuration hiveConf) throws Exception {
+    // This will call the static code that sets hiveSiteURL.
+    // We can reset it after this call, using reflection.
+    new HiveConf();
+    File confDir = Files.createTempDir();
+    File hiveFile = new File(confDir, "hive-site.xml");
+    hiveConf.writeXml(new FileOutputStream(hiveFile));
+    hiveFile.deleteOnExit();
+
+    Field hiveSiteUrlField = HiveConf.class.getDeclaredField("hiveSiteURL");
+    hiveSiteUrlField.setAccessible(true);
+    hiveSiteUrlField.set(null, hiveFile.toURI().toURL());
+  }
+
   @Override
   public Module getInMemoryModules() {
     try {
-      // The plan here is to create a configuration object with all the settings that we want,
-      // and write it to the classpath, so that new HiveConf doesn't complain.
-      URL url = HiveServer.class.getClassLoader().getResource("hive-site-placeholder.xml");
-      assert url != null;
-      File confDir = new File(url.toURI()).getParentFile();
-      File hiveFile = new File(confDir, "hive-site.xml");
-
       final Configuration hiveConf = new Configuration();
       hiveConf.clear();
       hiveConf.set("hive.server2.authentication", "NOSASL");
@@ -61,10 +74,9 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveMetaStorePort = PortDetector.findFreePort();
       hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
 
-      hiveConf.writeXml(new FileOutputStream(hiveFile));
-      hiveFile.deleteOnExit();
+      bypassHiveConfClasspath(hiveConf);
 
-      // This will load the hive-site.xml just created in the classpath
+      // This HiveConf object will load the hive-site.xml that we put in a temp folder
       final HiveConf newHiveConf = new HiveConf();
       return Modules.combine(new HiveModule(),
           new AbstractModule() {
@@ -100,7 +112,7 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveServerPort = PortDetector.findFreePort();
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
-      final HiveConf newHiveConf = new HiveConf();
+      HiveConf newHiveConf = new HiveConf();
       newHiveConf.clear();
       newHiveConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
       newHiveConf.set("hive.zookeeper.quorum", hiveConf.get("hive.zookeeper.quorum"));
@@ -111,11 +123,14 @@ public class HiveRuntimeModule extends RuntimeModule {
       newHiveConf.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionPreHook");
       newHiveConf.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionPostHook");
 
+      bypassHiveConfClasspath(newHiveConf);
+
+      final HiveConf passedHiveConf = new HiveConf();
       return Modules.combine(new HiveModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
-              bind(HiveConf.class).toInstance(newHiveConf);
+              bind(HiveConf.class).toInstance(passedHiveConf);
               bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
               bind(HiveServer.class).in(Scopes.SINGLETON);
             }
