@@ -18,8 +18,8 @@ dependencies {
     compile libraries.jetty8_jaspi
     compile libraries.servlet_api
     compile libraries.geronimo_jaspi
-    compile libraries.unboundid
 
+    testCompile libraries.unboundid
     testCompile libraries.junit
     testCompile(libraries.hbase94) {
         exclude module: 'junit'

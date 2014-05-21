@@ -486,7 +486,7 @@ public final class Constants {
     public static final String CFG_REALM = "security.realm";
     /** Authentication Handler class name */
     public static final String AUTH_HANDLER_CLASS = "security.authentication.handlerClassName";
-    /** Authentication Handler config base */
+    /** Prefix for all configurable properties of an Authentication handler. */
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";

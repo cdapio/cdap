@@ -23,14 +23,14 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.Multibinder;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.HandlerList;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Guice bindings for security related classes.  This extends {@code PrivateModule} in order to limit which classes
@@ -49,10 +49,11 @@ public abstract class SecurityModule extends PrivateModule {
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
-    Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
-                                                                  Names.named("security.handlers.set"));
-    handlerBinder.addBinding().toProvider(AuthenticationHandlerProvider.class);
-    handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
+    MapBinder<String, Handler> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Handler.class,
+                                                                     Names.named("security.handlers.map"));
+
+    handlerBinder.addBinding("AuthenticationHandler").toProvider(AuthenticationHandlerProvider.class);
+    handlerBinder.addBinding("GrantTokenHandler").to(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(AuthenticationHandlerListProvider.class)
                            .in(Scopes.SINGLETON);
@@ -91,13 +92,12 @@ public abstract class SecurityModule extends PrivateModule {
     private final HandlerList handlerList;
 
     @Inject
-    public AuthenticationHandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
+    public AuthenticationHandlerListProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
       handlerList = new HandlerList();
-      Handler[] handlerArray = handlers.toArray(new Handler[handlers.size()]);
-      ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlerArray[0];
-      Handler grantAccessTokenHandler = handlerArray[1];
+      ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlers.get("AuthenticationHandler");
+      Handler grantAccessTokenHandler = handlers.get("GrantTokenHandler");
       securityHandler.setHandler(grantAccessTokenHandler);
-      handlerList.setHandlers(handlerArray);
+      handlerList.setHandlers(handlers.values().toArray(new Handler[handlers.size()]));
     }
 
     @Override
