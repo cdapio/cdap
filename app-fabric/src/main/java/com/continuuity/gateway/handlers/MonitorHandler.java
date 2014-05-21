@@ -74,11 +74,14 @@ public class MonitorHandler extends AppFabricHelper {
     public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
+  //List of services whose status can be retrieved
   private List<Service> monitorList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS,
                                                     Service.APPFABRIC);
 
+  //List of services whose number of container instances can be queried
   private List<Service> getInstanceList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS);
 
+  //List of services whose instance count can be changed
   private List<Service> setInstanceList = Arrays.asList(Service.METRICS, Service.TRANSACTION);
 
   @Inject
