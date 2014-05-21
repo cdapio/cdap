@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -45,6 +46,7 @@ public class LocalQueueTest extends QueueTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
+      new DiscoveryRuntimeModule().getSingleNodeModules(),
       new DataFabricLocalModule(conf));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -61,6 +63,7 @@ public class LocalQueueTest extends QueueTest {
   public void testInjection() throws IOException {
     Injector injector = Guice.createInjector(
       new LocationRuntimeModule().getSingleNodeModules(),
+      new DiscoveryRuntimeModule().getSingleNodeModules(),
       new DataFabricModules(conf).getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));

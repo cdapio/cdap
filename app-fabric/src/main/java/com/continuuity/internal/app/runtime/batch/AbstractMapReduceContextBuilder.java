@@ -1,16 +1,15 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.DefaultProgram;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -18,6 +17,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
@@ -25,6 +25,7 @@ import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -32,6 +33,7 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -41,7 +43,8 @@ import javax.annotation.Nullable;
 
 /**
  * Builds the {@link BasicMapReduceContext}.
- * Subclasses should override {@link #createInjector()} method by providing Guice injector configured for running
+ * Subclasses must override {@link #prepare()} method by providing Guice injector configured for running and starting
+ * services specific to the environment. To release those resources subclass must override {@link #finish()}
  * environment.
  */
 public abstract class AbstractMapReduceContextBuilder {
@@ -51,7 +54,6 @@ public abstract class AbstractMapReduceContextBuilder {
   /**
    * Build the instance of {@link BasicMapReduceContext}.
    *
-   * @param conf runtime configuration
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
    * @param workflowBatch Tells whether the batch job is started by workflow.
@@ -63,8 +65,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
    * @return instance of {@link BasicMapReduceContext}
    */
-  public BasicMapReduceContext build(CConfiguration conf,
-                                     MapReduceMetrics.TaskType type,
+  public BasicMapReduceContext build(MapReduceMetrics.TaskType type,
                                      String runId,
                                      long logicalStartTime,
                                      String workflowBatch,
@@ -76,7 +77,7 @@ public abstract class AbstractMapReduceContextBuilder {
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName,
                                      File destinationUnpackedJarDir) {
-    Injector injector = createInjector();
+    Injector injector = prepare();
 
     // Initializing Program
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -110,11 +111,13 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing dataset context and hooking it up with mapreduce job transaction
 
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
+    DatasetManager datasetManager = injector.getInstance(DatasetManager.class);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetContext =
-      new DataSetInstantiator(dataFabric, classLoader);
-    dataSetContext.setDataSets(program.getSpecification().getDataSets().values());
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetManager, classLoader);
+    ApplicationSpecification programSpec = program.getSpecification();
+    dataSetContext.setDataSets(programSpec.getDataSets().values(),
+                               programSpec.getDatasets().values());
 
     // if this is not for a mapper or a reducer, we don't need the metrics collection service
     MetricsCollectionService metricsCollectionService =
@@ -124,8 +127,8 @@ public abstract class AbstractMapReduceContextBuilder {
     // NOTE: we are initializing all datasets of application, so that user is not required
     //       to define all datasets used in Mapper and Reducer classes on MapReduceJob
     //       class level
-    Map<String, DataSet> dataSets = DataSets.createDataSets(
-      dataSetContext, program.getSpecification().getDataSets().keySet());
+    Map<String, Closeable> dataSets = DataSets.createDataSets(
+      dataSetContext, Sets.union(programSpec.getDataSets().keySet(), programSpec.getDatasets().keySet()));
 
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
@@ -168,7 +171,15 @@ public abstract class AbstractMapReduceContextBuilder {
   }
 
   /**
+   * Refer to {@link AbstractMapReduceContextBuilder} for usage details
    * @return instance of {@link Injector} with bindings for current runtime environment
    */
-  protected abstract Injector createInjector();
+  protected abstract Injector prepare();
+
+  /**
+   * Refer to {@link AbstractMapReduceContextBuilder} for usage details
+   */
+  protected void finish() {
+    // Do NOTHING by default
+  }
 }
