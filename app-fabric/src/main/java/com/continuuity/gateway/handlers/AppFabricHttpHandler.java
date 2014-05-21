@@ -46,6 +46,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.util.AppFabricHelper;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -89,7 +90,6 @@ import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -137,7 +137,7 @@ import javax.ws.rs.PathParam;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class AppFabricHttpHandler extends AppFabricHelper {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
@@ -218,8 +218,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final DataSetAccessor dataSetAccessor;
 
   private final StreamAdmin streamAdmin;
-
-  private final TwillRunnerService twillRunnerService;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -303,7 +301,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.txClient = txClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
-    this.twillRunnerService = twillRunnerService;
   }
 
   /**
@@ -698,23 +695,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
-    }
-  }
-
   /**
    * Starts a Program.
    */
@@ -805,51 +785,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
-    }
-  }
-
-  /**
-   * Returns the number of instances of Reactor Services
-   */
-  @Path("/system/services/{service-name}/instances")
-  @GET
-  public void getInstance(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    int instances = 0;
-    if (twillControllerList != null) {
-      for (TwillController twillController : twillControllerList) {
-        LOG.info("RunID {} ", twillController.getRunId());
-        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
-      }
-      responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
-    } else {
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-    }
-  }
-
-  /**
-   * Sets the number of instances of Reactor Services
-   */
-  @Path("/system/services/{service-name}/instances")
-  @PUT
-  public void setInstance(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    try {
-      int instance = getInstances(request);
-      if (twillControllerList != null) {
-        for (TwillController twillController : twillControllerList) {
-          //twillController.sendCommand(serviceName, Command.Builder.of("suspend").build());
-          twillController.changeInstances(serviceName, instance).get();
-          //twillController.sendCommand(serviceName, Command.Builder.of("resume").build());
-        }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      }
-    } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1029,16 +964,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-
-  private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    String instanceCount = "";
-    Map<String, String> arguments = decodeArguments(request);
-    if (!arguments.isEmpty()) {
-      instanceCount = arguments.get("instances");
-    }
-    return Short.parseShort(instanceCount);
   }
 
   private ProgramStatus getProgramStatus(Id.Program id, Type type)
