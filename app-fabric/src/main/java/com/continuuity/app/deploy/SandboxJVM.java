@@ -4,8 +4,11 @@
 
 package com.continuuity.app.deploy;
 
+import com.continuuity.api.AbstractApplication;
 import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -99,9 +102,8 @@ public class SandboxJVM {
     // Load the JAR using the JAR class load and load the manifest file.
     File unpackedJarDir = Files.createTempDir();
 
+    Object app;
     try {
-      Object mainClass;
-
       try {
         if ("LOCAL".equals(locationFactory)) {
           lf = new LocalLocationFactory();
@@ -113,14 +115,11 @@ public class SandboxJVM {
         }
 
         Program archive = Programs.create(lf.create(jarFilename), unpackedJarDir);
-        mainClass = archive.getMainClass().newInstance();
+        app = archive.getMainClass().newInstance();
       } catch (Exception e) {
         LOG.error(e.getMessage());
         return -1;
       }
-
-      // Convert it to the type application.
-      Application application = (Application) mainClass;
 
       // Now, we are ready to call configure on application.
       // Setup security manager, this setting allows only output file to be written.
@@ -128,10 +127,19 @@ public class SandboxJVM {
       ApplicationSecurity.builder()
         .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
         .apply();
-
+  
       // Now, we call configure, which returns application specification.
-      ApplicationSpecification specification = Specifications.from(application.configure());
-
+      ApplicationSpecification specification;
+      if (app instanceof Application) {
+        specification = Specifications.from(((Application) app).configure());
+      } else if (app instanceof AbstractApplication) {
+        DefaultAppConfigurer configurer = new DefaultAppConfigurer((AbstractApplication) app);
+        ((AbstractApplication) app).configure(configurer, new ApplicationContext());
+        specification = configurer.createApplicationSpec();
+      } else {
+        throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
+                                                      app.getClass().getName()));
+      }
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.
       try {

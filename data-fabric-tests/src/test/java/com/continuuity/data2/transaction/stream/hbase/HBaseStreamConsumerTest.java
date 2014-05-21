@@ -6,10 +6,12 @@ package com.continuuity.data2.transaction.stream.hbase;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -45,6 +47,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionSystemClient txClient;
   private static InMemoryTransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
+  private static StreamFileWriterFactory fileWriterFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -60,6 +63,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(cConf, hConf)).with(new AbstractModule() {
 
         @Override
@@ -74,6 +78,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
     txManager.startAndWait();
   }
@@ -105,7 +110,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   @Override
-  protected String getStreamFilePrefix() {
-    return cConf.get(Constants.Stream.FILE_PREFIX) + ".0";
+  protected StreamFileWriterFactory getFileWriterFactory() {
+    return fileWriterFactory;
   }
 }

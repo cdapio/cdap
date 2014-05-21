@@ -25,10 +25,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,16 +44,15 @@ public class DatasetManagerService extends AbstractIdleService {
   private final DatasetTypeManager typeManager;
 
   private final DatasetManager mdsDatasetManager;
-  private final NavigableMap<String, Class<? extends DatasetModule>> defaultModules;
+  private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
 
   @Inject
   public DatasetManagerService(CConfiguration cConf,
                                LocationFactory locationFactory,
-                               @Named(Constants.Dataset.Manager.ADDRESS) InetAddress hostname,
                                DiscoveryService discoveryService,
                                @Named("datasetMDS") DatasetManager mdsDatasetManager,
                                @Named("defaultDatasetModules")
-                               NavigableMap<String, Class<? extends DatasetModule>> defaultModules,
+                               SortedMap<String, Class<? extends DatasetModule>> defaultModules,
                                TransactionSystemClient txSystemClient
   ) throws Exception {
 
@@ -72,8 +70,8 @@ public class DatasetManagerService extends AbstractIdleService {
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager)));
 
-    builder.setHost(hostname.getCanonicalHostName());
-    builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT, Constants.Dataset.Manager.DEFAULT_PORT));
+    builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
+    builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
 
     builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS,
                                               Constants.Dataset.Manager.DEFAULT_BACKLOG));

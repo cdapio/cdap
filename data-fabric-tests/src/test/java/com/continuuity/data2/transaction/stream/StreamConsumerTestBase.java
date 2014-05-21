@@ -8,7 +8,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data.file.FileWriter;
-import com.continuuity.data.stream.TimePartitionedStreamFileWriter;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -45,7 +45,7 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract TransactionSystemClient getTransactionClient();
 
-  protected abstract String getStreamFilePrefix();
+  protected abstract StreamFileWriterFactory getFileWriterFactory();
 
   @Test
   public void testFIFORollback() throws Exception {
@@ -106,7 +106,7 @@ public abstract class StreamConsumerTestBase {
 
   private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
     Map<String, String> headers = ImmutableMap.of();
-    FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(streamConfig, getStreamFilePrefix());
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
       writer.append(new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), System.currentTimeMillis()));

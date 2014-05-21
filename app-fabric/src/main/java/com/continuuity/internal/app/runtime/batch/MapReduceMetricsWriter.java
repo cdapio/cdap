@@ -107,6 +107,7 @@ public class MapReduceMetricsWriter {
   // report continuuity stats coming from user metrics or dataset operations
   private void reportContinuuityStats() throws IOException, InterruptedException {
     Counters counters = jobConf.getCounters();
+    // metrics scoped to mapper and reducer tasks
     for (MetricsScope scope : MetricsScope.values()) {
       String group = "continuuity.mapper." + scope.name();
       reportContinuuityStats(counters.getGroup(group),
@@ -115,6 +116,23 @@ public class MapReduceMetricsWriter {
       group = "continuuity.reducer." + scope.name();
       reportContinuuityStats(counters.getGroup(group),
                              context.getSystemReducerMetrics(scope), scope, previousReduceStats);
+    }
+
+    // also any other metrics (including dataset metrics)
+    for (String group : counters.getGroupNames()) {
+      if (group.startsWith("continuuity.")) {
+        String scopePart = group.substring(group.lastIndexOf(".") + 1);
+        // last one should be scope
+        MetricsScope scope;
+        try {
+          scope = MetricsScope.valueOf(scopePart);
+        } catch (IllegalArgumentException e) {
+          // SHOULD NEVER happen, simply skip if happens
+          continue;
+        }
+        reportContinuuityStats(counters.getGroup(group),
+                               context.getSystemMetrics(scope), scope, previousReduceStats);
+      }
     }
   }
 

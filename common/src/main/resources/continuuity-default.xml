@@ -221,7 +221,7 @@
 
     <property>
         <name>stream.flume.threads</name>
-        <value>20</value>
+        <value>100</value>
     </property>
 
     <property>
@@ -238,7 +238,7 @@
 
     <property>
         <name>stream.index.interval</name>
-        <value>300000</value>
+        <value>10000</value>
         <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
     </property>
 
@@ -310,13 +310,6 @@
         <value>15165</value>
         <description>The port number for the transaction
             service</description>
-    </property>
-
-    <property>
-        <name>data.tx.command.port</name>
-        <value>15175</value>
-        <description>The port number for the transaction
-            service command endpoint</description>
     </property>
 
     <property>
@@ -498,18 +491,6 @@
 
     <!-- App Fabric related changes -->
     <property>
-        <name>app.bind.port</name>
-        <value>45000</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
-    <property>
-        <name>app.command.port</name>
-        <value>45010</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
-    <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
@@ -519,6 +500,24 @@
         <name>app.output.dir</name>
         <value>/programs</value>
         <description>Directory where all archives are stored.</description>
+    </property>
+
+    <property>
+        <name>dataset.service.output.dir</name>
+        <value>/datasets</value>
+        <description>Directory where all dataset modules archives are stored.</description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>DataSet service hostname</description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.port</name>
+        <value>45055</value>
+        <description>DataSet service port</description>
     </property>
 
     <property>

@@ -17,6 +17,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.util.List;
 
 /**
@@ -71,7 +72,7 @@ public class RuntimeDataSetTest extends DataSetTestBase {
    */
   public static final class ListDataSet extends DataSet {
 
-    private List<? extends DataSet> dataSets;
+    private List<? extends Closeable> dataSets;
 
     public ListDataSet(String name) {
       super(name);
@@ -81,7 +82,7 @@ public class RuntimeDataSetTest extends DataSetTestBase {
     public DataSetSpecification configure() {
       try {
         return new DataSetSpecification.Builder(this)
-          .datasets(new KeyValueTable("kv"), new ObjectStore<String>("stringStore", String.class))
+          .datasets(new KeyValueTable("one"), new ObjectStore<String>("stringStore", String.class))
           .create();
       } catch (UnsupportedTypeException e) {
         throw Throwables.propagate(e);
@@ -91,7 +92,7 @@ public class RuntimeDataSetTest extends DataSetTestBase {
     @Override
     public void initialize(DataSetSpecification spec, DataSetContext context) {
       super.initialize(spec, context);
-      dataSets = Lists.newArrayList(context.getDataSet("kv"), context.getDataSet("stringStore"));
+      dataSets = Lists.newArrayList(context.getDataSet("one"), context.getDataSet("stringStore"));
     }
 
     @SuppressWarnings("unchecked")

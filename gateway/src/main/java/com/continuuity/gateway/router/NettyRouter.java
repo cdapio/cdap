@@ -122,6 +122,7 @@ public class NettyRouter extends AbstractIdleService {
       }
     };
 
+    tokenValidator.startAndWait();
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);
@@ -140,6 +141,7 @@ public class NettyRouter extends AbstractIdleService {
       clientBootstrap.shutdown();
       clientBootstrap.releaseExternalResources();
       serverBootstrap.releaseExternalResources();
+      tokenValidator.stopAndWait();
     }
 
     LOG.info("Stopped Netty Router.");

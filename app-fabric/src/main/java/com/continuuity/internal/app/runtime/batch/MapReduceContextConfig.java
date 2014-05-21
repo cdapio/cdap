@@ -1,12 +1,13 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.SimpleSplit;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
+import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
@@ -37,12 +38,9 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
-  private static final String HCONF_ATTR_INPUT_DATASET = "hconf.program.input.dataset";
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
-  private static final String HCONF_ATTR_OUTPUT_DATASET = "hconf.program.output.dataset";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
-  private static final String HCONF_ATTR_UNPACKED_JAR_DIR = "hconf.program.unpacked.jar.dir";
 
   private final JobContext jobContext;
 
@@ -59,14 +57,8 @@ public final class MapReduceContextConfig {
     setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
-    if (context.getInputDataset() != null && context.getInputDataset() instanceof DataSet) {
-      setInputDataSet(((DataSet) context.getInputDataset()).getName());
-      if (context.getInputDataSelection() != null) {
-        setInputSelection(context.getInputDataSelection());
-      }
-    }
-    if (context.getOutputDataset() != null) {
-      setOutputDataSet(((DataSet) context.getOutputDataset()).getName());
+    if (context.getInputDataset() != null && context.getInputDataSelection() != null) {
+      setInputSelection(context.getInputDataSelection());
     }
   }
 
@@ -123,12 +115,8 @@ public final class MapReduceContextConfig {
     return jobContext.getConfiguration().get(HCONF_ATTR_PROGRAM_JAR_NAME);
   }
 
-  private void setInputDataSet(String dataSetName) {
-    jobContext.getConfiguration().set(HCONF_ATTR_INPUT_DATASET, dataSetName);
-  }
-
   public String getInputDataSet() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_INPUT_DATASET);
+    return jobContext.getConfiguration().get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
   }
 
   private void setInputSelection(List<Split> splits) {
@@ -190,12 +178,8 @@ public final class MapReduceContextConfig {
     }
   }
 
-  private void setOutputDataSet(String dataSetName) {
-    jobContext.getConfiguration().set(HCONF_ATTR_OUTPUT_DATASET, dataSetName);
-  }
-
   public String getOutputDataSet() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET);
+    return jobContext.getConfiguration().get(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET);
   }
 
   private void setConf(CConfiguration conf) {

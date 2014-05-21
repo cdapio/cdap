@@ -9,9 +9,8 @@ ResponseCodeAnalytics Example
 A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
 ---------------------------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -131,6 +130,8 @@ Building and Running the Application and Example
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
 example code that is running on it as an "Application".
 
+We show the Windows prompt as ``>`` to indicate a command prompt opened in the SDK directory.
+
 In this example, you can either build the Application from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
 injecting Apache access log entries from an example file into the Application. 
@@ -153,6 +154,10 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 	$ bin/continuuity-reactor start
 
+On Windows::
+
+	> bin\reactor start
+
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
 #. Drag and drop the Application JAR file (``target/ResponseCodeAnalytics-1.0.jar``)
@@ -166,6 +171,13 @@ Command line tools are also available to deploy and manage apps. From within the
 #. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy [--gateway <hostname>]``
 #. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
 
+:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+On Windows:
+
+#. To deploy the App JAR file, run ``> bin\appManager deploy``
+#. To start the App, run ``> bin\appManager start``
+
 Running the Example
 -------------------
 
@@ -178,6 +190,12 @@ to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
 	$ bin/inject-data.sh [--gateway <hostname>]
 
+:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+On Windows::
+
+	> bin\inject-data
+
 Query
 .....
 There are two ways to query the *statusCodeTable* DataSet:
@@ -185,6 +203,10 @@ There are two ways to query the *statusCodeTable* DataSet:
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/methods/getCounts'
+
+  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
+
+	libexec\curl...
 
 #. Type a Procedure method name, in this case ``getCounts``, in the *Query* page of the Reactor Dashboard:
 
@@ -206,4 +228,11 @@ Either:
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/appManager.sh --action stop [--gateway <hostname>]``
 
-`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.1.0.zip>`_
+  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+  On Windows, run ``> bin\appManager stop``
+
+
+Downloading the Example
+=======================
+`Download the example </developers/examples-files/continuuity-ResponseCodeAnalytics-2.2.0.zip>`_
