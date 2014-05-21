@@ -355,6 +355,12 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
+Run at the command line::
+
+	$ stream-client --help
+
+for usage and documentation of options.
+
 Data HTTP API
 =============
 
