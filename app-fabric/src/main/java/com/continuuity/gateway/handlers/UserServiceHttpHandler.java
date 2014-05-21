@@ -14,14 +14,13 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.List;
-import java.util.Map;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -39,7 +38,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
 
   }
 
-  //Return the list of user twill apps for an application
+  /**Return the list of user twill apps for an application
+   *
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @Path("/user/{app-id}/")
   @GET
   public void getUserApps(final HttpRequest request, final HttpResponder responder,
@@ -53,6 +57,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
 
+  /**
+   * Return the runtimeargs for the specified twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @GET
   @Path("/user/{app-id}/runtimeargs")
   public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
@@ -62,6 +72,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
+  /**
+   * save the runtimeargs for the twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @PUT
   @Path("/user/{app-id}/runtimeargs")
   public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
@@ -69,6 +85,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Return the number of instances for user twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @GET
   @Path("/user/{app-id}/instances")
   public void getUserAppInstances(HttpRequest request, HttpResponder responder,
@@ -78,6 +100,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, reply);
   }
 
+  /**
+   * set instances
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @PUT
   @Path("/user/{app-id}/instances")
   public void setUserAppInstances(HttpRequest request, HttpResponder responder,
@@ -85,6 +113,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * start twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @POST
   @Path("/user/{app-id}/start")
   public void startApp(HttpRequest request, HttpResponder responder,
@@ -92,6 +126,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * stop twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @POST
   @Path("/user/{app-id}/stop")
   public void stopApp(HttpRequest request, HttpResponder responder,
@@ -99,6 +139,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * twill app status
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @GET
   @Path("/user/{app-id}/status")
   public void appStatus(HttpRequest request, HttpResponder responder,
@@ -108,8 +154,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, reply);
   }
 
-  /* metrics can be handled by metrics handlers, in the end-point /{scope}/{type}/{type-id}/{metric} , type can be
-  user above, user-app name can be type-id and that end-point should be able to handle the requests */
+  /**
+   * live info of a twill app
+   * @param request
+   * @param responder
+   * @param appId
+   */
   @GET
   @Path("/user/{app-id}/live-info")
   public void liveInfo(HttpRequest request, HttpResponder responder,
@@ -120,4 +170,5 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
     reply.addProperty("id", "sampleTwill");
     responder.sendJson(HttpResponseStatus.OK, reply);
   }
+
 }
