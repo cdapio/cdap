@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.program.Program;
@@ -13,6 +12,7 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.Map;
 
 /**
@@ -25,9 +25,9 @@ public abstract class AbstractContext implements DataSetContext {
 
   private final Program program;
   private final RunId runId;
-  private final Map<String, DataSet> datasets;
+  private final Map<String, Closeable> datasets;
 
-  public AbstractContext(Program program, RunId runId, Map<String, DataSet> datasets) {
+  public AbstractContext(Program program, RunId runId, Map<String, Closeable> datasets) {
     this.program = program;
     this.runId = runId;
     this.datasets = ImmutableMap.copyOf(datasets);
@@ -43,11 +43,10 @@ public abstract class AbstractContext implements DataSetContext {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T extends DataSet> T getDataSet(String name) {
+  public <T extends Closeable> T getDataSet(String name) {
     T dataSet = (T) datasets.get(name);
     Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
     return dataSet;
-
   }
 
   public String getAccountId() {
@@ -81,7 +80,7 @@ public abstract class AbstractContext implements DataSetContext {
    * method to release additional resources.
    */
   public void close() {
-    for (DataSet ds : datasets.values()) {
+    for (Closeable ds : datasets.values()) {
       closeDataSet(ds);
     }
   }
@@ -89,11 +88,11 @@ public abstract class AbstractContext implements DataSetContext {
   /**
    * Closes one dataset; logs but otherwise ignores exceptions.
    */
-  protected void closeDataSet(DataSet ds) {
+  protected void closeDataSet(Closeable ds) {
     try {
       ds.close();
     } catch (Throwable t) {
-      LOG.error("Dataset throws exceptions during close:" + ds.getName() + ", in context: " + this);
+      LOG.error("Dataset throws exceptions during close:" + ds.toString() + ", in context: " + this);
     }
   }
 }

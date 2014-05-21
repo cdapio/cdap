@@ -5,6 +5,7 @@ package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

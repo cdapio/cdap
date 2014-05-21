@@ -7,6 +7,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
