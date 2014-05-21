@@ -161,7 +161,7 @@ public class MonitorHandler extends AppFabricHelper {
         responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
       }
     } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service or Service Instance cannot be modified");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
     } catch (Exception e) {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
