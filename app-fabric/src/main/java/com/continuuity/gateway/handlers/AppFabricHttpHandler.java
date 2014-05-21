@@ -66,7 +66,10 @@ import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
@@ -104,6 +107,13 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -123,13 +133,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -1493,8 +1496,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         schema = "http";
       }
 
-      String url = String.format("%s://%s:%d/v2/apps/%s",
-                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
+      // Construct URL for promotion of application to remote cluster
+
+      Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
+        configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
+
+      BiMap<String, String> portForwards = HashBiMap.create(split);
+
+      String url = String.format("%s://%s:%s/v2/apps/%s",
+                                 schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
+
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
