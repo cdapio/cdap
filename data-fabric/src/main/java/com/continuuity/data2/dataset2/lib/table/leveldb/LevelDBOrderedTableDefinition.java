@@ -2,10 +2,10 @@ package com.continuuity.data2.dataset2.lib.table.leveldb;
 
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.data2.dataset2.lib.leveldb.LevelDBAware;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 
@@ -13,17 +13,13 @@ import java.io.IOException;
  *
  */
 public class LevelDBOrderedTableDefinition
-  extends AbstractDatasetDefinition<LevelDBOrderedTable, LevelDBOrderedTableAdmin> implements LevelDBAware {
+  extends AbstractDatasetDefinition<LevelDBOrderedTable, LevelDBOrderedTableAdmin> {
 
+  @Inject
   private LevelDBOcTableService service;
 
   public LevelDBOrderedTableDefinition(String name) {
     super(name);
-  }
-
-  @Override
-  public void setLevelDBService(LevelDBOcTableService service) {
-    this.service = service;
   }
 
   @Override

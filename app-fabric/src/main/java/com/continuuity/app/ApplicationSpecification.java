@@ -6,6 +6,7 @@ package com.continuuity.app;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
@@ -45,6 +46,20 @@ public interface ApplicationSpecification {
    *         for {@link DataSet}s configured for the Application.
    */
   Map<String, DataSetSpecification> getDataSets();
+
+  /**
+   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.module.DatasetModule} name
+   *         to {@link com.continuuity.internal.data.dataset.module.DatasetModule} class name for
+   *         dataset modules configured for the Application.
+   */
+  Map<String, String> getDatasetModules();
+
+  /**
+   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.Dataset} name to
+   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.internal.data.dataset.Dataset}s
+   *         configured for the Application.
+   */
+  Map<String, DatasetInstanceCreationSpec> getDatasets();
 
   /**
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}

@@ -4,6 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -20,7 +21,11 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Predicate;
@@ -32,6 +37,7 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -50,6 +56,7 @@ public class DataSetInstantiationBase {
   private final ClassLoader classLoader;
   // the known data set specifications
   private final Map<String, DataSetSpecification> datasets = Maps.newHashMap();
+  private final Map<String, DatasetInstanceCreationSpec> datasetsV2 = Maps.newHashMap();
 
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
@@ -71,9 +78,15 @@ public class DataSetInstantiationBase {
    * data sets' configure() method.
    * @param specs The list of DataSetSpecification's
    */
-  public void setDataSets(Iterable<DataSetSpecification> specs) {
+  public void setDataSets(Iterable<DataSetSpecification> specs,
+                          Iterable<DatasetInstanceCreationSpec> creationSpec) {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
+    }
+    for (DatasetInstanceCreationSpec spec : creationSpec) {
+      if (spec != null) {
+        this.datasetsV2.put(spec.getInstanceName(), spec);
+      }
     }
   }
 
@@ -91,7 +104,7 @@ public class DataSetInstantiationBase {
    * @return whether the instantiator knows the spec for the data set
    */
   public boolean hasDataSet(String name) {
-    return this.datasets.containsKey(name);
+    return this.datasets.containsKey(name) || this.datasetsV2.containsKey(name);
   }
 
   /**
@@ -102,15 +115,78 @@ public class DataSetInstantiationBase {
    *  @param fabric the data fabric to inject
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
-  public <T extends DataSet> T getDataSet(String dataSetName, DataFabric fabric)
+  @SuppressWarnings("unchecked")
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetManager datasetManager)
     throws DataSetInstantiationException {
 
     // find the data set specification
     DataSetSpecification spec = this.datasets.get(dataSetName);
-    if (spec == null) {
-      throw logAndException(null, "No data set named %s declared for application.", dataSetName);
+    if (spec != null) {
+      return (T) getDataSet(spec, fabric, dataSetName);
     }
-    return getDataSet(spec, fabric, dataSetName);
+
+    T dataSet = (T) getDataset(dataSetName, datasetManager);
+    if (dataSet != null) {
+      return dataSet;
+    }
+
+    throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
+  }
+
+  public <T extends Dataset> T getDataset(String dataSetName, DatasetManager datasetManager)
+    throws DataSetInstantiationException {
+
+    T dataset = getOrCreateDataset(dataSetName, datasetManager);
+
+    if (dataset instanceof TransactionAware) {
+      txAware.add((TransactionAware) dataset);
+      txAwareToMetricNames.put((TransactionAware) dataset, dataSetName);
+    }
+
+    return dataset;
+  }
+
+  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetManager datasetManager)
+    throws DataSetInstantiationException {
+    // First, get admin to check if dataset instance exists. If doesn't exist - create.
+    // If admin is null, then dataset meta doesn't exist, in which case try to create from scratch.
+    DatasetAdmin admin;
+    try {
+      admin = datasetManager.getAdmin(datasetName, classLoader);
+      if (admin != null) {
+        if (!admin.exists()) {
+          admin.create();
+        }
+      } else {
+        DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
+        if (creationSpec == null) {
+          return null;
+        }
+        try {
+          datasetManager.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
+                                     creationSpec.getProperties());
+          admin = datasetManager.getAdmin(datasetName, classLoader);
+          if (admin == null) {
+            throw new DataSetInstantiationException("Added instance meta to the system " + datasetName +
+                                                      " but still cannot access it");
+          }
+          admin.create();
+        } catch (Exception e) {
+          throw new DataSetInstantiationException("could not create dataset " + datasetName, e);
+        }
+      }
+
+      Dataset dataset = datasetManager.getDataset(datasetName, classLoader);
+      if (dataset == null) {
+        throw new DataSetInstantiationException("Attempted to create dataset " + datasetName +
+                                                  " but still cannot access it");
+      }
+
+      return (T) dataset;
+
+    } catch (Exception e) {
+      throw new DataSetInstantiationException("could not create dataset " + datasetName, e);
+    }
   }
 
   /**
@@ -311,12 +387,12 @@ public class DataSetInstantiationBase {
                                               final DataFabric dataFabric, final String metricName) {
     return new DataSetContext() {
       @Override
-      public <T extends DataSet> T getDataSet(String dataSetName) throws DataSetInstantiationException {
+      public <T extends Closeable> T getDataSet(String dataSetName) throws DataSetInstantiationException {
         DataSetSpecification spec = dataSetSpec.getSpecificationFor(dataSetName);
         if (spec == null) {
           throw logAndException(null, "No data set named %s declared for application.", dataSetName);
         }
-        return DataSetInstantiationBase.this.getDataSet(spec, dataFabric, metricName);
+        return (T) DataSetInstantiationBase.this.getDataSet(spec, dataFabric, metricName);
       }
     };
   }
@@ -328,7 +404,7 @@ public class DataSetInstantiationBase {
     final DataSetContext delegate = createDataSetContext(spec, dataFabric, metricName);
     return new DataSetContext() {
       @Override
-      public <T extends DataSet> T getDataSet(String name) throws DataSetInstantiationException {
+      public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
         // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
         String key = "." + name;
         return delegate.getDataSet(key);
@@ -366,6 +442,7 @@ public class DataSetInstantiationBase {
       metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
     for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
+      // "old" datasets API
       if (txAware.getKey() instanceof DataSetClient) {
         final String dataSetName = txAware.getValue();
         DataSetClient.DataOpsMetrics dataOpsMetrics = new DataSetClient.DataOpsMetrics() {
@@ -405,6 +482,44 @@ public class DataSetInstantiationBase {
         };
 
         ((DataSetClient) txAware.getKey()).setMetricsCollector(dataOpsMetrics);
+      }
+
+      // datasets API V2
+      if (txAware.getKey() instanceof MeteredDataset) {
+        final String dataSetName = txAware.getValue();
+        MeteredDataset.MetricsCollector metricsCollector = new MeteredDataset.MetricsCollector() {
+          @Override
+          public void recordRead(int opsCount, int dataSize) {
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.reads", 1, dataSetName);
+              programContextMetrics.gauge("store.ops", 1);
+            }
+            // these metrics are outside the context of any application and will stay unless explicitly
+            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("dataset.store.reads", 1, dataSetName);
+              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
+            }
+          }
+
+          @Override
+          public void recordWrite(int opsCount, int dataSize) {
+            if (programContextMetrics != null) {
+              programContextMetrics.gauge("store.writes", 1, dataSetName);
+              programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
+              programContextMetrics.gauge("store.ops", 1);
+            }
+            // these metrics are outside the context of any application and will stay unless explicitly
+            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("dataset.store.writes", 1, dataSetName);
+              dataSetMetrics.gauge("dataset.store.bytes", dataSize, dataSetName);
+              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
+            }
+          }
+        };
+
+        ((MeteredDataset) txAware.getKey()).setMetricsCollector(metricsCollector);
       }
     }
   }

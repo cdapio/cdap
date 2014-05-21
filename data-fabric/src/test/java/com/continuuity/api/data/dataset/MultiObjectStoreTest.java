@@ -2,6 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
@@ -16,6 +17,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -169,8 +171,8 @@ public class MultiObjectStoreTest extends DataSetTestBase {
       }
     };
     // create an instantiator that uses the dummy class loader
-    DataSetInstantiator inst = new DataSetInstantiator(fabric, loader);
-    inst.setDataSets(specs);
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, datasetManager, loader);
+    inst.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
     // use that instantiator to get a data set instance
     inst.getDataSet("customs");
     // verify the class name was recorded (the dummy class loader was used).

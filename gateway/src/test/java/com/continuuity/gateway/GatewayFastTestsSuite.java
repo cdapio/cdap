@@ -3,9 +3,6 @@ package com.continuuity.gateway;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.service.StreamHttpModule;
@@ -57,7 +54,6 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -74,7 +70,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -111,7 +106,6 @@ public class GatewayFastTestsSuite {
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
-  private static EndpointStrategy endpointStrategy;
   private static MetricsQueryService metrics;
   private static StreamHttpService streamHttpService;
 
@@ -125,7 +119,6 @@ public class GatewayFastTestsSuite {
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
       conf.set(Constants.Router.ADDRESS, hostname);
@@ -205,12 +198,6 @@ public class GatewayFastTestsSuite {
     }
     port = serviceMap.get(Constants.Service.GATEWAY);
 
-    // initialize the dataset instantiator
-    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
-    injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
-
     return injector;
   }
 
@@ -232,10 +219,6 @@ public class GatewayFastTestsSuite {
 
   public static Header getAuthHeader() {
     return AUTH_HEADER;
-  }
-
-  public static EndpointStrategy getEndpointStrategy() {
-    return endpointStrategy;
   }
 
   public static HttpResponse doGet(String resource) throws Exception {

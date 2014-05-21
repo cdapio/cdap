@@ -5,6 +5,7 @@ package com.continuuity.internal.specification;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.lang.FieldVisitor;
 import com.google.common.reflect.TypeToken;
 
@@ -28,7 +29,7 @@ public final class DataSetFieldExtractor extends FieldVisitor {
 
   @Override
   public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) {
-    if (DataSet.class.isAssignableFrom(field.getType())) {
+    if (DataSet.class.isAssignableFrom(field.getType()) || Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet dataset = field.getAnnotation(UseDataSet.class);
       if (dataset == null || dataset.value().isEmpty()) {
         return;
