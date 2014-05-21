@@ -84,9 +84,9 @@ public final class DataSetInstantiatorFromMetaData {
     String jsonSpec = null;
     try {
       DataSetSpecification spec = store.getDataSet(new Id.Account(context.getAccount()), name);
-      String json =  spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      String json =  spec == null ? "" : GSON.toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
       if (json != null) {
-        Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
+        Map<String, String> map = GSON.fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
         if (map != null) {
           jsonSpec = map.get("specification");
         }
@@ -95,7 +95,7 @@ public final class DataSetInstantiatorFromMetaData {
         throw new DataSetInstantiationException(
           "Data set '" + name + "' has no specification in meta data service.");
       }
-      return new Gson().fromJson(jsonSpec, DataSetSpecification.class);
+      return GSON.fromJson(jsonSpec, DataSetSpecification.class);
 
     } catch (JsonSyntaxException e) {
       throw new DataSetInstantiationException(
@@ -110,7 +110,7 @@ public final class DataSetInstantiatorFromMetaData {
 
   public void createDataSet(String accountId, String spec) throws Exception {
     try {
-      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      DataSetSpecification streamSpec = GSON.fromJson(spec, DataSetSpecification.class);
       store.addDataset(new Id.Account(accountId), streamSpec);
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);

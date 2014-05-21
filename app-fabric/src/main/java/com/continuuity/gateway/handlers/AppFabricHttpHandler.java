@@ -68,7 +68,10 @@ import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
@@ -1502,8 +1505,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         schema = "http";
       }
 
-      String url = String.format("%s://%s:%d/v2/apps/%s",
-                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
+      // Construct URL for promotion of application to remote cluster
+      Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
+        configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
+
+      BiMap<String, String> portForwards = HashBiMap.create(split);
+
+      String url = String.format("%s://%s:%s/v2/apps/%s",
+                                 schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)

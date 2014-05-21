@@ -36,7 +36,6 @@ public final class AppFabricServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
 
-  private final int port;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
@@ -60,7 +59,6 @@ public final class AppFabricServer extends AbstractIdleService {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
-    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handlers = handlers;
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
@@ -74,26 +72,6 @@ public final class AppFabricServer extends AbstractIdleService {
   protected void startUp() throws Exception {
     schedulerService.start();
     programRuntimeService.start();
-
-    // Register with discovery service.
-    InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
-    InetAddress address = socketAddress.getAddress();
-    if (address.isAnyLocalAddress()) {
-      address = InetAddress.getLocalHost();
-    }
-    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, port);
-
-    discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.APP_FABRIC;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalSocketAddress;
-      }
-    });
 
     // Run http service on random port
     httpService = NettyHttpService.builder()

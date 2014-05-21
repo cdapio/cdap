@@ -313,13 +313,6 @@
     </property>
 
     <property>
-        <name>data.tx.command.port</name>
-        <value>15175</value>
-        <description>The port number for the transaction
-            service command endpoint</description>
-    </property>
-
-    <property>
         <name>data.tx.bind.address</name>
         <value>127.0.0.1</value>
         <description>The inet address for the transaction
@@ -497,18 +490,6 @@
     </property>
 
     <!-- App Fabric related changes -->
-    <property>
-        <name>app.bind.port</name>
-        <value>45000</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
-    <property>
-        <name>app.command.port</name>
-        <value>45010</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
     <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
