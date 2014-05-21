@@ -190,7 +190,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private void sendMockLog(HttpResponder responder) {
     final JsonArray logResults = new JsonArray();
     JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("log", "LOG.Info : Test log message");
+    jsonObject.addProperty("log", "Info : Test log message");
     jsonObject.addProperty("offset", 0);
     logResults.add(jsonObject);
     responder.sendJson(HttpResponseStatus.OK, logResults);

@@ -39,10 +39,11 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
 
   }
 
-  //Return the list of user twill apps in JSON format
-  @Path("/user/apps/")
+  //Return the list of user twill apps for an application
+  @Path("/user/{app-id}/")
   @GET
-  public void getUserApps(final HttpRequest request, final HttpResponder responder) {
+  public void getUserApps(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("app-id") final String appId) {
     List<String> result = Lists.newArrayList();
     result.add("LocationService");
     result.add("MaskService");
