@@ -16,6 +16,7 @@ import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data2.dataset2.user.DatasetUserHttpModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;

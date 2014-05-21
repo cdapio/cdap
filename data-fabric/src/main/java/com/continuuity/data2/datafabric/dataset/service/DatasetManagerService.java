@@ -11,10 +11,12 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictExcept
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
+import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -23,6 +25,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +43,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
+  private final DatasetUserService userService;
   private Cancellable cancelDiscovery;
 
   private final DatasetInstanceManager instanceManager;
@@ -52,12 +56,13 @@ public class DatasetManagerService extends AbstractIdleService {
   public DatasetManagerService(CConfiguration cConf,
                                LocationFactory locationFactory,
                                DiscoveryService discoveryService,
+                               DiscoveryServiceClient discoveryServiceClient,
                                @Named("datasetMDS") DatasetManager mdsDatasetManager,
                                @Named("defaultDatasetModules")
                                SortedMap<String, Class<? extends DatasetModule>> defaultModules,
                                TransactionSystemClient txSystemClient,
-                               MetricsCollectionService metricsCollectionService
-  ) throws Exception {
+                               MetricsCollectionService metricsCollectionService,
+                               DatasetUserService userService) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -71,7 +76,8 @@ public class DatasetManagerService extends AbstractIdleService {
     this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(typeManager, instanceManager)));
+                                             new DatasetInstanceHandler(discoveryServiceClient,
+                                                                        typeManager, instanceManager)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
@@ -90,6 +96,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
+    this.userService = userService;
   }
 
   @Override
@@ -104,6 +111,7 @@ public class DatasetManagerService extends AbstractIdleService {
     typeManager.startAndWait();
     instanceManager.startAndWait();
 
+    userService.startAndWait();
     httpService.startAndWait();
 
     // adding default modules to be available in dataset manager service
@@ -152,6 +160,14 @@ public class DatasetManagerService extends AbstractIdleService {
       LOG.error("Interrupted while waiting...", e);
     }
 
+    userService.stopAndWait();
     httpService.stopAndWait();
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("bindAddress", httpService.getBindAddress())
+      .toString();
   }
 }

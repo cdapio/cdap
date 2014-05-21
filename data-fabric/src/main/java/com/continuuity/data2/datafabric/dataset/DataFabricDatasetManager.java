@@ -22,6 +22,7 @@ import com.continuuity.internal.lang.ClassLoaders;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -36,7 +37,7 @@ import java.util.Map;
 /**
  * {@link DatasetManager} implementation that talks to DatasetManager Service
  */
-public class DataFabricDatasetManager implements DatasetManager {
+public class DataFabricDatasetManager extends AbstractIdleService implements DatasetManager {
   private static final Logger LOG = LoggerFactory.getLogger(DataFabricDatasetManager.class);
 
   private final DatasetManagerServiceClient client;
@@ -114,6 +115,16 @@ public class DataFabricDatasetManager implements DatasetManager {
     DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
     return (T) impl.getDataset(instanceInfo.getSpec());
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    client.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    client.stopAndWait();
   }
 
   private String namespace(String datasetInstanceName) {

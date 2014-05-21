@@ -16,6 +16,7 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String DATASET_USER = "dataset.user";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }
 
@@ -296,6 +297,28 @@ public final class Constants {
       public static final String NUM_INSTANCES = "dataset.service.num.instances";
       public static final String NUM_CORES = "dataset.service.num.cores";
       public static final String MEMORY_MB = "dataset.service.memory.mb";
+    }
+
+    /**
+     * DatasetUserService configuration.
+     */
+    public static final class User {
+      /** for the port of the dataset user service server. */
+      public static final String PORT = "dataset.user.bind.port";
+
+      /** for the address (hostname) of the dataset server. */
+      public static final String ADDRESS = "dataset.user.bind.address";
+
+      public static final String BACKLOG_CONNECTIONS = "dataset.user.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.user.exec.threads";
+      public static final String BOSS_THREADS = "dataset.user.boss.threads";
+      public static final String WORKER_THREADS = "dataset.user.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.user.output.dir";
+
+      /** Twill Runnable configuration **/
+      public static final String CONTAINER_VIRTUAL_CORES = "dataset.user.container.num.cores";
+      public static final String CONTAINER_MEMORY_MB = "dataset.user.container.memory.mb";
+      public static final String CONTAINER_INSTANCES = "dataset.user.container.instances";
     }
   }
 

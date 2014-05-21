@@ -17,6 +17,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -37,17 +38,16 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetManagerServiceClient {
+public class DatasetManagerServiceClient extends AbstractIdleService {
   private static final Gson GSON = new Gson();
+
+  private final DiscoveryServiceClient discoveryClient;
 
   private EndpointStrategy endpointStrategy;
 
   @Inject
   public DatasetManagerServiceClient(DiscoveryServiceClient discoveryClient) {
-
-    this.endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
-      1L, TimeUnit.SECONDS);
+    this.discoveryClient = discoveryClient;
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
@@ -147,6 +147,18 @@ public class DatasetManagerServiceClient {
     }
   }
 
+  @Override
+  protected void startUp() throws Exception {
+    this.endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+      1L, TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+
+  }
+
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(resource, "GET", null, null, null);
   }
@@ -232,6 +244,7 @@ public class DatasetManagerServiceClient {
   }
 
   private String resolve(String resource) {
+    Preconditions.checkNotNull(endpointStrategy, "endpointStrategy was not initialized -- must start service first");
     InetSocketAddress addr = this.endpointStrategy.pick().getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);

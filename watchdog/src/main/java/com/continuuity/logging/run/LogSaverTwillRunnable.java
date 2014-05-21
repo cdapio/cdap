@@ -13,6 +13,7 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.watchdog.election.MultiLeaderElection;
