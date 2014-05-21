@@ -10,7 +10,8 @@ import org.eclipse.jetty.util.security.Constraint;
 import javax.security.auth.login.Configuration;
 
 /**
- *
+ * An abstract authentication handler that provides basic functionality including
+ * setting of constraints and setting of different required services.
  */
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
 
