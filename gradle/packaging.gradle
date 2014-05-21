@@ -51,6 +51,7 @@ task ('prepackager', dependsOn : ['build']) {
       exclude '**/hbase-*.jar'
       exclude '**/protobuf-java-*.jar'
       exclude '**/hive-*.jar'
+      exclude '**/datanucleus-*.jar'  // used by Hive
       into "${installDir}/lib"
     }
 

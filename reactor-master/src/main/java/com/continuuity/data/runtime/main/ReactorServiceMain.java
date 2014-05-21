@@ -19,6 +19,8 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.test.internal.TempFolder;
@@ -80,8 +82,6 @@ public class ReactorServiceMain extends DaemonMain {
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
-  protected final Map<String, Configuration> extraConfs = Maps.newHashMap();
-  private final Set<URI> resources = Sets.newHashSet();
 
   private final AtomicBoolean isLeader = new AtomicBoolean(false);
 
@@ -91,6 +91,7 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
+  private HiveServer hiveServer;
   private MetricsCollectionService metricsCollectionService;
 
   private String serviceName;
@@ -105,8 +106,6 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    initHiveService();
-
     twillApplication = createTwillApplication();
     if (twillApplication == null) {
       throw new IllegalArgumentException("TwillApplication cannot be null");
@@ -126,7 +125,8 @@ public class ReactorServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -144,6 +144,9 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer = injector.getInstance(AppFabricServer.class);
         appFabricServer.startAndWait();
 
+        hiveServer = injector.getInstance(HiveServer.class);
+        hiveServer.startAndWait();
+
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
@@ -159,6 +162,9 @@ public class ReactorServiceMain extends DaemonMain {
         }
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
+        }
+        if (hiveServer != null) {
+          hiveServer.stopAndWait();
         }
         isLeader.set(false);
       }
@@ -180,32 +186,8 @@ public class ReactorServiceMain extends DaemonMain {
   public void destroy() {
   }
 
-  private void initHiveService() {
-    HiveConf hiveConf = new HiveConf();
-    Configuration newConf = new Configuration();
-    newConf.clear();
-    newConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
-
-    // Port will be set once in the yarn container
-    newConf.set("hive.server2.thrift.port", "0");
-    newConf.set("mapreduce.framework.name", "yarn");
-    addExtraConf("hive-site.xml", newConf);
-  }
-
-  private void addExtraConf(String confName, Configuration conf) {
-    extraConfs.put(confName, conf);
-  }
-
-  private void addResource(URI uri) {
-    resources.add(uri);
-  }
-
   private TwillApplication createTwillApplication() {
     try {
-      for (Map.Entry<String, Configuration> extraConfEntry : extraConfs.entrySet()) {
-        File conf = getSavedExtraConf(extraConfEntry.getKey(), extraConfEntry.getValue());
-        addResource(conf.toURI());
-      }
       return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf());
     } catch (Exception e) {
       throw  Throwables.propagate(e);
@@ -276,12 +258,6 @@ public class ReactorServiceMain extends DaemonMain {
     return cConfFile;
   }
 
-  private File getSavedExtraConf(String confName, Configuration conf) throws IOException {
-    TempFolder tempFolder = new TempFolder();
-    File tFolder = tempFolder.newFolder("saved_confs");
-    return saveConf(conf, new File(tFolder, confName));
-  }
-
   /**
    * Wait for sometime while looking up service in twill.
    */
@@ -308,7 +284,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillPreparer getPreparer() {
     return prepare(twillRunnerService.prepare(twillApplication)
-                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out))).withResources(resources)
+                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
     );
   }
 

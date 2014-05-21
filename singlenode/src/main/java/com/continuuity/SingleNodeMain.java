@@ -24,7 +24,7 @@ import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.guice.InMemoryHiveModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -72,6 +72,7 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private final InMemoryHiveMetastore hiveMetastore;
   private final HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
@@ -93,7 +94,9 @@ public class SingleNodeMain {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
+
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
@@ -143,6 +146,7 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+    hiveMetastore.startAndWait();  // in that order
     hiveServer.startAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
@@ -173,6 +177,7 @@ public class SingleNodeMain {
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
     hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
   }
 
   /**

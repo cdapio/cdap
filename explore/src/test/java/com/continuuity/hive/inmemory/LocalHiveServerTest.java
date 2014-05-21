@@ -24,13 +24,14 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class LocalHiveServerTest extends HiveServerTest {
 
-  private HiveServer hiveServer;
-  private HiveCommandExecutor hiveCommandExecutor;
-  private InMemoryTransactionManager transactionManager;
+  private final HiveServer hiveServer;
+  private final HiveCommandExecutor hiveCommandExecutor;
+  private final InMemoryHiveMetastore hiveMetastore;
+  private final InMemoryTransactionManager transactionManager;
 
   public LocalHiveServerTest() {
     CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.Hive.Container.SERVER_ADDRESS, "localhost");
+    conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(
@@ -46,13 +47,9 @@ public class LocalHiveServerTest extends HiveServerTest {
         new HiveRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getInMemoryModules());
     hiveServer = injector.getInstance(HiveServer.class);
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-  }
-
-  @Override
-  protected HiveServer getHiveServer() {
-    return hiveServer;
   }
 
   @Override
@@ -61,7 +58,19 @@ public class LocalHiveServerTest extends HiveServerTest {
   }
 
   @Override
-  protected InMemoryTransactionManager getTransactionManager() {
-    return transactionManager;
+  protected void startServices() {
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
+    transactionManager.startAndWait();
+  }
+
+  @Override
+  protected void stopServices() {
+    if (hiveServer != null) {
+      hiveServer.stopAndWait();
+    }
+    if (hiveMetastore != null) {
+      hiveMetastore.stopAndWait();
+    }
   }
 }

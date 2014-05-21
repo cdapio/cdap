@@ -3,28 +3,20 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
-import com.continuuity.hive.runtime.HiveServiceTwillRunnable;
 import com.continuuity.logging.run.LogSaverTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsProcessorTwillRunnable;
 import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileReader;
-import java.util.Map;
 
 /**
  * TwillApplication wrapper for Reactor YARN Services.
  */
 public class ReactorTwillApplication implements TwillApplication {
-  private static final Logger LOG = LoggerFactory.getLogger(ReactorTwillApplication.class);
-
   private static final String NAME = "reactor.services";
 
   private final CConfiguration cConf;
@@ -44,13 +36,12 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
-      addHiveService(
-        addLogSaverService(
-         addStreamService(
-           addTransactionService(
-             addMetricsProcessor(
-               addMetricsService(
-                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
+      addLogSaverService(
+       addStreamService(
+         addTransactionService(
+           addMetricsProcessor(
+             addMetricsService(
+              TwillSpecification.Builder.with().setName(NAME).withRunnable())))))
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
@@ -156,24 +147,5 @@ public class ReactorTwillApplication implements TwillApplication {
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
       .apply();
-  }
-
-  private TwillSpecification.Builder.RunnableSetter addHiveService(TwillSpecification.Builder.MoreRunnable builder) {
-    int hiveNumCores = cConf.getInt(Constants.Hive.Container.NUM_CORES, 2);
-    int hiveMemoryMb = cConf.getInt(Constants.Hive.Container.MEMORY_MB, 2048);
-
-    ResourceSpecification hiveSpec = ResourceSpecification.Builder
-        .with()
-        .setVirtualCores(hiveNumCores)
-        .setMemory(hiveMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-        .setInstances(cConf.getInt(Constants.Hive.Container.NUM_INSTANCES, 1))
-        .build();
-
-    return builder.add(new HiveServiceTwillRunnable("hive.server", "cConf.xml", "hConf.xml"),
-                       hiveSpec)
-        .withLocalFiles()
-        .add("cConf.xml", cConfFile.toURI())
-        .add("hConf.xml", hConfFile.toURI())
-        .apply();
   }
 }

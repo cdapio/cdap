@@ -15,24 +15,20 @@ import java.net.URL;
  */
 public abstract class HiveServerTest {
 
-  protected abstract HiveServer getHiveServer();
-
   protected abstract HiveCommandExecutor getHiveCommandExecutor();
 
-  protected abstract InMemoryTransactionManager getTransactionManager();
+  protected abstract void startServices();
+
+  protected abstract void stopServices();
 
   @Before
   public void before() {
-    // Start hive server
-    getHiveServer().startAndWait();
-    getTransactionManager().startAndWait();
+    startServices();
   }
 
   @After
   public void after() {
-    // Stop hive server
-    getHiveServer().stopAndWait();
-    getTransactionManager().stopAndWait();
+    stopServices();
   }
 
   @Test

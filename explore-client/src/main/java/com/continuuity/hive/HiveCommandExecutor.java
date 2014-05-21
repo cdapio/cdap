@@ -1,6 +1,7 @@
 package com.continuuity.hive;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.hive.HiveClient;
 
 import com.google.inject.Inject;
@@ -13,10 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Iterator;
 
 /**
- *
+ * Executes commands on Hive using beeline on a discovered HiveServer2.
  */
 public class HiveCommandExecutor implements HiveClient {
   private static final Logger LOG = LoggerFactory.getLogger(HiveCommandExecutor.class);
@@ -31,14 +31,12 @@ public class HiveCommandExecutor implements HiveClient {
   @Override
   public void sendCommand(String cmd) throws IOException {
 
-    Iterable<Discoverable> hiveDiscoverables = discoveryClient.discover(Constants.Service.HIVE);
-    Iterator<Discoverable> iterator = hiveDiscoverables.iterator();
-    if (!iterator.hasNext()) {
+    Discoverable hiveDiscoverable = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)).pick();
+    if (hiveDiscoverable == null) {
+      LOG.debug("No endpoint for service {}", Constants.Service.HIVE);
       // todo throw some exception I guess
       return;
     }
-    // There should only be one hive discoverable
-    Discoverable hiveDiscoverable = iterator.next();
 
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
         "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
@@ -46,7 +44,7 @@ public class HiveCommandExecutor implements HiveClient {
         ":" + hiveDiscoverable.getSocketAddress().getPort() +
         "/default;auth=noSasl",
         "-n", "hive",
-        "--outputformat", "csv",
+        "--outputformat=table",
         "-e", cmd};
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();

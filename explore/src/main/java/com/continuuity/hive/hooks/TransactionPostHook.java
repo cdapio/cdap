@@ -2,8 +2,8 @@ package com.continuuity.hive.hooks;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.datasets.DatasetInputFormat;
-import com.continuuity.hive.inmemory.LocalHiveServer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -32,7 +32,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
       Transaction tx = GSON.fromJson(txJson, Transaction.class);
       LOG.debug("Transaction retrieved in post hook: {}", tx);
 
-      TransactionSystemClient txClient = LocalHiveServer.getTransactionSystemClient();
+      TransactionSystemClient txClient = HiveServer.getTransactionSystemClient();
       // Transaction doesn't involve any changes
       if (txClient.canCommit(tx, ImmutableList.<byte[]>of())) {
         if (!txClient.commit(tx)) {

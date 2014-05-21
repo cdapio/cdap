@@ -2,8 +2,8 @@ package com.continuuity.hive.hooks;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.datasets.DatasetInputFormat;
-import com.continuuity.hive.inmemory.LocalHiveServer;
 
 import com.google.gson.Gson;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -23,7 +23,7 @@ public class TransactionPreHook implements ExecuteWithHookContext {
 
   public void run(HookContext hookContext) throws Exception {
     if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
-      TransactionSystemClient txClient = LocalHiveServer.getTransactionSystemClient();
+      TransactionSystemClient txClient = HiveServer.getTransactionSystemClient();
       Transaction tx = txClient.startLong();
       HiveConf hiveConf = hookContext.getConf();
       hiveConf.set(DatasetInputFormat.TX_QUERY, GSON.toJson(tx));
