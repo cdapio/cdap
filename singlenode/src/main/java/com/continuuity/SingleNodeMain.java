@@ -352,7 +352,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule(),
-      new HiveRuntimeModule().getSingleNodeModules()
+      new HiveRuntimeModule(configuration).getSingleNodeModules()
     );
   }
 }

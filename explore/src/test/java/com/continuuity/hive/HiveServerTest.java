@@ -44,6 +44,7 @@ public abstract class HiveServerTest {
     getHiveCommandExecutor().sendCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
                                          "' INTO TABLE test;");
     getHiveCommandExecutor().sendCommand("select first, second from test;");
+    getHiveCommandExecutor().sendCommand("select * from test;");
     getHiveCommandExecutor().sendCommand("drop table test;");
     // todo add assertions
   }

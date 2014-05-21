@@ -8,6 +8,7 @@ import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.test.internal.TempFolder;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -34,23 +35,19 @@ import java.net.URL;
  */
 public class HiveRuntimeModule extends RuntimeModule {
 
-  @Override
-  public Module getInMemoryModules() {
-    try {
-      URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
-      File confDir = new File(url.toURI()).getParentFile();
-      File hiveFile = new File(confDir.getAbsolutePath(), "hive-site.xml");
+  private CConfiguration conf = null;
 
-      Configuration hiveConf = new Configuration();
-      hiveConf.clear();
-      hiveConf.set("hive.server2.authentication", "NOSASL");
-      hiveConf.set("hive.metastore.sasl.enabled", "false");
-      hiveConf.set("hive.server2.enable.doAs", "false");
-      hiveConf.set("hive.exec.mode.local.auto", "true");
-      hiveConf.set("hive.exec.submitviachild", "false");
-      hiveConf.set("mapreduce.framework.name", "local");
-      // TODO: get local data dir from CConf
-      hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
+  public HiveRuntimeModule(CConfiguration conf) {
+    this.conf = conf;
+  }
+
+  public HiveRuntimeModule() {
+    // do nothing
+  }
+
+  private Module getLocalModules() {
+    try {
+      final HiveConf hiveConf = new HiveConf();
 
       final int hiveServerPort = PortDetector.findFreePort();
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
@@ -58,16 +55,11 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveMetaStorePort = PortDetector.findFreePort();
       hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
 
-      hiveConf.writeXml(new FileOutputStream(hiveFile));
-      hiveFile.deleteOnExit();
-
-      // This HiveConf object will load the hive-site.xml in the classpath
-      final HiveConf newHiveConf = new HiveConf();
       return Modules.combine(new HiveModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
-              bind(HiveConf.class).toInstance(newHiveConf);
+              bind(HiveConf.class).toInstance(hiveConf);
               bind(int.class).annotatedWith(Names.named(Constants.Hive.METASTORE_PORT)).toInstance(hiveMetaStorePort);
               bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
               bind(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
@@ -82,8 +74,18 @@ public class HiveRuntimeModule extends RuntimeModule {
   }
 
   @Override
+  public Module getInMemoryModules() {
+    String tmpDir = System.getProperty("java.io.tmpdir") +
+        System.getProperty("file.separator") +
+        "hive-metastore-" + Long.toString(System.currentTimeMillis());
+    System.setProperty("continuuity.metastore.warehouse.dir", tmpDir);
+    return getLocalModules();
+  }
+
+  @Override
   public Module getSingleNodeModules() {
-    return getInMemoryModules();
+    System.setProperty("continuuity.metastore.warehouse.dir", conf.get(Constants.CFG_DATA_LEVELDB_DIR));
+    return getLocalModules();
   }
 
   @Override
