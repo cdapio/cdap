@@ -90,7 +90,6 @@ import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -281,8 +280,7 @@ public class AppFabricHttpHandler extends AppFabricHelper {
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator,
-                              TwillRunnerService twillRunnerService) {
+                              DataSetInstantiatorFromMetaData datasetInstantiator) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
