@@ -490,6 +490,8 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
+    /** Realm file for Basic Authentication */
+    public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
