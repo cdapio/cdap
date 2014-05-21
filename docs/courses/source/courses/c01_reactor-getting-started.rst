@@ -46,20 +46,6 @@ Getting Started With Continuuity Reactor
 Getting Started With Continuuity Reactor
 ========================================
 
-.. **Integrating Reactor Into Application Development Workflow**
-..
-.. - Chapter 8: Reactor In Your Continuous Integration Environment
-.. - Chapter 9: Integration Testing Strategies
-.. - Chapter 10: Debugging Applications With Reactor
-.. 
-.. .. *10 Minute Break*
-.. 
-.. **Reactor In Production**
-.. 
-.. - Chapter 11: Operational Considerations For Reactor
-.. - Chapter 12: Controlling Application Lifecycle using REST APIs
-.. - Chapter 13: Collecting Data From External Sources
-
 **Reactor In Production**
 
 - Chapter 8: Testing and Debugging Applications With Reactor
@@ -102,7 +88,7 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m03_reactor_overview.rst
 .. landslide: module: Continuuity Reactor SDK
 .. landslide: module link: ../modules/m04_reactor_sdk.rst
-.. landslide: exercise: Download Continuuity Reactor SDK, Install and Run Quickstart
+.. landslide: exercise: Download Continuuity Reactor SDK, Install and Run Quick Start
 .. landslide: exercise link: ../exercises/e01_reactor_sdk.rst
 
 
@@ -114,12 +100,14 @@ Upon completion of this course you should be able to:
 .. ....................................................
 .. landslide: module: Exploring an Example Reactor Application
 .. landslide: module link: ../modules/m05_exploring_a_reactor_application.rst
-.. landslide: exercise: Continuuity Reactor Purchase Example using Dashboard
+.. landslide: exercise: Continuuity Reactor Purchase Example Using Dashboard
 .. landslide: exercise link: ../exercises/e02_purchase_example_dashboard.rst
 .. landslide: module: Introduction to the Continuuity Reactor REST API
 .. landslide: module link: ../modules/m06_introduction_to_cr_rest.rst
-.. landslide: module: Building Your First Continuuity Reactor Application
+.. landslide: module: Building A Continuuity Reactor Application
 .. landslide: module link: ../modules/m07_building_a_cr_application.rst
+.. landslide: exercise: Build Your First Continuuity Reactor Application
+.. landslide: exercise link: ../exercises/e03_build_your_first_cr_application.rst
 
 
 .. chapter 3
@@ -131,10 +119,10 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m09_creating_streams.rst
 .. landslide: module: Streams REST API
 .. landslide: module link: ../modules/m10_streams_rest_api.rst
-.. landslide: exercise: Continuuity Reactor Purchase Example with REST
-.. landslide: exercise link: ../exercises/e03_purchase_example_rest.rst
+.. landslide: exercise: Continuuity Reactor Purchase Example Using REST
+.. landslide: exercise link: ../exercises/e04_purchase_example_rest.rst
 .. landslide: exercise: Building An Application Using Streams
-.. landslide: exercise link: ../exercises/e04_streams_exercise.rst
+.. landslide: exercise link: ../exercises/e05_streams_exercise.rst
 
 
 .. chapter 4
@@ -142,8 +130,6 @@ Upon completion of this course you should be able to:
 .. ................................................
 .. landslide: module: Flows and Flowlets
 .. landslide: module link: ../modules/m11_flows_and_flowlets.rst
-.. .. landslide: module: Flow Programming API
-.. .. landslide: module link: ../modules/m12_flow_programming_api.rst
 .. landslide: module: Flow Partitioning
 .. landslide: module link: ../modules/m12_flow_partitioning.rst
 .. landslide: module: Types of Flowlets
@@ -151,7 +137,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Type Projection
 .. landslide: module link: ../modules/m14_type_projection.rst
 .. landslide: exercise: Building An Application Using Flows
-.. landslide: exercise link: ../exercises/e05_flows_exercise.rst
+.. landslide: exercise link: ../exercises/e06_flows_exercise.rst
 
 .. chapter 5
 .. landslide: chapter: Storing Data Using DataSets
@@ -167,7 +153,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: DataSet REST API
 .. landslide: module link: ../modules/m19_dataset_rest_api.rst
 .. landslide: exercise: Building An Application Using DataSets
-.. landslide: exercise link: ../exercises/e06_datasets_exercise.rst
+.. landslide: exercise link: ../exercises/e07_datasets_exercise.rst
 
 .. chapter 6
 .. landslide: chapter: Batch Processing Using MapReduce and Workflows
@@ -181,7 +167,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Workflows
 .. landslide: module link: ../modules/m23_workflows.rst
 .. landslide: exercise: Building An Application Using MapReduce and Workflows
-.. landslide: exercise link: ../exercises/e07_mapreduce_workflow_exercise.rst
+.. landslide: exercise link: ../exercises/e08_mapreduce_workflow_exercise.rst
 
 .. chapter 7
 .. landslide: chapter: Querying Using Procedures
@@ -191,7 +177,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Procedures REST API
 .. landslide: module link: ../modules/m25_procedures_rest_api.rst
 .. landslide: exercise: Building An Application Using Procedures
-.. landslide: exercise link: ../exercises/e08_procedures_exercise.rst
+.. landslide: exercise link: ../exercises/e09_procedures_exercise.rst
 
 .. landslide: section: Reactor In Production
 .. -------------------------------------------
@@ -203,8 +189,8 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m26_testing_reactor_applications.rst
 .. landslide: module: Debugging Reactor Applications
 .. landslide: module link: ../modules/m27_debugging_reactor_applications.rst
-.. landslide: exercise: Testing and Debugging An Application
-.. landslide: exercise link: ../exercises/e09_testing_debugging_exercise.rst
+.. landslide: exercise: Testing and Debugging Reactor Applications
+.. landslide: exercise link: ../exercises/e10_testing_debugging_exercise.rst
 
 .. chapter 9
 .. landslide: chapter: Operational Considerations For Reactor
@@ -215,16 +201,16 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m29_collecting_via_logs.rst
 .. landslide: module: Runtime Arguments and Scaling Instances
 .. landslide: module link: ../modules/m30_runtime_arguments_scaling_instances.rst
-.. landslide: exercise: Monitoring and Logging An Application
-.. landslide: exercise link: ../exercises/e10_monitoring_logging_exercise.rst
+.. landslide: exercise: Monitoring and Logging Reactor Applications
+.. landslide: exercise link: ../exercises/e11_monitoring_logging_exercise.rst
 .. landslide: module: Lifecycle Management
 .. landslide: module link: ../modules/m31_lifecycle_management.rst
-.. landslide: exercise: Controlling Your Reactor Application
-.. landslide: exercise link: ../exercises/e11_controlling_application_exercise.rst
+.. landslide: exercise: Controlling the Lifecyle of a Reactor Application
+.. landslide: exercise link: ../exercises/e12_controlling_application_exercise.rst
 
 .. landslide: CUT START
 
-.. chapter 10
+.. chapter XX
 .. landslide: chapter: Controlling Application Lifecycle using REST APIs
 .. ................................................
 .. landslide: module: Application Management API

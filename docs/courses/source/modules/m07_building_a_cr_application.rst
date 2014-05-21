@@ -1,5 +1,5 @@
 ===================================================
-Building Your First Continuuity Reactor Application
+Building A Continuuity Reactor Application
 ===================================================
 
 .. .. reST Editor: .. section-numbering::
@@ -35,11 +35,10 @@ To generate a new project, execute the following command:
 .. sourcecode:: shell-session
 
     $ mvn archetype:generate \
-      -DarchetypeCatalog=https://repository.continuuity.com/ \
-         content/groups/releases/archetype-catalog.xml \
+      -DarchetypeCatalog=http://tinyurl.com/ndoa5l2 \
       -DarchetypeGroupId=com.continuuity \
       -DarchetypeArtifactId=reactor-app-archetype \
-      -DarchetypeVersion=2.0.0
+      -DarchetypeVersion=2.1.0
 
 This can take a moment or two to start downloading...
 
@@ -49,27 +48,30 @@ Specifying the Maven Properties
 =================================
 
 - In the interactive shell that appears, specify basic properties for the new project
-- After entering the *groupId* and the *artifactId*, accept the defaults for the other properties
-- Enter ``Y`` to accept the results
+- After entering the *groupId* and the *artifactId*, accept the defaults for the other
+  properties
+- *groupId* could be ``com.example``
+- *artifactId* (the project name) could be ``BigDataApp``
+- Enter ``Y`` or press ``Enter`` to accept the default or results
 
 ----
 
 Specifying the Maven Properties
 =================================
 
-For "HelloWorld":
+Entering *groupId* as ``com.example`` and  *artifactId* as ``BigDataApp``:
 
 .. sourcecode:: shell-session
 
 	Define value for property 'groupId': : com.example
-	Define value for property 'artifactId': : HelloWorld
+	Define value for property 'artifactId': : BigDataApp
 	Define value for property 'version': 1.0-SNAPSHOT: :
 	Define value for property 'package': com.example: :
 	Confirm properties configuration:
 	groupId: com.example
-	artifactId: MyFirstBigDataApp
+	artifactId: BigDataApp
 	version: 1.0-SNAPSHOT
-	package: org.myorg
+	package: com.example
 	Y: : Y
 
 ----
@@ -77,16 +79,16 @@ For "HelloWorld":
 Building the Project
 =================================
 
-- After you confirm the settings, the directory ``HelloWorld`` is
+- After you confirm the settings, the directory ``BigDataApp`` is
   created under the current directory
 - To build the project:
 
 .. sourcecode:: shell-session
 
-	$ cd HelloWorld
+	$ cd BigDataApp
 	$ mvn clean package
 
-- Creates ``HelloWorld-1.0-SNAPSHOT.jar`` in the target directory
+- Creates ``BigDataApp-1.0-SNAPSHOT.jar`` in the target directory
 - This JAR file is a skeleton Reactor application that is ready to be edited
 - When finished and compiled, deploy it by dragging and dropping it on the Reactor Dashboard
 
@@ -94,12 +96,14 @@ Now, what to put in that JAR file...
 
 ----
 
-Changing The Project
-====================
+Opening in IntelliJ
+=================================
 
-[DOCNOTE: FIXME! Add additional material]
-
-[What do we want to do here?]
+- You can open the resulting project in IntelliJ
+- From within IntelliJ, ``File > Open`` and navigate to the 
+  ``pom.xml`` file within ``BigDataApp`` directory
+- IntelliJ will then open the maven project
+- The source code will be in ``src > main > java > com.example > WordCountApp``
 
 ----
 
@@ -110,6 +114,7 @@ You should now be able to:
 
 - Use the Continuuity Reactor ``maven`` archetype
 - Create a simple Continuuity Reactor Application
+- Open it in an IDE
 - Deploy and run it in the Reactor
 
 ----

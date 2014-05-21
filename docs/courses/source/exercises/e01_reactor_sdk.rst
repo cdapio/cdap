@@ -1,8 +1,8 @@
-============================================================
-Download Continuuity Reactor SDK, Install and Run Quickstart
-============================================================
+=============================================================
+Download Continuuity Reactor SDK, Install and Run Quick Start
+=============================================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -11,11 +11,11 @@ Download Continuuity Reactor SDK, Install and Run Quickstart
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_e01| raw:: html
+.. |br| raw:: html
 
    <br />
 
-.. |br2_e01| raw:: html
+.. |br2| raw:: html
 
    <br /><br />
 
@@ -27,8 +27,8 @@ Exercise Objectives
 In this exercise, you will:
 
 - Download and install the SDK
-- Learn Basic Continuuity Reactor operations: Start and Stop
-- Run the Quickstart tour
+- Learn basic Continuuity Reactor operations: Start and Stop
+- Run the Quick Start tour
 
 ----
 
@@ -41,7 +41,7 @@ Exercise Steps
 - Unzip the download
 - Open a command line window, go to ``/bin`` and run ``reactor.sh start``
 - Open a browser window, go to ``http://localhost:9999``
-- Follow the steps of the *Log Analytics Application* Quickstart Tour
+- Follow the steps of the *Log Analytics Application* Quick Start Tour
 - When finished, shut down the Reactor with ``reactor.sh stop``
 
 These steps are online at ``http://continuuity.com/developers/quickstart``
@@ -51,14 +51,14 @@ These steps are online at ``http://continuuity.com/developers/quickstart``
 Exercise Summary
 ===================
 
-You should now be able to:
+You should now:
 
-- Perform basic Reactor operations of Start and Stop
-- Taken the Quickstart tour
-- Use the Dashboard for basic operations
-- Inject and Query Data through the Dashboard
-- Modify an Application
-- Redeploy and restart an Application
+- Be able to perform basic Reactor operations of Start and Stop
+- Have taken the Quick Start tour
+- Be able to use the Dashboard for basic operations
+- Be able to inject and query data through the Dashboard
+- Be able to modify an Application
+- Be able to redeploy and restart an Application
 
 ----
 

@@ -11,11 +11,11 @@ placeholder
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_e00| raw:: html
+.. |br| raw:: html
 
    <br />
 
-.. |br2_e00| raw:: html
+.. |br2| raw:: html
 
    <br /><br />
 

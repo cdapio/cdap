@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Building Your First Continuuity Reactor Application</title>
+    <title>Building A Continuuity Reactor Application</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -747,7 +747,7 @@ img.progress {
 table.progress {
   position: absolute;
   bottom: 70px;
-  width: 100%;
+  width: 94%;
 }
 
 section img.align-center {
@@ -1737,7 +1737,7 @@ function main() {
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Building Your First Continuuity Reactor Application</h1></header>
+            <header><h1>Building A Continuuity Reactor Application</h1></header>
             
             
             <section><!-- .. reST Editor: .. section-numbering:: -->
@@ -1811,11 +1811,10 @@ function main() {
 dependencies and sample code as a base to start writing your own Big Data application</p>
 <p>To generate a new project, execute the following command:</p>
 <pre><span class="go">$ mvn archetype:generate \</span>
-<span class="go">  -DarchetypeCatalog=https://repository.continuuity.com/ \</span>
-<span class="go">     content/groups/releases/archetype-catalog.xml \</span>
+<span class="go">  -DarchetypeCatalog=http://tinyurl.com/ndoa5l2 \</span>
 <span class="go">  -DarchetypeGroupId=com.continuuity \</span>
 <span class="go">  -DarchetypeArtifactId=reactor-app-archetype \</span>
-<span class="go">  -DarchetypeVersion=2.0.0</span>
+<span class="go">  -DarchetypeVersion=2.1.0</span>
 </pre>
 <p>This can take a moment or two to start downloading...</p></section>
             
@@ -1849,8 +1848,11 @@ dependencies and sample code as a base to start writing your own Big Data applic
             
             <section><ul class="simple">
 <li>In the interactive shell that appears, specify basic properties for the new project</li>
-<li>After entering the <em>groupId</em> and the <em>artifactId</em>, accept the defaults for the other properties</li>
-<li>Enter <tt class="docutils literal">Y</tt> to accept the results</li>
+<li>After entering the <em>groupId</em> and the <em>artifactId</em>, accept the defaults for the other
+properties</li>
+<li><em>groupId</em> could be <tt class="docutils literal">com.example</tt></li>
+<li><em>artifactId</em> (the project name) could be <tt class="docutils literal">BigDataApp</tt></li>
+<li>Enter <tt class="docutils literal">Y</tt> or press <tt class="docutils literal">Enter</tt> to accept the default or results</li>
 </ul></section>
             
           </div>
@@ -1881,16 +1883,16 @@ dependencies and sample code as a base to start writing your own Big Data applic
             <header><h1>Specifying the Maven Properties</h1></header>
             
             
-            <section><p>For &quot;HelloWorld&quot;:</p>
+            <section><p>Entering <em>groupId</em> as <tt class="docutils literal">com.example</tt> and  <em>artifactId</em> as <tt class="docutils literal">BigDataApp</tt>:</p>
 <pre><span class="go">Define value for property &#39;groupId&#39;: : com.example</span>
-<span class="go">Define value for property &#39;artifactId&#39;: : HelloWorld</span>
+<span class="go">Define value for property &#39;artifactId&#39;: : BigDataApp</span>
 <span class="go">Define value for property &#39;version&#39;: 1.0-SNAPSHOT: :</span>
 <span class="go">Define value for property &#39;package&#39;: com.example: :</span>
 <span class="go">Confirm properties configuration:</span>
 <span class="go">groupId: com.example</span>
-<span class="go">artifactId: MyFirstBigDataApp</span>
+<span class="go">artifactId: BigDataApp</span>
 <span class="go">version: 1.0-SNAPSHOT</span>
-<span class="go">package: org.myorg</span>
+<span class="go">package: com.example</span>
 <span class="go">Y: : Y</span>
 </pre></section>
             
@@ -1923,15 +1925,15 @@ dependencies and sample code as a base to start writing your own Big Data applic
             
             
             <section><ul class="simple">
-<li>After you confirm the settings, the directory <tt class="docutils literal">HelloWorld</tt> is
+<li>After you confirm the settings, the directory <tt class="docutils literal">BigDataApp</tt> is
 created under the current directory</li>
 <li>To build the project:</li>
 </ul>
-<pre><span class="go">$ cd HelloWorld</span>
+<pre><span class="go">$ cd BigDataApp</span>
 <span class="go">$ mvn clean package</span>
 </pre>
 <ul class="simple">
-<li>Creates <tt class="docutils literal"><span class="pre">HelloWorld-1.0-SNAPSHOT.jar</span></tt> in the target directory</li>
+<li>Creates <tt class="docutils literal"><span class="pre">BigDataApp-1.0-SNAPSHOT.jar</span></tt> in the target directory</li>
 <li>This JAR file is a skeleton Reactor application that is ready to be edited</li>
 <li>When finished and compiled, deploy it by dragging and dropping it on the Reactor Dashboard</li>
 </ul>
@@ -1962,11 +1964,16 @@ created under the current directory</li>
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Changing The Project</h1></header>
+            <header><h1>Opening in IntelliJ</h1></header>
             
             
-            <section><p>[DOCNOTE: FIXME! Add additional material]</p>
-<p>[What do we want to do here?]</p></section>
+            <section><ul class="simple">
+<li>You can open the resulting project in IntelliJ</li>
+<li>From within IntelliJ, <tt class="docutils literal">File &gt; Open</tt> and navigate to the
+<tt class="docutils literal">pom.xml</tt> file within <tt class="docutils literal">BigDataApp</tt> directory</li>
+<li>IntelliJ will then open the maven project</li>
+<li>The source code will be in <tt class="docutils literal">src &gt; main &gt; java &gt; com.example &gt; WordCountApp</tt></li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -2000,6 +2007,7 @@ created under the current directory</li>
 <ul class="simple">
 <li>Use the Continuuity Reactor <tt class="docutils literal">maven</tt> archetype</li>
 <li>Create a simple Continuuity Reactor Application</li>
+<li>Open it in an IDE</li>
 <li>Deploy and run it in the Reactor</li>
 </ul></section>
             
@@ -2062,7 +2070,7 @@ created under the current directory</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Building Your First Continuuity Reactor Application</a></th>
+        <th><a href="#slide1">Building A Continuuity Reactor Application</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2098,7 +2106,7 @@ created under the current directory</li>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Changing The Project</a></th>
+        <th><a href="#slide7">Opening in IntelliJ</a></th>
         <td><a href="#slide7">7</a></td>
       </tr>
       
@@ -2151,11 +2159,11 @@ created under the current directory</li>
         <td>1</td>
       </tr>
       <tr>
-        <th>Toggle Screen Blanking</th>
+        <th>Screen Blanking</th>
         <td>b</td>
       </tr>
       <tr>
-        <th>Show/Hide Slide Context</th>
+        <th>Slide Context</th>
         <td>c</td>
       </tr>
       <tr>
@@ -2164,19 +2172,19 @@ created under the current directory</li>
       </tr>
       <tr>
         <th>First Slide</th>
-        <td>Up Arrow</td>
+        <td>Shift-Up/Left Arrows</td>
       </tr>
       <tr>
         <th>Previous Slide</th>
-        <td>Shift-SPACEBAR</td>
+        <td>Shift-Spacebar or Up/Left Arrows</td>
       </tr>
       <tr>
         <th>Next Slide</th>
-        <td>SPACEBAR</td>
+        <td>Spacebar or Down/Right Arrows</td>
       </tr>
       <tr>
         <th>Last Slide</th>
-        <td>Down Arrow</td>
+        <td>Shift-Down/Right Arrows</td>
       </tr>
       <tr>
         <th>Toggle Help</th>

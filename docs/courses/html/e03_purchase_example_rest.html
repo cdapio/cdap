@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Continuuity Reactor Purchase Example using REST</title>
+    <title>Continuuity Reactor Purchase Example Using REST</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1737,11 +1737,10 @@ function main() {
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Continuuity Reactor Purchase Example using REST</h1></header>
+            <header><h1>Continuuity Reactor Purchase Example Using REST</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
+            <section><!-- Slide Presentation HTML Generation -->
 <p class="logo">&nbsp;</p></section>
             
           </div>
@@ -1774,7 +1773,7 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Work with the Continuuity Reactor <em>Purchase</em> Example</li>
+<li>Run the Continuuity Reactor <em>Purchase</em> Example, using shell scripts</li>
 <li>Run an application that uses scheduled MapReduce Workflows to read from one
 <tt class="docutils literal">ObjectStore</tt> DataSet and write to another</li>
 <li>Use shell commands to install Applications and interact with Reactor</li>
@@ -1851,7 +1850,9 @@ the purchase history of each customer</li>
             <header><h1>Purchase Example Hints</h1></header>
             
             
-            <section><p>Send sentences using</p>
+            <section><p>The Purchase Application is located in <tt class="docutils literal">/examples/Purchase</tt></p>
+<p>Shell script for installing it is located in <tt class="docutils literal">/examples/Purchase/bin</tt></p>
+<p>Send sentences using</p>
 <pre><span class="go">curl -X POST -d &quot;Tom bought 5 apples for $10&quot; \</span>
 <span class="go">  http://localhost:10000/v2/streams/purchaseStream</span>
 </pre>
@@ -1890,8 +1891,9 @@ the purchase history of each customer</li>
             
             <section><p>You are now able to:</p>
 <ul class="simple">
-<li>Install pre-compiled Applications using shell commands</li>
-<li>Interact with the Reactor with shell commands, both sending and receiving</li>
+<li>Install pre-compiled Applications using a shell script</li>
+<li>Interact with the Reactor with curl, both sending to a stream and receiving data
+from queries</li>
 </ul></section>
             
           </div>
@@ -1953,7 +1955,7 @@ the purchase history of each customer</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Continuuity Reactor Purchase Example using REST</a></th>
+        <th><a href="#slide1">Continuuity Reactor Purchase Example Using REST</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2024,11 +2026,11 @@ the purchase history of each customer</li>
         <td>1</td>
       </tr>
       <tr>
-        <th>Toggle Screen Blanking</th>
+        <th>Screen Blanking</th>
         <td>b</td>
       </tr>
       <tr>
-        <th>Show/Hide Slide Context</th>
+        <th>Slide Context</th>
         <td>c</td>
       </tr>
       <tr>
@@ -2037,19 +2039,19 @@ the purchase history of each customer</li>
       </tr>
       <tr>
         <th>First Slide</th>
-        <td>Up Arrow</td>
+        <td>Shift-Up/Left Arrows</td>
       </tr>
       <tr>
         <th>Previous Slide</th>
-        <td>Shift-SPACEBAR</td>
+        <td>Shift-Spacebar or Up/Left Arrows</td>
       </tr>
       <tr>
         <th>Next Slide</th>
-        <td>SPACEBAR</td>
+        <td>Spacebar or Down/Right Arrows</td>
       </tr>
       <tr>
         <th>Last Slide</th>
-        <td>Down Arrow</td>
+        <td>Shift-Down/Right Arrows</td>
       </tr>
       <tr>
         <th>Toggle Help</th>

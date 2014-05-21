@@ -1,8 +1,8 @@
 ===========================================================
-Continuuity Reactor Purchase Example using Dashboard
+Continuuity Reactor Purchase Example Using Dashboard
 ===========================================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
 .. Slide Presentation HTML Generation
@@ -11,11 +11,11 @@ Continuuity Reactor Purchase Example using Dashboard
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_e02| raw:: html
+.. |br| raw:: html
 
    <br />
 
-.. |br2_e02| raw:: html
+.. |br2| raw:: html
 
    <br /><br />
 
@@ -26,7 +26,7 @@ Exercise Objectives
 
 In this exercise, you will:
 
-- Run the Continuuity Reactor *Purchase* Example
+- Run the Continuuity Reactor *Purchase* Example, using drag 'n drop
 - This application uses scheduled MapReduce Workflows to read from one 
   ObjectStore DataSet and write to another
 - Learn how to use the Dashboard to enter events to a Stream
@@ -56,6 +56,8 @@ Purchase Example and Steps
 
 Purchase Example Hints
 ==========================
+
+- The Purchase Application is located in ``/examples/Purchase``
 
 - The method is ``history`` ; the parameters are entered as a JSON string such as
   ``{ "customers" : "Tom" }``
