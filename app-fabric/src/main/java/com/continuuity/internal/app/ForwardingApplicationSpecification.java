@@ -1,6 +1,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -59,5 +60,15 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, WorkflowSpecification> getWorkflows() {
     return delegate.getWorkflows();
+  }
+
+  @Override
+  public Map<String, String> getDatasetModules() {
+    return delegate.getDatasetModules();
+  }
+
+  @Override
+  public Map<String, DatasetInstanceCreationSpec> getDatasets() {
+    return delegate.getDatasets();
   }
 }

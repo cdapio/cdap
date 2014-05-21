@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.stream.hbase;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
@@ -62,6 +63,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(cConf, hConf)).with(new AbstractModule() {
 
         @Override

@@ -5,10 +5,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
@@ -32,7 +30,6 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-
 
 import java.util.concurrent.TimeUnit;
 
@@ -62,13 +59,11 @@ public class AppFabricTestsSuite {
     @Override
     protected void before() throws Throwable {
 
-      conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
@@ -79,7 +74,6 @@ public class AppFabricTestsSuite {
       DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
       endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
         Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
-      injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       txClient = injector.getInstance(TransactionSystemClient.class);
       metrics = injector.getInstance(MetricsQueryService.class);

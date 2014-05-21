@@ -1,12 +1,9 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
-import com.google.common.io.Files;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -26,11 +23,11 @@ import java.io.IOException;
  */
 public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetOutputFormat.class);
-  public static final String OUTPUT_DATASET_SPEC = "output.dataset.spec";
+  public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
 
-  public static void setOutput(Job job, DataSetSpecification spec) {
+  public static void setOutput(Job job, String outputDatasetName) {
     job.setOutputFormatClass(DataSetOutputFormat.class);
-    job.getConfiguration().set(OUTPUT_DATASET_SPEC, new Gson().toJson(spec));
+    job.getConfiguration().set(HCONF_ATTR_OUTPUT_DATASET, outputDatasetName);
   }
 
   @Override
@@ -43,14 +40,14 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
     BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     @SuppressWarnings("unchecked")
-    BatchWritable<KEY, VALUE> dataset = (BatchWritable) mrContext.getDataSet(getOutputDataSetSpec(conf).getName());
+    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) mrContext.getDataSet(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
     return new DataSetRecordWriter<KEY, VALUE>(dataset, mrContext);
   }
 
-  private DataSetSpecification getOutputDataSetSpec(Configuration conf) {
-    return new Gson().fromJson(conf.get(OUTPUT_DATASET_SPEC), DataSetSpecification.class);
+  private String getOutputDataSet(Configuration conf) {
+    return conf.get(HCONF_ATTR_OUTPUT_DATASET);
   }
 
   @Override
