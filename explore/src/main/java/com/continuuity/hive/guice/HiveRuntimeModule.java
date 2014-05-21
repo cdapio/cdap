@@ -34,27 +34,14 @@ import java.net.URL;
  */
 public class HiveRuntimeModule extends RuntimeModule {
 
-  /**
-   * Use the given file as hive-site.xml, instead of the one automatically retrieved from the classpath.
-   */
-  private void bypassHiveConfClasspath(Configuration hiveConf) throws Exception {
-    // This will call the static code that sets hiveSiteURL.
-    // We can reset it after this call, using reflection.
-    new HiveConf();
-    File confDir = Files.createTempDir();
-    File hiveFile = new File(confDir, "hive-site.xml");
-    hiveConf.writeXml(new FileOutputStream(hiveFile));
-    hiveFile.deleteOnExit();
-
-    Field hiveSiteUrlField = HiveConf.class.getDeclaredField("hiveSiteURL");
-    hiveSiteUrlField.setAccessible(true);
-    hiveSiteUrlField.set(null, hiveFile.toURI().toURL());
-  }
-
   @Override
   public Module getInMemoryModules() {
     try {
-      final Configuration hiveConf = new Configuration();
+      URL url = this.getClass().getClassLoader().getResource("hive-site-placeholder.xml");
+      File confDir = new File(url.toURI()).getParentFile();
+      File hiveFile = new File(confDir.getAbsolutePath(), "hive-site.xml");
+
+      Configuration hiveConf = new Configuration();
       hiveConf.clear();
       hiveConf.set("hive.server2.authentication", "NOSASL");
       hiveConf.set("hive.metastore.sasl.enabled", "false");
@@ -65,18 +52,16 @@ public class HiveRuntimeModule extends RuntimeModule {
       // TODO: get local data dir from CConf
       hiveConf.set("hive.metastore.warehouse.dir", "/tmp/hive-warehouse");
 
-      hiveConf.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionPreHook");
-      hiveConf.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionPostHook");
-
       final int hiveServerPort = PortDetector.findFreePort();
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
       final int hiveMetaStorePort = PortDetector.findFreePort();
       hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
 
-      bypassHiveConfClasspath(hiveConf);
+      hiveConf.writeXml(new FileOutputStream(hiveFile));
+      hiveFile.deleteOnExit();
 
-      // This HiveConf object will load the hive-site.xml that we put in a temp folder
+      // This HiveConf object will load the hive-site.xml in the classpath
       final HiveConf newHiveConf = new HiveConf();
       return Modules.combine(new HiveModule(),
           new AbstractModule() {
@@ -112,7 +97,7 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveServerPort = PortDetector.findFreePort();
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
-      HiveConf newHiveConf = new HiveConf();
+      final HiveConf newHiveConf = new HiveConf();
       newHiveConf.clear();
       newHiveConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
       newHiveConf.set("hive.zookeeper.quorum", hiveConf.get("hive.zookeeper.quorum"));
@@ -120,17 +105,12 @@ public class HiveRuntimeModule extends RuntimeModule {
       newHiveConf.set("hive.lock.manager", hiveConf.get("hive.lock.manager"));
       newHiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
       newHiveConf.set("mapreduce.framework.name", hiveConf.get("mapreduce.framework.name"));
-      newHiveConf.set("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionPreHook");
-      newHiveConf.set("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionPostHook");
 
-      bypassHiveConfClasspath(newHiveConf);
-
-      final HiveConf passedHiveConf = new HiveConf();
       return Modules.combine(new HiveModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
-              bind(HiveConf.class).toInstance(passedHiveConf);
+              bind(HiveConf.class).toInstance(newHiveConf);
               bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
               bind(HiveServer.class).in(Scopes.SINGLETON);
             }

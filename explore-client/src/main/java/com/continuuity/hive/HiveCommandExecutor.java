@@ -33,16 +33,19 @@ public class HiveCommandExecutor implements HiveClient {
 
     Discoverable hiveDiscoverable = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)).pick();
     if (hiveDiscoverable == null) {
-      LOG.debug("No endpoint for service {}", Constants.Service.HIVE);
+      LOG.error("No endpoint for service {}", Constants.Service.HIVE);
       // todo throw some exception I guess
       return;
     }
 
+    // The hooks are plugged at every command
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
         "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
         hiveDiscoverable.getSocketAddress().getHostName() +
         ":" + hiveDiscoverable.getSocketAddress().getPort() +
-        "/default;auth=noSasl",
+        "/default;auth=noSasl?" +
+        "hive.exec.pre.hooks=com.continuuity.hive.hooks.TransactionPreHook;" +
+        "hive.exec.post.hooks=com.continuuity.hive.hooks.TransactionPostHook",
         "-n", "hive",
         "--outputformat=table",
         "-e", cmd};
