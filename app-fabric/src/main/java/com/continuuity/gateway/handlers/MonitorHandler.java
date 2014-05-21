@@ -81,8 +81,6 @@ public class MonitorHandler extends AppFabricHelper {
 
   private List<Service> setInstanceList = Arrays.asList(Service.METRICS, Service.TRANSACTION);
 
-  private List<Service> stopList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS);
-
   @Inject
   public MonitorHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient,
                         TwillRunnerService twillRunnerService) {
@@ -98,21 +96,7 @@ public class MonitorHandler extends AppFabricHelper {
   @POST
   public void stopService(final HttpRequest request, final HttpResponder responder,
                           @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    try {
-      if (twillControllerList != null && stopList.contains(Service.valueofName(serviceName))) {
-        for (TwillController twillController : twillControllerList) {
-          twillController.changeInstances(serviceName, 0).get();
-        }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      }
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
-    } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
   /**
@@ -122,25 +106,7 @@ public class MonitorHandler extends AppFabricHelper {
   @POST
   public void startService(final HttpRequest request, final HttpResponder responder,
                            @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    try {
-      if (twillControllerList != null && stopList.contains(Service.valueofName(serviceName))) {
-        for (TwillController twillController : twillControllerList) {
-          if (twillController.getResourceReport().getRunnableResources(serviceName).size() != 0) {
-            responder.sendString(HttpResponseStatus.BAD_REQUEST, "Service is running already");
-          } else {
-            twillController.changeInstances(serviceName, 1).get();
-          }
-        }
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      }
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
-    } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
   /**
@@ -184,9 +150,7 @@ public class MonitorHandler extends AppFabricHelper {
         }
 
         for (TwillController twillController : twillControllerList) {
-          //twillController.sendCommand(serviceName, Command.Builder.of("suspend").build());
           twillController.changeInstances(serviceName, instance).get();
-          //twillController.sendCommand(serviceName, Command.Builder.of("resume").build());
         }
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
