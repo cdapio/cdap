@@ -4,8 +4,11 @@
 
 package com.continuuity.internal.app.deploy;
 
+import com.continuuity.api.AbstractApplication;
 import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
@@ -16,6 +19,7 @@ import com.continuuity.common.utils.DirUtils;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -85,6 +89,7 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
+      Object app;
       if (archive != null) {   // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
         Manifest manifest = BundleJarUtil.getManifest(archive);
@@ -93,7 +98,7 @@ public final class InMemoryConfigurator implements Configurator {
 
         File unpackedJarDir = Files.createTempDir();
         try {
-          Application app = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
+          app = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
                                         mainClassName).getMainClass().newInstance();
           result.set(createResponse(app));
         } finally {
@@ -110,14 +115,29 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application app) {
+  private ConfigResponse createResponse(Object app) {
+    return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(getSpecJson(app)));
+  }
+
+  @VisibleForTesting
+  static final String getSpecJson(Object app) {
     // Now, we call configure, which returns application specification.
-    ApplicationSpecification specification = Specifications.from(app.configure());
+    ApplicationSpecification specification;
+    if (app instanceof Application) {
+      specification = Specifications.from(((Application) app).configure());
+    } else if (app instanceof AbstractApplication) {
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer((AbstractApplication) app);
+      ((AbstractApplication) app).configure(configurer, new ApplicationContext());
+      specification = configurer.createApplicationSpec();
+    } else {
+      throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
+                                                    app.getClass().getName()));
+    }
 
     // Convert the specification to JSON.
+    // We write the Application specification to output file in JSON format.
     // TODO: The SchemaGenerator should be injected
-    String specJson = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification);
-    return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
+    return ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification);
   }
 
   private void removeDir(File dir) {

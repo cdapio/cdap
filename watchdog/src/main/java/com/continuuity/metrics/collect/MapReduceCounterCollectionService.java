@@ -47,10 +47,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       String counterGroup;
       String contextParts[] = splitPattern.split(context);
       if (contextParts.length < 4) {
-        LOG.error("unexpected context {}, will not update mapred counter...", context);
-        continue;
-      }
-      if ("m".equals(contextParts[3])) {
+        // using context name as counter group for "unknown"
+        counterGroup = "continuuity." + context;
+      } else if ("m".equals(contextParts[3])) {
         counterGroup = "continuuity.mapper";
       } else if ("r".equals(contextParts[3])) {
         counterGroup = "continuuity.reducer";

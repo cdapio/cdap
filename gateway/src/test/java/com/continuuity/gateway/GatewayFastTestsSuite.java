@@ -54,7 +54,6 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -198,9 +197,6 @@ public class GatewayFastTestsSuite {
       serviceMap.put(entry.getValue(), entry.getKey());
     }
     port = serviceMap.get(Constants.Service.GATEWAY);
-
-    // initialize the dataset instantiator
-    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
 
     return injector;
   }

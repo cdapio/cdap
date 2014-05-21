@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.metrics.Metrics;
@@ -16,6 +15,7 @@ import com.continuuity.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 
+import java.io.Closeable;
 import java.util.Map;
 
 /**
@@ -36,7 +36,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final MetricsCollector systemMetricsCollector;
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
-                      Map<String, DataSet> datasets, Arguments runtimeArguments,
+                      Map<String, Closeable> datasets, Arguments runtimeArguments,
                       FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.flowId = program.getName();

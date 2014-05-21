@@ -1,10 +1,11 @@
 package com.continuuity.test.app;
 
+import com.continuuity.api.AbstractApplication;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.data2.OperationException;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -158,8 +159,19 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   @Test(timeout = 360000)
-  public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
-    ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
+  public void testApp() throws InterruptedException, IOException, TimeoutException {
+    testApp(WordCountApp2.class, false);
+  }
+
+  @Test(timeout = 360000)
+  public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
+    testApp(WordCountAppV2.class, true);
+  }
+
+  private void testApp(Class<?> app, boolean datasetV2)
+    throws IOException, TimeoutException, InterruptedException {
+
+    ApplicationManager applicationManager = deployApplication(app);
 
     try {
       applicationManager.startFlow("WordCountFlow");
@@ -190,12 +202,6 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       Assert.assertEquals(100L, result.get("text:testing").longValue());
 
-      // Verify by looking into dataset
-      DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
-
-      Assert.assertEquals(100L,
-                          Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
-
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
       procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
@@ -217,6 +223,19 @@ public class TestFrameworkTest extends ReactorTestBase {
 
       // The stream MR only consume the body, not the header.
       Assert.assertEquals(3 * 100L, totalCount);
+
+      // Verify by looking into dataset
+      // todo: ugly workaround, refactor when datasets v1 gone
+      if (!datasetV2) {
+        DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
+        Assert.assertEquals(100L,
+                            Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
+      } else {
+        DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
+          applicationManager.getDataSet("mydataset");
+        Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
+      }
+
 
     } finally {
       applicationManager.stopAll();
@@ -293,5 +312,57 @@ public class TestFrameworkTest extends ReactorTestBase {
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
 
     dataSetManager.flush();
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDataset() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployOfDeployedDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    // we should be fine if module is already there. Deploy of module should not happen
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoCreateDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithExistingDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
+  }
+
+  private void testAppWithDataset(Class<? extends AbstractApplication> app, String procedureName) throws Exception {
+    ApplicationManager applicationManager = deployApplication(app);
+
+    try {
+      // Query the result
+      ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
+      ProcedureClient procedureClient = procedureManager.getClient();
+
+      procedureClient.query("set", ImmutableMap.of("key", "key1", "value", "value1"));
+
+      String response = procedureClient.query("get", ImmutableMap.of("key", "key1"));
+      Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
+
+    } finally {
+      applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
+      clear();
+    }
   }
 }

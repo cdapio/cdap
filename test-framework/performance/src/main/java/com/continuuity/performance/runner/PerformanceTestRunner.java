@@ -293,14 +293,17 @@ public final class PerformanceTestRunner {
     LOG.debug("Initializing Continuuity Reactor for a performance test.");
     File testAppDir = Files.createTempDir();
 
-    File outputDir = new File(testAppDir, "app");
+    File appDir = new File(testAppDir, "app");
+    File datasetDir = new File(testAppDir, "dataset");
     File tmpDir = new File(testAppDir, "tmp");
     tmpDir.deleteOnExit();
-    outputDir.mkdirs();
+    appDir.mkdirs();
+    datasetDir.mkdirs();
     tmpDir.mkdirs();
 
-    config.set("app.output.dir", outputDir.getAbsolutePath());
-    config.set("app.tmp.dir", tmpDir.getAbsolutePath());
+    config.set(Constants.AppFabric.OUTPUT_DIR, appDir.getAbsolutePath());
+    config.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
+    config.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
 
     List<Module> modules = Lists.newArrayList();
 
