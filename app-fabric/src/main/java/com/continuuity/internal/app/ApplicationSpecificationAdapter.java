@@ -40,7 +40,8 @@ import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -141,7 +142,8 @@ public final class ApplicationSpecificationAdapter {
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
       Class<?> rawType = type.getRawType();
       // note: we want ordered maps to remain ordered
-      if (!Map.class.isAssignableFrom(rawType) || TreeMap.class.isAssignableFrom(rawType)) {
+      if (!Map.class.isAssignableFrom(rawType) ||
+        SortedMap.class.isAssignableFrom(rawType)) {
         return null;
       }
       Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();

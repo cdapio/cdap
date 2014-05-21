@@ -45,8 +45,8 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props));
 
     // deploy modules
-    DatasetTypeHandlerTest.deployModule("module1", TestModule1.class);
-    DatasetTypeHandlerTest.deployModule("module2", TestModule2.class);
+    deployModule("module1", TestModule1.class);
+    deployModule("module2", TestModule2.class);
 
     // create dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
@@ -86,8 +86,8 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(0, getInstances().value.size());
 
     // delete dataset modules
-    Assert.assertEquals(HttpStatus.SC_OK, DatasetTypeHandlerTest.deleteModule("module2"));
-    Assert.assertEquals(HttpStatus.SC_OK, DatasetTypeHandlerTest.deleteModule("module1"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
   }
 
   private int createInstance(String instanceName, String typeName, DatasetInstanceProperties props) throws IOException {

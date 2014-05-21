@@ -5,6 +5,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -34,6 +35,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
+    jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetInstanceCreationSpec.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
@@ -54,6 +57,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               context, StreamSpecification.class);
     Map<String, DataSetSpecification> datasets = deserializeMap(jsonObj.get("datasets"),
                                                                 context, DataSetSpecification.class);
+    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
+    Map<String, DatasetInstanceCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
+                                                                               context,
+                                                                               DatasetInstanceCreationSpec.class);
     Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
                                                           context, FlowSpecification.class);
     Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
@@ -64,6 +71,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                                   context, WorkflowSpecification.class);
 
     return new DefaultApplicationSpecification(name, description, streams, datasets,
+                                               datasetModules, datasetInstances,
                                                flows, procedures, mapReduces, workflows);
   }
 }

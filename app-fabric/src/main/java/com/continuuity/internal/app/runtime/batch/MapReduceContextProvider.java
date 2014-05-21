@@ -57,8 +57,7 @@ public final class MapReduceContextProvider {
     if (context == null) {
       CConfiguration conf = contextConfig.getConf();
       context = getBuilder(conf)
-        .build(conf,
-               type,
+        .build(type,
                contextConfig.getRunId(),
                contextConfig.getLogicalStartTime(),
                contextConfig.getWorkflowBatch(),

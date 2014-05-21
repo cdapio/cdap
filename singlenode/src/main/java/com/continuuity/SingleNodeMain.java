@@ -12,9 +12,11 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -76,6 +78,8 @@ public class SingleNodeMain {
   private final HiveCommandExecutor hiveCommandExecutor;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
+  private final DatasetManagerService datasetService;
+
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -92,6 +96,8 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    datasetService = injector.getInstance(DatasetManagerService.class);
+
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
     hiveServer = injector.getInstance(HiveServer.class);
@@ -134,6 +140,7 @@ public class SingleNodeMain {
     // Start all the services.
     transactionManager.startAndWait();
     metricsCollectionService.startAndWait();
+    datasetService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
@@ -170,6 +177,7 @@ public class SingleNodeMain {
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
+    datasetService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
@@ -257,6 +265,9 @@ public class SingleNodeMain {
 
     //Run gateway on random port and forward using router.
     configuration.setInt(Constants.Gateway.PORT, 0);
+
+    //Run dataset service on random port
+    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
 
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
