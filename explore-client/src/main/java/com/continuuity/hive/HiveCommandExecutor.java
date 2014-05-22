@@ -29,12 +29,12 @@ public class HiveCommandExecutor implements HiveClient {
   }
 
   @Override
-  public void sendCommand(String cmd) throws IOException, HiveServiceNotFoundException {
+  public void sendCommand(String cmd) throws IOException {
 
     Discoverable hiveDiscoverable = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)).pick();
     if (hiveDiscoverable == null) {
       LOG.error("No endpoint for service {}", Constants.Service.HIVE);
-      throw new HiveServiceNotFoundException("No endpoint for service " + Constants.Service.HIVE);
+      throw new IOException("No endpoint for service " + Constants.Service.HIVE);
     }
 
     // The hooks are plugged at every command
