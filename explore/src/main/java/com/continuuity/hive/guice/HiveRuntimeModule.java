@@ -21,6 +21,8 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +36,7 @@ import java.net.URL;
  * Hive Runtime guice module.
  */
 public class HiveRuntimeModule extends RuntimeModule {
+  private static final Logger LOG = LoggerFactory.getLogger(HiveRuntimeModule.class);
 
   private CConfiguration conf = null;
 
@@ -75,16 +78,25 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    String tmpDir = System.getProperty("java.io.tmpdir") +
+    String warehouseDir = System.getProperty("java.io.tmpdir") +
         System.getProperty("file.separator") +
-        "hive-metastore-" + Long.toString(System.currentTimeMillis());
-    System.setProperty("continuuity.metastore.warehouse.dir", tmpDir);
+        "hive" +
+        System.getProperty("file.separator") +
+        "warehouse" +
+        Long.toString(System.currentTimeMillis());
+    LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir);
+    System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir);
     return getLocalModules();
   }
 
   @Override
   public Module getSingleNodeModules() {
-    System.setProperty("continuuity.metastore.warehouse.dir", conf.get(Constants.CFG_DATA_LEVELDB_DIR));
+    File warehouseDir = new File(new File(conf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "warehouse");
+    File databaseDir = new File(new File(conf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "database");
+    LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
+    LOG.debug("Setting {} to {}", Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
+    System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
+    System.setProperty(Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
     return getLocalModules();
   }
 
