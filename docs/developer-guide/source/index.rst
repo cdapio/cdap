@@ -14,6 +14,7 @@ Continuuity Reactor Documentation
    Operations Guide </operations>
    HTTP REST API </rest>
    /javadocs/index
+   Release Notes </releasenotes>
    FAQ </faq>
 
 Examples

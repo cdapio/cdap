@@ -1,4 +1,4 @@
-.. :Author: Sreevatsan Raman 
+.. :Author: Continuuity, Inc 
    :Description: Release notes for Continuuity Reactor
 
 .. _overview_release-notes:
