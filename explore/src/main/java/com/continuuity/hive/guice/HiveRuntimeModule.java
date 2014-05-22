@@ -6,10 +6,10 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;

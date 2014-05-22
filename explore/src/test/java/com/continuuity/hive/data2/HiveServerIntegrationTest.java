@@ -13,7 +13,7 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveCommandExecutor;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
