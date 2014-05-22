@@ -20,6 +20,7 @@ import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Charsets;
@@ -89,6 +90,7 @@ public class AppFabricTestHelper {
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+      injector.getInstance(SchedulerService.class).startAndWait();
 
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
