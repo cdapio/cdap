@@ -276,7 +276,6 @@ public final class Constants {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
-      public static final String VERSION = "v1";
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";
       public static final String BOSS_THREADS = "dataset.service.boss.threads";
@@ -392,6 +391,9 @@ public final class Constants {
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
+
+    // next version of Gateway API to serve new functionality
+    public static final String GATEWAY_VERSION_NEXT = "v3";
   }
 
   /**

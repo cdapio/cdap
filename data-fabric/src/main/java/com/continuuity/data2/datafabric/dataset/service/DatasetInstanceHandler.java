@@ -30,7 +30,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset instance management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path("/" + Constants.Dataset.Manager.VERSION)
+@Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new Gson();

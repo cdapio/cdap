@@ -43,7 +43,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
       if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
         return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("datasets")) {
+      } else if ((uriParts.length >= 2)
+        // NOTE: in old gateway APIs exists /v2/datasets/<table_name>/truncate
+        && Constants.Gateway.GATEWAY_VERSION_NEXT.equals(uriParts[0]) && uriParts[1].equals("datasets")) {
         return Constants.Service.DATASET_MANAGER;
       } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
         // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler

@@ -85,7 +85,7 @@ public abstract class DatasetManagerServiceTestBase {
 
   protected String getUrl(String resource) {
     return "http://" + "localhost" + ":" + port +
-      "/" + Constants.Dataset.Manager.VERSION + resource;
+      "/" + Constants.Gateway.GATEWAY_VERSION_NEXT + resource;
   }
 
   // todo: use HttpUrlConnection

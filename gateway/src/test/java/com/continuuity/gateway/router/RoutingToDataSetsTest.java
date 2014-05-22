@@ -95,7 +95,7 @@ public class RoutingToDataSetsTest {
     Assert.assertEquals("get:myInstance", doRequest("/datasets/instances/myInstance", "GET"));
   }
 
-  @Path("/" + Constants.Dataset.Manager.VERSION)
+  @Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
   public static final class MockDatasetTypeHandler extends AbstractHttpHandler {
     @GET
     @Path("/datasets/modules")
@@ -136,7 +136,7 @@ public class RoutingToDataSetsTest {
     }
   }
 
-  @Path("/" + Constants.Dataset.Manager.VERSION)
+  @Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
   public static final class DatasetInstanceHandler extends AbstractHttpHandler {
     @GET
     @Path("/datasets/instances/")
@@ -167,7 +167,7 @@ public class RoutingToDataSetsTest {
   }
 
   private String doRequest(String resource, String requestMethod) throws Exception {
-    resource = String.format("http://localhost:%d/%s" + resource, port, Constants.Dataset.Manager.VERSION);
+    resource = String.format("http://localhost:%d/%s" + resource, port, Constants.Gateway.GATEWAY_VERSION_NEXT);
     URL url = new URL(resource);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(requestMethod);
