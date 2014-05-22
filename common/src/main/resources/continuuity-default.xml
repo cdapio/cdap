@@ -809,6 +809,24 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
+    <!--
+     External Authentication login module settings
+    -->
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+    </property>
+
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+    </property>
+
+    <property>
+      <name>security.authentication.basic.realmfile</name>
+      <value></value>
+    </property>
+
     <property>
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
