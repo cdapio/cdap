@@ -79,7 +79,6 @@ public abstract class GatewayTestBase {
       conf.setInt(Constants.Gateway.PORT, 0);
       conf.set(Constants.Gateway.ADDRESS, hostname);
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
       conf.set(Constants.Router.ADDRESS, hostname);
@@ -160,12 +159,6 @@ public abstract class GatewayTestBase {
       serviceMap.put(entry.getValue(), entry.getKey());
     }
     port = serviceMap.get(Constants.Service.GATEWAY);
-
-    // initialize the dataset instantiator
-    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
-    injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
 
     return injector;
   }

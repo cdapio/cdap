@@ -1,7 +1,6 @@
 package com.continuuity.runtime;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
@@ -11,14 +10,17 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
@@ -64,8 +66,8 @@ public class MultiConsumerTest {
   public static final class MultiApp implements Application {
 
     @Override
-    public ApplicationSpecification configure() {
-      return ApplicationSpecification.Builder.with()
+    public com.continuuity.api.ApplicationSpecification configure() {
+      return com.continuuity.api.ApplicationSpecification.Builder.with()
         .setName("MultiApp")
         .setDescription("MultiApp")
         .noStream()
@@ -166,11 +168,14 @@ public class MultiConsumerTest {
 
     LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
+    DatasetManager datasetManager = AppFabricTestHelper.getInjector().getInstance(DatasetManager.class);
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
+                              datasetManager,
                               getClass().getClassLoader());
-    dataSetInstantiator.setDataSets(new MultiApp().configure().getDataSets().values());
+    ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
+    dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     TransactionExecutorFactory txExecutorFactory =

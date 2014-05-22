@@ -1,7 +1,11 @@
 package com.continuuity.test;
 
+import com.continuuity.api.AbstractApplication;
 import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationContext;
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
@@ -12,16 +16,27 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
@@ -46,6 +61,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -75,6 +91,8 @@ public class ReactorTestBase {
   private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricHttpHandler httpHandler;
   private static SchedulerService schedulerService;
+  private static DatasetManagerService datasetService;
+  private static DatasetManager datasetManager;
 
 
   /**
@@ -85,15 +103,26 @@ public class ReactorTestBase {
    * @param applicationClz The application class
    * @return An {@link com.continuuity.test.ApplicationManager} to manage the deployed application.
    */
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+  protected ApplicationManager deployApplication(Class<?> applicationClz,
                                                  File...bundleEmbeddedJars) {
-
-    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+    
+    Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
+      Object appInstance = applicationClz.newInstance();
+      ApplicationSpecification appSpec;
 
-      ApplicationSpecification appSpec =
-        Specifications.from(applicationClz.newInstance().configure());
+      if (appInstance instanceof AbstractApplication) {
+        AbstractApplication app = (AbstractApplication) appInstance;
+        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+        app.configure(configurer, new ApplicationContext());
+        appSpec = configurer.createApplicationSpec();
+      } else if (appInstance instanceof Application) {
+        appSpec = Specifications.from(((Application) appInstance).configure());
+      } else {
+        throw new IllegalArgumentException("Application class does not represent application: "
+                                             + applicationClz.getName());
+      }
 
       Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(),
                                                                    applicationClz, bundleEmbeddedJars);
@@ -116,17 +145,24 @@ public class ReactorTestBase {
   }
 
   @BeforeClass
-  public static final void init() throws IOException {
+  public static void init() throws Exception {
     testAppDir = tmpFolder.newFolder();
 
-    File outputDir = new File(testAppDir, "app");
+    File appDir = new File(testAppDir, "app");
+    File datasetDir = new File(testAppDir, "dataset");
     File tmpDir = new File(testAppDir, "tmp");
 
-    outputDir.mkdirs();
+    appDir.mkdirs();
+    datasetDir.mkdirs();
     tmpDir.mkdirs();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+
+    configuration.set(Constants.AppFabric.OUTPUT_DIR, appDir.getAbsolutePath());
+    configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
+    configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -186,18 +222,25 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService.startAndWait();
+    datasetManager = injector.getInstance(DatasetManager.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
   }
 
-  private static Module createDataFabricModule(CConfiguration cConf) {
-    return Modules.override(new DataFabricModules(cConf).getSingleNodeModules())
+  private static Module createDataFabricModule(final CConfiguration cConf) {
+    return Modules.override(new DataFabricModules(cConf).getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
         protected void configure() {
-          // Use in memory dataset instead
-          bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
+          bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(cConf);
+          bind(StreamConsumerStateStoreFactory.class)
+            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
+          bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }
       });
   }
@@ -228,6 +271,8 @@ public class ReactorTestBase {
   @AfterClass
   public static final void finish() {
     metricsQueryService.stopAndWait();
+    metricsCollectionService.startAndWait();
+    datasetService.stopAndWait();
     schedulerService.stopAndWait();
     logAppenderInitializer.close();
     cleanDir(testAppDir);
@@ -253,6 +298,37 @@ public class ReactorTestBase {
     protected void configure() {
       bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
     }
+  }
+
+  /**
+   * Deploys {@link DatasetModule}.
+   * @param moduleName name of the module
+   * @param datasetModule module class
+   * @throws Exception
+   */
+  @Beta
+  protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
+    throws Exception {
+    datasetManager.register(moduleName, datasetModule);
+  }
+
+
+  /**
+   * Adds instance of data set.
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param props properties
+   * @param <T> type of the dataset admin
+   * @return
+   * @throws Exception
+   */
+  @Beta
+  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+                                                       String datasetInstanceName,
+                                                       DatasetInstanceProperties props) throws Exception {
+
+    datasetManager.addInstance(datasetTypeName, datasetInstanceName, props);
+    return datasetManager.getAdmin(datasetInstanceName, null);
   }
 }
 

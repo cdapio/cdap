@@ -5,10 +5,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
@@ -48,11 +46,12 @@ public abstract class AppFabricTestBase {
     @Override
     protected void before() throws Throwable {
       conf = CConfiguration.create();
-      conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
+
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
@@ -63,7 +62,6 @@ public abstract class AppFabricTestBase {
       DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
       endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
         Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
-      injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       txClient = injector.getInstance(TransactionSystemClient.class);
       metrics = injector.getInstance(MetricsQueryService.class);

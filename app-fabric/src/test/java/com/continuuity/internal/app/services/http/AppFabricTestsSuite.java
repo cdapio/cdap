@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.services.http;
 
 import com.continuuity.common.conf.Constants;
+
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
 import com.google.common.collect.ObjectArrays;
@@ -16,7 +17,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-
 
 /**
  * Test Suite for running all API tests.

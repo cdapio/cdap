@@ -38,7 +38,8 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     this.taskContext = taskContext;
   }
 
-  protected Injector createInjector() {
+  @Override
+  protected Injector prepare() {
     // TODO: this logic should go into DataFabricModules. We'll move it once Guice modules are refactored
     Constants.InMemoryPersistenceType persistenceType = Constants.InMemoryPersistenceType.valueOf(
       cConf.get(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.DEFAULT_DATA_INMEMORY_PERSISTENCE));

@@ -14,6 +14,7 @@ import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class InMemoryDatasetManager implements DatasetManager {
     this(new InMemoryDatasetDefinitionRegistry());
   }
 
+  @Inject
   public InMemoryDatasetManager(DatasetDefinitionRegistry registry) {
     this.registry = registry;
   }

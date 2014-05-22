@@ -10,16 +10,12 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
-    public static final String APP_FABRIC = "app.fabric";
     public static final String APP_FABRIC_HTTP = "app.fabric.http";
-    public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
-    public static final String PROCEDURES = "procedures";
     public static final String GATEWAY = "gateway";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
-    public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }
 
@@ -28,7 +24,6 @@ public final class Constants {
    */
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
-    public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
     public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout.millis";
     public static final int DEFAULT_SESSION_TIMEOUT_MILLIS = 40000;
   }
@@ -64,8 +59,6 @@ public final class Constants {
      * Default constants for common.
      */
 
-    public static final int DEFAULT_SERVER_PORT = 45005;
-
     //TODO: THis temp
     public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
@@ -73,8 +66,6 @@ public final class Constants {
      * App Fabric Server.
      */
     public static final String SERVER_ADDRESS = "app.bind.address";
-    public static final String SERVER_PORT = "app.bind.port";
-    public static final String SERVER_COMMAND_PORT = "app.command.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -167,10 +158,6 @@ public final class Constants {
       public static final String CFG_DATA_TX_BIND_ADDRESS
         = "data.tx.bind.address";
 
-      /** for the address (hostname) of the tx server command port. */
-      public static final String CFG_DATA_TX_COMMAND_PORT
-        = "data.tx.command.port";
-
       /** the number of IO threads in the tx service. */
       public static final String CFG_DATA_TX_SERVER_IO_THREADS
         = "data.tx.server.io.threads";
@@ -200,11 +187,7 @@ public final class Constants {
       /** to specify the tx client socket timeout in ms. */
       public static final String CFG_DATA_TX_CLIENT_TIMEOUT
         = "data.tx.client.timeout";
-  
-      /** to specify the tx client socket timeout for long-running ops in ms. */
-      public static final String CFG_DATA_TX_CLIENT_LONG_TIMEOUT
-        = "data.tx.client.long.timeout";
-  
+
       /** to specify the tx client provider strategy. */
       public static final String CFG_DATA_TX_CLIENT_PROVIDER
         = "data.tx.client.provider";
@@ -236,11 +219,7 @@ public final class Constants {
       /** the default tx client socket timeout in milli seconds. */
       public static final int DEFAULT_DATA_TX_CLIENT_TIMEOUT
         = 30 * 1000;
-  
-      /** tx client timeout for long operations such as ClearFabric. */
-      public static final int DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT
-        = 300 * 1000;
-  
+
       /** default number of pooled tx clients. */
       public static final int DEFAULT_DATA_TX_CLIENT_COUNT
         = 5;
@@ -291,21 +270,33 @@ public final class Constants {
      * DatasetManager service configuration.
      */
     public static final class Manager {
+      /** for the port of the dataset server. */
+      public static final String PORT = "dataset.service.bind.port";
+
+      /** for the address (hostname) of the dataset server. */
+      public static final String ADDRESS = "dataset.service.bind.address";
+
       public static final String VERSION = "v1";
-      public static final String ADDRESS = "dataset.manager.bind.address";
-      public static final String PORT = "dataset.manager.bind.port";
-      public static final String BACKLOG_CONNECTIONS = "dataset.manager.connection.backlog";
-      public static final String EXEC_THREADS = "dataset.manager.exec.threads";
-      public static final String BOSS_THREADS = "dataset.manager.boss.threads";
-      public static final String WORKER_THREADS = "dataset.manager.worker.threads";
-      public static final String OUTPUT_DIR = "dataset.manager.output.dir";
+      public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.service.exec.threads";
+      public static final String BOSS_THREADS = "dataset.service.boss.threads";
+      public static final String WORKER_THREADS = "dataset.service.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
       // Defaults
-      public static final int DEFAULT_PORT = 10009;
       public static final int DEFAULT_BACKLOG = 20000;
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
+    }
+
+    /**
+     * Twill Runnable configuration.
+     */
+    public static final class Container {
+      public static final String NUM_INSTANCES = "dataset.service.num.instances";
+      public static final String NUM_CORES = "dataset.service.num.cores";
+      public static final String MEMORY_MB = "dataset.service.memory.mb";
     }
   }
 
@@ -366,11 +357,6 @@ public final class Constants {
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String BOSS_THREADS = "gateway.boss.threads";
     public static final String WORKER_THREADS = "gateway.worker.threads";
-    public static final String MAX_CACHED_STREAM_EVENTS_NUM = "gateway.max.cached.stream.events.num";
-    public static final String MAX_CACHED_EVENTS_PER_STREAM_NUM = "gateway.max.cached.events.per.stream.num";
-    public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
-    public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
-    public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
     public static final String CLUSTER_NAME = "gateway.cluster.name";
     public static final String NUM_CORES = "gateway.num.cores";
@@ -386,11 +372,6 @@ public final class Constants {
     public static final int DEFAULT_EXEC_THREADS = 20;
     public static final int DEFAULT_BOSS_THREADS = 1;
     public static final int DEFAULT_WORKER_THREADS = 10;
-    public static final int DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM = 10000;
-    public static final int DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM = 5000;
-    public static final long DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES = 50 * 1024 * 1024;
-    public static final long DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS = 150;
-    public static final int DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS = 5;
     public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
     public static final String CLUSTER_NAME_DEFAULT = "localhost";
     public static final int DEFAULT_NUM_CORES = 2;
@@ -407,32 +388,10 @@ public final class Constants {
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
-    public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
-
-    /**
-     * Query parameter to indicate start time.
-     */
-    public static final String QUERY_PARAM_START_TIME = "before";
-
-    /**
-     * Query parameter to indicate end time.
-     */
-    public static final String QUERY_PARAM_END_TIME = "after";
-
-    /**
-     * Query parameter to indicate limits on results.
-     */
-    public static final String QUERY_PARAM_LIMIT = "limit";
-
-    /**
-     * Default history results limit.
-     */
-    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
-
   }
 
   /**
@@ -536,7 +495,6 @@ public final class Constants {
   public static final String CFG_TWILL_ZK_NAMESPACE = "weave.zookeeper.namespace";
   public static final String CFG_TWILL_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
   public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
-  public static final String CFG_TWILL_JVM_GC_OPTS = "weave.jvm.gc.opts";
 
   /**
    * Data Fabric.
@@ -553,15 +511,6 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
 
-  /** Minimum count of table write ops executed by tx to try to apply batching logic to. */
-  public static final String CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = "data.table.ops.batch.min";
-  /** Max puts to perform in one rpc. */
-  public static final String CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE = "data.dist.hbase.put.batch_size.max";
-  /** Max threads to use to write into single HBase table. */
-  public static final String CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = "queue.state.proxy.max.cache.size.bytes";
-  public static final String CFG_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT =
-    "data.dist.hbase.table.write_threads_count.max";
-
 
   /**
    * Defaults for Data Fabric.
@@ -575,18 +524,8 @@ public final class Constants {
   /**
    * Configuration for Metadata service.
    */
-  public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.bind.address";
-  public static final String CFG_METADATA_SERVER_PORT = "metadata.bind.port";
-  public static final String CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
-
   public static final String CFG_RUN_HISTORY_KEEP_DAYS = "metadata.program.run.history.keepdays";
   public static final int DEFAULT_RUN_HISTORY_KEEP_DAYS = 30;
-
-  /**
-   * Defaults for metadata service.
-   */
-  public static final int DEFAULT_METADATA_SERVER_PORT = 45004;
-  public static final int DEFAULT_METADATA_SERVER_THREADS = 2;
 
   /**
    * Config for Log Collection.

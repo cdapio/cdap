@@ -2,16 +2,21 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -24,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.net.InetAddress;
 import javax.annotation.Nullable;
 
 /**
@@ -33,6 +37,7 @@ import javax.annotation.Nullable;
 public abstract class DatasetManagerServiceTestBase {
   private static final Gson GSON = new Gson();
 
+  private int port;
   private DatasetManagerService service;
   private InMemoryTransactionManager txManager;
 
@@ -47,6 +52,9 @@ public abstract class DatasetManagerServiceTestBase {
       throw new RuntimeException(String.format("Could not create DatasetManager output dir %s", datasetDir.getPath()));
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    port = Networks.getRandomPort();
+    cConf.setInt(Constants.Dataset.Manager.PORT, port);
 
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -58,7 +66,6 @@ public abstract class DatasetManagerServiceTestBase {
 
     service = new DatasetManagerService(cConf,
                                         new LocalLocationFactory(),
-                                        InetAddress.getByName("localhost"),
                                         discoveryService,
                                         new InMemoryDatasetManager(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
@@ -76,9 +83,30 @@ public abstract class DatasetManagerServiceTestBase {
     }
   }
 
-  protected static String getUrl(String resource) {
-    return "http://" + "localhost" + ":" + Constants.Dataset.Manager.DEFAULT_PORT +
+  protected String getUrl(String resource) {
+    return "http://" + "localhost" + ":" + port +
       "/" + Constants.Dataset.Manager.VERSION + resource;
+  }
+
+  // todo: use HttpUrlConnection
+  protected int deployModule(String moduleName, Class moduleClass) throws IOException {
+    String jarPath = JarFinder.getJar(moduleClass);
+
+    HttpPost post = new HttpPost(getUrl("/datasets/modules/" + moduleName));
+    post.setEntity(new FileEntity(new File(jarPath), "application/octet-stream"));
+    post.addHeader("class-name", moduleClass.getName());
+
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(post);
+
+    return response.getStatusLine().getStatusCode();
+  }
+
+  // todo: use HttpUrlConnection
+  protected int deleteModule(String moduleName) throws IOException {
+    HttpDelete delete = new HttpDelete(getUrl("/datasets/modules/" + moduleName));
+    HttpResponse response = new DefaultHttpClient().execute(delete);
+    return response.getStatusLine().getStatusCode();
   }
 
   @SuppressWarnings("unchecked")

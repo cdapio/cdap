@@ -460,7 +460,7 @@ public interface ApplicationSpecification {
       @Override
       public MoreProcedure add(Procedure procedure, int instance) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        Preconditions.checkArgument(instance > 1, "Number of instances can't be less than 1");
+        Preconditions.checkArgument(instance >= 1, "Number of instances can't be less than 1");
         ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, instance);
         procedures.put(spec.getName(), spec);
         return this;

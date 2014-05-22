@@ -1,5 +1,7 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -25,16 +27,19 @@ import javax.annotation.Nullable;
  */
 public class TransactionExecutorTest {
 
-  static final Injector INJECTOR = Guice.createInjector(Modules.override(
-    new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          InMemoryTransactionManager txManager = new InMemoryTransactionManager();
-          txManager.startAndWait();
-          bind(InMemoryTransactionManager.class).toInstance(txManager);
-          bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
-        }
-      }));
+  static final Injector INJECTOR = Guice.createInjector(
+    new LocationRuntimeModule().getInMemoryModules(),
+    new DiscoveryRuntimeModule().getInMemoryModules(),
+    Modules.override(
+      new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+        txManager.startAndWait();
+        bind(InMemoryTransactionManager.class).toInstance(txManager);
+        bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
+      }
+    }));
 
   static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
   static final TransactionExecutorFactory FACTORY = INJECTOR.getInstance(TransactionExecutorFactory.class);

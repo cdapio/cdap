@@ -5,6 +5,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
+import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -29,12 +35,18 @@ import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -43,6 +55,10 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.NavigableMap;
 
 /**
  * Defines guice bindings for distributed modules.
@@ -118,6 +134,8 @@ public class DataFabricDistributedModule extends AbstractModule {
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
+
+    install(new DataSetsModules().getDistributedModule());
   }
 
   /**
