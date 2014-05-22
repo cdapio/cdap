@@ -14,7 +14,8 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.HiveServer;
-import com.continuuity.hive.guice.InMemoryHiveModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.google.common.collect.ImmutableList;
@@ -37,6 +38,7 @@ import java.util.List;
 public class HiveServerIntegrationTest {
   private static InMemoryTransactionManager transactionManager;
   private static HiveServer hiveServer;
+  private static InMemoryHiveMetastore inMemoryHiveMetastore;
   private static DatasetManager datasetManager;
   private static DatasetManagerService datasetManagerService;
   private static InMemoryZKServer zookeeper;
@@ -54,10 +56,12 @@ public class HiveServerIntegrationTest {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
     Injector injector = Guice.createInjector(createInMemoryModules(configuration, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
     hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
 
     transactionManager.startAndWait();
+    inMemoryHiveMetastore.startAndWait();
     hiveServer.startAndWait();
 
     datasetManagerService = injector.getInstance(DatasetManagerService.class);
@@ -101,6 +105,7 @@ public class HiveServerIntegrationTest {
   @AfterClass
   public static void stop() throws Exception {
     hiveServer.stopAndWait();
+    inMemoryHiveMetastore.stopAndWait();
     transactionManager.stopAndWait();
     datasetManagerService.startAndWait();
     zookeeper.stopAndWait();
@@ -136,7 +141,7 @@ public class HiveServerIntegrationTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new InMemoryHiveModule()
+      new HiveRuntimeModule().getInMemoryModules()
     );
   }
 

@@ -1,8 +1,8 @@
 package com.continuuity.hive;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -10,7 +10,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.server.HiveServer2;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +27,8 @@ public class HiveServer extends AbstractIdleService {
 
   private HiveServer2 hiveServer2;
 
-  private static DiscoveryServiceClient discoveryServiceClient;
   private static TransactionSystemClient txClient;
+  private static DatasetManager datasetManager;
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
@@ -39,11 +38,11 @@ public class HiveServer extends AbstractIdleService {
 
   @Inject
   public HiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                    DiscoveryServiceClient discoveryServiceClient, HiveConf hiveConf,
+                    DatasetManager datasetManager, HiveConf hiveConf,
                     @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
                     @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
-    HiveServer.discoveryServiceClient = discoveryServiceClient;
     HiveServer.txClient = txClient;
+    HiveServer.datasetManager = datasetManager;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.hiveConf = hiveConf;
@@ -80,8 +79,8 @@ public class HiveServer extends AbstractIdleService {
     });
   }
 
-  public static DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public static DatasetManager getDatasetManager() {
+    return datasetManager;
   }
 
   public static TransactionSystemClient getTransactionSystemClient() {
