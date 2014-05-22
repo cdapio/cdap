@@ -32,7 +32,7 @@ public class DatasetSerDe extends AbstractSerDe {
       RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName, null);
       rowType = rowScannable.getRowType();
     } catch (IOException e) {
-      LOG.error("Got exception while trying to instantiate dataset {}", datasetName);
+      LOG.error("Got exception while trying to instantiate dataset {}", datasetName, e);
       throw new SerDeException(e);
     }
   }
