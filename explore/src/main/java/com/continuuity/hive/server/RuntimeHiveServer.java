@@ -1,6 +1,7 @@
 package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 
 import com.google.inject.Inject;
@@ -9,7 +10,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.server.HiveServer2;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +27,8 @@ public class RuntimeHiveServer extends HiveServer {
 
   private HiveServer2 hiveServer2;
 
-  private static DiscoveryServiceClient discoveryServiceClient;
   private static TransactionSystemClient txClient;
+  private static DatasetManager datasetManager;
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
@@ -38,11 +38,11 @@ public class RuntimeHiveServer extends HiveServer {
 
   @Inject
   public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient, HiveConf hiveConf,
+                           DatasetManager datasetManager, HiveConf hiveConf,
                            @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
                            @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
-    RuntimeHiveServer.discoveryServiceClient = discoveryServiceClient;
     RuntimeHiveServer.txClient = txClient;
+    RuntimeHiveServer.datasetManager = datasetManager;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.hiveConf = hiveConf;
@@ -79,8 +79,8 @@ public class RuntimeHiveServer extends HiveServer {
     });
   }
 
-  public static DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public static DatasetManager getDatasetManager() {
+    return datasetManager;
   }
 
   public static TransactionSystemClient getTransactionSystemClient() {
