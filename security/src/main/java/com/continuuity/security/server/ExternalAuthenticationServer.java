@@ -10,6 +10,7 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
   private final int port;
   private final int maxThreads;
-  private final HandlerList handlers;
+  private final HashMap<String, Handler> handlers;
   private final DiscoveryService discoveryService;
   private Cancellable serviceCancellable;
   private InetSocketAddress socketAddress;
@@ -47,9 +49,17 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     protected static final String EXPIRES_IN = "expires_in";
   }
 
+  /**
+   * Constants for Handler types.
+   */
+  public static final class HandlerType {
+    public static final String AUTHENTICATION_HANDLER = "AuthenticationHandler";
+    public static final String GRANT_TOKEN_HANDLER = "GrantTokenHandler";
+  }
+
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HandlerList handlers) {
+                                      @Named("security.handlers") HashMap handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
@@ -99,7 +109,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       ContextHandler context = new ContextHandler();
       context.setContextPath("*");
-      context.setHandler(handlers);
+
+      context.setHandler(initHandlers(handlers));
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
@@ -110,6 +121,21 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());
     }
+  }
+
+  /**
+   * Initializes the Authentication handler and returns a HandlerList.
+   * @param handlers
+   * @return {@link org.eclipse.jetty.server.handler.HandlerList}
+   */
+  protected HandlerList initHandlers(HashMap<String, Handler> handlers) {
+    Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
+    ((AbstractAuthenticationHandler) authHandler).init();
+
+    HandlerList handlerList = new HandlerList();
+    handlerList.addHandler(handlers.get(HandlerType.AUTHENTICATION_HANDLER));
+    handlerList.addHandler(handlers.get(HandlerType.GRANT_TOKEN_HANDLER));
+    return handlerList;
   }
 
   @Override

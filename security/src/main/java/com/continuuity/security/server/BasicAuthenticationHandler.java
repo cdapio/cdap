@@ -1,40 +1,52 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
-import org.eclipse.jetty.security.ConstraintMapping;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.Authenticator;
+import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.security.IdentityService;
+import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
-import org.eclipse.jetty.util.security.Constraint;
 
-import java.net.URL;
+import javax.security.auth.login.Configuration;
 
 /**
  * Handler for basic authentication of users.
  */
-public class BasicAuthenticationHandler extends ConstraintSecurityHandler {
+public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
+  private IdentityService identityService;
 
   @Inject
-  public BasicAuthenticationHandler() throws Exception {
-    super();
+  public BasicAuthenticationHandler(CConfiguration configuration) throws Exception {
+    super(configuration);
+  }
 
-    String[] roles = Constants.Security.BASIC_USER_ROLES;
-    Constraint constraint = new Constraint();
-    constraint.setName(Constraint.__BASIC_AUTH);
-    constraint.setRoles(roles);
-    constraint.setAuthenticate(true);
-
-    ConstraintMapping constraintMapping = new ConstraintMapping();
-    constraintMapping.setConstraint(constraint);
-    constraintMapping.setPathSpec("/*");
-
-    URL realmFile = getClass().getResource("/realm.properties");
+  @Override
+  protected LoginService getHandlerLoginService() {
+    String realmFile = configuration.get(Constants.Security.BASIC_REALM_FILE);
     HashLoginService loginService = new HashLoginService();
-    loginService.setConfig(realmFile.toExternalForm());
-    loginService.loadUsers();
-    this.setAuthenticator(new BasicAuthenticator());
-    this.setLoginService(loginService);
-    this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
+    loginService.setConfig(realmFile);
+    loginService.setIdentityService(getHandlerIdentityService());
+    return loginService;
+  }
+
+  @Override
+  protected Authenticator getHandlerAuthenticator() {
+    return new BasicAuthenticator();
+  }
+
+  @Override
+  protected IdentityService getHandlerIdentityService() {
+    if (identityService == null) {
+      identityService = new DefaultIdentityService();
+    }
+    return identityService;
+  }
+
+  @Override
+  protected Configuration getLoginModuleConfiguration() {
+    return null;
   }
 }

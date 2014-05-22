@@ -13,6 +13,7 @@ import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.io.Codec;
+import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.inject.Binder;
@@ -23,14 +24,13 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.Multibinder;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.handler.HandlerList;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Guice bindings for security related classes.  This extends {@code PrivateModule} in order to limit which classes
@@ -49,13 +49,17 @@ public abstract class SecurityModule extends PrivateModule {
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
-    Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
-                                                                  Names.named("security.handlers.set"));
-    handlerBinder.addBinding().toProvider(AuthenticationHandlerProvider.class);
-    handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
-    bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
-                           .toProvider(AuthenticationHandlerListProvider.class)
-                           .in(Scopes.SINGLETON);
+    MapBinder<String, Handler> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Handler.class,
+                                                                     Names.named("security.handlers.map"));
+
+    handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
+                 .toProvider(AuthenticationHandlerProvider.class);
+    handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
+                 .to(GrantAccessTokenHandler.class);
+    bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
+                       .toProvider(AuthenticationHandlerMapProvider.class)
+                       .in(Scopes.SINGLETON);
+
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
     expose(AccessTokenTransformer.class);
@@ -87,22 +91,23 @@ public abstract class SecurityModule extends PrivateModule {
     }
   }
 
-  private static final class AuthenticationHandlerListProvider implements Provider<HandlerList> {
-    private final HandlerList handlerList;
+  private static final class AuthenticationHandlerMapProvider implements Provider<HashMap> {
+    private final HashMap<String, Handler> handlerMap;
 
     @Inject
-    public AuthenticationHandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
-      handlerList = new HandlerList();
-      Handler[] handlerArray = handlers.toArray(new Handler[handlers.size()]);
-      ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlerArray[0];
-      Handler grantAccessTokenHandler = handlerArray[1];
-      securityHandler.setHandler(grantAccessTokenHandler);
-      handlerList.setHandlers(handlerArray);
+    public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
+      handlerMap = new HashMap<String, Handler>();
+      Handler securityHandler = handlers.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER);
+      Handler grantAccessTokenHandler = handlers.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER);
+      ((AbstractAuthenticationHandler) securityHandler).setHandler(grantAccessTokenHandler);
+
+      handlerMap.put(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER, securityHandler);
+      handlerMap.put(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER, grantAccessTokenHandler);
     }
 
     @Override
-    public HandlerList get() {
-      return handlerList;
+    public HashMap get() {
+      return handlerMap;
     }
   }
 
