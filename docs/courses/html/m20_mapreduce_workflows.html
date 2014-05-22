@@ -1979,12 +1979,22 @@ well as the intermediate data format:</p>
             
             <section><ul class="simple">
 <li>Invoked after the MapReduce job has finished</li>
-<li>Can perform cleanup or send a notification of job completion, if required</li>
+<li>Can perform cleanup or send a notification of job completion, if required:</li>
+</ul>
+<pre><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">MyMapReduce</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Action taken on MapReduce job &quot;</span> <span class="o">+</span>
+                       <span class="o">(</span><span class="n">succeeded</span> <span class="o">?</span> <span class="s">&quot;&quot;</span> <span class="o">:</span> <span class="s">&quot;un&quot;</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;successful completion&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+</pre>
+<ul class="simple">
 <li>Because many MapReduce jobs do not need this method, the <tt class="docutils literal">AbstractMapReduce</tt>
 class provides a default implementation that does nothing:</li>
 </ul>
 <pre><span class="nd">@Override</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
   <span class="c1">// do nothing</span>
 <span class="o">}</span>
 </pre></section>
@@ -2108,7 +2118,7 @@ class provides a default implementation that does nothing:</li>
 <ul class="simple">
 <li>Describe the difference between MapReduce and Workflows</li>
 <li>Configure a MapReduce job</li>
-<li>Implement Mapping and reducing</li>
+<li>Implement mapping and reducing</li>
 </ul></section>
             
           </div>

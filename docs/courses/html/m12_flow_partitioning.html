@@ -2318,7 +2318,8 @@ as well as by customer ID</li>
             
             <section><p>Partitioning can be combined with batch execution:</p>
 <pre><span class="nd">@Batch</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
-<span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span> <span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
+<span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span>
+<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">words</span><span class="o">)</span> <span class="o">{</span>
    <span class="o">...</span>
 </pre></section>

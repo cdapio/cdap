@@ -53,10 +53,10 @@ Flowlet Example 1/2
 
 	  @Override
 	  public FlowletSpecification configure() {
-	    return FlowletSpecification.Builder.with().
-	      setName("round").
-	      setDescription("A rounding Flowlet").
-	      build();
+	    return FlowletSpecification.Builder.with()
+	      .setName("round")
+	      .setDescription("A rounding Flowlet")
+	      .build();
 	  }
 
 ----

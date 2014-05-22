@@ -29,14 +29,13 @@ Module Objectives
 Introducing a Big Data Problem 1/3
 ==================================
 
-**Why**
-
-Companies want to know what is happening in realtime
+**Why**: Companies want to know what is happening in realtime
 
 - What are people saying about them?
 - What are people saying about their products?
 - How are these sentiments changing over time?
 - How are these sentiments different in different parts of a country?
+- Understand more about their brand, product, issues and campaigns
 
 A large company launches a new mobile phone product, and wants to know:
 
@@ -63,7 +62,7 @@ One approach is **Geo-Sentiment analysis of social media data**
 - Challenging problem
 
   - Large volumes of data: 5K average / 30K peak tweets per second
-  - Realtime results required: answers a day later aren't useful
+  - Realtime results required: answers a day later aren’t useful
 
 ----
 
@@ -73,6 +72,7 @@ Introducing a Big Data Problem 3/3
 **How:** Hadoop/HBase is at the core of Big Data reference architecture
 
 - Ingest social media data from different sources
+- Ingest both in realtime and batch modes
 - Select and store tweets based on a filter
 - Analyze tweets and calculate sentiments
 - Store calculated results with geo-information
@@ -106,6 +106,7 @@ Continuuity Reactor *Geo-sentiment*
   relative sentiment of tweets in each area
 - Data is persisted in a Hadoop-based system
 - Permits time and geolocation of specific queries
+- Actionable analytics: based on time-frames, geographic regions and keywords
 
 ----
 
@@ -137,74 +138,6 @@ Continuuity Reactor *Geo-sentiment*
 
 ----
 
-Ingesting Data
-==============
-
-.. sourcecode:: shell-session
-
-	curl -X POST -d "$line" http://$gateway:10000/v2/streams/MyInputStream;
-
------
-
-Processing Data: Filtering, Analyzing
-=====================================
-
-.. sourcecode:: java
-
-	class MyFilterFlowlet implements Flowlet {
-
-	  @Override
-	  public FlowletSpecification configure() {
-	    return FlowletSpecification.Builder.with().
-	      setName("filter").
-	      setDescription("A filtering Flowlet").
-	      build();
-	  }
-
-	  OutputEmitter<Long> output;
-	  @ProcessInput
-	  public void round(Double number) {
-	    output.emit(Math.round(number));
-	  }
-	}
-
------
-
-Storing Data
-========================
-
-.. sourcecode:: java
-
-	class MyCountingFowlet extends AbstractFlowlet {
-	  @UseDataSet("myCounters")
-	  private KeyValueTable counters;
-	  ...
-	  void process(String key) {
-	    counters.increment(key.getBytes());
-	  }
-	}
-
------
-
-Visualizing Results
-===================
-
-.. sourcecode:: java
-
-	class MyVisualization extends AbstractProcedure {
-
-	  @Handle("visualizer")
-	  public void wave(ProcedureRequest request,
-	      ProcedureResponder responder) throws IOException {
-	    String total = "Total " + request.getArgument("count");
-	    ProcedureResponse.Writer writer =
-	      responder.stream(new ProcedureResponse(SUCCESS));
-	    writer.write(ByteBuffer.wrap(total.getBytes())).close();
-	  }
-	}
-
-----
-
 Continuuity Reactor *Geo-sentiment*
 ========================================================
 
@@ -230,7 +163,8 @@ How Continuuity Reactor Helps
 **Without** Continuuity Reactor
 ===============================
 
-- Steep learning curve to decide which technologies to use
+- Large number of questions to answer before deciding which technologies to use
+- Numerous technologies to learn and master as part of the process
 - Increasing concerns in both application and infrastructure areas
 - Deep integration required between various distributed systems
 - Long time required to develop the application

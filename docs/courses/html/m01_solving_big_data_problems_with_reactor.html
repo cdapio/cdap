@@ -1757,7 +1757,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              1/17
+              1/13
             </aside>
           </footer>
         </div>
@@ -1792,7 +1792,7 @@ Realtime geo-sentiment analysis of social media</li>
             </aside>
             
             <aside class="page_number">
-              2/17
+              2/13
             </aside>
           </footer>
         </div>
@@ -1806,13 +1806,13 @@ Realtime geo-sentiment analysis of social media</li>
             <header><h1>Introducing a Big Data Problem 1/3</h1></header>
             
             
-            <section><p><strong>Why</strong></p>
-<p>Companies want to know what is happening in realtime</p>
+            <section><p><strong>Why</strong>: Companies want to know what is happening in realtime</p>
 <ul class="simple">
 <li>What are people saying about them?</li>
 <li>What are people saying about their products?</li>
 <li>How are these sentiments changing over time?</li>
 <li>How are these sentiments different in different parts of a country?</li>
+<li>Understand more about their brand, product, issues and campaigns</li>
 </ul>
 <p>A large company launches a new mobile phone product, and wants to know:</p>
 <ul class="simple">
@@ -1835,7 +1835,7 @@ Realtime geo-sentiment analysis of social media</li>
             </aside>
             
             <aside class="page_number">
-              3/17
+              3/13
             </aside>
           </footer>
         </div>
@@ -1861,7 +1861,7 @@ Realtime geo-sentiment analysis of social media</li>
 </li>
 <li>Challenging problem<ul>
 <li>Large volumes of data: 5K average / 30K peak tweets per second</li>
-<li>Realtime results required: answers a day later aren't useful</li>
+<li>Realtime results required: answers a day later aren’t useful</li>
 </ul>
 </li>
 </ul></section>
@@ -1880,7 +1880,7 @@ Realtime geo-sentiment analysis of social media</li>
             </aside>
             
             <aside class="page_number">
-              4/17
+              4/13
             </aside>
           </footer>
         </div>
@@ -1897,6 +1897,7 @@ Realtime geo-sentiment analysis of social media</li>
             <section><p><strong>How:</strong> Hadoop/HBase is at the core of Big Data reference architecture</p>
 <ul class="simple">
 <li>Ingest social media data from different sources</li>
+<li>Ingest both in realtime and batch modes</li>
 <li>Select and store tweets based on a filter</li>
 <li>Analyze tweets and calculate sentiments</li>
 <li>Store calculated results with geo-information</li>
@@ -1918,7 +1919,7 @@ Realtime geo-sentiment analysis of social media</li>
             </aside>
             
             <aside class="page_number">
-              5/17
+              5/13
             </aside>
           </footer>
         </div>
@@ -1953,7 +1954,7 @@ Realtime geo-sentiment analysis of social media</li>
             </aside>
             
             <aside class="page_number">
-              6/17
+              6/13
             </aside>
           </footer>
         </div>
@@ -1975,6 +1976,7 @@ Realtime geo-sentiment analysis of social media</li>
 relative sentiment of tweets in each area</li>
 <li>Data is persisted in a Hadoop-based system</li>
 <li>Permits time and geolocation of specific queries</li>
+<li>Actionable analytics: based on time-frames, geographic regions and keywords</li>
 </ul></section>
             
           </div>
@@ -1991,7 +1993,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              7/17
+              7/13
             </aside>
           </footer>
         </div>
@@ -2044,163 +2046,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              8/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Ingesting Data</h1></header>
-            
-            
-            <section><pre><span class="go">curl -X POST -d &quot;$line&quot; http://$gateway:10000/v2/streams/MyInputStream;</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              9/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Processing Data: Filtering, Analyzing</h1></header>
-            
-            
-            <section><pre><span class="kd">class</span> <span class="nc">MyFilterFlowlet</span> <span class="kd">implements</span> <span class="n">Flowlet</span> <span class="o">{</span>
-
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">FlowletSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">FlowletSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">().</span>
-      <span class="n">setName</span><span class="o">(</span><span class="s">&quot;filter&quot;</span><span class="o">).</span>
-      <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;A filtering Flowlet&quot;</span><span class="o">).</span>
-      <span class="n">build</span><span class="o">();</span>
-  <span class="o">}</span>
-
-  <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
-  <span class="nd">@ProcessInput</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              10/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Storing Data</h1></header>
-            
-            
-            <section><pre><span class="kd">class</span> <span class="nc">MyCountingFowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
-  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">counters</span><span class="o">;</span>
-  <span class="o">...</span>
-  <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">counters</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">getBytes</span><span class="o">());</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              11/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Visualizing Results</h1></header>
-            
-            
-            <section><pre><span class="kd">class</span> <span class="nc">MyVisualization</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
-
-  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;visualizer&quot;</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">wave</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
-      <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
-    <span class="n">String</span> <span class="n">total</span> <span class="o">=</span> <span class="s">&quot;Total &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
-    <span class="n">ProcedureResponse</span><span class="o">.</span><span class="na">Writer</span> <span class="n">writer</span> <span class="o">=</span>
-      <span class="n">responder</span><span class="o">.</span><span class="na">stream</span><span class="o">(</span><span class="k">new</span> <span class="n">ProcedureResponse</span><span class="o">(</span><span class="n">SUCCESS</span><span class="o">));</span>
-    <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">ByteBuffer</span><span class="o">.</span><span class="na">wrap</span><span class="o">(</span><span class="n">total</span><span class="o">.</span><span class="na">getBytes</span><span class="o">())).</span><span class="na">close</span><span class="o">();</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m01_solving_big_data_problems_with_reactor.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              12/17
+              8/13
             </aside>
           </footer>
         </div>
@@ -2231,7 +2077,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              13/17
+              9/13
             </aside>
           </footer>
         </div>
@@ -2268,7 +2114,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              14/17
+              10/13
             </aside>
           </footer>
         </div>
@@ -2283,7 +2129,8 @@ relative sentiment of tweets in each area</li>
             
             
             <section><ul class="simple">
-<li>Steep learning curve to decide which technologies to use</li>
+<li>Large number of questions to answer before deciding which technologies to use</li>
+<li>Numerous technologies to learn and master as part of the process</li>
 <li>Increasing concerns in both application and infrastructure areas</li>
 <li>Deep integration required between various distributed systems</li>
 <li>Long time required to develop the application</li>
@@ -2305,7 +2152,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              15/17
+              11/13
             </aside>
           </footer>
         </div>
@@ -2340,7 +2187,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              16/17
+              12/13
             </aside>
           </footer>
         </div>
@@ -2370,7 +2217,7 @@ relative sentiment of tweets in each area</li>
             </aside>
             
             <aside class="page_number">
-              17/17
+              13/13
             </aside>
           </footer>
         </div>
@@ -2433,56 +2280,32 @@ relative sentiment of tweets in each area</li>
       
       
       <tr id="toc-row-9">
-        <th><a href="#slide9">Ingesting Data</a></th>
+        <th><a href="#slide9">Continuuity Reactor <em>Geo-sentiment</em></a></th>
         <td><a href="#slide9">9</a></td>
       </tr>
       
       
       <tr id="toc-row-10">
-        <th><a href="#slide10">Processing Data: Filtering, Analyzing</a></th>
+        <th><a href="#slide10">How Continuuity Reactor Helps</a></th>
         <td><a href="#slide10">10</a></td>
       </tr>
       
       
       <tr id="toc-row-11">
-        <th><a href="#slide11">Storing Data</a></th>
+        <th><a href="#slide11"><strong>Without</strong> Continuuity Reactor</a></th>
         <td><a href="#slide11">11</a></td>
       </tr>
       
       
       <tr id="toc-row-12">
-        <th><a href="#slide12">Visualizing Results</a></th>
+        <th><a href="#slide12">Module Summary</a></th>
         <td><a href="#slide12">12</a></td>
       </tr>
       
       
       <tr id="toc-row-13">
-        <th><a href="#slide13">Continuuity Reactor <em>Geo-sentiment</em></a></th>
+        <th><a href="#slide13">Module Completed</a></th>
         <td><a href="#slide13">13</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-14">
-        <th><a href="#slide14">How Continuuity Reactor Helps</a></th>
-        <td><a href="#slide14">14</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-15">
-        <th><a href="#slide15"><strong>Without</strong> Continuuity Reactor</a></th>
-        <td><a href="#slide15">15</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-16">
-        <th><a href="#slide16">Module Summary</a></th>
-        <td><a href="#slide16">16</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-17">
-        <th><a href="#slide17">Module Completed</a></th>
-        <td><a href="#slide17">17</a></td>
       </tr>
       
       

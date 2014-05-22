@@ -77,13 +77,15 @@ Stream API supports:
 - Creating Streams
 - Sending events to a Stream
 - Reading single events from a Stream
-- Streams may have multiple consumers (for example, multiple Flows),
+- Streams may have multiple consumers (e.g., multiple Flows),
   each of which may be a group of different agents
-  (for example: multiple instances of a Flowlet)
-- In order to read events from a Stream, a client application must first obtain a consumer
-  (group) id, which is then passed to subsequent read requests
+  (e.g., multiple Flowlet instances)
+- To read events from a Stream, client application must first obtain a consumer
+  (group) id, which is passed to subsequent read requests
 
-Flows API: Query and set the number of instances executing a given Flowlet
+Flows API supports: 
+
+- Query and set the number of instances executing a given Flowlet
 
 ----
 

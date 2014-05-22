@@ -11,7 +11,7 @@ Custom DataSets
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m16| raw:: html
+.. |br| raw:: html
 
    <br />
 
@@ -54,16 +54,16 @@ Configuration and Initialization methods
 
 Custom DataSets can also optionally implement
 
-``configure`` method:
+A **configure** method:
 
-  - Returns a specification which can be used to save metadata about the DataSet (such as
-    configuration parameters)
+- Returns a specification which can be used to save metadata about the DataSet (such as
+  configuration parameters)
 
-``initialize`` method:
+An **initialize** method:
 
-  - Called at execution time
+- Called at execution time
 
-  - Any operations on the data of this DataSet are prohibited in ``initialize()``
+- Any operations on the data of this DataSet are prohibited in ``initialize()``
 
 
 ----

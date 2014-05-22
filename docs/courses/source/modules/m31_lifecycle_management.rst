@@ -194,11 +194,11 @@ Specifying Runtime Arguments
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
-	POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
+	POST <base-url>/apps/HelloWorld/procedures/Greeting/start
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+	{"greeting":"Good Morning"}
 
 These runtime arguments are used only for this single invocation of the element
 
@@ -210,15 +210,15 @@ Saving and Retrieving Runtime Arguments
 To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
-	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+	PUT <base-url>/apps/HelloWorld/procedures/Greeting/runtimeargs
 
 with the arguments as a JSON string in the body::
 
-	{"foo":"bar","this":"that"}
+	{"greeting":"Good Morning"}
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
-	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
+	GET <base-url>/apps/HelloWorld/procedures/Greeting/runtimeargs
 
 This will return the saved runtime arguments in JSON format
 

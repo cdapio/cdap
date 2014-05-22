@@ -11,11 +11,11 @@ Streams REST API
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m10| raw:: html
+.. |br| raw:: html
 
    <br />
 
-.. |br2_m10| raw:: html
+.. |br2| raw:: html
 
    <br /><br />
 
@@ -29,9 +29,7 @@ In this module, you will look at the Continuuity Reactor Streams REST API:
 - Creating a Stream
 - Sending Events to a Stream
 - Reading Events from a Stream
-- Reading Multiple Events from a Stream [tbc]
-
-[DOCNOTE: FIXME!]
+- Reading Multiple Events from a Stream
 
 ----
 
@@ -98,7 +96,7 @@ Description
 HTTP Responses
 
 Status Code : Description
-   ``200 OK`` : The event was successfully received |br_m10|
+   ``200 OK`` : The event was successfully received |br|
    ``404 Not Found`` : The Stream does not exist
 
 :Note: The response will always have an empty body
@@ -112,7 +110,7 @@ Sending Events to a Stream: Example
 
 - The body of the request must contain the event in binary form
 - Pass headers for the event as HTTP headers,
-  prefixing them with the *stream-id*: |br_m10|
+  prefixing them with the *stream-id*: |br|
   ``<stream-id>.<property>:<string value>``
 
 After receiving the request, the HTTP handler transforms it into a Stream event:
@@ -125,9 +123,9 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 
 ----
 
-Reading Events from a Stream: |br_m10| Getting a Consumer-ID
+Reading Events from a Stream: |br| Getting a Consumer-ID
 ============================================================
-|br_m10|
+|br|
 
 Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
 
@@ -141,14 +139,14 @@ Description
 HTTP Responses
 
 Status Code : Description
-  ``200 OK`` : The event was successfully received and a new ``consumer-id`` was returned |br_m10|
+  ``200 OK`` : The event was successfully received and a new ``consumer-id`` was returned |br|
   ``404 Not Found`` : The Stream does not exist
 
 ----
 
-Reading Events from a Stream: |br_m10| Getting a Consumer-ID: Example
+Reading Events from a Stream: |br| Getting a Consumer-ID: Example
 =====================================================================
-|br_m10|
+|br|
 
 ``POST <base-url>/streams/mystream/consumer-id``
 
@@ -165,15 +163,15 @@ Reading Events from a Stream
 - In order to read events from a Stream, a client application must
   first obtain a consumer (group) id, which is then passed to subsequent read requests
 - The ``Consumer-ID`` is returned in a response header
-  and in the body of the response: |br2_m10|
-  ``X-Continuuity-ConsumerId: <consumer-id>`` |br2_m10|
+  and in the body of the response: |br2|
+  ``X-Continuuity-ConsumerId: <consumer-id>`` |br2|
 - Once you have the ``Consumer-ID``, single events can be read from the Stream
 
 ----
 
-Reading Events from a Stream: |br_m10| Using the Consumer-ID
+Reading Events from a Stream: |br| Using the Consumer-ID
 =============================================================
-|br_m10| 
+|br| 
 A read is performed as an HTTP POST method to the URL::
 
 	POST <base-url>/streams/<stream-id>/dequeue
@@ -190,16 +188,16 @@ The request must pass the ``Consumer-ID`` in a header of the form::
 HTTP Responses
 
 Status Code : Description
-  ``200 OK`` : The event was successfully received and the result of the read was returned |br_m10|
-  ``204 No Content`` : The Stream exists but it is either empty or |br_m10|
-  the given ``Consumer-ID`` has read all the events in the Stream |br_m10|
+  ``200 OK`` : The event was successfully received and the result of the read was returned |br|
+  ``204 No Content`` : The Stream exists but it is either empty or |br|
+  the given ``Consumer-ID`` has read all the events in the Stream |br|
   ``404 Not Found`` : The Stream does not exist
 
 ----
 
-Reading Events from a Stream: |br_m10| Using the Consumer-ID: Example
+Reading Events from a Stream: |br| Using the Consumer-ID: Example
 =====================================================================
-|br_m10|
+|br|
 
 ``POST <base-url>/streams/mystream/dequeue``
 
@@ -228,7 +226,7 @@ posting an event to the Stream::
 
 ----
 
-Reading Multiple Events from a Stream [tbc]
+Reading Multiple Events from a Stream
 ===========================================
 Reading multiple events is not supported directly by the Stream HTTP API,
 but the command-line tool ``stream-client`` demonstrates how to view 
@@ -238,7 +236,13 @@ For more information, see the Stream Command Line Client
 ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
-[DOCNOTE: FIXME!]
+Run at the command line
+
+.. sourcecode:: shell-session
+
+	$ stream-client --help
+
+for usage and documentation of options.
 
 ----
 
@@ -250,7 +254,7 @@ You should now be able to:
 - Create a Stream
 - Send Events to a Stream
 - Read Events from a Stream
-- Read Multiple Events from a Stream [tbc]
+- Read Multiple Events from a Stream
 
 ----
 

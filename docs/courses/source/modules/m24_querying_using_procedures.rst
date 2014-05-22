@@ -38,7 +38,7 @@ Procedures:
 
 - Allow synchronous calls into the Reactor from an external system
 - Perform server-side processing on-demand
-- Are Similar to a stored procedure in a traditional database
+- Are similar to a stored procedure in a traditional database
 
 Procedures are typically used to post-process data at query time:
 

@@ -2211,11 +2211,11 @@ GET &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/status
             
             <section><p>When starting an element, you can optionally specify runtime arguments as a JSON map in the request body:</p>
 <pre class="literal-block">
-POST &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/start
+POST &lt;base-url&gt;/apps/HelloWorld/procedures/Greeting/start
 </pre>
 <p>with the arguments as a JSON string in the body:</p>
 <pre class="literal-block">
-{&quot;foo&quot;:&quot;bar&quot;,&quot;this&quot;:&quot;that&quot;}
+{&quot;greeting&quot;:&quot;Good Morning&quot;}
 </pre>
 <p>These runtime arguments are used only for this single invocation of the element</p></section>
             
@@ -2250,15 +2250,15 @@ POST &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/start
             <section><p>To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter <tt class="docutils literal">runtimeargs</tt>:</p>
 <pre class="literal-block">
-PUT &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/runtimeargs
+PUT &lt;base-url&gt;/apps/HelloWorld/procedures/Greeting/runtimeargs
 </pre>
 <p>with the arguments as a JSON string in the body:</p>
 <pre class="literal-block">
-{&quot;foo&quot;:&quot;bar&quot;,&quot;this&quot;:&quot;that&quot;}
+{&quot;greeting&quot;:&quot;Good Morning&quot;}
 </pre>
 <p>To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter <tt class="docutils literal">runtimeargs</tt>:</p>
 <pre class="literal-block">
-GET &lt;base-url&gt;/apps/HelloWorld/flows/WhoFlow/runtimeargs
+GET &lt;base-url&gt;/apps/HelloWorld/procedures/Greeting/runtimeargs
 </pre>
 <p>This will return the saved runtime arguments in JSON format</p></section>
             

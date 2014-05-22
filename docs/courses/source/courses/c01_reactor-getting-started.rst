@@ -121,9 +121,6 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m10_streams_rest_api.rst
 .. landslide: exercise: Continuuity Reactor Purchase Example Using REST
 .. landslide: exercise link: ../exercises/e04_purchase_example_rest.rst
-.. landslide: exercise: Building An Application Using Streams
-.. landslide: exercise link: ../exercises/e05_streams_exercise.rst
-
 
 .. chapter 4
 .. landslide: chapter: Real-time Processing Using Flows
@@ -136,8 +133,8 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m13_types_of_flowlets.rst
 .. landslide: module: Type Projection
 .. landslide: module link: ../modules/m14_type_projection.rst
-.. landslide: exercise: Building An Application Using Flows
-.. landslide: exercise link: ../exercises/e06_flows_exercise.rst
+.. landslide: exercise: Building An Application Using Streams and Flows
+.. landslide: exercise link: ../exercises/e05_streams_flows_exercise.rst
 
 .. chapter 5
 .. landslide: chapter: Storing Data Using DataSets
@@ -153,7 +150,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: DataSet REST API
 .. landslide: module link: ../modules/m19_dataset_rest_api.rst
 .. landslide: exercise: Building An Application Using DataSets
-.. landslide: exercise link: ../exercises/e07_datasets_exercise.rst
+.. landslide: exercise link: ../exercises/e06_datasets_exercise.rst
 
 .. chapter 6
 .. landslide: chapter: Batch Processing Using MapReduce and Workflows
@@ -167,7 +164,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Workflows
 .. landslide: module link: ../modules/m23_workflows.rst
 .. landslide: exercise: Building An Application Using MapReduce and Workflows
-.. landslide: exercise link: ../exercises/e08_mapreduce_workflow_exercise.rst
+.. landslide: exercise link: ../exercises/e07_mapreduce_workflow_exercise.rst
 
 .. chapter 7
 .. landslide: chapter: Querying Using Procedures
@@ -177,7 +174,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Procedures REST API
 .. landslide: module link: ../modules/m25_procedures_rest_api.rst
 .. landslide: exercise: Building An Application Using Procedures
-.. landslide: exercise link: ../exercises/e09_procedures_exercise.rst
+.. landslide: exercise link: ../exercises/e08_procedures_exercise.rst
 
 .. landslide: section: Reactor In Production
 .. -------------------------------------------
@@ -190,7 +187,7 @@ Upon completion of this course you should be able to:
 .. landslide: module: Debugging Reactor Applications
 .. landslide: module link: ../modules/m27_debugging_reactor_applications.rst
 .. landslide: exercise: Testing and Debugging Reactor Applications
-.. landslide: exercise link: ../exercises/e10_testing_debugging_exercise.rst
+.. landslide: exercise link: ../exercises/e09_testing_debugging_exercise.rst
 
 .. chapter 9
 .. landslide: chapter: Operational Considerations For Reactor
@@ -202,11 +199,11 @@ Upon completion of this course you should be able to:
 .. landslide: module: Runtime Arguments and Scaling Instances
 .. landslide: module link: ../modules/m30_runtime_arguments_scaling_instances.rst
 .. landslide: exercise: Monitoring and Logging Reactor Applications
-.. landslide: exercise link: ../exercises/e11_monitoring_logging_exercise.rst
+.. landslide: exercise link: ../exercises/e10_monitoring_logging_exercise.rst
 .. landslide: module: Lifecycle Management
 .. landslide: module link: ../modules/m31_lifecycle_management.rst
 .. landslide: exercise: Controlling the Lifecyle of a Reactor Application
-.. landslide: exercise link: ../exercises/e12_controlling_application_exercise.rst
+.. landslide: exercise link: ../exercises/e11_controlling_application_exercise.rst
 
 .. landslide: CUT START
 
@@ -283,8 +280,9 @@ Appendices
 
 - Developer Documentation
 - Support Page
-- White Paper
 - Data Sheets
+
+.. - White Paper
 
 ----
 
@@ -296,6 +294,7 @@ You should now be able to:
 - Describe Continuuity Reactor capabilities
 - Explain Reactor programming paradigms
 - Build basic Reactor applications
+- Create an application using ingesting with Streams
 - Understand real-time processing using Flows
 - Perform batch processing using MapReduce
 - Serve data using Procedures

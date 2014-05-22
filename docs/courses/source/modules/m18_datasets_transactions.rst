@@ -139,10 +139,10 @@ Rules for Flows, Flowlets and Procedures (2 of 2)
   the chance of conflict increases
 - Unless you depend on that return value, always perform an increment only as a write operation
 
-**Use hash-based partitioning**
+**Use hash-based partitioning** 
 
-- For the inputs of highly concurrent Flowlets that perform writes
-- This helps reduce concurrent writes to the same key from different instances of the Flowlet
+- Use with the inputs of highly concurrent Flowlets that perform writes
+- Reduces concurrent writes to same key from different instances of a Flowlet
 
 These guidelines will help you write more efficient and faster-performing code
 

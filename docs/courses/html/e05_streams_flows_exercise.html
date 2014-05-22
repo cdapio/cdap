@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Building An Application Using MapReduce and Workflows</title>
+    <title>Building An Application Using Streams and Flows</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1732,12 +1732,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Building An Application Using MapReduce and Workflows</h1></header>
+            <header><h1>Building An Application Using Streams and Flows</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1753,7 +1753,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1763,7 +1763,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1773,9 +1773,11 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Start with an application created by the maven archetype</li>
+<li>Add a Stream to the application</li>
+<li>Add a Flow to the application</li>
+<li>Build and deploy the application</li>
+<li>Run the application and use it to ingest data into Reactor</li>
 </ul></section>
             
           </div>
@@ -1788,7 +1790,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1798,7 +1800,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1807,53 +1809,8 @@ function main() {
             
             
             <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
-</ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/5
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Exercise Summary</h1></header>
-            
-            
-            <section><p>You should now be able to:</p>
-<ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>??</li>
+<li>??</li>
 </ul></section>
             
           </div>
@@ -1866,25 +1823,32 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              3/5
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>Exercise Summary</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e08">Chapter Index</a></p></section>
+            <section><p>You should now be able to:</p>
+<ul class="simple">
+<li>Start with an application created by the maven archetype</li>
+<li>Add a Stream to an application</li>
+<li>Add a Flow to an application</li>
+<li>Build and deploy the resulting application</li>
+<li>Run the application and use it to ingest data into Reactor</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -1896,7 +1860,37 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_mapreduce_workflow_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/5
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Exercise Completed</h1></header>
+            
+            
+            <section><p><a class="reference external" href="return.html#e06">Chapter Index</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1915,7 +1909,7 @@ function main() {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Building An Application Using MapReduce and Workflows</a></th>
+        <th><a href="#slide1">Building An Application Using Streams and Flows</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       

@@ -41,6 +41,14 @@ Continuuity Reactor Architecture
 
 ----
 
+Continuuity Reactor Flow (BigFlow Container)
+============================================
+
+.. image:: ../_images/Reactor_03.png
+   :height: 500px
+
+----
+
 Continuuity Reactor Functions
 =================================
 
@@ -92,7 +100,10 @@ Flowlets are wired together into a directed acyclic graph or DAG
 
 The DAG comprises the Flow
 
-.. image:: ../_images/Geo-sentiment-Dashboard.jpg
+.. .. image:: ../_images/Geo-sentiment-Dashboard.jpg
+..   :width: 400px
+
+.. image:: ../_images/dashboard_07_app_crawler_flow_out.png
    :width: 400px
 
 ----
@@ -110,6 +121,9 @@ Can perform data operations to a data store
 
 Can emit data objects on their outputs
 
+.. image:: ../_images/dashboard_07_app_crawler_flow_in.png
+   :width: 400px
+
 ----
 
 **Processing:** MapReduce Job
@@ -121,6 +135,9 @@ Can be written as in a conventional Hadoop system
 
 Reactor DataSets can be accessed from MapReduce jobs as both input and output
 
+.. image:: ../_images/dashboard_26_mapreduce.png
+   :width: 400px
+
 ----
 
 **Processing:** Workflows
@@ -131,6 +148,9 @@ Workflows are used to execute a series of MapReduce jobs
 A sequence of jobs that follow each other, with an optional schedule
 
 Goes from job to job unless there is an error, in which case the Workflow is halted
+
+.. image:: ../_images/dashboard_25_workflow.png
+   :width: 400px
 
 ----
 
@@ -147,6 +167,9 @@ Provide generic, reusable Java implementations of common data patterns
 
 Replace manipulating data with low-level APIs
 
+.. image:: ../_images/dashboard_15_dataset.png
+   :width: 400px
+
 ----
 
 **Querying:** Procedures
@@ -159,6 +182,9 @@ Allow you to make synchronous calls into Reactor from an external system
 Allow you to perform server-side processing on-demand
 
 Similar to a stored procedure in a traditional database
+
+.. image:: ../_images/dashboard_17_procedure_ranker.png
+   :width: 400px
 
 ----
 

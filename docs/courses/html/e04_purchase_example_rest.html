@@ -1858,7 +1858,10 @@ the purchase history of each customer</li>
 </pre>
 <p>Execute the PurchaseQuery procedure using</p>
 <pre><span class="go">curl -v -d &#39;{&quot;customer&quot;: &quot;Tom&quot;}&#39; -X POST \</span>
-<span class="go">  &#39;http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history&#39;</span>
+<span class="go">  &#39;&lt;base-url&gt;/PurchaseHistory/procedures/PurchaseQuery/methods/history&#39;</span>
+</pre>
+<p>where <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></tt> is</p>
+<pre><span class="go">http://localhost:10000/v2/apps</span>
 </pre></section>
             
           </div>
@@ -1892,8 +1895,9 @@ the purchase history of each customer</li>
             <section><p>You are now able to:</p>
 <ul class="simple">
 <li>Install pre-compiled Applications using a shell script</li>
-<li>Interact with the Reactor with curl, both sending to a stream and receiving data
-from queries</li>
+<li>Interact with the Reactor with curl</li>
+<li>Send events to a stream</li>
+<li>Receiving data from queries</li>
 </ul></section>
             
           </div>

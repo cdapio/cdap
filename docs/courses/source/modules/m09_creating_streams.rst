@@ -11,11 +11,11 @@ Creating Streams
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m09| raw:: html
+.. |br| raw:: html
 
    <br />
 
-.. |br2_m09| raw:: html
+.. |br2| raw:: html
 
    <br /><br />
 

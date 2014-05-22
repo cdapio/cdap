@@ -259,7 +259,8 @@ Partitioning can be combined with batch execution:
 .. sourcecode:: java
 
 	@Batch(100)
-	@HashPartition("wordHash") @ProcessInput("wordOut")
+	@HashPartition("wordHash")
+	@ProcessInput("wordOut")
 	public void process(Iterator<String> words) {
 	   ...
 

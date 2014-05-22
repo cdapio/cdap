@@ -11,7 +11,7 @@ Continuuity Reactor SDK
 
 .. include:: ../_slide-fragments/continuuity_logo.rst
 
-.. |br_m04| raw:: html
+.. |br| raw:: html
 
    <br />
 
@@ -114,7 +114,7 @@ Javadocs
 
 - Javadocs for Java portion of API
 - Located in ``javadocs/``
-- REST API documented separately
+- HTTP REST API documented separately
 - Examples & Documentation are best place to start learning
 
 ----
@@ -122,9 +122,9 @@ Javadocs
 REST API Guide
 ==============
    
-- Local copy of REST API located in ``docs/``:|br_m04|
+- Local copy of HTTP REST API located in ``docs/``:|br|
   ``REST-API-Reference-v<version>.pdf``
-- All other docs online
+- All other docs online through
 - ``http://www.continuuity.com/developers/``
 
 ----
@@ -133,16 +133,17 @@ Online Documentation
 ====================
 
 - Introduction
+- Quick Start
 - Examples
-- Quickstart
 - Programming Guide
-- Operations Guide
 - Advanced Features
+- Testing and Debugging
+- Operations Guide
+- HTTP REST API
 - Javadocs
-- REST API
 - FAQ
 
-At ``http://www.continuuity.com/developers/``
+Available through ``http://www.continuuity.com/developers/``
 
 -----
 
@@ -155,7 +156,7 @@ You should now be able to:
 - Install the SDK
 - Find the start scripts for Local Reactor
 - Start Local Reactor 
-- Start Dashboard webapp and take the Quickstart tour
+- Start Dashboard webapp and take the Quick Start tour
 
 ----
 

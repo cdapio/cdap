@@ -70,7 +70,13 @@ Execute the PurchaseQuery procedure using
 .. sourcecode:: shell-session
 
 	curl -v -d '{"customer": "Tom"}' -X POST \
-	  'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseQuery/methods/history'
+	  '<base-url>/PurchaseHistory/procedures/PurchaseQuery/methods/history'
+
+where ``<base-url>`` is
+
+.. sourcecode:: shell-session
+
+	http://localhost:10000/v2/apps
 
 ----
 
@@ -80,8 +86,9 @@ Exercise Summary
 You are now able to:
 
 - Install pre-compiled Applications using a shell script
-- Interact with the Reactor with curl, both sending to a stream and receiving data
-  from queries
+- Interact with the Reactor with curl
+- Send events to a stream
+- Receiving data from queries
 
 ----
 

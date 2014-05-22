@@ -94,7 +94,7 @@ Description
 Parameter
   ``<element-type>``
 Description
-  One of ``flows``, ```mapreduce``, or ``procedures``
+  One of ``flows``, ``mapreduce``, or ``procedures``
 
 ..
 

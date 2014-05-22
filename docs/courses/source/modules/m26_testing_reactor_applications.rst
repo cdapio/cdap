@@ -25,7 +25,7 @@ In this module, you will learn:
 - Strategies for testing Reactor Applications
 - How to test Flows
 - How to test MapReduce jobs
-- Unit tests in maven
+- Adding unit tests in maven
 
 
 ----

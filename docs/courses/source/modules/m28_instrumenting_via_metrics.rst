@@ -218,10 +218,10 @@ The time range of a metric query can be specified in different ways:
        You can apply simple math, using:  |br| ``now`` for the current time  |br| 
        ``s`` for seconds  |br| ``m`` for minutes  |br| ``h`` for hours and  |br| ``d`` for days |br| 
        For example: ``now-5d-12h`` is 5 days and 12 hours ago
-   * - ``start=1385625600&`` ``end=1385629200``
+   * - ``start=1385625600&end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` |br| to ``Thu, 28 Nov 2013 09:00:00 GMT``, |br| 
        both given as since the start of the Epoch
-   * - ``start=1385625600&`` ``count=3600``
+   * - ``start=1385625600&count=3600``
      - The same as before, but with the count given as a number of seconds
 
 ----

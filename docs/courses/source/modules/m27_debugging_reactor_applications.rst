@@ -197,7 +197,7 @@ for all instances of the Procedure
 Attaching a Debugger: IntelliJ (1 of 4)
 ===============================================
 
-1. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``
+1. From the *IntelliJ* toolbar, select ``Run->Edit Configurations``
 2. Click ``+`` and choose ``Remote Configuration``:
 
 .. image:: ../../../developer-guide/source/_images/IntelliJ_1.png
@@ -227,7 +227,7 @@ Attaching a Debugger: IntelliJ (3 of 4)
 Attaching a Debugger: IntelliJ (4 of 4)
 ===============================================
 
-6. To start the debugger, select ``Run -> Debug -> Continuuity``
+6. To start the debugger, select ``Run->Debug->Continuuity``
 7. Set a breakpoint in any code block, for example, a Flowlet method:
 
 .. image:: ../../../developer-guide/source/_images/IntelliJ_3.png
@@ -243,7 +243,7 @@ The control will stop at the breakpoint and you can proceed with debugging
 Attaching a Debugger: Eclipse (1 of 3)
 ===============================================
 
-1. In Eclipse, select ``Run-> Debug`` configurations
+1. In Eclipse, select ``Run->Debug`` configurations
 2. In the pop-up, select ``Remote Java application``
 3. Enter a name, for example, ``Continuuity``
 4. Enter the host name, for example, ``localhost`` or |br|

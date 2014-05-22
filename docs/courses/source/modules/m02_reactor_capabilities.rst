@@ -20,7 +20,7 @@ In this module, you will learn:
 - What is Continuuity Reactor?
 - Continuuity Reactor's APIs
 - Reactor as an integrated platform
-- Reactor's application lifecycle support
+- Reactor’s application lifecycle support
 
 ----
 
@@ -77,7 +77,7 @@ Big Data infrastructure stack
 
 ----
 
-Reactor's Application Lifecycle Support
+Reactor’s Application Lifecycle Support
 =======================================
 
 Reactor supports developers through the entire application development lifecycle: 
@@ -85,7 +85,7 @@ Reactor supports developers through the entire application development lifecycle
 - **Development:** Maven archetype, Java API, REST API
 - **Debugging:** local Reactor running on a laptop
 - **Testing:** Application unit test framework
-- **Continuous integration:** 
+- **Continuous integration** 
 - **Production deployment:**
 
   - Development cloud (Sandbox Reactor)
@@ -96,11 +96,12 @@ Reactor supports developers through the entire application development lifecycle
 Module Summary
 ==============
 
-You have now:
+You have now seen:
 
-- Seen Continuuity Reactor's simple APIs
-- Looked at Reactor as an integrated platform
-- Reviewed Reactor's application lifecycle support
+- Continuuity Reactor described as an application server
+- Continuuity Reactor’s two APIs: Java and REST
+- Reactor as an integrated platform
+- Reactor’s application lifecycle support
 
 ----
 

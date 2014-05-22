@@ -114,16 +114,28 @@ onFinish() method
 =================
 
 - Invoked after the MapReduce job has finished
-- Can perform cleanup or send a notification of job completion, if required
+- Can perform cleanup or send a notification of job completion, if required:
+
+.. sourcecode:: java
+
+	private static final Logger LOG = LoggerFactory.getLogger(MyMapReduce.class);
+	
+	@Override
+	public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+	  LOG.info("Action taken on MapReduce job " + 
+	                       (succeeded ? "" : "un") + "successful completion");
+	}
+
 - Because many MapReduce jobs do not need this method, the ``AbstractMapReduce``
   class provides a default implementation that does nothing:
 
 .. sourcecode:: java
 
 	@Override
-	public void onFinish(boolean succeeded, MapReduceContext context) {
+	public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
 	  // do nothing
 	}
+
 
 ----
 
@@ -178,7 +190,7 @@ You should be able describe:
 
 - Describe the difference between MapReduce and Workflows
 - Configure a MapReduce job
-- Implement Mapping and reducing
+- Implement mapping and reducing
 
 ----
 
