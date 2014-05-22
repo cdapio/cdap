@@ -16,6 +16,7 @@ import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -44,6 +45,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   private KafkaClientService kafkaClient;
   private MetricsCollectionService metricsCollectionService;
   private TransactionService txService;
+  private LogAppenderInitializer logAppenderInitializer;
 
   public TransactionServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -68,6 +70,9 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
 
       // Get the Transaction Service
       txService = injector.getInstance(TransactionService.class);
+
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
 
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {

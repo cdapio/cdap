@@ -17,6 +17,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -36,6 +37,7 @@ import java.util.List;
 public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
 
   private Injector injector;
+  private LogAppenderInitializer logAppenderInitializer;
 
   public StreamHandlerRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -65,6 +67,8 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
                                       new LoggingModules().getDistributedModules(),
                                       new AuthModule(),
                                       new StreamHttpModule());
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
