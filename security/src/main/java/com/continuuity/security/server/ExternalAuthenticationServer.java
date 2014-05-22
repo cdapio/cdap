@@ -130,7 +130,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         sslContextFactory.setKeyStorePassword(keyStorePassword);
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        int sslPort = configuration.getInt(Constants.Security.SSL_PORT);
+        int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
         sslConnector.setPort(sslPort);
         connector.setConfidentialPort(sslPort);
         server.setConnectors(new Connector[]{connector, sslConnector});

@@ -110,7 +110,7 @@ WebAppServer.prototype.getAuthServerAddress = function() {
   if (AUTH_SERVER_ADDRESSES.length === 0) {
     return null;
   }
-  return "http://" + AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)] + ":10009";
+  return AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)];
 }
 
 /**
@@ -740,7 +740,10 @@ WebAppServer.prototype.bindRoutes = function() {
           auth: {
             user: post.username,
             password: post.password
-          }
+          },
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false
         }
         request(options, function (nerr, nres, nbody) {
           if (nerr || nres.statusCode !== 200) {
@@ -764,7 +767,10 @@ WebAppServer.prototype.bindRoutes = function() {
             auth: {
               user: post.username,
               password: post.password
-            }
+            },
+            rejectUnauthorized: false,
+            requestCert: true,
+            agent: false
           }
 
           request(options, function (nerr, nres, nbody) {

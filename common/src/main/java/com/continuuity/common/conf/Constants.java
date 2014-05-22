@@ -493,7 +493,7 @@ public final class Constants {
     /** Configuration for enabling SSL */
     public static final String SSL_ENABLED = "security.server.ssl.enabled";
     /** SSL secured port for ExternalAuthentication */
-    public static final String SSL_PORT = "security.server.ssl.port";
+    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
     /** SSL keystore path */
     public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
     /** SSL keystore password */
