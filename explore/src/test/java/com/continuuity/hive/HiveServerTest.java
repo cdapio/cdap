@@ -1,5 +1,7 @@
 package com.continuuity.hive;
 
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -13,20 +15,20 @@ import java.net.URL;
  */
 public abstract class HiveServerTest {
 
-  protected abstract HiveServer getHiveServer();
-
   protected abstract HiveCommandExecutor getHiveCommandExecutor();
+
+  protected abstract void startServices();
+
+  protected abstract void stopServices();
 
   @Before
   public void before() {
-    // Start hive server
-    getHiveServer().startAndWait();
+    startServices();
   }
 
   @After
   public void after() {
-    // Stop hive server
-    getHiveServer().stopAndWait();
+    stopServices();
   }
 
   @Test
@@ -42,18 +44,8 @@ public abstract class HiveServerTest {
     getHiveCommandExecutor().sendCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
                                          "' INTO TABLE test;");
     getHiveCommandExecutor().sendCommand("select first, second from test;");
+    getHiveCommandExecutor().sendCommand("select * from test;");
     getHiveCommandExecutor().sendCommand("drop table test;");
+    // todo add assertions
   }
-
-//  @Test
-//  public void testExternalTable() throws Exception {
-//    runHiveCommand("drop table if exists employee");
-//    runHiveCommand("create external table employee (name STRING, id int) " +
-//                     "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler';");
-//    runHiveCommand("show tables;");
-//    runHiveCommand("describe employee;");
-//    runHiveCommand("select name, id from employee;");
-//    runHiveCommand("select * from employee;");
-//    runHiveCommand("drop table employee");
-//  }
 }

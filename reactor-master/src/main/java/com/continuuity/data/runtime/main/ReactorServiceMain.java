@@ -19,8 +19,11 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -80,6 +83,7 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
+  private HiveServer hiveServer;
   private MetricsCollectionService metricsCollectionService;
 
   private String serviceName;
@@ -113,7 +117,8 @@ public class ReactorServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -131,6 +136,9 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer = injector.getInstance(AppFabricServer.class);
         appFabricServer.startAndWait();
 
+        hiveServer = injector.getInstance(HiveServer.class);
+        hiveServer.startAndWait();
+
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
@@ -146,6 +154,9 @@ public class ReactorServiceMain extends DaemonMain {
         }
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
+        }
+        if (hiveServer != null) {
+          hiveServer.stopAndWait();
         }
         isLeader.set(false);
       }
@@ -314,5 +325,4 @@ public class ReactorServiceMain extends DaemonMain {
     }
     return file;
   }
-
 }

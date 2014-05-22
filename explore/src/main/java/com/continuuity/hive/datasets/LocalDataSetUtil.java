@@ -19,9 +19,8 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
-import com.continuuity.hive.inmemory.LocalHiveServer;
+import com.continuuity.hive.HiveServer;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -45,8 +44,8 @@ public class LocalDataSetUtil {
   public LocalDataSetUtil(CConfiguration conf) {
     this.configuration = conf;
     this.locationFactory = new LocalLocationFactory(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)));
-    this.txClient = LocalHiveServer.getTransactionSystemClient();
-    this.discoveryClient = LocalHiveServer.getDiscoveryServiceClient();
+    this.txClient = HiveServer.getTransactionSystemClient();
+    this.discoveryClient = HiveServer.getDiscoveryServiceClient();
   }
 
   public DataSetSpecification getDataSetSpecification(String accountName,
@@ -68,8 +67,8 @@ public class LocalDataSetUtil {
                                  }, accessor),
                                  locationFactory));
 
-    instantiator.init(new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
-      Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS));
+//    instantiator.init(new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
+//      Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS));
     return instantiator.getDataSetSpecification(datasetName, opContext);
   }
 
@@ -77,13 +76,14 @@ public class LocalDataSetUtil {
     DataSetAccessor accessor = new LocalDataSetAccessor(configuration, LevelDBOcTableService.getInstance());
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, accessor);
 
-    DataSetInstantiator instantiator = new DataSetInstantiator(dataFabric, this.getClass().getClassLoader());
-    instantiator.addDataSet(spec);
-    DataSet ds = instantiator.getDataSet(spec.getName());
-    for (TransactionAware txAware : instantiator.getTransactionAware()) {
-      txAware.startTx(tx);
-    }
-    return ds;
+//    DataSetInstantiator instantiator = new DataSetInstantiator(dataFabric, this.getClass().getClassLoader());
+//    instantiator.addDataSet(spec);
+//    DataSet ds = instantiator.getDataSet(spec.getName());
+//    for (TransactionAware txAware : instantiator.getTransactionAware()) {
+//      txAware.startTx(tx);
+//    }
+//    return ds;
+    return null;
   }
 
 }
