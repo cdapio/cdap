@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="162.5"
+   height="162.5"
+   id="svg101">
+  <defs
+     id="defs7" />
+  <ellipse
+     cx="56.113281"
+     cy="57.636719"
+     rx="44.433594"
+     ry="44.433594"
+     transform="translate(11.1719,-1.01562)"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.5"
+     id="path132" />
+  <path
+     d="M 81.7578,96.4844 L 122.891,150.82"
+     transform="translate(12.1875,-3.04688)"
+     style="font-size:12px;fill:none;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.5;stroke-linecap:round;stroke-linejoin:round"
+     id="path133" />
+  <path
+     d="M 39.1016,54.8438 L 95.9766,54.8438"
+     transform="matrix(1.01786,0,0,1,-1.71387,2.53906)"
+     style="font-size:12px;fill:none;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.38980007;stroke-linecap:round;stroke-linejoin:round"
+     id="path172" />
+  <path
+     d="M 67.03148,28.43747 L 67.03148,86.32825"
+     style="font-size:12px;fill:none;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.49995041;stroke-linecap:round;stroke-linejoin:round"
+     id="path919" />
+</svg>
