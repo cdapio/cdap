@@ -70,7 +70,6 @@ public class HiveServerIntegrationTest {
     datasetManager = injector.getInstance(DatasetManager.class);
     String moduleName = "inMemory";
     datasetManager.register(moduleName, InMemoryTableModule.class);
-//    datasetManager.register("table", TableModule.class);
     datasetManager.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
 
     // Performing admin operations to create dataset instance

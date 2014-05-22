@@ -21,7 +21,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- *
+ * Simple key value table for testing.
  */
 public class KeyValueTableDefinition
   extends AbstractDatasetDefinition<KeyValueTableDefinition.KeyValueTable, DatasetAdmin> {

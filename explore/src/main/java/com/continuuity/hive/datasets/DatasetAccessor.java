@@ -10,7 +10,7 @@ import com.continuuity.internal.data.dataset.Dataset;
 import java.io.IOException;
 
 /**
- *
+ * Helps in instantiating a dataset.
  */
 public class DatasetAccessor {
   public static Dataset getDataSetInstance(String datasetName, Transaction tx) throws IOException {
