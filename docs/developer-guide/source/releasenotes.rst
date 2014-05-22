@@ -13,17 +13,17 @@ Release Notes
 
 New Features
 ^^^^^^^^^^^^^
-• Stream data ingestion improvements
-New implementation of Streams enables increased throughput and horizontal scalability,  improving data ingestion performance.
+• Stream data ingestion improvements:
+ New implementation of Streams enables increased throughput and horizontal scalability,  improving data ingestion performance.
 
-• Consolidation of Reactor services
-Reactor services are consolidated so that dev-ops would need to operationalize fewer services. 
+• Consolidation of Reactor services:
+ Reactor services are consolidated so that dev-ops would need to operationalize fewer services. 
 
-• Introspection of transaction states
-Added capabilities to dump the state of the internal transaction manager into a local file to allow additional investigation.
+• Introspection of transaction states:
+ Added capabilities to dump the state of the internal transaction manager into a local file to allow additional investigation.
 
-• Expose runtime information of programs in YARN
-Program runtime information can be obtained through an HTTP end-point.
+• Expose runtime information of programs running in YARN:
+ Program runtime information can be obtained through an HTTP end-point.
 
 Major Bug Fixes
 ^^^^^^^^^^^^^^^

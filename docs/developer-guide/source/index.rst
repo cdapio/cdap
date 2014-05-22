@@ -16,6 +16,7 @@
    advanced
    debugging
    rest
+   releasenotes
    faq
 
    
@@ -42,6 +43,7 @@ Documentation
 
 :doc:`rest <rest>`
 
+:doc:`release notes <releasenotes>`
 
 Examples
 ==============
