@@ -134,6 +134,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	C.Router.map(function() {
 
+		this.resource('Login', { path: '/login' } );
+
 		this.resource('Overview', { path: '/overview' } );
 
 		this.resource('Resources', { path: '/resources' } );
@@ -223,6 +225,16 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 * This is a basic route handler that others can extend from to reduce duplication.
 	 */
 	var basicRouter = Ember.Route.extend({
+		/**
+		 * Check auth on every route transition.
+		 */
+		activate: function() {
+			var routeHandler = this;
+			if (C.Env.security_enabled === true) {
+				C.setupAuth(routeHandler);
+			}
+		},
+
 		/*
 		 * Override to load the Controller once the Route has been activated.
 		 */
@@ -264,6 +276,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
         this.transitionTo('Overview');
       }
     }),
+
+    LoginRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
 
@@ -429,6 +443,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	function getListHandler(types) {
 		return {
+			/**
+			 * Check auth on every route transition.
+			 */
+			activate: function() {
+				var routeHandler = this;
+				if (C.Env.security_enabled === true) {
+				  C.setupAuth(routeHandler);
+				}
+	  	},
 			/*
 			 * Override to load the Controller once the Route has been activated.
 			 */

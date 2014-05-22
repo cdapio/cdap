@@ -26,12 +26,40 @@ public class AccessTokenTransformer {
    * @return the serialized access token identifer
    * @throws IOException
    */
-  public String transform(String accessToken) throws IOException {
+  public AccessTokenIdentifierPair transform(String accessToken) throws IOException {
     byte[] decodedAccessToken = Base64.decodeBase64(accessToken);
     AccessToken accessTokenObj = accessTokenCodec.decode(decodedAccessToken);
     AccessTokenIdentifier accessTokenIdentifierObj = accessTokenObj.getIdentifier();
     byte[] encodedAccessTokenIdentifier = accessTokenIdentifierCodec.encode(accessTokenIdentifierObj);
-    return Base64.encodeBase64String(encodedAccessTokenIdentifier).trim();
+    return new AccessTokenIdentifierPair(Base64.encodeBase64String(encodedAccessTokenIdentifier).trim(),
+                                         accessTokenIdentifierObj);
+  }
+
+  /**
+   * Access token identifier pair that has marshalled and unmarshalled
+   * access token object
+   */
+  public class AccessTokenIdentifierPair {
+    private final String accessTokenIdentifierStr;
+    private final AccessTokenIdentifier accessTokenIdentifierObj;
+
+    public AccessTokenIdentifierPair(String accessTokenIdentifierStr, AccessTokenIdentifier accessTokenIdentifierObj) {
+      this.accessTokenIdentifierObj = accessTokenIdentifierObj;
+      this.accessTokenIdentifierStr = accessTokenIdentifierStr;
+    }
+
+    public String getAccessTokenIdentifierStr() {
+      return accessTokenIdentifierStr;
+    }
+
+    public AccessTokenIdentifier getAccessTokenIdentifierObj() {
+      return accessTokenIdentifierObj;
+    }
+
+    @Override
+    public String toString() {
+      return accessTokenIdentifierStr;
+    }
   }
 
 }
