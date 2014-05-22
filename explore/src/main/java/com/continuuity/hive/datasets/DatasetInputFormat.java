@@ -1,15 +1,10 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitRowScanner;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
-
+import com.continuuity.internal.data.dataset.Dataset;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -159,18 +154,13 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     }
 
     try {
-      CConfiguration conf = CConfiguration.create();
-      LocalDataSetUtil localDataSetUtil = new LocalDataSetUtil(conf);
-
-      DataSetSpecification spec = localDataSetUtil.getDataSetSpecification("developer", datasetName);
-      DataSet dataset = localDataSetUtil.getDataSetInstance(spec, tx);
+      Dataset dataset = DatasetAccessor.getDataSetInstance(datasetName, tx);
       if (!(dataset instanceof RowScannable)) {
         throw new IOException(
           String.format("Dataset %s does not implement RowScannable, and hence cannot be queried in Hive.",
                         datasetName));
       }
       return (RowScannable) dataset;
-
     } catch (Exception e) {
       throw new IOException("Exception while instantiating dataset " + datasetName, e);
     }
@@ -186,6 +176,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     private Split dataSetSplit;
 
     // for Writable
+    @SuppressWarnings("UnusedDeclaration")
     public DatasetInputSplit() {
     }
 
@@ -225,8 +216,13 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
-        dataSetSplit = GSON.fromJson(Text.readString(in), splitClass);
+        Class<?> splitClass = classLoader.loadClass(Text.readString(in));
+        if (!Split.class.isAssignableFrom(splitClass)) {
+          throw new IllegalStateException("Cannot de-serialize Split class type! Got type " +
+                                            splitClass.getCanonicalName());
+        }
+        //noinspection unchecked
+        dataSetSplit = GSON.fromJson(Text.readString(in), (Class<? extends Split>) splitClass);
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }

@@ -2,8 +2,8 @@ package com.continuuity.hive.inmemory;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.hive.HiveServer;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -14,7 +14,6 @@ import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hive.service.server.HiveServer2;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,22 +40,23 @@ public class LocalHiveServer extends AbstractIdleService implements HiveServer {
   private HiveServer2 hiveServer2;
 
   private final DiscoveryService discoveryService;
-  private static DiscoveryServiceClient discoveryServiceClient;
   private static TransactionSystemClient txClient;
   private final InetAddress hostname;
 
+  private static DatasetManager datasetManager;
+
   @Inject
   public LocalHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                         DiscoveryServiceClient discoveryServiceClient,
+                         DatasetManager datasetManager,
                          @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
     this.discoveryService = discoveryService;
-    LocalHiveServer.discoveryServiceClient = discoveryServiceClient;
     LocalHiveServer.txClient = txClient;
+    LocalHiveServer.datasetManager = datasetManager;
     this.hostname = hostname;
   }
 
-  public static DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public static DatasetManager getDatasetManager() {
+    return datasetManager;
   }
 
   public static TransactionSystemClient getTransactionSystemClient() {
