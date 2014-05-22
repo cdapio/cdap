@@ -1,0 +1,23 @@
+{
+  "styles" : [
+    ["bodytext" , {
+      "spaceBefore":0,
+      "spaceAfter": 0
+    }],
+    ["figure" , {
+      "spaceBefore":12,
+      "spaceAfter": 18,
+      "commands": [
+        ["BOX", [ 0, 0 ], [ 0, 0 ], 0.5, "#B0B0B8"],
+        ["TOPPADDING", [ 0, 0 ], [ 0, 0 ], 1 ],
+        ["BOTTOMPADDING", [ 0, 0 ], [ 0, 0 ], 1 ],
+        ["LEFTPADDING", [ 0, 0 ], [ 0, 0 ], 1 ],
+        ["RIGHTPADDING", [ 0, 0 ], [ 0, 0 ], 1 ],
+        ["TOPPADDING", [ 0, 1 ], [ 0, 1 ], 9 ]
+      ]
+    }],
+    ["figure-caption" , {
+      "textColor": "#404050"
+    }]
+  ]  
+}

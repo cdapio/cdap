@@ -1,14 +1,21 @@
+var setBlank = function(state) {
+        blank_elem = document.getElementById('blank');
+        blank_elem.style.display = state ? 'block' : 'none';
+        blanked = state;
+};
+
 function main() {
     // Since we don't have the fallback of attachEvent and
     // other IE only stuff we won't try to run JS for IE.
     // It will run though when using Google Chrome Frame
     if (document.all) { return; }
 
+        setBlank(true);
     var currentSlideNo;
     var notesOn = false;
     var expanded = false;
     var hiddenContext = true;
-    var blanked = false;
+    var blanked = true;
     var slides = document.getElementsByClassName('slide');
     var touchStartX = 0;
     var spaces = /\s+/, a1 = [''];
@@ -177,6 +184,16 @@ function main() {
         if (currentSlideNo > 1) {
             currentSlideNo--;
         }
+        updateSlideClasses(true);
+    };
+
+    var firstSlide = function() {
+        currentSlideNo = 1;
+        updateSlideClasses(true);
+    };
+
+    var lastSlide = function() {
+        currentSlideNo = slides.length;
         updateSlideClasses(true);
     };
 
@@ -381,6 +398,12 @@ function main() {
         blanked = !blanked;
     };
 
+//     var setBlank = function(state) {
+//         blank_elem = document.getElementById('blank');
+//         blank_elem.style.display = state ? 'block' : 'none';
+//         blanked = state;
+//     };
+
     var isModifierKey = function(keyCode) {
         switch (keyCode) {
             case 16: // shift
@@ -414,17 +437,33 @@ function main() {
                     toggleOverview();
                 }
                 break;
+            case 33: // page up
+//            case 38: // up arrow
+                event.preventDefault();
+                firstSlide();
+                break;
             case 37: // left arrow
             case 38: // up arrow
-            case 33: // page up
                 event.preventDefault();
-                prevSlide();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
                 break;
             case 39: // right arrow
             case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
             case 34: // page down
                 event.preventDefault();
-                nextSlide();
+                lastSlide();
                 break;
             case 32: // space
                 event.preventDefault();
@@ -612,10 +651,13 @@ function main() {
 
         addRemoteWindowControls();
         
+        setBlank(false);
+//         var first = document.getElementsByClassName('slides')[0];
+//         first.style.display = 'block';
+        document.getElementById('display-slides-container').style.display = "block";
         if (!showingPresenterView) {
             expandSlides();
             hideContext();
         }
-        
     })();
 }

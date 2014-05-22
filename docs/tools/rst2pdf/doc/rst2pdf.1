@@ -1,0 +1,213 @@
+.\" Man page generated from reStructuredText.
+.
+.TH RST2PDF 1 "" "" "text processing"
+.SH NAME
+rst2pdf \- Convert reStructuredText documents to PDF
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.sp
+rst2pdf [options] [input] [\-o output]
+.SH DESCRIPTION
+.sp
+The usual way of creating PDF from reStructuredText (ReST) is by going through LaTeX.
+The rst2pdf utility provides an alternative by producing PDF directly using the ReportLab
+library.
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-h,  \-\-help
+Show this help message and exit
+.TP
+.BI \-\-config\fB= FILE
+Config file to use. Default=~/.rst2pdf/config
+.TP
+.BI \-o \ FILE, \ \-\-output\fB= FILE
+Write the PDF to FILE
+.TP
+.BI \-s \ STYLESHEETS, \ \-\-stylesheets\fB= STYLESHEETS
+A comma\-separated list of custom stylesheets.
+Default=""
+.TP
+.BI \-\-stylesheet\-path\fB= FOLDERLIST
+A colon\-separated list of folders to search for
+stylesheets. Default=""
+.TP
+.B \-c,  \-\-compressed
+Create a compressed PDF. Default=False
+.TP
+.B \-\-print\-stylesheet
+Print the default stylesheet and exit
+.TP
+.BI \-\-font\-folder\fB= FOLDER
+Search this folder for fonts. (Deprecated)
+.TP
+.BI \-\-font\-path\fB= FOLDERLIST
+A colon\-separated list of folders to search for fonts.
+Default=""
+.TP
+.BI \-\-baseurl\fB= URL
+The base URL for relative URLs.
+.TP
+.BI \-l \ LANG, \ \-\-language\fB= LANG
+Language to be used for hyphenation and docutils localization.
+Default=None
+.TP
+.BI \-\-header\fB= HEADER
+Page header if not specified in the document.
+.TP
+.BI \-\-footer\fB= FOOTER
+Page footer if not specified in the document.
+.TP
+.BI \-\-section\-header\-depth\fB= N
+Sections up to this dept will be used in the header
+and footer\(aqs replacement of ###Section###. Default=2
+.TP
+.BI \-\-smart\-quotes\fB= VALUE
+Try to convert ASCII quotes, ellipsis and dashes to
+the typographically correct equivalent. Default=0
+.UNINDENT
+.sp
+The possible values are:
+.INDENT 0.0
+.IP 0. 4
+Suppress all transformations. (Do nothing.)
+.IP 1. 4
+Performs default SmartyPants transformations: quotes (including backticks\-style), em\-dashes, and ellipses. "\-\-" (dash dash) is used to signify an em\-dash; there is no support for en\-dashes.
+.IP 2. 4
+Same as \-\-smart\-quotes=1, except that it uses the old\-school typewriter shorthand for dashes: "\-\-" (dash dash) for en\-dashes, "\-\-\-" (dash dash dash) for em\-dashes.
+.IP 3. 4
+Same as \-\-smart\-quotes=2, but inverts the shorthand for dashes: "\-\-" (dash dash) for em\-dashes, and "\-\-\-" (dash dash dash) for en\-dashes.
+.UNINDENT
+.INDENT 0.0
+.TP
+.BI \-\-fit\-literal\-mode\fB= MODE
+What to do when a literal is too wide.
+One of error,overflow,shrink,truncate.
+Default="shrink"
+.TP
+.BI \-\-fit\-background\-mode\fB= MODE
+How to fit the background image to the page. One of
+scale or center. Default="center"
+.TP
+.B \-\-inline\-links
+Shows target between parenthesis instead of active link
+.TP
+.B \-\-repeat\-table\-rows
+Repeats header row for each splitted table
+.TP
+.B \-\-raw\-html
+Support embeddig raw HTML. Default: False
+.TP
+.B \-q,  \-\-quiet
+Print less information.
+.TP
+.B \-v,  \-\-verbose
+Print debug information.
+.TP
+.B \-\-very\-verbose
+Print even more debug information.
+.TP
+.B \-\-version
+Print version number and exit.
+.TP
+.B \-\-no\-footnote\-backlinks
+Disable footnote backlinks. Default: False
+.TP
+.B \-\-inline\-footnotes
+Show footnotes inline. Default: True
+.TP
+.BI \-\-default\-dpi\fB= NUMBER
+DPI for objects sized in pixels. Default=300
+.TP
+.B \-\-show\-frame\-boundary
+Show frame borders (only useful for debugging).
+Default=False
+.TP
+.B \-\-disable\-splittables
+Don\(aqt use splittable flowables in some elements. Only
+try this if you can\(aqt process a document any other
+way.
+.TP
+.BI \-b \ LEVEL, \ \-\-break\-level\fB= LEVEL
+Maximum section level that starts in a new page. Default: 0
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-first\-page\-on\-right When using double sided pages, the first page will start
+on the right hand side. (Book Style)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-blank\-first\-page
+Add a blank page at the beginning of the document.
+.TP
+.BI \-\-break\-side\fB= VALUE
+How section breaks work. Can be "even", and sections
+start in an even page,"odd", and sections start in odd
+pages, or "any" and sections start in the next page,be
+it even or odd. See also the \-b option.
+.TP
+.B \-\-date\-invariant
+Don\(aqt store the current date in the PDF. Useful mainly
+for the test suite, where we don\(aqt want the PDFs to
+change.
+.TP
+.BI \-e \ EXTENSIONS
+Alias for \-\-extension\-module
+.TP
+.BI \-\-extension\-module\fB= EXTENSIONS
+Add a helper extension module to this invocation of
+rst2pdf (module must end in .py and be on the python
+path)
+.TP
+.BI \-\-custom\-cover\fB= FILE
+Template file used for the cover page. Default:
+cover.tmpl
+.TP
+.B \-\-use\-floating\-images
+Makes images with :aling: attribute work more like in
+rst2html. Default: False
+.TP
+.B \-\-use\-numbered\-links
+When using numbered sections, adds the numbers to all
+links referring to the section headers. Default: False
+.TP
+.BI \-\-strip\-elements\-with\-class\fB= CLASS
+Remove elements with this CLASS from the output. Can
+be used multiple times.
+.UNINDENT
+.SH EXAMPLES
+.sp
+$ rst2pdf rest.txt \-o out.pdf
+.sp
+Produce an out.pdf file which is a PDF version of the ReST document rest.txt.
+.SH AUTHOR
+Chris Lamb <chris@chris-lamb.co.uk> for the Debian project
+.\" Generated by docutils manpage writer.
+.
