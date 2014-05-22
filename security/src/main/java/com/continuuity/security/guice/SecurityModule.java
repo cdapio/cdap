@@ -52,11 +52,14 @@ public abstract class SecurityModule extends PrivateModule {
     MapBinder<String, Handler> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Handler.class,
                                                                      Names.named("security.handlers.map"));
 
-    handlerBinder.addBinding("AuthenticationHandler").toProvider(AuthenticationHandlerProvider.class);
-    handlerBinder.addBinding("GrantTokenHandler").to(GrantAccessTokenHandler.class);
+    handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
+                 .toProvider(AuthenticationHandlerProvider.class);
+    handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
+                 .to(GrantAccessTokenHandler.class);
     bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
                        .toProvider(AuthenticationHandlerMapProvider.class)
                        .in(Scopes.SINGLETON);
+
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
     expose(AccessTokenTransformer.class);
