@@ -991,6 +991,34 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
+Container Information
+---------------------
+
+To find out the address of an element's container host and the container’s debug port, you can query
+the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+
+	GET <base-url>/apps/<app-id>/<element-type>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<element-type>``
+     - One of either ``flows`` or ``procedures``
+   * - ``<element-id>``
+     - Name of the element (*Flow* or *Procedure*)
+
+Example::
+
+	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+
+The response is formatted in JSON; an example of this is shown in the 
+`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+
 .. rst2pdf: PageBreak
 
 Scale
@@ -1514,6 +1542,65 @@ These metrics are available in the DataSets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
+Monitor HTTP API
+================
+Reactor internally uses a variety of services that are critical to its functionality. 
+Hence, the ability to check the health of those services can act as an useful initial 
+debug step. This is facilitated by the Metrics HTTP API. To check the status of a 
+service, send a HTTP GET request::
+
+	GET <base-url>/system/services/<service-id>/status
+
+The status of these Reactor services can be checked.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
+   
+   * - Service Name
+     - Service-Id
+     - Description of the Service
+   * - ``Metrics``
+     - ``metrics``
+     - Service that handles metrics related requests
+   * - ``Transaction``
+     - ``transaction``
+     - Service handling transactions 
+   * - ``Streams``
+     - ``streams``
+     - Service handling Stream management 
+   * - ``App Fabric``
+     - ``appfabric``
+     - Service handling Application Fabric requests
+
+Note that the service status checks are more useful when the Reactor is running in a 
+distributed cluster mode and that some of the status checks may not work in the Local 
+Reactor mode.
+
+Example
+-------
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+   
+   * - HTTP Method
+     - ``GET <base-url>/system/services/metrics/status``
+   * - Description
+     - Returns the status of the Metrics Service
+
+HTTP Responses
+--------------
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The service is up and running
+   * - ``404 Not Found``
+     - The service is not running or not found
 
 .. rst2pdf: CutStart
 

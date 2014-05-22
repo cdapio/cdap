@@ -206,7 +206,7 @@ runtime arguments in the exact same way as you normally would start a Flow.
 Once the Flow is running, each Flowlet will detect an available port in its container
 and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the Reactor for the Flow’s live info via HTTP::
+the Reactor for a Procedure or Flow’s live info via HTTP::
 
 	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
