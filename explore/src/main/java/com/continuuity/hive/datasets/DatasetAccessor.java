@@ -4,7 +4,7 @@ import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.RuntimeHiveServer;
 import com.continuuity.internal.data.dataset.Dataset;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public class DatasetAccessor {
   public static Dataset getDataSetInstance(String datasetName, Transaction tx) throws IOException {
-    DatasetManager manager = HiveServer.getDatasetManager();
+    DatasetManager manager = RuntimeHiveServer.getDatasetManager();
     try {
       Dataset dataset = manager.getDataset(datasetName, null);
       if (dataset instanceof TransactionAware) {

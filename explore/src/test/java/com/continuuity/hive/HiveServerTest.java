@@ -1,7 +1,5 @@
 package com.continuuity.hive;
 
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;

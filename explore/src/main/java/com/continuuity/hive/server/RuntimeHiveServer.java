@@ -1,9 +1,9 @@
-package com.continuuity.hive;
+package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.google.common.util.concurrent.AbstractIdleService;
+
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -20,10 +20,10 @@ import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Hive Server 2 service.
+ * Implementation of HiveServer internally running an instance of HiveServer2.
  */
-public class HiveServer extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(HiveServer.class);
+public class RuntimeHiveServer extends HiveServer {
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeHiveServer.class);
 
   private HiveServer2 hiveServer2;
 
@@ -37,12 +37,12 @@ public class HiveServer extends AbstractIdleService {
   private final int hiveServerPort;
 
   @Inject
-  public HiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                    DatasetManager datasetManager, HiveConf hiveConf,
-                    @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
-                    @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
-    HiveServer.txClient = txClient;
-    HiveServer.datasetManager = datasetManager;
+  public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
+                           DatasetManager datasetManager, HiveConf hiveConf,
+                           @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
+                           @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
+    RuntimeHiveServer.txClient = txClient;
+    RuntimeHiveServer.datasetManager = datasetManager;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.hiveConf = hiveConf;
