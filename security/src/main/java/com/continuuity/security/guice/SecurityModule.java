@@ -13,6 +13,7 @@ import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.io.Codec;
+import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.inject.Binder;
@@ -26,10 +27,9 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.handler.HandlerList;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -54,9 +54,9 @@ public abstract class SecurityModule extends PrivateModule {
 
     handlerBinder.addBinding("AuthenticationHandler").toProvider(AuthenticationHandlerProvider.class);
     handlerBinder.addBinding("GrantTokenHandler").to(GrantAccessTokenHandler.class);
-    bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
-                           .toProvider(AuthenticationHandlerListProvider.class)
-                           .in(Scopes.SINGLETON);
+    bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
+                       .toProvider(AuthenticationHandlerMapProvider.class)
+                       .in(Scopes.SINGLETON);
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
     expose(AccessTokenTransformer.class);
@@ -88,21 +88,23 @@ public abstract class SecurityModule extends PrivateModule {
     }
   }
 
-  private static final class AuthenticationHandlerListProvider implements Provider<HandlerList> {
-    private final HandlerList handlerList;
+  private static final class AuthenticationHandlerMapProvider implements Provider<HashMap> {
+    private final HashMap<String, Handler> handlerMap;
 
     @Inject
-    public AuthenticationHandlerListProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
-      handlerList = new HandlerList();
-      ConstraintSecurityHandler securityHandler = (ConstraintSecurityHandler) handlers.get("AuthenticationHandler");
-      Handler grantAccessTokenHandler = handlers.get("GrantTokenHandler");
-      securityHandler.setHandler(grantAccessTokenHandler);
-      handlerList.setHandlers(handlers.values().toArray(new Handler[handlers.size()]));
+    public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
+      handlerMap = new HashMap<String, Handler>();
+      Handler securityHandler = handlers.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER);
+      Handler grantAccessTokenHandler = handlers.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER);
+      ((AbstractAuthenticationHandler) securityHandler).setHandler(grantAccessTokenHandler);
+
+      handlerMap.put(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER, securityHandler);
+      handlerMap.put(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER, grantAccessTokenHandler);
     }
 
     @Override
-    public HandlerList get() {
-      return handlerList;
+    public HashMap get() {
+      return handlerMap;
     }
   }
 

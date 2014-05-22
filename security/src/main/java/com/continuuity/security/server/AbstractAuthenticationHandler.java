@@ -21,7 +21,13 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
   @Inject
   public AbstractAuthenticationHandler(CConfiguration configuration) {
     this.configuration = configuration;
+  }
 
+
+  /**
+   * Initialize the handler context and other related services.
+   */
+  public void init() {
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
@@ -37,11 +43,27 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setLoginService(getHandlerLoginService());
   }
 
+  /**
+   * Get a {@link org.eclipse.jetty.security.LoginService} for the handler.
+   * @return
+   */
   protected abstract LoginService getHandlerLoginService();
 
+  /**
+   * Get an {@link org.eclipse.jetty.security.Authenticator} for the handler.
+   * @return
+   */
   protected abstract Authenticator getHandlerAuthenticator();
 
+  /**
+   * Get an {@link org.eclipse.jetty.security.IdentityService} for the handler.
+   * @return
+   */
   protected abstract IdentityService getHandlerIdentityService();
 
+  /**
+   * Get configuration for the LoginModule.
+   * @return
+   */
   protected abstract Configuration getLoginModuleConfiguration();
 }
