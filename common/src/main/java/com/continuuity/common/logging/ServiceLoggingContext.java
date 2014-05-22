@@ -1,7 +1,7 @@
 package com.continuuity.common.logging;
 
 /**
- *
+ * Service Logging Context
  */
 public class ServiceLoggingContext extends ComponentLoggingContext {
   public static final String TAG_SERVICE_ID = ".serviceId";

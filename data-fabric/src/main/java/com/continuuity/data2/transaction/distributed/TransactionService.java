@@ -5,6 +5,8 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.rpc.ThriftRPCServer;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
@@ -84,6 +86,8 @@ public final class TransactionService extends AbstractService {
 
   @Override
   protected void doStart() {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services",
+                                                                       Constants.Service.TRANSACTION));
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
       @Override
       public void leader() {

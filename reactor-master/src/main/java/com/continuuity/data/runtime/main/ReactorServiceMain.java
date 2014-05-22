@@ -20,6 +20,8 @@ import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -81,6 +83,7 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
   private MetricsCollectionService metricsCollectionService;
+  private LogAppenderInitializer logAppenderInitializer;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -105,6 +108,7 @@ public class ReactorServiceMain extends DaemonMain {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
       new IOModule(),
       new AuthModule(),
       new KafkaClientModule(),
@@ -117,11 +121,13 @@ public class ReactorServiceMain extends DaemonMain {
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
+    logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
   }
 
   @Override
   public void start() {
     zkClientService.startAndWait();
+    logAppenderInitializer.initialize();
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
