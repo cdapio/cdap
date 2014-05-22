@@ -32,7 +32,6 @@ import javax.security.auth.message.module.ServerAuthModule;
  * An Authentication handler that supports JASPI plugins for External Authentication.
  */
 public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
-  private final CConfiguration configuration;
   private JAASLoginService loginService;
   private IdentityService identityService;
 
@@ -43,8 +42,7 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
    */
   @Inject
   public JASPIAuthenticationHandler(CConfiguration configuration) throws Exception {
-    super();
-    this.configuration = configuration;
+    super(configuration);
   }
 
   @Override

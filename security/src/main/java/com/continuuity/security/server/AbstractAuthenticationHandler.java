@@ -1,5 +1,7 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -14,10 +16,14 @@ import javax.security.auth.login.Configuration;
  * setting of constraints and setting of different required services.
  */
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
+  protected final CConfiguration configuration;
 
-  public AbstractAuthenticationHandler() {
+  @Inject
+  public AbstractAuthenticationHandler(CConfiguration configuration) {
+    this.configuration = configuration;
+
     Constraint constraint = new Constraint();
-    constraint.setRoles(new String[] {"*"});
+    constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
 
     ConstraintMapping constraintMapping = new ConstraintMapping();
