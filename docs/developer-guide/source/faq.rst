@@ -1,15 +1,23 @@
-.. _faq_toplevel:
+.. .. _faq_toplevel:
 
+.. toctree::
+   :hidden:
+   :maxdepth: 0
+   
 ==========================
-Frequently Asked Questions
+FAQ
 ==========================
 
 .. contents::
-        :local:
-        :class: faq
-        :backlinks: none
+   :local:
+   :class: faq
+   :backlinks: none
 
 .. _support: https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#faq
+
+
+Continuuity Reactor
+===================
 
 What is a Continuuity Reactor?
 ------------------------------
@@ -39,6 +47,10 @@ Reactor supports developers through the entire application development lifecycle
 4. Easy Application Operations
 Once your Big Data application is in production, Continuuity Reactor is designed specifically to monitor your applications and scale with your data processing needs: increase capacity with a click of a button without taking your application offline. Use the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your application.
 
+
+Platforms and Language
+======================
+
 What Platforms are Supported by the Continuuity SDK?
 ----------------------------------------------------
 The Development Kit can be run on Mac OS X, Linux or Windows platforms.
@@ -54,6 +66,10 @@ The latest version of the JDK or JRE version 6 or 7 must be installed in your en
 What Version of Node.JS is Required by the Continuuity SDK?
 ------------------------------------------------------------
 The version of Node.js must be v0.8.16 or greater.
+
+
+Sandbox Reactor
+===============
 
 What is a Sandbox Reactor?
 --------------------------
@@ -84,6 +100,10 @@ or email `sales@continuuity.com <mailto:sales@continuuity.com>`__.
 
 __ support_
 
+
+Hadoop
+======
+
 I have a Hadoop cluster in my datacenter, can I run Reactor that uses my Hadoop cluster?
 ---------------------------------------------------------------------------------------- 
 Yes. You can install Reactor on your Hadoop cluster. Contact `Continuuity support`__ on how this can be done.
@@ -93,6 +113,10 @@ __ support_
 What Hadoop distributions can the Reactor run on? 
 -------------------------------------------------
 Continuuity Reactor has been tested on and supports CDH 4, HDP 2.1, and Apache Hadoop/HBase 2.0.2-0.4 and 2.1.0. 
+
+
+Feedback and Support
+====================
 
 How can I Provide Feedback?
 ---------------------------

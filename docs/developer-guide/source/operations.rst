@@ -1,16 +1,13 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Operating a Continuuity Reactor and its Dashboard
 
-===================================
-Operating a Continuuity Reactor
-===================================
+====================================
+Continuuity Reactor Operations Guide
+====================================
 
------------------------------
 Running Big Data Applications
------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 Putting Continuuity Reactor into Production
@@ -49,7 +46,7 @@ Hosted and Enterprise Continuuity Reactors
 The Hosted Continuuity Reactor and the Enterprise Continuuity Reactor both run in fully distributed mode. In addition to the system components of the Reactor, distributed and highly available deployments of the underlying Hadoop infrastructure are included. Production applications should always be run on either a Hosted Reactor or an Enterprise Reactor.
 
 To learn more about getting your own Hosted Reactor or Enterprise Reactor, see
-`Continuuity Products </products>`__.
+`Continuuity Products <http://continuuity.com/products>`__.
 
 
 .. _dashboard:
@@ -434,7 +431,7 @@ Procedure
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
 
 For details of making requests and using Procedures, including configuring the parameters and calling methods,
-see the `Continuuity Reactor HTTP REST API Guide </developers/rest>`__.
+see the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -460,8 +457,8 @@ For instance, in a Flowlet you can write::
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
-- Using the `Continuuity Reactor HTTP REST interface </developers/rest>`__ .
-  The `REST interface </developers/rest#logging-http-api>`__ details all the available contexts that
+- Using the `Continuuity Reactor HTTP REST interface <rest.html>`__.
+  The `REST interface <rest.html#logging-http-api>`__ details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
@@ -480,7 +477,7 @@ As applications process data, the Continuuity Reactor collects metrics about the
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
 details on available system metrics in the
-`Continuuity Reactor HTTP REST API Guide </developers/rest#metrics-http-api>`__.
+`Continuuity Reactor HTTP REST API Guide <rest.html#metrics-http-api>`__.
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them
@@ -509,7 +506,7 @@ For example, to add metrics to a Flowlet *NameSaver*::
 	  }
 	}
 
-An example of user-defined metrics is in the `PageViewAnalytics example <example/PageViewAnalytics>`__.
+An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
 
 For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
 in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
@@ -629,5 +626,5 @@ Where to Go Next
 ================
 Now that you've seen how to operate a Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor HTTP REST API <rest>`__,
+- `Continuuity Reactor HTTP REST API <rest.hml>`__,
   a guide to programming Continuuity Reactor's HTTP interface.
