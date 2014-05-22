@@ -1,9 +1,9 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.google.common.collect.ImmutableMap;
 
+import java.io.Closeable;
 import java.util.Map;
 
 /**
@@ -11,17 +11,18 @@ import java.util.Map;
  */
 public final class DataSets {
 
-  public static Map<String, DataSet> createDataSets(DataSetContext context,
+  public static Map<String, Closeable> createDataSets(DataSetContext context,
                                                     Iterable<String> datasets) {
-    ImmutableMap.Builder<String, DataSet> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<String, Closeable> builder = ImmutableMap.builder();
 
     for (String dataset : datasets) {
-        builder.put(dataset, context.getDataSet(dataset));
+      Closeable dataSet = context.getDataSet(dataset);
+      if (dataSet != null) {
+        builder.put(dataset, dataSet);
+      }
     }
     return builder.build();
   }
 
   private DataSets() {}
-
-
 }

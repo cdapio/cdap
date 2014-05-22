@@ -1,9 +1,8 @@
 package com.continuuity.data;
 
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data2.dataset.api.DataSetClient;
-import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
-import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -17,21 +16,14 @@ public class InMemoryDataSetAccessorTest extends NamespacingDataSetAccessorTest 
   @BeforeClass
   public static void beforeClass() throws Exception {
     NamespacingDataSetAccessorTest.beforeClass();
-    Injector injector = Guice.createInjector(new DataFabricModules(conf).getInMemoryModules());
+    Injector injector = Guice.createInjector(new DataFabricModules(conf).getInMemoryModules(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new LocationRuntimeModule().getInMemoryModules());
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }
 
   @Override
   protected DataSetAccessor getDataSetAccessor() {
     return dsAccessor;
-  }
-
-  @Override
-  protected String getRawName(DataSetClient dsClient) {
-    if (dsClient instanceof OrderedColumnarTable) {
-      return ((BufferingOcTableClient) dsClient).getTableName();
-    }
-
-    throw new RuntimeException("Unknown DataSetClient type: " + dsClient.getClass());
   }
 }

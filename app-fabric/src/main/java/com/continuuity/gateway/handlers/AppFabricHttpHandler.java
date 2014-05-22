@@ -38,6 +38,8 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -66,7 +68,10 @@ import com.continuuity.metrics.MetricsConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
@@ -189,6 +194,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private TransactionSystemClient txClient;
 
   /**
+   * Access Dataset Service
+   */
+  private final DatasetManagerServiceClient dsClient;
+
+  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -279,7 +289,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DataSetInstantiatorFromMetaData datasetInstantiator) {
+                              DataSetInstantiatorFromMetaData datasetInstantiator,
+                              DatasetManagerServiceClient dsClient) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -296,6 +307,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
+    this.dsClient = dsClient;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
   }
@@ -1493,8 +1505,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         schema = "http";
       }
 
-      String url = String.format("%s://%s:%d/v2/apps/%s",
-                                 schema, hostname, Constants.AppFabric.DEFAULT_SERVER_PORT, appId);
+      // Construct URL for promotion of application to remote cluster
+      Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
+        configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
+
+      BiMap<String, String> portForwards = HashBiMap.create(split);
+
+      String url = String.format("%s://%s:%s/v2/apps/%s",
+                                 schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
@@ -2286,9 +2304,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       String json;
       if (appid == null) {
-        json = new Gson().toJson(result);
+        json = GSON.toJson(result);
       } else {
-        json = new Gson().toJson(result.get(0));
+        json = GSON.toJson(result.get(0));
       }
 
       responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
@@ -2386,7 +2404,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         throw new Exception("Unknown program type: " + type.name());
       }
     }
-    return new Gson().toJson(result);
+    return GSON.toJson(result);
   }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
@@ -2429,7 +2447,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                           @PathParam("table-id") String tableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      String spec = (new Gson()).toJson(new Table(tableName).configure());
+      String spec = (GSON).toJson(new Table(tableName).configure());
       Id.Program programId = Id.Program.from(accountId, "", "");
       createDataSet(programId, spec);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -2445,7 +2463,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private void createDataSet(Id.Program programId, String spec) throws Exception {
     try {
-      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      DataSetSpecification streamSpec = GSON.fromJson(spec, DataSetSpecification.class);
       store.addDataset(new Id.Account(programId.getAccountId()), streamSpec);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -2780,7 +2798,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       InputStreamReader reader = new InputStreamReader(
         new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-      return (new Gson()).fromJson(reader, STRING_MAP_TYPE);
+      return (GSON).fromJson(reader, STRING_MAP_TYPE);
     } catch (Exception e) {
       // failed to parse json, that is a bad request
       throw new IllegalArgumentException("Failed to parse body as json");
@@ -2866,12 +2884,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private String getDataEntity(Id.Program programId, Data type, String name) throws Exception {
     try {
+      Id.Account account = new Id.Account(programId.getAccountId());
       if (type == Data.DATASET) {
-        DataSetSpecification spec = store.getDataSet(new Id.Account(programId.getAccountId()), name);
-        return spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+        DataSetSpecification spec = store.getDataSet(account, name);
+        String typeName = null;
+        if (spec != null) {
+          typeName = spec.getType();
+        } else {
+          // trying to see if that is Dataset V2
+          DatasetInstanceMeta meta = getDatasetInstanceMeta(name);
+          if (meta != null) {
+            typeName = meta.getType().getName();
+          }
+        }
+        return GSON.toJson(makeDataSetRecord(name, typeName, spec));
       } else if (type == Data.STREAM) {
-        StreamSpecification spec = store.getStream(new Id.Account(programId.getAccountId()), name);
-        return spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
+        StreamSpecification spec = store.getStream(account, name);
+        return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
       }
       return "";
     } catch (OperationException e) {
@@ -2888,14 +2917,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
-        return new Gson().toJson(result);
+        return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
         List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (StreamSpecification spec : specs) {
           result.add(makeStreamRecord(spec.getName(), null));
         }
-        return new Gson().toJson(result);
+        return GSON.toJson(result);
       }
       return "";
     } catch (OperationException e) {
@@ -2914,12 +2943,22 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
         for (String dsName : dataSetsUsed) {
           DataSetSpecification spec = appSpec.getDataSets().get(dsName);
+          String typeName = null;
           if (spec == null) {
             spec = store.getDataSet(account, dsName);
           }
-          result.add(makeDataSetRecord(dsName, spec == null ? null : spec.getType(), null));
+          if (spec != null) {
+            typeName = spec.getType();
+          } else {
+            // trying to see if that is Dataset V2
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(dsName);
+            if (meta != null) {
+              typeName = meta.getType().getName();
+            }
+          }
+          result.add(makeDataSetRecord(dsName, typeName, null));
         }
-        return new Gson().toJson(result);
+        return GSON.toJson(result);
       }
       if (type == Data.STREAM) {
         Set<String> streamsUsed = streamsUsedBy(appSpec);
@@ -2927,13 +2966,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         for (String streamName : streamsUsed) {
           result.add(makeStreamRecord(streamName, null));
         }
-        return new Gson().toJson(result);
+        return GSON.toJson(result);
       }
       return "";
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
       throw new Exception("Could not retrieve data specs for " + programId.toString() + ", reason: " + e.getMessage());
     }
+  }
+
+  private DatasetInstanceMeta getDatasetInstanceMeta(String dsName) {
+    DatasetInstanceMeta meta = null;
+    try {
+      meta = dsClient.getInstance(dsName);
+    } catch (Exception e) {
+      LOG.warn("Couldn't get info for dataset: " + dsName);
+    }
+    return meta;
   }
 
   private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
@@ -3051,7 +3100,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           }
         }
       }
-      return new Gson().toJson(result);
+      return GSON.toJson(result);
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
       throw new Exception("Could not retrieve application specs for " +

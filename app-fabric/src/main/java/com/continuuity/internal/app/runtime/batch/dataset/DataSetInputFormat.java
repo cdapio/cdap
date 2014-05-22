@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
@@ -8,7 +7,6 @@ import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextConfig;
 import com.continuuity.internal.app.runtime.batch.MapReduceContextProvider;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -30,11 +28,11 @@ import java.util.List;
  */
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetInputFormat.class);
-  public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
+  public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
 
-  public static void setInput(Job job, DataSetSpecification spec) {
+  public static void setInput(Job job, String inputDatasetName) {
     job.setInputFormatClass(DataSetInputFormat.class);
-    job.getConfiguration().set(DataSetInputFormat.INPUT_DATASET_SPEC, new Gson().toJson(spec));
+    job.getConfiguration().set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, inputDatasetName);
   }
 
   @Override
@@ -62,15 +60,15 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
-    String dataSetName = getInputDataSetSpec(conf).getName();
-    BatchReadable<KEY, VALUE> dataset = (BatchReadable<KEY, VALUE>) mrContext.getDataSet(dataSetName);
-    SplitReader<KEY, VALUE> splitReader = dataset.createSplitReader(inputSplit.getSplit());
+    String dataSetName = getInputName(conf);
+    BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) mrContext.getDataSet(dataSetName);
+    SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
     return new DataSetRecordReader<KEY, VALUE>(splitReader, mrContext, dataSetName);
   }
 
-  private DataSetSpecification getInputDataSetSpec(Configuration conf) {
-    return new Gson().fromJson(conf.get(INPUT_DATASET_SPEC), DataSetSpecification.class);
+  private String getInputName(Configuration conf) {
+    return conf.get(HCONF_ATTR_INPUT_DATASET);
   }
 }
