@@ -14,7 +14,7 @@ Release Notes
 New Features
 ^^^^^^^^^^^^^
 • Stream data ingestion improvements:
- New implementation of Streams enables increased throughput and horizontal scalability,  improving data ingestion performance.
+ New implementation of Streams enables increased throughput and horizontal scalability, improving data ingestion performance.
 
 • Consolidation of Reactor services:
  Reactor services are consolidated so that dev-ops would need to operationalize fewer services. 
