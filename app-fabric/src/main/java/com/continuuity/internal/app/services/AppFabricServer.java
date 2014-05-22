@@ -76,7 +76,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-
     executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
     programRuntimeService.start();
