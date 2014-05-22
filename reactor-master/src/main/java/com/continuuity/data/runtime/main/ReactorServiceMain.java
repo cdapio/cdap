@@ -39,6 +39,7 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.common.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -125,9 +126,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void start() {
-    zkClientService.startAndWait();
-    kafkaClientService.startAndWait();
-    metricsCollectionService.startAndWait();
+    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
@@ -169,9 +168,7 @@ public class ReactorServiceMain extends DaemonMain {
       twillController.stopAndWait();
     }
     leaderElection.cancel();
-    metricsCollectionService.stopAndWait();
-    kafkaClientService.stopAndWait();
-    zkClientService.stopAndWait();
+    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
   @Override
