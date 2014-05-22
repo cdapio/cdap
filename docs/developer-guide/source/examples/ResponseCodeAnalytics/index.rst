@@ -6,7 +6,6 @@ ResponseCodeAnalytics Example
 =============================
 
 A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
-=======
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
