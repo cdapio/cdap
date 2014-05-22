@@ -8,6 +8,8 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
@@ -70,6 +72,7 @@ public final class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services", "appfabric"));
     schedulerService.start();
     programRuntimeService.start();
 
