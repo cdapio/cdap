@@ -498,7 +498,7 @@ simply write::
 	.connect()
 	  .from("RandomGenerator").to(“RoundingFlowlet”)
 
-If you have two Flowlets of the same class, you can give them explicit names::
+If you have multiple Flowlets of the same class, you can give them explicit names::
 
 	.withFlowlets()
 	  .add("random", new RandomGenerator())

@@ -13,11 +13,11 @@ import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.thrift.server.TThreadedSelectorServer;
-import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -27,26 +27,21 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
- * AppFabric Server that implements {@link AbstractExecutionThreadService}.
+ * AppFabric Server.
  */
-public class AppFabricServer extends AbstractExecutionThreadService {
+public final class AppFabricServer extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
-  private static final int THREAD_COUNT = 2;
 
-
-  private final int port;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
 
   private NettyHttpService httpService;
-  private ExecutorService executor;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
   private CConfiguration configuration;
@@ -64,7 +59,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
-    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
     this.handlers = handlers;
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
@@ -76,31 +70,10 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-
-    executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
     programRuntimeService.start();
 
-    // Register with discovery service.
-    InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
-    InetAddress address = socketAddress.getAddress();
-    if (address.isAnyLocalAddress()) {
-      address = InetAddress.getLocalHost();
-    }
-    final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, port);
-
-    discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.APP_FABRIC;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalSocketAddress;
-      }
-    });
-
+    // Run http service on random port
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
@@ -116,43 +89,56 @@ public class AppFabricServer extends AbstractExecutionThreadService {
                                                     Constants.Gateway.DEFAULT_WORKER_THREADS))
       .build();
 
-  }
+    // Add a listener so that when the service started, register with service discovery.
+    // Remove from service discovery when it is stopped.
+    httpService.addListener(new ServiceListenerAdapter() {
 
-  /**
-   * Runs the AppFabricServer.
-   * <p>
-   *   It's run on a different thread.
-   * </p>
-   */
-  @Override
-  protected void run() throws Exception {
+      private Cancellable cancellable;
+
+      @Override
+      public void running() {
+        final InetSocketAddress socketAddress = httpService.getBindAddress();
+        LOG.info("AppFabric HTTP Service started at {}", socketAddress);
+
+        // When it is running, register it with service discovery
+        cancellable = discoveryService.register(new Discoverable() {
+
+          @Override
+          public String getName() {
+            return Constants.Service.APP_FABRIC_HTTP;
+          }
+
+          @Override
+          public InetSocketAddress getSocketAddress() {
+            return socketAddress;
+          }
+        });
+      }
+
+      @Override
+      public void terminated(State from) {
+        LOG.info("AppFabric HTTP service stopped.");
+        if (cancellable != null) {
+          cancellable.cancel();
+        }
+      }
+
+      @Override
+      public void failed(State from, Throwable failure) {
+        LOG.info("AppFabric HTTP service stopped with failure.", failure);
+        if (cancellable != null) {
+          cancellable.cancel();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
     httpService.startAndWait();
-    final int httpPort = httpService.getBindAddress().getPort();
-    final InetSocketAddress socketAddress = new InetSocketAddress(hostname, httpPort);
-    final InetAddress httpAddress = socketAddress.getAddress();
-    discoveryService.register(new Discoverable() {
-      final InetSocketAddress finalHttpSocketAddress = new InetSocketAddress(httpAddress, httpPort);
-
-      @Override
-      public String getName() {
-        return Constants.Service.APP_FABRIC_HTTP;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalHttpSocketAddress;
-      }
-    });
   }
 
-  /**
-   * Invoked during shutdown of the thread.
-   */
-  protected void triggerShutdown() {
+  @Override
+  protected void shutDown() throws Exception {
+    httpService.stopAndWait();
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
-    executor.shutdownNow();
-    httpService.stopAndWait();
   }
-
 }

@@ -2,11 +2,14 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -36,15 +39,12 @@ import java.util.List;
 public class DataSetTestBase {
 
   protected static DataFabric fabric;
+  protected static DatasetManager datasetManager;
   protected static TransactionSystemClient txSystemClient;
 
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
 
-  /**
-   * Enum for the transaction agent mode.
-   */
-  protected enum Mode { Sync, Batch, Smart }
   /**
    * Sets up the in-memory data fabric.
    */
@@ -53,6 +53,7 @@ public class DataSetTestBase {
     // use Guice to inject an in-memory tx
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules(),
+                           new DiscoveryRuntimeModule().getInMemoryModules(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -65,6 +66,7 @@ public class DataSetTestBase {
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     // and create a data fabric with the default operation context
     fabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
+    datasetManager = injector.getInstance(DatasetManager.class);
   }
 
   /**
@@ -86,8 +88,8 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, null);
-    instantiator.setDataSets(specs);
+    instantiator = new DataSetInstantiator(fabric, datasetManager, null);
+    instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
   }
 
   /**

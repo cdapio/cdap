@@ -10,8 +10,10 @@ import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,8 +30,10 @@ public class ConfiguratorTest {
 
   @Test
   public void testInMemoryConfigurator() throws Exception {
+    Location appJar = AppFabricTestHelper.createAppJar(WordCountApp.class);
+
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(DefaultId.ACCOUNT, new WordCountApp());
+    Configurator configurator = new InMemoryConfigurator(DefaultId.ACCOUNT, appJar);
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();

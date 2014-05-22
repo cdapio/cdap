@@ -6,6 +6,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.guice.InMemorySecurityModule;
@@ -53,6 +54,7 @@ public class TestExternalAuthenticationServer {
   private static Codec<AccessToken> tokenCodec;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static InMemoryDirectoryServer ldapServer;
+  private static int ldapPort = Networks.getRandomPort();
 
   @BeforeClass
   public static void setup() {
@@ -83,7 +85,7 @@ public class TestExternalAuthenticationServer {
     cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "org.eclipse.jetty.plus.jaas.spi.LdapLoginModule");
     cConf.set(configBase.concat("debug"), "true");
     cConf.set(configBase.concat("hostname"), "localhost");
-    cConf.set(configBase.concat("port"), "2344");
+    cConf.set(configBase.concat("port"), Integer.toString(ldapPort));
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
     cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
@@ -94,7 +96,7 @@ public class TestExternalAuthenticationServer {
   private static void startLDAPServer() throws Exception {
     InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
     config.setListenerConfigs(InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
-                                                                      2344, null));
+                                                                      ldapPort, null));
     Entry defaultEntry = new Entry(
                               "dn: dc=example,dc=com",
                               "objectClass: top",

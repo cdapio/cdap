@@ -8,6 +8,7 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.performance.gateway.stream.MultiThreadedStreamWriter;
@@ -37,6 +38,7 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
   @Inject
   public DefaultBenchmarkManager(LocationFactory locationFactory,
                                  DataSetAccessor dataSetAccessor,
+                                 DatasetManager datasetManager,
                                  TransactionSystemClient txSystemClient,
                                  BenchmarkStreamWriterFactory streamWriterFactory,
                                  ProcedureClientFactory procedureClientFactory,
@@ -46,7 +48,7 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
                                  @Assisted ApplicationSpecification appSpec,
                                  AppFabricHttpHandler handler) {
     super(locationFactory,
-          dataSetAccessor, txSystemClient,
+          dataSetAccessor, datasetManager, txSystemClient,
           streamWriterFactory, procedureClientFactory,
           accountId, applicationId,
           deployedJar, appSpec, handler);

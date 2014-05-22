@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.procedure;
 
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -16,6 +15,7 @@ import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 
+import java.io.Closeable;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -34,7 +34,8 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
 
-  BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount, Map<String, DataSet> datasets,
+  BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
+                        Map<String, Closeable> datasets,
                         Arguments runtimeArguments, ProcedureSpecification procedureSpec,
                         MetricsCollectionService collectionService) {
     super(program, runId, datasets);
