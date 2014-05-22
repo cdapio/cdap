@@ -494,8 +494,8 @@ public final class Constants {
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
     public static final String SERVER_PORT= "hive.server.port";
     public static final String METASTORE_PORT = "hive.local.metastore.port";
-    public static final String METASTORE_WAREHOUSE_DIR = "continuuity.hive.metastore.warehouse.dir";
-    public static final String DATABASE_DIR = "continuuity.hive.database.dir";
+    public static final String METASTORE_WAREHOUSE_DIR = "reactor.hive.metastore.warehouse.dir";
+    public static final String DATABASE_DIR = "reactor.hive.database.dir";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

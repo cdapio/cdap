@@ -22,7 +22,7 @@ public class TransactionPreHook implements ExecuteWithHookContext {
   private static final Gson GSON = new Gson();
 
   public void run(HookContext hookContext) throws Exception {
-    LOG.info("Entering pre hive hook");
+    LOG.debug("Entering pre hive hook");
     if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
       TransactionSystemClient txClient = HiveServer.getTransactionSystemClient();
       Transaction tx = txClient.startLong();

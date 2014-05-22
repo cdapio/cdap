@@ -28,10 +28,10 @@
     </property>
     <property>
         <name>hive.metastore.warehouse.dir</name>
-        <value>${continuuity.hive.metastore.warehouse.dir}</value>
+        <value>${reactor.hive.metastore.warehouse.dir}</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
-        <value>jdbc:derby:;databaseName=${continuuity.hive.database.dir};create=true</value>
+        <value>jdbc:derby:;databaseName=${reactor.hive.database.dir};create=true</value>
     </property>
 </configuration>

@@ -38,17 +38,23 @@ import java.net.URL;
 public class HiveRuntimeModule extends RuntimeModule {
   private static final Logger LOG = LoggerFactory.getLogger(HiveRuntimeModule.class);
 
-  private CConfiguration conf = null;
+  private final CConfiguration conf;
 
   public HiveRuntimeModule(CConfiguration conf) {
     this.conf = conf;
   }
 
   public HiveRuntimeModule() {
-    // do nothing
+    this.conf = CConfiguration.create();
   }
 
-  private Module getLocalModules() {
+  private Module getLocalModules(File warehouseDir, File databaseDir) {
+    LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsoluteFile());
+    System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
+
+    LOG.debug("Setting {} to {}", Constants.Hive.DATABASE_DIR, databaseDir.getAbsoluteFile());
+    System.setProperty(Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
+
     try {
       final HiveConf hiveConf = new HiveConf();
 
@@ -58,17 +64,15 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveMetaStorePort = PortDetector.findFreePort();
       hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
 
-      return Modules.combine(new HiveModule(),
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(HiveConf.class).toInstance(hiveConf);
-              bind(int.class).annotatedWith(Names.named(Constants.Hive.METASTORE_PORT)).toInstance(hiveMetaStorePort);
-              bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
-              bind(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
-              bind(HiveServer.class).in(Scopes.SINGLETON);
-            }
-          }
+      return Modules.combine(new HiveModule(hiveConf, hiveServerPort),
+                             new AbstractModule() {
+                               @Override
+                               protected void configure() {
+                                 bind(int.class).annotatedWith(Names.named(Constants.Hive.METASTORE_PORT))
+                                     .toInstance(hiveMetaStorePort);
+                                 bind(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
+                               }
+                             }
       );
     } catch (Exception e) {
       Throwables.propagate(e);
@@ -78,26 +82,18 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    String warehouseDir = System.getProperty("java.io.tmpdir") +
-        System.getProperty("file.separator") +
-        "hive" +
-        System.getProperty("file.separator") +
-        "warehouse" +
-        Long.toString(System.currentTimeMillis());
-    LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir);
-    System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir);
-    return getLocalModules();
+    File warehouseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "warehouse"),
+                                 Long.toString(System.currentTimeMillis()));
+    File databaseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "database"),
+                                 Long.toString(System.currentTimeMillis()));
+    return getLocalModules(warehouseDir, databaseDir);
   }
 
   @Override
   public Module getSingleNodeModules() {
     File warehouseDir = new File(new File(conf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "warehouse");
     File databaseDir = new File(new File(conf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "database");
-    LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
-    LOG.debug("Setting {} to {}", Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
-    System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
-    System.setProperty(Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
-    return getLocalModules();
+    return getLocalModules(warehouseDir, databaseDir);
   }
 
   @Override
@@ -112,24 +108,9 @@ public class HiveRuntimeModule extends RuntimeModule {
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
       final HiveConf newHiveConf = new HiveConf();
-      newHiveConf.clear();
-      newHiveConf.set("hive.metastore.uris", hiveConf.get("hive.metastore.uris"));
-      newHiveConf.set("hive.zookeeper.quorum", hiveConf.get("hive.zookeeper.quorum"));
-      newHiveConf.set("hive.zookeeper.client.port", hiveConf.get("hive.zookeeper.client.port"));
-      newHiveConf.set("hive.lock.manager", hiveConf.get("hive.lock.manager"));
       newHiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
-      newHiveConf.set("mapreduce.framework.name", hiveConf.get("mapreduce.framework.name"));
 
-      return Modules.combine(new HiveModule(),
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(HiveConf.class).toInstance(newHiveConf);
-              bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
-              bind(HiveServer.class).in(Scopes.SINGLETON);
-            }
-          }
-      );
+      return new HiveModule(newHiveConf, hiveServerPort);
     } catch (Exception e) {
       Throwables.propagate(e);
       return null;
@@ -138,9 +119,20 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   private static final class HiveModule extends AbstractModule {
 
+    private final HiveConf hiveConf;
+    private final int hiveServerPort;
+
+    protected HiveModule(HiveConf hiveConf, int hiveServerPort) {
+      this.hiveConf = hiveConf;
+      this.hiveServerPort = hiveServerPort;
+    }
+
     @Override
     protected void configure() {
+      bind(HiveConf.class).toInstance(hiveConf);
       bind(HiveCommandExecutor.class);
+      bind(HiveServer.class).in(Scopes.SINGLETON);
+      bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
     }
 
     @Provides

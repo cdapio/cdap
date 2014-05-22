@@ -105,10 +105,10 @@ public class HiveServer extends AbstractIdleService {
         try {
           socket = new Socket(host, port);
         } catch (ConnectException e) {
-          TimeUnit.MILLISECONDS.sleep(500);
           if (++tries > maxTries) {
             throw e;
           }
+          TimeUnit.MILLISECONDS.sleep(500);
         }
       } while (socket == null);
     } finally {

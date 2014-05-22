@@ -23,13 +23,9 @@ import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.test.internal.TempFolder;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -38,7 +34,6 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -56,10 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -247,7 +239,7 @@ public class ReactorServiceMain extends DaemonMain {
   }
 
   private File getSavedHConf() throws IOException {
-    File hConfFile = saveConf(hConf, File.createTempFile("hConf", ".xml"));
+    File hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
     hConfFile.deleteOnExit();
     return hConfFile;
   }
@@ -314,7 +306,7 @@ public class ReactorServiceMain extends DaemonMain {
     lastRunTimeMs = System.currentTimeMillis();
   }
 
-  private static File saveConf(Configuration conf, File file) throws IOException {
+  private static File saveHConf(Configuration conf, File file) throws IOException {
     Writer writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       conf.writeXml(writer);

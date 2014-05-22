@@ -25,7 +25,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
 
   @Override
   public void run(HookContext hookContext) throws Exception {
-    LOG.info("Entering post hive hook");
+    LOG.debug("Entering post hive hook");
     if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
       HiveConf hiveConf = hookContext.getConf();
       String txJson = hiveConf.get(DatasetInputFormat.TX_QUERY);
