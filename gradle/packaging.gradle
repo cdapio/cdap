@@ -45,10 +45,13 @@ task ('prepackager', dependsOn : ['build']) {
       from configurations.runtime
       from configurations.archives.allArtifacts.files
       exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
-      // Important: excluding all hadoop, hbase and protobuf libraries in favor of continuuity-hadoop-libs-* packages
+      // Important: excluding all hadoop, hbase, protobuf and hive libraries in favor of continuuity-hadoop-libs-*
+      // packages
       exclude '**/hadoop-*.jar'
       exclude '**/hbase-*.jar'
       exclude '**/protobuf-java-*.jar'
+      exclude '**/hive-*.jar'
+      exclude '**/datanucleus-*.jar'  // used by Hive
       into "${installDir}/lib"
     }
 

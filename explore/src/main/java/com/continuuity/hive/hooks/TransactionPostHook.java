@@ -2,8 +2,8 @@ package com.continuuity.hive.hooks;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.hive.HiveServer;
 import com.continuuity.hive.datasets.DatasetInputFormat;
-import com.continuuity.hive.inmemory.LocalHiveServer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -16,7 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Hook executed in Hive driver after executing any command.
+ * Hook to retrieve the transaction a query has been wrapped in, and to terminate it - either by
+ * committing it or by aborting it.
  */
 public class TransactionPostHook implements ExecuteWithHookContext {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPostHook.class);
@@ -24,6 +25,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
 
   @Override
   public void run(HookContext hookContext) throws Exception {
+    LOG.debug("Entering post hive hook");
     if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
       HiveConf hiveConf = hookContext.getConf();
       String txJson = hiveConf.get(DatasetInputFormat.TX_QUERY);
@@ -31,7 +33,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
       Transaction tx = GSON.fromJson(txJson, Transaction.class);
       LOG.debug("Transaction retrieved in post hook: {}", tx);
 
-      TransactionSystemClient txClient = LocalHiveServer.getTransactionSystemClient();
+      TransactionSystemClient txClient = HiveServer.getTransactionSystemClient();
       // Transaction doesn't involve any changes
       if (txClient.canCommit(tx, ImmutableList.<byte[]>of())) {
         if (!txClient.commit(tx)) {

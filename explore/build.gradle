@@ -1,5 +1,4 @@
 apply plugin:'java'
-apply plugin: 'osgi'
 
 smartyFacts {
     api {
@@ -21,9 +20,7 @@ dependencies {
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
     }
-    compile (libraries.continuuity_hive_exec) {
-        exclude group: 'com.google.protobuf'
-    }
+    compile libraries.continuuity_hive_exec
     compile libraries.hive_metastore
 
     compile libraries.thrift
@@ -49,12 +46,6 @@ javadoc {
 
 test {
     jvmArgs '-Xmx3048m'
-}
-
-jar {
-    into('lib') {
-        from configurations.compile
-    }
 }
 
 checkstyleMain {

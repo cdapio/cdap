@@ -24,9 +24,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.HiveServer;
-import com.continuuity.hive.guice.InMemoryHiveModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -74,8 +74,8 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private final InMemoryHiveMetastore hiveMetastore;
   private final HiveServer hiveServer;
-  private final HiveCommandExecutor hiveCommandExecutor;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetManagerService datasetService;
@@ -100,8 +100,8 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
-    hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -153,6 +153,7 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+    hiveMetastore.startAndWait();  // in that order
     hiveServer.startAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
@@ -184,6 +185,7 @@ public class SingleNodeMain {
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
     hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
   }
 
   /**
@@ -302,7 +304,7 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new StreamHttpModule(),
-      new InMemoryHiveModule(),
+      new HiveRuntimeModule().getInMemoryModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
@@ -350,7 +352,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule(),
-      new InMemoryHiveModule()
+      new HiveRuntimeModule(configuration).getSingleNodeModules()
     );
   }
 }

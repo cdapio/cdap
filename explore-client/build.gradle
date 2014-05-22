@@ -1,5 +1,4 @@
 apply plugin:'java'
-apply plugin: 'osgi'
 
 smartyFacts {
     api {
@@ -40,12 +39,6 @@ javadoc {
 
 test {
     jvmArgs '-Xmx3048m'
-}
-
-jar {
-    into('lib') {
-        from configurations.compile
-    }
 }
 
 checkstyleMain {
