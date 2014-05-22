@@ -39,6 +39,8 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.common.Services;
+import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -80,6 +82,7 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
+  private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
 
   private String serviceName;
@@ -117,24 +120,29 @@ public class ReactorServiceMain extends DaemonMain {
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
+    kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
+    metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
   }
 
   @Override
   public void start() {
-    zkClientService.startAndWait();
+    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
 
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
-        appFabricServer = injector.getInstance(AppFabricServer.class);
-        appFabricServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
+        // app fabric uses twillRunnerService for reporting some AM container metrics and getting live-info for apps,
+        // make sure its started after twill runner is started.
+        appFabricServer = injector.getInstance(AppFabricServer.class);
+        appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
+
         isLeader.set(true);
       }
 
@@ -160,7 +168,7 @@ public class ReactorServiceMain extends DaemonMain {
       twillController.stopAndWait();
     }
     leaderElection.cancel();
-    zkClientService.stopAndWait();
+    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
   @Override
