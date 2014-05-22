@@ -39,7 +39,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset type management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
@@ -68,7 +68,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/modules")
+  @Path("/data/modules")
   public void listModules(HttpRequest request, final HttpResponder responder) {
     // Sorting by name for convenience
     List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules());
@@ -82,7 +82,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws IOException {
 
@@ -140,7 +140,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     boolean deleted;
     try {
@@ -159,7 +159,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
@@ -170,7 +170,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/types")
+  @Path("/data/types")
   public void listTypes(HttpRequest request, final HttpResponder responder) {
     // Sorting by name for convenience
     List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes());
@@ -184,7 +184,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/types/{name}")
+  @Path("/data/types/{name}")
   public void getTypeInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("name") String name) {
 

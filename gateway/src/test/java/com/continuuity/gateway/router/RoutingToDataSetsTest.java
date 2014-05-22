@@ -79,87 +79,87 @@ public class RoutingToDataSetsTest {
 
   @Test
   public void testTypeHandlerRequests() throws Exception {
-    Assert.assertEquals("listModules", doRequest("/datasets/modules", "GET"));
-    Assert.assertEquals("post:myModule", doRequest("/datasets/modules/myModule", "POST"));
-    Assert.assertEquals("delete:myModule", doRequest("/datasets/modules/myModule", "DELETE"));
-    Assert.assertEquals("get:myModule", doRequest("/datasets/modules/myModule", "GET"));
-    Assert.assertEquals("listTypes", doRequest("/datasets/types", "GET"));
-    Assert.assertEquals("getType:myType", doRequest("/datasets/types/myType", "GET"));
+    Assert.assertEquals("listModules", doRequest("/data/modules", "GET"));
+    Assert.assertEquals("post:myModule", doRequest("/data/modules/myModule", "POST"));
+    Assert.assertEquals("delete:myModule", doRequest("/data/modules/myModule", "DELETE"));
+    Assert.assertEquals("get:myModule", doRequest("/data/modules/myModule", "GET"));
+    Assert.assertEquals("listTypes", doRequest("/data/types", "GET"));
+    Assert.assertEquals("getType:myType", doRequest("/data/types/myType", "GET"));
   }
 
   @Test
   public void testInstanceHandlerRequests() throws Exception {
-    Assert.assertEquals("list", doRequest("/datasets/instances", "GET"));
-    Assert.assertEquals("post:myInstance", doRequest("/datasets/instances/myInstance", "POST"));
-    Assert.assertEquals("delete:myInstance", doRequest("/datasets/instances/myInstance", "DELETE"));
-    Assert.assertEquals("get:myInstance", doRequest("/datasets/instances/myInstance", "GET"));
+    Assert.assertEquals("list", doRequest("/data/instances", "GET"));
+    Assert.assertEquals("post:myInstance", doRequest("/data/instances/myInstance", "POST"));
+    Assert.assertEquals("delete:myInstance", doRequest("/data/instances/myInstance", "DELETE"));
+    Assert.assertEquals("get:myInstance", doRequest("/data/instances/myInstance", "GET"));
   }
 
-  @Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
+  @Path(Constants.Gateway.GATEWAY_VERSION)
   public static final class MockDatasetTypeHandler extends AbstractHttpHandler {
     @GET
-    @Path("/datasets/modules")
+    @Path("/data/modules")
     public void listModules(HttpRequest request, final HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "listModules");
     }
 
     @POST
-    @Path("/datasets/modules/{name}")
+    @Path("/data/modules/{name}")
     public void addModule(HttpRequest request, final HttpResponder responder,
                           @PathParam("name") String name) throws IOException {
       responder.sendString(HttpResponseStatus.OK, "post:" + name);
     }
 
     @DELETE
-    @Path("/datasets/modules/{name}")
+    @Path("/data/modules/{name}")
     public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
       responder.sendString(HttpResponseStatus.OK, "delete:" + name);
     }
 
     @GET
-    @Path("/datasets/modules/{name}")
+    @Path("/data/modules/{name}")
     public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
       responder.sendString(HttpResponseStatus.OK, "get:" + name);
     }
 
     @GET
-    @Path("/datasets/types")
+    @Path("/data/types")
     public void listTypes(HttpRequest request, final HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "listTypes");
     }
 
     @GET
-    @Path("/datasets/types/{name}")
+    @Path("/data/types/{name}")
     public void getTypeInfo(HttpRequest request, final HttpResponder responder,
                             @PathParam("name") String name) {
       responder.sendString(HttpResponseStatus.OK, "getType:" + name);
     }
   }
 
-  @Path("/" + Constants.Gateway.GATEWAY_VERSION_NEXT)
+  @Path(Constants.Gateway.GATEWAY_VERSION)
   public static final class DatasetInstanceHandler extends AbstractHttpHandler {
     @GET
-    @Path("/datasets/instances/")
+    @Path("/data/instances/")
     public void list(HttpRequest request, final HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "list");
     }
 
     @GET
-    @Path("/datasets/instances/{instance-name}")
+    @Path("/data/instances/{instance-name}")
     public void getInfo(HttpRequest request, final HttpResponder responder,
                         @PathParam("instance-name") String name) {
       responder.sendString(HttpResponseStatus.OK, "get:" + name);
     }
 
     @POST
-    @Path("/datasets/instances/{instance-name}")
+    @Path("/data/instances/{instance-name}")
     public void add(HttpRequest request, final HttpResponder responder,
                     @PathParam("instance-name") String name) {
       responder.sendString(HttpResponseStatus.OK, "post:" + name);
     }
 
     @DELETE
-    @Path("/datasets/instances/{instance-name}")
+    @Path("/data/instances/{instance-name}")
     public void drop(HttpRequest request, final HttpResponder responder,
                      @PathParam("instance-name") String instanceName) {
       responder.sendString(HttpResponseStatus.OK, "delete:" + instanceName);
@@ -167,7 +167,7 @@ public class RoutingToDataSetsTest {
   }
 
   private String doRequest(String resource, String requestMethod) throws Exception {
-    resource = String.format("http://localhost:%d/%s" + resource, port, Constants.Gateway.GATEWAY_VERSION_NEXT);
+    resource = String.format("http://localhost:%d%s" + resource, port, Constants.Gateway.GATEWAY_VERSION);
     URL url = new URL(resource);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(requestMethod);

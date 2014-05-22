@@ -167,26 +167,26 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
   }
 
   private Response<List<DatasetModuleMeta>> getModules() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/modules"));
+    HttpGet get = new HttpGet(getUrl("/data/modules"));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), new TypeToken<List<DatasetModuleMeta>>() {
     }.getType());
   }
 
   private Response<List<DatasetTypeMeta>> getTypes() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/types"));
+    HttpGet get = new HttpGet(getUrl("/data/types"));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
   private Response<DatasetModuleMeta> getModule(String moduleName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/modules/" + moduleName));
+    HttpGet get = new HttpGet(getUrl("/data/modules/" + moduleName));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), DatasetModuleMeta.class);
   }
 
   private Response<DatasetTypeMeta> getType(String typeName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/types/" + typeName));
+    HttpGet get = new HttpGet(getUrl("/data/types/" + typeName));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), DatasetTypeMeta.class);
   }

@@ -233,8 +233,8 @@ public class DatasetManagerServiceClient {
 
   private String resolve(String resource) {
     InetSocketAddress addr = this.endpointStrategy.pick().getSocketAddress();
-    return String.format("http://%s:%s/%s/datasets/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.GATEWAY_VERSION_NEXT, resource);
+    return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
+                         Constants.Gateway.GATEWAY_VERSION, resource);
   }
 
   private final class HttpResponse {

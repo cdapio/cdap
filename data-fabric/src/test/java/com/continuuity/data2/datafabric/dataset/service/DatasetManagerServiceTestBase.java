@@ -84,15 +84,14 @@ public abstract class DatasetManagerServiceTestBase {
   }
 
   protected String getUrl(String resource) {
-    return "http://" + "localhost" + ":" + port +
-      "/" + Constants.Gateway.GATEWAY_VERSION_NEXT + resource;
+    return "http://" + "localhost" + ":" + port + Constants.Gateway.GATEWAY_VERSION + resource;
   }
 
   // todo: use HttpUrlConnection
   protected int deployModule(String moduleName, Class moduleClass) throws IOException {
     String jarPath = JarFinder.getJar(moduleClass);
 
-    HttpPost post = new HttpPost(getUrl("/datasets/modules/" + moduleName));
+    HttpPost post = new HttpPost(getUrl("/data/modules/" + moduleName));
     post.setEntity(new FileEntity(new File(jarPath), "application/octet-stream"));
     post.addHeader("class-name", moduleClass.getName());
 
@@ -104,7 +103,7 @@ public abstract class DatasetManagerServiceTestBase {
 
   // todo: use HttpUrlConnection
   protected int deleteModule(String moduleName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/datasets/modules/" + moduleName));
+    HttpDelete delete = new HttpDelete(getUrl("/data/modules/" + moduleName));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }

@@ -391,9 +391,6 @@ public final class Constants {
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
     public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
-
-    // next version of Gateway API to serve new functionality
-    public static final String GATEWAY_VERSION_NEXT = "v3";
   }
 
   /**
