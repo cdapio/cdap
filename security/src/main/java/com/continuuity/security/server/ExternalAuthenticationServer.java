@@ -124,7 +124,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         String keystorePath = configuration.get(Constants.Security.SSL_KEYSTORE_PATH);
         String keyStorePassword = configuration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
         if (keystorePath == null || keyStorePassword == null) {
-          throw Throwables.propagate(new RuntimeException("Keystore not configured correctly"));
+          throw Throwables.propagate(new RuntimeException("Keystore not configured correctly."));
         }
         sslContextFactory.setKeyStorePath(keystorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
