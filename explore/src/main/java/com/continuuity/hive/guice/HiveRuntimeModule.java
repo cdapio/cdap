@@ -6,12 +6,12 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.hive.HiveCommandExecutor;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.HiveServer;
+import com.continuuity.hive.server.MockHiveServer;
+import com.continuuity.hive.server.RuntimeHiveServer;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
-import com.continuuity.test.internal.TempFolder;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -19,18 +19,13 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URL;
 
 /**
  * Hive Runtime guice module.
@@ -98,22 +93,34 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    try {
-      HiveConf hiveConf = new HiveConf();
+    // Hive is optional - if its libraries are not there, reactor still runs
+    if (!HiveServer.isHivePresent()) {
+      LOG.warn("HiveServer2 not present in classpath, disable explore functionality.");
+      return new AbstractModule() {
+        @Override
+        protected void configure() {
+          // todo this may need more binding in the future
+          bind(HiveServer.class).to(MockHiveServer.class).in(Scopes.SINGLETON);
+        }
+      };
+    } else {
+      try {
+        HiveConf hiveConf = new HiveConf();
 
-      // todo figure out for what module exactly we need a hive-site.xml in the classpath
-      // The port number is a parameter that is directly read from the hiveConf passed to hive server,
-      // Contrary to most parameters which need to be in hive-site.xml in the classpath.
-      final int hiveServerPort = PortDetector.findFreePort();
-      hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
+        // todo figure out for what module exactly we need a hive-site.xml in the classpath
+        // The port number is a parameter that is directly read from the hiveConf passed to hive server,
+        // Contrary to most parameters which need to be in hive-site.xml in the classpath.
+        final int hiveServerPort = PortDetector.findFreePort();
+        hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
-      final HiveConf newHiveConf = new HiveConf();
-      newHiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
+        final HiveConf newHiveConf = new HiveConf();
+        newHiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
-      return new HiveModule(newHiveConf, hiveServerPort);
-    } catch (Exception e) {
-      Throwables.propagate(e);
-      return null;
+        return new HiveModule(newHiveConf, hiveServerPort);
+      } catch (Exception e) {
+        Throwables.propagate(e);
+        return null;
+      }
     }
   }
 
@@ -130,9 +137,9 @@ public class HiveRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       bind(HiveConf.class).toInstance(hiveConf);
-      bind(HiveCommandExecutor.class);
-      bind(HiveServer.class).in(Scopes.SINGLETON);
       bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
+      bind(HiveServer.class).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
+      bind(HiveCommandExecutor.class);
     }
 
     @Provides

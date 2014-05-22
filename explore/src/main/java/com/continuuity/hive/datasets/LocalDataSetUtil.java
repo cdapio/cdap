@@ -4,13 +4,10 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -20,16 +17,15 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.RuntimeHiveServer;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.metadata.SerializingMetaDataTable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utility to access data sets in local mode.
@@ -39,13 +35,11 @@ public class LocalDataSetUtil {
 
   private LocationFactory locationFactory;
   private TransactionSystemClient txClient;
-  private DiscoveryServiceClient discoveryClient;
 
   public LocalDataSetUtil(CConfiguration conf) {
     this.configuration = conf;
     this.locationFactory = new LocalLocationFactory(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)));
-    this.txClient = HiveServer.getTransactionSystemClient();
-    this.discoveryClient = HiveServer.getDiscoveryServiceClient();
+    this.txClient = RuntimeHiveServer.getTransactionSystemClient();
   }
 
   public DataSetSpecification getDataSetSpecification(String accountName,

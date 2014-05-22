@@ -19,7 +19,7 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;

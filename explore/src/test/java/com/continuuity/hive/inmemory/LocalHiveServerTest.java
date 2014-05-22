@@ -10,7 +10,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.hive.HiveCommandExecutor;
-import com.continuuity.hive.HiveServer;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.HiveServerTest;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.google.inject.AbstractModule;
