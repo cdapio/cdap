@@ -360,6 +360,12 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
+Run at the command line::
+
+	$ stream-client --help
+
+for usage and documentation of options.
+
 Data HTTP API
 =============
 
@@ -990,6 +996,34 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
+Container Information
+---------------------
+
+To find out the address of an element's container host and the container’s debug port, you can query
+the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+
+	GET <base-url>/apps/<app-id>/<element-type>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<element-type>``
+     - One of either ``flows`` or ``procedures``
+   * - ``<element-id>``
+     - Name of the element (*Flow* or *Procedure*)
+
+Example::
+
+	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+
+The response is formatted in JSON; an example of this is shown in the 
+`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+
 .. rst2pdf: PageBreak
 
 Scale
@@ -1521,7 +1555,6 @@ These metrics are available in the DataSets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
-
 
 Monitor HTTP API
 ================

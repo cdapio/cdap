@@ -98,7 +98,8 @@ Note that the emitter must use the same name ("wordHash") for the key that the c
 Partitioning can be combined with batch execution::
 
 	@Batch(100)
-	@HashPartition("wordHash") @ProcessInput("wordOut")
+	@HashPartition("wordHash")
+	@ProcessInput("wordOut")
 	public void process(Iterator<String> words) {
 	   ...
 
