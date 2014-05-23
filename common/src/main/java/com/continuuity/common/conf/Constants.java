@@ -276,7 +276,6 @@ public final class Constants {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
-      public static final String VERSION = "v1";
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";
       public static final String BOSS_THREADS = "dataset.service.boss.threads";

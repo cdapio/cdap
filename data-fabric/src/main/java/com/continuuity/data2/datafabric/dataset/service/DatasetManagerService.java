@@ -2,6 +2,8 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -53,7 +55,8 @@ public class DatasetManagerService extends AbstractIdleService {
                                @Named("datasetMDS") DatasetManager mdsDatasetManager,
                                @Named("defaultDatasetModules")
                                SortedMap<String, Class<? extends DatasetModule>> defaultModules,
-                               TransactionSystemClient txSystemClient
+                               TransactionSystemClient txSystemClient,
+                               MetricsCollectionService metricsCollectionService
   ) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
@@ -69,6 +72,9 @@ public class DatasetManagerService extends AbstractIdleService {
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager)));
+
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.DATASET_MANAGER)));
 
     builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
     builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));

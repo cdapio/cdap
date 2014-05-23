@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
@@ -56,7 +57,8 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
                                                new InMemoryDatasetManager(),
                                                ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                                  "memoryTable", InMemoryTableModule.class),
-                                               txSystemClient);
+                                               txSystemClient,
+                                               new NoOpMetricsCollectionService());
     datasetManager.startAndWait();
 
     DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);

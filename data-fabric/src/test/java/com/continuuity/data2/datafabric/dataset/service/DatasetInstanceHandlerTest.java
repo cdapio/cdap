@@ -91,7 +91,7 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName, DatasetInstanceProperties props) throws IOException {
-    HttpPost post = new HttpPost(getUrl("/datasets/instances/" + instanceName));
+    HttpPost post = new HttpPost(getUrl("/data/instances/" + instanceName));
     post.addHeader("type-name", typeName);
     post.setEntity(new StringEntity(new Gson().toJson(props)));
 
@@ -102,19 +102,19 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
   }
 
   private Response<List<DatasetInstanceSpec>> getInstances() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/instances"));
+    HttpGet get = new HttpGet(getUrl("/data/instances"));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
   }
 
   private Response<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/instances/" + instanceName));
+    HttpGet get = new HttpGet(getUrl("/data/instances/" + instanceName));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), DatasetInstanceMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/datasets/instances/" + instanceName));
+    HttpDelete delete = new HttpDelete(getUrl("/data/instances/" + instanceName));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }
