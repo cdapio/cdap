@@ -78,7 +78,7 @@ WebAppServer.prototype.setSecurityStatus = function(setAddress) {
   var options = {
     host: this.config['gateway.server.address'],
     port: this.config['gateway.server.port'],
-    path: '/' + this.API_VERSION + '/deploy/status',
+    path: '/' + this.API_VERSION + '/apps',
     method: 'GET'
   };
 
