@@ -107,6 +107,16 @@ libraries.hbase96_test = "org.apache.hbase:hbase-testing-util:$versions.hbase96V
 libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"
 libraries.jetty_management = "jetty:jetty-management:6.0.0"
 
+libraries.jetty8 = "org.eclipse.jetty:jetty-server:8.1.15.v20140411"
+libraries.jetty8_util = "org.eclipse.jetty:jetty-util:8.1.15.v20140411"
+libraries.jetty8_security = "org.eclipse.jetty:jetty-security:8.1.15.v20140411"
+libraries.jetty8_plus = "org.eclipse.jetty:jetty-plus:8.1.15.v20140411"
+libraries.jetty8_jaspi = "org.eclipse.jetty:jetty-jaspi:8.1.15.v20140411"
+libraries.geronimo_jaspi = 'org.apache.geronimo.components:geronimo-jaspi:2.0.0'
+libraries.servlet_api = "javax.servlet:javax.servlet-api:3.0.1"
+
+libraries.unboundid = 'com.unboundid:unboundid-ldapsdk:2.3.6'
+
 //Yammer
 libraries.yammer_metrics = "com.yammer.metrics:metrics-core:2.1.5"
 

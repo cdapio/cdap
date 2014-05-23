@@ -1,0 +1,9 @@
+pageTemplates:
+    oneColumn:
+        frames: []
+            [0%, 0%, 100%, 100%]
+        showHeader : true
+        showFooter : true
+        defaultHeader : "|biohazard| |Python|     **Customer Initials:** _______ Date:_______          Page ###Page### of ###Total###"
+        defaultFooter : "|biohazard| |Python|     **Customer Initials:** _______ Date:_______          Page ###Page### of ###Total###"
+

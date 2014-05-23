@@ -1,0 +1,9 @@
+styles:
+    funborder: commands: []
+                [GRID, [0, 0], [-1, -1], 2, red]
+
+    noborder: 
+        parent: funborder
+        commands: [
+                [GRID, [0, 0], [-1, -1], 0.25, white]
+        ]

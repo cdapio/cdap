@@ -1,8 +1,7 @@
 package com.continuuity.security.zookeeper;
 
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.zookeeper.ZKExtOperations;
-import com.continuuity.security.io.Codec;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.AbstractLoadingCache;

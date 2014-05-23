@@ -290,6 +290,7 @@ Comments
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
+.. rst2pdf: PageBreak
 
 Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
@@ -358,6 +359,12 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
+
+Run at the command line::
+
+	$ stream-client --help
+
+for usage and documentation of options.
 
 Data HTTP API
 =============
@@ -971,7 +978,7 @@ When starting an element, you can optionally specify runtime arguments as a JSON
 
 with the arguments as a JSON string in the body::
 
-	{“foo”:”bar”,”this”:”that”}
+	{"foo":"bar","this":"that"}
 
 The Continuuity Reactor will use these these runtime arguments only for this single invocation of the element.
 To save the runtime arguments so that the Reactor will use them every time you start the element,
@@ -981,13 +988,41 @@ issue an HTTP PUT with the parameter ``runtimeargs``::
 
 with the arguments as a JSON string in the body::
 
-	{“foo”:”bar”,”this”:”that”}
+	{"foo":"bar","this":"that"}
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
+
+Container Information
+---------------------
+
+To find out the address of an element's container host and the container’s debug port, you can query
+the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+
+	GET <base-url>/apps/<app-id>/<element-type>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<element-type>``
+     - One of either ``flows`` or ``procedures``
+   * - ``<element-id>``
+     - Name of the element (*Flow* or *Procedure*)
+
+Example::
+
+	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+
+The response is formatted in JSON; an example of this is shown in the 
+`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
 
 .. rst2pdf: PageBreak
 
@@ -1155,7 +1190,7 @@ Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
 
 with the API Key in the header::
 
-	X-Continuuity-ApiKey: <api-key> {“hostname”:”<sandbox>.continuuity.net”}
+	X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
 
 .. list-table::
    :widths: 20 80
@@ -1191,9 +1226,9 @@ running in the Continuuity Reactor. To do that, send an HTTP GET request::
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
    * - ``<ts>``
-     - *Start* and *stop* time, given as seconds since the start of the Epoch
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 Example
 .......
@@ -1225,7 +1260,15 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-`Continuuity Reactor Operations Guide <operations>`_.
+Continuuity Reactor Operations Guide.
+
+
+.. rst2pdf: CutStart
+
+(:doc:`Operations Guide </operations>`)
+
+.. rst2pdf: CutStop
+
 
 Metrics Requests
 ----------------
@@ -1414,7 +1457,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - A single DataSet in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
    * - A single DataSet in the context of a specific Application
-     - ``/datasets/<dataset-id><any application context>``
+     - ``/datasets/<dataset-id>/<any application context>``
    * - A single DataSet across all Applications
      - ``/datasets/<dataset-id>``
    * - All DataSets across all Applications
@@ -1513,7 +1556,6 @@ These metrics are available in the DataSets context:
    * - ``store.writes``
      - Write operations performed
 
-
 Monitor HTTP API
 ================
 Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
@@ -1575,7 +1617,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs>`__,
+- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop

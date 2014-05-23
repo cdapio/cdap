@@ -1,0 +1,27 @@
+This is basically a copy of test_issue_138, modified to use a bigger figure, and a larger border padding size.
+
+This test shows that the math on size and location calculations for the border and the figure within the border are not correct.
+
+This is the default figure class without a border (which seems right):
+
+.. figure:: images/text_and_vectors_001.pdf
+
+   This is the caption.
+
+   And this is the legend.
+This is a line after the figure, just to show where things are.
+
+.. raw:: pdf
+
+    PageBreak
+
+This is a figure with ``with-border`` class (which is broken at the time of this report):
+
+.. class:: with-border
+.. figure:: images/text_and_vectors_001.pdf
+
+   This is the caption.
+
+   And this is the legend.
+
+This is a line after the figure, just to show where things are.
