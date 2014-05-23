@@ -15,6 +15,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
 import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
@@ -96,6 +97,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new KafkaMetricsProcessorModule()
