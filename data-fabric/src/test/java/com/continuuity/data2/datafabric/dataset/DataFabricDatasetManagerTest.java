@@ -32,7 +32,7 @@ import java.util.Collections;
  */
 public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
   private DatasetManagerService datasetManager;
-  private DatasetManager manager;
+  private DataFabricDatasetManager manager;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -74,6 +74,7 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
     manager = new DataFabricDatasetManager(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
                                            new InMemoryDatasetDefinitionRegistry());
+    manager.startAndWait();
   }
 
   @After
