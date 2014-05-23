@@ -13,12 +13,9 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.google.common.base.Throwables;
@@ -176,9 +173,6 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
-      new AuthModule(),
-      new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getDistributedModules()
     );
   }
