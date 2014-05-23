@@ -72,7 +72,8 @@ public final class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services", "appfabric"));
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME, "appfabric"));
     schedulerService.start();
     programRuntimeService.start();
 

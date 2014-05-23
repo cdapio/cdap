@@ -38,6 +38,9 @@ public final class StreamHttpService extends AbstractIdleService {
                            @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
 
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       "streams"));
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
@@ -54,7 +57,6 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services", "streams"));
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
       @Override

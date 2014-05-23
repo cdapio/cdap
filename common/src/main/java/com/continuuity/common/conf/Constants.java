@@ -459,6 +459,14 @@ public final class Constants {
   }
 
   /**
+   *
+   */
+  public static final class Logging {
+    public static final String SYSTEM_NAME = "reactor";
+    public static final String COMPONENT_NAME = "services";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {

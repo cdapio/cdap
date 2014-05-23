@@ -8,10 +8,13 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -38,6 +41,7 @@ public class DataSetServiceTwillRunnable extends AbstractReactorTwillRunnable {
   private KafkaClientService kafkaClient;
   private MetricsCollectionService metricsCollectionService;
   private DatasetManagerService dsService;
+  private LogAppenderInitializer logAppenderInitializer;
 
   public DataSetServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -45,13 +49,18 @@ public class DataSetServiceTwillRunnable extends AbstractReactorTwillRunnable {
 
   @Override
   public void doInit(TwillContext context) {
-    LOG.info("Initializing runnable {}", name);
     try {
+      getCConfiguration().set(Constants.Dataset.Manager.ADDRESS, context.getHost().getCanonicalHostName());
+      Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         "dataset"));
+
+      LOG.info("Initializing runnable {}", name);
+
       // Set the hostname of the machine so that cConf can be used to start internal services
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-      getCConfiguration().set(Constants.Dataset.Manager.ADDRESS, context.getHost().getCanonicalHostName());
-
-      Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
 
       //Get Zookeeper and Kafka Client Instances
       zkClient = injector.getInstance(ZKClientService.class);

@@ -11,6 +11,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -69,6 +71,9 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
                                       new StreamHttpModule());
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         "streams"));
 
     } catch (Exception e) {
       throw Throwables.propagate(e);

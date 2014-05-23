@@ -2,6 +2,8 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -88,6 +90,9 @@ public class DatasetManagerService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       "dataset"));
     LOG.info("Starting DatasetManagerService...");
 
     // adding default modules to init dataset manager used by mds (directly)

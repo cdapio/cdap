@@ -37,6 +37,10 @@ public class MetricsQueryService extends AbstractIdleService {
                              DiscoveryService discoveryService,
                              @Nullable MetricsCollectionService metricsCollectionService) {
 
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.METRICS));
+
     // netty http server config
     String address = cConf.get(Constants.Metrics.ADDRESS);
     int backlogcnxs = cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000);
@@ -69,8 +73,6 @@ public class MetricsQueryService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services",
-                                                                       Constants.Service.METRICS));
     LOG.info("Starting Metrics Service...");
     httpService.startAndWait();
     LOG.info("Started Metrics HTTP Service...");

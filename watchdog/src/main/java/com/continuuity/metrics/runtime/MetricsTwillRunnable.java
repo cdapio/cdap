@@ -8,6 +8,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
@@ -46,17 +48,23 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
 
   @Override
   protected void doInit(TwillContext context) {
-    LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
-      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
       getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
-      zkClient = injector.getInstance(ZKClientService.class);
-      kafkaClient = injector.getInstance(KafkaClientService.class);
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
+
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         Constants.Service.METRICS));
+
+      LOG.info("Initializing runnable {}", name);
+      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
+
+      zkClient = injector.getInstance(ZKClientService.class);
+      kafkaClient = injector.getInstance(KafkaClientService.class);
 
       // Get the Metric Services
       metricsQueryService = injector.getInstance(MetricsQueryService.class);
