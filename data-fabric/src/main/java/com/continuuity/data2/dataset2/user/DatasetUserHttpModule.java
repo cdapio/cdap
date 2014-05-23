@@ -20,8 +20,8 @@ public class DatasetUserHttpModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    Named name = Names.named(Constants.Service.DATASET_USER);
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, name);
+    Named datasetUserName = Names.named(Constants.Service.DATASET_USER);
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
     handlerBinder.addBinding().to(DatasetAdminHTTPHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
 

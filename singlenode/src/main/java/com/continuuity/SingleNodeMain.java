@@ -17,8 +17,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.user.DatasetUserHttpModule;
-import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -293,8 +291,6 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getSingleNodeModules(),
-      // TODO(alvin): remove
-      new DatasetUserHttpModule(),
       new StreamHttpModule()
     );
   }
@@ -340,8 +336,6 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      // TODO(alvin): remove
-      new DatasetUserHttpModule(),
       new StreamHttpModule());
   }
 }

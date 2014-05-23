@@ -103,7 +103,6 @@ public class DatasetUserServiceTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules(cConf, hConf).getInMemoryModules(),
-      new DatasetUserHttpModule(),
       new AuthModule(), new AbstractModule() {
       @Override
       protected void configure() {

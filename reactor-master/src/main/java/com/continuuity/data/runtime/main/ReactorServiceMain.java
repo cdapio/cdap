@@ -19,8 +19,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.user.DatasetUserHttpModule;
-import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -123,8 +121,6 @@ public class ReactorServiceMain extends DaemonMain {
       new AuthModule(),
       new KafkaClientModule(),
       new TwillModule(),
-      // TODO(alvin): remove
-      new DatasetUserHttpModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
