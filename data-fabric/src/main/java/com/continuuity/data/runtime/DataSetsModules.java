@@ -9,7 +9,6 @@ import com.continuuity.data2.dataset2.module.lib.TableModule;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
-import com.continuuity.data2.dataset2.user.DatasetUserHttpModule;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.collect.ImmutableSortedMap;
