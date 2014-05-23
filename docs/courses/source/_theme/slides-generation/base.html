@@ -75,7 +75,7 @@
     <div id="current_presenter_notes">
       <div id="presenter_note"></div>
     </div>
-    <div class="slides">
+    <div class="slides" id="display-slides-container" style="display: none">
       {% for slide in slides %}
       <!-- slide source: {% if slide.source %}{{ slide.source.rel_path }}{% endif %} -->
       <div class="slide-wrapper">
@@ -166,11 +166,11 @@
         <td>1</td>
       </tr>
       <tr>
-        <th>Toggle Screen Blanking</th>
+        <th>Screen Blanking</th>
         <td>b</td>
       </tr>
       <tr>
-        <th>Show/Hide Slide Context</th>
+        <th>Slide Context</th>
         <td>c</td>
       </tr>
       <tr>
@@ -178,15 +178,23 @@
         <td>n</td>
       </tr>
       <tr>
+        <th>First Slide</th>
+        <td>Shift-Up/Left Arrows</td>
+      </tr>
+      <tr>
         <th>Previous Slide</th>
-        <td>Shift-SPACEBAR</td>
+        <td>Shift-Spacebar or Up/Left Arrows</td>
       </tr>
       <tr>
         <th>Next Slide</th>
-        <td>SPACEBAR</td>
+        <td>Spacebar or Down/Right Arrows</td>
       </tr>
       <tr>
-        <th>Help</th>
+        <th>Last Slide</th>
+        <td>Shift-Down/Right Arrows</td>
+      </tr>
+      <tr>
+        <th>Toggle Help</th>
         <td>h</td>
       </tr>
     </table>

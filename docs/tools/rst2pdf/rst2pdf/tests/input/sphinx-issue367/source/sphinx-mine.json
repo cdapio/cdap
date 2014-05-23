@@ -1,0 +1,13 @@
+{
+  "pageTemplates" : {
+    "customPage": {
+        "frames": [
+            ["0%", "0%", "100%", "100%"]
+        ],
+        "showHeader" : true,
+        "showFooter" : true,
+        "defaultHeader" : "###Section###",
+        "defaultFooter" : "Seite ###Page### von ###Total###"
+    }
+  }
+}

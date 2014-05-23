@@ -2,14 +2,12 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.security.io.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Maintains secret keys used to sign and validate authentication tokens.

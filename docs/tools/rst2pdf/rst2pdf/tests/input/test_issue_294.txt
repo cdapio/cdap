@@ -1,0 +1,8 @@
+.. image:: images/biohazard.pdf
+   :height: 7cm
+
+.. image:: images/biohazard.png
+   :height: 7cm
+
+.. image:: images/biohazard.pdf
+   :height: 7cm

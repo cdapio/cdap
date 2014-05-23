@@ -1,0 +1,7 @@
+styles: nobox:
+        backColor: white
+        borderColor: null
+        borderPadding: 0
+        borderRadius: null
+        borderWidth: 0
+        parent: code

@@ -1,0 +1,111 @@
+===========================
+Help for rst2pdf developers
+===========================
+
+-----------------------------
+Or, how do I hack this thing?
+-----------------------------
+
+Guidelines
+----------
+
+In rst2pdf we want many things. We want ponies and icecream. But most of all, we want 
+rst2pdf to kick ass. The best way to achieve that is making rst2pdf work right. 
+The best way to do *that* is through testing and documenting.
+
+So, if you want to do something inside rst2pdf, you are welcome, but...
+
+* Create an Issue for the task. That's easy, just go to 
+  http://rst2pdf.googlecode.com and do it.
+
+* If you intend to fix a bug:
+
+  + Create a **minimal** test case that shows the bug. 
+
+  + Put it inside rst2pdf/tests/input like the others:
+    
+    - mytest.txt is the test itself
+
+    - mytest.cli is any needed command line arguments (if needed)
+  
+    - mytest.style is a custom stylesheet (if needed)
+
+  + Run the test suite on it::
+
+      cd rst2pdf/tests
+      ./autotest.py input/mytest.txt
+
+  + Check the output:
+
+      less output/mytest.log
+      acroread output/mytest.pdf
+
+  + If it's really a bug, mark the test as *bad* and save everything in SVN::
+
+      setmd5 bad input/mytest.txt
+      svn add input/mytest.*
+      svn add md5/mytest.json
+      svn commit -m "Test case for Issue X"
+   
+* Always, when committing something, check for regressions running the full test suite, 
+  it takes only a minute or two. Keep in mind that regressions can be trivial!
+
+  For example, if you change the spacing of definition lists, 3 or 4 tests will 
+  regress.
+
+* Keep your Issues updated. If you are working on frobnozzing the gargles, then by 
+  all means post it in the issue. There's no issue about it? You were meant to 
+  create one, remember? ;-)
+
+* If you added a command line option, document it in doc/rst2pdf.txt. 
+  That will make it appear in the manual and in the man page.
+  
+  Maybe it should also be available for sphinx users, let me know about it.
+  
+* If you implemented a new feature, please document it in manual.txt 
+  (or in a separate file and add an include in manual.txt)
+
+* If you implement an extension, make the docstring valid restructured text
+  and link it to the manual like the others.
+
+Why should you bother with all this?
+
+It's important that you do it this way because it means that the rest of us know what you are doing. It also means you don't break rst2pdf.
+
+Continuous Integration
+----------------------
+
+rst2pdf has a semi-public CI server running Hudson. What's CI? It's a server running 
+the test suite all the time. That means that if a commit breaks something, we can 
+find out about it.
+
+And yes, you are supposed to check for regressions yourself, but will you test 
+against ReportLab 2.3? How about Python 2.4? Hudson allows us to have all those 
+builds (and more) running every day, so we know it doesn't break for anyone else.
+
+Or at least, we hope so, this is a work in progress ;-)
+  
+Running tests
+-------------
+
+first run
+~~~~~~~~~
+
+while in project::
+
+  python bootstrap.py
+  ./bin/buildout
+  ./bin/nosetests -i regulartest -i sphinxtest
+  
+next runs
+~~~~~~~~~
+
+while in project::
+
+  ./bin/nosetests -i regulartest -i sphinxtest
+
+
+Getting commit rights
+---------------------
+
+Just ask in the mailing list.

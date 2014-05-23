@@ -1,3 +1,8 @@
+
+# This script is used by the installation scripts located in the /bin directory of each example.
+# It is not intended to be used directly but instead as part of a calling script.
+# The calling script must define the $script, $jar and $name variables.
+
 action=$1
 gateway=$2
 

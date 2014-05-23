@@ -30,7 +30,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset instance management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path("/" + Constants.Dataset.Manager.VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new Gson();
@@ -55,13 +55,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/instances/")
+  @Path("/data/instances/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
   @GET
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("instance-name") String name) {
     DatasetInstanceSpec spec = instanceManager.get(name);
@@ -74,7 +74,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("instance-name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
@@ -107,7 +107,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void drop(HttpRequest request, final HttpResponder responder,
                        @PathParam("instance-name") String instanceName) {
     LOG.info("Deleting dataset instance {}", instanceName);
@@ -120,7 +120,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/instances/{instance-id}/admin/{method}")
+  @Path("/data/instances/{instance-id}/admin/{method}")
   public void executeAdmin(HttpRequest request, final HttpResponder responder,
                            @PathParam("instance-id") String instanceName,
                            @PathParam("method") String method) {
@@ -129,7 +129,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/instances/{instance-id}/data/{method}")
+  @Path("/data/instances/{instance-id}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
                            @PathParam("instance-id") String instanceName,
                            @PathParam("method") String method) {
