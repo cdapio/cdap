@@ -10,7 +10,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
 import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.metrics.MetricsConstants;
