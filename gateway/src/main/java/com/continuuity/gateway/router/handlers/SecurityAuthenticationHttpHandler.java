@@ -166,7 +166,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
     do {
       for (Discoverable d : discoverables)  {
-
         String url = String.format("%s://%s:%d", protocol, d.getSocketAddress().getHostName(), port);
         externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
