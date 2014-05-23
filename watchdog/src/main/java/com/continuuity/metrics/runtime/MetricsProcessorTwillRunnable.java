@@ -62,6 +62,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
     try {
       getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
