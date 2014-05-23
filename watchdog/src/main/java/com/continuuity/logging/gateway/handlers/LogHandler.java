@@ -106,7 +106,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getAppEntityType(EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (SecurityException e) {
@@ -159,7 +159,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getAppEntityType(EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
@@ -212,7 +212,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getAppEntityType(EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -300,18 +300,18 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private LoggingContextHelper.AppEntityType getAppEntityType(EntityType entityType) {
+  private LoggingContextHelper.EntityType getEntityType(EntityType entityType) {
     if (entityType == null) {
       throw new IllegalArgumentException("Null program type");
     }
 
     switch (entityType) {
       case flows:
-        return LoggingContextHelper.AppEntityType.FLOW;
+        return LoggingContextHelper.EntityType.FLOW;
       case procedures:
-        return LoggingContextHelper.AppEntityType.PROCEDURE;
+        return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
-        return LoggingContextHelper.AppEntityType.MAP_REDUCE;
+        return LoggingContextHelper.EntityType.MAP_REDUCE;
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", entityType));
     }

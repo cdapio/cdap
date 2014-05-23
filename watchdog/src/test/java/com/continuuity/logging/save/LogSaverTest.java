@@ -1,11 +1,10 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.ComponentLoggingContext;
+import com.continuuity.common.logging.AccountLoggingContext;
+import com.continuuity.common.logging.ApplicationLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.common.logging.ServiceLoggingContext;
-import com.continuuity.common.logging.SystemLoggingContext;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -119,7 +118,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     publishLogs();
 
-    waitTillLogSaverDone(logBaseDir, "reactor/services/service-metrics/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
@@ -138,7 +137,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead2() throws Exception {
-    testLogRead(new ServiceLoggingContext("reactor", "services", "metrics"));
+    testLogRead(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", ""));
   }
 
   @Test
@@ -165,14 +164,14 @@ public class LogSaverTest extends KafkaTestBase {
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
 
       Assert.assertEquals(
-        loggingContext.getSystemTagsMap().get(SystemLoggingContext.TAG_SYSTEM_ID).getValue(),
-        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(SystemLoggingContext.TAG_SYSTEM_ID));
+        loggingContext.getSystemTagsMap().get(AccountLoggingContext.TAG_ACCOUNT_ID).getValue(),
+        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(AccountLoggingContext.TAG_ACCOUNT_ID));
       Assert.assertEquals(
-        loggingContext.getSystemTagsMap().get(ComponentLoggingContext.TAG_COMPONENT_ID).getValue(),
-        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ComponentLoggingContext.TAG_COMPONENT_ID));
+        loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue(),
+        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID));
       Assert.assertEquals(
-        loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue(),
-        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ServiceLoggingContext.TAG_SERVICE_ID));
+        loggingContext.getSystemTagsMap().get(FlowletLoggingContext.TAG_FLOW_ID).getValue(),
+        allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(FlowletLoggingContext.TAG_FLOW_ID));
     }
 
     LogCallback logCallback2 = new LogCallback();
@@ -269,9 +268,8 @@ public class LogSaverTest extends KafkaTestBase {
 
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("reactor", "services", "metrics"))));
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2",
-                                                                           "FLOWLET_2"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
 
     Futures.allAsList(futures).get();
 

@@ -20,7 +20,6 @@ import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -109,7 +108,6 @@ public class ReactorServiceMain extends DaemonMain {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
       new IOModule(),
       new AuthModule(),
       new KafkaClientModule(),

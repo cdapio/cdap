@@ -65,6 +65,9 @@ public final class TransactionService extends AbstractService {
     this.txManagerProvider = txManagerProvider;
     this.zkClient = zkClient;
 
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services",
+                                                                       Constants.Service.TRANSACTION));
+
     address = conf.get(Constants.Transaction.Container.ADDRESS);
 
     // Retrieve the number of threads for the service
@@ -86,8 +89,6 @@ public final class TransactionService extends AbstractService {
 
   @Override
   protected void doStart() {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext("reactor", "services",
-                                                                       Constants.Service.TRANSACTION));
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
       @Override
       public void leader() {

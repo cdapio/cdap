@@ -1,11 +1,16 @@
 package com.continuuity.common.logging;
 
 /**
- *
+ * Component Logging Context.
  */
 public class ComponentLoggingContext extends SystemLoggingContext {
   public static final String TAG_COMPONENT_ID = ".componentId";
 
+  /**
+   * Constructs ComponentLoggingContext.
+   * @param systemId system id
+   * @param componentId component id
+   */
   public ComponentLoggingContext(final String systemId, final String componentId) {
     super(systemId);
     setSystemTag(TAG_COMPONENT_ID, componentId);

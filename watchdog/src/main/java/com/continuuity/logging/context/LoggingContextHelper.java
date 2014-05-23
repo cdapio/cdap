@@ -25,9 +25,9 @@ public final class LoggingContextHelper {
   private LoggingContextHelper() {}
 
   /**
-   * Defines application entity types.
+   * Defines entity types.
    */
-  public enum AppEntityType {
+  public enum EntityType {
     FLOW, PROCEDURE, MAP_REDUCE
   }
 
@@ -75,7 +75,7 @@ public final class LoggingContextHelper {
   }
 
   public static LoggingContext getLoggingContext(String accountId, String applicationId, String entityId,
-                                                 AppEntityType entityType) {
+                                                 EntityType entityType) {
     switch (entityType) {
       case FLOW:
         return new FlowletLoggingContext(accountId, applicationId, entityId, "");
