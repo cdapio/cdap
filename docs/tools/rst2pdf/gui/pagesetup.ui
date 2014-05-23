@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>367</width>
+    <height>360</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>First Page Template:</string>
+     </property>
+     <property name="buddy">
+      <cstring>firstTemplate</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="firstTemplate"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Page Size:</string>
+     </property>
+     <property name="buddy">
+      <cstring>size</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="size">
+     <item>
+      <property name="text">
+       <string>Custom</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A0</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>A6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B0</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B3</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B4</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B5</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>B6</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>letter</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>legal</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>11&quot;x17&quot;</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Height:</string>
+     </property>
+     <property name="buddy">
+      <cstring>height</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLineEdit" name="height"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Width:</string>
+     </property>
+     <property name="buddy">
+      <cstring>width</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLineEdit" name="width"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Top Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>margin_top</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="margin_top"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Bottom Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>margin_bottom</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="margin_bottom"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Left Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>margin_left</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="margin_left"/>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Right Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>margin_right</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="margin_right"/>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Header Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>spacing_header</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QLineEdit" name="spacing_header"/>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>Footer Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>spacing_footer</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QLineEdit" name="spacing_footer"/>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Gutter Margin:</string>
+     </property>
+     <property name="buddy">
+      <cstring>margin_gutter</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QLineEdit" name="margin_gutter"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>firstTemplate</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>185</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>size</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>211</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>38</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>height</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>338</x>
+     <y>81</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>365</x>
+     <y>71</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>width</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>113</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>101</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>margin_top</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>336</x>
+     <y>141</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>margin_bottom</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>351</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>370</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>margin_left</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>328</x>
+     <y>201</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>202</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>margin_right</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>328</x>
+     <y>235</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>375</x>
+     <y>228</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spacing_header</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>334</x>
+     <y>258</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>385</x>
+     <y>257</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spacing_footer</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>323</x>
+     <y>292</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>292</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>margin_gutter</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>Form</receiver>
+   <slot>applyChanges()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>336</x>
+     <y>331</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>366</x>
+     <y>331</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>applyChanges()</slot>
+ </slots>
+</ui>

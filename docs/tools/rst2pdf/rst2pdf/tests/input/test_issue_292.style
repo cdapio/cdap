@@ -1,0 +1,9 @@
+styles:
+    linenumber: {fontName: stdMonoBold, textColor: #00FF00}
+    nobox:
+        backColor: white
+        borderColor: null
+        borderPadding: 0
+        borderRadius: null
+        borderWidth: 0
+        parent: code

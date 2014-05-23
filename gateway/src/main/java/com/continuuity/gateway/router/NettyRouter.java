@@ -25,8 +25,6 @@ import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -38,7 +36,6 @@ import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
-import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +70,7 @@ public class NettyRouter extends AbstractIdleService {
   private final boolean securityEnabled;
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
+  private final CConfiguration configuration;
   private final String realm;
 
   private ServerBootstrap serverBootstrap;
@@ -109,6 +107,7 @@ public class NettyRouter extends AbstractIdleService {
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.configuration = cConf;
   }
 
   @Override
@@ -180,6 +179,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
+                                                                                    configuration,
                                                                                     accessTokenTransformer,
                                                                                     discoveryServiceClient));
           }

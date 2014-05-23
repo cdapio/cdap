@@ -1,0 +1,11 @@
+pageSetup:
+    firstTemplate: oneColumn
+    height: 9cm
+    margin-bottom: 1cm
+    margin-gutter: 0cm
+    margin-left: 1cm
+    margin-right: 1cm
+    margin-top: 1cm
+    spacing-footer: 5mm
+    spacing-header: 5mm
+    width: 16cm

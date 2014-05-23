@@ -6,11 +6,11 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.guice.InMemorySecurityModule;
-import com.continuuity.security.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -74,7 +74,7 @@ public class TestExternalAuthenticationServer {
   }
 
   /**
-   * Configure an LDAP server instance.
+   * LDAP server and related handler configurations.
    * @return
    */
   private static CConfiguration getConfiguration() {
@@ -89,6 +89,7 @@ public class TestExternalAuthenticationServer {
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
     cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
+    cConf.set(Constants.Security.SSL_ENABLED, "false");
     return cConf;
   }
 

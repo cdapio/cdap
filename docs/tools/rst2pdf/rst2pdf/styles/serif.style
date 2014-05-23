@@ -1,0 +1,5 @@
+fontsAlias:
+    stdBold: Times-Bold
+    stdBoldItalic: Times-BoldItalic
+    stdFont: Times-Roman
+    stdItalic: Times-Italic

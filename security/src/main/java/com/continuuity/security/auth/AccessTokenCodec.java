@@ -2,6 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumReader;
@@ -9,7 +10,6 @@ import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.Schema;
-import com.continuuity.security.io.Codec;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 

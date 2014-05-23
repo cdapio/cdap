@@ -1,0 +1,17 @@
+* Roberto Alsina <ralsina at netmanagers dot com dot ar>
+* Nicolas Laurance <nlaurance at zindep dot com>
+* Christoph Zwerschke 
+* Yasushi Masuda
+* Josh VanderLinden
+* Runar Tenfjord
+* Patrick Maupin
+* Joshua J. Kugler
+* Patrick Maupin
+* anatoly techtonik
+* Joaquin Sorianello
+* tyler at datastax.com
+* charles at stanhope.com
+* al.yazdi
+* Dimitri Christodoulou
+* Paul Nation
+* Robert Johansson

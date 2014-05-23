@@ -2,6 +2,7 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 import java.util.HashMap;
@@ -44,7 +45,13 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         map.put("forceBindingLogin", "true");
 
         for (String configurable : mandatoryConfigurables) {
-          map.put(configurable, configuration.get(Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable)));
+          String key = Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable);
+          String value = configuration.get(key);
+          if (value == null) {
+            String errorMessage = String.format("Mandatory configuration %s is not set.", key);
+            throw Throwables.propagate(new RuntimeException(errorMessage));
+          }
+          map.put(configurable, value);
         }
 
         for (String configurable: optionalConfigurables) {
