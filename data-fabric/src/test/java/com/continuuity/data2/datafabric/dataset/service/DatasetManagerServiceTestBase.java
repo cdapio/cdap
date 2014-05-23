@@ -3,6 +3,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+
 import javax.annotation.Nullable;
 
 /**
@@ -70,7 +72,8 @@ public abstract class DatasetManagerServiceTestBase {
                                         new InMemoryDatasetManager(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                           "memoryTable", InMemoryTableModule.class),
-                                        txSystemClient);
+                                        txSystemClient,
+                                        new NoOpMetricsCollectionService());
     service.startAndWait();
   }
 
