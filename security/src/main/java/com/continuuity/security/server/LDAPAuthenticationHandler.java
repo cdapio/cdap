@@ -45,9 +45,11 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         map.put("forceBindingLogin", "true");
 
         for (String configurable : mandatoryConfigurables) {
-          String value = configuration.get(Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable));
+          String key = Constants.Security.AUTH_HANDLER_CONFIG_BASE.concat(configurable);
+          String value = configuration.get(key);
           if (value == null) {
-            throw Throwables.propagate(new RuntimeException("Mandatory configuration not set."));
+            String errorMessage = String.format("Mandatory configuration %s is not set.", key);
+            throw Throwables.propagate(new RuntimeException(errorMessage));
           }
           map.put(configurable, value);
         }

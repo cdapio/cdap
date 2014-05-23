@@ -155,18 +155,19 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     String protocol;
-    String port;
+    int port;
     if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
-      protocol = "https://";
-      port = configuration.get(Constants.Security.AUTH_SERVER_SSL_PORT);
+      protocol = "https";
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
     } else {
-      protocol = "http://";
-      port = configuration.get(Constants.Security.AUTH_SERVER_PORT);
+      protocol = "http";
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     }
 
     do {
       for (Discoverable d : discoverables)  {
-        String url = protocol + d.getSocketAddress().getHostName() + ":" + port;
+
+        String url = String.format("%s://%s:%d", protocol, d.getSocketAddress().getHostName(), port);
         externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
