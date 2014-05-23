@@ -160,8 +160,8 @@ public class DatasetManagerService extends AbstractIdleService {
       LOG.error("Interrupted while waiting...", e);
     }
 
-    userService.stopAndWait();
     httpService.stopAndWait();
+    userService.stopAndWait();
   }
 
   @Override
