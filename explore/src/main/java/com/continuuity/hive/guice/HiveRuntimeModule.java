@@ -9,7 +9,6 @@ import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
-
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -69,8 +68,7 @@ public class HiveRuntimeModule extends RuntimeModule {
                              }
       );
     } catch (Exception e) {
-      Throwables.propagate(e);
-      return null;
+      throw Throwables.propagate(e);
     }
   }
 
@@ -117,8 +115,7 @@ public class HiveRuntimeModule extends RuntimeModule {
 
         return new HiveModule(newHiveConf, hiveServerPort);
       } catch (Exception e) {
-        Throwables.propagate(e);
-        return null;
+        throw Throwables.propagate(e);
       }
     }
   }
