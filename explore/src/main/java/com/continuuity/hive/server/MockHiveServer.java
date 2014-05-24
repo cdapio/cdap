@@ -1,7 +1,5 @@
 package com.continuuity.hive.server;
 
-import com.continuuity.hive.server.HiveServer;
-
 /**
  * Mock implementation of HiveServer, in case Hive jars are not present in reactor.
  */

@@ -5,12 +5,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.hive.HiveCommandExecutor;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
-
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -70,8 +68,7 @@ public class HiveRuntimeModule extends RuntimeModule {
                              }
       );
     } catch (Exception e) {
-      Throwables.propagate(e);
-      return null;
+      throw Throwables.propagate(e);
     }
   }
 
@@ -118,8 +115,7 @@ public class HiveRuntimeModule extends RuntimeModule {
 
         return new HiveModule(newHiveConf, hiveServerPort);
       } catch (Exception e) {
-        Throwables.propagate(e);
-        return null;
+        throw Throwables.propagate(e);
       }
     }
   }
@@ -139,7 +135,6 @@ public class HiveRuntimeModule extends RuntimeModule {
       bind(HiveConf.class).toInstance(hiveConf);
       bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
       bind(HiveServer.class).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
-      bind(HiveCommandExecutor.class);
     }
 
     @Provides

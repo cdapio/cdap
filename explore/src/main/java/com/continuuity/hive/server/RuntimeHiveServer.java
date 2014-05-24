@@ -3,7 +3,7 @@ package com.continuuity.hive.server;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-
+import com.continuuity.hive.context.ContextManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -26,13 +26,8 @@ public class RuntimeHiveServer extends HiveServer {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeHiveServer.class);
 
   private HiveServer2 hiveServer2;
-
-  private static TransactionSystemClient txClient;
-  private static DatasetManager datasetManager;
-
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-
   private final HiveConf hiveConf;
   private final int hiveServerPort;
 
@@ -41,8 +36,7 @@ public class RuntimeHiveServer extends HiveServer {
                            DatasetManager datasetManager, HiveConf hiveConf,
                            @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
                            @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
-    RuntimeHiveServer.txClient = txClient;
-    RuntimeHiveServer.datasetManager = datasetManager;
+    ContextManager.initialize(txClient, datasetManager);
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.hiveConf = hiveConf;
@@ -77,14 +71,6 @@ public class RuntimeHiveServer extends HiveServer {
         return finalSocketAddress;
       }
     });
-  }
-
-  public static DatasetManager getDatasetManager() {
-    return datasetManager;
-  }
-
-  public static TransactionSystemClient getTransactionSystemClient() {
-    return txClient;
   }
 
   @Override
