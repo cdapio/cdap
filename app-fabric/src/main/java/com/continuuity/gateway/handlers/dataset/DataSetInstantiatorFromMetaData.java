@@ -11,6 +11,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -49,9 +50,10 @@ public final class DataSetInstantiatorFromMetaData {
   private Store store;
   @Inject
   public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
-                                         DataSetAccessor dataSetAccessor, StoreFactory storeFactory) {
+                                         DataSetAccessor dataSetAccessor, StoreFactory storeFactory,
+                                         HiveDatasetTableManager hiveDatasetTableManager) {
     // set up the data set instantiator
-    this.instantiator = new DataSetInstantiationBase();
+    this.instantiator = new DataSetInstantiationBase(hiveDatasetTableManager);
     // we don't set the data set specs of the instantiator, instead we will
     // do that on demand every time getDataSet() is called
 

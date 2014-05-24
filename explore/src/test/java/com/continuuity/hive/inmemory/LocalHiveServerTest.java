@@ -9,7 +9,9 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.client.HiveClient;
+import com.continuuity.hive.client.HiveCommandExecutor;
+import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.HiveServerTest;
 import com.continuuity.hive.guice.HiveRuntimeModule;
@@ -25,7 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 public class LocalHiveServerTest extends HiveServerTest {
 
   private final HiveServer hiveServer;
-  private final HiveCommandExecutor hiveCommandExecutor;
+  private final HiveClient hiveClient;
   private final InMemoryHiveMetastore hiveMetastore;
   private final InMemoryTransactionManager transactionManager;
 
@@ -45,16 +47,17 @@ public class LocalHiveServerTest extends HiveServerTest {
         },
         new ConfigModule(conf, hConf),
         new HiveRuntimeModule().getInMemoryModules(),
-        new DiscoveryRuntimeModule().getInMemoryModules());
+        new DiscoveryRuntimeModule().getInMemoryModules(),
+        new HiveClientModule());
     hiveServer = injector.getInstance(HiveServer.class);
     hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-    hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
+    hiveClient = injector.getInstance(HiveClient.class);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
   }
 
   @Override
-  protected HiveCommandExecutor getHiveCommandExecutor() {
-    return hiveCommandExecutor;
+  protected HiveClient getHiveClient() {
+    return hiveClient;
   }
 
   @Override

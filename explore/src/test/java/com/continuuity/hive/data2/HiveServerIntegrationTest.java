@@ -12,7 +12,8 @@ import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.client.HiveCommandExecutor;
+import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
@@ -140,7 +141,8 @@ public class HiveServerIntegrationTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new HiveRuntimeModule().getInMemoryModules()
+      new HiveRuntimeModule().getInMemoryModules(),
+      new HiveClientModule()
     );
   }
 

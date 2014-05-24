@@ -1,8 +1,7 @@
-package com.continuuity.hive;
+package com.continuuity.hive.client;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.hive.HiveClient;
 
 import com.google.inject.Inject;
 import org.apache.hive.beeline.BeeLine;

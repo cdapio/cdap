@@ -2,8 +2,8 @@ package com.continuuity.hive.hooks;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.hive.server.RuntimeHiveServer;
 import com.continuuity.hive.datasets.DatasetInputFormat;
+import com.continuuity.hive.server.RuntimeHiveServer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
 import org.apache.hadoop.hive.ql.hooks.HookContext;
-import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +24,10 @@ public class TransactionPostHook implements ExecuteWithHookContext {
 
   @Override
   public void run(HookContext hookContext) throws Exception {
-    LOG.debug("Entering post hive hook");
-    if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
+    // We cannot rely on hookContext.getOperationName(), it remains the same
+    // through the life of a beeline command
+    if (TransactionPreHook.SELECT_QUERY.matcher(hookContext.getQueryPlan().getQueryString()).matches()) {
+      LOG.debug("Entering post hive hook for hive query");
       HiveConf hiveConf = hookContext.getConf();
       String txJson = hiveConf.get(DatasetInputFormat.TX_QUERY);
       Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");

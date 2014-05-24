@@ -11,7 +11,7 @@ import java.util.List;
 public interface RowScannable<ROW> {
 
   /**
-   * This method is needed because Java does not
+   * This method is needed because Java does not.
    * @returns the schema type, that is ROW.
    */
   Type getRowType();

@@ -6,6 +6,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
+import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
@@ -130,6 +131,9 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);
     bind(StreamConsumerFactory.class).to(HBaseStreamFileConsumerFactory.class).in(Singleton.class);
     bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+
+    // Bind hive table manager
+    bind(HiveDatasetTableManager.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

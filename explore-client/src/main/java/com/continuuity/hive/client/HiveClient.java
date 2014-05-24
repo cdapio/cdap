@@ -1,4 +1,4 @@
-package com.continuuity.common.hive;
+package com.continuuity.hive.client;
 
 import java.io.IOException;
 

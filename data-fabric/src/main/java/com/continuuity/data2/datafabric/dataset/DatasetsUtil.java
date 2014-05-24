@@ -67,20 +67,20 @@ public final class DatasetsUtil {
     return instance;
   }
 
-  private static <ROW> void createHiveTable(String name, RowScannable<ROW> scannable) {
+  public static <ROW> String createHiveTable(String name, RowScannable<ROW> scannable) {
     String hiveSchema;
     try {
       hiveSchema = Scannables.hiveSchemaFor(scannable);
     } catch (UnsupportedTypeException e) {
       LOG.error(String.format(
         "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
-      return;
+      return null;
     }
     String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT 'Continuuity Reactor Dataset' " +
-                                           "STORED BY 'com.continuuity.hive.datasets.DatasetStorageHandler' WITH " +
-                                           "SERDEPROPERTIES(\"dataset.name\" = \"%s\")", name, hiveSchema, name);
+                                         "STORED BY 'com.continuuity.hive.datasets.DatasetStorageHandler' WITH " +
+                                         "SERDEPROPERTIES(\"reactor.dataset.name\" = \"%s\")", name, hiveSchema, name);
     LOG.info("Command for Hive: {}", hiveStatement);
-    // execute the hive command
+    return hiveStatement;
   }
 
 }

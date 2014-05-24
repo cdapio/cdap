@@ -152,7 +152,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager,
+    // todo is that OK to have HiveDatasetTableMgr null? Means no hive table will be created with this instantiator
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager, null,
                                                                       program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
     Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();

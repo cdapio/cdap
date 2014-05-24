@@ -6,6 +6,7 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
+import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
@@ -72,6 +73,9 @@ public class DataFabricLocalModule extends AbstractModule {
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
+
+        // Bind hive table manager
+        bind(HiveDatasetTableManager.class).in(Singleton.class);
 
         install(new DataSetsModules().getLocalModule());
       }

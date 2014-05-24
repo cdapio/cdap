@@ -1,5 +1,7 @@
 package com.continuuity.hive;
 
+import com.continuuity.hive.client.HiveClient;
+
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -13,7 +15,7 @@ import java.net.URL;
  */
 public abstract class HiveServerTest {
 
-  protected abstract HiveCommandExecutor getHiveCommandExecutor();
+  protected abstract HiveClient getHiveClient();
 
   protected abstract void startServices();
 
@@ -34,16 +36,16 @@ public abstract class HiveServerTest {
     URL loadFileUrl = getClass().getResource("/test_table.dat");
     Assert.assertNotNull(loadFileUrl);
 
-    getHiveCommandExecutor().sendCommand("drop table if exists test;");
-    getHiveCommandExecutor().sendCommand("create table test (first INT, second STRING) ROW FORMAT " +
-                                         "DELIMITED FIELDS TERMINATED BY '\\t';");
-    getHiveCommandExecutor().sendCommand("show tables;");
-    getHiveCommandExecutor().sendCommand("describe test;");
-    getHiveCommandExecutor().sendCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
-                                         "' INTO TABLE test;");
-    getHiveCommandExecutor().sendCommand("select first, second from test;");
-    getHiveCommandExecutor().sendCommand("select * from test;");
-    getHiveCommandExecutor().sendCommand("drop table test;");
+    getHiveClient().sendCommand("drop table if exists test;");
+    getHiveClient().sendCommand("create table test (first INT, second STRING) ROW FORMAT " +
+                                "DELIMITED FIELDS TERMINATED BY '\\t';");
+    getHiveClient().sendCommand("show tables;");
+    getHiveClient().sendCommand("describe test;");
+    getHiveClient().sendCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
+                                "' INTO TABLE test;");
+    getHiveClient().sendCommand("select first, second from test;");
+    getHiveClient().sendCommand("select * from test;");
+    getHiveClient().sendCommand("drop table test;");
     // todo add assertions
   }
 }

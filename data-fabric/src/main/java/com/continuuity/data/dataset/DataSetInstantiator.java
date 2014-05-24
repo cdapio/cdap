@@ -3,6 +3,7 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.DataFabric;
+import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 
 import java.io.Closeable;
@@ -31,8 +32,9 @@ public class DataSetInstantiator extends DataSetInstantiationBase implements Dat
    *                    If null, then the default class loader is used
    */
   public DataSetInstantiator(DataFabric fabric, DatasetManager datasetManager,
+                             HiveDatasetTableManager hiveDatasetTableManager,
                              ClassLoader classLoader) {
-    super(classLoader);
+    super(hiveDatasetTableManager, classLoader);
     this.fabric = fabric;
     this.datasetManager = datasetManager;
   }

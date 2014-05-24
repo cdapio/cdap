@@ -43,15 +43,15 @@ public class ScannablesTest {
   @Test
   public void testHiveSchemaFor() throws Exception {
 
-    Assert.assertEquals("(value:INT)", Scannables.hiveSchemaFor(Int.class));
-    Assert.assertEquals("(value:BIGINT)", Scannables.hiveSchemaFor(Longg.class));
-    Assert.assertEquals("(first:INT,second:STRING)",
+    Assert.assertEquals("(value INT)", Scannables.hiveSchemaFor(Int.class));
+    Assert.assertEquals("(value BIGINT)", Scannables.hiveSchemaFor(Longg.class));
+    Assert.assertEquals("(first INT,second STRING)",
                         Scannables.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() { }.getType()));
-    Assert.assertEquals("(a:INT,b:BIGINT,c:BOOLEAN,d:FLOAT,e:DOUBLE,f:STRING,g:BINARY," +
-                          "h:ARRAY<STRING>,i:ARRAY<BOOLEAN>,j:MAP<INT,STRING>)",
+    Assert.assertEquals("(a INT,b BIGINT,c BOOLEAN,d FLOAT,e DOUBLE,f STRING,g BINARY," +
+                          "h ARRAY<STRING>,i ARRAY<BOOLEAN>,j MAP<INT,STRING>)",
                         Scannables.hiveSchemaFor(Record.class));
 
-    Assert.assertEquals("(first:INT,second:STRING)",
+    Assert.assertEquals("(first INT,second STRING)",
                         Scannables.hiveSchemaFor(new ObjectStore<ImmutablePair<Integer, String>>("dummy",
                           new TypeToken<ImmutablePair<Integer, String>>() { }.getType())));
 

@@ -12,6 +12,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -84,6 +85,7 @@ public class DataSetServiceTwillRunnable extends AbstractReactorTwillRunnable {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
+      new HiveClientModule(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),

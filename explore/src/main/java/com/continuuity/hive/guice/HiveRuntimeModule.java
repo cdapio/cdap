@@ -5,7 +5,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.client.HiveClient;
+import com.continuuity.hive.client.HiveCommandExecutor;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
@@ -139,7 +140,6 @@ public class HiveRuntimeModule extends RuntimeModule {
       bind(HiveConf.class).toInstance(hiveConf);
       bind(int.class).annotatedWith(Names.named(Constants.Hive.SERVER_PORT)).toInstance(hiveServerPort);
       bind(HiveServer.class).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
-      bind(HiveCommandExecutor.class);
     }
 
     @Provides

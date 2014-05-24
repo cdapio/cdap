@@ -24,6 +24,7 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
@@ -305,6 +306,7 @@ public class SingleNodeMain {
       new RouterModules().getInMemoryModules(),
       new StreamHttpModule(),
       new HiveRuntimeModule().getInMemoryModules(),
+      new HiveClientModule(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
@@ -352,7 +354,8 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule(),
-      new HiveRuntimeModule(configuration).getSingleNodeModules()
+      new HiveRuntimeModule(configuration).getSingleNodeModules(),
+      new HiveClientModule()
     );
   }
 }
