@@ -64,11 +64,27 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     LOG.info("Starting DatasetInstanceHandler");
 
     // TODO(alvin): remove this once user service is run on-demand
-    // no retry since currently user service is always run before this is initialized
     ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.DATASET_USER);
+
+    // TODO(alvin): maybe make this configurable
+    int maxRetries = 5;
+    long sleep = 3000;
+    int retry = 0;
+
+    while (!discovered.iterator().hasNext() && retry < maxRetries) {
+      discovered = discoveryClient.discover(Constants.Service.DATASET_USER);
+      retry++;
+      try {
+        Thread.sleep(sleep);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
+    }
+
     if (!discovered.iterator().hasNext()) {
       LOG.warn("Failed to discover dataset user service");
     } else {
+      LOG.info("Successfully discovered dataset user service");
       datasetUserAddress = discovered.iterator().next().getSocketAddress();
     }
   }
