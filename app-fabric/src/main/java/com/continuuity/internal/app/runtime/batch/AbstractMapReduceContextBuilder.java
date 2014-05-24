@@ -114,8 +114,7 @@ public abstract class AbstractMapReduceContextBuilder {
     DatasetManager datasetManager = injector.getInstance(DatasetManager.class);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    // todo is that OK to have HiveDatasetTableMgr null? Means no hive table will be created with this instantiator
-    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetManager, null, classLoader);
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetManager, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
     dataSetContext.setDataSets(programSpec.getDataSets().values(),
                                programSpec.getDatasets().values());

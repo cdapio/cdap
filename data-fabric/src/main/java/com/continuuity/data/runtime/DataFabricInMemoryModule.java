@@ -9,7 +9,6 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
-import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
@@ -81,9 +80,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(cConf);
     bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(cConf);
     bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(cConf);
-
-    // Bind hive table manager
-    bind(HiveDatasetTableManager.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

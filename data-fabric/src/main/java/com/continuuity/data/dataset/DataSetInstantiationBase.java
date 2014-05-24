@@ -5,7 +5,6 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
-import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -21,7 +20,6 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
-import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -50,7 +48,6 @@ import java.util.Set;
  * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
  * built-in data sets.
  */
-// TODO add create hive table
 public class DataSetInstantiationBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiationBase.class);
@@ -67,15 +64,12 @@ public class DataSetInstantiationBase {
 
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
 
-  private final HiveDatasetTableManager hiveDatasetTableManager;
-
-  public DataSetInstantiationBase(HiveDatasetTableManager hiveDatasetTableManager) {
-    this(hiveDatasetTableManager, null);
+  public DataSetInstantiationBase() {
+    this(null);
   }
 
-  public DataSetInstantiationBase(HiveDatasetTableManager hiveDatasetTableManager, ClassLoader classLoader) {
+  public DataSetInstantiationBase(ClassLoader classLoader) {
     this.classLoader = classLoader;
-    this.hiveDatasetTableManager = hiveDatasetTableManager;
   }
 
   /**
@@ -157,13 +151,11 @@ public class DataSetInstantiationBase {
     // First, get admin to check if dataset instance exists. If doesn't exist - create.
     // If admin is null, then dataset meta doesn't exist, in which case try to create from scratch.
     DatasetAdmin admin;
-    boolean create = false;
     try {
       admin = datasetManager.getAdmin(datasetName, classLoader);
       if (admin != null) {
         if (!admin.exists()) {
           admin.create();
-          create = true;
         }
       } else {
         DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
@@ -179,7 +171,6 @@ public class DataSetInstantiationBase {
                                                       " but still cannot access it");
           }
           admin.create();
-          create = true;
         } catch (Exception e) {
           throw new DataSetInstantiationException("could not create dataset " + datasetName, e);
         }
@@ -189,11 +180,6 @@ public class DataSetInstantiationBase {
       if (dataset == null) {
         throw new DataSetInstantiationException("Attempted to create dataset " + datasetName +
                                                   " but still cannot access it");
-      }
-
-      // Create the hive table
-      if (create && (dataset instanceof RowScannable) && hiveDatasetTableManager != null) {
-        hiveDatasetTableManager.createTable(datasetName, (RowScannable) dataset);
       }
 
       return (T) dataset;

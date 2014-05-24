@@ -92,10 +92,9 @@ public class MapReduceProgramRunnerTest {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     DatasetManager datasetManager = injector.getInstance(DatasetManager.class);
-    // TODO fix this null value
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetManager, null,
+                              datasetManager,
                               getClass().getClassLoader());
   }
 

@@ -151,7 +151,7 @@ public class ObjectStoreTest extends DataSetTestBase {
       }
     };
     // create an instantiator that uses the dummy class loader
-    DataSetInstantiator inst = new DataSetInstantiator(fabric, datasetManager, hiveDatasetTableManager, loader);
+    DataSetInstantiator inst = new DataSetInstantiator(fabric, datasetManager, loader);
     inst.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
     // use that instantiator to get a data set instance
     inst.getDataSet("customs");

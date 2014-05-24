@@ -13,8 +13,6 @@ dependencies {
 
     apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 
-    compile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true], "explore-client")
-
     compile libraries.slf4j_api
     compile libraries.fastutil
     compile libraries.logback_core

@@ -170,10 +170,9 @@ public class MultiConsumerTest {
     DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
     DatasetManager datasetManager = AppFabricTestHelper.getInjector().getInstance(DatasetManager.class);
 
-    // todo fix this null value
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetManager, null,
+                              datasetManager,
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());

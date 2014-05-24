@@ -9,13 +9,10 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.datafabric.dataset.hive.HiveDatasetTableManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.hive.client.HiveClient;
-import com.continuuity.hive.client.NoOpHiveClient;
 
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -48,8 +45,6 @@ public class DataSetTestBase {
   protected static List<DataSetSpecification> specs;
   protected static DataSetInstantiator instantiator;
 
-  protected static HiveDatasetTableManager hiveDatasetTableManager;
-
   /**
    * Sets up the in-memory data fabric.
    */
@@ -62,7 +57,6 @@ public class DataSetTestBase {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
-                               bind(HiveClient.class).to(NoOpHiveClient.class);
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
                              }
                            });
@@ -73,7 +67,6 @@ public class DataSetTestBase {
     // and create a data fabric with the default operation context
     fabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     datasetManager = injector.getInstance(DatasetManager.class);
-    hiveDatasetTableManager = injector.getInstance(HiveDatasetTableManager.class);
   }
 
   /**
@@ -95,7 +88,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, datasetManager, hiveDatasetTableManager, null);
+    instantiator = new DataSetInstantiator(fabric, datasetManager, null);
     instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
   }
 
