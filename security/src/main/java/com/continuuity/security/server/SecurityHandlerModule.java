@@ -18,6 +18,6 @@ public class SecurityHandlerModule extends JerseyServletModule {
 
   }
   private void filters() {
-    filter("/v1/*").through(GuiceContainer.class);
+    filter("/*").through(GuiceContainer.class);
   }
 }
