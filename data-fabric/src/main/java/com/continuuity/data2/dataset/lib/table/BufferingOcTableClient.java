@@ -59,10 +59,10 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
   // that the corresponded column was removed.
-  private NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff;
+  private NavigableMap<byte[], NavigableMap<byte[], Update>> buff;
 
   // Keeps track of what was persisted so far
-  private NavigableMap<byte[], NavigableMap<byte[], byte[]>> toUndo;
+  private NavigableMap<byte[], NavigableMap<byte[], Update>> toUndo;
 
   // Report data ops metrics to
   private DataOpsMetrics dataOpsMetrics;
@@ -118,7 +118,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    *             which means that the corresponded column was deleted
    * @throws Exception
    */
-  protected abstract void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff)
+  protected abstract void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff)
     throws Exception;
 
   /**
@@ -128,7 +128,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    *                  values which means that the corresponded column was deleted
    * @throws Exception
    */
-  protected abstract void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted)
+  protected abstract void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted)
     throws Exception;
 
   /**
@@ -215,7 +215,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   private Collection<byte[]> getColumnChanges() {
     // we resolve conflicts on row level of individual table
     List<byte[]> changes = new ArrayList<byte[]>(buff.size());
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowChange : buff.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
       if (rowChange.getValue() == null) {
         // NOTE: as of now we cannot detect conflict between delete whole row and row's column value change.
         //       this is not a big problem as of now, as row deletion is now act as deletion of every column, but this
@@ -289,7 +289,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     throws Exception {
     reportRead(1);
     // checking if the row was deleted inside this tx
-    NavigableMap<byte[], byte[]> buffCols = buff.get(row);
+    NavigableMap<byte[], Update> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     // ANDREAS: can this ever happen?
     if (rowDeleted) {
@@ -303,13 +303,14 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     // adding server cols, and then overriding with buffered values
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     if (persistedCols != null) {
+      // TODO: need to merge values here, accounting for delta increments
       result.putAll(persistedCols);
     }
 
     if (buffCols != null) {
       buffCols = getRange(buffCols, startColumn, stopColumn, limit);
       // null valued columns in in-memory buffer are deletes, so we need to delete them from the result list
-      addOrDelete(result, buffCols);
+      mergeToPersisted(result, buffCols);
     }
 
     // applying limit
@@ -324,14 +325,14 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) throws Exception {
     reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
-    NavigableMap<byte[], byte[]> colVals = buff.get(row);
+    NavigableMap<byte[], Update> colVals = buff.get(row);
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       buff.put(row, colVals);
       // ANDREAS: is this thread-safe?
     }
     for (int i = 0; i < columns.length; i++) {
-      colVals.put(columns[i], values[i]);
+      colVals.put(columns[i], new PutValue(values[i]));
     }
   }
 
@@ -448,7 +449,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   private Map<byte[], byte[]> getRowMap(byte[] row) throws Exception {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
-    NavigableMap<byte[], byte[]> buffCols = buff.get(row);
+    NavigableMap<byte[], Update> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     if (rowDeleted) {
       return Collections.emptyMap();
@@ -456,10 +457,11 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
     Map<byte[], byte[]> persisted = getPersisted(row, null);
 
+
     result.putAll(persisted);
     if (buffCols != null) {
       // buffered should override those returned from persistent store
-      result.putAll(buffCols);
+      mergeToPersisted(result, buffCols);
     }
 
     return unwrapDeletes(result);
@@ -468,7 +470,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   private Map<byte[], byte[]> getRowMap(byte[] row, byte[][] columns) throws Exception {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
-    NavigableMap<byte[], byte[]> buffCols = buff.get(row);
+    NavigableMap<byte[], Update> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     if (rowDeleted) {
       return Collections.emptyMap();
@@ -488,8 +490,11 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
         continue;
       }
 
-      byte[] val = buffCols.get(column);
-      result.put(column, val);
+      Update val = buffCols.get(column);
+      // buffered increments will need to the applied on top of the persisted values
+      if (val instanceof IncrementValue) {
+        colsToFetchFromPersisted.add(column);
+      }
     }
 
     // fetching from server those that were not found in in-mem buffer
@@ -500,15 +505,50 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
         result.putAll(persistedCols);
       }
     }
+
+    // overlay buffered values on persisted, applying increments where necessary
+    mergeToPersisted(result, buffCols);
+
     return unwrapDeletes(result);
+  }
+
+  /**
+   * Applies the buffered updates on top of the map of persisted values.  The persisted map is modified in place
+   * with the updated values.
+   * @param persisted The map to modify with the buffered values.
+   * @param buffered The buffered values to overlay on the persisted map.
+   */
+  private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered) {
+    // overlay buffered values on persisted, applying increments where necessary
+    for (Map.Entry<byte[], ? extends Update> entry : buffered.entrySet()) {
+      Update val = entry.getValue();
+      if (val == null) {
+        persisted.remove(entry.getKey());
+      } else if (val instanceof IncrementValue) {
+        long newValue = Bytes.toLong(persisted.get(entry.getKey())) + ((IncrementValue) val).getValue();
+        persisted.put(entry.getKey(), Bytes.toBytes(newValue));
+      } else if (val instanceof PutValue) {
+        // overwrite the current
+        persisted.put(entry.getKey(), ((PutValue) val).getValue());
+      }
+      // unknown type?!
+    }
+  }
+
+  private void mergeToBuffered(Map<byte[], Update> base,
+                                              Map<byte[], Update> buffered) {
+    // overlay buffered values on persisted, applying increments where necessary
+    for (Map.Entry<byte[], ? extends Update> entry : buffered.entrySet()) {
+      base.put(entry.getKey(), mergeUpdates(base.get(entry.getKey()), entry.getValue()));
+    }
   }
 
   // utilities useful for underlying implementations
 
-  protected static NavigableMap<byte[], byte[]> getRange(NavigableMap<byte[], byte[]> rowMap,
+  protected static <T> NavigableMap<byte[], T> getRange(NavigableMap<byte[], T> rowMap,
                                                          byte[] startColumn, byte[] stopColumn,
                                                          int limit) {
-    NavigableMap<byte[], byte[]> result;
+    NavigableMap<byte[], T> result;
     if (startColumn == null && stopColumn == null) {
       result = rowMap;
     } else if (startColumn == null) {
@@ -521,12 +561,12 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     return head(result, limit);
   }
 
-  protected static NavigableMap<byte[], byte[]> head(NavigableMap<byte[], byte[]> map, int count) {
+  protected static <T> NavigableMap<byte[], T> head(NavigableMap<byte[], T> map, int count) {
     if (count > 0 && map.size() > count) {
       // todo: is there better way to do it?
       byte [] lastToInclude = null;
       int i = 0;
-      for (Map.Entry<byte[], byte[]> entry : map.entrySet()) {
+      for (Map.Entry<byte[], T> entry : map.entrySet()) {
         lastToInclude = entry.getKey();
         if (++i >= count) {
           break;
@@ -536,17 +576,6 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     }
 
     return map;
-  }
-
-  protected static void addOrDelete(NavigableMap<byte[], byte[]> dest, NavigableMap<byte[], byte[]> src) {
-    // value == null means column was deleted
-    for (Map.Entry<byte[], byte[]> keyVal : src.entrySet()) {
-      if (keyVal.getValue() == null) {
-        dest.remove(keyVal.getKey());
-      } else {
-        dest.put(keyVal.getKey(), keyVal.getValue());
-      }
-    }
   }
 
   protected static byte[] wrapDeleteIfNeeded(byte[] value) {
@@ -614,5 +643,72 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
   private static int getSize(byte[] item) {
     return item == null ? 0 : item.length;
+  }
+
+  protected static interface Update<T> {
+    T getValue();
+  }
+
+  protected static class IncrementValue implements Update<Long> {
+    private final Long value;
+
+    public IncrementValue(Long value) {
+      this.value = value;
+    }
+
+    public Long getValue() {
+      return value;
+    }
+  }
+
+  protected static class PutValue implements Update<byte[]> {
+    private final byte[] bytes;
+
+    public PutValue(byte[] bytes) {
+      this.bytes = bytes;
+    }
+
+    public byte[] getValue() {
+      return bytes;
+    }
+  }
+
+  private static final Function<byte[], Update> BYTES_TO_PUTS = new Function<byte[], Update>() {
+    @Nullable
+    @Override
+    public Update apply(@Nullable byte[] input) {
+      return new PutValue(input);
+    }
+  };
+
+  /**
+   * Merges together two Update instances:
+   * <ul>
+   *   <li>Put a + Put b = Put b</li>
+   *   <li>Put a + Increment b = new Put(a + b)</li>
+   *   <li>Increment a + Put b = Put b</li>
+   *   <li>Increment a + Increment b = new Increment(a + b)</li>
+   * </ul>
+   * @param base
+   * @param modifier
+   * @return
+   */
+  private static final Update mergeUpdates(Update base, Update modifier) {
+    if (base == null || modifier instanceof PutValue) {
+      return modifier;
+    }
+    if (modifier instanceof IncrementValue) {
+      IncrementValue increment = (IncrementValue) modifier;
+      if (base instanceof PutValue) {
+        PutValue put = (PutValue) base;
+        long newValue = Bytes.toLong(put.getValue()) + increment.getValue();
+        return new PutValue(Bytes.toBytes(newValue));
+      } else if (base instanceof IncrementValue) {
+        IncrementValue baseIncrement = (IncrementValue) base;
+        return new IncrementValue(baseIncrement.getValue() + increment.getValue());
+      }
+    }
+    // should not happen: modifier is neither Put nor Increment!
+    return base;
   }
 }

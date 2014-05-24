@@ -36,12 +36,38 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) {
-    InMemoryOcTableService.merge(getTableName(), buff, tx.getWritePointer());
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) {
+    // split up the increments and puts
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowEntry : buff.entrySet()) {
+      for (Map.Entry<byte[], Update> colEntry : rowEntry.getValue().entrySet()) {
+        Update val = colEntry.getValue();
+        if (val instanceof IncrementValue) {
+          NavigableMap<byte[], Long> incrCols = increments.get(rowEntry.getKey());
+          if (incrCols == null) {
+            incrCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+            increments.put(rowEntry.getKey(), incrCols);
+          }
+          incrCols.put(colEntry.getKey(), ((IncrementValue) val).getValue());
+        } else if (val instanceof PutValue) {
+          NavigableMap<byte[], byte[]> putCols = puts.get(rowEntry.getKey());
+          if (putCols == null) {
+            putCols = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+            puts.put(rowEntry.getKey(), putCols);
+          }
+          putCols.put(colEntry.getKey(), ((PutValue) val).getValue());
+        }
+      }
+    }
+    InMemoryOcTableService.merge(getTableName(), puts, tx.getWritePointer());
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> incrRow : increments.entrySet()) {
+      InMemoryOcTableService.increment(getTableName(), incrRow.getKey(), incrRow.getValue());
+    }
   }
 
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) {
     // NOTE: we could just use merge and pass the changes with all values = null, but separate method is more efficient
     InMemoryOcTableService.undo(getTableName(), persisted, tx.getWritePointer());
   }

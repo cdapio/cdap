@@ -1,5 +1,6 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
@@ -31,6 +32,7 @@ import javax.annotation.Nullable;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
+  public static final String DELTA_WRITE = "continuuity.delta";
   private final HTable hTable;
   private final String hTableName;
   private final int ttl;
@@ -80,19 +82,40 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> buff) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {
     List<Put> puts = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : buff.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : buff.entrySet()) {
       Put put = new Put(row.getKey());
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+      Put incrementPut = null;
+      for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
-                  wrapDeleteIfNeeded(column.getValue()));
+          Update val = column.getValue();
+          if (val instanceof IncrementValue) {
+            // TODO: handle increments
+            incrementPut = getIncrementalPut(incrementPut, row.getKey());
+            incrementPut.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+                             Bytes.toBytes(((IncrementValue) val).getValue()));
+          } else if (val instanceof PutValue) {
+            put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+                    wrapDeleteIfNeeded(((PutValue) val).getValue()));
+          }
+          // TODO: handle increments
         } else {
-          put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
+          Update val = column.getValue();
+          if (val instanceof IncrementValue) {
+            // TODO: handle increments
+            incrementPut = getIncrementalPut(incrementPut, row.getKey());
+            incrementPut.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(),
+                             Bytes.toBytes(((IncrementValue) val).getValue()));
+          } else if (val instanceof PutValue) {
+            put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), ((PutValue) val).getValue());
+          }
         }
+      }
+      if (incrementPut != null) {
+        puts.add(incrementPut);
       }
       puts.add(put);
     }
@@ -100,13 +123,22 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     hTable.flushCommits();
   }
 
+  private Put getIncrementalPut(Put existing, byte[] row) {
+    if (existing != null) {
+      return existing;
+    }
+    Put put = new Put(row);
+    put.setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+    return put;
+  }
+
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted) throws Exception {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
     // NOTE: we use Delete with the write pointer as the specific version to delete.
     List<Delete> deletes = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : persisted.entrySet()) {
       Delete delete = new Delete(row.getKey());
-      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+      for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
