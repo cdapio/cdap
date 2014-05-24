@@ -814,7 +814,7 @@
     -->
     <property>
         <name>security.authentication.handlerClassName</name>
-        <value></value>
+        <value>com.continuuity.security.server.BasicAuthenticationHandler</value>
     </property>
 
     <property>
@@ -845,7 +845,7 @@
     -->
     <property>
         <name>security.enabled</name>
-        <value>false</value>
+        <value>true</value>
         <description>If this is set to true, security layer will be up and active in reactor</description>
     </property>
 

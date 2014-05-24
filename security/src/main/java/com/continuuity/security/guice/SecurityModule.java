@@ -14,6 +14,7 @@ import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
 import com.continuuity.security.server.AbstractAuthenticationHandler;
+import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.inject.Binder;
@@ -59,6 +60,9 @@ public abstract class SecurityModule extends PrivateModule {
     bind(HashMap.class).annotatedWith(Names.named("security.handlers"))
                        .toProvider(AuthenticationHandlerMapProvider.class)
                        .in(Scopes.SINGLETON);
+
+    bind(BasicAuthenticationHandler.class);
+//    bind(GrantAccessTokenHandler.class);
 
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);

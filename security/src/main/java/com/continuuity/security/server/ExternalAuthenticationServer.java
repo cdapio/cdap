@@ -2,20 +2,28 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.name.Named;
+import com.google.inject.servlet.GuiceFilter;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
@@ -24,9 +32,11 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.servlet.DispatcherType;
 
 /**
  * Jetty service for External Authentication.
@@ -41,6 +51,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
+  private final AuthenticationGuiceServletContextListener contextListener;
 
   /**
    * Constants for a valid JSON response.
@@ -62,12 +73,14 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HashMap handlers) {
+                                      @Named("security.handlers") HashMap handlers,
+                                      AuthenticationGuiceServletContextListener contextListener) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
     this.configuration = configuration;
+    this.contextListener = contextListener;
   }
 
   /**
@@ -111,10 +124,18 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      ContextHandler context = new ContextHandler();
-      context.setContextPath("*");
+//      ContextHandler context = new ContextHandler();
+//      context.setContextPath("*");
+//      context.setHandler(initHandlers(handlers));
 
-      context.setHandler(initHandlers(handlers));
+      HandlerList handlerList = initHandlers(handlers);
+
+      ServletContextHandler context = new ServletContextHandler();
+      context.setServer(server);
+      context.setContextPath("/*");
+      context.addFilter(GuiceFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+      context.addServlet(DefaultServlet.class, "/*");
+      context.addEventListener(contextListener);
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
@@ -183,5 +204,13 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
     }
+  }
+
+  public static void main(String[] args) {
+    Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
+                                             new DiscoveryRuntimeModule().getSingleNodeModules(),
+                                             new SecurityModules().getSingleNodeModules());
+    ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
+    server.startAndWait();
   }
 }
