@@ -8,6 +8,7 @@ import com.continuuity.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -48,8 +49,12 @@ public final class ResourceCoordinatorClient extends AbstractService {
         if (input == null) {
           return null;
         }
-        String json = Bytes.toString(input.getData());
-        return CoordinationConstants.GSON.fromJson(json, ResourceRequirement.class);
+        try {
+          return CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(input.getData());
+        } catch (Throwable t) {
+          LOG.error("Failed to decode resource requirement: {}", Bytes.toString(input.getData()), t);
+          throw Throwables.propagate(t);
+        }
       }
   };
 
@@ -74,11 +79,32 @@ public final class ResourceCoordinatorClient extends AbstractService {
    *         submitted requirement as result. The future will fail if failed to submit the requirement. Calling
    *         {@link ListenableFuture#cancel(boolean)} has no effect.
    */
-  public ListenableFuture<ResourceRequirement> submitRequirement(final ResourceRequirement requirement) {
-    String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
-    byte[] data = Bytes.toBytes(CoordinationConstants.GSON.toJson(requirement));
+  public ListenableFuture<ResourceRequirement> submitRequirement(ResourceRequirement requirement) {
+    try {
+      String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
+      byte[] data = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.encode(requirement);
 
-    return ZKExtOperations.createOrSet(zkClient, zkPath, data, requirement, CoordinationConstants.MAX_ZK_FAILURE_RETRY);
+      return ZKExtOperations.createOrSet(zkClient, zkPath, data,
+                                         requirement, CoordinationConstants.MAX_ZK_FAILURE_RETRY);
+    } catch (Exception e) {
+      return Futures.immediateFailedFuture(e);
+    }
+  }
+
+  /**
+   * Modify an existing {@link ResourceRequirement}.
+   *
+   * @param name Resource name
+   * @param modifier A function to modify an existing requirement. The function might get called multiple times
+   *                 if there are concurrent modifications from multiple clients.
+   * @return A {@link ListenableFuture} that will be completed when submission is completed and it'll carry the
+   *         modified requirement as result or {@code null} if the modifier decided not to modify the requirement.
+   *         The future will fail if failed to submit the requirement.
+   *         Calling {@link ListenableFuture#cancel(boolean)} has no effect.
+   */
+  public ListenableFuture<ResourceRequirement> modifyRequirement(String name, final ResourceModifier modifier) {
+    String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + name;
+    return ZKExtOperations.updateOrCreate(zkClient, zkPath, modifier, CoordinationConstants.RESOURCE_REQUIREMENT_CODEC);
   }
 
   /**
@@ -193,13 +219,13 @@ public final class ResourceCoordinatorClient extends AbstractService {
     Futures.addCallback(zkClient.getData(zkPath, watcher), wrapCallback(new FutureCallback<NodeData>() {
       @Override
       public void onSuccess(NodeData result) {
-        String json = Bytes.toString(result.getData());
-        LOG.debug("Received resource assignment for {}. {}", serviceName, json);
         try {
-          ResourceAssignment assignment = CoordinationConstants.GSON.fromJson(json, ResourceAssignment.class);
+          ResourceAssignment assignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(result.getData());
+          LOG.debug("Received resource assignment for {}. {}", serviceName, assignment.getAssignments());
+
           handleAssignmentChange(serviceName, assignment);
         } catch (Exception e) {
-          LOG.error("Failed to decode ResourceAssignment {}", json, e);
+          LOG.error("Failed to decode ResourceAssignment {}", Bytes.toString(result.getData()), e);
         }
       }
 

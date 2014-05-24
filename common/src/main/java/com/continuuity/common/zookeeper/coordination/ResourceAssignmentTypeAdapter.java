@@ -21,8 +21,8 @@ import java.util.Map;
 /**
  * The Gson codec for {@link ResourceAssignment}.
  */
-class ResourceAssignmentCodec implements JsonSerializer<ResourceAssignment>,
-                                                JsonDeserializer<ResourceAssignment> {
+class ResourceAssignmentTypeAdapter implements JsonSerializer<ResourceAssignment>,
+                                               JsonDeserializer<ResourceAssignment> {
 
   @Override
   public JsonElement serialize(ResourceAssignment src, Type typeOfSrc, JsonSerializationContext context) {
