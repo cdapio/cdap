@@ -10,14 +10,16 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Request;
 
-import java.io.IOException;
-import java.net.URL;
 import javax.security.auth.login.Configuration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * Handler for basic authentication of users.
@@ -29,6 +31,14 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
   @Inject
   public BasicAuthenticationHandler(CConfiguration configuration) throws Exception {
     super(configuration);
+  }
+
+
+  @Path("ping")
+  @GET
+  @Produces("application/json")
+  public Response ok() {
+    return Response.ok("OK").build();
   }
 
   @Path("token")
