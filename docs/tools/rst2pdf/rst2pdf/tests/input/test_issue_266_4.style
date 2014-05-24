@@ -1,0 +1,6 @@
+styles: with-border:
+        backColor: white
+        borderPadding: 20
+        commands: []
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+        parent: figure

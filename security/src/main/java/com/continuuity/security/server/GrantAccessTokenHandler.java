@@ -2,17 +2,16 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.io.Codec;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.TokenManager;
-import com.continuuity.security.io.Codec;
-
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.handler.AbstractHandler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   }
 
   @Override
-  public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
+  public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
 
     String[] roles = Constants.Security.BASIC_USER_ROLES;

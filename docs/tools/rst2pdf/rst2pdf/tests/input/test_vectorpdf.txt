@@ -1,0 +1,22 @@
+PDF Vector image test
+=======================
+
+This tests reading PDFs using the vectorpdf extension ("-e vectorpdf").  This extension
+relies on `pdfrw`__.
+
+__ http://pdfrw.googlecode.com
+
+
+Here is page 6 from the demo manual:
+
+.. image:: images/demo.pdf#page=6
+        :scale: 25%
+
+Here is a portion of that same page:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+
+Here is a diagram:
+
+.. image:: images/text_and_vectors_001.pdf
+

@@ -128,6 +128,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -135,6 +136,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -1506,6 +1508,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
 
       // Construct URL for promotion of application to remote cluster
+
       Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
         configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
 
@@ -1513,6 +1516,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       String url = String.format("%s://%s:%s/v2/apps/%s",
                                  schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
+
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)

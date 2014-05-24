@@ -276,7 +276,6 @@ public final class Constants {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
-      public static final String VERSION = "v1";
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";
       public static final String BOSS_THREADS = "dataset.service.boss.threads";
@@ -484,6 +483,22 @@ public final class Constants {
     public static final String CFG_SECURITY_ENABLED = "security.enabled";
     /** Configuration for security realm. */
     public static final String CFG_REALM = "security.realm";
+    /** Authentication Handler class name */
+    public static final String AUTH_HANDLER_CLASS = "security.authentication.handlerClassName";
+    /** Prefix for all configurable properties of an Authentication handler. */
+    public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
+    /** Authentication Login Module class name */
+    public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
+    /** Configuration for enabling SSL */
+    public static final String SSL_ENABLED = "security.server.ssl.enabled";
+    /** SSL secured port for ExternalAuthentication */
+    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
+    /** SSL keystore path */
+    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
+    /** SSL keystore password */
+    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
+    /** Realm file for Basic Authentication */
+    public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

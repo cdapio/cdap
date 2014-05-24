@@ -1,0 +1,90 @@
+Alignment for figures and images
+================================
+
+Unaligned PNG Image:
+
+.. image:: images/biohazard.png 
+
+Align left:
+
+.. image:: images/biohazard.png 
+   :align: left
+
+Align right:
+
+.. image:: images/biohazard.png 
+   :align: right
+
+Align center:
+
+.. image:: images/biohazard.png 
+   :align: center
+
+Unaligned PNG figure:
+
+.. figure:: images/biohazard.png 
+   :figwidth: 50%
+
+Align left:
+
+.. figure:: images/biohazard.png 
+   :align: left
+   :figwidth: 50%
+
+Align right:
+
+.. figure:: images/biohazard.png 
+   :align: right
+   :figwidth: 50%
+
+Align center:
+
+.. figure:: images/biohazard.png 
+   :align: center
+   :figwidth: 50%
+
+Alignment for PDF-based images:
+
+Unaligned:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+
+Align left:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: left
+
+Align right:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: right
+
+Align center:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: center
+
+Alignment for PDF-based figures:
+
+Unaligned:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :figwidth: 50%
+
+Align left:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: left
+   :figwidth: 50%
+
+Align right:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: right
+   :figwidth: 50%
+
+Align center:
+
+.. figure:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :align: center
+   :figwidth: 50%

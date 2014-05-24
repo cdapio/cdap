@@ -1,35 +1,52 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
-import org.mortbay.jetty.security.Constraint;
-import org.mortbay.jetty.security.ConstraintMapping;
-import org.mortbay.jetty.security.HashUserRealm;
-import org.mortbay.jetty.security.SecurityHandler;
+import org.eclipse.jetty.security.Authenticator;
+import org.eclipse.jetty.security.DefaultIdentityService;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.security.IdentityService;
+import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 
-import java.net.URL;
+import javax.security.auth.login.Configuration;
 
 /**
  * Handler for basic authentication of users.
  */
-public class BasicAuthenticationHandler extends SecurityHandler {
+public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
+  private IdentityService identityService;
 
   @Inject
-  public BasicAuthenticationHandler() throws Exception {
-    super();
+  public BasicAuthenticationHandler(CConfiguration configuration) throws Exception {
+    super(configuration);
+  }
 
-    String[] roles = Constants.Security.BASIC_USER_ROLES;
-    Constraint constraint = new Constraint();
-    constraint.setName(Constraint.__BASIC_AUTH);
-    constraint.setRoles(roles);
-    constraint.setAuthenticate(true);
+  @Override
+  protected LoginService getHandlerLoginService() {
+    String realmFile = configuration.get(Constants.Security.BASIC_REALM_FILE);
+    HashLoginService loginService = new HashLoginService();
+    loginService.setConfig(realmFile);
+    loginService.setIdentityService(getHandlerIdentityService());
+    return loginService;
+  }
 
-    ConstraintMapping constraintMapping = new ConstraintMapping();
-    constraintMapping.setConstraint(constraint);
-    constraintMapping.setPathSpec("/*");
+  @Override
+  protected Authenticator getHandlerAuthenticator() {
+    return new BasicAuthenticator();
+  }
 
-    URL realmFile = getClass().getResource("/realm.properties");
-    this.setUserRealm(new HashUserRealm("userRealm", realmFile.toExternalForm()));
-    this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
+  @Override
+  protected IdentityService getHandlerIdentityService() {
+    if (identityService == null) {
+      identityService = new DefaultIdentityService();
+    }
+    return identityService;
+  }
+
+  @Override
+  protected Configuration getLoginModuleConfiguration() {
+    return null;
   }
 }

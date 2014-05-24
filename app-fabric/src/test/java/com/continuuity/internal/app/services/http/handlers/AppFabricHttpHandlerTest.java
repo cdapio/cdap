@@ -32,6 +32,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.internal.app.services.http.AppFabricTestBase;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -72,15 +73,16 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+
 import javax.annotation.Nullable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
 
 
 /**
- *
+ * Test {@link com.continuuity.gateway.handlers.AppFabricHttpHandler}
  */
-public class AppFabricHttpHandlerTest {
+public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -109,7 +111,7 @@ public class AppFabricHttpHandlerTest {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     HttpResponse response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" +
-                                                        flowletId + "/instances", json.toString());
+                                                         flowletId + "/instances", json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
   private String getDeploymentStatus() throws Exception {
@@ -159,7 +161,7 @@ public class AppFabricHttpHandlerTest {
       }
 
       HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" +
-          runnableId + "/history");
+                                                           runnableId + "/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
       List<Map<String, String>> o = GSON.fromJson(s, new TypeToken<List<Map<String, String>>>() {
@@ -189,8 +191,8 @@ public class AppFabricHttpHandlerTest {
 
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs",
-        argString);
+    response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/" +
+                                            runnableId + "/runtimeargs", argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
@@ -207,7 +209,7 @@ public class AppFabricHttpHandlerTest {
 
     //test empty runtime args
     response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
-        + runnableId + "/runtimeargs", "");
+                                            + runnableId + "/runtimeargs", "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
@@ -218,10 +220,11 @@ public class AppFabricHttpHandlerTest {
 
     //test null runtime args
     response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
-        + runnableId + "/runtimeargs", null);
+                                            + runnableId + "/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/"
+                                            + runnableId + "/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
@@ -304,8 +307,8 @@ public class AppFabricHttpHandlerTest {
   private int changeFlowletStreamInput(String app, String flow, String flowlet,
                                                 String oldStream, String newStream) throws Exception {
     return AppFabricTestsSuite.doPut(
-      String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream),
-      String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
+       String.format("/v2/apps/%s/flows/%s/flowlets/%s/connections/%s", app, flow, flowlet, newStream),
+       String.format("{\"oldStreamId\":\"%s\"}", oldStream)).getStatusLine().getStatusCode();
   }
 
 
@@ -318,9 +321,9 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //web-app, start, stop and status check.
-    Assert.assertEquals(200, AppFabricTestsSuite.doPost
-                          ("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode()
-    );
+    Assert.assertEquals(200, AppFabricTestsSuite.
+      doPost("/v2/apps/WordCountApp/webapp/start", null).getStatusLine().getStatusCode());
+
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
     Assert.assertEquals(200,
                         AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/webapp/stop", null)
@@ -638,8 +641,7 @@ public class AppFabricHttpHandlerTest {
     JsonObject json = new JsonObject();
     json.addProperty("instances", 10);
 
-    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/procedures/WordFrequency/instances",
-                                           json.toString());
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/procedures/WordFrequency/instances", json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
@@ -675,6 +677,7 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
 
+    deploy(DummyAppWithTrackingTable.class);
     //start map-reduce and check status and stop the map-reduce job and check the status ..
     Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
     Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
@@ -819,7 +822,7 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testInvalidateTx() throws Exception {
-    TransactionSystemClient txClient = AppFabricTestsSuite.getTxClient();
+    TransactionSystemClient txClient = AppFabricTestBase.getTxClient();
 
     Transaction tx1 = txClient.startShort();
     HttpResponse response = AppFabricTestsSuite.doPost("/v2/transactions/" + tx1.getWritePointer() + "/invalidate");
@@ -1050,7 +1053,7 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testTableReads() throws Exception {
     DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
 
     Table t = newTable("tTR_" + System.nanoTime(), instantiator);
     // write a row with 10 cols c0...c9 with values v0..v9
@@ -1064,7 +1067,7 @@ public class AppFabricHttpHandlerTest {
     }
 
     TransactionSystemClient txClient =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
@@ -1101,7 +1104,7 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testTableWritesAndDeletes() throws Exception {
     DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     String urlPrefix = "/v2";
     Table t = newTable("tTW_" + System.nanoTime(), instantiator);
     String row = "abc";
@@ -1113,7 +1116,7 @@ public class AppFabricHttpHandlerTest {
     assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
-    TransactionSystemClient txClient = AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txClient = AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     TransactionContext txContext = new TransactionContext(txClient,
                                                           instantiator.getInstantiator().getTransactionAware());
 
@@ -1162,14 +1165,14 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testIncrement() throws Exception {
     DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     String urlPrefix = "/v2";
     Table t = newTable("tI_" + System.nanoTime(), instantiator);
     String row = "abc";
     // directly write a row with two columns, a long, b not
     final byte[] a = { 'a' }, b = { 'b' }, c = { 'c' };
     TransactionSystemClient txClient =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
@@ -1244,7 +1247,7 @@ public class AppFabricHttpHandlerTest {
   public void testEncodingOfKeysAndValues() throws Exception {
 
     DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     // first create the table
     String tableName = "tEOCAV_" + System.nanoTime();
     Table table = createTable(tableName, instantiator);
@@ -1260,7 +1263,7 @@ public class AppFabricHttpHandlerTest {
 
     // starting new tx so that we see what was committed
     TransactionSystemClient txClient =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
@@ -1336,7 +1339,7 @@ public class AppFabricHttpHandlerTest {
 
     // create a stream, a queue, a table
     DataSetInstantiatorFromMetaData instantiator =
-      AppFabricTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
+      AppFabricTestBase.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     createTable(tableName, instantiator);
     createStream(streamName);
     createQueue(queueName);
@@ -1389,7 +1392,7 @@ public class AppFabricHttpHandlerTest {
   }
 
    boolean dequeueOne(QueueName queueName) throws Exception {
-    QueueClientFactory queueClientFactory = AppFabricTestsSuite.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
     final Queue2Consumer consumer = queueClientFactory.createConsumer(queueName,
                                                                       new ConsumerConfig(1L, 0, 1,
                                                                                          DequeueStrategy.ROUND_ROBIN,
@@ -1397,7 +1400,7 @@ public class AppFabricHttpHandlerTest {
                                                                       1);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionExecutorFactory.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
     return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) consumer))
       .execute(new Callable<Boolean>() {
         @Override
@@ -1419,7 +1422,7 @@ public class AppFabricHttpHandlerTest {
   }
 
   boolean verifyTable(String name, DataSetInstantiatorFromMetaData instantiator) throws Exception {
-    TransactionSystemClient txClient = AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txClient = AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
@@ -1430,11 +1433,11 @@ public class AppFabricHttpHandlerTest {
   }
 
   private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
-    QueueClientFactory queueClientFactory = AppFabricTestsSuite.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
     final Queue2Producer producer = queueClientFactory.createProducer(queueName);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionExecutorFactory.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
     txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer))
       .execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -1467,7 +1470,7 @@ public class AppFabricHttpHandlerTest {
 
    Table createTable(String name, DataSetInstantiatorFromMetaData instantiator) throws Exception {
     TransactionSystemClient txClient =
-      AppFabricTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
+      AppFabricTestBase.getInjector().getInstance(TransactionSystemClient.class);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     Table table = newTable(name, instantiator);

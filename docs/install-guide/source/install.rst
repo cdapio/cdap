@@ -37,10 +37,8 @@ These are the Continuuity Reactor components:
 - **Continuuity Web-App:** User interface—the *Dashboard*—for managing 
   Continuuity Reactor applications;
 - **Continuuity Gateway:** Service supporting REST endpoints for Continuuity Reactor; 
-- **Continuuity AppFabric:** Service for managing runtime, lifecycle and resources of
-  Reactor applications;
-- **Continuuity DataFabric:** Service for managing data operations;
-- **Continuuity Watchdog:** Metrics and logging service; and
+- **Continuuity Reactor-Master:** Service for managing runtime, lifecycle and resources of
+  Reactor applications; and
 - **Continuuity Kafka:** Metrics and logging transport service,
   using an embedded version of *Kafka*.
   ``                                 ``
@@ -104,13 +102,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 ..    * - **Continuuity Gateway**
 ..      - RAM
 ..      - 2 GB minimum, 4 GB recommended	
-..    * - **Continuuity AppFabric**
-..      - RAM
-..      - 2 GB minimum, 4 GB recommended	
-..    * - **Continuuity DataFabric**
-..      - RAM
-..      - 8 GB minimum, 16 GB recommended	
-..    * - **Continuuity Watchdog**
+..    * - **Continuuity Reactor-Master**
 ..      - RAM
 ..      - 2 GB minimum, 4 GB recommended	
 ..    * - **Continuuity Kafka**
@@ -123,28 +115,24 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 ..        deployed and running in the Continuuity Reactor
 ..        and the quantity of logs and metrics that they generate.
 
-+-------------------------------+--------------------+-----------------------------------------------+
-| Continuuity Component         | Hardware Component | Specifications                                |
-+===============================+====================+===============================================+
-| **Continuuity Web-App** | RAM                | 1 GB minimum, 2 GB recommended                |
-+-------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Gateway**       | RAM                | 2 GB minimum, 4 GB recommended                |
-+-------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity AppFabric**     | RAM                | 2 GB minimum, 4 GB recommended                |
-+-------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity DataFabric**    | RAM                | 8 GB minimum, 16 GB recommended               |
-+-------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Watchdog**      | RAM                | 2 GB minimum, 4 GB recommended                |
-+-------------------------------+--------------------+-----------------------------------------------+
-| **Continuuity Kafka**         | RAM                | 1 GB minimum, 2 GB recommended                |
-+                               +--------------------+-----------------------------------------------+
-|                               | Disk Space         | *Continuuity Kafka* maintains a data cache in |
-|                               |                    | a configurable data directory.                |
-|                               |                    | Required space depends on the number of       |
-|                               |                    | Continuuity applications deployed and running |
-|                               |                    | in the Continuuity Reactor and the quantity   |
-|                               |                    | of logs and metrics that they generate.       |
-+-------------------------------+--------------------+-----------------------------------------------+
++--------------------------------+--------------------+-----------------------------------------------+
+| Continuuity Component          | Hardware Component | Specifications                                |
++================================+====================+===============================================+
+| **Continuuity Web-App**        | RAM                | 1 GB minimum, 2 GB recommended                |
++--------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Gateway**        | RAM                | 2 GB minimum, 4 GB recommended                |
++--------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Reactor-Master** | RAM                | 2 GB minimum, 4 GB recommended                |
++--------------------------------+--------------------+-----------------------------------------------+
+| **Continuuity Kafka**          | RAM                | 1 GB minimum, 2 GB recommended                |
++                                +--------------------+-----------------------------------------------+
+|                                | Disk Space         | *Continuuity Kafka* maintains a data cache in |
+|                                |                    | a configurable data directory.                |
+|                                |                    | Required space depends on the number of       |
+|                                |                    | Continuuity applications deployed and running |
+|                                |                    | in the Continuuity Reactor and the quantity   |
+|                                |                    | of logs and metrics that they generate.       |
++--------------------------------+--------------------+-----------------------------------------------+
 
 
 Network Requirements
@@ -374,13 +362,13 @@ Install the Continuuity Reactor packages by using either of these methods:
 
 Using Yum (on one line)::
 
-	sudo yum install continuuity-app-fabric continuuity-data-fabric continuuity-gateway 
-	                 continuuity-kafka continuuity-watchdog continuuity-web-app
+	sudo yum install continuuity-gateway continuuity-kafka continuuity-reactor-master 
+	                  continuuity-web-app
 
 Using APT (on one line)::
 
-	sudo apt-get install continuuity-app-fabric continuuity-data-fabric continuuity-gateway
-	                     continuuity-kafka continuuity-watchdog continuuity-web-app
+	sudo apt-get install continuuity-gateway continuuity-kafka continuuity-reactor-master 
+	                      continuuity-web-app
 
 Do this on each of the boxes that are being used for the Reactor components; our 
 recommended installation is a minimum of two boxes.

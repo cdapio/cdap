@@ -9,17 +9,22 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.HandlerList;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.thread.QueuedThreadPool;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,8 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
   private final int port;
   private final int maxThreads;
-  private final HandlerList handlers;
+  private final HashMap<String, Handler> handlers;
   private final DiscoveryService discoveryService;
+  private final CConfiguration configuration;
   private Cancellable serviceCancellable;
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
@@ -46,13 +52,22 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     protected static final String EXPIRES_IN = "expires_in";
   }
 
+  /**
+   * Constants for Handler types.
+   */
+  public static final class HandlerType {
+    public static final String AUTHENTICATION_HANDLER = "AuthenticationHandler";
+    public static final String GRANT_TOKEN_HANDLER = "GrantTokenHandler";
+  }
+
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HandlerList handlers) {
+                                      @Named("security.handlers") HashMap handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
+    this.configuration = configuration;
   }
 
   /**
@@ -96,15 +111,56 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      Connector connector = new SelectChannelConnector();
-      connector.setPort(port);
-      server.setConnectors(new Connector[]{connector});
+      ContextHandler context = new ContextHandler();
+      context.setContextPath("*");
 
-      server.setHandler(handlers);
+      context.setHandler(initHandlers(handlers));
+
+      SelectChannelConnector connector = new SelectChannelConnector();
+      connector.setPort(port);
+
+      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        String keystorePath = configuration.get(Constants.Security.SSL_KEYSTORE_PATH);
+        String keyStorePassword = configuration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
+        if (keystorePath == null || keyStorePassword == null) {
+          String errorMessage = String.format("Keystore is not configured correctly. Have you configured %s and %s?",
+                                              Constants.Security.SSL_KEYSTORE_PATH,
+                                              Constants.Security.SSL_KEYSTORE_PASSWORD);
+          throw Throwables.propagate(new RuntimeException(errorMessage));
+        }
+        sslContextFactory.setKeyStorePath(keystorePath);
+        sslContextFactory.setKeyStorePassword(keyStorePassword);
+
+        SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+        int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+        sslConnector.setPort(sslPort);
+        connector.setConfidentialPort(sslPort);
+        server.setConnectors(new Connector[]{connector, sslConnector});
+      } else {
+        server.setConnectors(new Connector[]{connector});
+      }
+
+      server.setHandler(context);
     } catch (Exception e) {
       LOG.error("Error while starting server.");
       LOG.error(e.getMessage());
     }
+  }
+
+  /**
+   * Initializes the Authentication handler and returns a HandlerList.
+   * @param handlers
+   * @return {@link org.eclipse.jetty.server.handler.HandlerList}
+   */
+  protected HandlerList initHandlers(HashMap<String, Handler> handlers) {
+    Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
+    ((AbstractAuthenticationHandler) authHandler).init();
+
+    HandlerList handlerList = new HandlerList();
+    handlerList.addHandler(handlers.get(HandlerType.AUTHENTICATION_HANDLER));
+    handlerList.addHandler(handlers.get(HandlerType.GRANT_TOKEN_HANDLER));
+    return handlerList;
   }
 
   @Override

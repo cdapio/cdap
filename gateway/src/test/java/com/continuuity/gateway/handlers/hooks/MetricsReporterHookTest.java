@@ -2,6 +2,7 @@ package com.continuuity.gateway.handlers.hooks;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.GatewayTestBase;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
@@ -13,12 +14,12 @@ import org.junit.Test;
 /**
  * Test MetricReporterHook.
  */
-public class MetricsReporterHookTest {
+public class MetricsReporterHookTest extends GatewayTestBase {
   private static MockMetricsCollectionService mockMetricsCollectionService;
 
   @BeforeClass
   public static void init() throws Exception {
-    Injector injector = GatewayFastTestsSuite.getInjector();
+    Injector injector = GatewayTestBase.getInjector();
     mockMetricsCollectionService = injector.getInstance(MockMetricsCollectionService.class);
   }
 

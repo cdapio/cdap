@@ -1,0 +1,7 @@
+styles: field-list:
+        colWidths: [50%, 50%]
+        commands: []
+                [VALIGN, [0, 0], [-1, -1], TOP]
+                [TOPPADDING, [0, 0], [-1, -1], 0]
+        parent: bodytext
+        spaceBefore: 6

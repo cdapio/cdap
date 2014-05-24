@@ -1,0 +1,5 @@
+.. toctree::
+
+   module
+
+* :ref:`modindex`
