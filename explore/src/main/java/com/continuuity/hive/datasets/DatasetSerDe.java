@@ -1,6 +1,6 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.hive.context.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -26,11 +26,10 @@ public class DatasetSerDe extends AbstractSerDe {
 
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
-    String datasetName = properties.getProperty(DatasetInputFormat.DATASET_NAME);
+    String datasetName = properties.getProperty(Constants.DATASET_NAME);
+    entries.set(Constants.DATASET_NAME, datasetName);
     try {
-      // todo put the rowType in some dataset metadata
-      RowScannable rowScannable = DatasetInputFormat.getDataset(datasetName, null);
-      rowType = rowScannable.getRowType();
+      rowType = DatasetAccessor.getRowScannableType(entries);
     } catch (IOException e) {
       LOG.error("Got exception while trying to instantiate dataset {}", datasetName, e);
       throw new SerDeException(e);

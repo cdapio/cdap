@@ -2,12 +2,9 @@ package com.continuuity.hive.hooks;
 
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.hive.server.RuntimeHiveServer;
-import com.continuuity.hive.datasets.DatasetInputFormat;
-
-import com.google.common.base.Preconditions;
+import com.continuuity.hive.context.ContextManager;
+import com.continuuity.hive.context.TxnSerDe;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
 import org.apache.hadoop.hive.ql.hooks.HookContext;
@@ -21,19 +18,16 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionPostHook implements ExecuteWithHookContext {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPostHook.class);
-  private static final Gson GSON = new Gson();
 
   @Override
   public void run(HookContext hookContext) throws Exception {
     LOG.debug("Entering post hive hook");
     if (hookContext.getOperationName().equals(HiveOperation.QUERY.name())) {
       HiveConf hiveConf = hookContext.getConf();
-      String txJson = hiveConf.get(DatasetInputFormat.TX_QUERY);
-      Preconditions.checkNotNull(txJson, "Transaction ID not set for Hive query.");
-      Transaction tx = GSON.fromJson(txJson, Transaction.class);
+      Transaction tx = TxnSerDe.deserialize(hiveConf);
       LOG.debug("Transaction retrieved in post hook: {}", tx);
 
-      TransactionSystemClient txClient = RuntimeHiveServer.getTransactionSystemClient();
+      TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       // Transaction doesn't involve any changes
       if (txClient.canCommit(tx, ImmutableList.<byte[]>of())) {
         if (!txClient.commit(tx)) {
