@@ -163,7 +163,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   /**
    * Initializes the Authentication handler and returns a HandlerList.
    * @param handlers
-   * @return {@link org.eclipse.jetty.server.handler.HandlerList}
+   * @return
    */
   protected void initHandlers(HashMap<String, Handler> handlers) throws Exception {
     Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
