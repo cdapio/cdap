@@ -45,7 +45,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
     throws IOException, ServletException {
 
     super.handle("/token", Request.getRequest(request), request, response);
-    return "!";
+    return "";
   }
 
   /**
