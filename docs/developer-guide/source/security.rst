@@ -1,16 +1,16 @@
 .. :Author: Continuuity, Inc.
-   :Description: Securing Reactor
+   :Description: Reactor Security
 
 =====================================
 Reactor Security
 =====================================
 
-Enabling security
+Enabling Security
 ==================
-To enable security add the following property to continuuity-site.xml:
+To enable security add this property to ``continuuity-site.xml``:
 
 ==========================================  ===========
-   property                                   value
+   Property                                   Value
 ==========================================  ===========
 security.enabled                              true
 ==========================================  ===========
@@ -18,10 +18,10 @@ security.enabled                              true
 
 Configuring SSL
 ================
-To configure SSL add the following properties to continuuity-site.xml:
+To configure SSL add these properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
-   property                                   value
+   Property                                   Value
 ==========================================  ===========
 security.server.ssl.enabled                   true
 security.server.ssl.keystore.path            <path>
@@ -30,7 +30,7 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
-To enable access logging add the following to logback.xml: ::
+To enable access logging add the following to logback.xml::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>access.log</file>
@@ -55,28 +55,29 @@ Reactor provides several ways to authenticate a user's identity.
 Basic Authentication
 ---------------------
 The simplest way to identity a user is to authenticate against a realm file.
-To configure basic authentication add the following properties to continuuity-site.xml:
+To configure basic authentication add the following properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
-   property                                   value
+   Property                                   Value
 ==========================================  ===========
 security.authentication.handlerClassName     com.continuuity.security.server.BasicAuthenticationHandler
 security.authentication.basic.realmfile      <path>
 ==========================================  ===========
 
-The realm file is of the following format: ::
+The realm file is of the following format::
 
   username: password[,rolename ...]
 
-Note that it is not advisable to use this method of authentication.
+Note that it is not advisable to use this method of authentication. In production, we recommend using any of the
+other methods described below.
 
 LDAP Authentication
 --------------------
-You may also configure reactor to authenticate against an LDAP instance.
-To configure LDAP authentication add the following properties to continuuity-site.xml:
+You may also configure Reactor to authenticate against an LDAP instance.
+To configure LDAP authentication add these properties to ``continuuity-site.xml``:
 
 ================================================  ===========
-   property                                         value
+   Property                                         Value
 ================================================  ===========
 security.authentication.handlerClassName            com.continuuity.security.server.LDAPAuthenticationHandler
 security.authentication.loginmodule.className       org.eclipse.jetty.plus.jaas.spi.LdapLoginModule
@@ -88,10 +89,10 @@ security.authentication.handler.userRdnAttribute    <userRdnAttribute>
 security.authentication.handler.userObjectClass     <userObjectClass>
 ================================================  ===========
 
-In addition, you may also configure the following optional properties:
+In addition, you may also configure these optional properties:
 
 =====================================================  ===========
-   property                                               value
+   Property                                               Value
 =====================================================  ===========
 security.authentication.handler.bindDn                  <bindDn>
 security.authentication.handler.bindPassword            <bindPassword>
@@ -103,18 +104,18 @@ security.authentication.handler.roleMemberAttribute     <roleMemberAttribute>
 security.authentication.handler.roleObjectClass         <roleObjectClass>
 =====================================================  ===========
 
-JASPI Authentication
----------------------
-To authenticate a user using JASPI add the following properties to continuuity-site.xml:
+Java Authentication Service Provider Interface (JASPI) Authentication
+----------------------------------------------------------------------
+To authenticate a user using JASPI add the following properties to ``continuuity-site.xml``:
 
 ================================================  ===========
-   property                                         value
+   Property                                         Value
 ================================================  ===========
 security.authentication.handlerClassName            com.continuuity.security.server.JASPIAuthenticationHandler
 security.authentication.loginmodule.className       <custom login module>
 ================================================  ===========
 
-In addition, any properties with the prefix "security.authentication.handler." will be used when instantiating
+In addition, any properties with the prefix ``security.authentication.handler.`` will be used when instantiating
 the login module.
 
 Custom Authentication
