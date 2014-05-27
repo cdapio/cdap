@@ -15,12 +15,12 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Generate and grant access token to authorized users.
@@ -88,6 +88,6 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
-    ((Request) request).setHandled(true);
+//    ((Request) request).setHandled(true);
   }
 }

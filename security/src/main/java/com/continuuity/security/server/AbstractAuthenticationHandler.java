@@ -28,7 +28,7 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
   /**
    * Initialize the handler context and other related services.
    */
-  public void init() {
+  public void init() throws Exception {
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
@@ -46,6 +46,7 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setIdentityService(getHandlerIdentityService());
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
+    this.doStart();
   }
 
   /**

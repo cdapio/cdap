@@ -51,7 +51,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
-  private final AuthenticationGuiceServletContextListener contextListener;
 
   /**
    * Constants for a valid JSON response.
@@ -73,14 +72,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
-                                      @Named("security.handlers") HashMap handlers,
-                                      AuthenticationGuiceServletContextListener contextListener) {
+                                      @Named("security.handlers") HashMap handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
     this.configuration = configuration;
-    this.contextListener = contextListener;
   }
 
   /**
@@ -134,7 +131,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.setServer(server);
       context.addFilter(GuiceFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
       context.addServlet(DefaultServlet.class, "/");
-      context.addEventListener(new AuthenticationGuiceServletContextListener());
+      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers.get(HandlerType.AUTHENTICATION_HANDLER),
+                                                                             handlers.get(HandlerType.GRANT_TOKEN_HANDLER)));
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
@@ -173,7 +171,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @param handlers
    * @return {@link org.eclipse.jetty.server.handler.HandlerList}
    */
-  protected HandlerList initHandlers(HashMap<String, Handler> handlers) {
+  protected HandlerList initHandlers(HashMap<String, Handler> handlers) throws Exception {
     Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
     ((AbstractAuthenticationHandler) authHandler).init();
 

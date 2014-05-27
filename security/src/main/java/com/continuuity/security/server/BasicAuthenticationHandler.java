@@ -34,7 +34,6 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
     super(configuration);
   }
 
-
   @Path("ping")
   @GET
   @Produces("application/json")
@@ -42,19 +41,11 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
     return Response.ok("OK").build();
   }
 
-//  @Path("token")
-//  @GET
-//  @Override
-//  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-//    throws IOException, ServletException {
-//    super.handle(pathInContext, baseRequest, request, response);
-//  }
-
   @Path("token")
   @GET
-  public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException, ServletException {
+  public Void token(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException, ServletException {
     super.handle("/token", Request.getRequest(request), request, response);
-    return Response.ok("OK").build();
+    return null;
   }
 
   @Override
