@@ -46,7 +46,7 @@ To enable access logging add the following to logback.xml::
       <appender-ref ref="AUDIT" />
     </logger>
 
-You may also configure the file being logged to by changing the path under "<file>...</file>".
+You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
 Configuring Authentication Mechanisms
 ======================================
@@ -115,8 +115,8 @@ security.authentication.handlerClassName            com.continuuity.security.ser
 security.authentication.loginmodule.className       <custom login module>
 ================================================  ===========
 
-In addition, any properties with the prefix ``security.authentication.handler.`` will be used when instantiating
-the login module.
+In addition, any properties with the prefix ``security.authentication.handler.``,
+such as ``security.authentication.handler.hostname``, will also be used when instantiating the login module.
 
 Custom Authentication
 ----------------------
