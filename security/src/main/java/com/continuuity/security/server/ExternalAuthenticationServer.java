@@ -19,7 +19,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -121,11 +120,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-//      ContextHandler context = new ContextHandler();
-//      context.setContextPath("*");
-//      context.setHandler(initHandlers(handlers));
-
-      HandlerList handlerList = initHandlers(handlers);
+      initHandlers(handlers);
 
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
@@ -171,14 +166,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @param handlers
    * @return {@link org.eclipse.jetty.server.handler.HandlerList}
    */
-  protected HandlerList initHandlers(HashMap<String, Handler> handlers) throws Exception {
+  protected void initHandlers(HashMap<String, Handler> handlers) throws Exception {
     Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
     ((AbstractAuthenticationHandler) authHandler).init();
-
-    HandlerList handlerList = new HandlerList();
-    handlerList.addHandler(handlers.get(HandlerType.AUTHENTICATION_HANDLER));
-    handlerList.addHandler(handlers.get(HandlerType.GRANT_TOKEN_HANDLER));
-    return handlerList;
   }
 
   @Override

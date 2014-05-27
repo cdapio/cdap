@@ -60,9 +60,6 @@ public abstract class SecurityModule extends PrivateModule {
                        .toProvider(AuthenticationHandlerMapProvider.class)
                        .in(Scopes.SINGLETON);
 
-//    bind(BasicAuthenticationHandler.class);
-//    bind(GrantAccessTokenHandler.class);
-
     bind(TokenValidator.class).to(AccessTokenValidator.class);
     bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
     expose(AccessTokenTransformer.class);

@@ -1,6 +1,7 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
@@ -11,7 +12,6 @@ import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Request;
 
 import java.io.IOException;
-import java.net.URL;
 import javax.security.auth.login.Configuration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -50,10 +50,9 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
 
   @Override
   protected LoginService getHandlerLoginService() {
-//    String realmFile = configuration.get(Constants.Security.BASIC_REALM_FILE);
-    URL realmFile = getClass().getResource("/realm.properties");
+    String realmFile = configuration.get(Constants.Security.BASIC_REALM_FILE);
     HashLoginService loginService = new HashLoginService();
-    loginService.setConfig(realmFile.toExternalForm());
+    loginService.setConfig(realmFile);
     loginService.setIdentityService(getHandlerIdentityService());
     return loginService;
   }
