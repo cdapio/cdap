@@ -10,6 +10,8 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Request;
 
+import java.io.IOException;
+import java.net.URL;
 import javax.security.auth.login.Configuration;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,9 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URL;
 
 /**
  * Handler for basic authentication of users.
@@ -41,13 +42,20 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
     return Response.ok("OK").build();
   }
 
+//  @Path("token")
+//  @GET
+//  @Override
+//  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+//    throws IOException, ServletException {
+//
+//    super.handle(pathInContext, baseRequest, request, response);
+//  }
+
   @Path("token")
   @GET
-  @Override
-  public void handle(String pathInContext, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-    throws IOException, ServletException {
-
-    super.handle(pathInContext, baseRequest, request, response);
+  public String token(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException, ServletException {
+    super.handle("/token", Request.getRequest(request), request, response);
+    return "!";
   }
 
   @Override
