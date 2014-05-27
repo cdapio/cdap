@@ -43,9 +43,11 @@ public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
 
   @Path("token")
   @GET
-  public Void token(@Context HttpServletRequest request, @Context HttpServletResponse response) throws IOException, ServletException {
+  public String token(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws IOException, ServletException {
+
     super.handle("/token", Request.getRequest(request), request, response);
-    return null;
+    return "!";
   }
 
   @Override

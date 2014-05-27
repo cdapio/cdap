@@ -7,21 +7,18 @@ import com.continuuity.security.guice.SecurityModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceServletContextListener;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 import org.eclipse.jetty.server.Handler;
+
+import java.util.HashMap;
 
 /**
  *
  */
 public class AuthenticationGuiceServletContextListener extends GuiceServletContextListener {
-  private BasicAuthenticationHandler authenticationHandler;
-  private GrantAccessTokenHandler grantAccessTokenHandler;
+  private final HashMap<String, Handler> handlerMap;
 
-  public AuthenticationGuiceServletContextListener(Handler authenticationHandler,
-                                                   Handler grantAccessTokenHandler) {
-    this.authenticationHandler = (BasicAuthenticationHandler) authenticationHandler;
-    this.grantAccessTokenHandler = (GrantAccessTokenHandler) grantAccessTokenHandler;
+  public AuthenticationGuiceServletContextListener(HashMap<String, Handler> map) {
+    this.handlerMap = map;
   }
 
   @Override
@@ -29,15 +26,7 @@ public class AuthenticationGuiceServletContextListener extends GuiceServletConte
     return Guice.createInjector(new IOModule(), new ConfigModule(),
                                 new DiscoveryRuntimeModule().getSingleNodeModules(),
                                 new SecurityModules().getSingleNodeModules(),
-                                new JerseyServletModule() {
-                                  @Override
-                                  protected void configureServlets() {
-                                    bind(BasicAuthenticationHandler.class).toInstance(authenticationHandler);
-                                    bind(GrantAccessTokenHandler.class).toInstance(grantAccessTokenHandler);
-                                    filter("/*").through(GuiceContainer.class);
-                                  }
-                                }
-                         );
+                                new SecurityJerseyModule(handlerMap));
   }
 
 }
