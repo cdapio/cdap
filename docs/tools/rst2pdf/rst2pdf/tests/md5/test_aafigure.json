@@ -1,0 +1,38 @@
+bad_md5 = [
+        'sentinel'
+]
+
+good_md5 = [
+        '0f87f776b8f61ee3ebbf69e49ca990c6',
+        '136639903c59cbddbc25ec36fdeb0c25',
+        '1e4668aa525c6dca2773934da9544448',
+        '1f4c204838f6c7a666aaf426b862993f',
+        '2185f5069ff14aa0e234d7a413379d16',
+        '26ed22ce40416d808153d8996735bd6b',
+        '318c0a61cd72af2bcdbd49bd5892d3ee',
+        '34a7b4efcf67f95f21270d155ce36c8e',
+        '4f9bc8f2b868c87cb84ad07b67e7979f',
+        '52092ebf592cdf412864eabd365bf7c2',
+        '5e55bb791963cf2c46359a57200279a6',
+        '6cbd59137425e0fe65180f874e4e9bc5',
+        '755d6e3bff7d8cda0fedca4e8d97c2ea',
+        '8aca75224922d0c827560fa46703a358',
+        'b0cce54480b76f3791dcf32c609c8506',
+        'b4262cdf43a5645827beb1a52b6669fb',
+        'bcd8854c58735595655c9b94aff056d8',
+        'c71fabd6f6f89a1fb19031bd14321e98',
+        'cb3c7356f6c7f234285aa97ea5f28a26',
+        'd3f2535b858130da2a26e88d62319b05',
+        'sentinel'
+]
+
+incomplete_md5 = [
+        '1ad9bbaea07cec663b322489e6f39ed6',
+        '599b3d53146833db8bd927681d1b1655',
+        'sentinel'
+]
+
+unknown_md5 = [
+        'sentinel'
+]
+

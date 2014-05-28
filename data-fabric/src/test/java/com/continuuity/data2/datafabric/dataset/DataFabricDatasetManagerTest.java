@@ -2,6 +2,8 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.AbstractDatasetManagerTest;
@@ -21,7 +23,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.net.InetAddress;
 
 /**
  *
@@ -39,6 +40,8 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
     File datasetDir = new File(tmpFolder.newFolder(), "dataset");
     datasetDir.mkdirs();
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
 
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -50,12 +53,12 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
 
     datasetManager = new DatasetManagerService(cConf,
                                                new LocalLocationFactory(),
-                                               InetAddress.getByName("localhost"),
                                                discoveryService,
                                                new InMemoryDatasetManager(),
                                                ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                                  "memoryTable", InMemoryTableModule.class),
-                                               txSystemClient);
+                                               txSystemClient,
+                                               new NoOpMetricsCollectionService());
     datasetManager.startAndWait();
 
     DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);

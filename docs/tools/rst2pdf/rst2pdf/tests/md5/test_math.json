@@ -1,0 +1,26 @@
+bad_md5 = [
+        'sentinel'
+]
+
+good_md5 = [
+        '0e0bbe2a00634055ffc9d1f1c11d1ec0',
+        '17be6dd4fc33477203480023b516e872',
+        '454b897b6a3671b2efba6a8e053ce38d',
+        '48dc2e0e80c875b8117e8210598d75bc',
+        '61b78f9333f3629d1fb74246e398afea',
+        '8748ca044bde38ea86825079135b4ca9',
+        'd0c8cd54f4db431b52b57386bfe5fa7f',
+        'sentinel'
+]
+
+incomplete_md5 = [
+        'a77cd83d1fd4f980771ea809e819b034',
+        'e93d0c0bdff1eb84ab930a05717aaced',
+        'ed8a047d86b95962cafaf89763789780',
+        'sentinel'
+]
+
+unknown_md5 = [
+        'sentinel'
+]
+

@@ -1,0 +1,20 @@
+PDF partial image scaling test
+===============================
+
+This test combines something that test_vectorpdf (reading a partial page)
+was doing with something that test_isue_266 (scale so large that it has to be 
+scaled back down) was doing, using the vectorpdf extension ("-e vectorpdf").
+
+Basic image:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+
+Scaled up a bit:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 150%
+
+Scaled up a lot:
+
+.. image:: images/demo.pdf#page=6#viewrect=250,330,270,130
+   :scale: 300%

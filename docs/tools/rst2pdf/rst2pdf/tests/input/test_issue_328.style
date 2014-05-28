@@ -1,0 +1,20 @@
+  styles:
+    bodytext:
+      parent: normal
+      firstLineIndent: 24
+
+    bullet-list:
+      parent: bodytext
+      firstLineIndent: 0
+
+    bullet-list-item:
+      parent: bodytext
+      firstLineIndent: 0
+
+    item-list:
+      parent: bodytext
+      firstLineIndent: 0
+
+    item-list-item:
+      parent: bodytext
+      firstLineIndent: 0

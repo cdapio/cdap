@@ -1,0 +1,8 @@
+styles: with-border:
+        backColor: white
+        borderPadding: 8
+        commands: []
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+                [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+                [ALIGN, [ 0, 0 ], [ -1, -1 ], CENTER ]
+        parent: figure

@@ -1,0 +1,84 @@
+All shown pages should be upright and should have geometric shapes on either side:
+
+.. image:: images/rotated.pdf#page=1&viewrect=0,0,432,72
+   :width: 90%
+
+.. image:: images/rotated.pdf#page=2&viewrect=0,0,288,72
+   :width: 60%
+
+.. image:: images/rotated.pdf#page=3&viewrect=0,0,432,72
+   :width: 90%
+
+.. image:: images/rotated.pdf#page=4&viewrect=0,0,288,72
+   :width: 60%
+
+All shown pages should be upside down, with no geometric shapes:
+
+.. image:: images/rotated.pdf#page=3&viewrect=126,216,175,72
+   :width: 30%
+
+.. image:: images/rotated.pdf#page=4&viewrect=54,360,175,72
+   :width: 30%
+
+.. image:: images/rotated.pdf#page=1&viewrect=126,216,175,72
+   :width: 30%
+
+.. image:: images/rotated.pdf#page=2&viewrect=54,360,175,72
+   :width: 30%
+
+.. raw:: pdf
+
+   PageBreak
+
+Page 1 should be upright:
+
+.. image:: images/rotated.pdf
+   :width: 75%
+
+Page 2 should be upright:
+
+.. image:: images/rotated.pdf#page=2
+   :width: 50%
+
+.. raw:: pdf
+
+   PageBreak
+
+Page 3 should be upright:
+
+.. image:: images/rotated.pdf#page=3
+   :width: 75%
+
+Page 4 should be upright:
+
+.. image:: images/rotated.pdf#page=4
+   :width: 50%
+
+.. raw:: pdf
+
+   PageBreak
+
+Page 1 should be upright:
+
+.. image:: images/rotated.pdf#page=2&rotate=-90
+   :width: 75%
+
+Page 2 should be upright:
+
+.. image:: images/rotated.pdf#page=2&rotate=0
+   :width: 50%
+
+.. raw:: pdf
+
+   PageBreak
+
+Page 3 should be upright:
+
+.. image:: images/rotated.pdf#page=2&rotate=90
+   :width: 75%
+
+Page 4 should be upright:
+
+.. image:: images/rotated.pdf#page=2&rotate=180
+   :width: 50%
+

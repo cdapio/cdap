@@ -1,16 +1,13 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Advanced Reactor Features
 
 =====================================
 Advanced Continuuity Reactor Features
 =====================================
 
-------------------------------
 Building Big Data Applications
-------------------------------
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 
@@ -34,7 +31,7 @@ For the batch example above, up to 100 data objects can be read from the input a
 Flowlets and Instances
 ----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
-`REST interfaces </developers/rest>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
 In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be improved. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
@@ -101,7 +98,8 @@ Note that the emitter must use the same name ("wordHash") for the key that the c
 Partitioning can be combined with batch execution::
 
 	@Batch(100)
-	@HashPartition("wordHash") @ProcessInput("wordOut")
+	@HashPartition("wordHash")
+	@ProcessInput("wordOut")
 	public void process(Iterator<String> words) {
 	   ...
 
@@ -135,11 +133,18 @@ as the type or the interface of the DataSet. Every instance of a DataSet has a u
 (unique within the account that it belongs to) and metadata that defines its behavior.
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
 
-Every Application must declare all DataSets that it uses in its application specification. The specification of the DataSet must include its name and all of its metadata, including the specifications of its underlying DataSets. This creates the DataSet—if it does not exist yet—and stores its metadata at the time of deployment of the application. Application code (a Flow or Procedure) can then use a DataSet by giving only its name and type—the runtime system uses the stored metadata to create an instance of the DataSet class with all required metadata.
+Every Application must declare all DataSets that it uses in its application specification. 
+The specification of the DataSet must include its name and all of its metadata, including
+the specifications of its underlying DataSets. This creates the DataSet—if it does not
+exist yet—and stores its metadata at the time of deployment of the application.
+Application code (a Flow or Procedure) can then use a DataSet by giving only its name and
+type—the runtime system uses the stored metadata to create an instance of the DataSet
+class with all required metadata.
 
 Core DataSets
 -------------
-**Tables** are the only core DataSets, and all other DataSets are built using one or more core Tables. These Tables are similar to tables in a relational database with a few key differences:
+**Tables** are the only core DataSets, and all other DataSets are built using one or more
+core Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
   row has the same schema, every row of a Table can have a different set of columns.
@@ -221,7 +226,8 @@ A ``get`` operation reads all columns or selection of columns of a single row::
 	// Read only one column in one row byte[]
 	value = t.get(rowKey1, columnX);
 
-The ``Row`` object provides access to the Row data including its columns. If only a selection of row columns is requested, the returned Row object will contain only these columns.
+The ``Row`` object provides access to the Row data including its columns. If only a 
+selection of row columns is requested, the returned Row object will contain only these columns.
 The Row object provides an extensive API for accessing returned column values::
 
 	// Get column value as a byte array
@@ -329,7 +335,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs </developers/javadocs/index.html>`__ for these classes and `the examples </developers/examples>`__
+See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
 to learn more about these DataSets.
 
 Custom DataSets
@@ -367,8 +373,7 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-A complete application demonstrating use of a Custom DataSet is included in our
-`PageViewAnalytics <examples/PageViewAnalytics>`__ example.
+A complete application demonstrating use of a Custom DataSet is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
 
 DataSets & MapReduce
 --------------------
@@ -562,5 +567,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Testing and Debugging Guide <debugging>`__,
+- `Continuuity Reactor Testing and Debugging Guide <debugging.html>`__,
   which covers both testing and debugging of Continuuity Reactor applications.

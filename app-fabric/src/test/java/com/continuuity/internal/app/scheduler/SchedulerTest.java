@@ -1,5 +1,7 @@
 package com.continuuity.internal.app.scheduler;
 
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -8,6 +10,7 @@ import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -39,7 +42,9 @@ public class SchedulerTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    injector = Guice.createInjector (new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector (new LocationRuntimeModule().getInMemoryModules(),
+                                     new DiscoveryRuntimeModule().getInMemoryModules(),
+                                     new DataFabricModules().getInMemoryModules());
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     accessor = injector.getInstance(DataSetAccessor.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);

@@ -1,0 +1,13 @@
+{
+  "styles" : [
+    ["thick" , {
+    "parent" : "table",
+    "colWidths": ["20%","60%","20"],
+    "commands": [
+             [BOX, [ 0, 0 ], [ -1, -1 ], 10, red ]
+	]
+    }
+    ]
+   ]
+}
+

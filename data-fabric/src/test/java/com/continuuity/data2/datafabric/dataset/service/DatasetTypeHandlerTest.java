@@ -1,6 +1,5 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
-import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
@@ -17,12 +16,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
@@ -132,7 +127,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(1, getTypes().value.size());
 
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("module2"));
-    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").status);
 
     Assert.assertEquals(0, getModules().value.size());
@@ -171,48 +166,29 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertTrue(new File(moduleMeta.getJarLocation()).exists());
   }
 
-  static int deployModule(String moduleName, Class moduleClass) throws IOException {
-    String jarPath = JarFinder.getJar(moduleClass);
-
-    HttpPost post = new HttpPost(getUrl("/datasets/modules/" + moduleName));
-    post.setEntity(new FileEntity(new File(jarPath), "application/octet-stream"));
-    post.addHeader("class-name", moduleClass.getName());
-
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(post);
-
-    return response.getStatusLine().getStatusCode();
-  }
-
   private Response<List<DatasetModuleMeta>> getModules() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/modules"));
+    HttpGet get = new HttpGet(getUrl("/data/modules"));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), new TypeToken<List<DatasetModuleMeta>>() {
     }.getType());
   }
 
   private Response<List<DatasetTypeMeta>> getTypes() throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/types"));
+    HttpGet get = new HttpGet(getUrl("/data/types"));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
   private Response<DatasetModuleMeta> getModule(String moduleName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/modules/" + moduleName));
+    HttpGet get = new HttpGet(getUrl("/data/modules/" + moduleName));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), DatasetModuleMeta.class);
   }
 
   private Response<DatasetTypeMeta> getType(String typeName) throws IOException {
-    HttpGet get = new HttpGet(getUrl("/datasets/types/" + typeName));
+    HttpGet get = new HttpGet(getUrl("/data/types/" + typeName));
     DefaultHttpClient client = new DefaultHttpClient();
     return parseResponse(client.execute(get), DatasetTypeMeta.class);
-  }
-
-  static int deleteModule(String moduleName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/datasets/modules/" + moduleName));
-    HttpResponse response = new DefaultHttpClient().execute(delete);
-    return response.getStatusLine().getStatusCode();
   }
 
   /**

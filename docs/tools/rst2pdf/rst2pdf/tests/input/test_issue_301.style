@@ -1,0 +1,12 @@
+styles:
+    smallbullet:
+        bulletFontSize: 12
+        fontSize: 32
+        parent: bullet-list
+        commands: [
+            [ TOPPADDING, [0,0],[0,0], 50],
+            [ VALIGN, [0,0],[-1,-1], TOP],
+            [ COLBACKGROUNDS, [0,0],[0,-1],["red"]],
+            [ INNERGRID, [0,0], [-1,-1], 0.25, black],
+            [ BOX, [0,0], [-1,-1], 0.25, black]
+            ]

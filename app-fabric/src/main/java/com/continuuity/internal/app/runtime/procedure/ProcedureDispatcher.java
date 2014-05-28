@@ -132,6 +132,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
     try {
       handler = handlerMethod.get();
     } catch (Throwable t) {
+      LOG.error("Fail to get procedure.", t);
       errorResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR, channel, "Fail to get procedure.");
       return;
     }
