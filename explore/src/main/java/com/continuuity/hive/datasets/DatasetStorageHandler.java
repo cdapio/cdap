@@ -1,6 +1,7 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.hive.context.Constants;
+import com.continuuity.common.conf.Constants;
+
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -29,8 +30,8 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
 
   @Override
   public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-    String datasetName = tableDesc.getProperties().getProperty(Constants.DATASET_NAME);
-    jobProperties.put(Constants.DATASET_NAME, datasetName);
+    String datasetName = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAME);
+    jobProperties.put(Constants.Explore.DATASET_NAME, datasetName);
     LOG.debug("Got dataset {} for external table {}", datasetName, tableDesc.getTableName());
   }
 }

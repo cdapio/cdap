@@ -1,8 +1,8 @@
-package com.continuuity.hive;
+package com.continuuity.hive.client;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.hive.HiveClient;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 
 import com.google.inject.Inject;
 import org.apache.hive.beeline.BeeLine;
@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Executes commands on Hive using beeline on a discovered HiveServer2.
@@ -32,7 +33,8 @@ public class HiveCommandExecutor implements HiveClient {
   @Override
   public void sendCommand(String cmd, OutputStream out, OutputStream err) throws IOException {
 
-    Discoverable hiveDiscoverable = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)).pick();
+    Discoverable hiveDiscoverable = new TimeLimitEndpointStrategy(
+        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)), 3L, TimeUnit.SECONDS).pick();
     if (hiveDiscoverable == null) {
       LOG.error("No endpoint for service {}", Constants.Service.HIVE);
       throw new IOException("No endpoint for service " + Constants.Service.HIVE);

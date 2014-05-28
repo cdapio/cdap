@@ -1,6 +1,8 @@
 package com.continuuity.hive.context;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -23,11 +25,11 @@ public class CConfSerDe {
 
     String confStr = new String(bos.toByteArray(), Charsets.UTF_8);
     LOG.debug("Serializing CConfiguration {}", confStr);
-    destConf.set(Constants.CCONF_SERDE_KEY, confStr);
+    destConf.set(com.continuuity.common.conf.Constants.Explore.CCONF_SERDE_KEY, confStr);
   }
 
   public static CConfiguration deserialize(Configuration fromConf) {
-    String confStr = fromConf.get(Constants.CCONF_SERDE_KEY);
+    String confStr = fromConf.get(Constants.Explore.CCONF_SERDE_KEY);
 
     if (confStr == null) {
       LOG.warn("CConfiguration is empty");

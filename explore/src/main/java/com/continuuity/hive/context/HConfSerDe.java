@@ -1,5 +1,7 @@
 package com.continuuity.hive.context;
 
+import com.continuuity.common.conf.Constants;
+
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -23,11 +25,11 @@ public class HConfSerDe {
 
     String confStr = new String(bos.toByteArray(), Charsets.UTF_8);
     LOG.debug("Serializing HConfiguration {}", confStr);
-    destConf.set(Constants.HCONF_SERDE_KEY, confStr);
+    destConf.set(Constants.Explore.HCONF_SERDE_KEY, confStr);
   }
 
   public static Configuration deserialize(Configuration fromConf) {
-    String confStr = fromConf.get(Constants.HCONF_SERDE_KEY);
+    String confStr = fromConf.get(Constants.Explore.HCONF_SERDE_KEY);
 
     if (confStr == null) {
       LOG.warn("HConfiguration is empty");

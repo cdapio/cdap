@@ -12,12 +12,15 @@ import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.hive.HiveCommandExecutor;
+import com.continuuity.hive.client.HiveClient;
+import com.continuuity.hive.client.HiveCommandExecutor;
+import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -42,7 +45,7 @@ public class HiveServerIntegrationTest {
   private static DatasetManager datasetManager;
   private static DatasetManagerService datasetManagerService;
   private static InMemoryZKServer zookeeper;
-  private static HiveCommandExecutor hiveCommandExecutor;
+  private static HiveClient hiveClient;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -58,7 +61,7 @@ public class HiveServerIntegrationTest {
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
-    hiveCommandExecutor = injector.getInstance(HiveCommandExecutor.class);
+    hiveClient = injector.getInstance(HiveClient.class);
 
     transactionManager.startAndWait();
     inMemoryHiveMetastore.startAndWait();
@@ -122,13 +125,13 @@ public class HiveServerIntegrationTest {
 
   @Test
   public void testHiveIntegration() throws Exception {
-    hiveCommandExecutor.sendCommand("drop table if exists kv_table");
-    hiveCommandExecutor.sendCommand("create external table kv_table (customer STRING, quantity int) " +
-                                      "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
-                                      "with serdeproperties (\"reactor.dataset.name\"=\"my_table\") ;");
-    hiveCommandExecutor.sendCommand("describe kv_table");
-    hiveCommandExecutor.sendCommand("select key, value from kv_table");
-    hiveCommandExecutor.sendCommand("select * from kv_table");
+    hiveClient.sendCommand("drop table if exists kv_table");
+    hiveClient.sendCommand("create external table kv_table (customer STRING, quantity int) " +
+                           "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
+                           "with serdeproperties (\"reactor.dataset.name\"=\"my_table\") ;");
+    hiveClient.sendCommand("describe kv_table");
+    hiveClient.sendCommand("select key, value from kv_table");
+    hiveClient.sendCommand("select * from kv_table");
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
@@ -140,7 +143,8 @@ public class HiveServerIntegrationTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new HiveRuntimeModule().getInMemoryModules()
+      new HiveRuntimeModule().getInMemoryModules(),
+      new HiveClientModule()
     );
   }
 
