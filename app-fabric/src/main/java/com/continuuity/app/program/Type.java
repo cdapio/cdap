@@ -10,7 +10,6 @@ import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.runtime.webapp.WebappSpecification;
-import org.apache.twill.api.TwillSpecification;
 
 /**
  * Defines types of programs supported by the system.

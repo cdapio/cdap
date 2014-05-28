@@ -197,11 +197,11 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   /*
-    TODO: currently Mock Endpoints for twill-apps logs, implementation will be added later.
+    TODO: currently Mock Endpoints for user twill-service logs, implementation will be added later.
    */
   @GET
   @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs")
-  public void servicelist(HttpRequest request, HttpResponder responder,
+  public void serviceList(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
                           @PathParam("runnable-id") String runId) {
     sendMockLog(responder);
