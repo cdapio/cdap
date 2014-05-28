@@ -127,7 +127,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(1, getTypes().value.size());
 
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("module2"));
-    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").status);
 
     Assert.assertEquals(0, getModules().value.size());

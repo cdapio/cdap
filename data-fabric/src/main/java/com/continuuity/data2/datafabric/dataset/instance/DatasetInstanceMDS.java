@@ -47,6 +47,10 @@ final class DatasetInstanceMDS extends AbstractObjectsStore {
     return instances.values();
   }
 
+  public void deleteAll() {
+    deleteAll(INSTANCE_PREFIX);
+  }
+
   private byte[] getInstanceKey(String name) {
     return Bytes.add(INSTANCE_PREFIX, Bytes.toBytes(name));
   }

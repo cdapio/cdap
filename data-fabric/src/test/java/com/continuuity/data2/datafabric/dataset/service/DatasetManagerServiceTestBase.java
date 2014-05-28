@@ -111,6 +111,13 @@ public abstract class DatasetManagerServiceTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
+  // todo: use HttpUrlConnection
+  protected int deleteModules() throws IOException {
+    HttpDelete delete = new HttpDelete(getUrl("/data/modules"));
+    HttpResponse response = new DefaultHttpClient().execute(delete);
+    return response.getStatusLine().getStatusCode();
+  }
+
   @SuppressWarnings("unchecked")
   protected static <T> Response<T> parseResponse(HttpResponse response, Type typeOfT) throws IOException {
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);

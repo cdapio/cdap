@@ -3232,6 +3232,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
+      dsClient.deleteInstances();
+      dsClient.deleteModules();
+
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
