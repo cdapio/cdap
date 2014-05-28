@@ -1,0 +1,20 @@
+styles:
+    bullet-list:
+        colWidths: [50%, 50%]
+        commands: []
+                [VALIGN, [0, 0], [-1, -1], TOP]
+                [TOPPADDING, [0, 0], [-1, -1], 0]
+                [BOTTOMPADDING, [0, 0], [-1, -1], 0]
+                [RIGHTPADDING, [0, 0], [1, -1], 0]
+        parent: bodytext
+        spaceBefore: 0
+
+    item-list:
+        colWidths: [25%, 75%]
+        commands: []
+                [VALIGN, [0, 0], [-1, -1], TOP]
+                [TOPPADDING, [0, 0], [-1, -1], 0]
+                [BOTTOMPADDING, [0, 0], [-1, -1], 0]
+                [RIGHTPADDING, [0, 0], [1, -1], 0]
+        parent: bodytext
+        spaceBefore: 0

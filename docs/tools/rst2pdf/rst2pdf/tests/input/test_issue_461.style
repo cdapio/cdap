@@ -1,0 +1,8 @@
+styles:
+    custom:
+      parent: bullet-list
+      commands: []
+             [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+             [RIGHTPADDING, [ 0, 0 ], [ 1, -1 ], 0 ]
+      colWidths: ["200", null]
+

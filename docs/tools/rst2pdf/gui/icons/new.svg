@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="162.5"
+   height="162.5"
+   id="svg101">
+  <defs
+     id="defs7" />
+  <path
+     d="M 28.4375,153.867 C 28.4375,153.867 138.125,153.867 138.125,153.867 C 138.125,153.867 138.633,33.5157 138.633,33.5157 C 138.633,33.5157 110.703,10.1562 110.703,10.1562 C 110.703,10.1562 28.9453,10.1562 28.9453,10.1562 C 28.9453,10.1562 28.9453,154.883 28.4375,153.867 z "
+     transform="translate(1.01562,0)"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.5;stroke-linecap:round;stroke-linejoin:round"
+     id="path218" />
+  <path
+     d="M 108.672,10.6641 C 108.672,10.6641 109.18,36.5625 109.18,36.5625 C 109.18,36.5625 140.664,36.5625 140.664,36.5625"
+     transform="translate(-3.04688,3.04688)"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:6.25;stroke-linecap:round;stroke-linejoin:round"
+     id="path219" />
+  <rect
+     width="75.593361"
+     height="75.593361"
+     x="4.1139302"
+     y="4.6281409"
+     style="font-size:12px;fill:#e3f0f8;fill-opacity:0.74901997;fill-rule:evenodd;stroke:#2f3338;stroke-width:6.25;stroke-linecap:round;stroke-linejoin:round"
+     id="rect711" />
+  <polygon
+     points="53.3203,50.2734 33.7662,40.3692 14.5218,50.8625 17.8987,29.2049 1.97209,14.145 23.6133,10.6641 33.0145,-9.13682 43.0126,10.3695 64.7494,13.1918 49.2874,28.7283 53.3203,50.2734 "
+     transform="matrix(1.18605,0,0,1.16927,2.191433,17.86081)"
+     style="font-size:12px;fill:#7f7f7f;fill-rule:evenodd"
+     id="polygon126" />
+</svg>

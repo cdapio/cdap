@@ -1,6 +1,6 @@
 package com.continuuity.security.auth;
 
-import com.continuuity.security.io.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;

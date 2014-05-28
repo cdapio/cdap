@@ -103,4 +103,18 @@ public abstract class AbstractObjectsStore implements Closeable {
       throw Throwables.propagate(e);
     }
   }
+
+  protected final void deleteAll(byte[] prefix) {
+    byte[] stopKey = createStopKey(prefix);
+
+    try {
+      Scanner scan = table.scan(prefix, stopKey);
+      Row next;
+      while ((next = scan.next()) != null) {
+        table.delete(next.getRow());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
 }
