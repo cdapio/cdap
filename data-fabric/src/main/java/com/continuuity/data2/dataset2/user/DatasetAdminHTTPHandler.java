@@ -37,18 +37,6 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
     this.client = client;
   }
 
-  @Override
-  public void init(HandlerContext context) {
-    super.init(context);
-    client.startAndWait();
-  }
-
-  @Override
-  public void destroy(HandlerContext context) {
-    super.destroy(context);
-    client.stopAndWait();
-  }
-
   @POST
   @Path("/data/instances/{instance}/admin/exists")
   public void exists(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {

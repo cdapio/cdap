@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * {@link DatasetManager} implementation that talks to DatasetManager Service
  */
-public class DataFabricDatasetManager extends AbstractIdleService implements DatasetManager {
+public class DataFabricDatasetManager implements DatasetManager {
   private static final Logger LOG = LoggerFactory.getLogger(DataFabricDatasetManager.class);
 
   private final DatasetManagerServiceClient client;
@@ -115,16 +115,6 @@ public class DataFabricDatasetManager extends AbstractIdleService implements Dat
     DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
     return (T) impl.getDataset(instanceInfo.getSpec());
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    client.startAndWait();
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    client.stopAndWait();
   }
 
   private String namespace(String datasetInstanceName) {

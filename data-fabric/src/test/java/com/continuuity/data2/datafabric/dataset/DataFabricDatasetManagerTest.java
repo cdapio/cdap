@@ -74,7 +74,6 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
     manager = new DataFabricDatasetManager(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
                                            new InMemoryDatasetDefinitionRegistry());
-    manager.startAndWait();
   }
 
   @After

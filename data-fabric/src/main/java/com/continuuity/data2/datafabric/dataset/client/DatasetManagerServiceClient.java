@@ -14,6 +14,8 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -32,22 +34,28 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetManagerServiceClient extends AbstractIdleService {
+public class DatasetManagerServiceClient {
   private static final Gson GSON = new Gson();
 
-  private final DiscoveryServiceClient discoveryClient;
-
-  private EndpointStrategy endpointStrategy;
+  private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DatasetManagerServiceClient(DiscoveryServiceClient discoveryClient) {
-    this.discoveryClient = discoveryClient;
+  public DatasetManagerServiceClient(final DiscoveryServiceClient discoveryClient) {
+    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        EndpointStrategy coreStrategy = new RandomEndpointStrategy(
+          discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+        return new TimeLimitEndpointStrategy(coreStrategy, 1L, TimeUnit.SECONDS);
+      }
+    });
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
@@ -78,9 +86,7 @@ public class DatasetManagerServiceClient extends AbstractIdleService {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetInstanceProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPost("instances/" + datasetInstanceName,
-                                   GSON.toJson(props),
-                                   ImmutableMap.of("type-name", datasetType));
+    HttpResponse response = doPost("instances/" + datasetInstanceName, GSON.toJson(props), ImmutableMap.of("type-name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -145,18 +151,6 @@ public class DatasetManagerServiceClient extends AbstractIdleService {
       throw new DatasetManagementException(String.format("Failed to delete module %s, details: %s",
                                                          moduleName, getDetails(response)));
     }
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    this.endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
-      1L, TimeUnit.SECONDS);
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-
   }
 
   private HttpResponse doGet(String resource) throws DatasetManagementException {
@@ -244,8 +238,8 @@ public class DatasetManagerServiceClient extends AbstractIdleService {
   }
 
   private String resolve(String resource) {
-    Preconditions.checkNotNull(endpointStrategy, "endpointStrategy was not initialized -- must start service first");
-    InetSocketAddress addr = this.endpointStrategy.pick().getSocketAddress();
+    EndpointStrategy endpointStrategy = endpointStrategySupplier.get();
+    InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }

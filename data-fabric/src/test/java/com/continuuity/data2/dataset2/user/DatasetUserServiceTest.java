@@ -130,13 +130,10 @@ public class DatasetUserServiceTest {
       cConf,
       injector.getInstance(LocationFactory.class),
       new InMemoryDatasetDefinitionRegistry());
-
-    managerClient.startAndWait();
   }
 
   @After
   public void tearDown() {
-    managerClient.stopAndWait();
     managerClient = null;
 
     managerService.stopAndWait();
