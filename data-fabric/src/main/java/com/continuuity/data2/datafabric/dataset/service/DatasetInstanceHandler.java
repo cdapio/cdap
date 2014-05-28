@@ -69,7 +69,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     // TODO(alvin): remove this once user service is run on-demand
     EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_USER)),
       5L, TimeUnit.SECONDS);
     datasetUserAddress = endpointStrategy.pick().getSocketAddress();
   }
