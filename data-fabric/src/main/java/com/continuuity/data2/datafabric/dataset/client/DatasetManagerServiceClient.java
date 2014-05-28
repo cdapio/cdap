@@ -10,7 +10,6 @@ import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
 import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -19,7 +18,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -34,7 +32,6 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -86,7 +83,9 @@ public class DatasetManagerServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetInstanceProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPost("instances/" + datasetInstanceName, GSON.toJson(props), ImmutableMap.of("type-name", datasetType));
+    HttpResponse response = doPost("instances/" + datasetInstanceName,
+                                   GSON.toJson(props),
+                                   ImmutableMap.of("type-name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));

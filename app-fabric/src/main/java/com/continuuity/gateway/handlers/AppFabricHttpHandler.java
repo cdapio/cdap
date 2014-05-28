@@ -50,7 +50,6 @@ import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
-import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
