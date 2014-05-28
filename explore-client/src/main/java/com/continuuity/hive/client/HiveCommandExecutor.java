@@ -40,7 +40,7 @@ public class HiveCommandExecutor implements HiveClient {
       throw new IOException("No endpoint for service " + Constants.Service.HIVE);
     }
 
-    // The hooks are plugged at every command
+    // The hooks are plugged in for every command
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
         "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
         hiveDiscoverable.getSocketAddress().getHostName() +
@@ -61,12 +61,7 @@ public class HiveCommandExecutor implements HiveClient {
       PrintStream perr = new PrintStream(err);
       beeLine.setErrorStream(perr);
     }
-//    ByteArrayOutputStream out = new ByteArrayOutputStream();
-//    ByteArrayOutputStream err = new ByteArrayOutputStream();
     beeLine.begin(args, null);
     beeLine.close();
-
-//    LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
-//    LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
   }
 }

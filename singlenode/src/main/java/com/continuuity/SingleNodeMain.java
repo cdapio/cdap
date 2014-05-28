@@ -24,9 +24,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -36,6 +36,7 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -153,8 +154,11 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
-    hiveMetastore.startAndWait();  // in that order
+
+    // it is important to respect that order: metastore, then hivesERVER
+    hiveMetastore.startAndWait();
     hiveServer.startAndWait();
+
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
     }

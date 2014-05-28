@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Hive Metastore run in memory.
+ * Hive Metastore running in memory.
  */
 public class InMemoryHiveMetastore extends AbstractIdleService {
 

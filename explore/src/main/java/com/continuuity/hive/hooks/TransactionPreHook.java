@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class TransactionPreHook implements ExecuteWithHookContext {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPreHook.class);
   static final Pattern SELECT_QUERY = Pattern.compile("^(\\s)*select\\s.*$",
-                                                      Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+                                                      Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
   public void run(HookContext hookContext) throws Exception {
     // We cannot rely on hookContext.getOperationName(), it remains the same

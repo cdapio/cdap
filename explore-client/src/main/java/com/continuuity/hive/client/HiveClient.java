@@ -9,6 +9,13 @@ import java.io.OutputStream;
  */
 public interface HiveClient {
 
+  /**
+   * Sends a command to a Hive server.
+   * @param command String command to send to Hive
+   * @param out will contain the standard output of the command
+   * @param err will contain the standard error of the command
+   * @throws IOException
+   */
   void sendCommand(String command, OutputStream out, OutputStream err) throws IOException;
 
 }

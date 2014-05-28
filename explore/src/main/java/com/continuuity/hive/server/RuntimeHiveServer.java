@@ -52,12 +52,13 @@ public class RuntimeHiveServer extends HiveServer {
     hiveServer2.start();
     waitForPort(hostname.getHostName(), hiveServerPort);
 
-    // Register with discovery service.
+    // Register HiveServer2 with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
     InetAddress address = socketAddress.getAddress();
     if (address.isAnyLocalAddress()) {
       address = InetAddress.getLocalHost();
     }
+    // todo figure a way to not have "localhost" in distributed, but the actual host of reactor-master
     final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
 
     discoveryService.register(new Discoverable() {
@@ -80,6 +81,11 @@ public class RuntimeHiveServer extends HiveServer {
     }
   }
 
+  /**
+   * Util method that waits for a 3rd party service, running on a given port, to be started.
+   * @param host host the service is running on
+   * @param port port the service is running on
+   */
   public static void waitForPort(String host, int port) throws Exception {
     final int maxTries = 20;
     int tries = 0;
