@@ -35,21 +35,8 @@ class DataSetsModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-memory", InMemoryTableModule.class,
-            "table", TableModule.class)
-        );
-
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-
-        expose(DatasetManagerService.class);
         expose(DatasetManager.class);
 
         // TODO: remove once DatasetUserService is run on-demand
@@ -68,20 +55,8 @@ class DataSetsModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-memory", LevelDBTableModule.class,
-            "table", TableModule.class)
-        );
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-
-        expose(DatasetManagerService.class);
         expose(DatasetManager.class);
 
         // TODO: remove once DatasetUserService is run on-demand
@@ -100,20 +75,8 @@ class DataSetsModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-hbase", HBaseTableModule.class,
-            "table", TableModule.class)
-        );
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-
-        expose(DatasetManagerService.class);
         expose(DatasetManager.class);
 
         // TODO: remove once DatasetUserService is run on-demand

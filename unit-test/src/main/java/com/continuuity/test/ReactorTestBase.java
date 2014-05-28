@@ -17,6 +17,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
@@ -180,6 +181,7 @@ public class ReactorTestBase {
     }
 
     injector = Guice.createInjector(createDataFabricModule(configuration),
+                                    new DataSetServiceModules().getInMemoryModule(),
                                     new ConfigModule(configuration),
                                     new IOModule(),
                                     new AuthModule(),

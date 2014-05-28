@@ -100,6 +100,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
+  @DELETE
+  @Path("/data/instances/")
+  public void deleteAll(HttpRequest request, final HttpResponder responder) {
+    instanceManager.deleteAll();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   @GET
   @Path("/data/instances/{instance-name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,

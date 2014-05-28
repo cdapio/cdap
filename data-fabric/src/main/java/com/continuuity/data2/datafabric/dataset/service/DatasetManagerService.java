@@ -7,7 +7,6 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
@@ -17,7 +16,6 @@ import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -72,7 +70,7 @@ public class DatasetManagerService extends AbstractIdleService {
                                    new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     this.defaultModules = defaultModules;
 
-    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory);
+    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory, defaultModules);
     this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
@@ -113,20 +111,6 @@ public class DatasetManagerService extends AbstractIdleService {
 
     userService.startAndWait();
     httpService.startAndWait();
-
-    // adding default modules to be available in dataset manager service
-    for (Map.Entry<String, Class<? extends DatasetModule>> module : defaultModules.entrySet()) {
-      try {
-        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        typeManager.addModule(module.getKey(), module.getValue().getName(), null);
-      } catch (DatasetModuleConflictException e) {
-        // perfectly fine: we need to add default modules only the very first time service is started
-        LOG.info("Not adding " + module.getKey() + " module: it already exists");
-      } catch (Throwable th) {
-        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
-      }
-    }
 
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {

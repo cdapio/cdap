@@ -854,4 +854,24 @@
         <value>continuuity</value>
         <description>Security realm used for authentication</description>
     </property>
+
+    <property>
+      <name>security.server.ssl.enabled</name>
+      <value>false</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.path</name>
+      <value></value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.password</name>
+      <value></value>
+    </property>
 </configuration>

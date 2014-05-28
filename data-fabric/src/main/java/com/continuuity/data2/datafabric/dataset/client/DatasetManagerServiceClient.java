@@ -51,9 +51,9 @@ public class DatasetManagerServiceClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        EndpointStrategy coreStrategy = new RandomEndpointStrategy(
-          discoveryClient.discover(Constants.Service.DATASET_MANAGER));
-        return new TimeLimitEndpointStrategy(coreStrategy, 1L, TimeUnit.SECONDS);
+        return new TimeLimitEndpointStrategy(
+          new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+          1L, TimeUnit.SECONDS);
       }
     });
   }
@@ -153,6 +153,24 @@ public class DatasetManagerServiceClient {
     }
   }
 
+  public void deleteModules() throws DatasetManagementException {
+    HttpResponse response = doDelete("modules");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
+  public void deleteInstances() throws DatasetManagementException {
+    HttpResponse response = doDelete("instances");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(resource, "GET", null, null, null);
   }
@@ -238,8 +256,7 @@ public class DatasetManagerServiceClient {
   }
 
   private String resolve(String resource) {
-    EndpointStrategy endpointStrategy = endpointStrategySupplier.get();
-    InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
+    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }

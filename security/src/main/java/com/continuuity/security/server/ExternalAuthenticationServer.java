@@ -15,6 +15,8 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final int maxThreads;
   private final HashMap<String, Handler> handlers;
   private final DiscoveryService discoveryService;
+  private final CConfiguration configuration;
   private Cancellable serviceCancellable;
   private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
@@ -64,6 +67,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
+    this.configuration = configuration;
   }
 
   /**
@@ -114,7 +118,28 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setPort(port);
-      server.setConnectors(new Connector[]{connector});
+
+      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
+        SslContextFactory sslContextFactory = new SslContextFactory();
+        String keystorePath = configuration.get(Constants.Security.SSL_KEYSTORE_PATH);
+        String keyStorePassword = configuration.get(Constants.Security.SSL_KEYSTORE_PASSWORD);
+        if (keystorePath == null || keyStorePassword == null) {
+          String errorMessage = String.format("Keystore is not configured correctly. Have you configured %s and %s?",
+                                              Constants.Security.SSL_KEYSTORE_PATH,
+                                              Constants.Security.SSL_KEYSTORE_PASSWORD);
+          throw Throwables.propagate(new RuntimeException(errorMessage));
+        }
+        sslContextFactory.setKeyStorePath(keystorePath);
+        sslContextFactory.setKeyStorePassword(keyStorePassword);
+
+        SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+        int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+        sslConnector.setPort(sslPort);
+        connector.setConfidentialPort(sslPort);
+        server.setConnectors(new Connector[]{connector, sslConnector});
+      } else {
+        server.setConnectors(new Connector[]{connector});
+      }
 
       server.setHandler(context);
     } catch (Exception e) {
