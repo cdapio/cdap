@@ -32,7 +32,6 @@ public class HiveCommandExecutor implements HiveClient {
   @Override
   public void sendCommand(String cmd) throws IOException {
 
-
     Discoverable hiveDiscoverable = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)), 1L, TimeUnit.SECONDS).pick();
     if (hiveDiscoverable == null) {
