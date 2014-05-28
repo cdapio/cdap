@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 /**
@@ -29,7 +30,7 @@ public class HiveCommandExecutor implements HiveClient {
   }
 
   @Override
-  public void sendCommand(String cmd) throws IOException {
+  public void sendCommand(String cmd, OutputStream out, OutputStream err) throws IOException {
 
     Discoverable hiveDiscoverable = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)).pick();
     if (hiveDiscoverable == null) {
@@ -49,21 +50,21 @@ public class HiveCommandExecutor implements HiveClient {
         "--outputformat=table",
         "-e", cmd};
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream pout = new PrintStream(out);
-
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-    PrintStream perr = new PrintStream(err);
-
     BeeLine beeLine = new BeeLine();
-    beeLine.setOutputStream(pout);
-    beeLine.setErrorStream(perr);
+    if (out != null) {
+      PrintStream pout = new PrintStream(out);
+      beeLine.setOutputStream(pout);
+    }
+    if (err != null) {
+      PrintStream perr = new PrintStream(err);
+      beeLine.setErrorStream(perr);
+    }
+//    ByteArrayOutputStream out = new ByteArrayOutputStream();
+//    ByteArrayOutputStream err = new ByteArrayOutputStream();
     beeLine.begin(args, null);
     beeLine.close();
 
-    LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
-    LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
-
-    // todo should return the string result
+//    LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
+//    LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
   }
 }
