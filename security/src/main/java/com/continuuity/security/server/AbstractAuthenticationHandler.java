@@ -1,6 +1,7 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.google.inject.Inject;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -31,6 +32,10 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
+
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+      constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
+    }
 
     ConstraintMapping constraintMapping = new ConstraintMapping();
     constraintMapping.setConstraint(constraint);

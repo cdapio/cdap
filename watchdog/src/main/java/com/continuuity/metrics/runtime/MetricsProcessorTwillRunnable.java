@@ -10,11 +10,13 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.migrate.MetricsTableMigrator20to21;
 import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.continuuity.metrics.process.KafkaMetricsProcessorServiceFactory;
@@ -85,6 +87,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
+      new AuthModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),

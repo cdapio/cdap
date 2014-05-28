@@ -2,6 +2,8 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
@@ -10,6 +12,7 @@ import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -22,13 +25,14 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.util.Collections;
 
 /**
  *
  */
 public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
   private DatasetManagerService datasetManager;
-  private DatasetManager manager;
+  private DataFabricDatasetManager manager;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -44,6 +48,10 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
 
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+
+    DatasetUserService userService = new DatasetUserService(cConf, discoveryService, metricsCollectionService,
+                                                            Collections.EMPTY_SET);
 
     // Tx Manager to support working with datasets
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
@@ -53,10 +61,13 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
     datasetManager = new DatasetManagerService(cConf,
                                                new LocalLocationFactory(),
                                                discoveryService,
+                                               discoveryService,
                                                new InMemoryDatasetManager(),
                                                ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                                  "memoryTable", InMemoryTableModule.class),
-                                               txSystemClient);
+                                               txSystemClient,
+                                               metricsCollectionService,
+                                               userService);
     datasetManager.startAndWait();
 
     DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);

@@ -2,6 +2,7 @@ package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.io.Codec;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -12,7 +13,6 @@ import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
-import com.continuuity.security.io.Codec;
 import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
@@ -50,7 +50,7 @@ public abstract class SecurityModule extends PrivateModule {
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
     MapBinder<String, Handler> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Handler.class,
-                                                                     Names.named("security.handlers.map"));
+                                                                      Names.named("security.handlers.map"));
 
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
                  .toProvider(AuthenticationHandlerProvider.class);

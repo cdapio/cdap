@@ -95,6 +95,19 @@ public class DatasetInstanceManager extends AbstractIdleService {
   }
 
   /**
+   * Deletes all instances
+   */
+  public void deleteAll() {
+    // todo: do drop of data
+    getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        mds.deleteAll();
+      }
+    });
+  }
+
+  /**
    * Deletes dataset instance
    * @param instanceName name of the instance to delete
    * @return true if deletion succeeded, false otherwise

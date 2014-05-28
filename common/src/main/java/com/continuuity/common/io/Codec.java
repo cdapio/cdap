@@ -1,4 +1,4 @@
-package com.continuuity.security.io;
+package com.continuuity.common.io;
 
 import java.io.IOException;
 
