@@ -10,7 +10,6 @@ import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
 import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
