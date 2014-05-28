@@ -1,11 +1,11 @@
 package com.continuuity.hive.datasets;
 
 import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.hive.context.Constants;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.TxnSerDe;
 import com.continuuity.internal.data.dataset.Dataset;
@@ -41,9 +41,9 @@ public class DatasetAccessor {
   }
 
   private static RowScannable instantiate(Configuration conf) throws IOException {
-    String datasetName = conf.get(Constants.DATASET_NAME);
+    String datasetName = conf.get(Constants.Explore.DATASET_NAME);
     if (datasetName == null) {
-      throw new IOException(String.format("Dataset name property %s not defined.", Constants.DATASET_NAME));
+      throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
     }
 
     DatasetManager manager = ContextManager.getDatasetManager(conf);

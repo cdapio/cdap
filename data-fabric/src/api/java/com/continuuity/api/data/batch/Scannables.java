@@ -202,7 +202,7 @@ public class Scannables {
         first = false;
       }
       writer.append(field.getName());
-      writer.append(':');
+      writer.append(' ');
       generateHiveSchema(field.getSchema(), writer);
     }
   }

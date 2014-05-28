@@ -1,6 +1,7 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.hive.context.Constants;
+import com.continuuity.common.conf.Constants;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -26,8 +27,8 @@ public class DatasetSerDe extends AbstractSerDe {
 
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
-    String datasetName = properties.getProperty(Constants.DATASET_NAME);
-    entries.set(Constants.DATASET_NAME, datasetName);
+    String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
+    entries.set(Constants.Explore.DATASET_NAME, datasetName);
     try {
       rowType = DatasetAccessor.getRowScannableType(entries);
     } catch (IOException e) {
