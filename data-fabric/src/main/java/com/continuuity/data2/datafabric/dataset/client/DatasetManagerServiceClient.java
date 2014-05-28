@@ -10,10 +10,11 @@ import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
 import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -40,14 +41,18 @@ import javax.annotation.Nullable;
 public class DatasetManagerServiceClient {
   private static final Gson GSON = new Gson();
 
-  private EndpointStrategy endpointStrategy;
+  private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DatasetManagerServiceClient(DiscoveryServiceClient discoveryClient) {
-
-    this.endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
-      1L, TimeUnit.SECONDS);
+  public DatasetManagerServiceClient(final DiscoveryServiceClient discoveryClient) {
+    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new TimeLimitEndpointStrategy(
+          new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+          1L, TimeUnit.SECONDS);
+      }
+    });
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
@@ -147,6 +152,24 @@ public class DatasetManagerServiceClient {
     }
   }
 
+  public void deleteModules() throws DatasetManagementException {
+    HttpResponse response = doDelete("modules");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
+  public void deleteInstances() throws DatasetManagementException {
+    HttpResponse response = doDelete("instances");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(resource, "GET", null, null, null);
   }
@@ -232,9 +255,9 @@ public class DatasetManagerServiceClient {
   }
 
   private String resolve(String resource) {
-    InetSocketAddress addr = this.endpointStrategy.pick().getSocketAddress();
-    return String.format("http://%s:%s/%s/datasets/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Dataset.Manager.VERSION, resource);
+    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+    return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
+                         Constants.Gateway.GATEWAY_VERSION, resource);
   }
 
   private final class HttpResponse {

@@ -2,18 +2,20 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
+import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
-import com.google.common.base.Throwables;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -21,6 +23,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +41,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
+  private final DatasetUserService userService;
   private Cancellable cancelDiscovery;
 
   private final DatasetInstanceManager instanceManager;
@@ -50,11 +54,13 @@ public class DatasetManagerService extends AbstractIdleService {
   public DatasetManagerService(CConfiguration cConf,
                                LocationFactory locationFactory,
                                DiscoveryService discoveryService,
+                               DiscoveryServiceClient discoveryServiceClient,
                                @Named("datasetMDS") DatasetManager mdsDatasetManager,
                                @Named("defaultDatasetModules")
                                SortedMap<String, Class<? extends DatasetModule>> defaultModules,
-                               TransactionSystemClient txSystemClient
-  ) throws Exception {
+                               TransactionSystemClient txSystemClient,
+                               MetricsCollectionService metricsCollectionService,
+                               DatasetUserService userService) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -64,11 +70,15 @@ public class DatasetManagerService extends AbstractIdleService {
                                    new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     this.defaultModules = defaultModules;
 
-    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory);
+    this.typeManager = new DatasetTypeManager(mdsDatasetManager, txSystemClient, locationFactory, defaultModules);
     this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(typeManager, instanceManager)));
+                                             new DatasetInstanceHandler(discoveryServiceClient,
+                                                                        typeManager, instanceManager)));
+
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.DATASET_MANAGER)));
 
     builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
     builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
@@ -84,6 +94,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
+    this.userService = userService;
   }
 
   @Override
@@ -98,21 +109,8 @@ public class DatasetManagerService extends AbstractIdleService {
     typeManager.startAndWait();
     instanceManager.startAndWait();
 
+    userService.startAndWait();
     httpService.startAndWait();
-
-    // adding default modules to be available in dataset manager service
-    for (Map.Entry<String, Class<? extends DatasetModule>> module : defaultModules.entrySet()) {
-      try {
-        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        typeManager.addModule(module.getKey(), module.getValue().getName(), null);
-      } catch (DatasetModuleConflictException e) {
-        // perfectly fine: we need to add default modules only the very first time service is started
-        LOG.info("Not adding " + module.getKey() + " module: it already exists");
-      } catch (Throwable th) {
-        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
-      }
-    }
 
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {
@@ -147,5 +145,13 @@ public class DatasetManagerService extends AbstractIdleService {
     }
 
     httpService.stopAndWait();
+    userService.stopAndWait();
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("bindAddress", httpService.getBindAddress())
+      .toString();
   }
 }

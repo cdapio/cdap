@@ -16,6 +16,7 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String DATASET_USER = "dataset.user";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String HIVE = "hive.server";
   }
@@ -277,7 +278,6 @@ public final class Constants {
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
-      public static final String VERSION = "v1";
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";
       public static final String BOSS_THREADS = "dataset.service.boss.threads";
@@ -298,6 +298,28 @@ public final class Constants {
       public static final String NUM_INSTANCES = "dataset.service.num.instances";
       public static final String NUM_CORES = "dataset.service.num.cores";
       public static final String MEMORY_MB = "dataset.service.memory.mb";
+    }
+
+    /**
+     * DatasetUserService configuration.
+     */
+    public static final class User {
+      /** for the port of the dataset user service server. */
+      public static final String PORT = "dataset.user.bind.port";
+
+      /** for the address (hostname) of the dataset server. */
+      public static final String ADDRESS = "dataset.user.bind.address";
+
+      public static final String BACKLOG_CONNECTIONS = "dataset.user.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.user.exec.threads";
+      public static final String BOSS_THREADS = "dataset.user.boss.threads";
+      public static final String WORKER_THREADS = "dataset.user.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.user.output.dir";
+
+      /** Twill Runnable configuration **/
+      public static final String CONTAINER_VIRTUAL_CORES = "dataset.user.container.num.cores";
+      public static final String CONTAINER_MEMORY_MB = "dataset.user.container.memory.mb";
+      public static final String CONTAINER_INSTANCES = "dataset.user.container.instances";
     }
   }
 
@@ -491,6 +513,14 @@ public final class Constants {
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
     /** Authentication Login Module class name */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
+    /** Configuration for enabling SSL */
+    public static final String SSL_ENABLED = "security.server.ssl.enabled";
+    /** SSL secured port for ExternalAuthentication */
+    public static final String AUTH_SERVER_SSL_PORT = "security.server.ssl.port";
+    /** SSL keystore path */
+    public static final String SSL_KEYSTORE_PATH = "security.server.ssl.keystore.path";
+    /** SSL keystore password */
+    public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
   }
