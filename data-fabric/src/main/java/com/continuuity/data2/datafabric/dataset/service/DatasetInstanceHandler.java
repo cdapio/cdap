@@ -1,6 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.user.AdminOpResponse;
@@ -31,6 +34,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -64,29 +68,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     LOG.info("Starting DatasetInstanceHandler");
 
     // TODO(alvin): remove this once user service is run on-demand
-    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.DATASET_USER);
-
-    // TODO(alvin): maybe make this configurable
-    int maxRetries = 5;
-    long sleep = 3000;
-    int retry = 0;
-
-    while (!discovered.iterator().hasNext() && retry < maxRetries) {
-      discovered = discoveryClient.discover(Constants.Service.DATASET_USER);
-      retry++;
-      try {
-        Thread.sleep(sleep);
-      } catch (InterruptedException e) {
-        // NO-OP
-      }
-    }
-
-    if (!discovered.iterator().hasNext()) {
-      LOG.warn("Failed to discover dataset user service");
-    } else {
-      LOG.info("Successfully discovered dataset user service");
-      datasetUserAddress = discovered.iterator().next().getSocketAddress();
-    }
+    EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+      5L, TimeUnit.SECONDS);
+    datasetUserAddress = endpointStrategy.pick().getSocketAddress();
   }
 
   @Override
@@ -175,8 +160,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     String urlString = String.format(template, datasetUserAddress.getAddress().getCanonicalHostName(),
                                      datasetUserAddress.getPort(), Constants.Gateway.GATEWAY_VERSION,
                                      instanceName, method);
+    HttpURLConnection connection = null;
+
     try {
-      HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+      connection = (HttpURLConnection) new URL(urlString).openConnection();
       connection.setRequestMethod("POST");
 
       int responseCode = connection.getResponseCode();
@@ -187,6 +174,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     } catch (IOException e) {
       LOG.error("Error opening connection to {}", urlString);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
     }
   }
 
