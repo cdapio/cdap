@@ -506,6 +506,18 @@ public final class Constants {
     public static final String DATABASE_DIR = "reactor.hive.database.dir";
   }
 
+  /**
+   * Explore module configuration.
+   */
+  public static final class Explore {
+    public static final String CCONF_SERDE_KEY = "reactor.cconfiguration";
+    public static final String HCONF_SERDE_KEY = "reactor.hconfiguration";
+
+    public static final String DATASET_NAME = "reactor.dataset.name";
+    public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
+    public static final String TX_QUERY = "reactor.hive.query.tx.id";
+  }
+
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";

@@ -33,7 +33,7 @@ public class HiveCommandExecutor implements HiveClient {
   public void sendCommand(String cmd) throws IOException {
 
     Discoverable hiveDiscoverable = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)), 1L, TimeUnit.SECONDS).pick();
+        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)), 3L, TimeUnit.SECONDS).pick();
     if (hiveDiscoverable == null) {
       LOG.error("No endpoint for service {}", Constants.Service.HIVE);
       throw new IOException("No endpoint for service " + Constants.Service.HIVE);

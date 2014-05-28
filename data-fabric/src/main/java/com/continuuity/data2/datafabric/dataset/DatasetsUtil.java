@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.batch.Scannables;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
@@ -61,13 +62,13 @@ public final class DatasetsUtil {
     instance = (T) datasetManager.getDataset(instanceName, null);
 
     if (created && (instance instanceof RowScannable)) {
-      createHiveTable(instanceName, (RowScannable) instance);
+      generateCreateStatement(instanceName, (RowScannable) instance);
     }
 
     return instance;
   }
 
-  public static <ROW> String createHiveTable(String name, RowScannable<ROW> scannable) {
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
     String hiveSchema;
     try {
       hiveSchema = Scannables.hiveSchemaFor(scannable);
@@ -76,9 +77,10 @@ public final class DatasetsUtil {
         "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
       return null;
     }
-    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT 'Continuuity Reactor Dataset' " +
-                                         "STORED BY 'com.continuuity.hive.datasets.DatasetStorageHandler' WITH " +
-                                         "SERDEPROPERTIES(\"reactor.dataset.name\" = \"%s\")", name, hiveSchema, name);
+    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                         "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
     LOG.info("Command for Hive: {}", hiveStatement);
     return hiveStatement;
   }
