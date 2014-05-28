@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QScrollArea" name="scroll">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>400</width>
+        <height>300</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+  <action name="zoomin">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/viewmag+.svg</normaloff>:/icons/viewmag+.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+  </action>
+  <action name="zoomout">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/viewmag-.svg</normaloff>:/icons/viewmag-.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+  </action>
+  <action name="next">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/next.svg</normaloff>:/icons/next.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Next Page</string>
+   </property>
+  </action>
+  <action name="previous">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/previous.svg</normaloff>:/icons/previous.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Previous Page</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

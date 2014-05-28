@@ -10,7 +10,19 @@ import com.continuuity.api.data.batch.SplitReader;
 import java.util.List;
 
 /**
- * This class is a temporary hack for setting stream dynamically for using in MapReduce.
+ * This class is for using a Stream as input for a MapReduce job. An instance of this class should be set in the
+ * {@code MapReduceContext} of the {@code beforeSubmit} method to use the Stream as input.
+ *
+ * <pre>
+ * {@code
+ *
+ * class MyMapReduce implements MapReduce {
+ *    public void beforeSubmit(MapReduceContext context) {
+ *      context.setInput(new StreamBatchReadable("mystream"), null);
+ *    }
+ * }
+ * }
+ * </pre>
  *
  */
 public class StreamBatchReadable implements BatchReadable<Long, String> {

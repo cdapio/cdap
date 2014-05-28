@@ -1,0 +1,19 @@
+pageSetup:
+    firstTemplate: myLayout
+    margin-bottom: 8mm
+    margin-left: 12mm
+    margin-right: 12mm
+    margin-top: 8mm
+
+pageTemplates:
+    myLayout: 
+        frames:  [[0cm, 0cm, 100%, 100%]]
+        defaultHeader =
+            Biohazard PDF in the header: |img|
+
+            .. |img| image:: images/biohazard.pdf
+                        :width: 2cm
+
+        showFooter: false
+        showHeader: true
+

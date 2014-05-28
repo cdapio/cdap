@@ -3,6 +3,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+
 import javax.annotation.Nullable;
 
 /**
@@ -70,7 +72,8 @@ public abstract class DatasetManagerServiceTestBase {
                                         new InMemoryDatasetManager(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                           "memoryTable", InMemoryTableModule.class),
-                                        txSystemClient);
+                                        txSystemClient,
+                                        new NoOpMetricsCollectionService());
     service.startAndWait();
   }
 
@@ -84,15 +87,14 @@ public abstract class DatasetManagerServiceTestBase {
   }
 
   protected String getUrl(String resource) {
-    return "http://" + "localhost" + ":" + port +
-      "/" + Constants.Dataset.Manager.VERSION + resource;
+    return "http://" + "localhost" + ":" + port + Constants.Gateway.GATEWAY_VERSION + resource;
   }
 
   // todo: use HttpUrlConnection
   protected int deployModule(String moduleName, Class moduleClass) throws IOException {
     String jarPath = JarFinder.getJar(moduleClass);
 
-    HttpPost post = new HttpPost(getUrl("/datasets/modules/" + moduleName));
+    HttpPost post = new HttpPost(getUrl("/data/modules/" + moduleName));
     post.setEntity(new FileEntity(new File(jarPath), "application/octet-stream"));
     post.addHeader("class-name", moduleClass.getName());
 
@@ -104,7 +106,14 @@ public abstract class DatasetManagerServiceTestBase {
 
   // todo: use HttpUrlConnection
   protected int deleteModule(String moduleName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/datasets/modules/" + moduleName));
+    HttpDelete delete = new HttpDelete(getUrl("/data/modules/" + moduleName));
+    HttpResponse response = new DefaultHttpClient().execute(delete);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  // todo: use HttpUrlConnection
+  protected int deleteModules() throws IOException {
+    HttpDelete delete = new HttpDelete(getUrl("/data/modules"));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }

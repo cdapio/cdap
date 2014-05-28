@@ -1,0 +1,3 @@
+styles:
+    bullet-list: {parent: bodytext, spaceBefore: 8}
+    enumerated-list: {parent: bodytext, spaceBefore: 8}

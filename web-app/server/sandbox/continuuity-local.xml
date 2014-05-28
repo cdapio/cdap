@@ -36,7 +36,7 @@
 	<property>
       <name>gateway.cluster.name</name>
       <value>thebox</value>
-  </property>y
+  </property>
 
 	<property>
 		<name>cookie-secret</name>

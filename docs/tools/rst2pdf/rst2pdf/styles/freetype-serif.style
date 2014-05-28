@@ -1,0 +1,10 @@
+fontsAlias:
+    stdBold: Serif-Bold
+    stdBoldItalic: Serif-BoldItalic
+    stdFont: Serif
+    stdItalic: Serif-Italic
+    stdMono: Monospace
+    stdMonoBold: Monospace-Bold
+    stdMonoBoldItalic: Monospace-BoldItalic
+    stdMonoItalic: Monospace-Italic
+    stdSerif: Serif-Roman

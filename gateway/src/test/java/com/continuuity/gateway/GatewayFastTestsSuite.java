@@ -1,47 +1,20 @@
 package com.continuuity.gateway;
 
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Networks;
-import com.continuuity.data.stream.service.StreamHttpModule;
-import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
 import com.continuuity.gateway.handlers.ProcedureHandlerTest;
 import com.continuuity.gateway.handlers.RuntimeArgumentTest;
 import com.continuuity.gateway.handlers.StreamHandlerTest;
-import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
-import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterPathTest;
-import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
-import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.logging.read.LogReader;
-import com.continuuity.metrics.query.MetricsQueryService;
-import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.security.guice.InMemorySecurityModule;
-import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Provider;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.name.Named;
-import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -53,27 +26,20 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHeader;
 import org.apache.twill.internal.utils.Dependencies;
-import org.junit.ClassRule;
-import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+
 import javax.annotation.Nullable;
 
 /**
@@ -93,133 +59,8 @@ import javax.annotation.Nullable;
 })
 
 public class GatewayFastTestsSuite {
-  private static final String API_KEY = "SampleTestApiKey";
-  private static final String CLUSTER = "SampleTestClusterName";
-  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
-  private static Gateway gateway;
-  private static final String WEBAPPSERVICE = "$HOST";
-  private static final String hostname = "127.0.0.1";
-  private static int port;
-  private static CConfiguration conf = CConfiguration.create();
-
-  private static Injector injector;
-  private static AppFabricServer appFabricServer;
-  private static NettyRouter router;
-  private static MetricsQueryService metrics;
-  private static StreamHttpService streamHttpService;
-
-  @ClassRule
-  public static ExternalResource resources = new ExternalResource() {
-    @Override
-    protected void before() throws Throwable {
-      Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
-      conf.setInt(Constants.Gateway.PORT, 0);
-      conf.set(Constants.Gateway.ADDRESS, hostname);
-      conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-      conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-      conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-      conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
-      conf.set(Constants.Router.ADDRESS, hostname);
-      conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
-      injector = startGateway(conf);
-    }
-
-    @Override
-    protected void after() {
-      stopGateway(conf);
-    }
-  };
-
-  public static Injector startGateway(CConfiguration conf) {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
-    // Set up our Guice injections
-    injector = Guice.createInjector(
-      Modules.override(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-              @Override
-              public PassportClient get() {
-                return new MockedPassportClient(keysAndClusters);
-              }
-            });
-          }
-
-          @Provides
-          @Named(Constants.Router.ADDRESS)
-          public final InetAddress providesHostname(CConfiguration cConf) {
-            return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
-                                    new InetSocketAddress("localhost", 0).getAddress());
-          }
-        },
-        new InMemorySecurityModule(),
-        new GatewayModule().getInMemoryModules(),
-        new AppFabricTestModule(conf),
-        new StreamHttpModule()
-      ).with(new AbstractModule() {
-               @Override
-               protected void configure() {
-                 // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-                 // AppFabricServiceModule
-                 bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-                 bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
-
-                 MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-                 bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-                 bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-
-               }
-             }
-      ));
-
-    gateway = injector.getInstance(Gateway.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class);
-    metrics = injector.getInstance(MetricsQueryService.class);
-    streamHttpService = injector.getInstance(StreamHttpService.class);
-    appFabricServer.startAndWait();
-    metrics.startAndWait();
-    streamHttpService.startAndWait();
-    gateway.startAndWait();
-
-    // Restart handlers to check if they are resilient across restarts.
-    gateway.stopAndWait();
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
-    router = injector.getInstance(NettyRouter.class);
-    router.startAndWait();
-    Map<String, Integer> serviceMap = Maps.newHashMap();
-    for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
-      serviceMap.put(entry.getValue(), entry.getKey());
-    }
-    port = serviceMap.get(Constants.Service.GATEWAY);
-
-    return injector;
-  }
-
-  public static void stopGateway(CConfiguration conf) {
-    gateway.stopAndWait();
-    appFabricServer.stopAndWait();
-    metrics.stopAndWait();
-    streamHttpService.stopAndWait();
-    conf.clear();
-  }
-
-  public static Injector getInjector() {
-    return injector;
-  }
-
-  public static int getPort() {
-    return port;
-  }
-
-  public static Header getAuthHeader() {
-    return AUTH_HEADER;
-  }
+  private static final Header AUTH_HEADER = GatewayTestBase.getAuthHeader();
 
   public static HttpResponse doGet(String resource) throws Exception {
     return doGet(resource, null);
@@ -227,8 +68,7 @@ public class GatewayFastTestsSuite {
 
   public static HttpResponse doGet(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet("http://" + hostname + ":" + port + resource);
-
+    HttpGet get = new HttpGet(GatewayTestBase.getEndPoint(resource));
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
@@ -240,14 +80,14 @@ public class GatewayFastTestsSuite {
 
   public static org.apache.http.HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    HttpPut put = new HttpPut(GatewayTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return client.execute(put);
   }
 
   public static HttpResponse doPut(String resource, String body) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    HttpPut put = new HttpPut(GatewayTestBase.getEndPoint(resource));
     if (body != null) {
       put.setEntity(new StringEntity(body));
     }
@@ -267,14 +107,14 @@ public class GatewayFastTestsSuite {
     return client.execute(request);
   }
 
-  public static HttpPost getPost(String resource) {
-    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+  public static HttpPost getPost(String resource) throws Exception {
+    HttpPost post = new HttpPost(GatewayTestBase.getEndPoint(resource));
     post.setHeader(AUTH_HEADER);
     return post;
   }
 
-  public static HttpPut getPut(String resource) {
-    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+  public static HttpPut getPut(String resource) throws Exception {
+    HttpPut put = new HttpPut(GatewayTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return put;
   }
@@ -285,8 +125,7 @@ public class GatewayFastTestsSuite {
 
   public static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
-
+    HttpPost post = new HttpPost(GatewayTestBase.getEndPoint(resource));
     if (body != null) {
       post.setEntity(new StringEntity(body));
     }
@@ -301,7 +140,7 @@ public class GatewayFastTestsSuite {
 
   public static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
+    HttpDelete delete = new HttpDelete(GatewayTestBase.getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
   }

@@ -1,0 +1,12 @@
+styles:
+    antique1: fontName: GL-Antique
+    antique2: fontName: antique
+    antique3: fontName: Antique
+    tuffy1: fontName: Tuffy
+    tuffy2: fontName: Tuffy-Italic
+    tuffy3: fontName: Tuffy-Bold
+    tuffy4: fontName: Tuffy-Bold-Italic
+    tuffy5: fontName: Tuffy
+    tuffy6: fontName: Tuffy Italic
+    tuffy7: fontName: Tuffy Bold
+    tuffy8: fontName: Tuffy Bold Italic
