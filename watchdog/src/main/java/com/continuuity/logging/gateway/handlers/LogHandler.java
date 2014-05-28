@@ -195,27 +195,31 @@ public class LogHandler extends AuthenticatedHttpHandler {
     logResults.add(jsonObject);
     responder.sendJson(HttpResponseStatus.OK, logResults);
   }
+
+  /*
+    TODO: currently Mock Endpoints for twill-apps logs, implementation will be added later.
+   */
   @GET
-  @Path("/user/{app-id}/logs")
-  public void list(HttpRequest request, HttpResponder responder,
-  @PathParam("app-id") String appId) {
-    // todo: set entity type as twill
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs")
+  public void servicelist(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
     sendMockLog(responder);
   }
 
   @GET
-  @Path("/user/{app-id}/prev")
-  public void prev(HttpRequest request, HttpResponder responder,
-                   @PathParam("app-id") String appId) {
-    // todo: set entity type as twill
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/next")
+  public void serviceNext(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
     sendMockLog(responder);
   }
 
   @GET
-  @Path("/user/{app-id}/next")
-  public void next(HttpRequest request, HttpResponder responder,
-                   @PathParam("app-id") String appId) {
-    // todo: set entity type as twill
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/prev")
+  public void servicePrev(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
     sendMockLog(responder);
   }
 

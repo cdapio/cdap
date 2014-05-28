@@ -14,18 +14,21 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.util.List;
-import java.util.Map;
 
 
 /**
  *  Handler class for Twill User Apps
- *  TODO: Currently this is a Mock API, Implmentation will be added in next steps.
+ *  TODO: Currently this is a Mock API, Implementation will be added in next steps.
+ *  Will Extend AppFabricHelper, which will have the required common methods from AppFabricHttpHandler, once that
+ *  is merged
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class UserServiceHttpHandler extends AbstractHttpHandler {
@@ -44,7 +47,7 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param responder
    * @param appId
    */
-  @Path("/user/{app-id}/")
+  @Path("/apps/{app-id}/services")
   @GET
   public void getUserApps(final HttpRequest request, final HttpResponder responder,
                           @PathParam("app-id") final String appId) {
@@ -64,12 +67,13 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @GET
-  @Path("/user/{app-id}/runtimeargs")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/runtimeargs")
   public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId) {
-      Map<String, String> runtimeArgs = Maps.newHashMap();
-      runtimeArgs.put("threshold", "100");
-      responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("runnable-id") final String runId) {
+    Map<String, String> runtimeArgs = Maps.newHashMap();
+    runtimeArgs.put("threshold", "100");
+    responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
   /**
@@ -79,9 +83,10 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @PUT
-  @Path("/user/{app-id}/runtimeargs")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/runtimeargs")
   public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId) {
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("runnable-id") final String runId) {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -92,9 +97,10 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @GET
-  @Path("/user/{app-id}/instances")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/instances")
   public void getUserAppInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId) {
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("runnable-id") final String runId) {
     JsonObject reply = new JsonObject();
     reply.addProperty("instances", 3);
     responder.sendJson(HttpResponseStatus.OK, reply);
@@ -107,9 +113,10 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @PUT
-  @Path("/user/{app-id}/instances")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/instances")
   public void setUserAppInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId) {
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("runnable-id") final String runId) {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -120,7 +127,7 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @POST
-  @Path("/user/{app-id}/start")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/start")
   public void startApp(HttpRequest request, HttpResponder responder,
                        @PathParam("app-id") final String appId) {
     responder.sendStatus(HttpResponseStatus.OK);
@@ -133,9 +140,9 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @POST
-  @Path("/user/{app-id}/stop")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/stop")
   public void stopApp(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") final String appId) {
+                      @PathParam("app-id") final String appId) {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -146,12 +153,12 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @GET
-  @Path("/user/{app-id}/status")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/status")
   public void appStatus(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") final String appId) {
-    JsonObject reply = new JsonObject();
-    reply.addProperty("status", "RUNNING");
-    responder.sendJson(HttpResponseStatus.OK, reply);
+                        @PathParam("app-id") final String appId) {
+    JsonObject object = new JsonObject();
+    object.addProperty("status", "RUNNING");
+    responder.sendJson(HttpResponseStatus.OK, object);
   }
 
   /**
@@ -161,9 +168,10 @@ public class UserServiceHttpHandler extends AbstractHttpHandler {
    * @param appId
    */
   @GET
-  @Path("/user/{app-id}/live-info")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/live-info")
   public void liveInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") final String appId) {
+                       @PathParam("app-id") final String appId,
+                       @PathParam("runnable-id") final String runId) {
     JsonObject reply = new JsonObject();
     reply.addProperty("app", appId);
     reply.addProperty("type", "twill");
