@@ -10,6 +10,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
@@ -19,15 +20,24 @@ import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.DatasetManagementException;
+import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
@@ -50,15 +60,16 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link com.continuuity.data2.dataset2.executor.DatasetOpExecutorServer}.
+ * Test for {@link DatasetOpExecutorService}.
  */
-public class DatasetOpExecutorServerTest {
+public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServerTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -86,18 +97,22 @@ public class DatasetOpExecutorServerTest {
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
-      new DatasetOpExecutorServerModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules(cConf, hConf).getInMemoryModules(),
-      Modules.override(new DataSetServiceModules().getInMemoryModule()).with(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
-          }
+      Modules.override(new DataSetServiceModules().getInMemoryModule()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+          handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+          handlerBinder.addBinding().to(PingHandler.class);
+
+          bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+
+          bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         }
-      ),
+      }),
       new AuthModule(), new AbstractModule() {
       @Override
       protected void configure() {
@@ -112,6 +127,8 @@ public class DatasetOpExecutorServerTest {
     managerService.startAndWait();
 
     // initialize client
+    DatasetOpExecutor opExecutor = injector.getInstance(DatasetOpExecutor.class);
+
     DatasetManagerServiceClient serviceClient = new DatasetManagerServiceClient(
       injector.getInstance(DiscoveryServiceClient.class));
 
@@ -160,48 +177,26 @@ public class DatasetOpExecutorServerTest {
     testAdminOp("bob", "exists", 200, false);
   }
 
-  private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedBody)
+  private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
 
     InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
     URI baseUri = new URI("http://" + socketAddress.getHostName() + ":" + socketAddress.getPort());
     String template =  Constants.Gateway.GATEWAY_VERSION + "/data/instances/%s/admin/%s";
-    URI targetUri = baseUri.resolve(String.format(template, instanceName, opName));
+    URL targetUrl = baseUri.resolve(String.format(template, instanceName, opName)).toURL();
 
-    Response<DatasetAdminOpResponse> response = doPost(targetUri, DatasetAdminOpResponse.class);
-    Assert.assertEquals(expectedStatus, response.getStatusCode());
-    Assert.assertEquals(expectedBody, response.getBody().or(new DatasetAdminOpResponse(null, null)).getResult());
+    HttpRequests.HttpResponse response = HttpRequests.post(targetUrl);
+    DatasetAdminOpResponse body = getResponse(response.getResponseBody());
+    Assert.assertEquals(expectedStatus, response.getResponseCode());
+    Assert.assertEquals(expectedResult, body.getResult());
   }
 
-  private <T> Response<T> doPost(URI uri, Class<T> cls) throws IOException {
-    try {
-      LOG.info("doPost({}, {})", uri.toASCIIString(), cls);
-      HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-      connection.setRequestMethod("POST");
-      InputStream response = connection.getInputStream();
-      T body = GSON.fromJson(new InputStreamReader(response), cls);
-      return new Response(connection.getResponseCode(), body);
-    } catch (FileNotFoundException e) {
-      return new Response(404, null);
-    }
-  }
-
-  private static final class Response<T> {
-    private final int statusCode;
-    private final Optional<T> body;
-
-    private Response(int statusCode, T body) {
-      this.statusCode = statusCode;
-      this.body = Optional.fromNullable(body);
+  private DatasetAdminOpResponse getResponse(byte[] body) {
+    if (body == null) {
+      return new DatasetAdminOpResponse(null, null);
     }
 
-    public int getStatusCode() {
-      return statusCode;
-    }
-
-    public Optional<T> getBody() {
-      return body;
-    }
+    return GSON.fromJson(new String(body), DatasetAdminOpResponse.class);
   }
 
 }

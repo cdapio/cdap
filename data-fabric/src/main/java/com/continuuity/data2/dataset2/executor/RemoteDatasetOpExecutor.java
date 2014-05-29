@@ -4,6 +4,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.exception.HandlerException;
 import com.continuuity.common.http.HttpRequests;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -11,6 +12,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,7 +21,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Executes Dataset operations by querying a {@link DatasetOpExecutorServer} via REST.
+ * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
 public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
@@ -64,8 +66,15 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     executeAdminOp(instanceName, "upgrade");
   }
 
-  private DatasetAdminOpResponse executeAdminOp(String instanceName, String opName) throws IOException {
+  private DatasetAdminOpResponse executeAdminOp(String instanceName, String opName)
+    throws IOException, HandlerException {
+
     HttpRequests.HttpResponse httpResponse = HttpRequests.post(resolve(instanceName, opName));
+    if (httpResponse.getResponseCode() != 200) {
+      throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
+                                 httpResponse.getResponseMessage());
+    }
+
     return GSON.fromJson(new String(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
