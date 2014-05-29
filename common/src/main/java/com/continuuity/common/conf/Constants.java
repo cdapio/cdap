@@ -17,9 +17,9 @@ public final class Constants {
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
-    public static final String DATASET_MANAGER = "dataset.manager";
     public static final String REACTOR_SERVICES = "reactor.services";
-    public static final String DATASET_USER = "dataset.user";
+    public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
   }
 
@@ -305,23 +305,23 @@ public final class Constants {
     /**
      * DatasetUserService configuration.
      */
-    public static final class User {
+    public static final class Executor {
       /** for the port of the dataset user service server. */
-      public static final String PORT = "dataset.user.bind.port";
+      public static final String PORT = "dataset.executor.bind.port";
 
       /** for the address (hostname) of the dataset server. */
-      public static final String ADDRESS = "dataset.user.bind.address";
+      public static final String ADDRESS = "dataset.executor.bind.address";
 
-      public static final String BACKLOG_CONNECTIONS = "dataset.user.connection.backlog";
-      public static final String EXEC_THREADS = "dataset.user.exec.threads";
-      public static final String BOSS_THREADS = "dataset.user.boss.threads";
-      public static final String WORKER_THREADS = "dataset.user.worker.threads";
-      public static final String OUTPUT_DIR = "dataset.user.output.dir";
+      public static final String BACKLOG_CONNECTIONS = "dataset.executor.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.executor.exec.threads";
+      public static final String BOSS_THREADS = "dataset.executor.boss.threads";
+      public static final String WORKER_THREADS = "dataset.executor.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.executor.output.dir";
 
       /** Twill Runnable configuration **/
-      public static final String CONTAINER_VIRTUAL_CORES = "dataset.user.container.num.cores";
-      public static final String CONTAINER_MEMORY_MB = "dataset.user.container.memory.mb";
-      public static final String CONTAINER_INSTANCES = "dataset.user.container.instances";
+      public static final String CONTAINER_VIRTUAL_CORES = "dataset.executor.container.num.cores";
+      public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
+      public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
     }
   }
 

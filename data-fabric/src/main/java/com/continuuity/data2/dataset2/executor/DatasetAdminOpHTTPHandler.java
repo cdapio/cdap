@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.user;
+package com.continuuity.data2.dataset2.executor;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
@@ -6,7 +6,6 @@ import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
 import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.google.inject.Inject;
@@ -25,14 +24,14 @@ import javax.ws.rs.PathParam;
  * Provides REST endpoints for {@link DatasetAdmin} operations.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
+public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminHTTPHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
 
   private final DataFabricDatasetManager client;
 
   @Inject
-  public DatasetAdminHTTPHandler(Authenticator authenticator, DataFabricDatasetManager client) {
+  public DatasetAdminOpHTTPHandler(Authenticator authenticator, DataFabricDatasetManager client) {
     super(authenticator);
     this.client = client;
   }
@@ -42,7 +41,7 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
   public void exists(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
-      responder.sendJson(HttpResponseStatus.OK, new AdminOpResponse(datasetAdmin.exists(), null));
+      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(datasetAdmin.exists(), null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
       responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -58,7 +57,7 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.create();
-      responder.sendJson(HttpResponseStatus.OK, new AdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
       responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -74,7 +73,7 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.drop();
-      responder.sendJson(HttpResponseStatus.OK, new AdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
       responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -90,7 +89,7 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.truncate();
-      responder.sendJson(HttpResponseStatus.OK, new AdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
       responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));
@@ -106,7 +105,7 @@ public class DatasetAdminHTTPHandler extends AuthenticatedHttpHandler {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.upgrade();
-      responder.sendJson(HttpResponseStatus.OK, new AdminOpResponse(null, null));
+      responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (HandlerException e) {
       LOG.debug("Got handler exception", e);
       responder.sendError(e.getFailureStatus(), StringUtils.defaultIfEmpty(e.getMessage(), ""));

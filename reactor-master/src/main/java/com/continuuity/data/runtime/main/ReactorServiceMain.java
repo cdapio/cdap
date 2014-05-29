@@ -111,8 +111,6 @@ public class ReactorServiceMain extends DaemonMain {
     serviceName = twillApplication.configure().getName();
 
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
-    // TODO(alvin): remove once DatasetUserService runs outside of DatasetManagerService
-    cConf.set(Constants.Dataset.User.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -172,6 +170,7 @@ public class ReactorServiceMain extends DaemonMain {
         isLeader.set(false);
       }
     });
+    leaderElection.start();
   }
 
   @Override
@@ -183,7 +182,8 @@ public class ReactorServiceMain extends DaemonMain {
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
-    leaderElection.cancel();
+
+    leaderElection.stopAndWait();
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
