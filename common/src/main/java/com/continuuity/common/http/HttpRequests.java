@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -118,7 +119,8 @@ public final class HttpRequests {
         }
       }
       return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(), responseBody);
-
+    } catch (FileNotFoundException e) {
+      return new HttpResponse(404, conn.getResponseMessage(), null);
     } finally {
       conn.disconnect();
     }

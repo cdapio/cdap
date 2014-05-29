@@ -11,8 +11,8 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutorServer;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutorServerModule;
+import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data2.dataset2.executor.DatasetOpExecutorService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.util.concurrent.Service;
@@ -59,8 +59,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRu
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new AuthModule(),
-      new DatasetOpExecutorServerModule());
+      new DataSetServiceModules().getDistributedModule(),
+      new AuthModule());
   }
 
   @Override
@@ -68,6 +68,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRu
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
-    services.add(injector.getInstance(DatasetOpExecutorServer.class));
+    services.add(injector.getInstance(DatasetOpExecutorService.class));
   }
 }

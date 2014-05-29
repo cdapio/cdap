@@ -8,10 +8,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
  */
 public class LocalDatasetOpExecutor extends RemoteDatasetOpExecutor {
 
-  private final DatasetOpExecutorServer executorServer;
+  private final DatasetOpExecutorService executorServer;
 
   @Inject
-  public LocalDatasetOpExecutor(DiscoveryServiceClient discoveryClient, DatasetOpExecutorServer executorServer) {
+  public LocalDatasetOpExecutor(DiscoveryServiceClient discoveryClient, DatasetOpExecutorService executorServer) {
     super(discoveryClient);
     this.executorServer = executorServer;
   }
