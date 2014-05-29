@@ -21,8 +21,8 @@ import java.util.Map;
 /**
  *
  */
-public abstract class AbstractAppFabricHelper extends AuthenticatedHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHelper.class);
+public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
     = new TypeToken<Map<String, String>>() { }.getType();
@@ -34,7 +34,7 @@ public abstract class AbstractAppFabricHelper extends AuthenticatedHttpHandler {
 
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  public AbstractAppFabricHelper(Authenticator authenticator) {
+  public AbstractAppFabricHttpHandler(Authenticator authenticator) {
     super(authenticator);
   }
 

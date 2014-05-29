@@ -74,12 +74,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                MapBinder<String, ReactorServiceManagement> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, ReactorServiceManagement.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryReactorServiceManagement.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 TransactionServiceManagement.class);
+                                 InMemoryReactorServiceManagement.class);
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
-                                 MetricsProcessorServiceManagement.class);
-                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManagement.class);
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(
+                                 InMemoryReactorServiceManagement.class);
                              }
                            });
   }
@@ -121,14 +123,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                MapBinder<String, ReactorServiceManagement> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, ReactorServiceManagement.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
-                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManagement.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 InMemoryReactorServiceManagement.class);
+                                 TransactionServiceManagement.class);
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
-                                 InMemoryReactorServiceManagement.class);
-                               mapBinder.addBinding(Constants.Service.METRICS).to(
-                                 InMemoryReactorServiceManagement.class);
+                                 MetricsProcessorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManagement.class);
                              }
                            });
   }

@@ -6,7 +6,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.ReactorServiceManagement;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.gateway.handlers.util.AbstractAppFabricHelper;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -39,7 +39,7 @@ import javax.ws.rs.PathParam;
  * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class MonitorHandler extends AbstractAppFabricHelper {
+public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, ReactorServiceManagement> reactorServiceManagementMap;
@@ -135,7 +135,7 @@ public class MonitorHandler extends AbstractAppFabricHelper {
         return;
       }
 
-      if(reactorServiceManagementMap.get(serviceName).setInstanceCount(instance)) {
+      if (reactorServiceManagementMap.get(serviceName).setInstanceCount(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
