@@ -35,7 +35,6 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.twill.api.TwillSpecification;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -43,6 +42,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.SortedMap;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.

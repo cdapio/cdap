@@ -8,7 +8,7 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- *
+ * Test Application with services for the new application API.
  */
 public class AppWithServices extends AbstractApplication {
 
@@ -16,18 +16,20 @@ public class AppWithServices extends AbstractApplication {
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
     configurer.setName("AppWithServices");
     configurer.setDescription("Application with services");
-    configurer.addService(new TwillApplication() {
-      @Override
-      public TwillSpecification configure() {
-        return TwillSpecification.Builder.with()
-          .setName("NoOpService")
-          .withRunnable()
-            .add(new DummyService())
-          .noLocalFiles()
-          .anyOrder()
-          .build();
-      }
-    });
+    configurer.addService(new DummyTwillApplication());
+  }
+
+  public static final class DummyTwillApplication implements TwillApplication {
+   @Override
+    public TwillSpecification configure() {
+      return TwillSpecification.Builder.with()
+               .setName("NoOpService")
+               .withRunnable()
+               .add(new DummyService())
+               .noLocalFiles()
+               .anyOrder()
+               .build();
+     }
   }
 
   public static final class DummyService extends AbstractTwillRunnable {
