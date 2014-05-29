@@ -1,7 +1,9 @@
-package com.continuuity.data2.dataset2.user;
+package com.continuuity.data2.dataset2.executor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -26,11 +28,10 @@ import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -49,21 +50,22 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link DatasetUserService}.
+ * Test for {@link com.continuuity.data2.dataset2.executor.DatasetOpExecutorServer}.
  */
-public class DatasetUserServiceTest {
+public class DatasetOpExecutorServerTest {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetUserServiceTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServerTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private DatasetManagerService managerService;
-  private InetSocketAddress userServiceAddress;
   private DataFabricDatasetManager managerClient;
+  private TimeLimitEndpointStrategy endpointStrategy;
 
   @Before
   public void setUp() throws IOException {
@@ -77,17 +79,25 @@ public class DatasetUserServiceTest {
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
 
-    cConf.set(Constants.Dataset.User.ADDRESS, "localhost");
-    cConf.setInt(Constants.Dataset.User.PORT, Networks.getRandomPort());
+    cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
+    cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
+      new DatasetOpExecutorServerModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules(cConf, hConf).getInMemoryModules(),
-      new DataSetServiceModules().getInMemoryModule(),
+      Modules.override(new DataSetServiceModules().getInMemoryModule()).with(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+          }
+        }
+      ),
       new AuthModule(), new AbstractModule() {
       @Override
       protected void configure() {
@@ -101,11 +111,6 @@ public class DatasetUserServiceTest {
     managerService = injector.getInstance(DatasetManagerService.class);
     managerService.startAndWait();
 
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_USER);
-    Discoverable userServiceDiscoverable = discover.iterator().next();
-    userServiceAddress = userServiceDiscoverable.getSocketAddress();
-
     // initialize client
     DatasetManagerServiceClient serviceClient = new DatasetManagerServiceClient(
       injector.getInstance(DiscoveryServiceClient.class));
@@ -115,6 +120,12 @@ public class DatasetUserServiceTest {
       cConf,
       injector.getInstance(LocationFactory.class),
       new InMemoryDatasetDefinitionRegistry());
+
+    // find host
+    DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(
+        discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
   }
 
   @After
@@ -123,8 +134,6 @@ public class DatasetUserServiceTest {
 
     managerService.stopAndWait();
     managerService = null;
-
-    userServiceAddress = null;
   }
 
   @Test
@@ -154,13 +163,14 @@ public class DatasetUserServiceTest {
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedBody)
     throws URISyntaxException, IOException {
 
-    URI baseUri = new URI("http://" + userServiceAddress.getHostName() + ":" + userServiceAddress.getPort());
+    InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
+    URI baseUri = new URI("http://" + socketAddress.getHostName() + ":" + socketAddress.getPort());
     String template =  Constants.Gateway.GATEWAY_VERSION + "/data/instances/%s/admin/%s";
     URI targetUri = baseUri.resolve(String.format(template, instanceName, opName));
 
-    Response<AdminOpResponse> response = doPost(targetUri, AdminOpResponse.class);
+    Response<DatasetAdminOpResponse> response = doPost(targetUri, DatasetAdminOpResponse.class);
     Assert.assertEquals(expectedStatus, response.getStatusCode());
-    Assert.assertEquals(expectedBody, response.getBody().or(new AdminOpResponse(null, null)).getResult());
+    Assert.assertEquals(expectedBody, response.getBody().or(new DatasetAdminOpResponse(null, null)).getResult());
   }
 
   private <T> Response<T> doPost(URI uri, Class<T> cls) throws IOException {

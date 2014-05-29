@@ -8,9 +8,9 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.NamespacedDatasetManager;
-import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -41,7 +41,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
-  private final DatasetUserService userService;
+  private final DatasetOpExecutor opExecutorClient;
   private Cancellable cancelDiscovery;
 
   private final DatasetInstanceManager instanceManager;
@@ -60,7 +60,7 @@ public class DatasetManagerService extends AbstractIdleService {
                                SortedMap<String, Class<? extends DatasetModule>> defaultModules,
                                TransactionSystemClient txSystemClient,
                                MetricsCollectionService metricsCollectionService,
-                               DatasetUserService userService) throws Exception {
+                               DatasetOpExecutor opExecutorClient) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -74,8 +74,8 @@ public class DatasetManagerService extends AbstractIdleService {
     this.instanceManager = new DatasetInstanceManager(mdsDatasetManager, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(discoveryServiceClient,
-                                                                        typeManager, instanceManager)));
+                                             new DatasetInstanceHandler(discoveryServiceClient, typeManager,
+                                                                        instanceManager, opExecutorClient)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
@@ -94,7 +94,7 @@ public class DatasetManagerService extends AbstractIdleService {
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
-    this.userService = userService;
+    this.opExecutorClient = opExecutorClient;
   }
 
   @Override
@@ -109,7 +109,7 @@ public class DatasetManagerService extends AbstractIdleService {
     typeManager.startAndWait();
     instanceManager.startAndWait();
 
-    userService.startAndWait();
+    opExecutorClient.startAndWait();
     httpService.startAndWait();
 
     // Register the service
@@ -145,7 +145,7 @@ public class DatasetManagerService extends AbstractIdleService {
     }
 
     httpService.stopAndWait();
-    userService.stopAndWait();
+    opExecutorClient.stopAndWait();
   }
 
   @Override
