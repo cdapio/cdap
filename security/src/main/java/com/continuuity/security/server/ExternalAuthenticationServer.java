@@ -90,7 +90,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       public InetSocketAddress getSocketAddress() throws RuntimeException {
         InetAddress address;
         try {
-          address = InetAddress.getByName(server.getConnectors()[0].getHost());
+          address = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
           LOG.error("Error finding host to connect to.", e);
           throw Throwables.propagate(e);
