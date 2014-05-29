@@ -38,14 +38,6 @@ class DataSetsModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
         expose(DatasetManager.class);
-
-        // TODO: remove once DatasetUserService is run on-demand
-        Named datasetUserName = Names.named(Constants.Service.DATASET_USER);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        handlerBinder.addBinding().to(DatasetAdminHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
-        bind(DatasetUserService.class).in(Scopes.SINGLETON);
-        expose(DatasetUserService.class);
       }
     };
 
@@ -58,14 +50,6 @@ class DataSetsModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
         expose(DatasetManager.class);
-
-        // TODO: remove once DatasetUserService is run on-demand
-        Named datasetUserName = Names.named(Constants.Service.DATASET_USER);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        handlerBinder.addBinding().to(DatasetAdminHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
-        bind(DatasetUserService.class).in(Scopes.SINGLETON);
-        expose(DatasetUserService.class);
       }
     };
 
@@ -78,14 +62,6 @@ class DataSetsModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetManager.class).to(DataFabricDatasetManager.class);
         expose(DatasetManager.class);
-
-        // TODO: remove once DatasetUserService is run on-demand
-        Named datasetUserName = Names.named(Constants.Service.DATASET_USER);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        handlerBinder.addBinding().to(DatasetAdminHTTPHandler.class);
-        handlerBinder.addBinding().to(PingHandler.class);
-        bind(DatasetUserService.class).in(Scopes.SINGLETON);
-        expose(DatasetUserService.class);
       }
     };
   }
