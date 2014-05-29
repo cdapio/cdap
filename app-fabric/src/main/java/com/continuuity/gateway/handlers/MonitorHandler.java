@@ -4,8 +4,9 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.twill.ReactorServiceManagement;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.gateway.handlers.util.AppFabricHelper;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHelper;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -14,8 +15,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -40,10 +39,10 @@ import javax.ws.rs.PathParam;
  * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class MonitorHandler extends AppFabricHelper {
+public class MonitorHandler extends AbstractAppFabricHelper {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final TwillRunnerService twillRunnerService;
+  private final Map<String, ReactorServiceManagement> reactorServiceManagementMap;
   private static final String STATUS_OK = "OK";
   private static final String STATUS_NOTOK = "NOTOK";
 
@@ -78,18 +77,12 @@ public class MonitorHandler extends AppFabricHelper {
   private List<Service> monitorList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS,
                                                     Service.APPFABRIC);
 
-  //List of services whose number of container instances can be queried
-  private List<Service> getInstanceList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS);
-
-  //List of services whose instance count can be changed
-  private List<Service> setInstanceList = Arrays.asList(Service.METRICS, Service.TRANSACTION);
-
   @Inject
   public MonitorHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient,
-                        TwillRunnerService twillRunnerService) {
+                        Map<String, ReactorServiceManagement> serviceMap) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
-    this.twillRunnerService = twillRunnerService;
+    this.reactorServiceManagementMap = serviceMap;
   }
 
   /**
@@ -119,20 +112,12 @@ public class MonitorHandler extends AppFabricHelper {
   @GET
   public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    int instances = 0;
-    try {
-      if (twillControllerList != null && getInstanceList.contains(Service.valueofName(serviceName))) {
-        for (TwillController twillController : twillControllerList) {
-          instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
-        }
-        responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
-      } else {
-        //Cannot get ServiceInstance in SingleNode
-        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      }
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
+    if (reactorServiceManagementMap.containsKey(serviceName)) {
+      int instances = reactorServiceManagementMap.get(serviceName).getInstanceCount();
+      responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Invalid Service Name or Operation not valid for this service");
     }
   }
 
@@ -143,27 +128,21 @@ public class MonitorHandler extends AppFabricHelper {
   @PUT
   public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
     try {
-      if (twillControllerList != null && setInstanceList.contains(Service.valueofName(serviceName))) {
-        int instance = getInstances(request);
-        if (instance < 1) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-          return;
-        }
+      int instance = getInstances(request);
+      if (instance < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
 
-        for (TwillController twillController : twillControllerList) {
-          twillController.changeInstances(serviceName, instance).get();
-        }
+      if(reactorServiceManagementMap.get(serviceName).setInstanceCount(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
-        //Cannot set serviceInstance in SingleNode
-        responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
       }
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Invalid Service Name Or Operation Not Valid for this service");
     }
   }
 

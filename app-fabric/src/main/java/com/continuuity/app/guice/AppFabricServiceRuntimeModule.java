@@ -5,11 +5,12 @@ package com.continuuity.app.guice;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
-import com.continuuity.app.services.DummyTwillRunnerService;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
+import com.continuuity.common.twill.InMemoryReactorServiceManagement;
+import com.continuuity.common.twill.ReactorServiceManagement;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
@@ -18,6 +19,7 @@ import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.runtime.distributed.TransactionServiceManagement;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
@@ -26,6 +28,9 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.logging.run.LogSaverServiceManagement;
+import com.continuuity.metrics.runtime.MetricsProcessorServiceManagement;
+import com.continuuity.metrics.runtime.MetricsServiceManagement;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -33,11 +38,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.twill.api.TwillRunnerService;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -66,7 +71,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(TwillRunnerService.class).to(DummyTwillRunnerService.class);
+
+                               MapBinder<String, ReactorServiceManagement> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 TransactionServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 MetricsProcessorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManagement.class);
                              }
                            });
   }
@@ -80,7 +93,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(TwillRunnerService.class).to(DummyTwillRunnerService.class);
+
+                               MapBinder<String, ReactorServiceManagement> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(
+                                 InMemoryReactorServiceManagement.class);
                              }
                            });
   }
@@ -95,6 +118,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManagement> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryReactorServiceManagement.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(
+                                 InMemoryReactorServiceManagement.class);
                              }
                            });
   }

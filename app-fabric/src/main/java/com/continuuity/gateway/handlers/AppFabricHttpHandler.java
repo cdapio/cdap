@@ -48,7 +48,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.handlers.util.AppFabricHelper;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHelper;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -143,7 +143,7 @@ import javax.ws.rs.PathParam;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AppFabricHelper {
+public class AppFabricHttpHandler extends AbstractAppFabricHelper {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE

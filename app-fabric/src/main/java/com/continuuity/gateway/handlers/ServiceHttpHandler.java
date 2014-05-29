@@ -24,7 +24,7 @@ import javax.ws.rs.PathParam;
 /**
  *  Handler class for Twill User Apps
  *  TODO: Currently this is a Mock API, Implementation will be added in next steps.
- *  Will Extend AppFabricHelper, which will have the required common methods from AppFabricHttpHandler, once that
+ *  Will Extend AbstractAppFabricHelper, which will have the required common methods from AppFabricHttpHandler, once that
  *  is merged
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
