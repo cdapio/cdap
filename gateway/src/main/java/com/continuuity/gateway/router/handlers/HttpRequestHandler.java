@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.exception.HandlerException;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
