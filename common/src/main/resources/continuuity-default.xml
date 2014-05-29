@@ -243,6 +243,13 @@
     </property>
 
     <property>
+        <name>stream.partition.ttl</name>
+        <!-- 0 indicates indefinite TTL !-->
+        <value>0</value>
+        <description>Default time to live in milliseconds for stream partitions</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for stream file</description>
