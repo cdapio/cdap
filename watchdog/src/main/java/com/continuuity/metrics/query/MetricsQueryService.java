@@ -71,6 +71,7 @@ public class MetricsQueryService extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.METRICS));
+
     LOG.info("Starting Metrics Service...");
     httpService.startAndWait();
     LOG.info("Started Metrics HTTP Service...");

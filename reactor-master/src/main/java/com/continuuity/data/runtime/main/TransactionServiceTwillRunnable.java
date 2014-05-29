@@ -48,7 +48,6 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   private KafkaClientService kafkaClient;
   private MetricsCollectionService metricsCollectionService;
   private TransactionService txService;
-  private LogAppenderInitializer logAppenderInitializer;
 
   public TransactionServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -60,8 +59,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
-      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-      logAppenderInitializer.initialize();
+      injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));

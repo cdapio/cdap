@@ -39,7 +39,6 @@ import java.util.List;
 public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
 
   private Injector injector;
-  private LogAppenderInitializer logAppenderInitializer;
 
   public StreamHandlerRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -69,8 +68,8 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
                                       new LoggingModules().getDistributedModules(),
                                       new AuthModule(),
                                       new StreamHttpModule());
-      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-      logAppenderInitializer.initialize();
+
+      injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          "streams"));

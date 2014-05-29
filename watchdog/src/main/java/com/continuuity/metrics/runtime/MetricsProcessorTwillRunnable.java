@@ -55,7 +55,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
   private KafkaMetricsProcessorService kafkaMetricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
-  private LogAppenderInitializer logAppenderInitializer;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -66,8 +65,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
     try {
       getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
-      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-      logAppenderInitializer.initialize();
+      injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          "processor"));
