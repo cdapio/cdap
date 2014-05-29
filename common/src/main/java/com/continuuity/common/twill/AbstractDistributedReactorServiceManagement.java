@@ -8,7 +8,7 @@ import org.apache.twill.api.TwillRunnerService;
 import java.util.concurrent.ExecutionException;
 
 /**
- *
+ * Abstract class that can be extended by individual Reactor Services to implement their management methods.
  */
 public abstract class AbstractDistributedReactorServiceManagement implements ReactorServiceManagement {
 

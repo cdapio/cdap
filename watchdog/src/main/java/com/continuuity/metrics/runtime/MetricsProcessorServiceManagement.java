@@ -6,7 +6,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 
 /**
- *
+ * Metrics Processor Reactor Service Management in Distributed Mode.
  */
 public class MetricsProcessorServiceManagement extends AbstractDistributedReactorServiceManagement {
 

@@ -6,7 +6,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 
 /**
- *
+ * Transaction Reactor Service Management in Distributed Mode.
  */
 public class TransactionServiceManagement extends AbstractDistributedReactorServiceManagement {
 

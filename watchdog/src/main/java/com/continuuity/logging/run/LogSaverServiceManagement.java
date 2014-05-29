@@ -6,7 +6,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 
 /**
- *
+ * Log Saver Reactor Service Management in Distributed Mode.
  */
 public class LogSaverServiceManagement extends AbstractDistributedReactorServiceManagement {
 

@@ -1,7 +1,7 @@
 package com.continuuity.common.twill;
 
 /**
- *
+ * InMemory Reactor Service Management class.
  */
 public class InMemoryReactorServiceManagement implements ReactorServiceManagement {
 

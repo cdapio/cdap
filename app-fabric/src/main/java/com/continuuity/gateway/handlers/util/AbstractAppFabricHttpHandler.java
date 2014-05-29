@@ -19,7 +19,7 @@ import java.io.Reader;
 import java.util.Map;
 
 /**
- *
+ * Abstract Class that contains commonly used methods for parsing Http Requests.
  */
 public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
