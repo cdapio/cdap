@@ -81,12 +81,13 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
   }
 
+  private static long timestamp = System.currentTimeMillis();
   @Override
   public Module getInMemoryModules() {
     File warehouseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "warehouse"),
-                                 Long.toString(System.currentTimeMillis()));
+                                 Long.toString(timestamp));
     File databaseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "database"),
-                                 Long.toString(System.currentTimeMillis()));
+                                Long.toString(timestamp));
     return getLocalModules(warehouseDir, databaseDir);
   }
 

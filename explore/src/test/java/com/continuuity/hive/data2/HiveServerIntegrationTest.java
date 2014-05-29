@@ -30,12 +30,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -47,20 +45,12 @@ public class HiveServerIntegrationTest {
   private static InMemoryHiveMetastore inMemoryHiveMetastore;
   private static DatasetManager datasetManager;
   private static DatasetManagerService datasetManagerService;
-  private static InMemoryZKServer zookeeper;
+//  private static InMemoryZKServer zookeeper;
   private static HiveClient hiveClient;
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration configuration = CConfiguration.create();
-    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
-    //noinspection ResultOfMethodCallIgnored
-    zkDir.mkdir();
-    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
-    zookeeper.startAndWait();
-
-    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
-    Injector injector = Guice.createInjector(createInMemoryModules(configuration, new Configuration()));
+    Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
@@ -111,9 +101,8 @@ public class HiveServerIntegrationTest {
   public static void stop() throws Exception {
     hiveServer.stopAndWait();
     inMemoryHiveMetastore.stopAndWait();
-//    transactionManager.stopAndWait();
+    transactionManager.stopAndWait();
     datasetManagerService.startAndWait();
-    zookeeper.stopAndWait();
   }
 
 
