@@ -530,7 +530,7 @@ public final class Constants {
    */
   public static final class Hive {
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
-    public static final String SERVER_PORT= "hive.server.port";
+    public static final String SERVER_PORT = "hive.server.port";
     public static final String METASTORE_PORT = "hive.local.metastore.port";
     public static final String METASTORE_WAREHOUSE_DIR = "reactor.hive.metastore.warehouse.dir";
     public static final String DATABASE_DIR = "reactor.hive.database.dir";
