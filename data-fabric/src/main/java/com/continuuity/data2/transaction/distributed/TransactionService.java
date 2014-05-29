@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-public class TransactionService extends InMemoryTransactionService {
+public final class TransactionService extends InMemoryTransactionService {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionService.class);
   private LeaderElection leaderElection;
   private final ZKClient zkClient;
