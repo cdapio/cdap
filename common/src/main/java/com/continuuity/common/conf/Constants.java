@@ -463,6 +463,7 @@ public final class Constants {
   public static final class Monitor {
     public static final String STATUS_OK = "OK";
     public static final String STATUS_NOTOK = "NOTOK";
+    public static final String DISCOVERY_TIMEOUT_SECONDS = "monitor.handler.service.discovery.timeout.seconds";
   }
 
   /**

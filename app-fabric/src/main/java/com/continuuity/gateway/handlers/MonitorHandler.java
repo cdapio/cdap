@@ -1,5 +1,6 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -47,7 +48,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 1;
+  private final long DISCOVERY_TIMEOUT_SECONDS;
 
   private enum ReactorService {
     METRICS (Constants.Service.METRICS),
@@ -67,9 +68,11 @@ public class MonitorHandler extends AbstractHttpHandler {
   }
 
   @Inject
-  public MonitorHandler(DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+  public MonitorHandler(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                        TransactionSystemClient txClient) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.DISCOVERY_TIMEOUT_SECONDS = cConf.getInt(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS, 1);
   }
 
   //Return the status of reactor services in JSON format
