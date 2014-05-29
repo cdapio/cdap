@@ -48,7 +48,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
-  private final long DISCOVERY_TIMEOUT_SECONDS;
+  private final long discoveryTimeout;
 
   private enum ReactorService {
     METRICS (Constants.Service.METRICS),
@@ -72,7 +72,7 @@ public class MonitorHandler extends AbstractHttpHandler {
                         TransactionSystemClient txClient) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.DISCOVERY_TIMEOUT_SECONDS = cConf.getInt(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS, 1);
+    this.discoveryTimeout = cConf.getInt(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS, 1);
   }
 
   //Return the status of reactor services in JSON format
@@ -111,7 +111,7 @@ public class MonitorHandler extends AbstractHttpHandler {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(ReactorService.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
       Discoverable discoverable = endpointStrategy.pick();
       if (discoverable == null) {
         return false;
