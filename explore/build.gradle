@@ -25,6 +25,7 @@ dependencies {
 
     testCompile libraries.junit
     testCompile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true], "explore-client")
+    testCompile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 }
 
 sourceSets{

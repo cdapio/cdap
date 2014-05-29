@@ -7,11 +7,13 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.HiveClientTestUtils;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.guice.HiveClientModule;
@@ -20,6 +22,7 @@ import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
@@ -108,7 +111,7 @@ public class HiveServerIntegrationTest {
   public static void stop() throws Exception {
     hiveServer.stopAndWait();
     inMemoryHiveMetastore.stopAndWait();
-    transactionManager.stopAndWait();
+//    transactionManager.stopAndWait();
     datasetManagerService.startAndWait();
     zookeeper.stopAndWait();
   }
@@ -131,7 +134,7 @@ public class HiveServerIntegrationTest {
                            "with serdeproperties (\"reactor.dataset.name\"=\"my_table\");", null, null);
     HiveClientTestUtils.assertCmdFindPattern(hiveClient, "describe kv_table", "key.*string.*value.*string");
     HiveClientTestUtils.assertCmdFindPattern(hiveClient, "select key, value from kv_table",
-                                             "1.*first.*2.*two");
+        "1.*first.*2.*two");
     // todo fix select *
     //HiveClientTestUtils.assertCmdFindPattern(hiveClient, "select * from kv_table",
     //    "1.*first.*2.*two");
@@ -145,7 +148,10 @@ public class HiveServerIntegrationTest {
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
+      new DataSetServiceModules().getInMemoryModule(),
       new DataFabricModules().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new AuthModule(),
       new HiveRuntimeModule().getInMemoryModules(),
       new HiveClientModule()
     );

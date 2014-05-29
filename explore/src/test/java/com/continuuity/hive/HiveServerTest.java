@@ -7,11 +7,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.util.regex.Pattern;
 
 /**
  * Common test performing hive connection and simple queries.
