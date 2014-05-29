@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.GatewayTestBase;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
@@ -25,14 +26,14 @@ import java.util.Map;
 /**
  * Test netty flume collector.
  */
-public class NettyFlumeCollectorTest {
+public class NettyFlumeCollectorTest extends GatewayTestBase {
   private static final String hostname = "localhost";
 
   @Test
   public void testFlumeEnqueue() throws Exception {
-    CConfiguration cConfig = GatewayFastTestsSuite.getInjector().getInstance(CConfiguration.class);
+    CConfiguration cConfig = GatewayTestBase.getInjector().getInstance(CConfiguration.class);
     cConfig.setInt(Constants.Gateway.STREAM_FLUME_PORT, 0);
-    NettyFlumeCollector flumeCollector = GatewayFastTestsSuite.getInjector().getInstance(NettyFlumeCollector.class);
+    NettyFlumeCollector flumeCollector = GatewayTestBase.getInjector().getInstance(NettyFlumeCollector.class);
     flumeCollector.startAndWait();
     int port = flumeCollector.getPort();
 
@@ -86,7 +87,7 @@ public class NettyFlumeCollectorTest {
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("messageNumber", Integer.toString(i));
     headers.put(Constants.Gateway.HEADER_DESTINATION_STREAM, dest);
-    Header authHeader = GatewayFastTestsSuite.getAuthHeader();
+    Header authHeader = GatewayTestBase.getAuthHeader();
     headers.put(authHeader.getName(), authHeader.getValue());
     event.setHeaders(headers);
     event.setBody(Bytes.toBytes("This is a message " + i));

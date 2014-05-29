@@ -1,0 +1,3 @@
+pageSetup: firstTemplate: cutePage
+
+pageTemplates: cutePage: {background: "images/demo.pdf#page=6", foreground: images/foreground.svg}

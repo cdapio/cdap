@@ -23,6 +23,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,6 +40,14 @@ import java.util.concurrent.TimeoutException;
  */
 public class TestFrameworkTest extends ReactorTestBase {
 
+  @After
+  public void cleanup() throws Exception {
+    // Sleep a second before clear. There is a race between removal of RuntimeInfo
+    // in the AbstractProgramRuntimeService class and the clear() method, which loops all RuntimeInfo.
+    // The reason for the race is because removal is done through callback.
+    TimeUnit.SECONDS.sleep(1);
+    clear();
+  }
 
   @Test
   public void testFlowRuntimeArguments() throws Exception {
@@ -61,7 +70,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -150,25 +158,21 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
-      // Sleep a second before clear. There is a race between removal of RuntimeInfo
-      // in the AbstractProgramRuntimeService class and the clear() method, which loops all RuntimeInfo.
-      // The reason for the race is because removal is done through callback.
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
-    testApp(WordCountApp2.class, false);
+    testApp(WordCountApp2.class, false, "text2");
   }
 
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
-    testApp(WordCountAppV2.class, true);
+    testApp(WordCountAppV2.class, true, "text");
   }
 
-  private void testApp(Class<?> app, boolean datasetV2)
+  // todo: passing stream name as a workaround for not cleaning up streams during reset()
+  private void testApp(Class<?> app, boolean datasetV2, String streamName)
     throws IOException, TimeoutException, InterruptedException {
 
     ApplicationManager applicationManager = deployApplication(app);
@@ -177,7 +181,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       applicationManager.startFlow("WordCountFlow");
 
       // Send some inputs to streams
-      StreamWriter streamWriter = applicationManager.getStreamWriter("text");
+      StreamWriter streamWriter = applicationManager.getStreamWriter(streamName);
       for (int i = 0; i < 100; i++) {
         streamWriter.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
       }
@@ -197,10 +201,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
       Gson gson = new Gson();
       Map<String, Long> result = gson.fromJson(procedureClient.query("wordfreq",
-                                                                     ImmutableMap.of("word", "text:testing")),
+                                                                     ImmutableMap.of("word", streamName + ":testing")),
                                                resultType);
 
-      Assert.assertEquals(100L, result.get("text:testing").longValue());
+      Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
@@ -239,8 +243,6 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -266,8 +268,6 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -361,8 +361,6 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 }

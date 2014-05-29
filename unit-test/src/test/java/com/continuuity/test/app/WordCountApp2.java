@@ -69,7 +69,7 @@ public class WordCountApp2 implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("WordCountApp")
       .setDescription("Application for counting words")
-      .withStreams().add(new Stream("text"))
+      .withStreams().add(new Stream("text2"))
       .withDataSets().add(new MyKeyValueTable("mydataset"))
                      .add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
@@ -129,7 +129,7 @@ public class WordCountApp2 implements Application {
         .withFlowlets().add(new StreamSource())
                        .add(new Tokenizer())
                        .add(new CountByField())
-        .connect().fromStream("text").to("StreamSource")
+        .connect().fromStream("text2").to("StreamSource")
                   .from("StreamSource").to("Tokenizer")
                   .from("Tokenizer").to("CountByField")
         .build();
@@ -145,7 +145,7 @@ public class WordCountApp2 implements Application {
 
     @ProcessInput
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
-      if (!"text".equals(context.getOrigin())) {
+      if (!"text2".equals(context.getOrigin())) {
         return;
       }
 
@@ -171,7 +171,7 @@ public class WordCountApp2 implements Application {
     @ProcessInput
     public void foo(MyRecord data) {
       tokenize(data.getTitle(), "title");
-      tokenize(data.getText(), "text");
+      tokenize(data.getText(), "text2");
       if (error) {
         error = false;
         throw new IllegalStateException(data.toString());
@@ -320,7 +320,7 @@ public class WordCountApp2 implements Application {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      context.setInput(new StreamBatchReadable("text"), null);
+      context.setInput(new StreamBatchReadable("text2"), null);
 
       Job job = context.getHadoopJob();
       job.setMapperClass(StreamMapper.class);

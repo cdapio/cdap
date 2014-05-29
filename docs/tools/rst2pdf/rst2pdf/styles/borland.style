@@ -1,0 +1,146 @@
+styles:
+    pygments-bp: {parent: code, textColor: black}
+    pygments-c:
+        fontName: stdMonoItalic
+        parent: code
+        textColor: #008800
+
+    pygments-c1:
+        fontName: stdMonoItalic
+        parent: code
+        textColor: #008800
+
+    pygments-cm:
+        fontName: stdMonoItalic
+        parent: code
+        textColor: #008800
+
+    pygments-cp: {parent: code, textColor: #008080}
+    pygments-cs:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #008800
+
+    pygments-err:
+        backColor: #e3d2d2
+        parent: code
+        textColor: #a61717
+
+    pygments-g: {parent: code, textColor: black}
+    pygments-gd:
+        backColor: #ffdddd
+        parent: code
+        textColor: #000000
+
+    pygments-ge:
+        fontName: stdMonoItalic
+        parent: code
+        textColor: black
+
+    pygments-gh: {parent: code, textColor: #999999}
+    pygments-gi:
+        backColor: #ddffdd
+        parent: code
+        textColor: #000000
+
+    pygments-go: {parent: code, textColor: #888888}
+    pygments-gp: {parent: code, textColor: #555555}
+    pygments-gr: {parent: code, textColor: #aa0000}
+    pygments-gs:
+        fontName: stdMonoBold
+        parent: code
+        textColor: black
+
+    pygments-gt: {parent: code, textColor: #aa0000}
+    pygments-gu: {parent: code, textColor: #aaaaaa}
+    pygments-hll:
+        backColor: #ffffcc
+        parent: code
+        textColor: black
+
+    pygments-il: {parent: code, textColor: #0000FF}
+    pygments-k:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kc:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kd:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kn:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kp:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kr:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-kt:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-l: {parent: code, textColor: black}
+    pygments-ld: {parent: code, textColor: black}
+    pygments-m: {parent: code, textColor: #0000FF}
+    pygments-mf: {parent: code, textColor: #0000FF}
+    pygments-mh: {parent: code, textColor: #0000FF}
+    pygments-mi: {parent: code, textColor: #0000FF}
+    pygments-mo: {parent: code, textColor: #0000FF}
+    pygments-n: {parent: code, textColor: black}
+    pygments-na: {parent: code, textColor: #FF0000}
+    pygments-nb: {parent: code, textColor: black}
+    pygments-nc: {parent: code, textColor: black}
+    pygments-nd: {parent: code, textColor: black}
+    pygments-ne: {parent: code, textColor: black}
+    pygments-nf: {parent: code, textColor: black}
+    pygments-ni: {parent: code, textColor: black}
+    pygments-nl: {parent: code, textColor: black}
+    pygments-nn: {parent: code, textColor: black}
+    pygments-no: {parent: code, textColor: black}
+    pygments-nt:
+        fontName: stdMonoBold
+        parent: code
+        textColor: #000080
+
+    pygments-nv: {parent: code, textColor: black}
+    pygments-nx: {parent: code, textColor: black}
+    pygments-o: {parent: code, textColor: black}
+    pygments-ow:
+        fontName: stdMonoBold
+        parent: code
+        textColor: black
+
+    pygments-p: {parent: code, textColor: black}
+    pygments-py: {parent: code, textColor: black}
+    pygments-s: {parent: code, textColor: #0000FF}
+    pygments-s1: {parent: code, textColor: #0000FF}
+    pygments-s2: {parent: code, textColor: #0000FF}
+    pygments-sb: {parent: code, textColor: #0000FF}
+    pygments-sc: {parent: code, textColor: #800080}
+    pygments-sd: {parent: code, textColor: #0000FF}
+    pygments-se: {parent: code, textColor: #0000FF}
+    pygments-sh: {parent: code, textColor: #0000FF}
+    pygments-si: {parent: code, textColor: #0000FF}
+    pygments-sr: {parent: code, textColor: #0000FF}
+    pygments-ss: {parent: code, textColor: #0000FF}
+    pygments-sx: {parent: code, textColor: #0000FF}
+    pygments-vc: {parent: code, textColor: black}
+    pygments-vg: {parent: code, textColor: black}
+    pygments-vi: {parent: code, textColor: black}
+    pygments-w: {parent: code, textColor: #bbbbbb}
+    pygments-x: {parent: code, textColor: black}

@@ -14,6 +14,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -116,6 +117,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(ServiceHttpHandler.class);
     }
 
     @Provides

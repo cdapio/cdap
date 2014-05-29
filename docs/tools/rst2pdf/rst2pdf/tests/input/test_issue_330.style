@@ -1,0 +1,17 @@
+styles:
+
+    bullet-list:
+       spaceBefore: 50
+       spaceAfter: 0
+
+    bullet-list-item:
+      spaceBefore: 0
+      spaceAfter: 0
+
+    item-list:
+      spaceBefore: 15
+      spaceAfter: 0
+
+    item-list-item:
+       spaceBefore: 0
+       spaceAfter: 0

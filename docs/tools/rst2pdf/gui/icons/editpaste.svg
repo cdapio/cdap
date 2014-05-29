@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="162.5"
+   height="162.5"
+   id="svg101">
+  <defs
+     id="defs8" />
+  <path
+     d="M 29.0017,70.36 C 29.0017,70.36 138.689,70.36 138.689,70.36 C 138.689,70.36 138.633,33.5157 138.633,33.5157 C 138.633,33.5157 110.703,10.1562 110.703,10.1562 C 110.703,10.1562 28.9453,10.1562 28.9453,10.1562 C 28.9453,10.1562 29.5095,71.3761 29.0017,70.36 z "
+     transform="matrix(0.9,0,0,0.9,-9.41996,8.20143)"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.5;stroke-linecap:round;stroke-linejoin:round"
+     id="path218" />
+  <path
+     d="M 108.672,10.6641 C 108.672,10.6641 109.18,36.5625 109.18,36.5625 C 109.18,36.5625 140.664,36.5625 140.664,36.5625"
+     transform="matrix(0.9,0,0,0.9,-13.0762,10.9436)"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:6.25;stroke-linecap:round;stroke-linejoin:round"
+     id="path219" />
+  <rect
+     width="96.992378"
+     height="42.148426"
+     x="17.265575"
+     y="104.10153"
+     style="font-size:12px;fill:#f0f0f8;fill-opacity:0.19607795;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:12.5;stroke-linecap:round;stroke-linejoin:round"
+     id="rect512" />
+  <rect
+     width="114.258"
+     height="37.070301"
+     x="38.085888"
+     y="69.062462"
+     style="font-size:12px;fill:#e3f0f8;fill-opacity:0.74901997;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:6.25;stroke-linecap:round;stroke-linejoin:round"
+     id="rect511" />
+  <path
+     d="M 78.4505,78.5314 C 78.4505,78.5314 122.891,78.7109 122.891,78.7109 C 122.891,78.7109 104.102,66.0156 104.102,66.0156 C 104.102,66.0156 104.282,91.2012 104.282,91.2012 C 104.282,91.2012 122.952,78.7109 122.952,78.7109 C 122.952,78.7109 78.3889,78.4699 78.4505,78.5314 z "
+     transform="matrix(-0.919349,0,0,-0.919349,194.804,159.869)"
+     style="font-size:12px;fill:#4a4b4f;fill-rule:evenodd;stroke:#4a4b4f;stroke-width:6.25;stroke-linecap:round;stroke-linejoin:round"
+     id="path513" />
+</svg>
