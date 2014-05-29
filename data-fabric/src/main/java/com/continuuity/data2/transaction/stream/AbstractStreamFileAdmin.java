@@ -170,9 +170,24 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(), streamLocation);
+      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
+                              config.getTtl(), streamLocation);
     } finally {
       Closeables.closeQuietly(reader);
+    }
+  }
+
+  @Override
+  public void updateConfig(String streamName, StreamConfig config) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamName);
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
+
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+    Writer writer = new OutputStreamWriter(configLocation.getOutputStream(), Charsets.UTF_8);
+    try {
+      writer.write(GSON.toJson(config));
+    } finally {
+      Closeables.closeQuietly(writer);
     }
   }
 
@@ -210,9 +225,10 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                             cConf.get(Constants.Stream.PARTITION_DURATION)));
     long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
+    long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, streamLocation);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
     Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
     try {
       GSON.toJson(config, writer);
