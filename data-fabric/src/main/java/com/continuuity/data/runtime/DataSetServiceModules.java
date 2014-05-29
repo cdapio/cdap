@@ -2,7 +2,6 @@ package com.continuuity.data.runtime;
 
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
-import com.continuuity.data2.dataset2.executor.RemoteDatasetOpExecutor;
 import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.executor.LocalDatasetOpExecutor;
 import com.continuuity.data2.dataset2.executor.YarnDatasetOpExecutor;
