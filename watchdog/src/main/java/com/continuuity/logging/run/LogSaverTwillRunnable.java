@@ -13,6 +13,7 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -170,6 +171,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
+      new AuthModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),

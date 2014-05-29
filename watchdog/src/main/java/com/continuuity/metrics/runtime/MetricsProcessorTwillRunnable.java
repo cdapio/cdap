@@ -99,6 +99,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
+      new AuthModule(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),

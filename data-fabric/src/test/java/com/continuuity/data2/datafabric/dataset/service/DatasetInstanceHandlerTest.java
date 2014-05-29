@@ -82,7 +82,7 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(1, getInstances().value.size());
 
     // delete dataset instance
-    Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
     Assert.assertEquals(0, getInstances().value.size());
 
     // delete dataset modules
@@ -115,6 +115,12 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
 
   private int deleteInstance(String instanceName) throws IOException {
     HttpDelete delete = new HttpDelete(getUrl("/data/instances/" + instanceName));
+    HttpResponse response = new DefaultHttpClient().execute(delete);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int deleteInstances() throws IOException {
+    HttpDelete delete = new HttpDelete(getUrl("/data/instances"));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }

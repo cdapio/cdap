@@ -81,6 +81,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, list);
   }
 
+  @DELETE
+  @Path("/data/modules")
+  public void deleteModules(HttpRequest request, final HttpResponder responder) {
+    manager.deleteModules();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   @POST
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,

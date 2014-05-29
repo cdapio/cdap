@@ -3,8 +3,11 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.jar.JarFinder;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
+import com.continuuity.data2.dataset2.executor.NoOpDatasetOpExecutor;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -30,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-
 import javax.annotation.Nullable;
 
 /**
@@ -60,6 +62,7 @@ public abstract class DatasetManagerServiceTestBase {
 
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
     // Tx Manager to support working with datasets
     txManager = new InMemoryTransactionManager();
@@ -69,11 +72,13 @@ public abstract class DatasetManagerServiceTestBase {
     service = new DatasetManagerService(cConf,
                                         new LocalLocationFactory(),
                                         discoveryService,
+                                        discoveryService,
                                         new InMemoryDatasetManager(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                           "memoryTable", InMemoryTableModule.class),
                                         txSystemClient,
-                                        new NoOpMetricsCollectionService());
+                                        metricsCollectionService,
+                                        new NoOpDatasetOpExecutor());
     service.startAndWait();
   }
 
@@ -107,6 +112,13 @@ public abstract class DatasetManagerServiceTestBase {
   // todo: use HttpUrlConnection
   protected int deleteModule(String moduleName) throws IOException {
     HttpDelete delete = new HttpDelete(getUrl("/data/modules/" + moduleName));
+    HttpResponse response = new DefaultHttpClient().execute(delete);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  // todo: use HttpUrlConnection
+  protected int deleteModules() throws IOException {
+    HttpDelete delete = new HttpDelete(getUrl("/data/modules"));
     HttpResponse response = new DefaultHttpClient().execute(delete);
     return response.getStatusLine().getStatusCode();
   }

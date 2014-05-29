@@ -119,7 +119,7 @@ public final class TransactionService extends AbstractService {
           LOG.info("Transaction Thrift Service started successfully on " + server.getBindAddress());
         } catch (Throwable t) {
           LOG.info("Transaction Thrift Service didn't start on " + server.getBindAddress());
-          leaderElection.asyncCancel();
+          leaderElection.stop();
           notifyFailed(t);
         }
       }
@@ -135,6 +135,7 @@ public final class TransactionService extends AbstractService {
         }
       }
     });
+    leaderElection.start();
 
     notifyStarted();
   }
@@ -145,7 +146,7 @@ public final class TransactionService extends AbstractService {
       // NOTE: if was a leader this will cause loosing of leadership which in callback above will
       //       de-register service in discovery service and stop the service if needed
       try {
-        Uninterruptibles.getUninterruptibly(leaderElection.asyncCancel(), 5, TimeUnit.SECONDS);
+        Uninterruptibles.getUninterruptibly(leaderElection.stop(), 5, TimeUnit.SECONDS);
       } catch (TimeoutException te) {
         LOG.warn("Timed out waiting for leader election cancellation to complete");
       } catch (ExecutionException e) {

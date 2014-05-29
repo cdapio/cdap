@@ -1,10 +1,13 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.exception.HandlerException;
+import com.continuuity.common.http.HttpRequests;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.data2.dataset2.executor.DatasetAdminOpResponse;
+import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
 import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
@@ -12,6 +15,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -37,27 +41,28 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
+  private final DatasetOpExecutor opExecutorClient;
 
   @Inject
-  public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager) {
+  public DatasetInstanceHandler(DiscoveryServiceClient discoveryClient,
+                                DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
+                                DatasetOpExecutor opExecutorClient) {
+    this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
-  }
-
-  @Override
-  public void init(HandlerContext context) {
-    LOG.info("Starting DatasetInstanceHandler");
-  }
-
-  @Override
-  public void destroy(HandlerContext context) {
-    LOG.info("Stopping DatasetInstanceHandler");
   }
 
   @GET
   @Path("/data/instances/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
+  }
+
+  @DELETE
+  @Path("/data/instances/")
+  public void deleteAll(HttpRequest request, final HttpResponder responder) {
+    instanceManager.deleteAll();
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @GET
@@ -124,8 +129,34 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void executeAdmin(HttpRequest request, final HttpResponder responder,
                            @PathParam("instance-id") String instanceName,
                            @PathParam("method") String method) {
-    // todo: execute admin operation
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+
+    try {
+      Object result = null;
+      String message = null;
+
+      if (method.equals("exists")) {
+        result = opExecutorClient.exists(instanceName);
+      } else if (method.equals("create")) {
+        opExecutorClient.create(instanceName);
+      } else if (method.equals("drop")) {
+        opExecutorClient.drop(instanceName);
+      } else if (method.equals("truncate")) {
+        opExecutorClient.truncate(instanceName);
+      } else if (method.equals("upgrade")) {
+        opExecutorClient.upgrade(instanceName);
+      } else {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, "Invalid admin operation: " + method);
+      }
+
+      DatasetAdminOpResponse response = new DatasetAdminOpResponse(result, message);
+      responder.sendJson(HttpResponseStatus.OK, response);
+    } catch (HandlerException e) {
+      LOG.debug("Handler error", e);
+      responder.sendStatus(e.getFailureStatus());
+    } catch (Exception e) {
+      LOG.error("Error executing admin operation {} for dataset instance {}", method, instanceName, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @POST
