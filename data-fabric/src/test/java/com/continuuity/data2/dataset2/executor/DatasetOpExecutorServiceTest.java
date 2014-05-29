@@ -103,8 +103,8 @@ public class DatasetOpExecutorServiceTest {
       Modules.override(new DataSetServiceModules().getInMemoryModule()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
+          Named name = Names.named(Constants.Service.DATASET_EXECUTOR);
+          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, name);
           handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
           handlerBinder.addBinding().to(PingHandler.class);
 
