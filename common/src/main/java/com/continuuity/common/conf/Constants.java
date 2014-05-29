@@ -328,7 +328,7 @@ public final class Constants {
   public static final class Stream {
     /* Begin CConfiguration keys */
     public static final String BASE_DIR = "stream.base.dir";
-    public static final String PARTITION_TTL = "stream.partition.ttl";
+    public static final String TTL = "stream.event.ttl";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";

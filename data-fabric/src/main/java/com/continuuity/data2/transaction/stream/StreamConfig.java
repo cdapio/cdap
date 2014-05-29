@@ -50,7 +50,7 @@ public final class StreamConfig {
   }
 
   /**
-   * @return The time to live in milliseconds for stream files in this stream.
+   * @return The time to live in milliseconds for events in this stream.
    */
   public long getTtl() {
     return ttl;
