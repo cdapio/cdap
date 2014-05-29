@@ -107,5 +107,4 @@ public final class TransactionService extends InMemoryTransactionService {
 
     notifyStopped();
   }
-
 }
