@@ -7,12 +7,12 @@ import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.manager.AbstractDatasetManagerTest;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -25,7 +25,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.util.Collections;
 
 /**
  *
@@ -49,9 +48,7 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
     // Starting DatasetManagerService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
-
-    DatasetUserService userService = new DatasetUserService(cConf, discoveryService, metricsCollectionService,
-                                                            Collections.EMPTY_SET);
+    InMemoryDatasetOpExecutor opExecutorClient = new InMemoryDatasetOpExecutor();
 
     // Tx Manager to support working with datasets
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
@@ -67,13 +64,14 @@ public class DataFabricDatasetManagerTest extends AbstractDatasetManagerTest {
                                                  "memoryTable", InMemoryTableModule.class),
                                                txSystemClient,
                                                metricsCollectionService,
-                                               userService);
+                                               opExecutorClient);
     datasetManager.startAndWait();
 
     DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);
     manager = new DataFabricDatasetManager(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
                                            new InMemoryDatasetDefinitionRegistry());
+    opExecutorClient.setClient(manager);
   }
 
   @After

@@ -111,8 +111,6 @@ public class ReactorServiceMain extends DaemonMain {
     serviceName = twillApplication.configure().getName();
 
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
-    // TODO(alvin): remove once DatasetUserService runs outside of DatasetManagerService
-    cConf.set(Constants.Dataset.User.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
