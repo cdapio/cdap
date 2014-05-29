@@ -172,6 +172,7 @@ public class ReactorServiceMain extends DaemonMain {
         isLeader.set(false);
       }
     });
+    leaderElection.start();
   }
 
   @Override
@@ -183,7 +184,8 @@ public class ReactorServiceMain extends DaemonMain {
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
-    leaderElection.cancel();
+
+    leaderElection.stopAndWait();
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
