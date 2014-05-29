@@ -7,19 +7,22 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.hive.HiveClientTestUtils;
 import com.continuuity.hive.client.HiveClient;
-import com.continuuity.hive.client.HiveCommandExecutor;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
@@ -32,7 +35,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -49,15 +51,7 @@ public class HiveServerIntegrationTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration configuration = CConfiguration.create();
-    File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
-    //noinspection ResultOfMethodCallIgnored
-    zkDir.mkdir();
-    zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
-    zookeeper.startAndWait();
-
-    configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
-    Injector injector = Guice.createInjector(createInMemoryModules(configuration, new Configuration()));
+    Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
@@ -110,7 +104,6 @@ public class HiveServerIntegrationTest {
     inMemoryHiveMetastore.stopAndWait();
     transactionManager.stopAndWait();
     datasetManagerService.startAndWait();
-    zookeeper.stopAndWait();
   }
 
 
@@ -125,13 +118,16 @@ public class HiveServerIntegrationTest {
 
   @Test
   public void testHiveIntegration() throws Exception {
-    hiveClient.sendCommand("drop table if exists kv_table");
+    hiveClient.sendCommand("drop table if exists kv_table", null, null);
     hiveClient.sendCommand("create external table kv_table (customer STRING, quantity int) " +
                            "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
-                           "with serdeproperties (\"reactor.dataset.name\"=\"my_table\") ;");
-    hiveClient.sendCommand("describe kv_table");
-    hiveClient.sendCommand("select key, value from kv_table");
-    hiveClient.sendCommand("select * from kv_table");
+                           "with serdeproperties (\"reactor.dataset.name\"=\"my_table\");", null, null);
+    HiveClientTestUtils.assertCmdFindPattern(hiveClient, "describe kv_table", "key.*string.*value.*string");
+    HiveClientTestUtils.assertCmdFindPattern(hiveClient, "select key, value from kv_table",
+        "1.*first.*2.*two");
+    // todo fix select *
+    //HiveClientTestUtils.assertCmdFindPattern(hiveClient, "select * from kv_table",
+    //    "1.*first.*2.*two");
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
@@ -142,7 +138,10 @@ public class HiveServerIntegrationTest {
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
+      new DataSetServiceModules().getInMemoryModule(),
       new DataFabricModules().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new AuthModule(),
       new HiveRuntimeModule().getInMemoryModules(),
       new HiveClientModule()
     );

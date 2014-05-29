@@ -6,12 +6,15 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.HiveServerTest;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.server.HiveServer;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,6 +41,9 @@ public class LocalHiveServerTest extends HiveServerTest {
         new ConfigModule(conf, hConf),
         new HiveRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
+        new MetricsClientRuntimeModule().getInMemoryModules(),
+        new DataSetServiceModules().getInMemoryModule(),
+        new AuthModule(),
         new HiveClientModule());
     hiveServer = injector.getInstance(HiveServer.class);
     hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);

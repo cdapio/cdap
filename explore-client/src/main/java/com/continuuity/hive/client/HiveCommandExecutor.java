@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +31,7 @@ public class HiveCommandExecutor implements HiveClient {
   }
 
   @Override
-  public void sendCommand(String cmd) throws IOException {
+  public void sendCommand(String cmd, OutputStream out, OutputStream err) throws IOException {
 
     Discoverable hiveDiscoverable = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.HIVE)), 3L, TimeUnit.SECONDS).pick();
@@ -39,7 +40,7 @@ public class HiveCommandExecutor implements HiveClient {
       throw new IOException("No endpoint for service " + Constants.Service.HIVE);
     }
 
-    // The hooks are plugged at every command
+    // The hooks are plugged in for every command
     String[] args = new String[] {"-d", BeeLine.BEELINE_DEFAULT_JDBC_DRIVER,
         "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
         hiveDiscoverable.getSocketAddress().getHostName() +
@@ -51,21 +52,16 @@ public class HiveCommandExecutor implements HiveClient {
         "--outputformat=table",
         "-e", cmd};
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream pout = new PrintStream(out);
-
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-    PrintStream perr = new PrintStream(err);
-
     BeeLine beeLine = new BeeLine();
-    beeLine.setOutputStream(pout);
-    beeLine.setErrorStream(perr);
+    if (out != null) {
+      PrintStream pout = new PrintStream(out);
+      beeLine.setOutputStream(pout);
+    }
+    if (err != null) {
+      PrintStream perr = new PrintStream(err);
+      beeLine.setErrorStream(perr);
+    }
     beeLine.begin(args, null);
     beeLine.close();
-
-    LOG.info("********* HIVE OUT = [" + out.toString("UTF-8") + "]");
-    LOG.info("********* HIVE ERR = [" + err.toString("UTF-8") + "]");
-
-    // todo should return the string result
   }
 }

@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.server.HiveServer2;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ public class RuntimeHiveServer extends HiveServer {
   private final InetAddress hostname;
   private final HiveConf hiveConf;
   private final int hiveServerPort;
+  private Cancellable discoveryCancel;
 
   @Inject
   public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
@@ -52,15 +54,16 @@ public class RuntimeHiveServer extends HiveServer {
     hiveServer2.start();
     waitForPort(hostname.getHostName(), hiveServerPort);
 
-    // Register with discovery service.
+    // Register HiveServer2 with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
     InetAddress address = socketAddress.getAddress();
     if (address.isAnyLocalAddress()) {
       address = InetAddress.getLocalHost();
     }
+    // todo figure a way to not have "localhost" in distributed, but the actual host of reactor-master
     final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
 
-    discoveryService.register(new Discoverable() {
+    discoveryCancel = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.HIVE;
@@ -77,9 +80,15 @@ public class RuntimeHiveServer extends HiveServer {
   protected void shutDown() throws Exception {
     if (hiveServer2 != null) {
       hiveServer2.stop();
+      discoveryCancel.cancel();
     }
   }
 
+  /**
+   * Util method that waits for a 3rd party service, running on a given port, to be started.
+   * @param host host the service is running on
+   * @param port port the service is running on
+   */
   public static void waitForPort(String host, int port) throws Exception {
     final int maxTries = 20;
     int tries = 0;

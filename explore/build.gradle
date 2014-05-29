@@ -11,8 +11,11 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true],
-            "explore-client")
+
+    compile libraries.google_guava
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
 
     compile (libraries.hive_beeline) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
@@ -26,6 +29,9 @@ dependencies {
     compile libraries.thrift
 
     testCompile libraries.junit
+    testCompile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true], "explore-client")
+    testCompile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
+
 }
 
 sourceSets{

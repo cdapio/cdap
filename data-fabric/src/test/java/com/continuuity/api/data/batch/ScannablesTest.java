@@ -1,7 +1,7 @@
 package com.continuuity.api.data.batch;
 
-import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.common.utils.ImmutablePair;
+
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
@@ -50,10 +50,6 @@ public class ScannablesTest {
     Assert.assertEquals("(a INT,b BIGINT,c BOOLEAN,d FLOAT,e DOUBLE,f STRING,g BINARY," +
                           "h ARRAY<STRING>,i ARRAY<BOOLEAN>,j MAP<INT,STRING>)",
                         Scannables.hiveSchemaFor(Record.class));
-
-    Assert.assertEquals("(first INT,second STRING)",
-                        Scannables.hiveSchemaFor(new ObjectStore<ImmutablePair<Integer, String>>("dummy",
-                          new TypeToken<ImmutablePair<Integer, String>>() { }.getType())));
 
   }
 }

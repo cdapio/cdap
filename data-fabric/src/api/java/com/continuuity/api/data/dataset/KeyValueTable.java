@@ -5,15 +5,11 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
-import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -21,9 +17,7 @@ import javax.annotation.Nullable;
  * This class implements a key/value map on top of Table. Supported
  * operations are read, write, delete, and swap.
  */
-public class KeyValueTable
-  extends DataSet
-  implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>, RowScannable<KeyValueTable.Entry> {
+public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -146,44 +140,6 @@ public class KeyValueTable
   @Override
   public List<Split> getSplits() {
     return this.table.getSplits();
-  }
-
-  /**
-   * Used as the row objects in RowScannable.
-   */
-  public static class Entry {
-    private final byte[] key;
-    private final byte[] value;
-
-    public Entry(byte[] key, byte[] value) {
-      this.key = key;
-      this.value = value;
-    }
-
-    public byte[] getKey() {
-      return key;
-    }
-
-    public byte[] getValue() {
-      return value;
-    }
-  }
-
-  @Override
-  public Type getRowType() {
-    return Entry.class;
-  }
-
-  @Override
-  public SplitRowScanner<Entry> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split),
-                                      new Scannables.RowMaker<byte[], byte[], Entry>() {
-                                        @Override
-                                        public Entry makeRow(byte[] key, byte[] value) {
-                                          return new Entry(key, value);
-                                        }
-                                      }
-    );
   }
 
   @Override

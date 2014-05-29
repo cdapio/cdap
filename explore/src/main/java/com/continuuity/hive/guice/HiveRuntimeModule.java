@@ -41,6 +41,12 @@ public class HiveRuntimeModule extends RuntimeModule {
     this.conf = CConfiguration.create();
   }
 
+  /**
+   * The strategy for hive in singlenode is to have a hive-site.xml file in the classpath containing the configuration
+   * needed to start an in-memory hive metastore instance, on an in-memory framework (not hadoop).
+   * @param warehouseDir directory of the metastore files (tables metadata)
+   * @param databaseDir directory of the hive tables data.
+   */
   private Module getLocalModules(File warehouseDir, File databaseDir) {
     LOG.debug("Setting {} to {}", Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsoluteFile());
     System.setProperty(Constants.Hive.METASTORE_WAREHOUSE_DIR, warehouseDir.getAbsolutePath());
@@ -49,11 +55,14 @@ public class HiveRuntimeModule extends RuntimeModule {
     System.setProperty(Constants.Hive.DATABASE_DIR, databaseDir.getAbsolutePath());
 
     try {
+      // This will load the hive-site.xml file in the classpath
       final HiveConf hiveConf = new HiveConf();
 
+      // Select a random free port for hive server to run
       final int hiveServerPort = PortDetector.findFreePort();
       hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
+      // Select a random free port hive metastore to run
       final int hiveMetaStorePort = PortDetector.findFreePort();
       hiveConf.set("hive.metastore.uris", "thrift://localhost:" + hiveMetaStorePort);
 
@@ -72,12 +81,13 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
   }
 
+  private static long timestamp = System.currentTimeMillis();
   @Override
   public Module getInMemoryModules() {
     File warehouseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "warehouse"),
-                                 Long.toString(System.currentTimeMillis()));
+                                 Long.toString(timestamp));
     File databaseDir = new File(new File(new File(System.getProperty("java.io.tmpdir"), "hive"), "database"),
-                                 Long.toString(System.currentTimeMillis()));
+                                Long.toString(timestamp));
     return getLocalModules(warehouseDir, databaseDir);
   }
 
@@ -96,7 +106,6 @@ public class HiveRuntimeModule extends RuntimeModule {
       return new AbstractModule() {
         @Override
         protected void configure() {
-          // todo this may need more binding in the future
           bind(HiveServer.class).to(MockHiveServer.class).in(Scopes.SINGLETON);
         }
       };
@@ -104,9 +113,8 @@ public class HiveRuntimeModule extends RuntimeModule {
       try {
         HiveConf hiveConf = new HiveConf();
 
-        // todo figure out for what module exactly we need a hive-site.xml in the classpath
         // The port number is a parameter that is directly read from the hiveConf passed to hive server,
-        // Contrary to most parameters which need to be in hive-site.xml in the classpath.
+        // contrary to most parameters which need to be in hive-site.xml in the classpath.
         final int hiveServerPort = PortDetector.findFreePort();
         hiveConf.setInt("hive.server2.thrift.port", hiveServerPort);
 
@@ -120,9 +128,14 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
   }
 
+  /**
+   * Common Hive Module for both singlenode and distributed mode.
+   */
   private static final class HiveModule extends AbstractModule {
 
     private final HiveConf hiveConf;
+
+    // Port number where to launch hive server2
     private final int hiveServerPort;
 
     protected HiveModule(HiveConf hiveConf, int hiveServerPort) {
