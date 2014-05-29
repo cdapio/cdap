@@ -23,18 +23,18 @@ import java.util.Set;
 /**
  * Provides various REST endpoints to execute user code via {@link DatasetAdminOpHTTPHandler}.
  */
-public class DatasetOpExecutorServer extends AbstractIdleService {
+public class DatasetOpExecutorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorService.class);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
-  public DatasetOpExecutorServer(CConfiguration cConf, DiscoveryService discoveryService,
-                                 MetricsCollectionService metricsCollectionService,
-                                 @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
+  public DatasetOpExecutorService(CConfiguration cConf, DiscoveryService discoveryService,
+                                  MetricsCollectionService metricsCollectionService,
+                                  @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
 
     this.discoveryService = discoveryService;
 
@@ -54,7 +54,7 @@ public class DatasetOpExecutorServer extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting DatasetOpExecutorServer...");
+    LOG.info("Starting DatasetOpExecutorService...");
 
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
@@ -69,12 +69,12 @@ public class DatasetOpExecutorServer extends AbstractIdleService {
       }
     });
 
-    LOG.info("DatasetOpExecutorServer started successfully on {}", httpService.getBindAddress());
+    LOG.info("DatasetOpExecutorService started successfully on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping DatasetOpExecutorServer...");
+    LOG.info("Stopping DatasetOpExecutorService...");
 
     try {
       if (cancellable != null) {

@@ -53,12 +53,12 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link com.continuuity.data2.dataset2.executor.DatasetOpExecutorServer}.
+ * Test for {@link DatasetOpExecutorService}.
  */
-public class DatasetOpExecutorServerTest {
+public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServerTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorServiceTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -86,7 +86,6 @@ public class DatasetOpExecutorServerTest {
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
-      new DatasetOpExecutorServerModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules(cConf, hConf).getInMemoryModules(),

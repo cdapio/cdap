@@ -19,7 +19,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Executes Dataset operations by querying a {@link DatasetOpExecutorServer} via REST.
+ * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
 public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
