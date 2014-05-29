@@ -1,8 +1,14 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -12,48 +18,95 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * Starts TxManager and also registers in discoveryService
+ * Transaction server that manages transaction data for the Reactor.
+ * <p>
+ *   Transaction server is HA, one can start multiple instances, only one of which is active and will register itself in
+ *   discovery service.
+ * </p>
  */
-public class InMemoryTransactionService extends AbstractIdleService {
+public class InMemoryTransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionService.class);
 
   private final DiscoveryService discoveryService;
+  protected final Provider<InMemoryTransactionManager> txManagerProvider;
   private Cancellable cancelDiscovery;
-  private InMemoryTransactionManager txManager;
+  protected InMemoryTransactionManager txManager;
+
+  // thrift server config
+  protected final String address;
+  protected final int threads;
+  protected final int ioThreads;
+  protected final int maxReadBufferBytes;
 
   @Inject
-  public InMemoryTransactionService(DiscoveryService discoveryService, InMemoryTransactionManager txManager) {
-    this.discoveryService = discoveryService;
-    this.txManager = txManager;
+  public InMemoryTransactionService(@Named("TransactionServerConfig") CConfiguration conf,
+                            DiscoveryService discoveryService,
+                            Provider<InMemoryTransactionManager> txManagerProvider) {
 
-    LOG.info("Configuring TransactionService");
+    this.discoveryService = discoveryService;
+    this.txManagerProvider = txManagerProvider;
+
+    address = conf.get(Constants.Transaction.Container.ADDRESS);
+
+    // Retrieve the number of threads for the service
+    threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
+                          Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);
+    ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
+                            Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_IO_THREADS);
+
+    maxReadBufferBytes = conf.getInt(com.continuuity.common.conf.Constants.Thrift.MAX_READ_BUFFER,
+                                     com.continuuity.common.conf.Constants.Thrift.DEFAULT_MAX_READ_BUFFER);
+
+    LOG.info("Configuring TransactionService" +
+               ", address: " + address +
+               ", threads: " + threads +
+               ", io threads: " + ioThreads +
+               ", max read buffer (bytes): " + maxReadBufferBytes);
   }
 
-  @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting Transaction Service...");
-    txManager.startAndWait();
-    LOG.info("Started Transaction Service...");
+  protected void undoRegiser() {
+    if (cancelDiscovery != null) {
+      cancelDiscovery.cancel();
+    }
+  }
+
+  protected void doRegister() {
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.TRANSACTION;
+        return com.continuuity.common.conf.Constants.Service.TRANSACTION;
       }
 
       @Override
       public InetSocketAddress getSocketAddress() {
-        //Dummy Socket Address since txManager is accessed directly in SingleNode
-        return new InetSocketAddress(1);
+        return getAddress();
       }
     });
+  }
 
-    LOG.info("Transaction Service started successfully");
+  protected InetSocketAddress getAddress() {
+    return new InetSocketAddress(1);
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    LOG.info("Stopping Transaction Service...");
-    cancelDiscovery.cancel();
-    txManager.stopAndWait();
+  protected void doStart() {
+    try {
+      txManager = txManagerProvider.get();
+      txManager.startAndWait();
+      doRegister();
+      LOG.info("Transaction Thrift service started successfully on " + getAddress());
+      notifyStarted();
+    } catch (Throwable t) {
+      LOG.info("Transaction Thrift service didn't start on " + getAddress());
+      notifyFailed(t);
+    }
   }
+
+  @Override
+  protected void doStop() {
+    undoRegiser();
+    txManager.stopAndWait();
+    notifyStopped();
+  }
+
 }

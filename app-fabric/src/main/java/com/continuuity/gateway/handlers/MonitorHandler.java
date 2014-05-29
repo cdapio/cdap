@@ -49,7 +49,7 @@ public class MonitorHandler extends AbstractHttpHandler {
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 1;
 
-  private enum Service {
+  private enum ReactorService {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
     STREAMS (Constants.Service.STREAM_HANDLER),
@@ -57,13 +57,13 @@ public class MonitorHandler extends AbstractHttpHandler {
 
     private final String name;
 
-    private Service(String name) {
+    private ReactorService(String name) {
       this.name = name;
     }
 
     public String getName() { return name; }
 
-    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
+    public static ReactorService valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
   @Inject
@@ -78,7 +78,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Service service : Service.values()) {
+    for (ReactorService service : ReactorService.values()) {
       String serviceName = String.valueOf(service);
       String status = discoverService(serviceName) ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       result.put(serviceName, status);
@@ -105,18 +105,17 @@ public class MonitorHandler extends AbstractHttpHandler {
 
   private boolean discoverService(String serviceName) {
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(ReactorService.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
         new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       Discoverable discoverable = endpointStrategy.pick();
-      //Transaction Service will return null discoverable in SingleNode mode
       if (discoverable == null) {
         return false;
       }
 
       //For Transaction Service use the TransactionSystemClient to check the txManager's status
-      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
+      if (ReactorService.valueofName(serviceName).equals(ReactorService.TRANSACTION)) {
         return txClient.status().equals(Constants.Monitor.STATUS_OK);
       }
 
