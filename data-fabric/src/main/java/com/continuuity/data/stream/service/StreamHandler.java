@@ -18,6 +18,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
@@ -227,6 +228,22 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     // TODO: Implement file removal logic
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+  }
+
+  @POST
+  @Path("/{stream}/ttl/{ttlString}")
+  public void setTtl(HttpRequest request, HttpResponder responder,
+                     @PathParam("stream") String stream,
+                     @PathParam("ttlString") String ttlString) throws Exception {
+
+    long ttl = Long.parseLong(ttlString);
+    String accountId = getAuthenticatedAccountId(request);
+
+    StreamConfig config = streamAdmin.getConfig(stream);
+    StreamConfig newConfig = new StreamConfig(null, config.getPartitionDuration(),
+                                              config.getIndexInterval(), ttl, null);
+    streamAdmin.updateConfig(stream, newConfig);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
