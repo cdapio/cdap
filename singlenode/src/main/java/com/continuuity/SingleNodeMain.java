@@ -156,7 +156,7 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
-    // it is important to respect that order: metastore, then hivesERVER
+    // it is important to respect that order: metastore, then HiveServer
     hiveMetastore.startAndWait();
     hiveServer.startAndWait();
 

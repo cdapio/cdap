@@ -30,6 +30,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class HiveServerIntegrationTest {
   private static InMemoryHiveMetastore inMemoryHiveMetastore;
   private static DatasetManager datasetManager;
   private static DatasetManagerService datasetManagerService;
-//  private static InMemoryZKServer zookeeper;
+  private static InMemoryZKServer zookeeper;
   private static HiveClient hiveClient;
 
   @BeforeClass

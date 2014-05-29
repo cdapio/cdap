@@ -129,7 +129,7 @@ public class HiveRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * Commong Hive Module for both singlenode and distributed mode.
+   * Common Hive Module for both singlenode and distributed mode.
    */
   private static final class HiveModule extends AbstractModule {
 
