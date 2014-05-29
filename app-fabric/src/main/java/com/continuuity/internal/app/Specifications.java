@@ -10,6 +10,7 @@ public final class Specifications {
     return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
                                                spec.getStreams(), spec.getDataSets(),
                                                spec.getFlows(), spec.getProcedures(),
-                                               spec.getMapReduce(), spec.getWorkflows());
+                                               spec.getMapReduce(), spec.getWorkflows(),
+                                               spec.getServices());
   }
 }

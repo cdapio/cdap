@@ -18,6 +18,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
+import org.apache.twill.api.TwillSpecification;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -41,6 +42,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
+    jsonObj.add("services", serializeMap(src.getServices(), context, TwillSpecification.class));
 
     return jsonObj;
   }
@@ -70,8 +72,12 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 
+    Map<String, TwillSpecification> services = deserializeMap(jsonObj.get("services"),
+                                                              context, TwillSpecification.class);
+
     return new DefaultApplicationSpecification(name, description, streams, datasets,
                                                datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces, workflows);
+                                               flows, procedures, mapReduces,
+                                               workflows, services);
   }
 }

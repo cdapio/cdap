@@ -33,16 +33,16 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.apache.twill.api.TwillSpecification;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.SortedMap;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.
@@ -66,6 +66,7 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(Schedule.class, new ScheduleCodec())
                   .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
+                  .registerTypeAdapter(TwillSpecification.class, new TwillSpecificationCodec())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);
   }

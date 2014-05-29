@@ -24,8 +24,9 @@ import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +44,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, ProcedureSpecification> procedures = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-
+  private final Map<String, TwillSpecification> services = Maps.newHashMap();
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(AbstractApplication app) {
     this.name = app.getClass().getSimpleName();
@@ -130,9 +131,18 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
+  @Override
+  public void addService(TwillApplication application) {
+    Preconditions.checkNotNull(application, "Service cannot be null.");
+
+    TwillSpecification specification = application.configure();
+    services.put(specification.getName(), specification);
+
+  }
+
   public ApplicationSpecification createApplicationSpec() {
     return new DefaultApplicationSpecification(name, description, streams, dataSets,
                                                datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces, workflows);
+                                               flows, procedures, mapReduces, workflows, services);
   }
 }

@@ -22,6 +22,7 @@ import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,6 +81,12 @@ public interface ApplicationSpecification {
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
+   * @return An immutable {@link Map} from {@link TwillApplication} name to {@link TwillSpecification}
+   *         for services configured for the Application.
+   */
+  Map<String, TwillSpecification> getServices();
+
+  /**
    * Builder for creating instance of {@link ApplicationSpecification}. 
    * The builder instance is not reusable; each instance of this class can only 
    * be used once to create an instance of an {@link ApplicationSpecification}.
@@ -126,6 +133,11 @@ public interface ApplicationSpecification {
      * Map from Workflow name to {@link WorkflowSpecification} for all Workflows defined in this Application.
      */
     private final Map<String, WorkflowSpecification> workflows = new HashMap<String, WorkflowSpecification>();
+
+    /**
+     * Map from Service name to {@link TwillSpecification} for the services defined in this Application.
+     */
+    private final Map<String, TwillSpecification> services = new HashMap<String, TwillSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -592,7 +604,7 @@ public interface ApplicationSpecification {
 
     private ApplicationSpecification build() {
       return new ApplicationSpecificationImpl(name, description, streams, dataSets,
-                                              flows, procedures, mapReduces, workflows);
+                                              flows, procedures, mapReduces, workflows, services);
     }
 
     /**
@@ -613,6 +625,7 @@ public interface ApplicationSpecification {
       private final Map<String, ProcedureSpecification> procedures;
       private final Map<String, MapReduceSpecification> mapReduces;
       private final Map<String, WorkflowSpecification> workflows;
+      private final Map<String, TwillSpecification> services;
 
       public ApplicationSpecificationImpl(String name, String description,
                                           Map<String, StreamSpecification> streams,
@@ -620,7 +633,8 @@ public interface ApplicationSpecification {
                                           Map<String, FlowSpecification> flows,
                                           Map<String, ProcedureSpecification> procedures,
                                           Map<String, MapReduceSpecification> mapReduces,
-                                          Map<String, WorkflowSpecification> workflows) {
+                                          Map<String, WorkflowSpecification> workflows,
+                                          Map<String, TwillSpecification> services) {
         this.name = name;
         this.description = description;
         this.streams = ImmutableMap.copyOf(streams);
@@ -629,6 +643,7 @@ public interface ApplicationSpecification {
         this.procedures = ImmutableMap.copyOf(procedures);
         this.mapReduces = ImmutableMap.copyOf(mapReduces);
         this.workflows = ImmutableMap.copyOf(workflows);
+        this.services = ImmutableMap.copyOf(services);
       }
 
       @Override
@@ -669,6 +684,11 @@ public interface ApplicationSpecification {
       @Override
       public Map<String, WorkflowSpecification> getWorkflows() {
         return workflows;
+      }
+
+      @Override
+      public Map<String, TwillSpecification> getServices() {
+        return services;
       }
     }
   }

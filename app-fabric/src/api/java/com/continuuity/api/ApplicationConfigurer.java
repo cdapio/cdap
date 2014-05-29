@@ -9,6 +9,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+import org.apache.twill.api.TwillApplication;
 
 /**
  * Configures Reactor application.
@@ -92,4 +93,10 @@ public interface ApplicationConfigurer {
    * @param workflow The {@link Workflow} to be included in the Application.
    */
   void addWorkflow(Workflow workflow);
+
+  /**
+   * Adds a {@link TwillApplication} to the Application.
+   * @param application The {@link TwillApplication} to be included in the Application.
+   */
+  void addService(TwillApplication application);
 }
