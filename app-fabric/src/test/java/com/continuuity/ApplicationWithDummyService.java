@@ -13,7 +13,7 @@ import org.apache.twill.api.TwillSpecification;
 public class ApplicationWithDummyService implements Application {
 
   /**
-   * Configures the {@link com.continuuity.api.Application} by returning an {@link com.continuuity.api.ApplicationSpecification}.
+   * Configures the {@link com.continuuity.api.Application} by returning an {@link ApplicationSpecification}.
    *
    * @return An instance of {@link com.continuuity.api.ApplicationSpecification}.
    */
