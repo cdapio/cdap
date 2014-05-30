@@ -789,7 +789,7 @@
     </property>
 
     <property>
-      <name>security.server.address</name>
+      <name>security.auth.server.address</name>
       <value>127.0.0.1</value>
     </property>
 

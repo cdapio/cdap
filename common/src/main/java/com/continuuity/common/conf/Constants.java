@@ -493,7 +493,7 @@ public final class Constants {
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
     /** Address the Authentication Server should bind to*/
-    public static final String AUTH_SERVER_ADDRESS = "security.server.address";
+    public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /** Configuration for External Authentication Server. */
     public static final String AUTH_SERVER_PORT = "security.server.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
