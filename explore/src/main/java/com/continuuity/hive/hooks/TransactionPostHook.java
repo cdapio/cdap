@@ -4,7 +4,6 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.TxnSerDe;
-
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
@@ -38,7 +37,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
         }
       } else {
         // Very unlikely with empty changes
-        txClient.abort(tx);
+        txClient.invalidate(tx.getWritePointer());
         LOG.info("Could not pass first commit checking for tx used for Hive query: {}", tx);
       }
     }
