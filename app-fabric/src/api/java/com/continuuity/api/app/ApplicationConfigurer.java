@@ -1,4 +1,4 @@
-package com.continuuity.api;
+package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
@@ -57,7 +57,7 @@ public interface ApplicationConfigurer {
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
-  void addDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties);
+  void createDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties);
 
   /**
    * Adds a {@link Flow} to the Application.
