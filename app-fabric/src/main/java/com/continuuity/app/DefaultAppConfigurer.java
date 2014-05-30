@@ -137,7 +137,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
     TwillSpecification specification = application.configure();
     services.put(specification.getName(), specification);
-
   }
 
   public ApplicationSpecification createApplicationSpec() {

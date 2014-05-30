@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
-
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.
  */
@@ -65,7 +64,6 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
                   .registerTypeAdapter(Schedule.class, new ScheduleCodec())
                   .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
-//                  .registerTypeAdapter(TwillSpecification.class, new TwillSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);

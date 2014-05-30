@@ -95,8 +95,8 @@ public interface ApplicationConfigurer {
   void addWorkflow(Workflow workflow);
 
   /**
-   * Adds a {@link TwillApplication} to the Application.
-   * @param application The {@link TwillApplication} to be included in the Application.
+   * Adds a service - {@link TwillApplication} to the Reactor application.
+   * @param application Service - {@link TwillApplication} to be included in the Reactor application.
    */
   void addService(TwillApplication application);
 }
