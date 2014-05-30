@@ -1,11 +1,15 @@
 package com.continuuity.data2.datafabric.dataset;
 
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.dataset2.manager.InstanceConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,16 +49,40 @@ public final class DatasetsUtil {
       admin = datasetManager.getAdmin(instanceName, cl);
     }
 
-    try {
-      if (!admin.exists()) {
+    T instance;
+    boolean created = false;
+    if (!admin.exists()) {
+      try {
         admin.create();
+        created = true;
+      } finally {
+        admin.close();
       }
-    } finally {
-      admin.close();
+    }
+    instance = (T) datasetManager.getDataset(instanceName, null);
+
+    if (created && (instance instanceof RowScannable)) {
+      generateCreateStatement(instanceName, (RowScannable) instance);
     }
 
-    return (T) datasetManager.getDataset(instanceName, null);
+    return instance;
   }
 
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+    String hiveSchema;
+    try {
+      hiveSchema = Scannables.hiveSchemaFor(scannable);
+    } catch (UnsupportedTypeException e) {
+      LOG.error(String.format(
+        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+      return null;
+    }
+    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                         "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
+    LOG.info("Command for Hive: {}", hiveStatement);
+    return hiveStatement;
+  }
 
 }

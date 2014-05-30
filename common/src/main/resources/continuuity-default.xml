@@ -775,6 +775,14 @@
         <value>10000</value>
     </property>
 
+    <!---
+         Hive Server Settings.
+     -->
+    <property>
+        <name>hive.server.bind.address</name>
+        <value>localhost</value>
+    </property>
+
     <!--
         External Authentication Settings
     -->
