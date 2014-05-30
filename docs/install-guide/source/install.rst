@@ -1,13 +1,15 @@
 .. :Author: John Jackson
    :Description: Installation guide for Continuuity Reactor on Linux systems
 
+:orphan:
+
 ==============================================================
-Continuuity Reactor 2.1.0 Installation and Configuration Guide
+Installation and Configuration
 ==============================================================
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 
 Introduction
@@ -37,7 +39,7 @@ These are the Continuuity Reactor components:
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
-`hardware requirements <#hardware-requirements>`__ are relatively modest, 
+`hardware requirements <#hardware-requirements>`_ are relatively modest, 
 as most of the work is done by the Hadoop cluster. These two
 boxes provide high availability; at any one time, one of them is the leader
 providing services while the other is a follower providing failover support. 
@@ -388,11 +390,11 @@ We provide pre-built ``.JAR`` files for convenience:
 #. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
    ``CONTINUUITY_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
 #. Once the application is deployed, instructions on running the example can be found at the 
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#running-the-example>`__.
+   `TrafficAnalytics example <examples/TrafficAnalytics.html#running-the-example>`__.
 #. You should be able to start the application, inject log entries,
    run the ``MapReduce`` job and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example </developers/examples/TrafficAnalytics#stopping-the-app>`__.
+   `TrafficAnalytics example <examples/TrafficAnalytics.html#stopping-the-app>`__.
 
 Troubleshooting
 ---------------
@@ -431,7 +433,7 @@ Where to Go Next
 ================
 Now that you've installed Continuuity Reactor, take a look at:
 
-- `Introduction to Continuuity Reactor <intro>`__,
+- `Introduction to Continuuity Reactor <http://continuuity.com/developers/>`__,
   an introduction to Big Data and the Continuuity Reactor.
 
 Appendix: ``continuuity-site.xml``

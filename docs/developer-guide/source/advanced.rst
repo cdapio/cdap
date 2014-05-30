@@ -1,17 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Advanced Reactor Features
 
 =====================================
-Advanced Continuuity Reactor Features
+Advanced Features
 =====================================
 
-------------------------------
 Building Big Data Applications
-------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 
 Flow System
@@ -31,22 +28,22 @@ By default, a Flowlet processes a single data object at a time within a single t
 
 For the batch example above, up to 100 data objects can be read from the input and processed at one time.
 
-Flows and Instances
--------------------
+Flowlets and Instances
+----------------------
 You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
-`REST interfaces </developers/rest>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
-In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be affected. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
+In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be improved. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
 Partitioning Strategies
 -----------------------
 As mentioned above, if you have multiple instances of a Flowlet the input queue is partitioned among the Flowlets. The partitioning can occur in different ways, and each Flowlet can specify one of these three partitioning strategies:
 
-- **First-in first-out (FIFO)**: Default mode. In this mode, every Flowlet instance receives the next available data object in the queue. However, since multiple consumers may compete for the same data object, access to the queue must be synchronized. This may not always be the most efficient strategy.
+- **First-in first-out (FIFO):** Default mode. In this mode, every Flowlet instance receives the next available data object in the queue. However, since multiple consumers may compete for the same data object, access to the queue must be synchronized. This may not always be the most efficient strategy.
 
-- **Round-robin**: With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO, it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
+- **Round-robin:** With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO, it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
 
-- **Hash-based**: If the emitting Flowlet annotates each data object with a hash key, this partitioning ensures that all objects of a given key are received by the same consumer instance. This can be useful for aggregating by key, and can help reduce write conflicts.
+- **Hash-based:** If the emitting Flowlet annotates each data object with a hash key, this partitioning ensures that all objects of a given key are received by the same consumer instance. This can be useful for aggregating by key, and can help reduce write conflicts.
 
 Suppose we have a Flowlet that counts words::
 
@@ -329,7 +326,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs </developers/javadocs/index.html>`__ for these classes and `the examples </developers/examples>`__
+See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`
 to learn more about these DataSets.
 
 Custom DataSets
@@ -367,8 +364,7 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-A complete application demonstrating use of a Custom DataSet is included in our
-`PageViewAnalytics <examples/PageViewAnalytics>`__ example.
+A complete application demonstrating use of a Custom DataSet is included in our `PageViewAnalytics <examples/PageViewAnalytics/index.html>` example.
 
 DataSets & MapReduce
 --------------------
@@ -562,5 +558,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Operating a Continuuity Reactor <operations>`__,
+- `Operating a Continuuity Reactor <operations.html>`_,
   which covers putting Continuuity Reactor into production.

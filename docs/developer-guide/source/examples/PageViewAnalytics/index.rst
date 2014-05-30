@@ -1,17 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
 ============================
 PageViewAnalytics Example
 ============================
 
----------------------------------------------------------------
 A Continuuity Reactor Application demonstrating Custom DataSets
----------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
@@ -43,7 +40,7 @@ Let's look at some of these elements, and then run the Application and see the r
 
 The PageViewAnalytics Application
 ---------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components
+As in the other :doc:`examples </examples/index>`, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {
@@ -192,4 +189,4 @@ Either:
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.1.0.zip>`_
+Download the example: :download:`continuuity-PageViewAnalytics-2.1.0.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.1.0.zip>`

@@ -1,24 +1,21 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
 
 ==========================
 TrafficAnalytics Example
 ==========================
 
-----------------------------------------------------------
 A Continuuity Reactor Application demonstrating MapReduce
-----------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Overview
 ========
 This example demonstrates an application of streaming log analysis. 
 It computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data. 
-The application expands on the other `examples <http://continuuity.com/developers/examples>`__
+The application expands on the other :doc:`examples </examples/index>`
 to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
@@ -35,7 +32,7 @@ Let's look at some of these elements, and then run the application and see the r
 
 The TrafficAnalytics Application
 --------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
+As in the other :doc:`examples </examples/index>`, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 	public class TrafficAnalyticsApp implements Application {
@@ -250,4 +247,4 @@ Either:
 - On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
-`Download the example </developers/examples-files/continuuity-TrafficAnalytics-2.1.0.zip>`_
+Download the example: :download:`continuuity-TrafficAnalytics-2.1.0.zip </examples/TrafficAnalytics/continuuity-TrafficAnalytics-2.1.0.zip>`

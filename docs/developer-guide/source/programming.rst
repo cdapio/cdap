@@ -1,17 +1,14 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Programming Applications for the Continuuity Reactor
 
-===================================================
-Continuuity Reactor Programming Guide
-===================================================
+=================
+Programming Guide
+=================
 
------------------------------------------------------------------------
 Introduction to Programming Applications for the Continuuity Reactor
------------------------------------------------------------------------
 
-.. reST Editor: section-numbering::
-
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
 
 Introduction
 ============
@@ -22,12 +19,12 @@ and Workflows—and how you work with them in Java to build a Big Data
 application.
 
 For a high-level view of the concepts of the Continuuity Reactor Java
-APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
+APIs, please see the `Introduction to Continuuity Reactor <intro>`__.
 
-For more information beyond this document, see both the
-`Javadocs </developers/javadocs/index.html>`_  and the code in the
-`examples </developers/examples>`_ directory, both of which are on the
-Continuuity.com `Developers website </developers>`_ as well as in your
+For more information beyond this document, see the
+`Javadocs <javadocs/index>`_  and the code in the
+`examples <examples/index>`_ directory, both of which are on the
+Continuuity.com `Developers website <http://continuuity.com/developers>`_ as well as in your
 Reactor installation directory.
 
 
@@ -113,8 +110,6 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _application:
-
 Applications
 ------------
 
@@ -179,16 +174,18 @@ Collecting Data: Streams
 ------------------------
 **Streams** are the primary means for bringing data
 from external systems into the Reactor in realtime.
-You specify a Stream in your `Application`_ metadata::
+You specify a Stream in your `Application`__ metadata::
 
 	.withStreams()
 	  .add(new Stream("myStream")) ...
+
+__ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API </developers/rest>`_
+using either the `Continuuity Reactor HTTP REST API <rest.html>`__
 or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
@@ -722,11 +719,7 @@ by using one Table for the data to index and a second Table for the
 index itself.
 
 You can implement your own data patterns as custom DataSets on top of
-Tables. Because a number of useful datasets, including key/value tables,
-indexed tables and time series are already included with the Reactor, we
-call them system datasets.
-
-A number of useful DataSets—we refer to them as system DataSets—are
+Tables. A number of useful DataSets—we refer to them as system DataSets—are
 included with Reactor, including key/value tables, indexed tables and
 time series.
 
@@ -758,7 +751,7 @@ instance of the DataSet class into the Application.
 
 You can also implement custom DataSets by extending the ``DataSet`` base
 class or by extending existing DataSet types. See the `PageViewAnalytics
-<examples/PageViewAnalytics>`__ example for an implementation of a
+<examples/PageViewAnalytics/index.html>`__ example for an implementation of a
 Custom DataSet.
 
 .. _Procedures:
@@ -929,7 +922,7 @@ Strategies in Testing MapReduce
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
+found under `TrafficAnalytics <examples/TrafficAnalytics/index.html>`_.
 
 The ``TrafficAnalyticsTest`` class should extend from
 ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
@@ -1054,5 +1047,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
+- `Advanced Continuuity Reactor Features <advanced.html>`__,
   with details of the Flow, DataSet and Transaction systems.
