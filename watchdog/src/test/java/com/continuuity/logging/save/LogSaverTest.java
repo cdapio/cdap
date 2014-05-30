@@ -5,6 +5,7 @@ import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -120,6 +121,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(logBaseDir, "reactor/services/service-metrics", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
     multiElection.stopAndWait();
@@ -143,6 +145,11 @@ public class LogSaverTest extends KafkaTestBase {
   @Test
   public void testLogRead1() throws Exception {
     testLogRead(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", ""));
+  }
+
+  @Test
+  public void testLogRead3() throws Exception {
+    testLogRead(new ServiceLoggingContext("reactor", "service", "metrics"));
   }
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
@@ -270,6 +277,7 @@ public class LogSaverTest extends KafkaTestBase {
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
+    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("reactor", "services", "metrics"))));
 
     Futures.allAsList(futures).get();
 
