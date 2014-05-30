@@ -495,7 +495,7 @@ public final class Constants {
     /** Address the Authentication Server should bind to*/
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.server.port";
+    public static final String AUTH_SERVER_PORT = "security.auth.server.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
