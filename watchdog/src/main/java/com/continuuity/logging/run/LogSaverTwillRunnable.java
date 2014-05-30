@@ -165,7 +165,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
     };
   }
 
-  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -175,8 +175,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new DataFabricModules(cConf, hConf).getDistributedModules()
     );
   }
 }
