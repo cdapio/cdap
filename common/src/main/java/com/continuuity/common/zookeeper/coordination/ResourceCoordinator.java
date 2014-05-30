@@ -366,7 +366,7 @@ public final class ResourceCoordinator extends AbstractService {
 
           @Override
           public void onFailure(Throwable t) {
-            LOG.error("Failed to save assignment {}", Bytes.toString(data), t);
+            LOG.error("Failed to save assignment {}", Bytes.toStringBinary(data), t);
             doNotifyFailed(t);
           }
         }, executor

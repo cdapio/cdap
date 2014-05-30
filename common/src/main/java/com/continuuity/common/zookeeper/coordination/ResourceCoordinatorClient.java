@@ -52,7 +52,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
         try {
           return CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(input.getData());
         } catch (Throwable t) {
-          LOG.error("Failed to decode resource requirement: {}", Bytes.toString(input.getData()), t);
+          LOG.error("Failed to decode resource requirement: {}", Bytes.toStringBinary(input.getData()), t);
           throw Throwables.propagate(t);
         }
       }
@@ -225,7 +225,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
 
           handleAssignmentChange(serviceName, assignment);
         } catch (Exception e) {
-          LOG.error("Failed to decode ResourceAssignment {}", Bytes.toString(result.getData()), e);
+          LOG.error("Failed to decode ResourceAssignment {}", Bytes.toStringBinary(result.getData()), e);
         }
       }
 
