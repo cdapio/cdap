@@ -789,6 +789,11 @@
     </property>
 
     <property>
+      <name>security.server.address</name>
+      <value>127.0.0.1</value>
+    </property>
+
+    <property>
         <name>security.server.port</name>
         <value>10009</value>
     </property>
