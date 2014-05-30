@@ -1,6 +1,7 @@
 package com.continuuity.hive.context;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
@@ -12,6 +13,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
+
+import java.io.IOException;
 
 /**
  * Stores/creates context for Hive queries to run in MapReduce jobs.
@@ -25,7 +28,7 @@ public class ContextManager {
     ContextManager.datasetManager = datasetManager;
   }
 
-  public static TransactionSystemClient getTxClient(Configuration conf) {
+  public static TransactionSystemClient getTxClient(Configuration conf) throws IOException {
     if (txClient == null) {
       selfInit(conf);
     }
@@ -33,7 +36,7 @@ public class ContextManager {
     return txClient;
   }
 
-  public static DatasetManager getDatasetManager(Configuration conf) {
+  public static DatasetManager getDatasetManager(Configuration conf) throws IOException {
     if (datasetManager == null) {
       selfInit(conf);
     }
@@ -41,12 +44,12 @@ public class ContextManager {
     return datasetManager;
   }
 
-  private static void selfInit(Configuration conf) {
+  private static void selfInit(Configuration conf) throws IOException {
     // Self init needs to happen only when running in as a MapReduce job.
     // In other cases, ContextManager will be initialized using initialize method.
 
-    CConfiguration cConf = CConfSerDe.deserialize(conf);
-    Configuration hConf = HConfSerDe.deserialize(conf);
+    CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE);
+    Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),

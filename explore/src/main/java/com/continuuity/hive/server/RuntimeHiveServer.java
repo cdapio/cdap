@@ -80,6 +80,8 @@ public class RuntimeHiveServer extends HiveServer {
   protected void shutDown() throws Exception {
     if (hiveServer2 != null) {
       hiveServer2.stop();
+    }
+    if (discoveryCancel != null) {
       discoveryCancel.cancel();
     }
   }

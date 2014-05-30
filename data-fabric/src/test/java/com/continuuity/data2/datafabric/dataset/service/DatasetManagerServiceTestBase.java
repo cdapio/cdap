@@ -6,9 +6,10 @@ import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
+import com.continuuity.data2.dataset2.executor.NoOpDatasetOpExecutor;
 import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import com.continuuity.data2.dataset2.user.DatasetUserService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -64,10 +64,6 @@ public abstract class DatasetManagerServiceTestBase {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
-    DatasetUserService userService = new DatasetUserService(cConf, discoveryService,
-                                                            metricsCollectionService, Collections.EMPTY_SET);
-    userService.startAndWait();
-
     // Tx Manager to support working with datasets
     txManager = new InMemoryTransactionManager();
     txManager.startAndWait();
@@ -82,7 +78,7 @@ public abstract class DatasetManagerServiceTestBase {
                                           "memoryTable", InMemoryTableModule.class),
                                         txSystemClient,
                                         metricsCollectionService,
-                                        userService);
+                                        new NoOpDatasetOpExecutor());
     service.startAndWait();
   }
 

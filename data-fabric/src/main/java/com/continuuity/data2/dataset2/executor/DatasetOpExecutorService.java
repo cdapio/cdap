@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.user;
+package com.continuuity.data2.dataset2.executor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -21,31 +21,31 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * Provides various REST endpoints to execute user code via {@link DatasetAdminHTTPHandler}.
+ * Provides various REST endpoints to execute user code via {@link DatasetAdminOpHTTPHandler}.
  */
-public class DatasetUserService extends AbstractIdleService {
+public class DatasetOpExecutorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetUserService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetOpExecutorService.class);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
-  public DatasetUserService(CConfiguration cConf, DiscoveryService discoveryService,
-                            MetricsCollectionService metricsCollectionService,
-                            @Named(Constants.Service.DATASET_USER) Set<HttpHandler> handlers) {
+  public DatasetOpExecutorService(CConfiguration cConf, DiscoveryService discoveryService,
+                                  MetricsCollectionService metricsCollectionService,
+                                  @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
 
     this.discoveryService = discoveryService;
 
-    int workerThreads = cConf.getInt(Constants.Dataset.User.WORKER_THREADS, 10);
-    int execThreads = cConf.getInt(Constants.Dataset.User.EXEC_THREADS, 10);
+    int workerThreads = cConf.getInt(Constants.Dataset.Executor.WORKER_THREADS, 10);
+    int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 10);
 
     this.httpService = NettyHttpService.builder()
       .addHttpHandlers(handlers)
-      .setHost(cConf.get(Constants.Dataset.User.ADDRESS))
+      .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
       .setHandlerHooks(ImmutableList.of(
-        new MetricsReporterHook(metricsCollectionService, Constants.Service.DATASET_USER)))
+        new MetricsReporterHook(metricsCollectionService, Constants.Service.DATASET_EXECUTOR)))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(execThreads)
       .setConnectionBacklog(20000)
@@ -54,13 +54,13 @@ public class DatasetUserService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting DatasetUserService...");
+    LOG.info("Starting DatasetOpExecutorService...");
 
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.DATASET_USER;
+        return Constants.Service.DATASET_EXECUTOR;
       }
 
       @Override
@@ -69,12 +69,12 @@ public class DatasetUserService extends AbstractIdleService {
       }
     });
 
-    LOG.info("DatasetUserService started successfully on {}", httpService.getBindAddress());
+    LOG.info("DatasetOpExecutorService started successfully on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping DatasetUserService...");
+    LOG.info("Stopping DatasetOpExecutorService...");
 
     try {
       if (cancellable != null) {

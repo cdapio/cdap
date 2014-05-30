@@ -1,10 +1,11 @@
 package com.continuuity.hive.hooks;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
-import com.continuuity.hive.context.TxnSerDe;
-
+import com.continuuity.hive.context.TxnCodec;
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
@@ -26,7 +27,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
     if (TransactionPreHook.SELECT_QUERY.matcher(hookContext.getQueryPlan().getQueryString()).matches()) {
       LOG.debug("Entering post hive hook for hive query");
       HiveConf hiveConf = hookContext.getConf();
-      Transaction tx = TxnSerDe.deserialize(hiveConf);
+      Transaction tx = ConfigurationUtil.get(hiveConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE);
       LOG.debug("Transaction retrieved in post hook: {}", tx);
 
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
@@ -38,7 +39,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
         }
       } else {
         // Very unlikely with empty changes
-        txClient.abort(tx);
+        txClient.invalidate(tx.getWritePointer());
         LOG.info("Could not pass first commit checking for tx used for Hive query: {}", tx);
       }
     }

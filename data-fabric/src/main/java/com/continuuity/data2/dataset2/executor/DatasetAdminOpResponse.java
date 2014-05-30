@@ -1,14 +1,14 @@
-package com.continuuity.data2.dataset2.user;
+package com.continuuity.data2.dataset2.executor;
 
 /**
  * Used to respond to various admin operation requests.
  */
-public final class AdminOpResponse {
+public final class DatasetAdminOpResponse {
 
   private Object result;
   private String message;
 
-  public AdminOpResponse(Object result, String message) {
+  public DatasetAdminOpResponse(Object result, String message) {
     this.result = result;
     this.message = message;
   }

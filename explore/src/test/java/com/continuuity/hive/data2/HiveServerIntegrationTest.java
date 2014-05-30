@@ -23,14 +23,12 @@ import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,7 +44,6 @@ public class HiveServerIntegrationTest {
   private static InMemoryHiveMetastore inMemoryHiveMetastore;
   private static DatasetManager datasetManager;
   private static DatasetManagerService datasetManagerService;
-  private static InMemoryZKServer zookeeper;
   private static HiveClient hiveClient;
 
   @BeforeClass
@@ -114,6 +111,7 @@ public class HiveServerIntegrationTest {
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);
     Assert.assertEquals("first", table.get("1"));
+    transactionManager.abort(tx);
   }
 
   @Test

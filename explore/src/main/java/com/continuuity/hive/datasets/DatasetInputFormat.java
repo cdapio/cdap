@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
+ * Map reduce input format to read from datasets that implement RowScannable.
  */
 public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   private static final Gson GSON = new Gson();

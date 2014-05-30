@@ -3,7 +3,7 @@ ext {
     libraries = [:]
 }
 
-versions.avroVersion = '1.7.1'
+versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
 versions.hadoopVersion = '2.1.0-beta'
 versions.googleGuavaVersion = '13.0.1'

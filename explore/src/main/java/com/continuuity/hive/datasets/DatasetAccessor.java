@@ -6,8 +6,9 @@ import com.continuuity.data2.dataset2.manager.DatasetManagementException;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
-import com.continuuity.hive.context.TxnSerDe;
+import com.continuuity.hive.context.TxnCodec;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -22,15 +23,15 @@ import java.util.Map;
 public class DatasetAccessor {
 
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict.
-  private static final Map<String, ClassLoader> datasetClassloaders = Maps.newHashMap();
+  private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newHashMap();
 
   public static RowScannable getRowScannable(Configuration conf) throws IOException {
     RowScannable rowScannable = instantiate(conf);
 
     if (rowScannable instanceof TransactionAware) {
       // TODO: do we have to commit transaction?
-      Transaction tx = TxnSerDe.deserialize(conf);
-      ((TransactionAware) rowScannable).startTx(tx);
+      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE);
+        ((TransactionAware) rowScannable).startTx(tx);
     }
 
     return rowScannable;
@@ -49,14 +50,14 @@ public class DatasetAccessor {
     DatasetManager manager = ContextManager.getDatasetManager(conf);
 
     try {
-      ClassLoader classLoader = datasetClassloaders.get(datasetName);
+      ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
       if (classLoader == null) {
         classLoader = conf.getClassLoader();
       }
 
       Dataset dataset = manager.getDataset(datasetName, classLoader);
-      if (dataset != null && !datasetClassloaders.containsKey(datasetName)) {
-        datasetClassloaders.put(datasetName, dataset.getClass().getClassLoader());
+      if (dataset != null && !DATASET_CLASSLOADERS.containsKey(datasetName)) {
+        DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
       }
 
       if (!(dataset instanceof RowScannable)) {

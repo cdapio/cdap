@@ -117,6 +117,7 @@ public abstract class TwillRunnerMain extends DaemonMain {
         isLeader.set(false);
       }
     });
+    leaderElection.start();
   }
 
   @Override
@@ -128,7 +129,7 @@ public abstract class TwillRunnerMain extends DaemonMain {
       twillController.stopAndWait();
     }
 
-    leaderElection.cancel();
+    leaderElection.stopAndWait();
     zkClientService.stopAndWait();
   }
 
