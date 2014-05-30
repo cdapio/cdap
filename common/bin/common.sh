@@ -130,7 +130,10 @@ set_classpath()
 
   # If Hive classpath is successfully determined, add it to classpath
   if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" ]; then
-    CP=$CP:$HIVE_CONF_DIR:$HIVE_HOME/lib/*
+    # Hive exec has a HiveConf class that needs to be loaded before the HiveConf class from
+    # hive-common for joins operations to work
+    HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
+    CP=$CP:$HIVE_CONF_DIR:$HIVE_EXEC:$HIVE_HOME/lib/*
   else
     echo "WARN: Could not find Hive libraries"
   fi
