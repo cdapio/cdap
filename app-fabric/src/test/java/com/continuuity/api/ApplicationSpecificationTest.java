@@ -2,7 +2,6 @@ package com.continuuity.api;
 
 
 import com.continuuity.AppWithServices;
-import com.continuuity.ApplicationWithDummyService;
 import com.continuuity.ResourceApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.FlowSpecification;
@@ -48,27 +47,16 @@ public class ApplicationSpecificationTest {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
 
-    ApplicationSpecification spec = appConfigurer.createApplicationSpec();
-    Map<String, TwillSpecification> services = spec.getServices();
-    Assert.assertEquals(1, services.size());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
 
-    Assert.assertTrue(services.containsKey("NoOpService"));
-    TwillSpecification specification = services.get("NoOpService");
-    Map<String, RuntimeSpecification> runnables = specification.getRunnables();
-    Assert.assertEquals(1, runnables.size());
-  }
-
-  @Test
-  public void testConfigureAppWithServices2() {
-
-    ApplicationSpecification spec = Specifications.from(new ApplicationWithDummyService().configure());
+    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
+    ApplicationSpecification spec = adapter.fromJson(adapter.toJson(appSpec));
 
     Map<String, TwillSpecification> services = spec.getServices();
     Assert.assertEquals(1, services.size());
 
     Assert.assertTrue(services.containsKey("NoOpService"));
     TwillSpecification specification = services.get("NoOpService");
-
     Map<String, RuntimeSpecification> runnables = specification.getRunnables();
     Assert.assertEquals(1, runnables.size());
   }

@@ -33,7 +33,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import org.apache.twill.api.TwillSpecification;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -43,6 +42,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
+
 
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.
@@ -65,8 +65,8 @@ public final class ApplicationSpecificationAdapter {
                   .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
                   .registerTypeAdapter(Schedule.class, new ScheduleCodec())
                   .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
+//                  .registerTypeAdapter(TwillSpecification.class, new TwillSpecificationCodec())
                   .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
-                  .registerTypeAdapter(TwillSpecification.class, new TwillSpecificationCodec())
                   .create();
     return new ApplicationSpecificationAdapter(generator, gson);
   }
