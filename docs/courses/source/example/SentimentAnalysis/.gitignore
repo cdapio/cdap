@@ -1,0 +1,34 @@
+*.class
+.*.swp
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Intellij Files & Dir #
+*.iml
+*.ipr
+*.iws
+atlassian-ide-plugin.xml
+out/
+.DS_Store
+./lib/
+.idea
+
+# Gradle Files & Dir #
+build/
+.gradle/
+.stickyStorage
+.build/
+target/
+
+# Node log
+npm-*.log
+logs/
+
+# dependency
+dependency-reduced-pom.xml
+streamy/data/*
+webapp/server/logs/streamy-lite.log
+data/*

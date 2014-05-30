@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+source $bin/../../common.sh
+app="SentimentAnalysisApp"
+
+jar="$bin/../target/SentimentAnalysis-1.0.0.jar"
+
+PID_FILE="$bin/.sentiment-analysis.pid"
+STREAM_URL="http://$gateway/v2/streams/sentence"
+
+test_status() {
+  if [ $status -ne 200 ]; then
+    echo "Failed with status: $status"
+    exit 1;
+  fi
+}
+
+start() {
+  echo "Starting sentiment analysis application..."
+
+  echo "Starting analysis flow"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/SentimentAnalysisApp/flows/analysis/start`
+  test_status
+  
+  echo "Starting sentiment-query procedure"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/SentimentAnalysisApp/procedures/sentiment-query/start`
+  test_status
+  
+  echo "Starting webapp"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/SentimentAnalysisApp/webapp/start`
+  test_status
+  
+  echo "Started all components"
+
+  #curl -s -X POST http://$gateway/v2/apps/$app/flows/analysis/start 2>/dev/null
+  #curl -s -X POST http://$gateway/v2/apps/$app/procedures/sentiment-query/start 2>/dev/null
+  #curl -s -X POST http://$gateway/v2/apps/$app/webapp/start 2>/dev/null
+
+  sleep 3
+
+  echo "Sending events..."
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Building big data apps is hard" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Continuuity Reactor is awesome" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "I love hbase" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "I have hard time building apps on hadoop" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Continuuity Reactor makes it easy, love it" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Reactor 2.2.0 is awesome" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Hadoop is the Big Data platform" http://localhost:10000/v2/streams/sentence`
+  test_status
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -d "Hadoop is hard" http://localhost:10000/v2/streams/sentence`
+  test_status
+  
+  echo "Opening webapp"
+  name=`echo $gateway | awk -F":" '{ print $1 }'`
+  open http://$name:20000/senti
+  
+  echo "Started all components and sent all events"
+}
+
+stop() {
+  echo "Stopping flow, procedure and webapp..."
+
+  echo "Stopping analysis flow"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/$app/flows/analysis/stop`
+  test_status
+  
+  echo "Stopping sentiment-query procedure"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/$app/procedures/sentiment-query/stop`
+  test_status
+
+  echo "Stopping webapp"
+  status=`curl -o /dev/null -sL -w "%{http_code}\\n" -X POST http://localhost:10000/v2/apps/$app/webapp/stop`
+  test_status
+  
+  echo "Stopped all components"
+}
+
+if [ "x$action" != "xdeploy" ] && [ "x$action" != "xstart" ] && [ "x$action" != "xstop" ]; then
+  usage
+  exit 1
+fi
+
+$action

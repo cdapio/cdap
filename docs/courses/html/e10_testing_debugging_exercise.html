@@ -1732,7 +1732,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1741,7 +1741,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1753,17 +1764,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1773,9 +1784,275 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Implement testing in a Reactor Application</li>
+<li>Hook up a debugger to a Reactor, and step through the code</li>
+</ul>
+<p>Note: the test given here requires that the example project have the
+natural language toolkit included in the project; if not, modify the test</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              2/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Setting Up <tt class="docutils literal">SentimentAnalysisTest.java</tt></h1></header>
+            
+            
+            <section><p>Add these imports:</p>
+<pre><span class="kn">import</span> <span class="nn">java.util.Collections</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.google.common.collect.ImmutableSet</span><span class="o">;</span>
+</pre>
+<p>The test framework can be summarized as:</p>
+<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SentimentAnalysisTest</span> <span class="kd">extends</span> <span class="n">ReactorTestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="o">...</span> <span class="c1">// Insert test code here: Part 1</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+         <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+      <span class="n">clear</span><span class="o">();</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Part 1: Setting Up Testing</h1></header>
+            
+            
+            <section><p>Add this test code in the <tt class="docutils literal">try</tt> block:</p>
+<pre><span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">SentimentAnalysisApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="c1">// Starts the Flow</span>
+<span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;analysis&quot;</span><span class="o">);</span>
+
+<span class="c1">// Write messages to the Stream and Flow</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="o">...</span> <span class="c1">// Part 2</span>
+<span class="o">}</span>
+
+<span class="c1">// Start Procedure and verify</span>
+<span class="n">ProcedureManager</span> <span class="n">procedureManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startProcedure</span><span class="o">(</span><span class="s">&quot;sentiment-query&quot;</span><span class="o">);</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="o">...</span> <span class="c1">// Parts 3 &amp; 4</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Part 2: Writing Messages to the Stream</h1></header>
+            
+            
+            <section><pre><span class="c1">// Write messages to the Stream and Flow</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="n">StreamWriter</span> <span class="n">streamWriter</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">getStreamWriter</span><span class="o">(</span><span class="s">&quot;sentence&quot;</span><span class="o">);</span>
+  <span class="n">streamWriter</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;i love the movie&quot;</span><span class="o">);</span>
+  <span class="n">streamWriter</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;i hate the movie&quot;</span><span class="o">);</span>
+  <span class="n">streamWriter</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;i am neutral towards the movie&quot;</span><span class="o">);</span>
+  <span class="n">streamWriter</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;i am happy that I got this working.&quot;</span><span class="o">);</span>
+
+  <span class="c1">// Wait for the last Flowlet to process all tokens</span>
+  <span class="n">RuntimeMetrics</span> <span class="n">countMetrics</span> <span class="o">=</span>
+    <span class="n">RuntimeStats</span><span class="o">.</span><span class="na">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;SentimentAnalysisApp&quot;</span><span class="o">,</span> <span class="s">&quot;analysis&quot;</span><span class="o">,</span> <span class="s">&quot;update&quot;</span><span class="o">);</span>
+  <span class="n">countMetrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">4</span><span class="o">,</span> <span class="mi">15</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+  <span class="n">flowManager</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Part 3: Start Procedure and Verify</h1></header>
+            
+            
+            <section><pre><span class="c1">// Start Procedure and verify</span>
+<span class="n">ProcedureManager</span> <span class="n">procedureManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startProcedure</span><span class="o">(</span><span class="s">&quot;sentiment-query&quot;</span><span class="o">);</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;aggregates&quot;</span><span class="o">,</span>
+    <span class="n">Collections</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">());</span>
+
+  <span class="c1">// Verify the aggregates</span>
+  <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="k">new</span>
+    <span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;(){}.</span><span class="na">getType</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;positive&quot;</span><span class="o">).</span><span class="na">intValue</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;negative&quot;</span><span class="o">).</span><span class="na">intValue</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;neutral&quot;</span><span class="o">).</span><span class="na">intValue</span><span class="o">());</span>
+
+  <span class="c1">// Verify retrieval of sentiments</span>
+  <span class="n">response</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;sentiments&quot;</span><span class="o">,</span>
+    <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;sentiment&quot;</span><span class="o">,</span> <span class="s">&quot;positive&quot;</span><span class="o">));</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="k">new</span> <span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;(){}.</span><span class="na">getType</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">ImmutableSet</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;i love the movie&quot;</span><span class="o">,</span> <span class="s">&quot;i am happy that I got this</span>
+<span class="s">    working.&quot;</span><span class="o">),</span> <span class="n">result</span><span class="o">.</span><span class="na">keySet</span><span class="o">());</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Part 4: Start Procedure and Verify</h1></header>
+            
+            
+            <section><pre>  <span class="n">response</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;sentiments&quot;</span><span class="o">,</span>
+    <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;sentiment&quot;</span><span class="o">,</span> <span class="s">&quot;negative&quot;</span><span class="o">));</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="k">new</span> <span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;(){}.</span><span class="na">getType</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">ImmutableSet</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;i hate the movie&quot;</span><span class="o">),</span> <span class="n">result</span><span class="o">.</span><span class="na">keySet</span><span class="o">());</span>
+
+  <span class="n">response</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">().</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;sentiments&quot;</span><span class="o">,</span>
+    <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;sentiment&quot;</span><span class="o">,</span> <span class="s">&quot;neutral&quot;</span><span class="o">));</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="k">new</span> <span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;(){}.</span><span class="na">getType</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">ImmutableSet</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;i am neutral towards the movie&quot;</span><span class="o">),</span> <span class="n">result</span><span class="o">.</span><span class="na">keySet</span><span class="o">());</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+  <span class="n">procedureManager</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Include NLTK Before Building Package</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>For these tests to work, you will need to complete the SentimentAnalysis Application
+to include the NLTK (natural language toolkit) as described in the earlier examples</li>
+<li>Stop the existing Flows and Procedures, and with Reactor running,
+build the package and watch as the tests are run</li>
+<li>Build using <tt class="docutils literal">mvn clean package</tt></li>
+<li>To build without tests, use <tt class="docutils literal">mvn clean package <span class="pre">-DskipTests</span></tt></li>
 </ul></section>
             
           </div>
@@ -1788,35 +2065,33 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              8/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Debugging: Setup</h1></header>
             
             
             <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
-</ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+<li>Open the <tt class="docutils literal">pom.xml</tt> in IntelliJ</li>
+<li>From the IntelliJ toolbar, select <tt class="docutils literal"><span class="pre">Run-&gt;Edit</span> Configurations</tt></li>
+<li>Click <tt class="docutils literal">+</tt> and choose <tt class="docutils literal">Remote Configuration</tt></li>
+<li>Create a debug configuration by entering a name; for example, <cite>Continuuity</cite></li>
+<li>Set the host name; for example, <tt class="docutils literal">localhost</tt></li>
+<li>Set the debugging port as <tt class="docutils literal">5005</tt> in the Port field</li>
+<li>Save the configuration using the OK button</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -1828,17 +2103,58 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              9/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Debugging: Running</h1></header>
+            
+            
+            <section><p>Start Reactor in debugging mode; if already running, use the <tt class="docutils literal">restart</tt> option:</p>
+<pre class="literal-block">
+$ ./bin/reactor.sh restart --enable-debug
+</pre>
+<ul class="simple">
+<li>To run the debugger, select <tt class="docutils literal"><span class="pre">Run-&gt;Debug-&gt;Continuuity</span></tt></li>
+<li>Set a breakpoint in a code block</li>
+<li>For example, just after the definition of the variable
+<tt class="docutils literal">text</tt> in the <tt class="docutils literal">process</tt> method in the <tt class="docutils literal">Normalization</tt> Flowlet</li>
+<li>Start the Flow, send in a sentence and control will stop at the breakpoint</li>
+<li>Check the value of <tt class="docutils literal">text</tt> and see that it matches what you sent</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/12
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1848,12 +2164,8 @@ function main() {
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Implement testing in a Reactor Application</li>
+<li>Hook up a debugger to a Reactor, and step through the code</li>
 </ul></section>
             
           </div>
@@ -1866,17 +2178,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              11/12
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1896,11 +2208,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e10_testing_debugging_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              12/12
             </aside>
           </footer>
         </div>
@@ -1927,20 +2239,62 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Setting Up <tt class="docutils literal">SentimentAnalysisTest.java</tt></a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">Part 1: Setting Up Testing</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Part 2: Writing Messages to the Stream</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Part 3: Start Procedure and Verify</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Part 4: Start Procedure and Verify</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Include NLTK Before Building Package</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Debugging: Setup</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Debugging: Running</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Exercise Summary</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12">Exercise Completed</a></th>
+        <td><a href="#slide12">12</a></td>
       </tr>
       
       

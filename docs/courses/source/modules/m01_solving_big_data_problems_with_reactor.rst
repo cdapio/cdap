@@ -8,7 +8,7 @@ Solving Big Data Problems with Reactor
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br_e00| raw:: html
 
@@ -29,7 +29,7 @@ Module Objectives
 Introducing a Big Data Problem 1/3
 ==================================
 
-**Why**: Companies want to know what is happening in realtime
+**Why:** Companies want to know what is happening in realtime
 
 - What are people saying about them?
 - What are people saying about their products?
@@ -48,7 +48,7 @@ A large company launches a new mobile phone product, and wants to know:
 Introducing a Big Data Problem 2/3
 ==================================
 
-**What**
+**What:**
 
 One approach is **Geo-Sentiment analysis of social media data**
 

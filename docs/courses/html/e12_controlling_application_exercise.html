@@ -1732,7 +1732,7 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1741,7 +1741,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1753,17 +1764,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/6
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1773,9 +1784,10 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Control the example application's lifecycle</li>
+<li>Start and stop Flows and Procedures</li>
+<li>Deploy the example application</li>
+<li>Truncate an existing DataSet</li>
 </ul></section>
             
           </div>
@@ -1788,35 +1800,36 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/6
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Exercise Steps (1 of 2)</h1></header>
             
             
-            <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
-</ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+            <section><p>Stop the <tt class="docutils literal">analysis</tt> Flow (or another Procedure, MapReduce job) associated with the application:</p>
+<pre class="literal-block">
+curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -X POST
+  http://localhost:10000/v2/apps/SentimentAnalysisApp/flows/analysis/stop
+</pre>
+<p>Using a similar <tt class="docutils literal">curl</tt> command, stop the <tt class="docutils literal"><span class="pre">sentiment-query</span></tt> procedure</p>
+<p>Now deploy the app using a <tt class="docutils literal">curl</tt> command, executed from the directory where you are building the application:</p>
+<pre class="literal-block">
+curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -H &quot;X-Archive-Name: SentimentAnalysisApp&quot;
+  -X POST http://localhost:10000/v2/apps
+  --data-binary &#64;target/SentimentAnalysis-1.0-SNAPSHOT.jar
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1828,17 +1841,52 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/6
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Exercise Steps (2 of 2)</h1></header>
+            
+            
+            <section><p>Re-use the previous commands to start the <tt class="docutils literal">analysis</tt> Flow and <br />
+<tt class="docutils literal"><span class="pre">sentiment-query</span></tt> Procedure</p>
+<p>Use a DataSet command to truncate the two tables in the example; the command is of the form:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/datasets/&lt;dataset-name&gt;/truncate
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/6
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1848,12 +1896,10 @@ function main() {
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Control an application's lifecycle using external commands</li>
+<li>Start and stop Flows and Procedures</li>
+<li>Deploy applications</li>
+<li>Truncate an existing DataSet</li>
 </ul></section>
             
           </div>
@@ -1866,17 +1912,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/5
+              5/6
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1896,11 +1942,11 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/exercises/e12_controlling_application_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              5/5
+              6/6
             </aside>
           </footer>
         </div>
@@ -1927,20 +1973,26 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Exercise Steps (1 of 2)</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">Exercise Steps (2 of 2)</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Exercise Summary</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Exercise Completed</a></th>
+        <td><a href="#slide6">6</a></td>
       </tr>
       
       

@@ -1,6 +1,6 @@
-===========================================================
-Building An Application Using MapReduce and Workflows
-===========================================================
+===============================================================
+Building An Application Using MapReduce Jobs |br| and Workflows
+===============================================================
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -9,7 +9,7 @@ Building An Application Using MapReduce and Workflows
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
@@ -26,25 +26,18 @@ Exercise Objectives
 
 In this exercise, you will:
 
-- Download and install the SDK
-- Basic Continuuity Reactor operations Start and Stop
-- Run the Quick Start tour
+- Add a MapReduce job and Workflow to the example project
+- Run the MapReduce job
+- Run the Workflow
+- View operations and results in Reactor Dashboard
 
 ----
 
 Exercise Steps
 ========================
 
-- Go to Continuuity Reactor Download: ``http://www.continuuity.com/download``
-- Register for free account
-- Download ``continuuity-sdk-<version>.zip``
-- Unzip the download
-- Open a command line window, go to ``/bin`` and run ``reactor.sh start``
-- Open a browser window, go to ``http://localhost:9999``
-- Follow the steps of the *Log Analytics Application* Tour
-- When finished, shut down the Reactor with ``reactor.sh stop``
+- To be completed
 
-These steps are online at ``http://continuuity.com/developers/quickstart``
 
 ----
 
@@ -53,17 +46,15 @@ Exercise Summary
 
 You should now be able to:
 
-- Perform basic Reactor operations of Start and Stop
-- Taken the Quick Start tour
-- Use the Dashboard for basic operations
-- Inject and Query Data through the Dashboard
-- Modify an Application
-- Redeploy and restart an Application
+- Add MapReduce jobs and Workflows to a project
+- Run MapReduce jobs
+- Run Workflows
+- View operations and results in the Reactor Dashboard
 
 ----
 
 Exercise Completed
 ==================
 
-`Chapter Index <return.html#e08>`__
+`Chapter Index <return.html#e07>`__
 
