@@ -1,13 +1,14 @@
 package com.continuuity.hive.hooks;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.hive.context.CConfSerDe;
+import com.continuuity.hive.context.CConfCodec;
+import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
-import com.continuuity.hive.context.HConfSerDe;
-import com.continuuity.hive.context.TxnSerDe;
-
+import com.continuuity.hive.context.HConfCodec;
+import com.continuuity.hive.context.TxnCodec;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
@@ -35,9 +36,11 @@ public class TransactionPreHook implements ExecuteWithHookContext {
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       Transaction tx = txClient.startLong();
 
-      TxnSerDe.serialize(tx, hiveConf);
-      CConfSerDe.serialize(CConfiguration.create(), hiveConf);
-      HConfSerDe.serialize(HBaseConfiguration.create(), hiveConf);
+      ConfigurationUtil.set(hiveConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE, tx);
+      ConfigurationUtil.set(hiveConf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE,
+                            CConfiguration.create());
+      ConfigurationUtil.set(hiveConf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE,
+                            HBaseConfiguration.create());
     }
   }
 }
