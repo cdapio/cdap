@@ -25,6 +25,7 @@
     <module>hbase-compat-0.96</module>
     <module>passport</module>
     <module>watchdog-api</module>
+    <module>watchdog</module>
   </modules>
 
   <repositories>
