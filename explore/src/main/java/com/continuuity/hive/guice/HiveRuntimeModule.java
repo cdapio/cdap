@@ -5,11 +5,17 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
@@ -17,13 +23,18 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.hbase.ipc.HBaseClient;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.Set;
 
 /**
  * Hive Runtime guice module.
@@ -111,6 +122,10 @@ public class HiveRuntimeModule extends RuntimeModule {
       };
     } else {
       try {
+        String auxJarsPath = generateAuxJarsClasspath();
+        LOG.error("Setting hive.aux.jars.path to {}", auxJarsPath);
+        System.setProperty("hive.aux.jars.path", auxJarsPath);
+
         HiveConf hiveConf = new HiveConf();
 
         // The port number is a parameter that is directly read from the hiveConf passed to hive server,
@@ -128,6 +143,36 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
   }
 
+  private String generateAuxJarsClasspath() throws IOException {
+    final Set<URL> uris = Sets.newHashSet();
+
+    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+      File file = new File(classpath);
+      builder.add(file.getAbsolutePath());
+      try {
+        builder.add(file.getCanonicalPath());
+      } catch (IOException e) {
+        // Ignore the exception and proceed.
+      }
+    }
+
+    final Set<String> bootstrapClassPaths = builder.build();
+    Dependencies.findClassDependencies(this.getClass().getClassLoader(), new Dependencies.ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+          return false;
+        }
+
+        uris.add(classPathUrl);
+        return true;
+      }
+    }, HBaseClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
+                                       new HBaseTableUtilFactory().get().getClass().getCanonicalName());
+
+    return Joiner.on(',').join(uris);
+  }
   /**
    * Common Hive Module for both singlenode and distributed mode.
    */
