@@ -19,9 +19,11 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
@@ -87,9 +89,10 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
+  private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
-  private DatasetManagerService dsService;
+  private DatasetService dsService;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -125,13 +128,14 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules()
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
-    dsService = baseInjector.getInstance(DatasetManagerService.class);
+    dsService = baseInjector.getInstance(DatasetService.class);
   }
 
   @Override
@@ -143,6 +147,9 @@ public class ReactorServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
+
+        hiveServer = injector.getInstance(HiveServer.class);
+        hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -166,6 +173,9 @@ public class ReactorServiceMain extends DaemonMain {
         }
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
+        }
+        if (hiveServer != null) {
+          hiveServer.stopAndWait();
         }
         isLeader.set(false);
       }
@@ -356,5 +366,4 @@ public class ReactorServiceMain extends DaemonMain {
     }
     return file;
   }
-
 }

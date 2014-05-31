@@ -41,3 +41,6 @@ examples/checkstyle_report.xml
 
 # Examples Stuff
 dependency-reduced-pom.xml
+
+# Hive db Stuff
+derby.log

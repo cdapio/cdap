@@ -38,9 +38,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
   private Cancellable serviceCancellable;
-  private InetSocketAddress socketAddress;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
+  private InetAddress address;
 
   /**
    * Constants for a valid JSON response.
@@ -75,7 +75,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @return InetSocketAddress of server.
    */
   public InetSocketAddress getSocketAddress() {
-    return this.socketAddress;
+    return new InetSocketAddress(address, port);
   }
 
   @Override
@@ -88,15 +88,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
-        InetAddress address;
-        try {
-          address = InetAddress.getByName(server.getConnectors()[0].getHost());
-        } catch (UnknownHostException e) {
-          LOG.error("Error finding host to connect to.", e);
-          throw Throwables.propagate(e);
-        }
-        socketAddress = new InetSocketAddress(address, port);
-        return socketAddress;
+        return new InetSocketAddress(address, port);
       }
     });
     server.start();
@@ -106,6 +98,13 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   protected void startUp() {
     try {
       server = new Server();
+
+      try {
+        address = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_ADDRESS));
+      } catch (UnknownHostException e) {
+        LOG.error("Error finding host to connect to.", e);
+        throw Throwables.propagate(e);
+      }
 
       QueuedThreadPool threadPool = new QueuedThreadPool();
       threadPool.setMaxThreads(maxThreads);
@@ -117,6 +116,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.setHandler(initHandlers(handlers));
 
       SelectChannelConnector connector = new SelectChannelConnector();
+      connector.setHost(address.getCanonicalHostName());
       connector.setPort(port);
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
@@ -134,6 +134,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
         int sslPort = configuration.getInt(Constants.Security.AUTH_SERVER_SSL_PORT);
+        sslConnector.setHost(address.getCanonicalHostName());
         sslConnector.setPort(sslPort);
         connector.setConfidentialPort(sslPort);
         server.setConnectors(new Connector[]{connector, sslConnector});

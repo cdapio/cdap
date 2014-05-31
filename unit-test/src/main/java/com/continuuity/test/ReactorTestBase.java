@@ -21,8 +21,8 @@ import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamHttpModule;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
@@ -91,8 +91,8 @@ public class ReactorTestBase {
   private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricHttpHandler httpHandler;
   private static SchedulerService schedulerService;
-  private static DatasetManagerService datasetService;
-  private static DatasetManager datasetManager;
+  private static DatasetService datasetService;
+  private static DatasetFramework datasetFramework;
 
 
   /**
@@ -223,9 +223,9 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    datasetManager = injector.getInstance(DatasetManager.class);
+    datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
   }
@@ -310,7 +310,7 @@ public class ReactorTestBase {
   @Beta
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetManager.register(moduleName, datasetModule);
+    datasetFramework.register(moduleName, datasetModule);
   }
 
 
@@ -328,8 +328,8 @@ public class ReactorTestBase {
                                                        String datasetInstanceName,
                                                        DatasetInstanceProperties props) throws Exception {
 
-    datasetManager.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetManager.getAdmin(datasetInstanceName, null);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
+    return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 }
 

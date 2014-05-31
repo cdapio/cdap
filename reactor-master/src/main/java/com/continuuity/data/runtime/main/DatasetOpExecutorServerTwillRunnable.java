@@ -12,7 +12,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutorService;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.util.concurrent.Service;
