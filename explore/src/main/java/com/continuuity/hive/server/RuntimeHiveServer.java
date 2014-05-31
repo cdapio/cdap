@@ -1,7 +1,7 @@
 package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.hive.context.ContextManager;
 import com.google.inject.Inject;
@@ -35,10 +35,10 @@ public class RuntimeHiveServer extends HiveServer {
 
   @Inject
   public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                           DatasetManager datasetManager, HiveConf hiveConf,
+                           DatasetFramework datasetFramework, HiveConf hiveConf,
                            @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
                            @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
-    ContextManager.initialize(txClient, datasetManager);
+    ContextManager.initialize(txClient, datasetFramework);
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.hiveConf = hiveConf;

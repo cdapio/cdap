@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager.inmemory;
+package com.continuuity.data2.dataset2;
 
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;

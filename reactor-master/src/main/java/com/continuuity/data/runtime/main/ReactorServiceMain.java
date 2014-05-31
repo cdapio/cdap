@@ -19,7 +19,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
@@ -92,7 +92,7 @@ public class ReactorServiceMain extends DaemonMain {
   private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
-  private DatasetManagerService dsService;
+  private DatasetService dsService;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -135,7 +135,7 @@ public class ReactorServiceMain extends DaemonMain {
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
-    dsService = baseInjector.getInstance(DatasetManagerService.class);
+    dsService = baseInjector.getInstance(DatasetService.class);
   }
 
   @Override

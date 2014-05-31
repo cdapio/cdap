@@ -3,9 +3,9 @@ package com.continuuity.data2.datafabric.dataset;
 import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
@@ -26,19 +26,20 @@ public final class DatasetsUtil {
   private DatasetsUtil() {}
 
   /**
-   * Gets instance of {@link Dataset}, while add instance to {@link DatasetManager} and creating the physical data set
+   * Gets instance of {@link Dataset}, while add instance to
+   * {@link com.continuuity.data2.dataset2.DatasetFramework} and creating the physical data set
    * if that one doesn't exist.
    * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
-  public static <T extends Dataset> T getOrCreateDataset(DatasetManager datasetManager,
+  public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
                                                    String instanceName, String typeName,
                                                    DatasetInstanceProperties props, ClassLoader cl)
     throws DatasetManagementException, IOException {
     // making sure dataset instance is added
-    DatasetAdmin admin = datasetManager.getAdmin(instanceName, cl);
+    DatasetAdmin admin = datasetFramework.getAdmin(instanceName, cl);
     if (admin == null) {
       try {
-        datasetManager.addInstance(typeName, instanceName, props);
+        datasetFramework.addInstance(typeName, instanceName, props);
       } catch (InstanceConflictException e) {
         // Do nothing: someone created this instance in between, just continuing
       } catch (DatasetManagementException e) {
@@ -46,7 +47,7 @@ public final class DatasetsUtil {
                   instanceName, typeName, props, e);
         throw Throwables.propagate(e);
       }
-      admin = datasetManager.getAdmin(instanceName, cl);
+      admin = datasetFramework.getAdmin(instanceName, cl);
     }
 
     T instance;
@@ -59,7 +60,7 @@ public final class DatasetsUtil {
         admin.close();
       }
     }
-    instance = (T) datasetManager.getDataset(instanceName, null);
+    instance = (T) datasetFramework.getDataset(instanceName, null);
 
     if (created && (instance instanceof RowScannable)) {
       generateCreateStatement(instanceName, (RowScannable) instance);

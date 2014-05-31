@@ -17,7 +17,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -80,7 +80,7 @@ public class SingleNodeMain {
   private final HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private final DatasetManagerService datasetService;
+  private final DatasetService datasetService;
 
   private InMemoryZKServer zookeeper;
 
@@ -98,7 +98,7 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService = injector.getInstance(DatasetService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 

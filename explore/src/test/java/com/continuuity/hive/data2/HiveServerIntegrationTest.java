@@ -8,8 +8,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -42,8 +42,8 @@ public class HiveServerIntegrationTest {
   private static InMemoryTransactionManager transactionManager;
   private static HiveServer hiveServer;
   private static InMemoryHiveMetastore inMemoryHiveMetastore;
-  private static DatasetManager datasetManager;
-  private static DatasetManagerService datasetManagerService;
+  private static DatasetFramework datasetFramework;
+  private static DatasetService datasetService;
   private static HiveClient hiveClient;
 
   @BeforeClass
@@ -58,24 +58,24 @@ public class HiveServerIntegrationTest {
     inMemoryHiveMetastore.startAndWait();
     hiveServer.startAndWait();
 
-    datasetManagerService = injector.getInstance(DatasetManagerService.class);
-    datasetManagerService.startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
 
-    datasetManager = injector.getInstance(DatasetManager.class);
+    datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
-    datasetManager.register(moduleName, InMemoryTableModule.class);
-    datasetManager.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
+    datasetFramework.register(moduleName, InMemoryTableModule.class);
+    datasetFramework.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
 
     // Performing admin operations to create dataset instance
-    datasetManager.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
-    DatasetAdmin admin = datasetManager.getAdmin("my_table", null);
+    datasetFramework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
+    DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    KeyValueTableDefinition.KeyValueTable table = datasetManager.getDataset("my_table", null);
+    KeyValueTableDefinition.KeyValueTable table = datasetFramework.getDataset("my_table", null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
     table.put("1", "first");
@@ -100,13 +100,13 @@ public class HiveServerIntegrationTest {
     hiveServer.stopAndWait();
     inMemoryHiveMetastore.stopAndWait();
     transactionManager.stopAndWait();
-    datasetManagerService.startAndWait();
+    datasetService.startAndWait();
   }
 
 
   @Test
   public void testTable() throws Exception {
-    KeyValueTableDefinition.KeyValueTable table = datasetManager.getDataset("my_table", null);
+    KeyValueTableDefinition.KeyValueTable table = datasetFramework.getDataset("my_table", null);
     Assert.assertNotNull(table);
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);

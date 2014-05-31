@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.executor;
+package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;

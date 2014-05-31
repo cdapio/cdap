@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager;
+package com.continuuity.data2.dataset2;
 
 /**
  * Thrown when there's an error during dataset modules, types or instances management exception

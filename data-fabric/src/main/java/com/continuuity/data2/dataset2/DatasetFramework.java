@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager;
+package com.continuuity.data2.dataset2;
 
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
@@ -13,12 +13,12 @@ import javax.annotation.Nullable;
  *
  * Typical usage example:
  * <tt>
- *   DatasetManager datasetManager = ...;
- *   datasetManager.register("myDatasets", MyDatasetModule.class);
- *   datasetManager.addInstance("myTable", "table", DatasetInstanceProperties.EMPTY);
- *   TableAdmin admin = datasetManager.getAdmin("myTable");
+ *   DatasetFramework datasetFramework = ...;
+ *   datasetFramework.register("myDatasets", MyDatasetModule.class);
+ *   datasetFramework.addInstance("myTable", "table", DatasetInstanceProperties.EMPTY);
+ *   TableAdmin admin = datasetFramework.getAdmin("myTable");
  *   admin.create();
- *   Table table = datasetManager.getDataset("myTable");
+ *   Table table = datasetFramework.getDataset("myTable");
  *   try {
  *     table.write("key", "value");
  *   } finally {
@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  *   }
  * </tt>
  */
-public interface DatasetManager {
+public interface DatasetFramework {
 
   // Due to a bug in checkstyle, it would emit false positives here of the form
   // "Unable to get class information for @throws tag '<exn>' (...)".

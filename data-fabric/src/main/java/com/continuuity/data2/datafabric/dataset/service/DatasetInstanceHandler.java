@@ -2,17 +2,15 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
-import com.continuuity.common.http.HttpRequests;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
-import com.continuuity.data2.dataset2.executor.DatasetAdminOpResponse;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;

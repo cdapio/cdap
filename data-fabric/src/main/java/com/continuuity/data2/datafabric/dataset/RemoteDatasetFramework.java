@@ -9,9 +9,9 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClie
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.DatasetNamespace;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.DatasetNamespace;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
@@ -33,10 +33,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {@link DatasetManager} implementation that talks to DatasetManager Service
+ * {@link com.continuuity.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
  */
-public class DataFabricDatasetManager implements DatasetManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DataFabricDatasetManager.class);
+public class RemoteDatasetFramework implements DatasetFramework {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
   private final DatasetManagerServiceClient client;
   private final Map<String, DatasetModule> modulesCache;
@@ -45,10 +45,10 @@ public class DataFabricDatasetManager implements DatasetManager {
   private final DatasetNamespace namespace;
 
   @Inject
-  public DataFabricDatasetManager(DatasetManagerServiceClient client,
-                                  CConfiguration conf,
-                                  LocationFactory locationFactory,
-                                  DatasetDefinitionRegistry registry) {
+  public RemoteDatasetFramework(DatasetManagerServiceClient client,
+                                CConfiguration conf,
+                                LocationFactory locationFactory,
+                                DatasetDefinitionRegistry registry) {
 
     this.client = client;
     this.modulesCache = Maps.newHashMap();

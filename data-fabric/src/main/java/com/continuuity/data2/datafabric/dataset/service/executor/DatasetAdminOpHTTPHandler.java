@@ -1,9 +1,9 @@
-package com.continuuity.data2.dataset2.executor;
+package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
-import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -28,10 +28,10 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
 
-  private final DataFabricDatasetManager client;
+  private final RemoteDatasetFramework client;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(Authenticator authenticator, DataFabricDatasetManager client) {
+  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework client) {
     super(authenticator);
     this.client = client;
   }

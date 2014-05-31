@@ -7,7 +7,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -21,11 +21,11 @@ import java.io.IOException;
  */
 public class ContextManager {
   private static TransactionSystemClient txClient;
-  private static DatasetManager datasetManager;
+  private static DatasetFramework datasetFramework;
 
-  public static void initialize(TransactionSystemClient txClient, DatasetManager datasetManager) {
+  public static void initialize(TransactionSystemClient txClient, DatasetFramework datasetFramework) {
     ContextManager.txClient = txClient;
-    ContextManager.datasetManager = datasetManager;
+    ContextManager.datasetFramework = datasetFramework;
   }
 
   public static TransactionSystemClient getTxClient(Configuration conf) throws IOException {
@@ -36,12 +36,12 @@ public class ContextManager {
     return txClient;
   }
 
-  public static DatasetManager getDatasetManager(Configuration conf) throws IOException {
-    if (datasetManager == null) {
+  public static DatasetFramework getDatasetManager(Configuration conf) throws IOException {
+    if (datasetFramework == null) {
       selfInit(conf);
     }
 
-    return datasetManager;
+    return datasetFramework;
   }
 
   private static void selfInit(Configuration conf) throws IOException {
@@ -63,7 +63,7 @@ public class ContextManager {
     // TODO: need to stop zkClientService at the end
     zkClientService.startAndWait();
 
-    datasetManager = injector.getInstance(DatasetManager.class);
+    datasetFramework = injector.getInstance(DatasetFramework.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
   }
 }

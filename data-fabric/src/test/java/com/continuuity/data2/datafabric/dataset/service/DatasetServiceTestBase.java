@@ -6,9 +6,8 @@ import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
-import com.continuuity.data2.dataset2.executor.NoOpDatasetOpExecutor;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
+import com.continuuity.data2.datafabric.dataset.service.executor.NoOpDatasetOpExecutor;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
@@ -36,13 +35,13 @@ import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 
 /**
- * Base class for unit-tests that require running of {@link DatasetManagerService}
+ * Base class for unit-tests that require running of {@link DatasetService}
  */
-public abstract class DatasetManagerServiceTestBase {
+public abstract class DatasetServiceTestBase {
   private static final Gson GSON = new Gson();
 
   private int port;
-  private DatasetManagerService service;
+  private DatasetService service;
   private InMemoryTransactionManager txManager;
 
   @ClassRule
@@ -53,14 +52,15 @@ public abstract class DatasetManagerServiceTestBase {
     CConfiguration cConf = CConfiguration.create();
     File datasetDir = new File(tmpFolder.newFolder(), "dataset");
     if (!datasetDir.mkdirs()) {
-      throw new RuntimeException(String.format("Could not create DatasetManager output dir %s", datasetDir.getPath()));
+      throw
+        new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir.getPath()));
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     port = Networks.getRandomPort();
     cConf.setInt(Constants.Dataset.Manager.PORT, port);
 
-    // Starting DatasetManagerService service
+    // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
@@ -69,11 +69,11 @@ public abstract class DatasetManagerServiceTestBase {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    service = new DatasetManagerService(cConf,
+    service = new DatasetService(cConf,
                                         new LocalLocationFactory(),
                                         discoveryService,
                                         discoveryService,
-                                        new InMemoryDatasetManager(),
+                                        new InMemoryDatasetFramework(),
                                         ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
                                           "memoryTable", InMemoryTableModule.class),
                                         txSystemClient,
