@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager;
+package com.continuuity.data2.dataset2;
 
 /**
  * Thrown when operation conflicts with existing dataset instances available in the system.

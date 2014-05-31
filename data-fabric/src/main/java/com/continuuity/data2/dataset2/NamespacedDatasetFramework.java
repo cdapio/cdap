@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager;
+package com.continuuity.data2.dataset2;
 
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
@@ -8,13 +8,13 @@ import com.continuuity.internal.data.dataset.module.DatasetModule;
 import java.io.IOException;
 
 /**
- * Wrapper for {@link DatasetManager} that namespaces dataset instances names.
+ * Wrapper for {@link DatasetFramework} that namespaces dataset instances names.
  */
-public class NamespacedDatasetManager implements DatasetManager {
+public class NamespacedDatasetFramework implements DatasetFramework {
   private final DatasetNamespace namespace;
-  private final DatasetManager delegate;
+  private final DatasetFramework delegate;
 
-  public NamespacedDatasetManager(DatasetManager delegate, DatasetNamespace namespace) {
+  public NamespacedDatasetFramework(DatasetFramework delegate, DatasetNamespace namespace) {
     this.delegate = delegate;
     this.namespace = namespace;
   }

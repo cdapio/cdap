@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.executor;
+package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -16,11 +16,11 @@ import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
-import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
@@ -56,7 +56,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link DatasetOpExecutorService}.
+ * Test for {@link com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutorService}.
  */
 public class DatasetOpExecutorServiceTest {
 
@@ -66,8 +66,8 @@ public class DatasetOpExecutorServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private DatasetManagerService managerService;
-  private DataFabricDatasetManager managerClient;
+  private DatasetService managerService;
+  private RemoteDatasetFramework dsFramework;
   private TimeLimitEndpointStrategy endpointStrategy;
 
   @Before
@@ -115,7 +115,7 @@ public class DatasetOpExecutorServiceTest {
     InMemoryTransactionManager transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();
 
-    managerService = injector.getInstance(DatasetManagerService.class);
+    managerService = injector.getInstance(DatasetService.class);
     managerService.startAndWait();
 
     // initialize client
@@ -124,7 +124,7 @@ public class DatasetOpExecutorServiceTest {
     DatasetManagerServiceClient serviceClient = new DatasetManagerServiceClient(
       injector.getInstance(DiscoveryServiceClient.class));
 
-    managerClient = new DataFabricDatasetManager(
+    dsFramework = new RemoteDatasetFramework(
       serviceClient,
       cConf,
       injector.getInstance(LocationFactory.class),
@@ -139,7 +139,7 @@ public class DatasetOpExecutorServiceTest {
 
   @After
   public void tearDown() {
-    managerClient = null;
+    dsFramework = null;
 
     managerService.stopAndWait();
     managerService = null;
@@ -151,7 +151,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp("bob", "exists", 404, null);
 
     // add instance and check non-existence with 200
-    managerClient.addInstance("table", "bob", DatasetInstanceProperties.EMPTY);
+    dsFramework.addInstance("table", "bob", DatasetInstanceProperties.EMPTY);
     testAdminOp("bob", "exists", 200, false);
 
     testAdminOp("joe", "exists", 404, null);

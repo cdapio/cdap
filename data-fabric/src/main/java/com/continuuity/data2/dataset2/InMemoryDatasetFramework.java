@@ -1,8 +1,5 @@
-package com.continuuity.data2.dataset2.manager.inmemory;
+package com.continuuity.data2.dataset2;
 
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
@@ -21,19 +18,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A simple implementation of {@link DatasetManager} that keeps its state in memory
+ * A simple implementation of {@link com.continuuity.data2.dataset2.DatasetFramework} that keeps its state in
+ * memory
  */
-public class InMemoryDatasetManager implements DatasetManager {
+public class InMemoryDatasetFramework implements DatasetFramework {
   private final Set<String> modules = Sets.newHashSet();
   private final DatasetDefinitionRegistry registry;
   private final Map<String, DatasetInstanceSpec> instances = Maps.newHashMap();
 
-  public InMemoryDatasetManager() {
+  public InMemoryDatasetFramework() {
     this(new InMemoryDatasetDefinitionRegistry());
   }
 
   @Inject
-  public InMemoryDatasetManager(DatasetDefinitionRegistry registry) {
+  public InMemoryDatasetFramework(DatasetDefinitionRegistry registry) {
     this.registry = registry;
   }
 

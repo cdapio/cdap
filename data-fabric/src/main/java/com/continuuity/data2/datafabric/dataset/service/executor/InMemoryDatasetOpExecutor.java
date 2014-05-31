@@ -1,7 +1,7 @@
-package com.continuuity.data2.dataset2.executor;
+package com.continuuity.data2.datafabric.dataset.service.executor;
 
-import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -13,10 +13,10 @@ import java.io.IOException;
  */
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
-  private DataFabricDatasetManager client;
+  private RemoteDatasetFramework client;
 
   @Inject
-  public InMemoryDatasetOpExecutor(DataFabricDatasetManager client) {
+  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client) {
     this.client = client;
   }
 
@@ -24,7 +24,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   }
 
-  public void setClient(DataFabricDatasetManager client) {
+  public void setClient(RemoteDatasetFramework client) {
     this.client = client;
   }
 

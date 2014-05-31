@@ -2,8 +2,8 @@ package com.continuuity.hive.datasets;
 
 import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.hive.context.ConfigurationUtil;
@@ -47,7 +47,7 @@ public class DatasetAccessor {
       throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
     }
 
-    DatasetManager manager = ContextManager.getDatasetManager(conf);
+    DatasetFramework framework = ContextManager.getDatasetManager(conf);
 
     try {
       ClassLoader classLoader = DATASET_CLASSLOADERS.get(datasetName);
@@ -55,7 +55,7 @@ public class DatasetAccessor {
         classLoader = conf.getClassLoader();
       }
 
-      Dataset dataset = manager.getDataset(datasetName, classLoader);
+      Dataset dataset = framework.getDataset(datasetName, classLoader);
       if (dataset != null && !DATASET_CLASSLOADERS.containsKey(datasetName)) {
         DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
       }

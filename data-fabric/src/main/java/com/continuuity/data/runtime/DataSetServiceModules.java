@@ -1,16 +1,16 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.executor.DatasetAdminOpHTTPHandler;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutor;
-import com.continuuity.data2.dataset2.executor.DatasetOpExecutorService;
-import com.continuuity.data2.dataset2.executor.InMemoryDatasetOpExecutor;
-import com.continuuity.data2.dataset2.executor.LocalDatasetOpExecutor;
-import com.continuuity.data2.dataset2.executor.YarnDatasetOpExecutor;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.TableModule;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
@@ -48,9 +48,9 @@ public class DataSetServiceModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-        expose(DatasetManagerService.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetService.class);
+        expose(DatasetService.class);
 
         bind(DatasetOpExecutor.class).to(InMemoryDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
@@ -72,9 +72,9 @@ public class DataSetServiceModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-        expose(DatasetManagerService.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetService.class);
+        expose(DatasetService.class);
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
@@ -105,9 +105,9 @@ public class DataSetServiceModules {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
-        bind(DatasetManager.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetManager.class);
-        bind(DatasetManagerService.class);
-        expose(DatasetManagerService.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetService.class);
+        expose(DatasetService.class);
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);

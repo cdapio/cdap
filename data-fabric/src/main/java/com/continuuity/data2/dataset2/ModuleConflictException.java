@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.manager;
+package com.continuuity.data2.dataset2;
 
 /**
  * Thrown when operation conflicts with existing {@link com.continuuity.internal.data.dataset.module.DatasetModule}s

@@ -2,7 +2,7 @@ package com.continuuity.data2.datafabric;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset2.manager.DatasetNamespace;
+import com.continuuity.data2.dataset2.DatasetNamespace;
 
 /**
  * Reactor's dataset namespace.

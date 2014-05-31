@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.executor;
+package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
