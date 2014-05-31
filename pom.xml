@@ -18,6 +18,7 @@
   <modules>
     <module>continuuity-api</module>
     <module>common</module>
+    <module>kafka</module>
   </modules>
 
   <repositories>
