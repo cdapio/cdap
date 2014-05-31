@@ -5,6 +5,7 @@ import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -29,6 +30,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -361,6 +364,27 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
+    }
+  }
+
+  @Test
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+      appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+
+    Connection connection = getQueryClient();
+    try {
+      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
+      connection.prepareStatement(DatasetsUtil.generateCreateStatement("myTable", kvTable)).execute();
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("myTable", results.getString(1));
+    } finally {
+      connection.close();
     }
   }
 }
