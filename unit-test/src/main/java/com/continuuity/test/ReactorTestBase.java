@@ -379,7 +379,11 @@ public class ReactorTestBase {
     String jdbcUser = "hive";
     String jdbcPassword = "";
 
-    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
+    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl" +
+                                           // TODO remove these once they are configured in hive-site.xml
+                                           "?hive.exec.pre.hooks=com.continuuity.hive.hooks.TransactionPreHook;" +
+                                           "hive.exec.post.hooks=com.continuuity.hive.hooks.TransactionPostHook",
+                                         host, port);
 
     return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
   }
