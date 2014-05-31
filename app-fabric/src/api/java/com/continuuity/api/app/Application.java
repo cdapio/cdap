@@ -5,7 +5,6 @@ import com.continuuity.api.annotation.Beta;
 /**
  * Defines Continuuity Reactor Application.
  *
- * TODO: in future, it will be the only available API for application configuration
  */
 @Beta
 public interface Application {

@@ -7,8 +7,10 @@
  *   Application definition.
  * </p>
  * <p>
- *   Every Application must implement {@link Application} interface. Using {@link AbstractApplication} will help produce
- *   cleaner code.
+ *   Every Application must implement {@link Application} interface.
+ * </p>
+ * <p>
+ *   Extending {@link AbstractApplication} will help produce cleaner code.
  * </p>
  */
 package com.continuuity.api.app;
