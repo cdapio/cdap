@@ -23,6 +23,7 @@
     <module>passport-api</module>
     <module>hbase-compat-0.94</module>
     <module>hbase-compat-0.96</module>
+    <module>passport</module>
   </modules>
 
   <repositories>
@@ -61,11 +62,15 @@
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
     <http.component.version>4.1.3</http.component.version>
+    <hsql.version>2.2.4</hsql.version>
+    <jetty.version>6.1.22</jetty.version>
     <junit.version>4.11</junit.version>
     <leveldb.version>0.6</leveldb.version>
     <kafka.version>0.8.0</kafka.version>
     <logback.version>1.0.9</logback.version>
+    <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
+    <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <thrift.version>0.8.0</thrift.version>
     <twill.version>0.3.0-incubating-SNAPSHOT</twill.version>
@@ -586,6 +591,37 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <dependency>
+        <groupId>org.apache.shiro</groupId>
+        <artifactId>shiro-core</artifactId>
+        <version>${shiro.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.shiro</groupId>
+        <artifactId>shiro-guice</artifactId>
+        <version>${shiro.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>${mysql.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-management</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>junit</groupId>
@@ -662,7 +698,14 @@
         <version>${hbase96.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.hsqldb</groupId>
+        <artifactId>hsqldb</artifactId>
+        <version>${hsql.version}</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
+
   </dependencyManagement>
 
   <build>
