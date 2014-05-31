@@ -1,9 +1,8 @@
 package com.continuuity.test;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationContext;
 import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
@@ -113,13 +112,13 @@ public class ReactorTestBase {
       Object appInstance = applicationClz.newInstance();
       ApplicationSpecification appSpec;
 
-      if (appInstance instanceof AbstractApplication) {
-        AbstractApplication app = (AbstractApplication) appInstance;
+      if (appInstance instanceof Application) {
+        Application app = (Application) appInstance;
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
         appSpec = configurer.createApplicationSpec();
-      } else if (appInstance instanceof Application) {
-        appSpec = Specifications.from(((Application) appInstance).configure());
+      } else if (appInstance instanceof com.continuuity.api.Application) {
+        appSpec = Specifications.from(((com.continuuity.api.Application) appInstance).configure());
       } else {
         throw new IllegalArgumentException("Application class does not represent application: "
                                              + applicationClz.getName());

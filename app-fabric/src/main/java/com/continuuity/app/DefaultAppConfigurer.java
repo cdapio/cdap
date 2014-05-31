@@ -1,7 +1,7 @@
 package com.continuuity.app;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.ApplicationConfigurer;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
@@ -25,7 +25,6 @@ import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +44,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
-  public DefaultAppConfigurer(AbstractApplication app) {
+  public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
@@ -82,7 +81,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties) {
+  public void createDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");

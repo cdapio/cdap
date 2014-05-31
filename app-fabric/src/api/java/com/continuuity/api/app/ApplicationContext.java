@@ -1,4 +1,4 @@
-package com.continuuity.api;
+package com.continuuity.api.app;
 
 import com.continuuity.api.annotation.Beta;
 
