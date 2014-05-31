@@ -19,6 +19,7 @@
     <module>continuuity-api</module>
     <module>common</module>
     <module>kafka</module>
+    <module>passport-api</module>
   </modules>
 
   <repositories>
