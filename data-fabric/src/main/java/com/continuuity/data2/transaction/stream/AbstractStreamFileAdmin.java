@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamUtils;
 import com.google.common.base.Charsets;
@@ -42,6 +43,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private static final Gson GSON = new Gson();
 
   private final Location streamBaseLocation;
+  private final StreamCoordinator streamCoordinator;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
 
@@ -50,10 +52,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final StreamAdmin oldStreamAdmin;
 
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                                    StreamCoordinator streamCoordinator,
                                     StreamConsumerStateStoreFactory stateStoreFactory,
                                     StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.streamCoordinator = streamCoordinator;
     this.stateStoreFactory = stateStoreFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }
@@ -164,7 +168,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public StreamConfig getConfig(String streamName) throws IOException {
     Location streamLocation = streamBaseLocation.append(streamName);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' not exists.", streamName);
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
@@ -195,9 +199,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public void create(String name, @Nullable Properties props) throws Exception {
     Location streamLocation = streamBaseLocation.append(name);
-    if (!streamLocation.mkdirs() && !streamLocation.isDirectory()) {
-      throw new IllegalStateException("Failed to create stream '" + name + "' at " + streamLocation.toURI());
-    }
+    Locations.mkdirsIfNotExists(streamLocation);
 
     Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
     if (!configLocation.createNew()) {
@@ -224,11 +226,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void truncate(String name) throws Exception {
-    // TODO: How to support it properly with opened stream writer?
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.truncate(streamName);
     }
+
+    StreamConfig config = getConfig(name);
+    streamCoordinator.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
 
   @Override
@@ -242,7 +246,6 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);

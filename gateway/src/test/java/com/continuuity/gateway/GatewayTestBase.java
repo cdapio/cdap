@@ -3,12 +3,10 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.MockLogReader;
@@ -33,7 +31,6 @@ import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -45,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -121,7 +117,7 @@ public abstract class GatewayTestBase {
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
-        new StreamHttpModule()
+        new StreamServiceModule()
       ).with(new AbstractModule() {
                @Override
                protected void configure() {

@@ -20,7 +20,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
-import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -201,7 +201,7 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new StreamHttpModule() {
+                                    new StreamServiceModule() {
                                       @Override
                                       protected void configure() {
                                         super.configure();

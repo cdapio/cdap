@@ -3,7 +3,6 @@
  */
 package com.continuuity.common.conf;
 
-import com.continuuity.common.conf.PropertyUpdater;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 

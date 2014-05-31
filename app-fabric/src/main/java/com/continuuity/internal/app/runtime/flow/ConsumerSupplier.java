@@ -85,6 +85,10 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
     }
   }
 
+  QueueName getQueueName() {
+    return queueName;
+  }
+
   /**
    * Close the current consumer if there is one.
    */
