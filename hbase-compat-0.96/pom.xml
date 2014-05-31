@@ -11,8 +11,8 @@
     <version>2.3.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>hbase-compat-0.94</artifactId>
-  <name>Continuuity HBase 0.94 Compatibility</name>
+  <artifactId>hbase-compat-0.96</artifactId>
+  <name>Continuuity HBase 0.96 Compatibility</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -25,6 +25,12 @@
       <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -35,13 +41,22 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
+      <artifactId>hbase-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-protocol</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -59,10 +74,13 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
-      <classifier>tests</classifier>
+      <artifactId>hbase-testing-util</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>
