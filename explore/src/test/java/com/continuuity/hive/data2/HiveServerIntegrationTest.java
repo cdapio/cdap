@@ -131,14 +131,14 @@ public class HiveServerIntegrationTest {
   @Test
   public void testHiveDatasetsJoin() throws Exception {
     // Performing admin operations to create another dataset instance
-    datasetManager.addInstance("keyValueTable", "my_table_2", DatasetInstanceProperties.EMPTY);
-    DatasetAdmin admin = datasetManager.getAdmin("my_table_2", null);
+    datasetFramework.addInstance("keyValueTable", "my_table_2", DatasetInstanceProperties.EMPTY);
+    DatasetAdmin admin = datasetFramework.getAdmin("my_table_2", null);
     admin.create();
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    KeyValueTableDefinition.KeyValueTable table = datasetManager.getDataset("my_table_2", null);
+    KeyValueTableDefinition.KeyValueTable table = datasetFramework.getDataset("my_table_2", null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
     table.put("1", "first");
