@@ -17,6 +17,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -278,7 +279,12 @@ public final class StreamUtils {
     int genId = 0;
     CharMatcher numMatcher = CharMatcher.inRange('0', '9');
 
-    for (Location location : streamLocation.list()) {
+    List<Location> locations = streamLocation.list();
+    if (locations == null) {
+      return 0;
+    }
+
+    for (Location location : locations) {
       if (numMatcher.matchesAllOf(location.getName()) && location.isDirectory()) {
         int id = Integer.parseInt(location.getName());
         if (id > genId) {
