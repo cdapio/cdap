@@ -1,9 +1,8 @@
-/**
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 /**
- * Annotations used within the libraries and system.
+ * Annotations used in applications.
  */
 package com.continuuity.api.annotation;
-

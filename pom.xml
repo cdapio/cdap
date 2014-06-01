@@ -28,7 +28,6 @@
     <module>passport</module>
     <module>watchdog-api</module>
     <module>watchdog</module>
-    <module>gateway</module>
   </modules>
 
   <repositories>
@@ -79,7 +78,7 @@
     <quartz.version>2.2.0</quartz.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <thrift.version>0.8.0</thrift.version>
+    <thrift.version>0.9.0</thrift.version>
     <twill.version>0.3.0-incubating-SNAPSHOT</twill.version>
     <zookeeper.version>3.4.5</zookeeper.version>
   </properties>
