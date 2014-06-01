@@ -16,17 +16,19 @@
   </organization>
 
   <modules>
+    <module>app-fabric</module>
     <module>continuuity-api</module>
     <module>common</module>
     <module>data-fabric</module>
-    <module>kafka</module>
-    <module>passport-api</module>
+    <module>data-fabric-tests</module>
     <module>hbase-compat-0.94</module>
     <module>hbase-compat-0.96</module>
+    <module>kafka</module>
+    <module>passport-api</module>
     <module>passport</module>
     <module>watchdog-api</module>
     <module>watchdog</module>
-    <module>data-fabric-tests</module>
+    <module>gateway</module>
   </modules>
 
   <repositories>
@@ -53,6 +55,7 @@
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
     <asm.version>5.0.2</asm.version>
+    <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <continuuity.http.version>0.2.0</continuuity.http.version>
     <fastutil.version>6.5.6</fastutil.version>
@@ -73,6 +76,7 @@
     <logback.version>1.0.9</logback.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
+    <quartz.version>2.2.0</quartz.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <thrift.version>0.8.0</thrift.version>
@@ -706,6 +710,27 @@
         <artifactId>hsqldb</artifactId>
         <version>${hsql.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.quartz-scheduler</groupId>
+        <artifactId>quartz</artifactId>
+        <version>${quartz.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.quartz-scheduler</groupId>
+        <artifactId>quartz-jobs</artifactId>
+        <version>${quartz.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ning</groupId>
+        <artifactId>async-http-client</artifactId>
+        <version>${async.http.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
 
