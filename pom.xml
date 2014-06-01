@@ -26,6 +26,7 @@
     <module>passport</module>
     <module>watchdog-api</module>
     <module>watchdog</module>
+    <module>data-fabric-tests</module>
   </modules>
 
   <repositories>
