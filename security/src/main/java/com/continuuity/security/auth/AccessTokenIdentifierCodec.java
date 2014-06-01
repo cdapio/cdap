@@ -2,6 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumReader;
@@ -38,8 +39,8 @@ public class AccessTokenIdentifierCodec implements Codec<AccessTokenIdentifier> 
     Encoder encoder = new BinaryEncoder(bos);
 
     encoder.writeInt(AccessTokenIdentifier.Schemas.getVersion());
-    DatumWriter writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                              AccessTokenIdentifier.Schemas.getCurrentSchema());
+    DatumWriter<AccessTokenIdentifier> writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
+                                                                     AccessTokenIdentifier.Schemas.getCurrentSchema());
     writer.encode(identifier, encoder);
     return bos.toByteArray();
   }

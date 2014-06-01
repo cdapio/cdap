@@ -1,0 +1,41 @@
+styles:
+    bigsmall:
+        colWidths: [80%, 20%]
+        parent: table
+
+    justgrid:
+        commands: []
+                [INNERGRID, [0, 0], [-1, -1], 1, black]
+                [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E0E0E0]]
+                [BOX, [0, 0], [-1, -1], 0, white]
+        parent: table
+
+    onesmall:
+        colWidths: [20%]
+        parent: table
+
+    smallbig:
+        colWidths: [20%, 80%]
+        parent: table
+
+    thick:
+        commands: []
+                [INNERGRID, [0, 0], [-1, -1], 2, black]
+                [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E0E0E0]]
+                [BOX, [0, 0], [-1, -1], 2, black]
+        parent: table
+
+    thin:
+        commands: []
+                [INNERGRID, [0, 0], [-1, -1], 0.1, black]
+                [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E0E0E0]]
+                [BOX, [0, 0], [-1, -1], 0.1, black]
+        parent: table
+
+    toomany:
+        colWidths: [30%, 30%, 30%]
+        parent: table
+
+    twosmall:
+        colWidths: [20%, 20%]
+        parent: table

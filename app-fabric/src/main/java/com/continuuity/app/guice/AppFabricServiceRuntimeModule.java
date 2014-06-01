@@ -13,6 +13,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
@@ -31,7 +32,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -101,7 +101,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(new TypeLiteral<PipelineFactory<?>>() { }).to(new TypeLiteral<SynchronousPipelineFactory<?>>() { });
+      bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
       bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
@@ -113,6 +113,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(ServiceHttpHandler.class);
     }
 
     @Provides

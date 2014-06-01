@@ -125,10 +125,3 @@ configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
 }
-
-/**
- * Excludes Tests that are part of test suite.
- */
-test {
-    exclude '**/handlers/**'
-}

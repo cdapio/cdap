@@ -1,8 +1,11 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -15,25 +18,28 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Tests the transaction executor.
  */
 public class TransactionExecutorTest {
 
-  static final Injector INJECTOR = Guice.createInjector(Modules.override(
-    new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          InMemoryTransactionManager txManager = new InMemoryTransactionManager();
-          txManager.startAndWait();
-          bind(InMemoryTransactionManager.class).toInstance(txManager);
-          bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
-        }
-      }));
+  static final Injector INJECTOR = Guice.createInjector(
+    new LocationRuntimeModule().getInMemoryModules(),
+    new DiscoveryRuntimeModule().getInMemoryModules(),
+    Modules.override(
+      new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+        txManager.startAndWait();
+        bind(InMemoryTransactionManager.class).toInstance(txManager);
+        bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
+      }
+    }));
 
   static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
   static final TransactionExecutorFactory FACTORY = INJECTOR.getInstance(TransactionExecutorFactory.class);

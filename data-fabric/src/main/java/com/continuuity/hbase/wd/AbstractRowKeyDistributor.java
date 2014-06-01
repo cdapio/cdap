@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * Defines the way row keys are distributed
+ * Defines the way row keys are distributed.
  */
 public abstract class AbstractRowKeyDistributor implements Parametrizable {
   public abstract byte[] getDistributedKey(byte[] originalKey);
@@ -42,6 +42,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
    * @param originalStopKey stop key
    * @return array[Pair(startKey, stopKey)]
    */
+  @SuppressWarnings("unchecked")
   public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey, byte[] originalStopKey) {
     byte[][] startKeys = getAllDistributedKeys(originalStartKey);
     byte[][] stopKeys;

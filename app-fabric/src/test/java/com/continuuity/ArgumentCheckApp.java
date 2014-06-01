@@ -17,8 +17,6 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -96,7 +94,6 @@ public class ArgumentCheckApp implements Application {
   }
 
   private class SimpleProcedure extends AbstractProcedure {
-    private final Logger LOG = LoggerFactory.getLogger(SimpleProcedure.class);
     private ProcedureContext context;
 
     @Override

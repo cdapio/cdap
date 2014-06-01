@@ -1,0 +1,9 @@
+pageTemplates:
+    oneColumn:
+        frames: []
+            [0%, 0%, 100%, 100%]
+        showHeader : true
+        showFooter : true
+        defaultHeader : ".. class:: right\n\nThis should be aligned right."
+        defaultFooter : "This should be in two lines. 1.\n\nAnd 2."
+

@@ -2,16 +2,18 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.io.Codec;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
-import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.TokenManager;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.handler.AbstractHandler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  * Generate and grant access token to authorized users.
  */
 public class GrantAccessTokenHandler extends AbstractHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(GrantAccessTokenHandler.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
@@ -38,7 +41,17 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   }
 
   @Override
-  public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
+  protected void doStart() {
+    tokenManager.start();
+  }
+
+  @Override
+  protected void doStop() {
+    tokenManager.stop();
+  }
+
+  @Override
+  public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
 
     String[] roles = Constants.Security.BASIC_USER_ROLES;
@@ -50,13 +63,13 @@ public class GrantAccessTokenHandler extends AbstractHandler {
       }
     }
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
-                                       Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
     AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userRoles, issueTime, expireTime);
     AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
+    LOG.debug("Issued token for user {}", username);
 
     // Set response headers
     response.setContentType("application/json;charset=UTF-8");

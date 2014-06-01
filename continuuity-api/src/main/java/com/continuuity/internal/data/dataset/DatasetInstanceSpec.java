@@ -151,7 +151,7 @@ public final class DatasetInstanceSpec {
     }
 
     /**
-     * Add underlying dataset specs
+     * Add underlying dataset specs.
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
@@ -160,7 +160,7 @@ public final class DatasetInstanceSpec {
     }
 
     /**
-     * Add underlying dataset specs
+     * Add underlying dataset specs.
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
@@ -183,7 +183,7 @@ public final class DatasetInstanceSpec {
     }
 
     /**
-     * Add properties
+     * Add properties.
      * @param props properties to add
      * @return this builder object to allow chaining
      */

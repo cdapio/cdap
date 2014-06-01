@@ -4,10 +4,10 @@
 
 package com.continuuity.internal.io;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  *

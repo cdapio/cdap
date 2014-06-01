@@ -8,7 +8,7 @@ import com.continuuity.common.conf.CConfiguration;
 public interface Server {
 
   /**
-   * Starts the {@link Server}
+   * Starts the {@link Server}.
    * @param args arguments for the service
    * @param conf instance of configuration object.
    *
@@ -17,7 +17,7 @@ public interface Server {
   public void start(String[] args, CConfiguration conf) throws ServerException;
 
   /**
-   * Stops the {@link Server}
+   * Stops the {@link Server}.
    * @param now true specifies non-graceful shutdown; false otherwise.
    *
    * @throws ServerException If there is an problem when stopping the server.

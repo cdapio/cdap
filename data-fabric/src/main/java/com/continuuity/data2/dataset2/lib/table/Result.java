@@ -3,8 +3,8 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 
-import javax.annotation.Nullable;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link com.continuuity.api.data.dataset.table.Row}

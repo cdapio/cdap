@@ -9,10 +9,11 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
-import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
+import com.continuuity.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
@@ -20,27 +21,31 @@ import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import javax.annotation.Nullable;
 
 /**
  * This class is concrete implementation of {@link Manager}.
+ *
+ * @param <I> Input type.
+ * @param <O> Output type.
  */
-public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
-  private final PipelineFactory<?> pipelineFactory;
+public class LocalManager<I, O> implements Manager<I, O> {
+  private final PipelineFactory pipelineFactory;
   private final LocationFactory locationFactory;
   private final CConfiguration configuration;
   private final Store store;
   private final ProgramTerminator programTerminator;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final DatasetFramework datasetFramework;
 
-  public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
+  public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
                       ProgramTerminator programTerminator, QueueAdmin queueAdmin,
-                      DiscoveryServiceClient discoveryServiceClient) {
+                      DiscoveryServiceClient discoveryServiceClient,
+                      DatasetFramework datasetFramework) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
@@ -48,24 +53,18 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     this.store = storeFactory.create();
     this.programTerminator = programTerminator;
     this.queueAdmin = queueAdmin;
+    this.datasetFramework = datasetFramework;
   }
 
-  /**
-   * Executes a pipeline for deploying an archive.
-   *
-   * @param id account id to which the archive is deployed.
-   * @param appId application id to be used to override app name provided by app spec. If null, name of app spec is used
-   * @param archive to be verified and converted into programs
-   * @return A future of Application with Programs.
-   */
   @Override
-  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, @Nullable String appId, Location archive) {
-    Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
+  public ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception {
+    Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
+    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    return pipeline.execute(archive);
+    return pipeline.execute(input);
   }
 }

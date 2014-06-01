@@ -8,8 +8,8 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
-import javax.annotation.Nullable;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * This class implements a key/value map on top of Table. Supported
@@ -29,7 +29,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
    */
   public MyKeyValueTable(String name) {
     super(name);
-    this.table = new Table("kv");
+    this.table = new Table("one");
   }
 
   /**

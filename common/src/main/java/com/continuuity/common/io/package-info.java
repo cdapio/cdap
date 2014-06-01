@@ -1,5 +1,5 @@
-/**
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 /**

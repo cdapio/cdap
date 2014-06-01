@@ -10,7 +10,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import junit.framework.Assert;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -18,6 +17,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -168,7 +168,7 @@ public class ResourceCoordinatorTest {
                                 final Discoverable discoverable,
                                 final BlockingQueue<Collection<PartitionReplica>> assignmentQueue,
                                 final Semaphore finishSemaphore) {
-    return client.subscribe(discoverable, new ResourceHandler() {
+    return client.subscribe(discoverable.getName(), new ResourceHandler(discoverable) {
       @Override
       public void onChange(Collection<PartitionReplica> partitionReplicas) {
         try {

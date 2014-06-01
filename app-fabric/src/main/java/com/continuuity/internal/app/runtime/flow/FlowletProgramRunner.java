@@ -122,6 +122,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     CAppender.logWriter = logWriter;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     BasicFlowletContext flowletContext = null;
@@ -242,6 +243,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
    * @param result A {@link Collection} for storing newly created {@link ProcessSpecification}.
    * @return The same {@link Collection} as the {@code result} parameter.
    */
+  @SuppressWarnings("unchecked")
   private Collection<ProcessSpecification> createProcessSpecification(BasicFlowletContext flowletContext,
                                                                       TypeToken<? extends Flowlet> flowletType,
                                                                       ProcessMethodFactory processMethodFactory,
@@ -441,7 +443,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private ProcessMethodFactory processMethodFactory(final Flowlet flowlet) {
     return new ProcessMethodFactory() {
       @Override
-      public ProcessMethod create(Method method, int maxRetries) {
+      public <T> ProcessMethod<T> create(Method method, int maxRetries) {
         return ReflectionProcessMethod.create(flowlet, method, maxRetries);
       }
     };
@@ -477,6 +479,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 Function<StreamEvent, T> decoder = wrapInputDecoder(flowletContext,
                                                                     queueName, new Function<StreamEvent, T>() {
                   @Override
+                  @SuppressWarnings("unchecked")
                   public T apply(StreamEvent input) {
                     return (T) input;
                   }
@@ -574,7 +577,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private static interface ProcessMethodFactory {
-    ProcessMethod create(Method method, int maxRetries);
+    <T> ProcessMethod<T> create(Method method, int maxRetries);
   }
 
   private static interface ProcessSpecificationFactory {

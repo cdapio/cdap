@@ -6,24 +6,26 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.IdVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.verification.ApplicationVerification;
 import com.continuuity.internal.app.verification.DataSetVerification;
+import com.continuuity.internal.app.verification.DatasetInstanceCreationSpecVerifier;
 import com.continuuity.internal.app.verification.FlowVerification;
 import com.continuuity.internal.app.verification.ProgramVerification;
 import com.continuuity.internal.app.verification.StreamVerification;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -34,8 +36,9 @@ import java.util.Map;
  * concrete implementations.
  */
 public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
-  private static final Logger LOG = LoggerFactory.getLogger(VerificationStage.class);
+
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
+  private final IdVerifier idVerifier = new IdVerifier();
 
   public VerificationStage() {
     super(TypeToken.of(ApplicationSpecLocation.class));
@@ -66,6 +69,20 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       }
     }
 
+    for (Map.Entry<String, String> module : specification.getDatasetModules().entrySet()) {
+      result = idVerifier.verify(appId, module.getKey());
+      if (!result.isSuccess()) {
+        throw new RuntimeException(result.getMessage());
+      }
+    }
+
+    for (DatasetInstanceCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
+      result = getVerifier(DatasetInstanceCreationSpec.class).verify(appId, dataSetCreateSpec);
+      if (!result.isSuccess()) {
+        throw new RuntimeException(result.getMessage());
+      }
+    }
+
     for (StreamSpecification spec : specification.getStreams().values()) {
       result = getVerifier(StreamSpecification.class).verify(appId, spec);
       if (!result.isSuccess()) {
@@ -89,6 +106,7 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
     emit(input);
   }
 
+  @SuppressWarnings("unchecked")
   private <T> Verifier<T> getVerifier(Class<? extends T> clz) {
     if (verifiers.containsKey(clz)) {
       return (Verifier<T>) verifiers.get(clz);
@@ -104,6 +122,10 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       verifiers.put(clz, new FlowVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, createProgramVerifier((Class<ProgramSpecification>) clz));
+    } else if (DatasetInstanceCreationSpec.class.isAssignableFrom(clz)) {
+      verifiers.put(clz, new DatasetInstanceCreationSpecVerifier());
+    } else if (DatasetModule.class.isAssignableFrom(clz)) {
+      verifiers.put(clz, new IdVerifier());
     }
 
     return (Verifier<T>) verifiers.get(clz);

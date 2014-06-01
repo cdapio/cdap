@@ -1,28 +1,29 @@
 package com.continuuity.data2.datafabric.dataset.client;
 
-import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.InstanceConflictException;
+import com.continuuity.data2.dataset2.ModuleConflictException;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,22 +32,27 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
- * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.
+ * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
 public class DatasetManagerServiceClient {
   private static final Gson GSON = new Gson();
 
-  private EndpointStrategy endpointStrategy;
+  private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DatasetManagerServiceClient(DiscoveryServiceClient discoveryClient) {
-
-    this.endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
-      1L, TimeUnit.SECONDS);
+  public DatasetManagerServiceClient(final DiscoveryServiceClient discoveryClient) {
+    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
+      @Override
+      public EndpointStrategy get() {
+        return new TimeLimitEndpointStrategy(
+          new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER)),
+          1L, TimeUnit.SECONDS);
+      }
+    });
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
@@ -146,6 +152,24 @@ public class DatasetManagerServiceClient {
     }
   }
 
+  public void deleteModules() throws DatasetManagementException {
+    HttpResponse response = doDelete("modules");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
+  public void deleteInstances() throws DatasetManagementException {
+    HttpResponse response = doDelete("instances");
+
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(resource, "GET", null, null, null);
   }
@@ -201,7 +225,7 @@ public class DatasetManagerServiceClient {
           }
         }
         byte[] responseBody = null;
-        if (conn.getDoInput()) {
+        if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
           InputStream is = conn.getInputStream();
           try {
             responseBody = ByteStreams.toByteArray(is);
@@ -226,14 +250,14 @@ public class DatasetManagerServiceClient {
   private String getDetails(HttpResponse response) throws DatasetManagementException {
     return String.format("Response code: %s, message:'%s', body: '%s'",
                          response.responseCode, response.responseMessage,
-                         new String(response.responseBody, Charsets.UTF_8));
+                         response.responseBody == null ? "null" : new String(response.responseBody, Charsets.UTF_8));
 
   }
 
   private String resolve(String resource) {
-    InetSocketAddress addr = this.endpointStrategy.pick().getSocketAddress();
-    return String.format("http://%s:%s/%s/datasets/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Dataset.Manager.VERSION, resource);
+    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+    return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
+                         Constants.Gateway.GATEWAY_VERSION, resource);
   }
 
   private final class HttpResponse {

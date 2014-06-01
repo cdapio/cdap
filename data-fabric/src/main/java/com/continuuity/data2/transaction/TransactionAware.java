@@ -79,5 +79,6 @@ public interface TransactionAware {
   /**
    * Used for error reporting.
    */
+  // todo: use toString() instead everywhere
   String getName();
 }

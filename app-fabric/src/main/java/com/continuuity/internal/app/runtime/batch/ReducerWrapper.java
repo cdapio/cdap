@@ -32,6 +32,7 @@ public class ReducerWrapper extends Reducer {
 
   private File unpackedJarDir;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void cleanup(Context context) throws IOException, InterruptedException {
     super.cleanup(context);
@@ -45,6 +46,7 @@ public class ReducerWrapper extends Reducer {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     unpackedJarDir = Files.createTempDir();

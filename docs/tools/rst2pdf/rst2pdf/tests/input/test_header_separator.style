@@ -1,0 +1,15 @@
+{"pageSetup": {
+    "firstTemplate": "cutePage"
+  },
+  "pageTemplates" : {
+    "cutePage": {
+        "frames": [
+            ["0", "0", "100%", "100%"]
+        ],
+        "showHeader" : true,
+        "headerSeparator" : true,
+        "showFooter" : true,
+        "footerSeparator" : true
+    }
+  }
+}

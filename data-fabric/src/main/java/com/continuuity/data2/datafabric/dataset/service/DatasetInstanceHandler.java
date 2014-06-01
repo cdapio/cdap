@@ -1,66 +1,70 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.exception.HandlerException;
+import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
-import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 /**
  * Handles dataset instance management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path("/" + Constants.Dataset.Manager.VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new Gson();
 
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
+  private final DatasetOpExecutor opExecutorClient;
 
   @Inject
-  public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager) {
+  public DatasetInstanceHandler(DiscoveryServiceClient discoveryClient,
+                                DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
+                                DatasetOpExecutor opExecutorClient) {
+    this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
   }
 
-  @Override
-  public void init(HandlerContext context) {
-    LOG.info("Starting DatasetInstanceHandler");
-  }
-
-  @Override
-  public void destroy(HandlerContext context) {
-    LOG.info("Stopping DatasetInstanceHandler");
-  }
-
   @GET
-  @Path("/datasets/instances/")
+  @Path("/data/instances/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
+  @DELETE
+  @Path("/data/instances/")
+  public void deleteAll(HttpRequest request, final HttpResponder responder) {
+    instanceManager.deleteAll();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   @GET
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("instance-name") String name) {
     DatasetInstanceSpec spec = instanceManager.get(name);
@@ -73,7 +77,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("instance-name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
@@ -106,7 +110,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/datasets/instances/{instance-name}")
+  @Path("/data/instances/{instance-name}")
   public void drop(HttpRequest request, final HttpResponder responder,
                        @PathParam("instance-name") String instanceName) {
     LOG.info("Deleting dataset instance {}", instanceName);
@@ -119,16 +123,42 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/instances/{instance-id}/admin/{method}")
+  @Path("/data/instances/{instance-id}/admin/{method}")
   public void executeAdmin(HttpRequest request, final HttpResponder responder,
                            @PathParam("instance-id") String instanceName,
                            @PathParam("method") String method) {
-    // todo: execute admin operation
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+
+    try {
+      Object result = null;
+      String message = null;
+
+      if (method.equals("exists")) {
+        result = opExecutorClient.exists(instanceName);
+      } else if (method.equals("create")) {
+        opExecutorClient.create(instanceName);
+      } else if (method.equals("drop")) {
+        opExecutorClient.drop(instanceName);
+      } else if (method.equals("truncate")) {
+        opExecutorClient.truncate(instanceName);
+      } else if (method.equals("upgrade")) {
+        opExecutorClient.upgrade(instanceName);
+      } else {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, "Invalid admin operation: " + method);
+      }
+
+      DatasetAdminOpResponse response = new DatasetAdminOpResponse(result, message);
+      responder.sendJson(HttpResponseStatus.OK, response);
+    } catch (HandlerException e) {
+      LOG.debug("Handler error", e);
+      responder.sendStatus(e.getFailureStatus());
+    } catch (Exception e) {
+      LOG.error("Error executing admin operation {} for dataset instance {}", method, instanceName, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @POST
-  @Path("/datasets/instances/{instance-id}/data/{method}")
+  @Path("/data/instances/{instance-id}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
                            @PathParam("instance-id") String instanceName,
                            @PathParam("method") String method) {

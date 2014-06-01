@@ -1,12 +1,13 @@
 package com.continuuity.data;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
+
 import org.apache.twill.filesystem.Location;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * This is the abstract base class for data fabric.

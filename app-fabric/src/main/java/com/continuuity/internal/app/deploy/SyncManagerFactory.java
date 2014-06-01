@@ -8,6 +8,7 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.Inject;
@@ -19,27 +20,29 @@ import org.apache.twill.filesystem.LocationFactory;
  */
 public final class SyncManagerFactory implements ManagerFactory {
   private final CConfiguration configuration;
-  private final PipelineFactory<?> pFactory;
+  private final PipelineFactory pFactory;
   private final LocationFactory lFactory;
   private final StoreFactory sFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final DatasetFramework datasetFramework;
 
   @Inject
-  public SyncManagerFactory(CConfiguration configuration, PipelineFactory<?> pFactory,
+  public SyncManagerFactory(CConfiguration configuration, PipelineFactory pFactory,
                             LocationFactory lFactory, StoreFactory sFactory, QueueAdmin queueAdmin,
-                            DiscoveryServiceClient discoveryServiceClient) {
+                            DiscoveryServiceClient discoveryServiceClient, DatasetFramework datasetFramework) {
     this.configuration = configuration;
     this.pFactory = pFactory;
     this.lFactory = lFactory;
     this.sFactory = sFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
-  public Manager<?, ?> create(ProgramTerminator programTerminator) {
-    return new LocalManager(configuration, pFactory, lFactory, sFactory, programTerminator, queueAdmin,
-                            discoveryServiceClient);
+  public <I, O> Manager<I, O> create(ProgramTerminator programTerminator) {
+    return new LocalManager<I, O>(configuration, pFactory, lFactory, sFactory, programTerminator, queueAdmin,
+                            discoveryServiceClient, datasetFramework);
   }
 }

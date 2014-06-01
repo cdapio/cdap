@@ -2,16 +2,19 @@ package com.continuuity.logging.gateway.handlers;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.LogReader;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -19,12 +22,12 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Handler to serve log requests.
@@ -184,7 +187,44 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private static long parseTimestamp(List<String> parameter) {
+  private void sendMockLog(HttpResponder responder) {
+    final JsonArray logResults = new JsonArray();
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("log", "Info : Test log message");
+    jsonObject.addProperty("offset", 0);
+    logResults.add(jsonObject);
+    responder.sendJson(HttpResponseStatus.OK, logResults);
+  }
+
+  /*
+    TODO: currently Mock Endpoints for user twill-service logs, implementation will be added later.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs")
+  public void serviceList(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
+    sendMockLog(responder);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/next")
+  public void serviceNext(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
+    sendMockLog(responder);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/prev")
+  public void servicePrev(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
+                          @PathParam("runnable-id") String runId) {
+    sendMockLog(responder);
+  }
+
+
+    private static long parseTimestamp(List<String> parameter) {
     if (parameter == null || parameter.isEmpty()) {
       return -1;
     }

@@ -5,9 +5,9 @@ import com.continuuity.data2.datafabric.dataset.AbstractObjectsStore;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Dataset instances metadata store
@@ -45,6 +45,10 @@ final class DatasetInstanceMDS extends AbstractObjectsStore {
   public Collection<DatasetInstanceSpec> getAll() {
     Map<String, DatasetInstanceSpec> instances = scan(INSTANCE_PREFIX, DatasetInstanceSpec.class);
     return instances.values();
+  }
+
+  public void deleteAll() {
+    deleteAll(INSTANCE_PREFIX);
   }
 
   private byte[] getInstanceKey(String name) {

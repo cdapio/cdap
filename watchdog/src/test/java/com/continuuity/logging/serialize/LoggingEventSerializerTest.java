@@ -4,14 +4,14 @@
 
 package com.continuuity.logging.serialize;
 
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.logback.TestLoggingContext;
+import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.common.logging.logback.TestLoggingContext;
-import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import kafka.utils.VerifiableProperties;
@@ -26,7 +26,6 @@ import java.util.Map;
  * Test cases for LoggingEventSerializer.
  */
 public class LoggingEventSerializerTest {
-
   @BeforeClass
   public static void setUpContext() {
     LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));

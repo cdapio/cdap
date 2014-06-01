@@ -23,8 +23,6 @@ import com.continuuity.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
-import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
@@ -48,6 +46,9 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
+
+    install(new DataSetsModules().getInMemoryModule());
+
     bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
     bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
@@ -55,7 +56,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
     bind(StreamAdmin.class).to(InMemoryStreamAdmin.class).in(Singleton.class);
-    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
     bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
     bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);

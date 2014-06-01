@@ -8,6 +8,7 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.GatewayTestBase;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
@@ -40,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -53,7 +55,7 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 /**
  * Tests Procedure API Handling.
  */
-public class ProcedureHandlerTest  {
+public class ProcedureHandlerTest extends GatewayTestBase {
   private static final Gson GSON = new Gson();
   private static final String hostname = "127.0.0.1";
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -71,7 +73,7 @@ public class ProcedureHandlerTest  {
     httpService.startAndWait();
 
     // Register services of test server
-    DiscoveryService discoveryService = GatewayFastTestsSuite.getInjector().getInstance(DiscoveryService.class);
+    DiscoveryService discoveryService = GatewayTestBase.getInjector().getInstance(DiscoveryService.class);
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {

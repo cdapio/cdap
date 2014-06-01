@@ -34,6 +34,7 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
   private final InstantiatorFactory creatorFactory;
   private final FieldAccessorFactory fieldAccessorFactory;
 
+  @SuppressWarnings("unchecked")
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
 
@@ -46,6 +47,7 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
     this.fieldAccessorFactory = new ReflectionFieldAccessorFactory();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T read(Decoder decoder, Schema sourceSchema) throws IOException {
     return (T) read(decoder, sourceSchema, schema, type);
@@ -131,6 +133,7 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
     return buffer;
   }
 
+  @SuppressWarnings("unchecked")
   private Object readArray(Decoder decoder, Schema sourceSchema,
                            Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
@@ -166,6 +169,7 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
     return collection;
   }
 
+  @SuppressWarnings("unchecked")
   private Map<Object, Object> readMap(Decoder decoder, Schema sourceSchema,
                                       Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
     check(Map.class.isAssignableFrom(targetTypeToken.getRawType()), "Only map type is supported for map data.");

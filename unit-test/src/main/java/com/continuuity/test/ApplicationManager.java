@@ -1,7 +1,5 @@
 package com.continuuity.test;
 
-import com.continuuity.api.data.DataSet;
-
 import java.util.Map;
 
 /**
@@ -69,7 +67,7 @@ public interface ApplicationManager {
    * @param <T> Type of the dataset.
    * @return A {@link DataSetManager} instance.
    */
-  <T extends DataSet> DataSetManager<T> getDataSet(String dataSetName);
+  <T> DataSetManager<T> getDataSet(String dataSetName);
 
   /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.

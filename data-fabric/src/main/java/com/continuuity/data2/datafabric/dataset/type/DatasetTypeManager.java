@@ -2,8 +2,8 @@ package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -15,8 +15,11 @@ import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.lang.ClassLoaders;
+
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.filesystem.Location;
@@ -24,11 +27,13 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Manages dataset types and modules metadata
@@ -39,8 +44,10 @@ public class DatasetTypeManager extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
   private final TransactionSystemClient txClient;
-  private final DatasetManager mdsDatasetManager;
+  private final DatasetFramework mdsDatasetFramework;
   private final LocationFactory locationFactory;
+
+  private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
 
   /** dataset types metadata store */
   private DatasetTypeMDS mds;
@@ -48,24 +55,28 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   /**
    * Ctor
-   * @param mdsDatasetManager dataset manager to be used to access the metadata store
+   * @param mdsDatasetFramework dataset manager to be used to access the metadata store
    * @param txSystemClient tx client to be used to operate on the metadata store
    */
-  public DatasetTypeManager(DatasetManager mdsDatasetManager,
+  public DatasetTypeManager(DatasetFramework mdsDatasetFramework,
                             TransactionSystemClient txSystemClient,
-                            LocationFactory locationFactory) {
-    this.mdsDatasetManager = mdsDatasetManager;
+                            LocationFactory locationFactory,
+                            SortedMap<String, Class<? extends DatasetModule>> defaultModules) {
+    this.mdsDatasetFramework = mdsDatasetFramework;
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
+    this.defaultModules = ImmutableSortedMap.copyOf(defaultModules);
   }
 
   @Override
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetManager, "datasets.type", "orderedTable",
+    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.type", "orderedTable",
                                                          DatasetInstanceProperties.EMPTY, null);
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);
+
+    deployDefaultModules();
   }
 
   @Override
@@ -258,6 +269,44 @@ public class DatasetTypeManager extends AbstractIdleService {
         throw (DatasetModuleConflictException) e.getCause();
       }
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Deletes all modules (apart from default).
+   */
+  public void deleteModules() {
+    LOG.warn("Deleting all modules apart {}", Joiner.on(", ").join(defaultModules.keySet()));
+    try {
+      getTxExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws DatasetModuleConflictException {
+          for (DatasetModuleMeta module : mds.getModules()) {
+            if (!defaultModules.containsKey(module.getName())) {
+              mds.deleteModule(module.getName());
+            }
+          }
+        }
+      });
+    } catch (TransactionFailureException e) {
+      LOG.error("Failed to do a delete of all modules apart {}", Joiner.on(", ").join(defaultModules.keySet()));
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private void deployDefaultModules() {
+    // adding default modules to be available in dataset manager service
+    for (Map.Entry<String, Class<? extends DatasetModule>> module : defaultModules.entrySet()) {
+      try {
+        // NOTE: we assume default modules are always in classpath, hence passing null for jar location
+        addModule(module.getKey(), module.getValue().getName(), null);
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add default modules only the very first time service is started
+        LOG.info("Not adding " + module.getKey() + " module: it already exists");
+      } catch (Throwable th) {
+        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
+      }
     }
   }
 

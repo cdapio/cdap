@@ -12,9 +12,12 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -22,6 +25,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -30,6 +36,8 @@ import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
+import com.continuuity.security.server.ExternalAuthenticationServer;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -68,6 +76,12 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private final InMemoryHiveMetastore hiveMetastore;
+  private final HiveServer hiveServer;
+
+  private ExternalAuthenticationServer externalAuthenticationServer;
+  private final DatasetService datasetService;
+
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -84,7 +98,17 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    datasetService = injector.getInstance(DatasetService.class);
+
     streamHttpService = injector.getInstance(StreamHttpService.class);
+
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
+
+    boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    if (securityEnabled) {
+      externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -118,6 +142,7 @@ public class SingleNodeMain {
     // Start all the services.
     transactionManager.startAndWait();
     metricsCollectionService.startAndWait();
+    datasetService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
@@ -130,6 +155,14 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+
+    // it is important to respect that order: metastore, then HiveServer
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
+
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.startAndWait();
+    }
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
@@ -150,8 +183,14 @@ public class SingleNodeMain {
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
+    datasetService.stopAndWait();
+    if (externalAuthenticationServer != null) {
+      externalAuthenticationServer.stopAndWait();
+    }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
+    hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
   }
 
   /**
@@ -234,6 +273,9 @@ public class SingleNodeMain {
     //Run gateway on random port and forward using router.
     configuration.setInt(Constants.Gateway.PORT, 0);
 
+    //Run dataset service on random port
+    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
+
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
@@ -263,9 +305,13 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
+      new DataSetServiceModules().getInMemoryModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
+      new StreamHttpModule(),
+      new HiveRuntimeModule().getInMemoryModules(),
+      new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
   }
@@ -307,10 +353,13 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
       new DataFabricModules(configuration).getSingleNodeModules(),
+      new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule());
+      new StreamHttpModule(),
+      new HiveRuntimeModule(configuration).getSingleNodeModules()
+    );
   }
 }

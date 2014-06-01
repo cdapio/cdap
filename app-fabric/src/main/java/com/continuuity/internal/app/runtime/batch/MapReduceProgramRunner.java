@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.stream.StreamBatchReadable;
@@ -25,13 +26,12 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.stream.StreamInputFormat;
 import com.continuuity.data.stream.TextStreamInputFormat;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
@@ -69,10 +69,10 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -90,6 +90,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DataSetAccessor dataSetAccessor;
+  private final DatasetFramework datasetFramework;
+
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
 
@@ -100,7 +102,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
-                                DataSetAccessor dataSetAccessor, TransactionSystemClient txSystemClient,
+                                DataSetAccessor dataSetAccessor,
+                                DatasetFramework datasetFramework,
+                                TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory) {
     this.cConf = cConf;
@@ -109,6 +113,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.dataSetAccessor = dataSetAccessor;
+    this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -147,10 +152,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
+                                                                      program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
-    dataSetInstantiator.setDataSets(dataSetSpecs.values());
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, dataSetSpecs.keySet());
+    Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
+    dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
+
+    Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator,
+                                                              Sets.union(dataSetSpecs.keySet(), datasetSpecs.keySet()));
 
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
@@ -430,15 +439,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
             // committing long running tx: no need to commit datasets, as they were committed in external processes
             // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
             // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-            try {
-              if (!txSystemClient.commit(tx)) {
-                LOG.warn("Mapreduce job transaction {} failed to commit, context: {}", tx.getWritePointer(), context);
-                success = false;
-              }
-            } catch (TransactionNotInProgressException e) {
-              // will probably NEVER happen as it will never be timed out and there's nobody to invalidate it...
-              LOG.warn(String.format("Mapreduce job transaction %d UNEXPECTEDLY is NOT in progress, context: %s",
-                                     tx.getWritePointer(), context), e);
+            if (!txSystemClient.commit(tx)) {
+              LOG.warn("Mapreduce job transaction failed to commit");
               success = false;
             }
           } else {
@@ -458,57 +460,55 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
   }
 
-  private DataSet setOutputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
-    DataSet outputDataset = null;
+  private void setOutputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
+    String outputDataSetName = null;
+    BatchWritable outputDataset;
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getOutputDataset() != null) {
-      outputDataset = (DataSet) mapReduceContext.getOutputDataset();
+      outputDataset = mapReduceContext.getOutputDataset();
+      if (outputDataset instanceof DataSet) {
+        outputDataSetName = ((DataSet) outputDataset).getName();
+      }
     } else {
       // trying to init output dataset from spec
-      String outputDataSetName = mapReduceContext.getSpecification().getOutputDataSet();
-      if (outputDataSetName != null) {
-        // We checked on validation phase that it implements BatchWritable
-        outputDataset = mapReduceContext.getDataSet(outputDataSetName);
-        mapReduceContext.setOutput((BatchWritable) outputDataset);
-      }
+      outputDataSetName = mapReduceContext.getSpecification().getOutputDataSet();
     }
 
-    if (outputDataset != null) {
-      LOG.debug("Using dataset {} as output for mapreduce job", outputDataset.getName());
-      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
-                                                  .getDataSets().get(outputDataset.getName());
-      DataSetOutputFormat.setOutput(jobConf, spec);
+    if (outputDataSetName != null) {
+      LOG.debug("Using dataset {} as output for mapreduce job", outputDataSetName);
+      // We checked on validation phase that it implements BatchWritable
+      outputDataset = (BatchWritable) mapReduceContext.getDataSet(outputDataSetName);
+      mapReduceContext.setOutput(outputDataset);
+      DataSetOutputFormat.setOutput(jobConf, outputDataSetName);
     }
-    return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws Exception {
-    DataSet inputDataset = null;
+  @SuppressWarnings("unchecked")
+  private void setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws IOException {
+    String inputDataSetName;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     BatchReadable batchReadable = mapReduceContext.getInputDataset();
 
     if (batchReadable != null && batchReadable instanceof DataSet) {
-      inputDataset = (DataSet) batchReadable;
+      inputDataSetName = ((DataSet) batchReadable).getName();
     } else  {
       // trying to init input dataset from spec
-      String inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
+      inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
       if (inputDataSetName != null) {
         // TODO: It's a hack for stream
         if (inputDataSetName.startsWith("stream://")) {
           batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
         } else {
-          inputDataset = mapReduceContext.getDataSet(inputDataSetName);
+          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
           // We checked on validation phase that it implements BatchReadable
-          mapReduceContext.setInput((BatchReadable) inputDataset, ((BatchReadable) inputDataset).getSplits());
+          mapReduceContext.setInput(inputDataSet, inputDataSet.getSplits());
         }
       }
     }
 
-    if (inputDataset != null) {
-      LOG.debug("Using dataset {} as input for mapreduce job", inputDataset.getName());
-      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
-                                                  .getDataSets().get(inputDataset.getName());
-      DataSetInputFormat.setInput(jobConf, spec);
+    if (inputDataSetName != null) {
+      LOG.debug("Using dataset {} as input for mapreduce job", inputDataSetName);
+      DataSetInputFormat.setInput(jobConf, inputDataSetName);
     } else if (batchReadable instanceof StreamBatchReadable) {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
@@ -519,8 +519,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
       TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
       jobConf.setInputFormatClass(TextStreamInputFormat.class);
     }
-
-    return inputDataset;
   }
 
   private Location buildJobJar(BasicMapReduceContext context) throws IOException {
@@ -528,19 +526,24 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
+    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
+    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           Type.MAPREDUCE.name().toLowerCase(),
+      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
+                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    Set<Class<?>> classes = Sets.newHashSet(MapReduce.class,
-                                            DataSetOutputFormat.class, DataSetInputFormat.class,
-                                            TextStreamInputFormat.class,
-                                            MapperWrapper.class, ReducerWrapper.class);
+    Set<Class<?>> classes = Sets.newHashSet();
+    classes.add(MapReduce.class);
+    classes.add(DataSetOutputFormat.class);
+    classes.add(DataSetInputFormat.class);
+    classes.add(TextStreamInputFormat.class);
+    classes.add(MapperWrapper.class);
+    classes.add(ReducerWrapper.class);
 
     Job jobConf = context.getHadoopJob();
     try {

@@ -4,13 +4,13 @@
 
 package com.continuuity.logging.serialize;
 
+import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.LoggingContextAccessor;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
-import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
@@ -225,6 +225,7 @@ public final class LoggingEvent implements ILoggingEvent {
     return encodeMap;
   }
 
+  @SuppressWarnings("unchecked")
   public static ILoggingEvent decode(GenericRecord datum) {
     LoggingEvent loggingEvent = new LoggingEvent();
     loggingEvent.threadName = stringOrNull(datum.get("threadName"));
@@ -242,10 +243,8 @@ public final class LoggingEvent implements ILoggingEvent {
     loggingEvent.loggerName = stringOrNull(datum.get("loggerName"));
     loggingEvent.loggerContextVO = LoggerContextSerializer.decode((GenericRecord) datum.get("loggerContextVO"));
     loggingEvent.throwableProxy = ThrowableProxySerializer.decode((GenericRecord) datum.get("throwableProxy"));
-    //noinspection unchecked
     loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
-    //loggingEvent.marker =
     loggingEvent.mdc = decodeMdcMap((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;

@@ -57,6 +57,8 @@ public class DataFabricLocalModule extends AbstractModule {
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
+
+        install(new DataSetsModules().getLocalModule());
       }
     }));
   }

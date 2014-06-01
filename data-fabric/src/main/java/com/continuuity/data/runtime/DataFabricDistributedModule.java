@@ -118,6 +118,8 @@ public class DataFabricDistributedModule extends AbstractModule {
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
+
+    install(new DataSetsModules().getDistributedModule());
   }
 
   /**

@@ -29,6 +29,7 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
     this.instanceUpdater = instanceUpdater;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void doCommand(String name, Object value) throws Exception {
     if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {

@@ -2,19 +2,20 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
+
 import com.google.common.base.Preconditions;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -22,23 +23,23 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Handles dataset type management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path("/" + Constants.Dataset.Manager.VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
@@ -67,7 +68,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/modules")
+  @Path("/data/modules")
   public void listModules(HttpRequest request, final HttpResponder responder) {
     // Sorting by name for convenience
     List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules());
@@ -80,8 +81,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, list);
   }
 
+  @DELETE
+  @Path("/data/modules")
+  public void deleteModules(HttpRequest request, final HttpResponder responder) {
+    manager.deleteModules();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   @POST
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws IOException {
 
@@ -116,7 +124,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     InputStream inputStream = new ChannelBufferInputStream(content);
     try {
-      // todo: store to temp file first and do some verifications? Or even datasetManager should persist file?
+      // todo: store to temp file first and do some verifications? Or even datasetFramework should persist file?
       OutputStream outStream = archive.getOutputStream();
       try {
         ByteStreams.copy(inputStream, outStream);
@@ -139,7 +147,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     boolean deleted;
     try {
@@ -158,7 +166,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/modules/{name}")
+  @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
@@ -169,7 +177,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/types")
+  @Path("/data/types")
   public void listTypes(HttpRequest request, final HttpResponder responder) {
     // Sorting by name for convenience
     List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes());
@@ -183,7 +191,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/types/{name}")
+  @Path("/data/types/{name}")
   public void getTypeInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("name") String name) {
 
