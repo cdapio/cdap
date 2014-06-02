@@ -17,7 +17,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
@@ -111,10 +111,10 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing dataset context and hooking it up with mapreduce job transaction
 
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    DatasetManager datasetManager = injector.getInstance(DatasetManager.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetManager, classLoader);
+    DataSetInstantiator dataSetContext = new DataSetInstantiator(dataFabric, datasetFramework, classLoader);
     ApplicationSpecification programSpec = program.getSpecification();
     dataSetContext.setDataSets(programSpec.getDataSets().values(),
                                programSpec.getDatasets().values());

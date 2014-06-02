@@ -1,7 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 public class DatasetInstanceManager extends AbstractIdleService {
 
   private final TransactionSystemClient txClient;
-  private final DatasetManager mdsDatasetManager;
+  private final DatasetFramework mdsDatasetFramework;
 
   /** dataset types metadata store */
   private DatasetInstanceMDS mds;
@@ -32,19 +32,19 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   /**
    * Ctor
-   * @param mdsDatasetManager dataset manager to be used to access the metadata store
+   * @param mdsDatasetFramework dataset manager to be used to access the metadata store
    * @param txSystemClient tx client to be used to operate on the metadata store
    */
-  public DatasetInstanceManager(DatasetManager mdsDatasetManager,
+  public DatasetInstanceManager(DatasetFramework mdsDatasetFramework,
                                 TransactionSystemClient txSystemClient) {
-    this.mdsDatasetManager = mdsDatasetManager;
+    this.mdsDatasetFramework = mdsDatasetFramework;
     this.txClient = txSystemClient;
   }
 
   @Override
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetManager, "datasets.instance", "orderedTable",
+    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.instance", "orderedTable",
                                                          DatasetInstanceProperties.EMPTY, null);
 
     this.txAware = (TransactionAware) table;

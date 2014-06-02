@@ -1,10 +1,8 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.ApplicationConfigurer;
-import com.continuuity.api.ApplicationContext;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -32,8 +30,8 @@ public class AppsWithDataset {
    */
   public static class AppWithExisting extends AbstractApplication {
     @Override
-    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.addProcedure(new MyProcedure());
+    public void configure() {
+      addProcedure(new MyProcedure());
     }
   }
 
@@ -42,9 +40,9 @@ public class AppsWithDataset {
    */
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
-    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.addDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
-      configurer.addProcedure(new MyProcedure());
+    public void configure() {
+      createDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      addProcedure(new MyProcedure());
     }
   }
 
@@ -53,10 +51,10 @@ public class AppsWithDataset {
    */
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
-    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.addDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
-      configurer.addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
-      configurer.addProcedure(new MyProcedure());
+    public void configure() {
+      createDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
+      addProcedure(new MyProcedure());
     }
   }
 
@@ -104,8 +102,8 @@ public class AppsWithDataset {
    */
   public static class AppUsesAnnotation extends AbstractApplication {
     @Override
-    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-      configurer.addProcedure(new MyProcedureWithUseDataSetAnnotation());
+    public void configure() {
+      addProcedure(new MyProcedureWithUseDataSetAnnotation());
     }
   }
 

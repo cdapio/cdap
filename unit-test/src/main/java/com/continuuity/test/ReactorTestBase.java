@@ -1,9 +1,8 @@
 package com.continuuity.test;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationContext;
 import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
@@ -22,8 +21,8 @@ import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamHttpModule;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
@@ -92,8 +91,8 @@ public class ReactorTestBase {
   private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricHttpHandler httpHandler;
   private static SchedulerService schedulerService;
-  private static DatasetManagerService datasetService;
-  private static DatasetManager datasetManager;
+  private static DatasetService datasetService;
+  private static DatasetFramework datasetFramework;
 
 
   /**
@@ -113,13 +112,13 @@ public class ReactorTestBase {
       Object appInstance = applicationClz.newInstance();
       ApplicationSpecification appSpec;
 
-      if (appInstance instanceof AbstractApplication) {
-        AbstractApplication app = (AbstractApplication) appInstance;
+      if (appInstance instanceof Application) {
+        Application app = (Application) appInstance;
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
         appSpec = configurer.createApplicationSpec();
-      } else if (appInstance instanceof Application) {
-        appSpec = Specifications.from(((Application) appInstance).configure());
+      } else if (appInstance instanceof com.continuuity.api.Application) {
+        appSpec = Specifications.from(((com.continuuity.api.Application) appInstance).configure());
       } else {
         throw new IllegalArgumentException("Application class does not represent application: "
                                              + applicationClz.getName());
@@ -224,9 +223,9 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    datasetManager = injector.getInstance(DatasetManager.class);
+    datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
   }
@@ -311,7 +310,7 @@ public class ReactorTestBase {
   @Beta
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetManager.register(moduleName, datasetModule);
+    datasetFramework.register(moduleName, datasetModule);
   }
 
 
@@ -329,8 +328,8 @@ public class ReactorTestBase {
                                                        String datasetInstanceName,
                                                        DatasetInstanceProperties props) throws Exception {
 
-    datasetManager.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetManager.getAdmin(datasetInstanceName, null);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
+    return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 }
 

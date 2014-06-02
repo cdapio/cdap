@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * Unit-test for {@link DatasetTypeHandler}
  */
-public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
+public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {

@@ -21,7 +21,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
@@ -116,7 +116,7 @@ public class DataSetInstantiationBase {
    *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetManager datasetManager)
+  public <T extends Closeable> T getDataSet(String dataSetName, DataFabric fabric, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
     // find the data set specification
@@ -125,7 +125,7 @@ public class DataSetInstantiationBase {
       return (T) getDataSet(spec, fabric, dataSetName);
     }
 
-    T dataSet = (T) getDataset(dataSetName, datasetManager);
+    T dataSet = (T) getDataset(dataSetName, datasetFramework);
     if (dataSet != null) {
       return dataSet;
     }
@@ -133,10 +133,10 @@ public class DataSetInstantiationBase {
     throw logAndException(null, "No data set named %s can be instantiated.", dataSetName);
   }
 
-  public <T extends Dataset> T getDataset(String dataSetName, DatasetManager datasetManager)
+  public <T extends Dataset> T getDataset(String dataSetName, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
 
-    T dataset = getOrCreateDataset(dataSetName, datasetManager);
+    T dataset = getOrCreateDataset(dataSetName, datasetFramework);
 
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
@@ -146,13 +146,13 @@ public class DataSetInstantiationBase {
     return dataset;
   }
 
-  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetManager datasetManager)
+  private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
     // First, get admin to check if dataset instance exists. If doesn't exist - create.
     // If admin is null, then dataset meta doesn't exist, in which case try to create from scratch.
     DatasetAdmin admin;
     try {
-      admin = datasetManager.getAdmin(datasetName, classLoader);
+      admin = datasetFramework.getAdmin(datasetName, classLoader);
       if (admin != null) {
         if (!admin.exists()) {
           admin.create();
@@ -163,9 +163,9 @@ public class DataSetInstantiationBase {
           return null;
         }
         try {
-          datasetManager.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
+          datasetFramework.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
                                      creationSpec.getProperties());
-          admin = datasetManager.getAdmin(datasetName, classLoader);
+          admin = datasetFramework.getAdmin(datasetName, classLoader);
           if (admin == null) {
             throw new DataSetInstantiationException("Added instance meta to the system " + datasetName +
                                                       " but still cannot access it");
@@ -176,7 +176,7 @@ public class DataSetInstantiationBase {
         }
       }
 
-      Dataset dataset = datasetManager.getDataset(datasetName, classLoader);
+      Dataset dataset = datasetFramework.getDataset(datasetName, classLoader);
       if (dataset == null) {
         throw new DataSetInstantiationException("Attempted to create dataset " + datasetName +
                                                   " but still cannot access it");

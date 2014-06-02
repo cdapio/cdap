@@ -17,7 +17,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.internal.app.Specifications;
@@ -168,11 +168,11 @@ public class MultiConsumerTest {
 
     LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
-    DatasetManager datasetManager = AppFabricTestHelper.getInjector().getInstance(DatasetManager.class);
+    DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetManager,
+                              datasetFramework,
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());

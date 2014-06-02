@@ -16,8 +16,9 @@ public final class Constants {
     public static final String GATEWAY = "gateway";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
-    public static final String DATASET_USER = "dataset.user";
+    public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
+    public static final String HIVE = "hive.server";
   }
 
   /**
@@ -302,23 +303,23 @@ public final class Constants {
     /**
      * DatasetUserService configuration.
      */
-    public static final class User {
+    public static final class Executor {
       /** for the port of the dataset user service server. */
-      public static final String PORT = "dataset.user.bind.port";
+      public static final String PORT = "dataset.executor.bind.port";
 
       /** for the address (hostname) of the dataset server. */
-      public static final String ADDRESS = "dataset.user.bind.address";
+      public static final String ADDRESS = "dataset.executor.bind.address";
 
-      public static final String BACKLOG_CONNECTIONS = "dataset.user.connection.backlog";
-      public static final String EXEC_THREADS = "dataset.user.exec.threads";
-      public static final String BOSS_THREADS = "dataset.user.boss.threads";
-      public static final String WORKER_THREADS = "dataset.user.worker.threads";
-      public static final String OUTPUT_DIR = "dataset.user.output.dir";
+      public static final String BACKLOG_CONNECTIONS = "dataset.executor.connection.backlog";
+      public static final String EXEC_THREADS = "dataset.executor.exec.threads";
+      public static final String BOSS_THREADS = "dataset.executor.boss.threads";
+      public static final String WORKER_THREADS = "dataset.executor.worker.threads";
+      public static final String OUTPUT_DIR = "dataset.executor.output.dir";
 
       /** Twill Runnable configuration **/
-      public static final String CONTAINER_VIRTUAL_CORES = "dataset.user.container.num.cores";
-      public static final String CONTAINER_MEMORY_MB = "dataset.user.container.memory.mb";
-      public static final String CONTAINER_INSTANCES = "dataset.user.container.instances";
+      public static final String CONTAINER_VIRTUAL_CORES = "dataset.executor.container.num.cores";
+      public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
+      public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
     }
   }
 
@@ -501,9 +502,10 @@ public final class Constants {
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
-
+    /** Address the Authentication Server should bind to*/
+    public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.server.port";
+    public static final String AUTH_SERVER_PORT = "security.auth.server.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
@@ -531,6 +533,29 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+  }
+
+  /**
+   * Hive configuration.
+   */
+  public static final class Hive {
+    public static final String SERVER_ADDRESS = "hive.server.bind.address";
+    public static final String SERVER_PORT = "hive.server.port";
+    public static final String METASTORE_PORT = "hive.local.metastore.port";
+    public static final String METASTORE_WAREHOUSE_DIR = "reactor.hive.metastore.warehouse.dir";
+    public static final String DATABASE_DIR = "reactor.hive.database.dir";
+  }
+
+  /**
+   * Explore module configuration.
+   */
+  public static final class Explore {
+    public static final String CCONF_CODEC_KEY = "reactor.cconfiguration";
+    public static final String HCONF_CODEC_KEY = "reactor.hconfiguration";
+    public static final String TX_QUERY_CODEC_KEY = "reactor.hive.query.tx.id";
+
+    public static final String DATASET_NAME = "reactor.dataset.name";
+    public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

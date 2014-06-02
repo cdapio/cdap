@@ -783,6 +783,14 @@
         <value>10000</value>
     </property>
 
+    <!---
+         Hive Server Settings.
+     -->
+    <property>
+        <name>hive.server.bind.address</name>
+        <value>localhost</value>
+    </property>
+
     <!--
         External Authentication Settings
     -->
@@ -797,7 +805,12 @@
     </property>
 
     <property>
-        <name>security.server.port</name>
+      <name>security.auth.server.address</name>
+      <value>127.0.0.1</value>
+    </property>
+
+    <property>
+        <name>security.auth.server.port</name>
         <value>10009</value>
     </property>
 
