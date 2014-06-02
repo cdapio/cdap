@@ -293,13 +293,11 @@ a, a:visited {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	border-bottom: 1px solid #7c8586;
 	padding-bottom: 16px;
 	padding-top: 16px;
 }
 
 #nav ul li.overview {
-	border-top: 1px solid #7c8586;
 }
 
 #nav ul li {
