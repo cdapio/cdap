@@ -30,7 +30,7 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
-To enable access logging add the following to logback.xml::
+To enable access logging add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>access.log</file>
@@ -116,7 +116,9 @@ security.authentication.loginmodule.className       <custom login module>
 ================================================  ===========
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
-such as ``security.authentication.handler.hostname``, will also be used when instantiating the login module.
+such as ``security.authentication.handler.hostname``, will also be used by the handler.
+These properties, without the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
+by the ``LoginModule``.
 
 Custom Authentication
 ----------------------
@@ -146,5 +148,8 @@ To provide a custom authentication mechanism you may create your own ``Authentic
     }
   }
 
+To make your custom handler class available to the authentication service, copy your packaged jar file (and any
+additional dependency jars) to the ``security/lib/`` directory within your Reactor installation
+(typically under ``/opt/continuuity``).
 
 
