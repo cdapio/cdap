@@ -1,5 +1,6 @@
 package com.continuuity.api.app;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -8,11 +9,13 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+import org.apache.twill.api.TwillApplication;
 
 /**
  * A support class for {@link Application}s which reduces repetition and results in
  * a more readable configuration. Simply implement {@link #configure()} to define your application.
  */
+@Beta
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
@@ -118,5 +121,12 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addWorkflow(Workflow workflow) {
     configurer.addWorkflow(workflow);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillApplication)
+   */
+  protected void addService(TwillApplication application) {
+    configurer.addService(application);
   }
 }

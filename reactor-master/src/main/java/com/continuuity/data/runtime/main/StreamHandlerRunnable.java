@@ -11,12 +11,15 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -65,6 +68,11 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
                                       new LoggingModules().getDistributedModules(),
                                       new AuthModule(),
                                       new StreamHttpModule());
+
+      injector.getInstance(LogAppenderInitializer.class).initialize();
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         Constants.Service.STREAM_HANDLER));
 
     } catch (Exception e) {
       throw Throwables.propagate(e);

@@ -8,6 +8,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -17,6 +19,7 @@ import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -52,13 +55,19 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
 
   @Override
   protected void doInit(TwillContext context) {
-    LOG.info("Initializing runnable {}", name);
     try {
-      // Set the hostname of the machine so that cConf can be used to start internal services
-      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
       getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+      injector.getInstance(LogAppenderInitializer.class).initialize();
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         Constants.Service.TRANSACTION));
+
+      LOG.info("Initializing runnable {}", name);
+      // Set the hostname of the machine so that cConf can be used to start internal services
+      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
+
 
       //Get Zookeeper and Kafka Client Instances
       zkClient = injector.getInstance(ZKClientService.class);

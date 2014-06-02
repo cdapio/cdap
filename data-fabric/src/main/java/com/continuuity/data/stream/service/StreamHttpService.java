@@ -6,6 +6,8 @@ package com.continuuity.data.stream.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
@@ -35,7 +37,6 @@ public final class StreamHttpService extends AbstractIdleService {
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
-
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
@@ -52,6 +53,9 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.STREAM_HANDLER));
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
       @Override
