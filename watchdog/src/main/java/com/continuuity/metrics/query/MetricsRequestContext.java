@@ -27,6 +27,7 @@ public class MetricsRequestContext {
   public enum TagType {
     STREAM,
     DATASET,
+    SERVICE,
     QUEUE
   }
 

@@ -222,6 +222,8 @@ public class MetricsRequestExecutor {
 
   private AggregateResponse getAggregates(MetricsRequest request) {
     AggregatesTable aggregatesTable = aggregatesTables.get(request.getScope());
+    LOG.info("Querying for context prefix :" + request.getContextPrefix() + " metrics prefix: " +
+               request.getMetricPrefix() + "tag prefix is :" + request.getTagPrefix());
     AggregatesScanner scanner = aggregatesTable.scan(request.getContextPrefix(), request.getMetricPrefix(),
                                                      request.getRunId(), request.getTagPrefix());
     return new AggregateResponse(sumAll(scanner));

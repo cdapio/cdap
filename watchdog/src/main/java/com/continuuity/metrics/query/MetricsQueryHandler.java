@@ -91,6 +91,8 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
     handleRequest(request, responder);
   }
 
+  //can follow this format  "/reactor/service/{service-name}/handler/{handler-name}/method/{method-name}/{metric}"
+
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {
     try {
       URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));

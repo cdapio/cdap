@@ -57,16 +57,21 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     String accountId = getAuthenticatedAccountId(request);
     // check for existance of elements in the path
-    String dataName = metricsRequestContext.getTag();
-    if (dataName != null) {
-      if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.STREAM) {
-        if (!streamExists(accountId, dataName)) {
-          throw new MetricsPathException("stream " + dataName + " not found");
-        }
-      } else if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.DATASET) {
-        if (!datasetExists(accountId, dataName)) {
-          throw new MetricsPathException("dataset " + dataName + " not found");
-        }
+    String tagName = metricsRequestContext.getTag();
+    if (tagName != null) {
+      switch (metricsRequestContext.getTagType()) {
+        case STREAM:
+          if (!streamExists(accountId, tagName)) {
+            throw new MetricsPathException("stream " + tagName + " not found");
+          }
+          break;
+        case DATASET:
+          if (!datasetExists(accountId, tagName)) {
+            throw new MetricsPathException("dataset " + tagName + " not found");
+          }
+          break;
+        case SERVICE:
+          return;
       }
     }
     String appId = metricsRequestContext.getAppId();

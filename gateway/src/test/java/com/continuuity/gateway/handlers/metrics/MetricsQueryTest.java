@@ -77,6 +77,34 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     }
   }
 
+
+  @Test
+  public void testingSystemMetrics() throws Exception {
+    // Insert some metric
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                "app.fabric.http.h.AppFabricHttpHandler.getAllApps",
+                                                                "0");
+    collector.gauge("request.received", 1, "Service");
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    //for (String resource : validResources) {
+      String resource =
+        "/reactor/service/app.fabric.http/handler/AppFabricHttpHandler/method/getAllApps/" +
+          "request.received?aggregate=true";
+      HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
+      Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+      try {
+        Assert.assertEquals("GET " + resource + " did not return 200 status.",
+                            HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+        JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+        Assert.assertEquals("GET " + resource + " returned unexpected results.", 1, json.get("data").getAsInt());
+      } finally {
+        reader.close();
+      }
+  }
+
   @Test
   public void testGetMetric() throws Exception {
     // Insert some metric

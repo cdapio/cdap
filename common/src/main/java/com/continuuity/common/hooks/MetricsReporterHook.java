@@ -30,9 +30,9 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final LoadingCache<String, MetricsCollector> collectorCache;
 
-  @Inject
   public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
+    // todo : for testing purpose, remove later
     this.serviceName = serviceName;
 
     if (metricsCollectionService != null) {
@@ -41,6 +41,8 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
+            LOG.info("LOAD: collection service returned for key: "  + key + "metricsCollectionService is :" +
+                       metricsCollectionService.toString());
             return metricsCollectionService.getCollector(MetricsScope.REACTOR, key, "0");
           }
         });
@@ -53,8 +55,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
-        collector.gauge("request.received", 1);
+        String path = createContext(handlerInfo);
+        MetricsCollector collector = collectorCache.get(path);
+        LOG.info("PRECALL Request Received at : " + path + "collection is : " + collector.toString());
+        collector.gauge("request.received", 1, "tag_request");
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }
@@ -85,6 +89,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
           name = "unknown";
         }
         collector.gauge("response." + name, 1, "status:" + code);
+        LOG.info("POSTCALL Response sent for : " + name);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }
@@ -92,7 +97,9 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
-    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
+    LOG.info(String.format("CONTEXT IS : %s.h.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
+                           handlerInfo.getMethodName()));
+    return String.format("%s.h.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
                          handlerInfo.getMethodName());
   }
 

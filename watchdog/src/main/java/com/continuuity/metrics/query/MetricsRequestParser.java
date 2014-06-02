@@ -40,13 +40,15 @@ final class MetricsRequestParser {
     APPS,
     DATASETS,
     STREAMS,
-    CLUSTER
+    CLUSTER,
+    SERVICE
   }
 
   public enum ProgramType {
     FLOWS("f"),
     MAPREDUCE("b"),
-    PROCEDURES("p");
+    PROCEDURES("p"),
+    HANDLER("h");
 
     private final String code;
 
@@ -179,6 +181,16 @@ final class MetricsRequestParser {
           parseAppContext(pathParts, contextBuilder);
         }
         break;
+      case SERVICE:
+        if (!pathParts.hasNext()) {
+          throw new MetricsPathException("'service must be followed by a service name");
+        }
+        //temporary
+        contextBuilder.setTag(MetricsRequestContext.TagType.SERVICE, "Service");
+        parseAppContext(pathParts, contextBuilder);
+
+        break;
+
     }
 
     if (pathParts.hasNext()) {
@@ -190,6 +202,31 @@ final class MetricsRequestParser {
       builder.setTagPrefix(context.getTag());
     }
     return context;
+  }
+
+  private static void parseServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+
+    if (!pathParts.hasNext()) {
+      return;
+    }
+    builder.setAppId(urlDecode(pathParts.next()));
+
+    if (!pathParts.hasNext()) {
+      return;
+    }
+
+    // program-type: flows, procedures, or mapreduce
+    String pathProgramTypeStr = pathParts.next();
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
+      builder.setProgramType(programType);
+    } catch (IllegalArgumentException e) {
+      throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
+    }
+
+
   }
 
   /**
@@ -207,7 +244,7 @@ final class MetricsRequestParser {
       return;
     }
 
-    // program-type: flows, procedures, or mapreduce
+    // program-type: flows, procedures, or mapreduce or handlers
     String pathProgramTypeStr = pathParts.next();
     ProgramType programType;
     try {
@@ -242,10 +279,30 @@ final class MetricsRequestParser {
       case FLOWS:
         buildFlowletContext(pathParts, builder);
         break;
+      case HANDLER:
+        buildHandlerContext(pathParts, builder);
     }
 
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
+    }
+  }
+
+
+  /**
+   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
+   */
+  private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("method")) {
+      throw new MetricsPathException("expecting 'method' after the handler name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("method must be followed by a method name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
+    if (pathParts.hasNext()) {
+      throw new MetricsPathException("too many path after method name");
     }
   }
 
