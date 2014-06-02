@@ -124,7 +124,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     InputStream inputStream = new ChannelBufferInputStream(content);
     try {
-      // todo: store to temp file first and do some verifications? Or even datasetManager should persist file?
+      // todo: store to temp file first and do some verifications? Or even datasetFramework should persist file?
       OutputStream outStream = archive.getOutputStream();
       try {
         ByteStreams.copy(inputStream, outStream);

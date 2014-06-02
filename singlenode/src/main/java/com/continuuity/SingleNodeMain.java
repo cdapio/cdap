@@ -17,7 +17,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -25,6 +25,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -34,6 +37,7 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -72,8 +76,11 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionManager transactionManager;
 
+  private final InMemoryHiveMetastore hiveMetastore;
+  private final HiveServer hiveServer;
+
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private final DatasetManagerService datasetService;
+  private final DatasetService datasetService;
 
   private InMemoryZKServer zookeeper;
 
@@ -91,9 +98,12 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    datasetService = injector.getInstance(DatasetManagerService.class);
+    datasetService = injector.getInstance(DatasetService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
+
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -145,6 +155,11 @@ public class SingleNodeMain {
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
+
+    // it is important to respect that order: metastore, then HiveServer
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
+
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
     }
@@ -174,6 +189,8 @@ public class SingleNodeMain {
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
+    hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
   }
 
   /**
@@ -292,6 +309,8 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
+      new StreamHttpModule(),
+      new HiveRuntimeModule().getInMemoryModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamHttpModule()
     );
@@ -339,6 +358,8 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule());
+      new StreamHttpModule(),
+      new HiveRuntimeModule(configuration).getSingleNodeModules()
+    );
   }
 }

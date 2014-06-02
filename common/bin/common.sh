@@ -94,7 +94,7 @@ set_hbase()
   export CLASSPATH
 }
 
-# set the classpath to include hadoop and hbase dependencies
+# set the classpath to include hadoop, hbase and hive dependencies
 set_classpath()
 {
   COMP_HOME=$1
@@ -111,6 +111,31 @@ set_classpath()
     # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
     echo "WARN: could not find Hadoop and HBase libraries"
     CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  fi
+
+  # Determine Hive classpath
+  if [ "x$HIVE_HOME" = "x" ] || [ "x$HIVE_CONF_DIR" = "x" ]; then
+    if [ `which hive` ]; then
+      HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
+
+      if [ "x$HIVE_HOME" = "x" ]; then
+        HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_HOME' | cut -f 2 -d '='`
+      fi
+
+      if [ "x$HIVE_CONF_DIR" = "x" ]; then
+        HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_CONF_DIR' | cut -f 2 -d '='`
+      fi
+    fi
+  fi
+
+  # If Hive classpath is successfully determined, add it to classpath
+  if [ "x$HIVE_HOME" != "x" -a "x$HIVE_CONF_DIR" != "x" ]; then
+    # Hive exec has a HiveConf class that needs to be loaded before the HiveConf class from
+    # hive-common for joins operations to work
+    HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
+    CP=$CP:$HIVE_CONF_DIR:$HIVE_EXEC:$HIVE_HOME/lib/*
+  else
+    echo "WARN: Could not find Hive libraries"
   fi
 
   # Setup classpaths.

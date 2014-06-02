@@ -1,6 +1,6 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.AbstractApplication;
+import com.continuuity.api.app.Application;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
@@ -346,7 +346,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
-  private void testAppWithDataset(Class<? extends AbstractApplication> app, String procedureName) throws Exception {
+  private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
     ApplicationManager applicationManager = deployApplication(app);
 
     try {

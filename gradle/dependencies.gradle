@@ -16,6 +16,7 @@ versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
 versions.quartzVersion = '2.2.0'
 versions.slf4jVersion = '1.7.5'
+versions.hiveVersion = '0.12.0'
 versions.continuuityNettyHttp='0.2.0'
 
 //--------------------------------------------------------------------------
@@ -158,4 +159,15 @@ libraries.quartz_jobs = "org.quartz-scheduler:quartz-jobs:$versions.quartzVersio
 
 //continuuity-netty-http
 libraries.continuuity_netty_http="com.continuuity:http:$versions.continuuityNettyHttp"
+
+// hive
+libraries.hive_beeline = "org.apache.hive:hive-beeline:$versions.hiveVersion"
+libraries.hive_contrib = "org.apache.hive:hive-contrib:$versions.hiveVersion"
+libraries.hive_metastore = "org.apache.hive:hive-metastore:$versions.hiveVersion"
+libraries.continuuity_hive_exec = "com.continuuity:hive-exec:$versions.hiveVersion"
+libraries.hive_hcatalog = "org.apache.hive.hcatalog:hcatalog:$versions.hiveVersion"
+libraries.hive_hcatalog_core = "org.apache.hive.hcatalog:hcatalog-core:$versions.hiveVersion"
+libraries.hive_serde = "org.apache.hive:hive-serde:$versions.hiveVersion"
+libraries.hive_jdbc = "org.apache.hive:hive-jdbc:$versions.hiveVersion"
+
 //--------------------------------------------------------------------------
