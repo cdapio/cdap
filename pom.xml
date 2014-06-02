@@ -45,6 +45,8 @@
     <module>gateway</module>
     <module>explore-client</module>
     <module>explore</module>
+    <module>reactor-master</module>
+    <module>singlenode</module>
   </modules>
 
   <dependencyManagement>
