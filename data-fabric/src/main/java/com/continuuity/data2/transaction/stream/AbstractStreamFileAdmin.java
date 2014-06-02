@@ -235,7 +235,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
                                                      cConf.get(Constants.Stream.TTL)));
 
-    Location tmpConfigLocation = configLocation.getTempFile(null);
+    Location tmpConfigLocation = configLocation.getTempFile("tmp");
 
     try {
       StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
