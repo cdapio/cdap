@@ -63,6 +63,7 @@
     <shiro.version>1.2.1</shiro.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.3.0-incubating-SNAPSHOT</twill.version>
+    <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
   </properties>
 
@@ -612,9 +613,50 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.mortbay.jetty</groupId>
+        <groupId>org.quartz-scheduler</groupId>
+        <artifactId>quartz</artifactId>
+        <version>${quartz.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.quartz-scheduler</groupId>
+        <artifactId>quartz-jobs</artifactId>
+        <version>${quartz.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ning</groupId>
+        <artifactId>async-http-client</artifactId>
+        <version>${async.http.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty8.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-security</artifactId>
+        <version>${jetty8.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-util</artifactId>
+        <version>${jetty8.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-jaspi</artifactId>
+        <version>${jetty8.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-plus</artifactId>
-        <version>${jetty.version}</version>
+        <version>${jetty8.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.geronimo.components</groupId>
@@ -704,40 +746,10 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.quartz-scheduler</groupId>
-        <artifactId>quartz</artifactId>
-        <version>${quartz.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.quartz-scheduler</groupId>
-        <artifactId>quartz-jobs</artifactId>
-        <version>${quartz.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.ning</groupId>
-        <artifactId>async-http-client</artifactId>
-        <version>${async.http.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-server</artifactId>
-        <version>${jetty8.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-security</artifactId>
-        <version>${jetty8.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-jaspi</artifactId>
-        <version>${jetty8.version}</version>
+        <groupId>com.unboundid</groupId>
+        <artifactId>unboundid-ldapsdk</artifactId>
+        <version>${unboundid.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

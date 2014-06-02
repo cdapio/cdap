@@ -40,7 +40,7 @@
     <module>watchdog</module>
     <module>app-fabric</module>
     <module>unit-test</module>
-    <!--<module>security</module>-->
+    <module>security</module>
   </modules>
 
   <dependencyManagement>
