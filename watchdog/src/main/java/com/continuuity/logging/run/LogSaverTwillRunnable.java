@@ -165,7 +165,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
     };
   }
 
-  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
