@@ -932,7 +932,7 @@
             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
           </systemPropertyVariables>
           <includes>
-            <include>**/*TestSuite.java</include>
+            <include>**/*TestsSuite.java</include>
             <include>**/Test*.java</include>
             <include>**/*Test.java</include>
             <include>**/*TestCase.java</include>
