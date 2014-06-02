@@ -927,6 +927,7 @@
         <configuration>
           <argLine>-Xmx2048m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
           <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
+          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
           </systemPropertyVariables>
