@@ -1,5 +1,6 @@
 package com.continuuity.api.app;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -14,6 +15,7 @@ import org.apache.twill.api.TwillApplication;
  * A support class for {@link Application}s which reduces repetition and results in
  * a more readable configuration. Simply implement {@link #configure()} to define your application.
  */
+@Beta
 public abstract class AbstractApplication implements Application {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
