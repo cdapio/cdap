@@ -72,7 +72,7 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
-                                                                         "streams"));
+                                                                         Constants.Service.STREAM_HANDLER));
 
     } catch (Exception e) {
       throw Throwables.propagate(e);

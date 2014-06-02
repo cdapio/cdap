@@ -10,10 +10,11 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
-    public static final String APP_FABRIC_HTTP = "app.fabric.http";
+    public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
     public static final String GATEWAY = "gateway";
+    public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String DATASET_EXECUTOR = "dataset.executor";

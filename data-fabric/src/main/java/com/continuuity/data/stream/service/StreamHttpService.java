@@ -55,7 +55,7 @@ public final class StreamHttpService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
-                                                                       "streams"));
+                                                                       Constants.Service.STREAM_HANDLER));
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
       @Override

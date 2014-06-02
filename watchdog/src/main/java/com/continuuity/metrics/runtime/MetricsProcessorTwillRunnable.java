@@ -67,7 +67,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
-                                                                         "processor"));
+                                                                         Constants.Service.METRICS_PROCESSOR));
 
       LOG.info("Initializing runnable {}", name);
       // Set the hostname of the machine so that cConf can be used to start internal services
