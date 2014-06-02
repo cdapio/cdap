@@ -32,7 +32,7 @@ public class InMemoryHiveMetastore extends AbstractIdleService {
           @Override
           public void run() {
             try {
-              // No need to pass the hive conf, hive-site.xml will be read from the classpath directly
+              // No need to pass the hive conf, configuration will be read from System Properties.
               HiveMetaStore.main(new String[]{"-v", "-p", Integer.toString(hiveMetastorePort)});
             } catch (Throwable throwable) {
               LOG.error("Exception while starting Hive MetaStore: ", throwable);
