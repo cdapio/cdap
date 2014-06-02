@@ -195,8 +195,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       Closeables.closeQuietly(writer);
     }
 
-    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed", tempLocation, configLocation);
-    Preconditions.checkState(tempLocation.delete(), "Delete {} failed", tempLocation);
+    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed",
+                             tempLocation, configLocation);
   }
 
   @Override
