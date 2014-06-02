@@ -54,6 +54,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +74,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
-  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
-    = new com.google.gson.reflect.TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -226,7 +227,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                    cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
 
     String consumerId = Long.toString(groupId);
-    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8), ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
+    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
+                            ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
   }
 
   @POST
@@ -251,7 +253,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    long ttl = getTtl(request);
+    long ttl = getTTL(request);
     StreamConfig config = streamAdmin.getConfig(stream);
     StreamConfig newConfig = new StreamConfig(null, config.getPartitionDuration(),
                                               config.getIndexInterval(), ttl, null);
@@ -259,7 +261,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private long getTtl(HttpRequest request) throws IOException {
+  private long getTTL(HttpRequest request) throws IOException {
     Map<String, String> arguments = decodeArguments(request);
     if (arguments.containsKey("ttl")) {
       return Long.parseLong(arguments.get("ttl"));
