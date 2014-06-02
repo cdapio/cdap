@@ -1,10 +1,11 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.AbstractApplication;
+import com.continuuity.api.app.Application;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -29,6 +30,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -346,7 +349,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
-  private void testAppWithDataset(Class<? extends AbstractApplication> app, String procedureName) throws Exception {
+  private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
     ApplicationManager applicationManager = deployApplication(app);
 
     try {
@@ -361,6 +364,42 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
+    }
+  }
+
+  @Test
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+      appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+    kvTable.put("a", "1");
+    kvTable.put("b", "2");
+    kvTable.put("c", "1");
+    myTableManager.flush();
+
+    Connection connection = getQueryClient();
+    try {
+      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
+      connection.prepareStatement(DatasetsUtil.generateCreateStatement("myTable", kvTable)).execute();
+
+      // list the tables and make sure the table is there
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
+
+      // run a query over the dataset
+      results = connection.prepareStatement("select key from mytable where value = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      connection.close();
     }
   }
 }

@@ -2,8 +2,8 @@ package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -44,7 +44,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
   private final TransactionSystemClient txClient;
-  private final DatasetManager mdsDatasetManager;
+  private final DatasetFramework mdsDatasetFramework;
   private final LocationFactory locationFactory;
 
   private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
@@ -55,14 +55,14 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   /**
    * Ctor
-   * @param mdsDatasetManager dataset manager to be used to access the metadata store
+   * @param mdsDatasetFramework dataset manager to be used to access the metadata store
    * @param txSystemClient tx client to be used to operate on the metadata store
    */
-  public DatasetTypeManager(DatasetManager mdsDatasetManager,
+  public DatasetTypeManager(DatasetFramework mdsDatasetFramework,
                             TransactionSystemClient txSystemClient,
                             LocationFactory locationFactory,
                             SortedMap<String, Class<? extends DatasetModule>> defaultModules) {
-    this.mdsDatasetManager = mdsDatasetManager;
+    this.mdsDatasetFramework = mdsDatasetFramework;
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
     this.defaultModules = ImmutableSortedMap.copyOf(defaultModules);
@@ -71,7 +71,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetManager, "datasets.type", "orderedTable",
+    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.type", "orderedTable",
                                                          DatasetInstanceProperties.EMPTY, null);
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);

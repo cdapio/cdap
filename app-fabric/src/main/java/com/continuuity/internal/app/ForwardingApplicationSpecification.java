@@ -8,6 +8,7 @@ import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -70,5 +71,10 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, DatasetInstanceCreationSpec> getDatasets() {
     return delegate.getDatasets();
+  }
+
+  @Override
+  public Map<String, TwillSpecification> getServices() {
+    return delegate.getServices();
   }
 }

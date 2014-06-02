@@ -113,10 +113,11 @@ function(Components, Embeddables, HTTP, Util) {
 					}
 
 					if (display && C.get('isLocal')) {
-						$('#warning').html('<div>New version available: ' + newest.major +
+						$('#warning .warning-text').html('New version available: ' + newest.major +
 							'.' + newest.minor + '.' + newest.revision +
 							'<br /><a target="_blank" href="https://www.continuuity.com/download">' +
-							'Click here to download</a>.</div>').show();
+							'Click here to download</a>.');
+						$('#warning').show();
 
 					}
 				}
@@ -169,7 +170,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('productName', env.product_name);
 			C.Env.set('ip', env.ip);
 			C.Env.set('nux', !!env.nux);
-			C.Env.set('security_enabled', env.security_enabled)
+      C.Env.set('security_enabled', env.security_enabled);
 
 			$('title').text(env.product_name + ' » Continuuity');
 
@@ -244,7 +245,7 @@ function(Components, Embeddables, HTTP, Util) {
 			var themeLink = document.createElement('link');
 			themeLink.setAttribute("rel", "stylesheet");
 			themeLink.setAttribute("type", "text/css");
-			themeLink.setAttribute("href", "/assets/css/" + C.Env.get('productId') + ".css");
+			themeLink.setAttribute("href", "/assets/css/new/" + C.Env.get('productId') + ".css");
 			return themeLink;
 		},
 
@@ -401,6 +402,12 @@ function(Components, Embeddables, HTTP, Util) {
 			C.focus();
 		}
 	};
+
+	Em.run.next(function() {			
+		$('#warning-close').click(function() {
+			$('#warning').hide();
+		});
+	});
 
 	Em.debug('Application setup complete');
 

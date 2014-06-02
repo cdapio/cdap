@@ -8,19 +8,17 @@ import com.continuuity.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Throwables;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
-import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -31,7 +29,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -52,20 +49,24 @@ public final class ResourceCoordinatorClient extends AbstractService {
         if (input == null) {
           return null;
         }
-        String json = Bytes.toString(input.getData());
-        return CoordinationConstants.GSON.fromJson(json, ResourceRequirement.class);
+        try {
+          return CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(input.getData());
+        } catch (Throwable t) {
+          LOG.error("Failed to decode resource requirement: {}", Bytes.toStringBinary(input.getData()), t);
+          throw Throwables.propagate(t);
+        }
       }
   };
 
   private final ZKClient zkClient;
-  private final Table<String, Discoverable, ResourceHandlerCaller> resourceHandlers;
+  private final Multimap<String, AssignmentChangeListener> changeListeners;
   private final Set<String> serviceWatched;
   private final Map<String, ResourceAssignment> assignments;
   private ExecutorService handlerExecutor;
 
   public ResourceCoordinatorClient(ZKClient zkClient) {
     this.zkClient = zkClient;
-    this.resourceHandlers = TreeBasedTable.create(Ordering.natural(), DiscoverableComparator.COMPARATOR);
+    this.changeListeners = LinkedHashMultimap.create();
     this.serviceWatched = Sets.newHashSet();
     this.assignments = Maps.newHashMap();
   }
@@ -78,11 +79,32 @@ public final class ResourceCoordinatorClient extends AbstractService {
    *         submitted requirement as result. The future will fail if failed to submit the requirement. Calling
    *         {@link ListenableFuture#cancel(boolean)} has no effect.
    */
-  public ListenableFuture<ResourceRequirement> submitRequirement(final ResourceRequirement requirement) {
-    String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
-    byte[] data = Bytes.toBytes(CoordinationConstants.GSON.toJson(requirement));
+  public ListenableFuture<ResourceRequirement> submitRequirement(ResourceRequirement requirement) {
+    try {
+      String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
+      byte[] data = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.encode(requirement);
 
-    return ZKExtOperations.createOrSet(zkClient, zkPath, data, requirement, CoordinationConstants.MAX_ZK_FAILURE_RETRY);
+      return ZKExtOperations.createOrSet(zkClient, zkPath, data,
+                                         requirement, CoordinationConstants.MAX_ZK_FAILURE_RETRY);
+    } catch (Exception e) {
+      return Futures.immediateFailedFuture(e);
+    }
+  }
+
+  /**
+   * Modify an existing {@link ResourceRequirement}.
+   *
+   * @param name Resource name
+   * @param modifier A function to modify an existing requirement. The function might get called multiple times
+   *                 if there are concurrent modifications from multiple clients.
+   * @return A {@link ListenableFuture} that will be completed when submission is completed and it'll carry the
+   *         modified requirement as result or {@code null} if the modifier decided not to modify the requirement.
+   *         The future will fail if failed to submit the requirement.
+   *         Calling {@link ListenableFuture#cancel(boolean)} has no effect.
+   */
+  public ListenableFuture<ResourceRequirement> modifyRequirement(String name, final ResourceModifier modifier) {
+    String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + name;
+    return ZKExtOperations.updateOrCreate(zkClient, zkPath, modifier, CoordinationConstants.RESOURCE_REQUIREMENT_CODEC);
   }
 
   /**
@@ -120,35 +142,31 @@ public final class ResourceCoordinatorClient extends AbstractService {
   }
 
   /**
-   * Subscribes for changes in resource assignment for the given {@link Discoverable}. Upon subscription started,
-   * the {@link ResourceHandler#onChange(java.util.Collection)} method will get called to receive the current
-   * assignment for the Discoverable if it exists.
+   * Subscribes for changes in resource assignment. Upon subscription started,
+   * the {@link AssignmentChangeListener#onChange(ResourceAssignment)} method will be invoked to receive the
+   * current assignment if it exists.
    *
-   * @param discoverable The discoverable that is interested for changes in resource assignment.
-   * @param handler The {@link ResourceHandler} that get notified why resource assignment changed.
-   * @return A {@link Cancellable} for cancelling the watch.
+   * @param serviceName Name of the service to watch for changes.
+   * @param listener The listener to invoke when there are changes.
+   * @return A {@link Cancellable} for cancelling the subscription.
    */
-  public synchronized Cancellable subscribe(final Discoverable discoverable, final ResourceHandler handler) {
-    final String serviceName = discoverable.getName();
-    final ResourceHandlerCaller caller = new ResourceHandlerCaller(discoverable, handler);
+  public synchronized Cancellable subscribe(String serviceName, AssignmentChangeListener listener) {
+    AssignmentChangeListenerCaller caller = new AssignmentChangeListenerCaller(serviceName, listener);
 
     if (serviceWatched.add(serviceName)) {
       // Not yet watching ZK, add the handler and start watching ZK for changes in assignment.
-      resourceHandlers.put(serviceName, discoverable, caller);
+      changeListeners.put(serviceName, caller);
       watchAssignment(serviceName);
     } else {
-      // Invoke the handler for the cached assignment if there is any before adding to the resource handler list
+      // Invoke the listener with the cached assignment if there is any before adding to the resource handler list
       ResourceAssignment assignment = assignments.get(serviceName);
-      if (assignment != null) {
-        Collection<PartitionReplica> partitionReplicas = assignment.getAssignments().get(discoverable);
-        if (!partitionReplicas.isEmpty()) {
-          caller.onChange(partitionReplicas);
-        }
+      if (assignment != null && !assignment.getAssignments().isEmpty()) {
+        caller.onChange(assignment);
       }
-      resourceHandlers.put(serviceName, discoverable, caller);
+      changeListeners.put(serviceName, caller);
     }
 
-    return new ResourceHandlerCancellable(caller);
+    return new AssignmentListenerCancellable(caller);
   }
 
   @Override
@@ -183,8 +201,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
    * @param failureCause Failure reason for finish or {@code null} if finish is not due to failure.
    */
   private synchronized void finishHandlers(Throwable failureCause) {
-    for (ResourceHandlerCaller caller : resourceHandlers.values()) {
-      caller.finished(failureCause);
+    for (AssignmentChangeListener listener : changeListeners.values()) {
+      listener.finished(failureCause);
     }
   }
 
@@ -201,13 +219,13 @@ public final class ResourceCoordinatorClient extends AbstractService {
     Futures.addCallback(zkClient.getData(zkPath, watcher), wrapCallback(new FutureCallback<NodeData>() {
       @Override
       public void onSuccess(NodeData result) {
-        String json = Bytes.toString(result.getData());
-        LOG.debug("Received resource assignment for {}. {}", serviceName, json);
         try {
-          ResourceAssignment assignment = CoordinationConstants.GSON.fromJson(json, ResourceAssignment.class);
+          ResourceAssignment assignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(result.getData());
+          LOG.debug("Received resource assignment for {}. {}", serviceName, assignment.getAssignments());
+
           handleAssignmentChange(serviceName, assignment);
         } catch (Exception e) {
-          LOG.error("Failed to decode ResourceAssignment {}", json, e);
+          LOG.error("Failed to decode ResourceAssignment {}", Bytes.toStringBinary(result.getData()), e);
         }
       }
 
@@ -220,7 +238,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
 
           // Watch for exists if it still interested
           synchronized (ResourceCoordinatorClient.this) {
-            if (!resourceHandlers.row(serviceName).isEmpty()) {
+            if (changeListeners.containsKey(serviceName)) {
               watchAssignmentOnExists(serviceName);
             }
           }
@@ -269,7 +287,6 @@ public final class ResourceCoordinatorClient extends AbstractService {
       return;
     }
 
-    Collection<PartitionReplica> emptyAssignment = ImmutableList.of();
     // If the new assignment is empty, simply remove it from cache, otherwise remember it.
     if (newAssignment.getAssignments().isEmpty()) {
       assignments.remove(serviceName);
@@ -277,28 +294,14 @@ public final class ResourceCoordinatorClient extends AbstractService {
       assignments.put(serviceName, newAssignment);
     }
 
-    // For each new assignment, see if it has been changed by comparing with the old assignment.
-    Map<Discoverable, Collection<PartitionReplica>> assignmentMap = newAssignment.getAssignments().asMap();
-    for (Map.Entry<Discoverable, Collection<PartitionReplica>> entry : assignmentMap.entrySet()) {
-      if (oldAssignment == null || !oldAssignment.getAssignments().get(entry.getKey()).equals(entry.getValue())) {
-        // Assignment has been changed, notify the handler if there is one.
-        ResourceHandlerCaller caller = resourceHandlers.get(serviceName, entry.getKey());
-        if (caller != null) {
-          caller.onChange(ImmutableList.copyOf(entry.getValue()));
-        }
-      }
+    // If the change is from null to empty, no need to notify listeners.
+    if (oldAssignment == null && newAssignment.getAssignments().isEmpty()) {
+      return;
     }
 
-    // For each old assignment, if it is no long exists in the new one, it should invoke with a empty change.
-    if (oldAssignment != null) {
-      Sets.SetView<Discoverable> discoverableRemoved = Sets.difference(oldAssignment.getAssignments().keySet(),
-                                                                       newAssignment.getAssignments().keySet());
-      for (Discoverable discoverable : discoverableRemoved) {
-        ResourceHandlerCaller caller = resourceHandlers.get(serviceName, discoverable);
-        if (caller != null) {
-          caller.onChange(emptyAssignment);
-        }
-      }
+    // Otherwise, notify all listeners
+    for (AssignmentChangeListener listener : changeListeners.get(serviceName)) {
+      listener.onChange(newAssignment);
     }
   }
 
@@ -345,29 +348,25 @@ public final class ResourceCoordinatorClient extends AbstractService {
   }
 
   /**
-   * Wraps a {@link ResourceHandler} so that it's always invoked from the handler executor. It also make sure
-   * change event only get fired to the intended Discoverable.
+   * Wraps a {@link AssignmentChangeListener} so that it's always invoked from the handler executor. It also make sure
+   * upon {@link AssignmentChangeListener#finished(Throwable)} is called, it get removed from the listener list.
    */
-  private final class ResourceHandlerCaller implements ResourceHandler {
+  private final class AssignmentChangeListenerCaller implements AssignmentChangeListener {
 
-    private final Discoverable targetDiscoverable;
-    private final ResourceHandler delegate;
+    private final String service;
+    private final AssignmentChangeListener delegate;
 
-    ResourceHandlerCaller(Discoverable targetDiscoverable, ResourceHandler delegate) {
-      this.targetDiscoverable = targetDiscoverable;
+    private AssignmentChangeListenerCaller(String service, AssignmentChangeListener delegate) {
+      this.service = service;
       this.delegate = delegate;
     }
 
-    public Discoverable getDiscoverable() {
-      return targetDiscoverable;
-    }
-
     @Override
-    public void onChange(final Collection<PartitionReplica> partitionReplicas) {
+    public void onChange(final ResourceAssignment assignment) {
       handlerExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          delegate.onChange(partitionReplicas);
+          delegate.onChange(assignment);
         }
       });
     }
@@ -376,13 +375,12 @@ public final class ResourceCoordinatorClient extends AbstractService {
     public void finished(final Throwable failureCause) {
       // Remove itself from the handlers and only invoke finish call if successfully removing itself.
       synchronized (ResourceCoordinatorClient.this) {
-        if (resourceHandlers.remove(targetDiscoverable.getName(), targetDiscoverable) != this) {
+        if (!changeListeners.remove(service, this)) {
           return;
         }
       }
 
       handlerExecutor.execute(new Runnable() {
-
         @Override
         public void run() {
           delegate.finished(failureCause);
@@ -409,7 +407,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
       if (actOnTypes.contains(event.getType())) {
         // If no handler is interested in the event, simply ignore the event and not setting the watch again.
         synchronized (ResourceCoordinatorClient.this) {
-          if (resourceHandlers.row(serviceName).isEmpty()) {
+          if (!changeListeners.containsKey(serviceName)) {
             serviceWatched.remove(serviceName);
             return;
           }
@@ -420,14 +418,13 @@ public final class ResourceCoordinatorClient extends AbstractService {
     }
   }
 
-
   /**
-   * Cancellable for removing handler from the handler list.
+   * Cancellable that delegates to the {@link AssignmentChangeListenerCaller#finished(Throwable)} method.
    */
-  private final class ResourceHandlerCancellable implements Cancellable {
-    private final ResourceHandlerCaller caller;
+  private static final class AssignmentListenerCancellable implements Cancellable {
+    private final AssignmentChangeListenerCaller caller;
 
-    public ResourceHandlerCancellable(ResourceHandlerCaller caller) {
+    private AssignmentListenerCancellable(AssignmentChangeListenerCaller caller) {
       this.caller = caller;
     }
 

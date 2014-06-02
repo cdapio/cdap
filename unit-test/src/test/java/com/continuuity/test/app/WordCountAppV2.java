@@ -4,13 +4,11 @@
 
 package com.continuuity.test.app;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.ApplicationConfigurer;
-import com.continuuity.api.ApplicationContext;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamBatchReadable;
@@ -54,16 +52,16 @@ import javax.annotation.Nullable;
  */
 public class WordCountAppV2 extends AbstractApplication {
   @Override
-  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    configurer.setName("WordCountApp");
-    configurer.addStream(new Stream("text"));
-    configurer.addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
-    configurer.addDataSet("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
-    configurer.addDataSet("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);
-    configurer.addFlow(new WordCountFlow());
-    configurer.addProcedure(new WordFrequency());
-    configurer.addMapReduce(new CountTotal());
-    configurer.addMapReduce(new CountFromStream());
+  public void configure() {
+    setName("WordCountApp");
+    addStream(new Stream("text"));
+    addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
+    createDataSet("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
+    createDataSet("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);
+    addFlow(new WordCountFlow());
+    addProcedure(new WordFrequency());
+    addMapReduce(new CountTotal());
+    addMapReduce(new CountFromStream());
   }
 
   /**

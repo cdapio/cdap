@@ -8,9 +8,9 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
@@ -68,7 +68,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
 
           bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-          bind(DatasetManager.class).to(DataFabricDatasetManager.class);
+          bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
 
           // For log publishing
           bind(LogAppender.class).to(KafkaLogAppender.class);

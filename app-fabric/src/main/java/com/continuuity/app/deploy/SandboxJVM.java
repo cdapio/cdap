@@ -4,9 +4,8 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationContext;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.program.Program;
@@ -130,11 +129,11 @@ public class SandboxJVM {
   
       // Now, we call configure, which returns application specification.
       ApplicationSpecification specification;
-      if (app instanceof Application) {
-        specification = Specifications.from(((Application) app).configure());
-      } else if (app instanceof AbstractApplication) {
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer((AbstractApplication) app);
-        ((AbstractApplication) app).configure(configurer, new ApplicationContext());
+      if (app instanceof com.continuuity.api.Application) {
+        specification = Specifications.from(((com.continuuity.api.Application) app).configure());
+      } else if (app instanceof Application) {
+        DefaultAppConfigurer configurer = new DefaultAppConfigurer((Application) app);
+        ((Application) app).configure(configurer, new ApplicationContext());
         specification = configurer.createApplicationSpec();
       } else {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",

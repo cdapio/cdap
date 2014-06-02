@@ -6,9 +6,9 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
-import com.continuuity.data2.dataset2.manager.DatasetManagementException;
-import com.continuuity.data2.dataset2.manager.InstanceConflictException;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
+import com.continuuity.data2.dataset2.DatasetManagementException;
+import com.continuuity.data2.dataset2.InstanceConflictException;
+import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetManagerService}.
+ * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
 public class DatasetManagerServiceClient {

@@ -62,6 +62,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
         //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
         return Constants.Service.METRICS;
+      } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
+        //Log Handler Path /v2/system/services/<service-id>/logs
+        return Constants.Service.METRICS;
       } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
         //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
         String accId = getAuthenticatedAccountId(httpRequest);

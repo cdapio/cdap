@@ -8,10 +8,13 @@ import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -45,6 +48,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
   private CConfiguration configuration;
+  private LogAppenderInitializer logAppenderInitializer;
 
   /**
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
@@ -55,7 +59,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService) {
+                         ProgramRuntimeService programRuntimeService, LogAppenderInitializer logAppenderInitializer) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -63,6 +67,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.logAppenderInitializer = logAppenderInitializer;
   }
 
   /**
@@ -70,6 +75,10 @@ public final class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
+    logAppenderInitializer.initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.APP_FABRIC_HTTP));
     schedulerService.start();
     programRuntimeService.start();
 

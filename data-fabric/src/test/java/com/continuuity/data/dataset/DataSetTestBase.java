@@ -9,7 +9,7 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -39,7 +39,7 @@ import java.util.List;
 public class DataSetTestBase {
 
   protected static DataFabric fabric;
-  protected static DatasetManager datasetManager;
+  protected static DatasetFramework datasetFramework;
   protected static TransactionSystemClient txSystemClient;
 
   protected static List<DataSetSpecification> specs;
@@ -66,7 +66,7 @@ public class DataSetTestBase {
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     // and create a data fabric with the default operation context
     fabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    datasetManager = injector.getInstance(DatasetManager.class);
+    datasetFramework = injector.getInstance(DatasetFramework.class);
   }
 
   /**
@@ -88,7 +88,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, datasetManager, null);
+    instantiator = new DataSetInstantiator(fabric, datasetFramework, null);
     instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
   }
 

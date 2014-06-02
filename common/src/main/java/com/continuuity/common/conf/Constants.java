@@ -10,17 +10,18 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
-    public static final String APP_FABRIC_HTTP = "app.fabric.http";
+    public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
     public static final String LOGSAVER = "saver";
-    public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
     public static final String REACTOR_SERVICES = "reactor.services";
+    public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
+    public static final String HIVE = "hive.server";
   }
 
   /**
@@ -485,6 +486,14 @@ public final class Constants {
   }
 
   /**
+   *
+   */
+  public static final class Logging {
+    public static final String SYSTEM_NAME = "reactor";
+    public static final String COMPONENT_NAME = "services";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {
@@ -496,9 +505,10 @@ public final class Constants {
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
-
+    /** Address the Authentication Server should bind to*/
+    public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.server.port";
+    public static final String AUTH_SERVER_PORT = "security.auth.server.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
@@ -526,6 +536,29 @@ public final class Constants {
     public static final String SSL_KEYSTORE_PASSWORD = "security.server.ssl.keystore.password";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+  }
+
+  /**
+   * Hive configuration.
+   */
+  public static final class Hive {
+    public static final String SERVER_ADDRESS = "hive.server.bind.address";
+    public static final String SERVER_PORT = "hive.server.port";
+    public static final String METASTORE_PORT = "hive.local.metastore.port";
+    public static final String METASTORE_WAREHOUSE_DIR = "reactor.hive.metastore.warehouse.dir";
+    public static final String DATABASE_DIR = "reactor.hive.database.dir";
+  }
+
+  /**
+   * Explore module configuration.
+   */
+  public static final class Explore {
+    public static final String CCONF_CODEC_KEY = "reactor.cconfiguration";
+    public static final String HCONF_CODEC_KEY = "reactor.hconfiguration";
+    public static final String TX_QUERY_CODEC_KEY = "reactor.hive.query.tx.id";
+
+    public static final String DATASET_NAME = "reactor.dataset.name";
+    public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

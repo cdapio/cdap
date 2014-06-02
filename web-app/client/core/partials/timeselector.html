@@ -1,11 +1,11 @@
-<div class="pull-right" style="margin-top: 2px;position: relative; width: 150px;text-align: center;">
-  <img style="display: none;margin-top: 2px;" src="/assets/img/start-all-load.gif" />
-  <button class="btn dropdown-toggle" data-toggle="dropdown" style="width: 140px;padding-left:14px;float: right;">
-{{C.__timeLabel}} <span class="caret"></span>
-</button>
-<ul class="dropdown-menu" style="text-align: left;">
-<li><a {{action setTime 3600 target="view"}}>Last 1 Hour</a></li>
-<li><a {{action setTime 600 target="view"}}>Last 10 Minutes</a></li>
-<li><a {{action setTime 60 target="view"}}>Last 1 Minute</a></li>
-</ul>
+<div class="pull-right" style="margin-top: 2px;position: relative; width: 210px;text-align: center;">
+  <div class="custom-dropdown" data-toggle="dropdown">
+    <div class="text-span">  <img id="loading-time-select-img" src="/assets/img/start-all-load.gif" />{{C.__timeLabel}}</div>
+    <div class="image-span"></div>
+  </div>
+    <ul class="dropdown-menu" style="text-align: left; margin-top: -5px;">
+      <li><a {{action setTime 3600 target="view"}}>Last 1 Hour</a></li>
+      <li><a {{action setTime 600 target="view"}}>Last 10 Minutes</a></li>
+      <li><a {{action setTime 60 target="view"}}>Last 1 Minute</a></li>
+    </ul>
 </div>
