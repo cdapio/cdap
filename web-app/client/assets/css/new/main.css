@@ -363,8 +363,9 @@ a, a:visited {
 
 #warning-close {
 	float: right;
-	margin-right: 10px;
+	margin-right: -1px;
 	cursor: pointer;
+	margin-top: -10px;
 }
 
 #warning div {
