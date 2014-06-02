@@ -25,11 +25,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public StreamConfig getConfig(String streamName) {
-    return new StreamConfig(streamName, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, null);
+    // TODO: add support for queue-based stream
+    throw new UnsupportedOperationException("Not yet supported");
   }
 
   @Override
   public void updateConfig(String streamName, StreamConfig config) throws IOException {
-
+    throw new UnsupportedOperationException("Not yet supported");
   }
 }

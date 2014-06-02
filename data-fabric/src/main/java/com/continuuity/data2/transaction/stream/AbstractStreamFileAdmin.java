@@ -15,16 +15,12 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
-import org.apache.commons.io.FileUtils;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -175,7 +171,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
       return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
-                              config.getTtl(), streamLocation);
+                              config.getTTL(), streamLocation);
     } finally {
       Closeables.closeQuietly(reader);
     }
@@ -191,8 +187,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                 "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    File tempDir = Files.createTempDir();
-    Location tempLocation = new LocalLocationFactory().create(tempDir.toURI()).append(CONFIG_FILE_NAME);
+    Location tempLocation = configLocation.getTempFile("tmp");
     Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
     try {
       writer.write(GSON.toJson(config));
@@ -200,9 +195,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
       Closeables.closeQuietly(writer);
     }
 
-    Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
-                             "Rename {} to {} failed", tempLocation, configLocation);
-    FileUtils.deleteDirectory(tempDir);
+    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed", tempLocation, configLocation);
+    Preconditions.checkState(tempLocation.delete(), "Delete {} failed", tempLocation);
   }
 
   @Override
