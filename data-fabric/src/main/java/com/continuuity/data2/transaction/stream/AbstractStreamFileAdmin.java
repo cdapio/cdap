@@ -236,15 +236,16 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                                      cConf.get(Constants.Stream.TTL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
-    Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
+
     try {
-      GSON.toJson(config, writer);
-    } finally {
-      writer.close();
-    }
-    
-    try {
+      StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
+      Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
+      try {
+        GSON.toJson(config, writer);
+      } finally {
+        writer.close();
+      }
+
       tmpConfigLocation.renameTo(configLocation);
     } finally {
       if (tmpConfigLocation.exists()) {
