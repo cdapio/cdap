@@ -38,12 +38,11 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, FlowSpecification> flows,
                                          Map<String, ProcedureSpecification> procedures,
                                          Map<String, MapReduceSpecification> mapReduces,
-                                         Map<String, WorkflowSpecification> workflows,
-                                         Map<String, TwillSpecification> services) {
+                                         Map<String, WorkflowSpecification> workflows) {
     this(name, description, streams, datasets,
          Maps.<String, String>newHashMap(),
          Maps.<String, DatasetInstanceCreationSpec>newHashMap(),
-         flows, procedures, mapReduces, workflows, services);
+         flows, procedures, mapReduces, workflows, Maps.<String, TwillSpecification>newHashMap());
 
   }
 
@@ -74,8 +73,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
                                                spec.getStreams(), spec.getDataSets(),
                                                spec.getFlows(), spec.getProcedures(),
-                                               spec.getMapReduce(), spec.getWorkflows(),
-                                               spec.getServices());
+                                               spec.getMapReduce(), spec.getWorkflows());
   }
 
   @Override
