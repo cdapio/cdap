@@ -4,24 +4,130 @@
 
 @font-face {
 	font-family:"HelveticaNeueW01-Thin";
-	src:url("../../fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix");
-	src:url("../../fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix") format("eot"),url("../../fonts/50d35bbc-dfd4-48f1-af16-cf058f69421d.woff") format("woff"),url("../fonts/278bef59-6be1-4800-b5ac-1f769ab47430.ttf") format("truetype"),url("../../fonts/2e309b1b-08b8-477f-bc9e-7067cf0af0b3.svg#2e309b1b-08b8-477f-bc9e-7067cf0af0b3") format("svg");
+	src:url("/assets/fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix");
+	src:url("/assets/fonts/56be84de-9d60-4089-8df0-0ea6ec786b84.eot?#iefix") format("eot"),url("../../fonts/50d35bbc-dfd4-48f1-af16-cf058f69421d.woff") format("woff"),url("../fonts/278bef59-6be1-4800-b5ac-1f769ab47430.ttf") format("truetype"),url("../../fonts/2e309b1b-08b8-477f-bc9e-7067cf0af0b3.svg#2e309b1b-08b8-477f-bc9e-7067cf0af0b3") format("svg");
 }
 @font-face {
 	font-family:"HelveticaNeueW01-55Roma";
-	src:url("../../fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix");
-	src:url("../../fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix") format("eot"),url("../../fonts/bcf54343-d033-41ee-bbd7-2b77df3fe7ba.woff") format("woff"),url("../fonts/b0ffdcf0-26da-47fd-8485-20e4a40d4b7d.ttf") format("truetype"),url("../../fonts/da09f1f1-062a-45af-86e1-2bbdb3dd94f9.svg#da09f1f1-062a-45af-86e1-2bbdb3dd94f9") format("svg");
+	src:url("/assets/fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix");
+	src:url("/assets/fonts/b7693a83-b861-4aa6-85e0-9ecf676bc4d6.eot?#iefix") format("eot"),url("../../fonts/bcf54343-d033-41ee-bbd7-2b77df3fe7ba.woff") format("woff"),url("../fonts/b0ffdcf0-26da-47fd-8485-20e4a40d4b7d.ttf") format("truetype"),url("../../fonts/da09f1f1-062a-45af-86e1-2bbdb3dd94f9.svg#da09f1f1-062a-45af-86e1-2bbdb3dd94f9") format("svg");
 }
 @font-face {
 	font-family:"HelveticaNeueW01-57Cn";
-	src:url("../../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix");
-	src:url("../../fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix") format("eot"),url("../../fonts/842088d0-1ae2-40d0-8561-3c95761ba7a6.woff") format("woff"),url("../fonts/c74505d5-13e8-47ed-94a8-630aab4da3e6.ttf") format("truetype"),url("../../fonts/6cd480d1-47d0-48b4-86bd-283db2cb9235.svg#6cd480d1-47d0-48b4-86bd-283db2cb9235") format("svg");
+	src:url("/assets/fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix");
+	src:url("/assets/fonts/ecaa98fe-425a-42de-846b-c235f0dbc449.eot?#iefix") format("eot"),url("../../fonts/842088d0-1ae2-40d0-8561-3c95761ba7a6.woff") format("woff"),url("../fonts/c74505d5-13e8-47ed-94a8-630aab4da3e6.ttf") format("truetype"),url("../../fonts/6cd480d1-47d0-48b4-86bd-283db2cb9235.svg#6cd480d1-47d0-48b4-86bd-283db2cb9235") format("svg");
 }
 @font-face {
 	font-family:"HelveticaNeueW01-75Bold";
-	src:url("../../fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix");
-	src:url("../../fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix") format("eot"),url("../../fonts/14ff6081-326d-4dae-b778-d7afa66166fc.woff") format("woff"),url("../fonts/8fda1e47-19be-46c7-8d83-8d4fb35572f0.ttf") format("truetype"),url("../../fonts/f751c8ae-1057-46d9-8d74-62592e002568.svg#f751c8ae-1057-46d9-8d74-62592e002568") format("svg");
+	src:url("/assets/fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix");
+	src:url("/assets/fonts/c07fef9e-a934-42d7-92ad-69205f2b8a00.eot?#iefix") format("eot"),url("../../fonts/14ff6081-326d-4dae-b778-d7afa66166fc.woff") format("woff"),url("../fonts/8fda1e47-19be-46c7-8d83-8d4fb35572f0.ttf") format("truetype"),url("../../fonts/f751c8ae-1057-46d9-8d74-62592e002568.svg#f751c8ae-1057-46d9-8d74-62592e002568") format("svg");
 }
+@font-face {
+	font-family:"Gotham";
+	font-weight: bolder;
+	src:url("/assets/fonts/v2/Gotham-Black.otf");
+	src:url("/assets/fonts/v2/Gotham-Black.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: bolder;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-BlackItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-BlackItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: bold;
+	src:url("/assets/fonts/v2/Gotham-Bold.otf");
+	src:url("/assets/fonts/v2/Gotham-Bold.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: bolder;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-BoldItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-BoldItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: normal;
+	src:url("/assets/fonts/v2/Gotham-Book.otf");
+	src:url("/assets/fonts/v2/Gotham-Book.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: normal;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-BookItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-BookItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: lighter;
+	src:url("/assets/fonts/v2/Gotham-Light.otf");
+	src:url("/assets/fonts/v2/Gotham-Light.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: lighter;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-LightItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-LightItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: normal;
+	src:url("/assets/fonts/v2/Gotham-Medium.otf");
+	src:url("/assets/fonts/v2/Gotham-Medium.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: normal;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-MediumItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-MediumItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 300;
+	src:url("/assets/fonts/v2/Gotham-Thin.otf");
+	src:url("/assets/fonts/v2/Gotham-Thin.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 300;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-ThinItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-ThinItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 900;
+	src:url("/assets/fonts/v2/Gotham-Ultra.otf");
+	src:url("/assets/fonts/v2/Gotham-Ultra.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 900;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-UltraItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-UltraItalic.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 200;
+	src:url("/assets/fonts/v2/Gotham-XLight.otf");
+	src:url("/assets/fonts/v2/Gotham-XLight.otf") format("opentype");
+}
+@font-face {
+	font-family:"Gotham";
+	font-weight: 200;
+	font-style: italic;
+	src:url("/assets/fonts/v2/Gotham-XLightItalic.otf");
+	src:url("/assets/fonts/v2/Gotham-XLightItalic.otf") format("opentype");
+}
+
+
 
 /* Following selector courtesy of http://meyerweb.com/eric/tools/css/reset/ */
 * { margin: 0; }
@@ -58,7 +164,7 @@ body {
 	margin: 0;
 	background-color: #fff;
 	height: 100%;
-	font-family:'HelveticaNeueW01-55Roma';
+	font-family:'Gotham';
 	cursor: default;
 	text-rendering: optimizeLegibility;
 }
@@ -79,6 +185,10 @@ progress::-webkit-progress-value {
 	background: #eea44c;
 }
 
+.value-number {
+	font-family: "HelveticaNeueW01-75Bold";
+}
+
 progress::-moz-progress-bar {
 	background-color: #eea44c;
 }
@@ -92,7 +202,6 @@ progress::-moz-progress-bar {
 }
 
 .gf3-font {
-	font-family: "HelveticaNeueW01-57Cn";
 	color: #555;
 }
 
@@ -166,7 +275,6 @@ a, a:visited {
 #product-name {
 	display: block;
   color: #0A234B;
-	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	font-size: 13px;
 	letter-spacing: 0.1em;
@@ -201,7 +309,7 @@ a, a:visited {
 	color: #fff;
 	text-decoration: none;
 	line-height: 32px;
-	font-weight: 200;
+	font-weight: normal;
 	font-size: 14px;
   opacity: 0.7;
 }
@@ -459,9 +567,8 @@ a, a:visited {
 h1 {
 	margin: 0;
 	font-size: 22px;
-	font-weight: 500;
+	font-weight: lighter;
 	color: #4D5268;
-	font-family: "HelveticaNeueW01-Thin";
 	line-height: 32px;
 	padding-bottom: 4px;
 	height: 36px;
@@ -470,7 +577,6 @@ h1 {
 h1 span {
 	color: #aaa;
 	margin-left: 4px;
-	font-family: "HelveticaNeueW01-Thin";
 }
 .page-tabs {
 	float: right;
@@ -507,13 +613,11 @@ h1 span {
 	font-weight: 100;
 	letter-spacing: 0.08em;
 	line-height: normal;
-	font-family: "HelveticaNeueW01-Thin";
   color: #505050;
 }
 .panel-head {
   padding: 20px;
 	border-bottom: 1px solid #eee;
-	font-family: "HelveticaNeueW01-Thin";
 }
 
 .panel-body {
@@ -540,15 +644,15 @@ h1 span {
 	border-bottom: 0;
 	vertical-align: middle;
 	border-width: 1px 0px;
+	font-weight: 100;
 }
 .panel table th {
-	background-color: #fafafa;
+	background-color: #F1F2F3;
 }
 .panel table th, .popup-container table th,
 	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
 	 {
 	border-top: 0;
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 14px;
 	color: #696E7E;
 	padding: 2px 4px;
@@ -561,6 +665,8 @@ h1 span {
 }
 .panel table th, .popup-container table th {
   padding: 10px;
+  text-transform: uppercase;
+	font-size: 12px;
 }
 
 .half {
@@ -582,20 +688,20 @@ h1 span {
 .quarter-title {
 	text-align: center;
 	font-size: 25px;
-	font-family: "HelveticaNeueW01-Thin";
 	padding: 10px 0px 10px;
   color: #2451A4;
+  font-family: "HelveticaNeueW01-Thin";
 }
 .quarter-value {
 	text-align: center;
 	font-size: 20px;
 	min-height: 42px;
-	font-family: "HelveticaNeueW01-Thin";
 	padding: 0px 0px 20px;
   color: #2451A4;
+  font-family: "HelveticaNeueW01-Thin";
 }
 .quarter-title strong, .quarter-value strong {
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 }
 
 .third {
@@ -647,7 +753,7 @@ h1 span {
 	border-left: 0;
 	background-color: white;
 	color: #555;
-	font-weight: 300;
+	font-weight: 400;
 	text-align: center;
 	overflow: hidden;
 	font-size: 24px;
@@ -675,7 +781,6 @@ h1 span {
 
 .sparkline-list-container-empty {
 	text-align: center;
-	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	line-height: 40px;
 	color: #c5d1d4;
@@ -705,7 +810,7 @@ h1 span {
 	float: right;
 	width: 80px;
 	height: 92px;
-	font-weight: 300;
+	font-weight: 400;
 	font-size: 26px;
 	padding-top: 38px;
 	padding-left: 10px;
@@ -736,7 +841,6 @@ h1 span {
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
-	font-family: "HelveticaNeueW01-57Cn";
 	color: #FFF;
 	text-transform: uppercase;
 	padding: 4px;
@@ -749,8 +853,6 @@ h1 span {
 	height: 98px;
 	float: right;
 	border-left: 1px solid #83cce1;
-
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 23px;
 	padding-top: 38px;
 	padding-left: 5px;
@@ -967,7 +1069,6 @@ input[type="text"] {
 	font-size: 56px;
 	background-repeat: no-repeat;
 	color: #555;
-	font-family: "HelveticaNeueW01-Thin";
 }
 .dash-app-resource a:hover {
 	text-decoration: none;
@@ -1000,7 +1101,6 @@ input[type="text"] {
 }
 
 .dash-app-resource-usage {
-	font-family: "HelveticaNeueW01-57Cn";
 	color: #505050;
 	font-size: 32px;
 	text-align: center;
@@ -1025,7 +1125,6 @@ input[type="text"] {
 }
 
 .dash-app-sub-title {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #5c696c;
 	text-transform: uppercase;
@@ -1056,7 +1155,6 @@ input[type="text"] {
 	line-height: 64px;
 	font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "HelveticaNeueW01-57Cn";
 
 }
 .dash-app-sub-health-value span {
@@ -1070,12 +1168,11 @@ input[type="text"] {
 	line-height: 64px;
 		font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "HelveticaNeueW01-57Cn";
 	color: #505050;
 }
 
 .app-list-count {
-	font-weight: 300 !important;
+	font-weight: 400 !important;
 	font-size: 26px;
 	text-align: center !important;
 	width: 56px;
@@ -1096,7 +1193,7 @@ input[type="text"] {
 }
 
 .app-list-name a {
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
   color: #2451A4;
 }
 
@@ -1174,7 +1271,6 @@ input[type="text"] {
 }
 
 .nav-pills > li > a {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -1206,7 +1302,6 @@ input[type="text"] {
 }
 
 .nav-tabs>li>a {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -1305,7 +1400,6 @@ a strong {
 
 .btn.btn-blank {
 	background: #fff;
-	font-family: "HelveticaNeueW01-57Cn";
   font-size: 12px;
   text-shadow: none;
   color: #969CB4;
@@ -1330,7 +1424,6 @@ a strong {
 .btn.btn-blue {
 	border: 1px solid transparent;
   background: #2C56A0;
-  font-family: "HelveticaNeueW01-57Cn";
   font-size: 12px;
   text-shadow: none;
   color: white;
@@ -1370,7 +1463,6 @@ a strong {
 #action-buttons .btn {
 	margin-right:0;
 	height: 56px;
-	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	padding-top: 8px;
 }
@@ -1564,7 +1656,6 @@ a strong {
 	float: right;
 	padding-top: 28px;
 	padding-right: 16px;
-	width: 120px;
 	text-align: right;
 }
 
@@ -1572,7 +1663,6 @@ a strong {
 	color: #396DC7;
 	font-size: 30px;
 	font-weight: 500;
-	font-family: "HelveticaNeueW01-57Cn";
 	line-height: normal;
 	text-shadow: 0px 1px 0px white;
 }
@@ -1616,7 +1706,7 @@ a strong {
 	text-align: left;
 	font-size: 20px;
 	margin-bottom: 16px;
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 	letter-spacing: normal;
 }
 
@@ -1681,7 +1771,7 @@ a strong {
 	float: right;
 	cursor: pointer;
 	font-size: 24px;
-	line-height: 20px;
+	line-height: 27px;
 	width: 26px;
 	height: 26px;
 	text-align: center;
@@ -1725,7 +1815,6 @@ a strong {
 
 .popup-white-label {
 	border-top: 0;
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -1897,14 +1986,12 @@ textarea {
 	background-position: center center;
 	text-transform: uppercase;
 	padding-right: 12px !important;
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 }
 
 .flowlet-popup-input-contrib {
 	background-image: url(../../img/contrib-background.png);
 	background-position: center left;
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #505050;
 	padding: 0px 16px;
@@ -2182,7 +2269,7 @@ textarea {
 
 }
 .object-list-empty-content div {
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 	padding-top: 8px;
 	line-height: 8px;
 	font-size: 13px;
@@ -2220,12 +2307,8 @@ ol {
 	float: left;
 }
 .window {
-
 	color: #fff;
-	text-transform: uppercase;
-
-	border: 4px solid #70CDEB;
-	background-color: #40AECF;
+	background-color: #396DC7;
 	border-radius: 100%;
 	width: 104px;
 	height: 104px;
@@ -2291,8 +2374,7 @@ ol {
 	background-color: #e76363;
 }
 .window-input-label {
-	font-size: 19px;
-	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 14px;
 	position: absolute;
 	top: 37px;
 	left: -50px;
@@ -2303,22 +2385,22 @@ ol {
 	height: 32px;
 	width: 32px;
 	margin: 24px auto 5px;
-	background-image: url(../../img/flowlet-types.png);
+	background-image: url(/assets/img/v2/flowlet-types.png);
 	background-position: 0px 0px;
 }
 .window-icon.running {
-	background: url(../../img/workload-action-running.gif);
+	background: url(/assets/img/workload-action-running.gif);
 	background-position: center center !important;
 	background-repeat: no-repeat;
 }
 .window-title {
 	vertical-align: center;
 	margin: 0px 12px;
-	font-family: "HelveticaNeueW01-57Cn";
 	max-height: 24px;
 	overflow: hidden;
 	line-height: 12px;
 	word-wrap: break-word;
+	font-family: "Gotham";
 }
 .window-title span {
 	color: #c5ecf4;
@@ -2332,23 +2414,23 @@ ol {
 }
 .window-instances {
 	font-size: 10px;
-	color: #3397b5;
+	color: white;
 	position: absolute;
 	top: 0px;
 	right: 0px;
-	background-color: #fff;
+	background-color: #4C5669;
 	border-radius: 100%;
 	width: 25px;
 	height: 25px;
 	line-height: 21px;
-	opacity: 0.9;
-	border: 2px solid #40AECF;
+	opacity: 1;
+	border: 2px solid #FFFFFF;
 	text-align: center;
 	font-weight: bold;
 	padding-left: 1px;
 }
 .window.source {
-	background-image: url(../../img/stream-shape.png) !important;
+	background-image: url(/assets/img/v2/stream_shape.png) !important;
 	background-color: white;
 	background-repeat: no-repeat;
 	border-radius: 0px;
@@ -2358,9 +2440,10 @@ ol {
 	width: 113px;
 	border-color: #fff;
 	margin-bottom: 39px;
+	background-size: 113px 107px;
 }
 .window.source .window-input {
-	background-color: #7daf7c;
+	background-color: #04A674;
 }
 .window.source .window-icon {
 	background-position: 0px 32px;
@@ -2461,7 +2544,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	text-align: center;
 	font-size: 16px;
 	line-height: 14px;
-	font-family: "HelveticaNeueW01-57Cn";
 }
 
 .stream-icon {
@@ -2632,7 +2714,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 32px;
 	height: 32px;
 	margin-right: 5px;
-	background-color: #5FAECC;
+	background-color: #396DC7;
 	border-radius: 2px;
 	color: #fff;
 	font-size: 32px;
@@ -2643,13 +2725,13 @@ only screen and (min-device-pixel-ratio: 1.5) {
 
 .analyze-selected-metric-element {
 	margin-left: 40px;
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 	white-space: nowrap;
 	margin-right: 17px;
 	overflow: hidden;
+	font-size: 14px;
 }
 .analyze-selected-metric-name {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #aaa;
 	text-transform: uppercase;
@@ -2689,8 +2771,8 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	display: none;
 	position: absolute;
 	width: 260px;
-	top: 16px;
-	right: 8px;
+	top: 173px;
+	right: 49px;
 	z-index: 1;
 }
 .analyze-dropdown {
@@ -2736,7 +2818,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .select2-container {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -2747,7 +2828,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .select2-results li.select2-result-with-children > .select2-result-label {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #aaa;
 	text-transform: uppercase;
@@ -2757,7 +2837,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .select2-results .select2-result-label, .select2-searching, .select2-no-results {
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 	font-size: 12px;
 	color: #505050;
 	padding: 2px 4px;
@@ -2783,10 +2863,9 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 
 .analyze-blue-btn, .analyze-gray-btn {
-	background: #5FAECC;
+	background: #396DC7;
 	border: 0;
 	color: white;
-	font-family: "HelveticaNeueW01-57Cn";
 	text-transform: uppercase;
 	text-align: center;
 	padding: 5px 8px;
@@ -2816,11 +2895,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .analyze-chart {
 	padding: 16px;
 	margin-right: 300px;
-	height: 532px;
+	height: 560px;
 }
 
 .analyze-app-label {
-	font-family: "HelveticaNeueW01-75Bold";
+	font-weight: bold;
 	color: #505050;
 }
 
@@ -2839,7 +2918,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	left: 0;
 	float: right;
 	width: 276px;
-	height: 532px;
+	height: 560px;
 }
 
 #analyze-selected .label {
@@ -2896,7 +2975,6 @@ div.tooltip {
 }
 
 .flow-run-date {
-	font-family: "HelveticaNeueW01-57Cn";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
@@ -2919,7 +2997,6 @@ div.tooltip {
 }
 
 .custom-dropdown {
-  font-family: "HelveticaNeueW01-57Cn";
   font-size: 12px;
   color: #4B88E7;
   letter-spacing: 0.1em;
@@ -2931,7 +3008,7 @@ div.tooltip {
   background: white;
   border: 1px solid #CACBCF;
   text-transform: none;
-  width: 150px;
+  width: 170px;
 }
 
 .custom-dropdown .text-span {

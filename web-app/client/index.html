@@ -963,8 +963,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</div>
     </div>
     <div id="panels">
 
@@ -1036,13 +1036,13 @@
     <div id="title">
       {{view C.Embed.TimeSelector}}
       <div style="float: right;margin-top: 2px;">
-        <button class="btn btn-blank pause" {{action togglePause}}>{{pausedLabel}}</button>
+        <button class="btn btn-blank pause force-margin-right-20" {{action togglePause}}>{{pausedLabel}}</button>
       </div>
       <h1>Metrics <span>Explorer</span></h1>
     </div>
     <div id="panels">
       <div class="panel" id="analyze-selected">
-        <div class="panel-body clearfix">
+        <div class="clearfix">
 
           <div class="analyze-selected">
             <ul>
@@ -1304,8 +1304,8 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Stream</span>
             </td>
-            <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td class="app-list-count">{{eventsLabel}}{{eventsUnits}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{storageLabel}}<span>{{storageUnits}}</span></td>
+            <td class="app-list-count">{{eventsLabel}}{{eventsUnits}}</td>
             <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}</td>
           </tr>
         {{/each}}
