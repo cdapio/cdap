@@ -43,6 +43,7 @@ public class CustomURLClassLoader extends URLClassLoader {
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     if (name.startsWith("com.continuuity.hive.")) {
+      // TODO: cache loaded class
       return customLoad(name, resolve);
     }
 
