@@ -1,1 +1,0 @@
-{"errors":["Line: 1 Col: 7 Unexpected start tag (table). Expected DOCTYPE.","Line: 1 Col: 20 Unexpected end tag (div) in table context caused voodoo mode.","Line: 1 Col: 20 End tag (div) seen too early. Expected other end tag.","Line: 1 Col: 20 Unexpected end of file. Expected table content."]}
