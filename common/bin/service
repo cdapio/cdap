@@ -103,6 +103,9 @@ start() {
       # Setup classpaths.
       set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
 
+      # Setup hive classpath if hive is installed.
+      set_hive_classpath
+
       # sets the JAVA variable.
       set_java
 

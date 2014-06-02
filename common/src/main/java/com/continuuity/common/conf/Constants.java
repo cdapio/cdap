@@ -531,16 +531,15 @@ public final class Constants {
    */
   public static final class Hive {
     public static final String SERVER_ADDRESS = "hive.server.bind.address";
-    public static final String SERVER_PORT = "hive.server.port";
     public static final String METASTORE_PORT = "hive.local.metastore.port";
-    public static final String METASTORE_WAREHOUSE_DIR = "reactor.hive.metastore.warehouse.dir";
-    public static final String DATABASE_DIR = "reactor.hive.database.dir";
   }
 
   /**
    * Explore module configuration.
    */
   public static final class Explore {
+    public static final String HIVE_CLASSPATH = "HIVE_CLASSPATH";
+    public static final String HIVE_CLASSSLOADER = "explore.hive.classloader";
     public static final String CCONF_CODEC_KEY = "reactor.cconfiguration";
     public static final String HCONF_CODEC_KEY = "reactor.hconfiguration";
     public static final String TX_QUERY_CODEC_KEY = "reactor.hive.query.tx.id";

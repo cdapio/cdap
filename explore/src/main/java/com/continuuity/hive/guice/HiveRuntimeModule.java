@@ -7,12 +7,8 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.hive.datasets.DatasetStorageHandler;
-import com.continuuity.hive.hooks.TransactionPostHook;
-import com.continuuity.hive.hooks.TransactionPreHook;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
-import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -46,13 +42,15 @@ public class HiveRuntimeModule extends RuntimeModule {
   private static final Logger LOG = LoggerFactory.getLogger(HiveRuntimeModule.class);
 
   private final CConfiguration conf;
+  private final ClassLoader hiveClassLoader;
 
-  public HiveRuntimeModule(CConfiguration conf) {
+  public HiveRuntimeModule(CConfiguration conf, ClassLoader hiveClassLoader) {
     this.conf = conf;
+    this.hiveClassLoader = hiveClassLoader;
   }
 
   public HiveRuntimeModule() {
-    this.conf = CConfiguration.create();
+    this(CConfiguration.create(), HiveRuntimeModule.class.getClassLoader());
   }
 
   /**
@@ -84,7 +82,7 @@ public class HiveRuntimeModule extends RuntimeModule {
       final int hiveMetaStorePort = PortDetector.findFreePort();
       System.setProperty(HiveConf.ConfVars.METASTOREURIS.toString(), "thrift://localhost:" + hiveMetaStorePort);
 
-      return Modules.combine(new HiveModule(),
+      return Modules.combine(new HiveModule(hiveClassLoader),
                              new AbstractModule() {
                                @Override
                                protected void configure() {
@@ -118,26 +116,15 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    // Hive is optional - if its libraries are not there, reactor still runs
-    if (!HiveServer.isHivePresent()) {
-      LOG.warn("HiveServer2 not present in classpath, disabling explore functionality.");
-      return new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(HiveServer.class).to(MockHiveServer.class).in(Scopes.SINGLETON);
-        }
-      };
-    } else {
-      try {
-        String auxJarsPath = generateAuxJarsClasspath();
-        System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
-        LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-                  System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+    try {
+      String auxJarsPath = generateAuxJarsClasspath();
+      System.setProperty("hive.aux.jars.path", auxJarsPath);
+      LOG.debug("Setting {} to {}", "hive.aux.jars.path",
+                System.getProperty("hive.aux.jars.path"));
 
-        return new HiveModule();
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+      return new HiveModule(hiveClassLoader);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 
@@ -156,7 +143,7 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
 
     final Set<String> bootstrapClassPaths = builder.build();
-    Dependencies.findClassDependencies(this.getClass().getClassLoader(),
+    Dependencies.findClassDependencies(hiveClassLoader,
      new Dependencies.ClassAcceptor() {
        @Override
        public boolean accept(String className, URL classUrl, URL classPathUrl) {
@@ -168,7 +155,7 @@ public class HiveRuntimeModule extends RuntimeModule {
          return true;
        }
      },
-     DatasetManagerServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
+     DatasetManagerServiceClient.class.getCanonicalName(), "com.continuuity.hive.datasets.DatasetStorageHandler",
      new HBaseTableUtilFactory().get().getClass().getCanonicalName());
 
     return Joiner.on(',').join(uris);
@@ -178,17 +165,25 @@ public class HiveRuntimeModule extends RuntimeModule {
    */
   private static final class HiveModule extends AbstractModule {
 
+    private HiveModule(ClassLoader hiveClassLoader) {
+      this.hiveClassLoader = hiveClassLoader;
+    }
+
+    private final ClassLoader hiveClassLoader;
+
     @Override
     protected void configure() {
-      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
+      System.setProperty("hive.exec.pre.hooks", "com.continuuity.hive.hooks.TransactionPreHook");
+      LOG.debug("Setting {} to {}", "hive.exec.pre.hooks",
+                System.getProperty("hive.exec.pre.hooks"));
 
-      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
+      System.setProperty("hive.exec.post.hooks", "com.continuuity.hive.hooks.TransactionPostHook");
+      LOG.debug("Setting {} to {}", "hive.exec.post.hooks",
+                System.getProperty("hive.exec.post.hooks"));
 
       bind(HiveServer.class).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
+      bind(ClassLoader.class).annotatedWith(Names.named(Constants.Explore.HIVE_CLASSSLOADER))
+        .toInstance(hiveClassLoader);
     }
 
     @Provides

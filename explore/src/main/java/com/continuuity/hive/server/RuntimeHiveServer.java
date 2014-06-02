@@ -7,8 +7,6 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.hive.context.ContextManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.service.server.HiveServer2;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -27,15 +25,18 @@ import java.util.concurrent.TimeUnit;
 public class RuntimeHiveServer extends HiveServer {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeHiveServer.class);
 
-  private HiveServer2 hiveServer2;
+  private IsolatedHiveServer hiveServer2;
+  private ClassLoader hiveClassLoader;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private Cancellable discoveryCancel;
 
   @Inject
-  public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
+  public RuntimeHiveServer(@Named(Constants.Explore.HIVE_CLASSSLOADER) ClassLoader hiveClassLoader,
+                           DiscoveryService discoveryService, TransactionSystemClient txClient,
                            DatasetFramework datasetFramework,
                            @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
+    this.hiveClassLoader = hiveClassLoader;
     ContextManager.initialize(txClient, datasetFramework);
     this.discoveryService = discoveryService;
     this.hostname = hostname;
@@ -45,12 +46,11 @@ public class RuntimeHiveServer extends HiveServer {
   protected void startUp() throws Exception {
     // Start Hive Server2
     int hiveServerPort = PortDetector.findFreePort();
-    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_PORT.toString(), String.valueOf(hiveServerPort));
-    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST.toString(), hostname.getCanonicalHostName());
+    System.setProperty("hive.server2.thrift.port", String.valueOf(hiveServerPort));
+    System.setProperty("hive.server2.thrift.bind.host", hostname.getCanonicalHostName());
 
     LOG.info("Starting hive server on port {}...", hiveServerPort);
-    hiveServer2 = new HiveServer2();
-    hiveServer2.init(new HiveConf());
+    hiveServer2 = new IsolatedHiveServer(hiveClassLoader);
     hiveServer2.start();
     waitForPort(hostname.getCanonicalHostName(), hiveServerPort);
 

@@ -22,7 +22,7 @@ import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.guice.ExploreRuntimeModule;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -129,7 +129,7 @@ public class ReactorServiceMain extends DaemonMain {
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new HiveRuntimeModule().getDistributedModules()
+      new ExploreRuntimeModule(cConf).getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
