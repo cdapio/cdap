@@ -2256,14 +2256,12 @@ textarea {
 }
 .object-list-empty-content {
 	margin: 0 auto;
-	width: 320px;
+	width: 360px;
 	text-align: left;
 	font-size: 14px;
 	color: #8C9495;
-
 	border: 1px solid #efefef;
 	border-radius: 3px;
-
 	background-position: 68px 25px;
 	background-color: #FDFDFD;
 	padding: 6px 20px;
