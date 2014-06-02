@@ -8,6 +8,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+import org.apache.twill.api.TwillApplication;
 
 /**
  * A support class for {@link Application}s which reduces repetition and results in
@@ -118,5 +119,12 @@ public abstract class AbstractApplication implements Application {
    */
   protected void addWorkflow(Workflow workflow) {
     configurer.addWorkflow(workflow);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(TwillApplication)
+   */
+  protected void addService(TwillApplication application) {
+    configurer.addService(application);
   }
 }

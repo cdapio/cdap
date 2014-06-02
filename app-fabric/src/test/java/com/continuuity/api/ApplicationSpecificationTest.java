@@ -4,6 +4,8 @@ package com.continuuity.api;
 import com.continuuity.AppWithServices;
 import com.continuuity.ResourceApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -44,12 +46,13 @@ public class ApplicationSpecificationTest {
   @Test
   public void testConfigureAppWithServices() {
     AbstractApplication app = new AppWithServices();
+
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
 
-    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
+    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();;
     ApplicationSpecification spec = adapter.fromJson(adapter.toJson(appSpec));
 
     Map<String, TwillSpecification> services = spec.getServices();
