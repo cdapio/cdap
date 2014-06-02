@@ -6,8 +6,8 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.ModuleConflictException;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
@@ -22,11 +22,11 @@ import java.util.Map;
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
-  private final DatasetManager datasetManager;
+  private final DatasetFramework datasetFramework;
 
-  public DeployDatasetModulesStage(DatasetManager datasetManager) {
+  public DeployDatasetModulesStage(DatasetFramework datasetFramework) {
     super(TypeToken.of(ApplicationSpecLocation.class));
-    this.datasetManager = datasetManager;
+    this.datasetFramework = datasetFramework;
   }
 
   /**
@@ -47,7 +47,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
         (Class<DatasetModule>) classLoader.loadClass(module.getValue());
       String moduleName = module.getKey();
       try {
-        datasetManager.register(moduleName, moduleClass);
+        datasetFramework.register(moduleName, moduleClass);
       } catch (ModuleConflictException e) {
         LOG.info("Not deploying module " + moduleName + " as it already exists");
       }

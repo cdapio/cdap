@@ -8,7 +8,7 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.inject.Inject;
@@ -25,24 +25,24 @@ public final class SyncManagerFactory implements ManagerFactory {
   private final StoreFactory sFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final DatasetManager datasetManager;
+  private final DatasetFramework datasetFramework;
 
   @Inject
   public SyncManagerFactory(CConfiguration configuration, PipelineFactory pFactory,
                             LocationFactory lFactory, StoreFactory sFactory, QueueAdmin queueAdmin,
-                            DiscoveryServiceClient discoveryServiceClient, DatasetManager datasetManager) {
+                            DiscoveryServiceClient discoveryServiceClient, DatasetFramework datasetFramework) {
     this.configuration = configuration;
     this.pFactory = pFactory;
     this.lFactory = lFactory;
     this.sFactory = sFactory;
     this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.datasetManager = datasetManager;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
   public <I, O> Manager<I, O> create(ProgramTerminator programTerminator) {
     return new LocalManager<I, O>(configuration, pFactory, lFactory, sFactory, programTerminator, queueAdmin,
-                            discoveryServiceClient, datasetManager);
+                            discoveryServiceClient, datasetFramework);
   }
 }
