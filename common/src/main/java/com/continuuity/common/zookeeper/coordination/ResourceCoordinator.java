@@ -5,7 +5,6 @@ package com.continuuity.common.zookeeper.coordination;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.zookeeper.ZKExtOperations;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
@@ -212,8 +211,7 @@ public final class ResourceCoordinator extends AbstractService {
         }
 
         try {
-          ResourceRequirement requirement = CoordinationConstants.GSON.fromJson(new String(nodeData, Charsets.UTF_8),
-                                                                                ResourceRequirement.class);
+          ResourceRequirement requirement = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(nodeData);
           LOG.info("Get requirement {}", requirement);
 
           // See if the requirement changed.
@@ -320,9 +318,15 @@ public final class ResourceCoordinator extends AbstractService {
           return;
         }
         byte[] data = result.getData();
-        ResourceAssignment resourceAssignment =
-          (data == null) ? new ResourceAssignment(name)
-                         : CoordinationConstants.GSON.fromJson(Bytes.toString(data), ResourceAssignment.class);
+        ResourceAssignment resourceAssignment = new ResourceAssignment(name);
+        try {
+          if (data != null) {
+            resourceAssignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(data);
+          }
+        } catch (Throwable t) {
+          LOG.warn("Failed to decode resource assignment. Perform assignment as if no assignment existed.", t);
+        }
+
         assignments.put(name, resourceAssignment);
         performAssignment(requirement, handlers);
       }
@@ -346,26 +350,31 @@ public final class ResourceCoordinator extends AbstractService {
   private void saveAssignment(ResourceAssignment assignment) {
     assignments.put(assignment.getName(), assignment);
 
-    final String json = CoordinationConstants.GSON.toJson(assignment);
-    final byte[] data = Bytes.toBytes(json);
-    final String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + assignment.getName();
+    try {
+      final byte[] data = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.encode(assignment);
+      String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + assignment.getName();
 
-    Futures.addCallback(
-      ZKExtOperations.setOrCreate(zkClient, zkPath, data, assignment, CoordinationConstants.MAX_ZK_FAILURE_RETRY),
-      new FutureCallback<ResourceAssignment>() {
+      Futures.addCallback(
+        ZKExtOperations.setOrCreate(zkClient, zkPath, data, assignment, CoordinationConstants.MAX_ZK_FAILURE_RETRY),
+        new FutureCallback<ResourceAssignment>() {
 
-        @Override
-        public void onSuccess(ResourceAssignment result) {
-          // Done. Just log for debugging.
-          LOG.debug("Resource assignment updated for {}. {}", result.getName(), json);
-        }
+          @Override
+          public void onSuccess(ResourceAssignment result) {
+            // Done. Just log for debugging.
+            LOG.debug("Resource assignment updated for {}. {}", result.getName(), Bytes.toString(data));
+          }
 
-        @Override
-        public void onFailure(Throwable t) {
-          LOG.error("Failed to save assignment {}", json, t);
-          doNotifyFailed(t);
-        }
-      }, executor);
+          @Override
+          public void onFailure(Throwable t) {
+            LOG.error("Failed to save assignment {}", Bytes.toStringBinary(data), t);
+            doNotifyFailed(t);
+          }
+        }, executor
+      );
+    } catch (Exception e) {
+      // Something very wrong
+      LOG.error("Failed to save assignment: {}", assignment.getName(), e);
+    }
   }
 
   /**

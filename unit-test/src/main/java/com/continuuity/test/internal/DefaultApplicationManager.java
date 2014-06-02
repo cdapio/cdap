@@ -8,7 +8,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -59,7 +59,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Inject
   public DefaultApplicationManager(LocationFactory locationFactory,
                                    DataSetAccessor dataSetAccessor,
-                                   DatasetManager datasetManager,
+                                   DatasetFramework datasetFramework,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
@@ -80,7 +80,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
       // The drawback is we'll not be able to instrument DataSet classes using ASM.
-      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager,
+      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                          new DataSetClassLoader(new JarClassLoader(deployedJar)));
     } catch (IOException e) {
       throw Throwables.propagate(e);

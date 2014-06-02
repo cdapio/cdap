@@ -1,8 +1,8 @@
 package com.continuuity.data.runtime;
 
-import com.continuuity.data2.datafabric.dataset.DataFabricDatasetManager;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
-import com.continuuity.data2.dataset2.manager.inmemory.DefaultDatasetDefinitionRegistry;
+import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -16,8 +16,8 @@ class DataSetsModules {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-        bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        expose(DatasetManager.class);
+        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class);
       }
     };
 
@@ -28,8 +28,8 @@ class DataSetsModules {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-        bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        expose(DatasetManager.class);
+        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class);
       }
     };
 
@@ -40,8 +40,8 @@ class DataSetsModules {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
-        bind(DatasetManager.class).to(DataFabricDatasetManager.class);
-        expose(DatasetManager.class);
+        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class);
       }
     };
   }

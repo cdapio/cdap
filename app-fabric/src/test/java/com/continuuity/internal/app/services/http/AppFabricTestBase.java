@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.data2.datafabric.dataset.service.DatasetManagerService;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -49,7 +49,7 @@ public abstract class AppFabricTestBase {
   private static InMemoryTransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsQueryService metricsService;
-  private static DatasetManagerService dsService;
+  private static DatasetService dsService;
   private static TransactionSystemClient txClient;
 
   @BeforeClass
@@ -67,7 +67,7 @@ public abstract class AppFabricTestBase {
     injector = Guice.createInjector(new AppFabricTestModule(conf));
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();
-    dsService = injector.getInstance(DatasetManagerService.class);
+    dsService = injector.getInstance(DatasetService.class);
     dsService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();

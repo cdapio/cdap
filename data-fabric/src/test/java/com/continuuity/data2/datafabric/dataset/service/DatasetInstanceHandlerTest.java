@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Unit-test for {@link com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler}
  */
-public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
+public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {

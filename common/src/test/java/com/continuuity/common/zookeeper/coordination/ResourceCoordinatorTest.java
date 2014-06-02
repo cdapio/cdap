@@ -168,7 +168,7 @@ public class ResourceCoordinatorTest {
                                 final Discoverable discoverable,
                                 final BlockingQueue<Collection<PartitionReplica>> assignmentQueue,
                                 final Semaphore finishSemaphore) {
-    return client.subscribe(discoverable, new ResourceHandler() {
+    return client.subscribe(discoverable.getName(), new ResourceHandler(discoverable) {
       @Override
       public void onChange(Collection<PartitionReplica> partitionReplicas) {
         try {
