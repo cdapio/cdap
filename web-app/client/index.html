@@ -300,7 +300,7 @@
       <div class="info-box sparkline-box app-busyness">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.busyness" unit="percent" title="Busyness"}}</div>
       <div class="info-box app-storage" style="text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top: 23px;width: 80px;">{{model.storageLabel}}<span>{{model.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top: 23px;width: 100px;">{{model.storageLabel}}<span>{{model.storageUnits}}</span></div>
       </div>
     </div>
 
@@ -366,7 +366,7 @@
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Arrival Rate" metrics="/reactor/streams/{id}/collect.events"}}</div>
       <div class="info-box" style="text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 100px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
       <div class="info-box" style="text-align: center;">
         <div class="sparkline-box-title">Events</div>
@@ -922,7 +922,7 @@
 
       <div class="info-box app-storage" style="text-align: center;">
         <div class="sparkline-box-title">Stored</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:16px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:16px;width: 100px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
 
     </div>

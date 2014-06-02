@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2014 Continuuity, Inc.
  */
 
 @font-face {
@@ -809,7 +809,7 @@ h1 span {
 }
 .sparkline-box-value {
 	float: right;
-	width: 80px;
+	width: 85px;
 	height: 92px;
 	font-weight: 400;
 	font-size: 26px;
@@ -827,15 +827,15 @@ h1 span {
 	margin-left: 2px;
 }
 .info-box.sparkline-box {
-	width: 262px;
+	width: 275px;
 	padding: 10px;
 }
 
 .sparkline-flowlet-box {
-	border: 1px solid #83cce1;
+	border: 1px solid #E0E0E0;
 }
 .sparkline-flowlet-container {
-	background-image: url(../../img/flowlet-sparkline-bg.png);
+	background-image: url(../../img/v2/flowlet-sparkline-bg.png);
 	margin-right: 60px;
 	height: 70px;
 	overflow: hidden;
@@ -853,7 +853,7 @@ h1 span {
 	width: 60px;
 	height: 98px;
 	float: right;
-	border-left: 1px solid #83cce1;
+	border-left: 1px solid #E0E0E0;
 	font-size: 23px;
 	padding-top: 38px;
 	padding-left: 5px;
@@ -891,8 +891,8 @@ path.sparkline-area {
 }
 
 .sparkline-flowlet-container path.sparkline-area {
-	stroke: #83CCE1;
-	fill: #83CCE1;
+	stroke: #E0E0E0;
+	fill: #E0E0E0;
 }
 
 line {
@@ -1939,7 +1939,7 @@ textarea {
 }
 
 .flowlet-popup-tab-content td.flowlet-blue {
-	background-color: #41b0d1;
+	background-color: #3C6FC4;
 	width: 50%;
 	max-width:305px;
 	overflow: hidden;
@@ -1961,7 +1961,7 @@ textarea {
 }
 
 #flowlet-popup-inputs {
-	background-image: url(../../img/flowlet-background-input.png);
+	background-image: url(../../img/v2/flowlet-background-input.png);
 	background-position: top right;
 	background-repeat: no-repeat;
 }
@@ -1972,7 +1972,7 @@ textarea {
 
 #flowlet-popup-outputs {
 	display: none;
-	background-image: url(../../img/flowlet-background-output.png);
+	background-image: url(../../img/v2/flowlet-background-output.png);
 	background-position: top left;
 	background-repeat: no-repeat;
 }
@@ -2029,7 +2029,7 @@ textarea {
 }
 
 #flowlet-popup-tab-content .input-queue {
-	background-color: #41B0D1;
+	background-color: #3C6FC4;
 	margin-left: 300px;
 	height: 100px;
 }
@@ -3009,7 +3009,7 @@ div.tooltip {
   background: white;
   border: 1px solid #CACBCF;
   text-transform: none;
-  width: 170px;
+  width: 210px;
 }
 
 .custom-dropdown .text-span {
@@ -3031,6 +3031,13 @@ div.tooltip {
   background-image: url('/assets/img/v2/icon_expand.png');
   background-repeat: no-repeat;
   background-position: 5px;
+}
+
+#loading-time-select-img {
+	margin-top: 0px;
+	display: none;
+	height: 15px;
+	margin-right: 5px;
 }
 
 .dropdown-menu>li>a:hover, .dropdown-menu>li>a:focus, .dropdown-submenu:hover>a, .dropdown-submenu:focus>a {
