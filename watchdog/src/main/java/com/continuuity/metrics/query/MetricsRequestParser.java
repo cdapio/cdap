@@ -186,7 +186,7 @@ final class MetricsRequestParser {
           throw new MetricsPathException("'service must be followed by a service name");
         }
         //temporary
-        contextBuilder.setTag(MetricsRequestContext.TagType.SERVICE, "Service");
+        contextBuilder.setTag(MetricsRequestContext.TagType.SERVICE, "tag_request");
         parseAppContext(pathParts, contextBuilder);
 
         break;
