@@ -577,14 +577,7 @@ public interface ApplicationSpecification {
        *
        * @return A new {@link ApplicationSpecification}.
        */
-      @Deprecated
       ApplicationSpecification build();
-
-      /**
-       * @return A instance of {@link ServiceAdder}
-       */
-      ServiceAdder withServices();
-
     }
 
     /**
@@ -592,7 +585,6 @@ public interface ApplicationSpecification {
      */
     public final class MoreWorkflow implements WorkflowAdder, AfterWorkflow {
 
-      @Deprecated
       @Override
       public ApplicationSpecification build() {
         return Builder.this.build();
@@ -607,56 +599,6 @@ public interface ApplicationSpecification {
 
         // Add MapReduces from workflow into application
         mapReduces.putAll(spec.getMapReduce());
-        return this;
-      }
-
-      @Override
-      public MoreService withServices() {
-        return new MoreService();
-      }
-    }
-
-    /**
-     * Defines interface for proceeding to the next step after adding Services
-     * to the application.
-     */
-    public interface AfterService {
-      /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
-       */
-      ApplicationSpecification build();
-    }
-
-    /**
-     * Define interface for adding services to the application.
-     */
-    public interface ServiceAdder {
-      /**
-       * Adds a {@link TwillApplication} to the application.
-       *
-       * @param service The {@link TwillApplication} to include in the application.
-       * @return A {@link MoreService} for adding more services.
-       */
-      MoreService add(TwillApplication service);
-    }
-
-    /**
-     * Class for adding services to the application.
-     */
-    public final class MoreService implements ServiceAdder, AfterService {
-
-      @Override
-      public ApplicationSpecification build() {
-        return Builder.this.build();
-      }
-
-      @Override
-      public MoreService add(TwillApplication service) {
-        Preconditions.checkNotNull(service, "Service cannot be null");
-        TwillSpecification spec = service.configure();
-        services.put(spec.getName(), spec);
         return this;
       }
     }
