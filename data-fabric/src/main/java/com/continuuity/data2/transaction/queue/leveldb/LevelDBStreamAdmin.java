@@ -50,11 +50,11 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Override
   public StreamConfig getConfig(String streamName) throws IOException {
-    return null;
+    throw new UnsupportedOperationException("Not yet supported");
   }
 
   @Override
   public void updateConfig(String streamName, StreamConfig config) throws IOException {
-
+    throw new UnsupportedOperationException("Not yet supported");
   }
 }
