@@ -188,14 +188,21 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     Location tempLocation = configLocation.getTempFile("tmp");
-    Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
     try {
-      writer.write(GSON.toJson(config));
-    } finally {
-      Closeables.closeQuietly(writer);
-    }
+      Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
+      try {
+        writer.write(GSON.toJson(config));
+      } finally {
+        Closeables.closeQuietly(writer);
+      }
 
-    Preconditions.checkState(tempLocation.renameTo(configLocation) != null, "Rename {} to {} failed", tempLocation, configLocation);
+      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                               "Rename {} to {} failed", tempLocation, configLocation);
+    } finally {
+      if (tempLocation.exists()) {
+        tempLocation.delete();
+      }
+    }
   }
 
   @Override
@@ -235,7 +242,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
                                                      cConf.get(Constants.Stream.TTL)));
 
-    Location tmpConfigLocation = configLocation.getTempFile("tmp");
+    Location tmpConfigLocation = configLocation.getTempFile(null);
 
     try {
       StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
