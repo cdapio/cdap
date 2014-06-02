@@ -9,9 +9,10 @@ project.evaluationDependsOn(':app-fabric')
  */
 dependencies {
   // Dependencies for smartyFacts & main
-  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
-  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'explore', version: "${version}", changing: true], "explore")
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
   // Test framework dependencies
@@ -26,6 +27,7 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
+  testRuntime libraries.hive_jdbc
 }
 
 /**
