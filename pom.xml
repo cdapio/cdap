@@ -43,6 +43,7 @@
     <module>unit-test</module>
     <module>security</module>
     <module>gateway</module>
+    <module>explore-client</module>
   </modules>
 
   <dependencyManagement>

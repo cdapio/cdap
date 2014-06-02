@@ -49,6 +49,7 @@
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
+    <hive.version>0.12.0</hive.version>
     <http.component.version>4.1.3</http.component.version>
     <hsql.version>2.2.4</hsql.version>
     <jetty.version>6.1.22</jetty.version>
@@ -662,6 +663,17 @@
         <groupId>org.apache.geronimo.components</groupId>
         <artifactId>geronimo-jaspi</artifactId>
         <version>${geronimo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-beeline</artifactId>
+        <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
