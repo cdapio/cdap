@@ -38,9 +38,11 @@
     <module>hbase-compat-0.96</module>
     <module>passport</module>
     <module>watchdog</module>
+    <module>watchdog-tests</module>
     <module>app-fabric</module>
     <module>unit-test</module>
     <module>security</module>
+    <module>gateway</module>
   </modules>
 
   <dependencyManagement>
