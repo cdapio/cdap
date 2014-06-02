@@ -109,7 +109,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (SecurityException e) {
@@ -163,7 +163,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
@@ -217,7 +217,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
-                                               entityId, getEntityType(LogHandler.EntityType.valueOf(entityType)));
+                                               entityId, getEntityType(EntityType.valueOf(entityType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
