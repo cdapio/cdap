@@ -75,7 +75,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext("reactor", componentId, serviceId);
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+                                                                             serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (IllegalArgumentException e) {
@@ -132,7 +133,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       boolean escape = logArgs.getEscape();
       Filter filter = FilterParser.parse(logArgs.getFilter());
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext("reactor", componentId, serviceId);
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+                                                                             serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
@@ -186,7 +188,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       boolean escape = logArgs.getEscape();
       Filter filter = FilterParser.parse(logArgs.getFilter());
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext("reactor", componentId, serviceId);
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+                                                                             serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
