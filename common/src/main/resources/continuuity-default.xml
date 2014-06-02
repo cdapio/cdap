@@ -243,10 +243,10 @@
     </property>
 
     <property>
-        <name>stream.partition.ttl</name>
-        <!-- 0 indicates indefinite TTL !-->
-        <value>0</value>
-        <description>Default time to live in milliseconds for stream partitions</description>
+        <name>stream.event.ttl</name>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
+        <description>Default time to live in milliseconds for stream events</description>
     </property>
 
     <property>

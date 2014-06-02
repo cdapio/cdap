@@ -39,7 +39,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -47,6 +52,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +71,10 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
+    = new com.google.gson.reflect.TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -216,8 +226,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                                    cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
 
     String consumerId = Long.toString(groupId);
-    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
+    responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8), ImmutableMultimap.of(Constants.Stream.Headers.CONSUMER_ID, consumerId));
   }
 
   @POST
@@ -231,19 +240,52 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/{stream}/ttl/{ttlString}")
+  @Path("/{stream}/ttl")
   public void setTtl(HttpRequest request, HttpResponder responder,
-                     @PathParam("stream") String stream,
-                     @PathParam("ttlString") String ttlString) throws Exception {
+                     @PathParam("stream") String stream) throws Exception {
 
-    long ttl = Long.parseLong(ttlString);
     String accountId = getAuthenticatedAccountId(request);
 
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    long ttl = getTtl(request);
     StreamConfig config = streamAdmin.getConfig(stream);
     StreamConfig newConfig = new StreamConfig(null, config.getPartitionDuration(),
                                               config.getIndexInterval(), ttl, null);
     streamAdmin.updateConfig(stream, newConfig);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private long getTtl(HttpRequest request) throws IOException {
+    Map<String, String> arguments = decodeArguments(request);
+    if (arguments.containsKey("ttl")) {
+      return Long.parseLong(arguments.get("ttl"));
+    }
+
+    return Long.MAX_VALUE;
+  }
+
+  /**
+   * Copied from AppFabricHttpHandler.
+   */
+  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return ImmutableMap.of();
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      Map<String, String> args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      return args == null ? ImmutableMap.<String, String>of() : args;
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      throw e;
+    } finally {
+      reader.close();
+    }
   }
 
   /**

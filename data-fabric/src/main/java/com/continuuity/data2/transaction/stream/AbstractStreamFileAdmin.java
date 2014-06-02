@@ -15,12 +15,16 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
+import org.apache.commons.io.FileUtils;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -182,13 +186,23 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
+    StreamConfig originalConfig = getConfig(streamName);
+    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
+                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Writer writer = new OutputStreamWriter(configLocation.getOutputStream(), Charsets.UTF_8);
+    File tempDir = Files.createTempDir();
+    Location tempLocation = new LocalLocationFactory().create(tempDir.toURI()).append(CONFIG_FILE_NAME);
+    Writer writer = new OutputStreamWriter(tempLocation.getOutputStream(), Charsets.UTF_8);
     try {
       writer.write(GSON.toJson(config));
     } finally {
       Closeables.closeQuietly(writer);
     }
+
+    Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                             "Rename {} to {} failed", tempLocation, configLocation);
+    FileUtils.deleteDirectory(tempDir);
   }
 
   @Override
@@ -264,6 +278,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
     }
+  }
+
+  private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {
+    return originalConfig.getIndexInterval() == newConfig.getIndexInterval()
+      && originalConfig.getPartitionDuration() == newConfig.getPartitionDuration();
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
