@@ -53,14 +53,13 @@
         <a href="#" id="product-name"></a>
       </div>
       <div id="global">
-        <!-- CHANGING THIS TEMPORARILY!!!!!!!!!!!!!!!!!!!! -->
-      {{#unless C.Env.security_enabled}}
-          {{#unless C.Env.auth_token}}
+      {{#if C.Env.security_enabled}}
+          {{#if C.Env.auth_token}}
             <a href="/logout" id="header-logout">Logout</a>
           {{else}}
             <a href="/#/login" id="header-login">Login</a>
-          {{/unless}}
-          {{#unless C.Env.authenticated}}
+          {{/if}}
+          {{#if C.Env.authenticated}}
             <a href="https://accounts.continuuity.com/logout">Logout</a>
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
             <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
@@ -68,8 +67,8 @@
           {{else}}
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
             <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
-          {{/unless}}
-      {{/unless}}
+          {{/if}}
+      {{/if}}
       <a href="#/analyze" class="metrics-link" id="header-metrics"></a>
       </div>
     </div>

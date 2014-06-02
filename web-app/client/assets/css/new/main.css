@@ -280,6 +280,8 @@ a, a:visited {
 	letter-spacing: 0.1em;
 	padding-left: 45px;
 	line-height: 8px;
+	padding-left: 38px;
+	line-height: 13px;
 }
 #product-name:after {
 	content: 'Loading';
@@ -702,6 +704,7 @@ h1 span {
 }
 .quarter-title strong, .quarter-value strong {
 	font-weight: bold;
+	font-family: "HelveticaNeueW01-75Bold";
 }
 
 .third {
