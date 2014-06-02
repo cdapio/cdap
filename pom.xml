@@ -44,6 +44,7 @@
     <module>security</module>
     <module>gateway</module>
     <module>explore-client</module>
+    <module>explore</module>
   </modules>
 
   <dependencyManagement>
