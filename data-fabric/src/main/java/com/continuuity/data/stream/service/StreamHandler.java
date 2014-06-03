@@ -262,32 +262,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   private long getTTL(HttpRequest request) throws IOException {
-    Map<String, String> arguments = decodeArguments(request);
+    Map<String, String> arguments = GSON.fromJson(
+      request.getContent().toString(Charsets.UTF_8), MAP_STRING_STRING_TYPE);
     if (arguments.containsKey("ttl")) {
       return Long.parseLong(arguments.get("ttl"));
     }
 
     return Long.MAX_VALUE;
-  }
-
-  /**
-   * Copied from AppFabricHttpHandler.
-   */
-  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
-    }
   }
 
   /**
