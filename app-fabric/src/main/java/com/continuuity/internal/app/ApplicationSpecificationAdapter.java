@@ -40,7 +40,6 @@ import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
 

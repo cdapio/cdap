@@ -86,7 +86,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(instances)
       .build();
 
-    return builder.add(new MetricsProcessorTwillRunnable("metrics.processor", "cConf.xml", "hConf.xml"),
+    return builder.add(new MetricsProcessorTwillRunnable(Constants.Service.METRICS_PROCESSOR, "cConf.xml", "hConf.xml"),
                        metricsProcessorSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())

@@ -6,7 +6,10 @@ package com.continuuity.logging.context;
 
 import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;
+import com.continuuity.common.logging.ComponentLoggingContext;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.logging.ServiceLoggingContext;
+import com.continuuity.common.logging.SystemLoggingContext;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.MdcExpression;
@@ -37,9 +40,14 @@ public final class LoggingContextHelper {
     String accountId = tags.get(AccountLoggingContext.TAG_ACCOUNT_ID);
     String applicationId = tags.get(ApplicationLoggingContext.TAG_APPLICATION_ID);
 
+    String systemId = tags.get(SystemLoggingContext.TAG_SYSTEM_ID);
+    String componentId = tags.get(ComponentLoggingContext.TAG_COMPONENT_ID);
+
     // No account id or application id present.
     if (accountId == null || applicationId == null) {
-      throw new IllegalArgumentException("No account id or application id present");
+      if (systemId == null || componentId == null) {
+        throw new IllegalArgumentException("No account/application or system/component id present");
+      }
     }
 
     if (tags.containsKey(FlowletLoggingContext.TAG_FLOW_ID)) {
@@ -54,9 +62,16 @@ public final class LoggingContextHelper {
     } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
       return new ProcedureLoggingContext(accountId, applicationId,
                                          tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID));
+    } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {
+      return new ServiceLoggingContext(systemId, componentId,
+                                       tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
     }
 
     throw new IllegalArgumentException("Unsupported logging context");
+  }
+
+  public static LoggingContext getLoggingContext(String systemId, String componentId, String serviceId) {
+    return new ServiceLoggingContext(systemId, componentId, serviceId);
   }
 
   public static LoggingContext getLoggingContext(String accountId, String applicationId, String entityId,
@@ -74,32 +89,44 @@ public final class LoggingContextHelper {
   }
 
   public static Filter createFilter(LoggingContext loggingContext) {
-    String accountId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ACCOUNT_ID).getValue();
-    String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
-
-    String tagName;
-    String entityId;
-    if (loggingContext instanceof FlowletLoggingContext) {
-      tagName = FlowletLoggingContext.TAG_FLOW_ID;
-      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
-    } else if (loggingContext instanceof ProcedureLoggingContext) {
-      tagName = ProcedureLoggingContext.TAG_PROCEDURE_ID;
-      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
-    } else if (loggingContext instanceof MapReduceLoggingContext) {
-      tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
-      entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
-    } else if (loggingContext instanceof GenericLoggingContext) {
-      entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
-      return createGenericFilter(accountId, applId, entityId);
+    if (loggingContext instanceof ServiceLoggingContext) {
+      String systemId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
+      String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
+      String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
+      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
+      return new AndFilter(
+        ImmutableList.of(new MdcExpression(ServiceLoggingContext.TAG_SYSTEM_ID, systemId),
+                         new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId),
+                         new MdcExpression(tagName, entityId)));
     } else {
-      throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
+      String accountId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ACCOUNT_ID).getValue();
+      String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
+
+      String tagName;
+      String entityId;
+      if (loggingContext instanceof FlowletLoggingContext) {
+        tagName = FlowletLoggingContext.TAG_FLOW_ID;
+        entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
+      } else if (loggingContext instanceof ProcedureLoggingContext) {
+        tagName = ProcedureLoggingContext.TAG_PROCEDURE_ID;
+        entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
+      } else if (loggingContext instanceof MapReduceLoggingContext) {
+        tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
+        entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
+      } else if (loggingContext instanceof GenericLoggingContext) {
+        entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
+        return createGenericFilter(accountId, applId, entityId);
+      } else {
+        throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
+      }
+
+      return new AndFilter(
+        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_ACCOUNT_ID, accountId),
+                         new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
+                         new MdcExpression(tagName, entityId)
+        )
+      );
     }
-    return new AndFilter(
-      ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_ACCOUNT_ID, accountId),
-                       new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
-                       new MdcExpression(tagName, entityId)
-      )
-    );
   }
 
   private static Filter createGenericFilter(String accountId, String applicationId, String entityId) {
