@@ -121,8 +121,16 @@ Build, Deploy and Run
 - After stopping the Flow and Procedure, rebuild and redeploy the App
 - Re-run some sentences, and view the metrics and logs using the Metrics and Logs
   Explorers in the Continuuity Reactor Dashboard
+
+.. sourcecode:: shell-session
+
+	curl -o /dev/null -sL -w "%{http_code}\\n" -d
+	  "Continuuity Reactor is awesome"
+	    http://localhost:10000/v2/streams/sentence
+
 - Run the query ``sentiments`` with the parameters such as ``{"sentiment":"neutral"}``
   and read the results in the Log Explorer
+
 
 ----
 

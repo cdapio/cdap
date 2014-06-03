@@ -41,9 +41,7 @@ To the previous example, now add DataSets
 - Modify the ``ApplicationSpecification``
 - Modify the ``Update`` Flowlet to use the DataSets
 
-Add these imports:
-
-.. sourcecode:: java
+Add these imports::
 
 	import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 	import com.continuuity.api.data.dataset.TimeseriesTable;
@@ -59,18 +57,14 @@ Add these imports:
 Exercise Steps
 ========================
 
-Change the ``ApplicationSpecification``, replacing ``.noDataSet()`` with:
-
-.. sourcecode:: java
+Change the ``ApplicationSpecification`` replacing ``.noDataSet()`` with::
 
       .withDataSets()
         .add(new Table("sentiments"))
         .add(new SimpleTimeseriesTable("text-sentiments"))
 
 
-Change the ``Update`` class to use the DataSets by adding:
-
-.. sourcecode:: java
+Change the ``Update`` class to use the DataSets by adding::
 
     @UseDataSet("sentiments")
     private Table sentiments;
@@ -83,9 +77,7 @@ Change the ``Update`` class to use the DataSets by adding:
 Exercise Steps
 ========================
 
-Change the ``while`` statement of the ``process`` method to read:
-
-.. sourcecode:: java
+Change the ``while`` statement of the ``process`` method to read::
 
       while (sentimentItr.hasNext()) {
         String text = sentimentItr.next();
@@ -97,8 +89,6 @@ Change the ``while`` statement of the ``process`` method to read:
           textSentiments.write(new TimeseriesTable.Entry(sentiment.getBytes(Charsets.UTF_8),
                                                          sentence.getBytes(Charsets.UTF_8),
                                                          System.currentTimeMillis()));
-        } else {
-          metrics.count("data.ignored.sentiments", 1);
         }
       }
 
@@ -113,9 +103,9 @@ Build, Deploy and Run
 - Build the App using ``mvn clean package``
 - Deploy the App by dragging and dropping 
 - Send sentences with sentiments using ``curl`` and watch them run through the Flow system
-
-Note: The sentiments follow the sentence, and are either positive, negative or neutral,
-and are separated from the sentence by three dashes
+- Examples on the following slide
+- Note: The sentiments follow the sentence, and are either positive, negative or neutral,
+  and are separated from the sentence by three dashes
 
 ----
 

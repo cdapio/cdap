@@ -2,21 +2,12 @@ package com.example;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.ResourceSpecification;
-import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -24,10 +15,6 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.Callback;
 import com.continuuity.api.flow.flowlet.FailurePolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
-
-import com.continuuity.api.flow.flowlet.FlowletContext;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
-
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
@@ -37,32 +24,61 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
-import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
-
-import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
-
 import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+
+import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import java.util.Iterator;
+
+import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
+import com.continuuity.api.data.dataset.TimeseriesTable;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Table;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.MD5Hash;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import com.continuuity.api.schedule.Schedule;
+import com.continuuity.api.workflow.Workflow;
+import com.continuuity.api.workflow.WorkflowSpecification;
+
+import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.procedure.ProcedureSpecification;
+import com.google.common.collect.Maps;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.continuuity.api.ResourceSpecification;
+
+import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
+import java.io.File;
+import com.continuuity.api.flow.flowlet.FlowletContext;
+import java.io.InputStream;
+import com.google.common.base.Throwables;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Application that analyzes sentiment of sentences as positive, negative or neutral.
@@ -83,22 +99,25 @@ public class SentimentAnalysisApp implements Application {
     .setName("SentimentAnalysisApp")
     .setDescription("Application for Sentiment Analysis")
     .withStreams()
-      .add(new Stream("sentence"))
+    .add(new Stream("sentence"))
     .withDataSets()
       .add(new Table("sentiments"))
       .add(new SimpleTimeseriesTable("text-sentiments"))
     .withFlows()
       .add(new SentimentAnalysisFlow())
+//    .noProcedure()
     .withProcedures()
       .add(new SentimentAnalysisProcedure())
     .noMapReduce()
+//    .withMapReduce()
+//    .add(new SentimentAnalysisMapReduce())
     .noWorkflow()
+//    .withWorkflows()
+//        .add(new SentimentAnalysisWorkflow())
     .build();
   }
   
-  /**
-   * Flow for sentiment analysis.
-   */
+  
   public static class SentimentAnalysisFlow implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -106,25 +125,21 @@ public class SentimentAnalysisApp implements Application {
       .setName("analysis")
       .setDescription("Analysis of text to generate sentiments")
       .withFlowlets()
-        .add(new Normalization())
-        .add(new Analyze())
-        .add(new Update())
+      .add(new Normalization())
+      .add(new Analyze())
+      .add(new Update())
       .connect()
-        .fromStream("sentence").to(new Normalization())
-        .from(new Normalization()).to(new Analyze())
-        .from(new Analyze()).to(new Update())
+      .fromStream("sentence").to(new Normalization())
+      .from(new Normalization()).to(new Analyze())
+      .from(new Analyze()).to(new Update())
       .build();
     }
   }
-
+  
   /**
    * Normalizes the sentences.
    */
   public static class Normalization extends AbstractFlowlet {
-    
-    /**
-     * Emitter for emitting sentences from this Flowlet.
-     */
     private OutputEmitter<String> out;
     
     @ProcessInput
@@ -135,10 +150,9 @@ public class SentimentAnalysisApp implements Application {
       }
     }
   }
-
+  
   /**
-   * Analyzes the sentences by passing the sentence to NLTK based sentiment analyzer
-   * written in Python.
+   * Analyzes the sentences.
    */
   public static class Analyze extends ExternalProgramFlowlet<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(Analyze.class);
@@ -148,36 +162,23 @@ public class SentimentAnalysisApp implements Application {
     
     private File workDir;
     
-    /**
-     * This method will be called at Flowlet initialization time.
-     *
-     * @param context The {@link com.continuuity.api.flow.flowlet.FlowletContext} for this Flowlet.
-     * @return An {@link com.continuuity.flow.flowlet.ExternalProgramFlowlet.ExternalProgram}
-     * to specify properties of the external program to process input.
-     */
     @Override
     protected ExternalProgram init(FlowletContext context) {
       try {
         InputStream in = this.getClass().getClassLoader()
         .getResourceAsStream("sentiment-process.zip");
-        
         if (in != null) {
           workDir = new File("work");
           Unzipper.unzip(in, workDir);
-          
           File bash = new File("/bin/bash");
-          File program = new File(workDir, "sentiment/score-sentence");
-          
-          if (bash.exists()) {
-            return new ExternalProgram(bash, program.getAbsolutePath());
-          } else {
+          if (!bash.exists()) {
             bash = new File("/usr/bin/bash");
-            if (bash.exists()) {
-              return new ExternalProgram(bash, program.getAbsolutePath());
-            }
+          }
+          if (bash.exists()) {
+            File program = new File(workDir, "sentiment/score-sentence");
+            return new ExternalProgram(bash, program.getAbsolutePath());
           }
         }
-        
         throw new RuntimeException("Unable to start process");
       } catch (IOException e) {
         throw Throwables.propagate(e);
@@ -189,7 +190,7 @@ public class SentimentAnalysisApp implements Application {
      * into string before sending to external program for processing.
      *
      * @param input The input event.
-     * @return A UTF-8 encoded string of the input, or {@code null} if to skip this input.
+     * @return A UTF-8 encoded string of the input, or null if to skip this input.
      */
     @Override
     protected String encode(String input) {
@@ -199,7 +200,7 @@ public class SentimentAnalysisApp implements Application {
     /**
      * This method will be called when the external program returns the result. Child
      * class can do its own processing in this method or could return an object of type
-     * {@code OUT} for emitting to next Flowlet with the
+     * for emitting to next Flowlet with the
      * {@link com.continuuity.api.flow.flowlet.OutputEmitter} returned by
      * {@link #getOutputEmitter()}.
      *
@@ -215,8 +216,6 @@ public class SentimentAnalysisApp implements Application {
      * Child class can override this method to return an OutputEmitter for writing data
      * to the next Flowlet.
      *
-     * @return An {@link com.continuuity.api.flow.flowlet.OutputEmitter} for type
-     * {@code OUT}, or {@code null} if this flowlet doesn't have output.
      */
     @Override
     protected OutputEmitter<String> getOutputEmitter() {
@@ -233,12 +232,9 @@ public class SentimentAnalysisApp implements Application {
         throw Throwables.propagate(e);
       }
     }
+    
   }
   
-  
-  /**
-   * Updates the timeseries table with sentiments received.
-   */
   public static class Update extends AbstractFlowlet {
     
     @UseDataSet("sentiments")
@@ -246,7 +242,7 @@ public class SentimentAnalysisApp implements Application {
     
     @UseDataSet("text-sentiments")
     private SimpleTimeseriesTable textSentiments;
-
+    
     @Override
     public FlowletSpecification configure() {
       return FlowletSpecification.Builder.with()
@@ -273,11 +269,111 @@ public class SentimentAnalysisApp implements Application {
     }
   }
   
+  public static class SentimentAnalysisMapReduce extends AbstractMapReduce {
+    
+    // Annotation indicates the DataSets used in this MapReduce
+    @UseDataSet("text-sentiments")
+    private SimpleTimeseriesTable textSentiments;
+    
+    @UseDataSet("sentiments")
+    private Table sentiments;
+    
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+      .setName("SentimentCountMapReduce")
+      .setDescription("Sentiment count MapReduce job")
+      // Specify the DataSet for Mapper to read.
+      .useInputDataSet("text-sentiments")
+      // Specify the DataSet for Reducer to write.
+      .useOutputDataSet("sentiments")
+      .setMapperMemoryMB(512)
+      .setReducerMemoryMB(1024)
+      .build();
+    }
+    
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      
+      // A Mapper processes sentiments from the stored sentences
+      context.setInput(textSentiments, textSentiments.getSplits());
+      
+      job.setMapperClass(SentimentMapper.class);
+      
+      // Set the output key of the Reducer class
+      job.setMapOutputKeyClass(Text.class);
+      
+      // Set the output value of the Reducer class
+      job.setMapOutputValueClass(IntWritable.class);
+      
+      job.setReducerClass(SentimentReducer.class);
+    }
+    
+    /**
+     * A Mapper that reads the sentiments from the text-sentiments
+     * DataSet and creates key value pairs, where the key is the
+     * sentiment and value is the occurence of a sentence. The Mapper
+     * receives a key value pair (<byte[], TimeseriesTable.Entry>)
+     * from the input DataSet and outputs data in another key value
+     * pair (<Text, IntWritable>) to the Reducer.
+     */
+    public static class SentimentMapper extends Mapper<byte[], TimeseriesTable.Entry, Text,
+    IntWritable> {
+      // The output value
+      private static final IntWritable ONE = new IntWritable(1);
+      
+      @Override
+      public void map(byte[] key, TimeseriesTable.Entry entry, Context context)
+      throws IOException, InterruptedException {
+        // Send the key value pair to Reducer.
+        String sentiment = Bytes.toString(key);
+        context.write(new Text(sentiment), ONE);
+      }
+    }
+    
+    /**
+     * Aggregate the number of sentences per sentiment and store the results in a Table.
+     */
+    public static class SentimentReducer extends Reducer<Text, IntWritable, byte[],
+    IntWritable> {
+      public void reduce(Text sentiment, Iterable<IntWritable> values, Context context)
+      throws IOException, InterruptedException {
+        int count = 0;
+        // Get the count of sentences
+        for (IntWritable val : values) {
+          count += val.get();
+        }
+        // Store aggregated results in output DataSet.
+        // Each sentiment's aggregated result is stored in a different row.
+        // Each result, the number of sentences, is an entry of the row.
+        // context.write(ROW_KEY, new TimeseriesTable.Entry(ROW_KEY, Bytes.toBytes(count), key.get()));
+        context.write(Bytes.toBytes(sentiment.toString()), new IntWritable(count));
+      }
+    }
+    
+  } // Closes class SentimentAnalysisMapReduce
+  
   /**
-   * Procedure that returns the aggregates timeseries sentiment data.
+   * Implements a simple Workflow with one Workflow action to run 
+   * the SentimentAnalysisMapReduce MapReduce job with a schedule
+   * that runs every day at 11:00 A.M.
    */
+  public class SentimentAnalysisWorkflow implements Workflow {
+    
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+      .setName("SentimentAnalysisWorkflow")
+      .setDescription("SentimentAnalysisWorkflow description")
+      .onlyWith(new SentimentAnalysisMapReduce())
+      .addSchedule(new Schedule("DailySchedule", "Run every day at 11:00 A.M.", "0 11 * * *",
+                                Schedule.Action.START))
+      .build();
+    }
+  }
+
   public static class SentimentAnalysisProcedure extends AbstractProcedure {
-    private static final Logger LOG = LoggerFactory.getLogger(SentimentAnalysisProcedure.class);
     
     @UseDataSet("sentiments")
     private Table sentiments;
@@ -333,4 +429,8 @@ public class SentimentAnalysisApp implements Application {
     }
   }
   
+  
+  
+  
 }
+

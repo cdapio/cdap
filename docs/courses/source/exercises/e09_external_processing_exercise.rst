@@ -44,7 +44,7 @@ Copy from the Sentiment Analysis example in the Continuuity Reactor SDK these di
 	/examples/SentimentAnalysis/lib
 	/examples/SentimentAnalysis/sentiment
 
-- Place them in the top level of your application's directory
+- Place them in the top level of your ``SentimentAnalysis``'s directory
 - The ``lib`` directory contains two archives with natural language toolkit
   and a supporting data serialization implementation, both written in Python
 - The ``sentiment`` directory contains data for the natural language toolkit
@@ -57,14 +57,13 @@ The ``Unzipper``
 Copy from the Sentiment Analysis example in the Continuuity Reactor SDK::
 
 	/examples/SentimentAnalysis/src/main/java/.../Unzipper.java
-	/examples/SentimentAnalysis/src/test/java/.../UnzipperTest.java
 
-These files are used to unzip the archives of the ``lib`` directory
+This file is used to unzip the archives of the ``lib`` directory
 
-- Place each in the matching location in your project
-- Update the package statement in each of the files to reflect their new locations
+- Place in the matching location in your project
+- Update the package statement in the files to reflect its new location
 
-.. sourcecode:: java
+::
 
 	package com.example;
 
@@ -127,9 +126,7 @@ Using the NLTK
 To use the NLTK, modify the ``Analyze`` Flowlet to pass sentences through the NLTK for
 suffixing with a sentiment
 
-Add these imports:
-
-.. sourcecode:: java
+Add these imports::
 
 	import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
 	import java.io.File;
@@ -143,7 +140,7 @@ Add these imports:
 Revised ``Analyze`` Flowlet
 ===========================
 
-.. sourcecode:: java
+::
 
   public static class Analyze extends ExternalProgramFlowlet<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(Analyze.class);
@@ -171,7 +168,7 @@ Revised ``Analyze`` Flowlet
 ``init`` method
 ===============
 
-.. sourcecode:: java
+::
 
 	@Override
 	protected ExternalProgram init(FlowletContext context) {
@@ -201,7 +198,7 @@ Revised ``Analyze`` Flowlet
 ``encode`` method
 =================
 
-.. sourcecode:: java
+::
 
 	/**
 	 * This method will be called for each input event to transform the given input
@@ -220,7 +217,7 @@ Revised ``Analyze`` Flowlet
 ``processResult`` method
 ========================
 
-.. sourcecode:: java
+::
 
 	/**
 	 * This method will be called when the external program returns the result. Child
@@ -242,7 +239,7 @@ Revised ``Analyze`` Flowlet
 ``getOutputEmitter`` method
 ===========================
 
-.. sourcecode:: java
+::
 
 	/**
 	 * Child class can override this method to return an OutputEmitter for writing data
@@ -259,7 +256,7 @@ Revised ``Analyze`` Flowlet
 ``finish`` method
 =================
 
-.. sourcecode:: java
+::
 
 	@Override
 	protected void finish() {

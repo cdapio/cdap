@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1828,7 +1832,7 @@ language toolkit (NLTK)</li>
 /examples/SentimentAnalysis/sentiment
 </pre>
 <ul class="simple">
-<li>Place them in the top level of your application's directory</li>
+<li>Place them in the top level of your <tt class="docutils literal">SentimentAnalysis</tt>'s directory</li>
 <li>The <tt class="docutils literal">lib</tt> directory contains two archives with natural language toolkit
 and a supporting data serialization implementation, both written in Python</li>
 <li>The <tt class="docutils literal">sentiment</tt> directory contains data for the natural language toolkit</li>
@@ -1865,14 +1869,14 @@ and a supporting data serialization implementation, both written in Python</li>
             <section><p>Copy from the Sentiment Analysis example in the Continuuity Reactor SDK:</p>
 <pre class="literal-block">
 /examples/SentimentAnalysis/src/main/java/.../Unzipper.java
-/examples/SentimentAnalysis/src/test/java/.../UnzipperTest.java
 </pre>
-<p>These files are used to unzip the archives of the <tt class="docutils literal">lib</tt> directory</p>
+<p>This file is used to unzip the archives of the <tt class="docutils literal">lib</tt> directory</p>
 <ul class="simple">
-<li>Place each in the matching location in your project</li>
-<li>Update the package statement in each of the files to reflect their new locations</li>
+<li>Place in the matching location in your project</li>
+<li>Update the package statement in the files to reflect its new location</li>
 </ul>
-<pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">;</span>
+<pre class="literal-block">
+package com.example;
 </pre></section>
             
           </div>
@@ -1994,12 +1998,13 @@ and a supporting data serialization implementation, both written in Python</li>
             <section><p>To use the NLTK, modify the <tt class="docutils literal">Analyze</tt> Flowlet to pass sentences through the NLTK for
 suffixing with a sentiment</p>
 <p>Add these imports:</p>
-<pre><span class="kn">import</span> <span class="nn">com.continuuity.flow.flowlet.ExternalProgramFlowlet</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.io.File</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">com.continuuity.api.flow.flowlet.FlowletContext</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.io.InputStream</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">com.google.common.base.Throwables</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.apache.commons.io.FileUtils</span><span class="o">;</span>
+<pre class="literal-block">
+import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
+import java.io.File;
+import com.continuuity.api.flow.flowlet.FlowletContext;
+import java.io.InputStream;
+import com.google.common.base.Throwables;
+import org.apache.commons.io.FileUtils;
 </pre></section>
             
           </div>
@@ -2030,26 +2035,27 @@ suffixing with a sentiment</p>
             <header><h1>Revised <tt class="docutils literal">Analyze</tt> Flowlet</h1></header>
             
             
-            <section><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Analyze</span> <span class="kd">extends</span> <span class="n">ExternalProgramFlowlet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="o">{</span>
-  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">Analyze</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+            <section><pre class="literal-block">
+public static class Analyze extends ExternalProgramFlowlet&lt;String, String&gt; {
+  private static final Logger LOG = LoggerFactory.getLogger(Analyze.class);
 
-  <span class="nd">@Output</span><span class="o">(</span><span class="s">&quot;sentiments&quot;</span><span class="o">)</span>
-  <span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">sentiment</span><span class="o">;</span>
+  &#64;Output(&quot;sentiments&quot;)
+  private OutputEmitter&lt;String&gt; sentiment;
 
-  <span class="kd">private</span> <span class="n">File</span> <span class="n">workDir</span><span class="o">;</span>
+  private File workDir;
 
-  <span class="nd">@Override</span>
-  <span class="kd">protected</span> <span class="n">ExternalProgram</span> <span class="nf">init</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{...}</span>
-  <span class="nd">@Override</span>
-  <span class="kd">protected</span> <span class="n">String</span> <span class="nf">encode</span><span class="o">(</span><span class="n">String</span> <span class="n">input</span><span class="o">)</span> <span class="o">{...}</span>
-  <span class="nd">@Override</span>
-  <span class="kd">protected</span> <span class="n">String</span> <span class="nf">processResult</span><span class="o">(</span><span class="n">String</span> <span class="n">result</span><span class="o">)</span> <span class="o">{...}</span>
-  <span class="nd">@Override</span>
-  <span class="kd">protected</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getOutputEmitter</span><span class="o">()</span> <span class="o">{...}</span>
-  <span class="nd">@Override</span>
-  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">finish</span><span class="o">()</span> <span class="o">{...}</span>
+  &#64;Override
+  protected ExternalProgram init(FlowletContext context) {...}
+  &#64;Override
+  protected String encode(String input) {...}
+  &#64;Override
+  protected String processResult(String result) {...}
+  &#64;Override
+  protected OutputEmitter&lt;String&gt; getOutputEmitter() {...}
+  &#64;Override
+  protected void finish() {...}
 
-<span class="o">}</span>
+}
 </pre></section>
             
           </div>
@@ -2080,28 +2086,29 @@ suffixing with a sentiment</p>
             <header><h1><tt class="docutils literal">init</tt> method</h1></header>
             
             
-            <section><pre><span class="nd">@Override</span>
-<span class="kd">protected</span> <span class="n">ExternalProgram</span> <span class="nf">init</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
-  <span class="k">try</span> <span class="o">{</span>
-    <span class="n">InputStream</span> <span class="n">in</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getClassLoader</span><span class="o">()</span>
-                         <span class="o">.</span><span class="na">getResourceAsStream</span><span class="o">(</span><span class="s">&quot;sentiment-process.zip&quot;</span><span class="o">);</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">in</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">workDir</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;work&quot;</span><span class="o">);</span>
-      <span class="n">Unzipper</span><span class="o">.</span><span class="na">unzip</span><span class="o">(</span><span class="n">in</span><span class="o">,</span> <span class="n">workDir</span><span class="o">);</span>
-      <span class="n">File</span> <span class="n">bash</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;/bin/bash&quot;</span><span class="o">);</span>
-      <span class="k">if</span> <span class="o">(!</span><span class="n">bash</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
-        <span class="n">bash</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;/usr/bin/bash&quot;</span><span class="o">);</span>
-      <span class="o">}</span>
-      <span class="k">if</span> <span class="o">(</span><span class="n">bash</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
-        <span class="n">File</span> <span class="n">program</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">workDir</span><span class="o">,</span> <span class="s">&quot;sentiment/score-sentence&quot;</span><span class="o">);</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="nf">ExternalProgram</span><span class="o">(</span><span class="n">bash</span><span class="o">,</span> <span class="n">program</span><span class="o">.</span><span class="na">getAbsolutePath</span><span class="o">());</span>
-      <span class="o">}</span>
-    <span class="o">}</span>
-    <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">&quot;Unable to start process&quot;</span><span class="o">);</span>
-  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+&#64;Override
+protected ExternalProgram init(FlowletContext context) {
+  try {
+    InputStream in = this.getClass().getClassLoader()
+                         .getResourceAsStream(&quot;sentiment-process.zip&quot;);
+    if (in != null) {
+      workDir = new File(&quot;work&quot;);
+      Unzipper.unzip(in, workDir);
+      File bash = new File(&quot;/bin/bash&quot;);
+      if (!bash.exists()) {
+        bash = new File(&quot;/usr/bin/bash&quot;);
+      }
+      if (bash.exists()) {
+        File program = new File(workDir, &quot;sentiment/score-sentence&quot;);
+        return new ExternalProgram(bash, program.getAbsolutePath());
+      }
+    }
+    throw new RuntimeException(&quot;Unable to start process&quot;);
+  } catch (IOException e) {
+    throw Throwables.propagate(e);
+  }
+}
 </pre></section>
             
           </div>
@@ -2132,17 +2139,18 @@ suffixing with a sentiment</p>
             <header><h1><tt class="docutils literal">encode</tt> method</h1></header>
             
             
-            <section><pre><span class="cm">/**</span>
-<span class="cm"> * This method will be called for each input event to transform the given input</span>
-<span class="cm"> * into string before sending to external program for processing.</span>
-<span class="cm"> *</span>
-<span class="cm"> * @param input The input event.</span>
-<span class="cm"> * @return A UTF-8 encoded string of the input, or null if to skip this input.</span>
-<span class="cm"> */</span>
-<span class="nd">@Override</span>
-<span class="kd">protected</span> <span class="n">String</span> <span class="nf">encode</span><span class="o">(</span><span class="n">String</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">input</span><span class="o">;</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+/**
+ * This method will be called for each input event to transform the given input
+ * into string before sending to external program for processing.
+ *
+ * &#64;param input The input event.
+ * &#64;return A UTF-8 encoded string of the input, or null if to skip this input.
+ */
+&#64;Override
+protected String encode(String input) {
+  return input;
+}
 </pre></section>
             
           </div>
@@ -2173,20 +2181,21 @@ suffixing with a sentiment</p>
             <header><h1><tt class="docutils literal">processResult</tt> method</h1></header>
             
             
-            <section><pre><span class="cm">/**</span>
-<span class="cm"> * This method will be called when the external program returns the result. Child</span>
-<span class="cm"> * class can do its own processing in this method or could return an object of type</span>
-<span class="cm"> * for emitting to next Flowlet with the</span>
-<span class="cm"> * {@link com.continuuity.api.flow.flowlet.OutputEmitter} returned by</span>
-<span class="cm"> * {@link #getOutputEmitter()}.</span>
-<span class="cm"> *</span>
-<span class="cm"> * @param result The result from the external program.</span>
-<span class="cm"> * @return The output to emit or {@code null} if nothing to emit.</span>
-<span class="cm"> */</span>
-<span class="nd">@Override</span>
-<span class="kd">protected</span> <span class="n">String</span> <span class="nf">processResult</span><span class="o">(</span><span class="n">String</span> <span class="n">result</span><span class="o">)</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+/**
+ * This method will be called when the external program returns the result. Child
+ * class can do its own processing in this method or could return an object of type
+ * for emitting to next Flowlet with the
+ * {&#64;link com.continuuity.api.flow.flowlet.OutputEmitter} returned by
+ * {&#64;link #getOutputEmitter()}.
+ *
+ * &#64;param result The result from the external program.
+ * &#64;return The output to emit or {&#64;code null} if nothing to emit.
+ */
+&#64;Override
+protected String processResult(String result) {
+  return result;
+}
 </pre></section>
             
           </div>
@@ -2217,15 +2226,16 @@ suffixing with a sentiment</p>
             <header><h1><tt class="docutils literal">getOutputEmitter</tt> method</h1></header>
             
             
-            <section><pre><span class="cm">/**</span>
-<span class="cm"> * Child class can override this method to return an OutputEmitter for writing data</span>
-<span class="cm"> * to the next Flowlet.</span>
-<span class="cm"> *</span>
-<span class="cm"> */</span>
-<span class="nd">@Override</span>
-<span class="kd">protected</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getOutputEmitter</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">sentiment</span><span class="o">;</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+/**
+ * Child class can override this method to return an OutputEmitter for writing data
+ * to the next Flowlet.
+ *
+ */
+&#64;Override
+protected OutputEmitter&lt;String&gt; getOutputEmitter() {
+  return sentiment;
+}
 </pre></section>
             
           </div>
@@ -2256,16 +2266,17 @@ suffixing with a sentiment</p>
             <header><h1><tt class="docutils literal">finish</tt> method</h1></header>
             
             
-            <section><pre><span class="nd">@Override</span>
-<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">finish</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">try</span> <span class="o">{</span>
-    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Deleting work dir {}&quot;</span><span class="o">,</span> <span class="n">workDir</span><span class="o">);</span>
-    <span class="n">FileUtils</span><span class="o">.</span><span class="na">deleteDirectory</span><span class="o">(</span><span class="n">workDir</span><span class="o">);</span>
-  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Could not delete work dir {}&quot;</span><span class="o">,</span> <span class="n">workDir</span><span class="o">);</span>
-    <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+&#64;Override
+protected void finish() {
+  try {
+    LOG.info(&quot;Deleting work dir {}&quot;, workDir);
+    FileUtils.deleteDirectory(workDir);
+  } catch (IOException e) {
+    LOG.error(&quot;Could not delete work dir {}&quot;, workDir);
+    throw Throwables.propagate(e);
+  }
+}
 </pre></section>
             
           </div>

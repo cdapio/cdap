@@ -48,16 +48,12 @@ Exercise Steps
 Application Specification
 =========================
 
-Change the ApplicationSpecification, replacing ``.noProcedure()`` with:
-
-.. sourcecode:: java
+Change the ApplicationSpecification, replacing ``.noProcedure()`` with::
 
       .withProcedures()
         .add(new SentimentAnalysisProcedure())
 
-Add these imports:
-
-.. sourcecode:: java
+Add these imports::
 
 	import com.continuuity.api.procedure.ProcedureResponse;
 	import com.continuuity.api.procedure.ProcedureSpecification;
@@ -66,7 +62,7 @@ Add these imports:
 	import java.util.concurrent.TimeUnit;
 	import com.continuuity.api.ResourceSpecification;
 
-``ResourceSpecification`` sets the minimum amount of memory (5112MB) and cores (1)
+``ResourceSpecification`` sets the minimum amount of memory (512MB) and cores (1)
 used by an instance
 
 ----
@@ -74,7 +70,7 @@ used by an instance
 Add Procedure to ``SentimentAnalysisApp``
 =========================================
 
-.. sourcecode:: java
+::
 
 	  public static class SentimentAnalysisProcedure extends AbstractProcedure {
 	
@@ -85,6 +81,7 @@ Add Procedure to ``SentimentAnalysisApp``
 	    private SimpleTimeseriesTable textSentiments;
 	
 	    @Handle("aggregates")
+
 	    @Handle("sentiments")
 	
 	    @Override
@@ -102,7 +99,7 @@ Add Procedure to ``SentimentAnalysisApp``
 Implement ``@Handle("aggregates")``
 =========================================
 
-.. sourcecode:: java
+::
 
 	    @Handle("aggregates")
 	    public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response)
@@ -125,7 +122,7 @@ Implement ``@Handle("aggregates")``
 Implement ``@Handle("sentiments")``
 =========================================
 
-.. sourcecode:: java
+::
 
 	    @Handle("sentiments")
 	    public void getSentiments(ProcedureRequest request, ProcedureResponder response)

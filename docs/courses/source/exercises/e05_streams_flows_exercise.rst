@@ -26,7 +26,7 @@ Exercise Objectives
 
 In this exercise, you will:
 
-- Start with the application created by the maven archetype
+- Start with the application created by the ``maven`` archetype
 - Specify a Stream in the application
 - Specify a Flow in the application
 - Build and deploy the application
@@ -151,7 +151,9 @@ Build and Run
 
 Start Reactor
 
-Build App using ``mvn clean package`` and deploy by dragging and dropping 
+Build App using ``mvn clean package`` and deploy by dragging and dropping
+
+Start the ``analysis`` Flow
 
 Send sentences using a ``curl`` command (on one line) and watch them run through the
 Flow system::

@@ -77,9 +77,9 @@ Exercise Steps: Sentiment Analysis
   the Continuuity Reactor SDK's ``/examples/SentimentAnalysis`` directory
 - The completed application performs sentiment analysis of sentences
   using an external Python natural language toolkit
-- The application will be called SentimentAnalysisApp
+- The application will be called ``SentimentAnalysisApp``
 
-In the ``pox.xml``, change the ``app.main.class`` from ``WordCountApp``
+In the ``pox.xml`` change the ``app.main.class`` from ``WordCountApp``
 to ``SentimentAnalysisApp``::
 
 	<app.main.class>com.example.SentimentAnalysisApp</app.main.class>

@@ -39,22 +39,23 @@ Setting Up ``SentimentAnalysisTest.java``
 
 Add these imports:
 
-.. sourcecode:: java
+::
 
 	import java.util.Collections;
 	import com.google.common.collect.ImmutableSet;
 
 The test framework can be summarized as:
 
-.. sourcecode:: java
+::
 
 	public class SentimentAnalysisTest extends ReactorTestBase {
 	  @Test
 	  public void test() throws Exception {
 	    try {
+
 	      ... // Insert test code here: Part 1
+
 	    } finally {
-		 TimeUnit.SECONDS.sleep(1);
 	      clear();
 	    }
 	  }
@@ -65,32 +66,32 @@ The test framework can be summarized as:
 Part 1: Setting Up Testing
 ==========================
 
-Add this test code in the ``try`` block:
-
-.. sourcecode:: java
+Add this test code in the ``try`` block::
 
 	ApplicationManager appManager = deployApplication(SentimentAnalysisApp.class);
 	
 	// Starts the Flow
 	FlowManager flowManager = appManager.startFlow("analysis");
 	
-	// Write messages to the Stream and Flow
+	// Write messages to the Stream and Flow (Part 2)
 	try {
-	  ... // Part 2
+	  ...
 	}
 	
-	// Start Procedure and verify
+	// Start Procedure and verify (Parts 3 and 4)
 	ProcedureManager procedureManager = appManager.startProcedure("sentiment-query");
 	try {
-	  ... // Parts 3 & 4
+	  ...
 	}
+
+	TimeUnit.SECONDS.sleep(1);
 
 ----
 
 Part 2: Writing Messages to the Stream
 ======================================
 
-.. sourcecode:: java
+::
 
 	// Write messages to the Stream and Flow
 	try {
@@ -113,7 +114,7 @@ Part 2: Writing Messages to the Stream
 Part 3: Start Procedure and Verify
 ==================================
 
-.. sourcecode:: java
+::
 
 	// Start Procedure and verify
 	ProcedureManager procedureManager = appManager.startProcedure("sentiment-query");
@@ -128,19 +129,19 @@ Part 3: Start Procedure and Verify
 	  Assert.assertEquals(1, result.get("negative").intValue());
 	  Assert.assertEquals(1, result.get("neutral").intValue());
 	  
-	  // Verify retrieval of sentiments
-	  response = procedureManager.getClient().query("sentiments", 
-	    ImmutableMap.of("sentiment", "positive"));
-	  result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
-	  Assert.assertEquals(ImmutableSet.of("i love the movie", "i am happy that I got this
-	    working."), result.keySet());
-	  
 ----
 
 Part 4: Start Procedure and Verify
 ==================================
 
-.. sourcecode:: java
+::
+
+	  // Verify retrieval of sentiments
+	  response = procedureManager.getClient().query("sentiments", 
+	    ImmutableMap.of("sentiment", "positive"));
+	  result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+	  Assert.assertEquals(ImmutableSet.of("i love the movie", 
+	    "i am happy that I got this working."), result.keySet());
 
 	  response = procedureManager.getClient().query("sentiments", 
 	    ImmutableMap.of("sentiment", "negative"));
@@ -161,7 +162,7 @@ Include NLTK Before Building Package
 ====================================
 
 - For these tests to work, you will need to complete the SentimentAnalysis Application 
-  to include the NLTK (natural language toolkit) as described in the earlier examples
+  to include the NLTK (natural language toolkit) as described in an earlier example
 - Stop the existing Flows and Procedures, and with Reactor running,
   build the package and watch as the tests are run
 - Build using ``mvn clean package``
