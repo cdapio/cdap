@@ -273,7 +273,7 @@ final class MetricsRequestParser {
 
 
   /**
-   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
+   * At this point, pathParts should look like methods/{method-name}
    */
   private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
