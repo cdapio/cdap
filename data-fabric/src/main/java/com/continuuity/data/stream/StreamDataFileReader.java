@@ -347,7 +347,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         if (condition.apply(position, timestamp)) {
           break;
         }
-        nextStreamEvent(ReadFilter.ALWAYS_REJECT);
+        nextStreamEvent(ReadFilter.ALWAYS_REJECT_OFFSET);
         position = eventInput.getPos();
       }
     } catch (IOException e) {
@@ -401,7 +401,8 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   /**
    * Reads or skips a {@link StreamEvent}.
    *
-   * @param filter to determine to accept or skip a stream event.
+   * @param filter to determine to accept or skip a stream event by offset
+   *               and accept or skip a stream event block by timestamp.
    * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
   private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
@@ -423,6 +424,19 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
       boolean isReadBlockLength = length < 0;
       if (isReadBlockLength) {
         length = readLength();
+      }
+
+      if (!filter.acceptTimestamp(timestamp)) {
+        long bytesSkipped = eventInput.skip(length);
+        if (bytesSkipped == length) {
+          timestamp = -1L;
+          length = -1;
+          continue;
+        } else {
+          // Couldn't skip entire block -- shouldn't be due to EOF since we checked
+          // Timestamp == -1 above, so just try again later.
+          break;
+        }
       }
 
       if (length > 0) {

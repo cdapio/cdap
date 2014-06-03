@@ -8,6 +8,8 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
+import com.continuuity.data.file.ReadFilters;
+import com.continuuity.data.file.filter.TTLReadFilter;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -164,7 +166,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
-    this.readFilter = createReadFilter(consumerConfig);
+    this.readFilter = ReadFilters.and(createTtlReadFilter(streamConfig),
+                                      createReadFilter(consumerConfig));
 
     this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
     this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
@@ -364,6 +367,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .add("stream", streamConfig)
       .add("consumer", consumerConfig)
       .toString();
+  }
+  
+  public ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
+    return new TTLReadFilter(streamConfig.getTTL());
   }
 
   private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
