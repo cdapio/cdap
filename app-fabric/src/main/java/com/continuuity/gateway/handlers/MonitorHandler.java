@@ -4,7 +4,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.common.twill.ReactorServiceManagement;
+import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -42,7 +42,7 @@ import javax.ws.rs.PathParam;
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final Map<String, ReactorServiceManagement> reactorServiceManagementMap;
+  private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
   private static final String STATUS_OK = "OK";
   private static final String STATUS_NOTOK = "NOTOK";
 
@@ -79,7 +79,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public MonitorHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient,
-                        Map<String, ReactorServiceManagement> serviceMap) {
+                        Map<String, ReactorServiceManager> serviceMap) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
     this.reactorServiceManagementMap = serviceMap;
@@ -113,7 +113,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
     if (reactorServiceManagementMap.containsKey(serviceName)) {
-      int instances = reactorServiceManagementMap.get(serviceName).getInstanceCount();
+      int instances = reactorServiceManagementMap.get(serviceName).getInstances();
       responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
@@ -135,7 +135,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      if (reactorServiceManagementMap.get(serviceName).setInstanceCount(instance)) {
+      if (reactorServiceManagementMap.get(serviceName).setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
