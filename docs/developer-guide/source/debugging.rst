@@ -5,7 +5,7 @@
 Testing and Debugging Guide
 ===============================================
 
-Introduction to Testing and Troubleshooting Applications for the Continuuity Reactor
+**Introduction to Testing, Debugging and Troubleshooting Applications for the Continuuity Reactor**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

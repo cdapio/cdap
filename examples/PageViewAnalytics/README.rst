@@ -5,9 +5,7 @@
 PageViewAnalytics Example
 ============================
 
----------------------------------------------------------------------------
-A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics
----------------------------------------------------------------------------
+**A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

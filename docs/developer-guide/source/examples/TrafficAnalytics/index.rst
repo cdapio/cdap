@@ -5,8 +5,7 @@
 TrafficAnalytics Example
 ==========================
 
-A Continuuity Reactor Application Demonstrating MapReduce
-=========================================================
+**A Continuuity Reactor Application Demonstrating MapReduce**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::

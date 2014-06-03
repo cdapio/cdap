@@ -5,7 +5,7 @@
 Advanced Continuuity Reactor Features
 =====================================
 
-Building Big Data Applications
+**Flow, DataSets and Transaction Systems and Best Practices for the Continuuity Reactor**
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
