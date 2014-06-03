@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.AbstractDatasetFrameworkTest;
@@ -48,30 +48,28 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
-    InMemoryDatasetOpExecutor opExecutorClient = new InMemoryDatasetOpExecutor();
 
     // Tx Manager to support working with datasets
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    service = new DatasetService(cConf,
-                                               new LocalLocationFactory(),
-                                               discoveryService,
-                                               discoveryService,
-                                               new InMemoryDatasetFramework(),
-                                               ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-                                                 "memoryTable", InMemoryTableModule.class),
-                                               txSystemClient,
-                                               metricsCollectionService,
-                                               opExecutorClient);
-    service.startAndWait();
-
-    DatasetManagerServiceClient dsManagerClient = new DatasetManagerServiceClient(discoveryService);
+    DatasetServiceClient dsManagerClient = new DatasetServiceClient(discoveryService);
     framework = new RemoteDatasetFramework(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
                                            new InMemoryDatasetDefinitionRegistry());
-    opExecutorClient.setClient(framework);
+    InMemoryDatasetOpExecutor opExecutorClient = new InMemoryDatasetOpExecutor(framework);
+
+    service = new DatasetService(cConf,
+                                 new LocalLocationFactory(),
+                                 discoveryService,
+                                 new InMemoryDatasetFramework(),
+                                 ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
+                                   "memoryTable", InMemoryTableModule.class),
+                                 txSystemClient,
+                                 metricsCollectionService,
+                                 opExecutorClient);
+    service.startAndWait();
   }
 
   @After

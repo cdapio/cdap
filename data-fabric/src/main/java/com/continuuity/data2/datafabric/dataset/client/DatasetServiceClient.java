@@ -10,6 +10,7 @@ import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -19,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -30,6 +32,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -38,13 +42,13 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetManagerServiceClient {
+public class DatasetServiceClient {
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DatasetManagerServiceClient(final DiscoveryServiceClient discoveryClient) {
+  public DatasetServiceClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -66,6 +70,17 @@ public class DatasetManagerServiceClient {
     }
 
     return GSON.fromJson(new String(response.responseBody, Charsets.UTF_8), DatasetInstanceMeta.class);
+  }
+
+  public Collection<DatasetInstanceSpec> getAllInstances() throws DatasetManagementException {
+    HttpResponse response = doGet("instances");
+    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         getDetails(response)));
+    }
+
+    return GSON.fromJson(new String(response.responseBody, Charsets.UTF_8),
+                         new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
@@ -184,7 +199,7 @@ public class DatasetManagerServiceClient {
     return doRequest(resource, "DELETE", null, null, null);
   }
 
-  private DatasetManagerServiceClient.HttpResponse doRequest(String resource, String requestMethod,
+  private DatasetServiceClient.HttpResponse doRequest(String resource, String requestMethod,
                                                              @Nullable Map<String, String> headers,
                                                              @Nullable String body,
                                                              @Nullable InputStream bodySrc)

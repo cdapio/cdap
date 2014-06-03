@@ -6,14 +6,13 @@ import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -42,8 +41,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
 
   @Inject
-  public DatasetInstanceHandler(DiscoveryServiceClient discoveryClient,
-                                DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
+  public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
@@ -58,8 +56,24 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/instances/")
-  public void deleteAll(HttpRequest request, final HttpResponder responder) {
-    instanceManager.deleteAll();
+  public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
+    for (DatasetInstanceSpec spec : instanceManager.getAll()) {
+      // skip if not exists: someone may be deleting it at same time
+      if (!instanceManager.delete(spec.getName())) {
+        continue;
+      }
+
+      try {
+        opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+      } catch (Exception e) {
+        String msg = String.format("Cannot delete dataset instance %s: executing delete() failed, reason: %s",
+                                   spec.getName(), e.getMessage());
+        LOG.warn(msg, e);
+        // we continue deleting if something wring happens.
+        // todo: Will later be improved by doing all in async: see REACTOR-200
+      }
+    }
+
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -95,9 +109,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetDefinition type = implManager.getType(typeName);
-
-    if (type == null) {
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeName);
+    if (typeMeta == null) {
       String message = String.format("Cannot create dataset instance %s: unknown type %s",
                                      name, typeName);
       LOG.warn(message);
@@ -105,20 +118,46 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    instanceManager.add(type.configure(name, props));
+    // Note how we execute configure() on the
+    DatasetInstanceSpec spec;
+    try {
+      spec = opExecutorClient.create(name, typeMeta, props);
+    } catch (Exception e) {
+      String msg = String.format("Cannot create dataset instance %s of type %s: executing create() failed, reason: %s",
+                                 name, typeName, e.getMessage());
+      LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
+    }
+    instanceManager.add(spec);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
   @Path("/data/instances/{instance-name}")
   public void drop(HttpRequest request, final HttpResponder responder,
-                       @PathParam("instance-name") String instanceName) {
-    LOG.info("Deleting dataset instance {}", instanceName);
+                       @PathParam("instance-name") String name) {
+    LOG.info("Deleting dataset instance {}", name);
 
-    if (!instanceManager.delete(instanceName)) {
+    DatasetInstanceSpec spec = instanceManager.get(name);
+    if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
+
+    if (!instanceManager.delete(name)) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    } catch (Exception e) {
+      String msg = String.format("Cannot delete dataset instance %s: executing delete() failed, reason: %s",
+                                 name, e.getMessage());
+      LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
+    }
+
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -132,12 +171,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       Object result = null;
       String message = null;
 
+      // NOTE: one cannot directly call create and drop, instead this should be called thru
+      //       POST/DELETE @ /data/instances/{instance-id}. Because we must create/drop metadata for these at same time
       if (method.equals("exists")) {
         result = opExecutorClient.exists(instanceName);
-      } else if (method.equals("create")) {
-        opExecutorClient.create(instanceName);
-      } else if (method.equals("drop")) {
-        opExecutorClient.drop(instanceName);
       } else if (method.equals("truncate")) {
         opExecutorClient.truncate(instanceName);
       } else if (method.equals("upgrade")) {

@@ -6,8 +6,13 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.common.http.HttpRequests;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -47,13 +52,25 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   @Override
-  public void create(String instanceName) throws Exception {
-    executeAdminOp(instanceName, "create");
+  public DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
+    throws Exception {
+
+    HttpRequests.HttpResponse httpResponse =
+      HttpRequests.post(resolve(instanceName, "create"), "",
+                        ImmutableMap.of("instance-props", GSON.toJson(props),
+                                        "type-meta", GSON.toJson(typeMeta)));
+    verifyResponse(httpResponse);
+
+    return GSON.fromJson(new String(httpResponse.getResponseBody(), Charsets.UTF_8), DatasetInstanceSpec.class);
   }
 
   @Override
-  public void drop(String instanceName) throws Exception {
-    executeAdminOp(instanceName, "drop");
+  public void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception {
+    HttpRequests.HttpResponse httpResponse =
+      HttpRequests.post(resolve(spec.getName(), "drop"), "",
+                        ImmutableMap.of("instance-spec", GSON.toJson(spec),
+                                        "type-meta", GSON.toJson(typeMeta)));
+    verifyResponse(httpResponse);
   }
 
   @Override
@@ -79,10 +96,21 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   private URL resolve(String instanceName, String opName) throws MalformedURLException {
+    return resolve(String.format("instances/%s/admin/%s", instanceName, opName));
+  }
+
+  private URL resolve(String path) throws MalformedURLException {
     InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
-    return new URL(String.format("http://%s:%s%s/data/instances/%s/admin/%s",
+    return new URL(String.format("http://%s:%s%s/data/%s",
                          addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION,
-                         instanceName, opName));
+                         path));
+  }
+
+  private void verifyResponse(HttpRequests.HttpResponse httpResponse) {
+    if (httpResponse.getResponseCode() != 200) {
+      throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
+                                 httpResponse.getResponseMessage());
+    }
   }
 }
