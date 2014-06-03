@@ -34,6 +34,7 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
@@ -512,9 +513,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     } else if (batchReadable instanceof StreamBatchReadable) {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
-      Location streamPath = streamAdmin.getConfig(stream.getStreamName()).getLocation();
+      StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+      Location streamPath = streamConfig.getLocation();
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
+      TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());
       TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
       TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
       jobConf.setInputFormatClass(TextStreamInputFormat.class);

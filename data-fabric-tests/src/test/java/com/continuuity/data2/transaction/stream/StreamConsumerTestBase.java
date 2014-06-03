@@ -4,10 +4,14 @@
 package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.data.file.ReadFilter;
+import com.continuuity.data.file.filter.AndReadFilter;
+import com.continuuity.data.file.filter.TTLReadFilter;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -27,8 +31,11 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -104,14 +111,18 @@ public abstract class StreamConsumerTestBase {
     consumer1.close();
   }
 
-  private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+  private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count, Clock clock) throws IOException {
     Map<String, String> headers = ImmutableMap.of();
     FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
-      writer.append(new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), System.currentTimeMillis()));
+      writer.append(new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime()));
     }
     writer.close();
+  }
+
+  private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+    this.writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   @Test
@@ -283,7 +294,117 @@ public abstract class StreamConsumerTestBase {
     consumer.close();
   }
 
+  @Test
+  public void testTTL() throws Exception {
+    String stream = "testTTL";
+    QueueName streamName = QueueName.fromStream(stream);
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create stream with ttl of 5000
+    long ttl = 5000;
+    Properties streamProperties = new Properties();
+    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
+    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+
+    // Write 10 expired messages to stream with timestamp 0..5000 in increments of 500
+    writeEvents(streamConfig, "Old event ", 10, new IncrementingClock(0, 500));
+
+    // Write 5 non-expired messages to stream with timestamp 5001..10001 in increments of 1000
+    writeEvents(streamConfig, "New event ", 5, new IncrementingClock(5001, 1000));
+
+    // Create a consumer, with current time of 5000 for the TTLReadFilter
+    AbstractStreamFileConsumer consumer = (AbstractStreamFileConsumer) consumerFactory
+      .create(streamName, "ttl", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+
+    // TODO: hack
+    Field field = AbstractStreamFileConsumer.class.getDeclaredField("readFilter");
+    field.setAccessible(true);
+    AndReadFilter readFilter = (AndReadFilter) field.get(consumer);
+
+    field = AndReadFilter.class.getDeclaredField("filters");
+    field.setAccessible(true);
+    ReadFilter[] readFilters = (ReadFilter[]) field.get(readFilter);
+
+    boolean replacedTTLReadFilter = false;
+    for (int i = 0; i < readFilters.length; i++) {
+      ReadFilter rf = readFilters[i];
+      if (rf instanceof TTLReadFilter) {
+        readFilters[i] = new TTLReadFilter(ttl) {
+          @Override
+          protected long getCurrentTime() {
+            return 10001;
+          }
+        };
+        replacedTTLReadFilter = true;
+      }
+    }
+
+    Assert.assertTrue(replacedTTLReadFilter);
+
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+
+    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTTL());
+
+    List<String> actualEvents = Lists.newArrayList();
+    List<String> expectedEvents = Lists.newArrayList();
+    try {
+      DequeueResult<StreamEvent> result = consumer.poll(16, 1, TimeUnit.SECONDS);
+      for (StreamEvent event : result) {
+        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
+        actualEvents.add(msg);
+      }
+    } finally {
+      txContext.finish();
+    }
+
+    for (int i = 0; i < 5; i++) {
+      expectedEvents.add("New event " + i);
+    }
+
+    Assert.assertEquals(Arrays.toString(expectedEvents.toArray()), Arrays.toString(actualEvents.toArray()));
+
+    txContext.start();
+    try {
+      // Should be no more pending events
+      DequeueResult<StreamEvent> result = consumer.poll(1, 0, TimeUnit.SECONDS);
+      Assert.assertTrue(result.isEmpty());
+    } finally {
+      txContext.finish();
+    }
+
+    consumer.close();
+  }
+
   private TransactionContext createTxContext(TransactionAware... txAwares) {
     return new TransactionContext(getTransactionClient(), txAwares);
+  }
+
+  private class Clock {
+    public long getTime() {
+      return System.currentTimeMillis();
+    }
+  }
+  
+  private class IncrementingClock extends Clock {
+    private long current;
+    private final long increment;
+
+    public IncrementingClock(long start, long increment) {
+      this.current = start;
+      this.increment = increment;
+    }
+
+    @Override
+    public long getTime() {
+      final long result = current;
+      current += increment;
+      return result;
+    }
   }
 }

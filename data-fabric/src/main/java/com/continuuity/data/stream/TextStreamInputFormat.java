@@ -12,7 +12,7 @@ import org.apache.hadoop.io.Text;
 /**
  * An {@link StreamInputFormat} that decode {@link StreamEvent} into timestamp and body text.
  */
-public final class TextStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
+public class TextStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
 
   @Override
   protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder() {

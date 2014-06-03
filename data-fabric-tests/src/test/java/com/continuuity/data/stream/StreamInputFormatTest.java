@@ -4,6 +4,7 @@
 package com.continuuity.data.stream;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.StringTokenizer;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -33,6 +35,51 @@ public class StreamInputFormatTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private static final long CURRENT_TIME = 2000;
+
+  @Test
+  public void testAllEventsWithTTL() throws Exception {
+    File inputDir = tmpFolder.newFolder();
+    File outputDir = tmpFolder.newFolder();
+
+    outputDir.delete();
+
+    final long currentTime = CURRENT_TIME;
+    final long ttl = 1500;
+
+    // Write 1000 events in one bucket under one partition, with timestamps 0..999 by 1
+    generateEvents(inputDir, 1000, 0, 1, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        if (timestamp + ttl < currentTime) {
+          return "expiredEvent " + timestamp;
+        } else {
+          return "nonExpiredEvent " + timestamp;
+        }
+      }
+    });
+
+    // Write 1000 events in one bucket under a different partition, with timestamps 1000..1999 by 1
+    generateEvents(inputDir, 1000, 1000, 1, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        return "nonExpiredEvent " + timestamp;
+      }
+    });
+
+    // Run MR with TTL = 1500, currentTime = CURRENT_TIME
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, 1500);
+
+    // Verify the result. It should have 2500 "Not expired event {timestamp}" for timestamp 1500..1999 by 1
+    Map<String, Integer> output = loadMRResult(outputDir);
+    Assert.assertEquals(1501, output.size());
+    Assert.assertEquals(null, output.get("expiredEvent"));
+    Assert.assertEquals(1500, output.get("nonExpiredEvent").intValue());
+    for (long i = (currentTime - ttl); i < currentTime; i++) {
+      Assert.assertEquals(1, output.get(Long.toString(i)).intValue());
+    }
+  }
 
   @Test
   public void testAllEvents() throws Exception {
@@ -43,7 +90,7 @@ public class StreamInputFormatTest {
     outputDir.delete();
 
     generateEvents(inputDir);
-    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 1000);
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 1000, Long.MAX_VALUE);
 
     // Verify the result. It should have 1000 "testing", and 100 for each integers in 0..9.
     Map<String, Integer> output = loadMRResult(outputDir);
@@ -64,7 +111,7 @@ public class StreamInputFormatTest {
 
     generateEvents(inputDir);
     // Run a MapReduce on 1 timestamp only.
-    runMR(inputDir, outputDir, 1401, 1402, 1000);
+    runMR(inputDir, outputDir, 1401, 1402, 1000, Long.MAX_VALUE);
 
     // Verify the result. It should have 1 "testing", and 1 "1".
     Map<String, Integer> output = loadMRResult(outputDir);
@@ -97,7 +144,7 @@ public class StreamInputFormatTest {
     writer.flush();
 
     // Run MapReduce to process all data.
-    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 1000);
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 1000, Long.MAX_VALUE);
     Map<String, Integer> output = loadMRResult(outputDir);
 
     Assert.assertEquals(3, output.size());
@@ -106,9 +153,9 @@ public class StreamInputFormatTest {
     Assert.assertEquals(1, output.get("1").intValue());
   }
 
-  private void generateEvents(File inputDir) throws IOException {
-    long baseTimestamp = 1000;
-    File partition = new File(inputDir, Long.toString(baseTimestamp / 1000) + ".1000");
+  private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,
+                              GenerateEvent generator) throws IOException {
+    File partition = new File(inputDir, Long.toString(startTime / 1000) + ".1000");
     File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
     File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
 
@@ -118,21 +165,34 @@ public class StreamInputFormatTest {
                                                            Files.newOutputStreamSupplier(indexFile),
                                                            100L);
     // Write 1000 events
-    for (int i = 0; i < 1000; i++) {
-      writer.append(StreamFileTestUtils.createEvent(baseTimestamp + i, "Testing " + (i % 10)));
+    for (int i = 0; i < numEvents; i++) {
+      long timestamp = startTime + i * timeIncrement;
+      writer.append(StreamFileTestUtils.createEvent(timestamp, generator.generate(i, timestamp)));
     }
 
     writer.close();
   }
 
-  private void runMR(File inputDir, File outputDir, long startTime, long endTime, long splitSize) throws Exception {
+  private void generateEvents(File inputDir) throws IOException {
+    generateEvents(inputDir, 1000, 1000, 1, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        return "Testing " + (index % 10);
+      }
+    });
+  }
+
+  private void runMR(File inputDir, File outputDir, long startTime, long endTime,
+                     long splitSize, long ttl) throws Exception {
+
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf);
 
+    StreamInputFormat.setTTL(job, ttl);
     StreamInputFormat.setStreamPath(job, inputDir.toURI());
     StreamInputFormat.setTimeRange(job, startTime, endTime);
     StreamInputFormat.setMaxSplitSize(job, splitSize);
-    job.setInputFormatClass(TextStreamInputFormat.class);
+    job.setInputFormatClass(TestStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));
     job.setOutputFormatClass(TextOutputFormat.class);
@@ -163,6 +223,19 @@ public class StreamInputFormatTest {
     return output;
   }
 
+  private interface GenerateEvent {
+    String generate(int index, long timestamp);
+  }
+
+  /**
+   * StreamInputFormat for testing.
+   */
+  private static final class TestStreamInputFormat extends TextStreamInputFormat {
+    @Override
+    protected long getCurrentTime() {
+      return CURRENT_TIME;
+    }
+  }
 
   /**
    * Mapper for testing.
