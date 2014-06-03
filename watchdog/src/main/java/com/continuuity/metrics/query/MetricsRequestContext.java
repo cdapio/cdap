@@ -20,6 +20,7 @@ public class MetricsRequestContext {
   private final TagType tagType;
   private final String tag;
   private final MetricsRequestParser.ProgramType programType;
+  private final MetricsRequestParser.PathType pathType;
 
   /**
    * Represents the tag type for metrics context.
@@ -31,9 +32,11 @@ public class MetricsRequestContext {
     QUEUE
   }
 
-  private MetricsRequestContext(String appId, MetricsRequestParser.ProgramType programType,
+  private MetricsRequestContext(String appId, MetricsRequestParser.PathType pathType,
+                                MetricsRequestParser.ProgramType programType,
                                 String programId, String componentId, TagType tagType, String tag) {
     this.appId = appId;
+    this.pathType = pathType;
     this.programType = programType;
     this.programId = programId;
     this.componentId = componentId;
@@ -70,6 +73,10 @@ public class MetricsRequestContext {
     return programType;
   }
 
+  public MetricsRequestParser.PathType getPathType() {
+    return pathType;
+  }
+
   public String getComponentId() {
     return componentId;
   }
@@ -96,6 +103,7 @@ public class MetricsRequestContext {
     private TagType tagType;
     private String tag;
     private MetricsRequestParser.ProgramType programType;
+    private MetricsRequestParser.PathType pathType;
 
     public Builder setAppId(String appId) {
       this.appId = appId;
@@ -104,6 +112,11 @@ public class MetricsRequestContext {
 
     public Builder setProgramType(MetricsRequestParser.ProgramType programType) {
       this.programType = programType;
+      return this;
+    }
+
+    public Builder setPathType(MetricsRequestParser.PathType pathType) {
+      this.pathType = pathType;
       return this;
     }
 
@@ -124,7 +137,7 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(appId, programType, programId, componentId, tagType, tag);
+      return new MetricsRequestContext(appId, pathType, programType, programId, componentId, tagType, tag);
     }
   }
 }

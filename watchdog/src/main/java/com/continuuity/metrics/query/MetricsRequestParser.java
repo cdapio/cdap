@@ -36,12 +36,21 @@ final class MetricsRequestParser {
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
 
-  private enum PathType {
-    APPS,
-    DATASETS,
-    STREAMS,
-    CLUSTER,
-    SERVICE
+  public enum PathType {
+    APPS("a"),
+    DATASETS("d"),
+    STREAMS("s"),
+    CLUSTER("c"),
+    SERVICE("r");
+    private final String code;
+
+    private PathType(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
   }
 
   public enum ProgramType {
@@ -154,6 +163,7 @@ final class MetricsRequestParser {
     PathType pathType;
     try {
       pathType = PathType.valueOf(pathTypeStr.toUpperCase());
+      contextBuilder.setPathType(pathType);
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
@@ -186,7 +196,7 @@ final class MetricsRequestParser {
           throw new MetricsPathException("'service must be followed by a service name");
         }
         //temporary
-        contextBuilder.setTag(MetricsRequestContext.TagType.SERVICE, "tag_request");
+        //contextBuilder.setTag(MetricsRequestContext.TagType.SERVICE, "Service");
         parseAppContext(pathParts, contextBuilder);
 
         break;

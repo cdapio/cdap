@@ -57,6 +57,14 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     String accountId = getAuthenticatedAccountId(request);
     // check for existance of elements in the path
+
+    if (metricsRequestContext.getPathType() != null) {
+      if (metricsRequestContext.getPathType().getCode().equals("r")) {
+        //Metrics is of type "Service"
+        return;
+      }
+    }
+
     String tagName = metricsRequestContext.getTag();
     if (tagName != null) {
       switch (metricsRequestContext.getTagType()) {
@@ -70,8 +78,6 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
             throw new MetricsPathException("dataset " + tagName + " not found");
           }
           break;
-        case SERVICE:
-          return;
       }
     }
     String appId = metricsRequestContext.getAppId();

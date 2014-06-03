@@ -58,7 +58,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         String path = createContext(handlerInfo);
         MetricsCollector collector = collectorCache.get(path);
         LOG.info("PRECALL Request Received at : " + path + "collection is : " + collector.toString());
-        collector.gauge("request.received", 1, "tag_request");
+        collector.gauge("request.received", 1);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }

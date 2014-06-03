@@ -8,15 +8,12 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.process.AggregatesMetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -34,8 +31,6 @@ import java.util.Map;
  * </p>
  */
 public final class AggregatesTable {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AggregatesTable.class);
 
   private final MetricsEntityCodec entityCodec;
   private final MetricsTable aggregatesTable;
@@ -94,9 +89,6 @@ public final class AggregatesTable {
         for (byte b : rowKey) {
           sb.append("0x" + String.format("%02X ", b));
         }
-        LOG.info("ROWKEY for {} is {} ", record.getContext(), sb.toString());
-        LOG.info("RECORD context : {} Name : {} RunId : {} RowKey : {}", record.getContext(), record.getName(),
-                 record.getRunId(), rowKey);
         // The no tag value
         increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), (long) record.getValue());
 
