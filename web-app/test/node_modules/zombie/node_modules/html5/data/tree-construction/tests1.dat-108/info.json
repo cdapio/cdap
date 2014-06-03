@@ -1,1 +1,0 @@
-{"errors":["4: Start tag seen without seeing a doctype first. Expected “<!DOCTYPE html>”.","15: “td” start tag in table body.","27: Unclosed elements.","31: Heading cannot be a child of another heading.","36: End tag “h1” seen but there were unclosed elements."]}

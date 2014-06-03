@@ -251,6 +251,13 @@
     </property>
 
     <property>
+        <name>stream.event.ttl</name>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
+        <description>Default time to live in milliseconds for stream events</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for stream file</description>

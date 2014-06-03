@@ -10,10 +10,11 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
-    public static final String APP_FABRIC_HTTP = "app.fabric.http";
+    public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
     public static final String GATEWAY = "gateway";
+    public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String DATASET_MANAGER = "dataset.manager";
     public static final String DATASET_EXECUTOR = "dataset.executor";
@@ -329,6 +330,7 @@ public final class Constants {
   public static final class Stream {
     /* Begin CConfiguration keys */
     public static final String BASE_DIR = "stream.base.dir";
+    public static final String TTL = "stream.event.ttl";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
@@ -482,12 +484,20 @@ public final class Constants {
   }
 
   /**
-   * Monitor constants
+   * Monitor constants.
    */
   public static final class Monitor {
     public static final String STATUS_OK = "OK";
     public static final String STATUS_NOTOK = "NOTOK";
     public static final String DISCOVERY_TIMEOUT_SECONDS = "monitor.handler.service.discovery.timeout.seconds";
+  }
+
+  /**
+   * Logging constants.
+   */
+  public static final class Logging {
+    public static final String SYSTEM_NAME = "reactor";
+    public static final String COMPONENT_NAME = "services";
   }
 
   /**
