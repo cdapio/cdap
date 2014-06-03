@@ -5,7 +5,8 @@
 ResponseCodeAnalytics Example
 =============================
 
-A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
+A Continuuity Reactor Application Demonstrating Streams, Flows, DataSets and Procedures
+=======================================================================================
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
@@ -233,4 +234,4 @@ Either:
 
 Downloading the Example
 =======================
-Download the example: :download:`continuuity-ResponseCodeAnalytics-2.2.0.zip </examples/ResponseCodeAnalytics/continuuity-ResponseCodeAnalytics-2.2.0.zip>`
+Download the example: :download:`continuuity-ResponseCodeAnalytics-2.3.0.zip </examples/ResponseCodeAnalytics/continuuity-ResponseCodeAnalytics-2.3.0.zip>`

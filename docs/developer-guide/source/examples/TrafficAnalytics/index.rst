@@ -5,7 +5,7 @@
 TrafficAnalytics Example
 ==========================
 
-A Continuuity Reactor Application demonstrating MapReduce
+A Continuuity Reactor Application Demonstrating MapReduce
 =========================================================
 
 .. reST Editor: .. section-numbering::
@@ -278,4 +278,4 @@ Either:
 
 Downloading the Example
 =======================
-Download the example: :download:`continuuity-TrafficAnalytics-2.2.0.zip </examples/TrafficAnalytics/continuuity-TrafficAnalytics-2.2.0.zip>`
+Download the example: :download:`continuuity-TrafficAnalytics-2.3.0.zip </examples/TrafficAnalytics/continuuity-TrafficAnalytics-2.3.0.zip>`

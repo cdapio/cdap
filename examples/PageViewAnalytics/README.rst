@@ -1,4 +1,4 @@
-.. :Author: John Jackson
+.. :Author: Continuuity. Inc.
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
 ============================
@@ -6,7 +6,7 @@ PageViewAnalytics Example
 ============================
 
 ---------------------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Custom DataSets and Metrics
+A Continuuity Reactor Application Demonstrating Custom DataSets and Metrics
 ---------------------------------------------------------------------------
 
 .. reST Editor: .. section-numbering::
@@ -230,4 +230,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.0.zip>`_
+`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.3.0.zip>`_
