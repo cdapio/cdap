@@ -85,10 +85,7 @@ public final class AggregatesTable {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
         Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-        StringBuilder sb = new StringBuilder();
-        for (byte b : rowKey) {
-          sb.append("0x" + String.format("%02X ", b));
-        }
+
         // The no tag value
         increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), (long) record.getValue());
 

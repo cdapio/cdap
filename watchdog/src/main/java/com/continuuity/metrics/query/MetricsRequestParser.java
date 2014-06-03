@@ -41,7 +41,7 @@ final class MetricsRequestParser {
     DATASETS("d"),
     STREAMS("s"),
     CLUSTER("c"),
-    SERVICE("r");
+    SERVICES("r");
     private final String code;
 
     private PathType(String code) {
@@ -57,7 +57,7 @@ final class MetricsRequestParser {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p"),
-    HANDLER("h");
+    HANDLERS("h");
 
     private final String code;
 
@@ -191,7 +191,7 @@ final class MetricsRequestParser {
           parseAppContext(pathParts, contextBuilder);
         }
         break;
-      case SERVICE:
+      case SERVICES:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'service must be followed by a service name");
         }
@@ -210,31 +210,6 @@ final class MetricsRequestParser {
       builder.setTagPrefix(context.getTag());
     }
     return context;
-  }
-
-  private static void parseServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
-    throws MetricsPathException {
-
-    if (!pathParts.hasNext()) {
-      return;
-    }
-    builder.setAppId(urlDecode(pathParts.next()));
-
-    if (!pathParts.hasNext()) {
-      return;
-    }
-
-    // program-type: flows, procedures, or mapreduce
-    String pathProgramTypeStr = pathParts.next();
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      builder.setProgramType(programType);
-    } catch (IllegalArgumentException e) {
-      throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
-    }
-
-
   }
 
   /**
@@ -287,7 +262,7 @@ final class MetricsRequestParser {
       case FLOWS:
         buildFlowletContext(pathParts, builder);
         break;
-      case HANDLER:
+      case HANDLERS:
         buildHandlerContext(pathParts, builder);
     }
 
@@ -302,11 +277,11 @@ final class MetricsRequestParser {
    */
   private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("method")) {
-      throw new MetricsPathException("expecting 'method' after the handler name");
+    if (!pathParts.next().equals("methods")) {
+      throw new MetricsPathException("expecting 'methods' after the handler name");
     }
     if (!pathParts.hasNext()) {
-      throw new MetricsPathException("method must be followed by a method name");
+      throw new MetricsPathException("methods must be followed by a method name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
     if (pathParts.hasNext()) {

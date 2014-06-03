@@ -77,7 +77,7 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   }
 
   // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
-  // ex2: /reactor/service/{service-name}/handler/{handler-name}/method/{method-name}/{metric}
+  // ex2: /reactor/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
   @GET
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {

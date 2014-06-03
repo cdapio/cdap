@@ -90,7 +90,7 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     TimeUnit.SECONDS.sleep(2);
 
     String resource =
-      "/reactor/service/app.fabric.http/handler/AppFabricHttpHandler/method/getAllApps/" +
+      "/reactor/services/app.fabric.http/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
     HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);

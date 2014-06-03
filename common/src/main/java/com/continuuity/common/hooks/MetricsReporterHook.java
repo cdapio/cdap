@@ -14,8 +14,8 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Records gateway requests/response metrics.
@@ -31,7 +31,6 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
-    // todo : for testing purpose, remove later
     this.serviceName = serviceName;
 
     if (metricsCollectionService != null) {
@@ -91,6 +90,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
+    //'h' is for handler, used in metrics query handler
     return String.format("%s.h.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
                          handlerInfo.getMethodName());
   }
