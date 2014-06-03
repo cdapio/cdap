@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -170,9 +171,34 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
     try {
       StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(), streamLocation);
+      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(),
+                              config.getTTL(), streamLocation);
     } finally {
       Closeables.closeQuietly(reader);
+    }
+  }
+
+  @Override
+  public void updateConfig(String streamName, StreamConfig config) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamName);
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
+
+    StreamConfig originalConfig = getConfig(streamName);
+    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
+                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+    Location tempLocation = configLocation.getTempFile("tmp");
+    try {
+      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
+
+      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                               "Rename {} to {} failed", tempLocation, configLocation);
+    } finally {
+      if (tempLocation.exists()) {
+        tempLocation.delete();
+      }
     }
   }
 
@@ -210,16 +236,21 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                             cConf.get(Constants.Stream.PARTITION_DURATION)));
     long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
+    long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
+                                                     cConf.get(Constants.Stream.TTL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, streamLocation);
-    Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
+    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+    
     try {
-      GSON.toJson(config, writer);
+      tmpConfigLocation.renameTo(configLocation);
     } finally {
-      writer.close();
+      if (tmpConfigLocation.exists()) {
+        tmpConfigLocation.delete();
+      }
     }
-    tmpConfigLocation.renameTo(configLocation);
   }
 
   @Override
@@ -247,6 +278,11 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
     }
+  }
+
+  private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {
+    return originalConfig.getIndexInterval() == newConfig.getIndexInterval()
+      && originalConfig.getPartitionDuration() == newConfig.getPartitionDuration();
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,
