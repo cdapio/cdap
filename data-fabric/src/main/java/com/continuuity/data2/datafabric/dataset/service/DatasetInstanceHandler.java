@@ -118,7 +118,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    // Note how we execute configure() on the
+    // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetInstanceSpec spec;
     try {
       spec = opExecutorClient.create(name, typeMeta, props);
