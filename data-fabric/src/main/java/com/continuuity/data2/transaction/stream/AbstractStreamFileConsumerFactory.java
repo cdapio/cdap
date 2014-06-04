@@ -127,8 +127,11 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     // Otherwise, search for files with the smallest partition start time
     // If no partition exists for the stream, start with one partition earlier than current time to make sure
     // no event will be lost if events start flowing in about the same time.
-    long startTime = StreamUtils.getPartitionStartTime(System.currentTimeMillis() - streamConfig.getPartitionDuration(),
+    long currentTime = System.currentTimeMillis();
+    long startTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getPartitionDuration(),
                                                        streamConfig.getPartitionDuration());
+    long earliestNonExpiredTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getTTL(),
+                                                                    streamConfig.getPartitionDuration());
 
     for (Location partitionLocation : streamLocation.list()) {
       if (!partitionLocation.isDirectory()) {
@@ -137,7 +140,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       }
 
       long partitionStartTime = StreamUtils.getPartitionStartTime(partitionLocation.getName());
-      if (partitionStartTime < startTime) {
+      if (earliestNonExpiredTime <= partitionStartTime && partitionStartTime < startTime) {
         startTime = partitionStartTime;
       }
     }

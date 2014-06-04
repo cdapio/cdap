@@ -48,7 +48,16 @@ public class StreamInputFormatTest {
     final long currentTime = CURRENT_TIME;
     final long ttl = 1500;
 
-    // Write 1000 events in one bucket under one partition, with timestamps 0..999 by 1
+    // Write 500 events in one bucket under one partition, with timestamps 0..499 by 1
+    // This partition file should be skipped by AbstractStreamFileConsumerFactory
+    generateEvents(inputDir, 500, 0, 1, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        return "expiredEvent " + timestamp;
+      }
+    });
+
+    // Write 1000 events in one bucket under a different partition, with timestamps 0..999 by 1
     generateEvents(inputDir, 1000, 0, 1, new GenerateEvent() {
       @Override
       public String generate(int index, long timestamp) {
