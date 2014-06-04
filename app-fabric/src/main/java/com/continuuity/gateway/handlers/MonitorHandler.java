@@ -72,7 +72,7 @@ public class MonitorHandler extends AbstractHttpHandler {
                         TransactionSystemClient txClient) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.discoveryTimeout = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS, 1);
+    this.discoveryTimeout = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS);
   }
 
   //Return the status of reactor services in JSON format
