@@ -121,7 +121,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     return String.format("%s.%s.%s", tablePrefix, streamName.getSimpleName(), namespace);
   }
 
-  private MultiLiveStreamFileReader createReader(StreamConfig streamConfig,
+  private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,
                                                  StreamConsumerState consumerState) throws IOException {
     Location streamLocation = streamConfig.getLocation();
     Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
@@ -130,12 +130,16 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     final int generation = StreamUtils.getGeneration(streamConfig);
     streamLocation = StreamUtils.createGenerationLocation(streamLocation, generation);
 
+    final long currentTime = System.currentTimeMillis();
+
     if (!Iterables.isEmpty(consumerState.getState())) {
-      // See if the offset has the same generation. If not, don't use the old states.
+      // See if any offset has a different generation or is expired. If so, don't use the old states.
       boolean useStoredStates = Iterables.all(consumerState.getState(), new Predicate<StreamFileOffset>() {
         @Override
         public boolean apply(StreamFileOffset input) {
-          return generation == input.getGeneration();
+          boolean isExpired = input.getPartitionEnd() + streamConfig.getTTL() < currentTime;
+          boolean sameGeneration = generation == input.getGeneration();
+          return !isExpired && sameGeneration;
         }
       });
 
@@ -152,7 +156,6 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     // Otherwise, search for files with the smallest partition start time
     // If no partition exists for the stream, start with one partition earlier than current time to make sure
     // no event will be lost if events start flowing in about the same time.
-    long currentTime = System.currentTimeMillis();
     long startTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getPartitionDuration(),
                                                        streamConfig.getPartitionDuration());
     long earliestNonExpiredTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getTTL(),

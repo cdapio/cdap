@@ -111,7 +111,9 @@ public abstract class StreamConsumerTestBase {
     consumer1.close();
   }
 
-  private List<StreamEventRep> writeEvents(StreamConfig streamConfig, String msgPrefix, int count, Clock clock) throws IOException {
+  private List<StreamEventRep> writeEvents(StreamConfig streamConfig, String msgPrefix,
+                                           int count, Clock clock) throws IOException {
+
     FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
     try {
       return writeEvents(writer, streamConfig, msgPrefix, count, clock);
