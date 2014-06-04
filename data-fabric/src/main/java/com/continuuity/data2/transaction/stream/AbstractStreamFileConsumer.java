@@ -9,7 +9,6 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.file.ReadFilters;
-import com.continuuity.data.file.filter.TTLReadFilter;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -35,6 +34,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.sun.istack.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,11 +154,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * @param reader For reading stream events. This class is responsible for closing the reader.
    * @param consumerStateStore The state store for saving consumer state
    * @param beginConsumerState Consumer state to begin with.
+   * @param extraFilter Extra {@link ReadFilter} that is ANDed with default read filter and applied first.
    */
   protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                        StreamConsumerStateStore consumerStateStore,
-                                       StreamConsumerState beginConsumerState) {
+                                       StreamConsumerState beginConsumerState,
+                                       @Nullable ReadFilter extraFilter) {
 
     LOG.info("Create consumer {}, reader offsets: {}", consumerConfig, reader.getPosition());
     this.streamName = QueueName.fromStream(streamConfig.getName());
@@ -166,7 +168,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
-    this.readFilter = createReadFilter(consumerConfig, streamConfig);
+    this.readFilter = createReadFilter(consumerConfig, extraFilter);
 
     this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
     this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
@@ -368,8 +370,14 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .toString();
   }
 
-  private ReadFilter createReadFilter(ConsumerConfig consumerConfig, StreamConfig streamConfig) {
-    return ReadFilters.and(createTtlReadFilter(streamConfig), createBaseReadFilter(consumerConfig));
+  private ReadFilter createReadFilter(ConsumerConfig consumerConfig, @Nullable ReadFilter extraFilter) {
+    ReadFilter baseFilter = createBaseReadFilter(consumerConfig);
+
+    if (extraFilter != null) {
+      return ReadFilters.and(extraFilter, baseFilter);
+    } else {
+      return baseFilter;
+    }
   }
 
   private ReadFilter createBaseReadFilter(final ConsumerConfig consumerConfig) {
@@ -394,10 +402,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         return instanceId == (hashValue % groupSize);
       }
     };
-  }
-
-  private ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
-    return new TTLReadFilter(streamConfig.getTTL());
   }
 
   private void getEvents(List<? extends StreamEventOffset> source,
