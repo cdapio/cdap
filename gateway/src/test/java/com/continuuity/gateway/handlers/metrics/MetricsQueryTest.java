@@ -77,56 +77,6 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     }
   }
 
-
-  @Test
-  public void testingSystemMetricsWithMethod() throws Exception {
-    // Insert system metric
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
-                                                                "appfabric.AppFabricHttpHandler.getAllApps",
-                                                                "0");
-    collector.gauge("request.received", 1);
-
-    // Wait for collection to happen
-    TimeUnit.SECONDS.sleep(2);
-
-    String request =
-      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
-        "request.received?aggregate=true";
-    systemMetrics(request);
-  }
-
-  @Test
-  public void testingSystemMetricsWithHandler() throws Exception {
-    // Insert system metric
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
-                                                                "metrics.MetricsQueryHandler.handleComponent",
-                                                                "0");
-    collector.gauge("request.received", 1);
-
-    // Wait for collection to happen
-    TimeUnit.SECONDS.sleep(2);
-
-    String request = "/reactor/services/metrics/handlers/MetricsQueryHandler/request.received?aggregate=true";
-    systemMetrics(request);
-  }
-
-  @Test
-  public void testingSystemMetricsWithService() throws Exception {
-    // Insert system metric  (stream.handler is the service name)
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
-                                                                "stream.handler.StreamHandler.enqueue",
-                                                                "0");
-    collector.gauge("request.received", 1);
-
-    // Wait for collection to happen
-    TimeUnit.SECONDS.sleep(2);
-
-    String request =
-      "/reactor/services/stream.handler/request.received?aggregate=true";
-    systemMetrics(request);
-  }
-
-
   @Test
   public void testingTransactoinMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)

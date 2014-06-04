@@ -114,7 +114,7 @@ final class MetricsRequestParser {
     String strippedPath = uriPath.substring(0, index);
 
     MetricsRequestContext metricsRequestContext;
-    if (strippedPath.startsWith("/reactor/cluster")) {
+    if (strippedPath.startsWith("reactor/cluster")) {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();

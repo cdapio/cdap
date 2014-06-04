@@ -1,8 +1,11 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.metrics.Metrics;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -11,8 +14,12 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +43,24 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractTransactionStateStorageTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionStateStorageTest.class);
   private static Random random = new Random();
+  private static Injector injector;
 
   protected abstract CConfiguration getConfiguration(String testName) throws IOException;
 
   protected abstract AbstractTransactionStateStorage getStorage(CConfiguration conf);
+
+  @Before
+  public void before() {
+    injector = Guice.createInjector
+      (new AbstractModule() {
+         @Override
+         protected void configure() {
+           MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+           bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+         }
+       }
+      );
+  }
 
   @Test
   public void testSnapshotPersistence() throws Exception {
@@ -110,7 +131,8 @@ public abstract class AbstractTransactionStateStorageTest {
     TransactionStateStorage storage3 = null;
     try {
       storage = getStorage(conf);
-      InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage, null);
+      InMemoryTransactionManager txManager = new InMemoryTransactionManager
+        (conf, storage, injector.getInstance(MetricsCollectionService.class));
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -133,7 +155,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // starts a new tx manager
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, null);
+      txManager = new InMemoryTransactionManager(conf, storage2, injector.getInstance(MetricsCollectionService.class));
       txManager.startAndWait();
 
       // check that the reloaded state matches the old
@@ -177,7 +199,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage3, null);
+      txManager = new InMemoryTransactionManager(conf, storage3, injector.getInstance(MetricsCollectionService.class));
       txManager.startAndWait();
 
       // verify state again matches (this time should include WAL replay)
@@ -213,7 +235,8 @@ public abstract class AbstractTransactionStateStorageTest {
     TransactionStateStorage storage2 = null;
     try {
       storage1 = getStorage(conf);
-      InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage1, null);
+      InMemoryTransactionManager txManager = new InMemoryTransactionManager
+        (conf, storage1, injector.getInstance(MetricsCollectionService.class));
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -233,7 +256,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
       // simulate a failure by starting a new tx manager without stopping first
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, null);
+      txManager = new InMemoryTransactionManager(conf, storage2, injector.getInstance(MetricsCollectionService.class));
       txManager.startAndWait();
 
       // check that the reloaded state matches the old

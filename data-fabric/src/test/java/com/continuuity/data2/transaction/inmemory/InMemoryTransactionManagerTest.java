@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -10,6 +11,10 @@ import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   static CConfiguration conf = CConfiguration.create();
+  static Injector injector;
 
   InMemoryTransactionManager txManager = null;
   TransactionStateStorage txStateStorage = null;
@@ -41,10 +47,20 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   @Before
   public void before() {
+
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     // todo should create two sets of tests, one with LocalFileTxStateStorage and one with InMemoryTxStateStorage
+    injector = Guice.createInjector(
+      new AbstractModule() {
+      @Override
+      protected void configure() {
+        MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+        bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+      }
+    });
     txStateStorage = new InMemoryTransactionStateStorage();
-    txManager = new InMemoryTransactionManager(conf, txStateStorage, null);
+    txManager = new InMemoryTransactionManager
+      (conf, txStateStorage, injector.getInstance(MetricsCollectionService.class));
     txManager.startAndWait();
   }
 
@@ -58,7 +74,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 3);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
-    InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage(), null);
+    InMemoryTransactionManager txm = new InMemoryTransactionManager
+      (conf, new InMemoryTransactionStateStorage(), injector.getInstance(MetricsCollectionService.class));
     txm.startAndWait();
     try {
       Assert.assertEquals(0, txm.getInvalidSize());
