@@ -19,6 +19,10 @@ public class TTLReadFilter extends ReadFilter {
     this.ttl = ttl;
   }
 
+  public long getTTL() {
+    return ttl;
+  }
+
   @Override
   public boolean acceptTimestamp(long timestamp) {
     return getCurrentTime() - timestamp <= ttl;

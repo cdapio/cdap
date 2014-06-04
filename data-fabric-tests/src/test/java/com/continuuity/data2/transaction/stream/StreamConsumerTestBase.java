@@ -381,6 +381,108 @@ public abstract class StreamConsumerTestBase {
     consumer.close();
   }
 
+
+  @Test
+  public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
+    String stream = "testTTL";
+    QueueName streamName = QueueName.fromStream(stream);
+    StreamAdmin streamAdmin = getStreamAdmin();
+
+    // Create stream with ttl of 5000
+    final long ttl = 5000;
+    final long currentTime = 5001;
+    final long latestExpiredTime = currentTime - ttl - 1;
+    final long earliestNonExpiredTime = currentTime - ttl;
+
+    Properties streamProperties = new Properties();
+    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
+    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    streamAdmin.create(stream, streamProperties);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+
+    // Write 100 expired messages to stream with expired timestamp
+    writeEvents(streamConfig, "Old event ", 100, new ConstantClock(latestExpiredTime));
+
+    // Write 500 non-expired messages to stream with timestamp earliestNonExpiredTime..currentTime
+    writeEvents(streamConfig, "New event.0 ", 100, new IncrementingClock(earliestNonExpiredTime, ttl / 100));
+    writeEvents(streamConfig, "New event.1 ", 100, new IncrementingClock(earliestNonExpiredTime, ttl / 100));
+    writeEvents(streamConfig, "New event.2 ", 100, new IncrementingClock(earliestNonExpiredTime, ttl / 100));
+    writeEvents(streamConfig, "New event.3 ", 100, new IncrementingClock(earliestNonExpiredTime, ttl / 100));
+    writeEvents(streamConfig, "New event.4 ", 100, new IncrementingClock(earliestNonExpiredTime, ttl / 100));
+
+    // Create a consumer, with constant current time for the TTLReadFilter
+    AbstractStreamFileConsumer consumer = (AbstractStreamFileConsumer) consumerFactory
+      .create(streamName, "ttl", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    makeTTLReadFilterConstant(consumer, currentTime);
+
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+
+    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTTL());
+
+    List<String> actualEvents = Lists.newArrayList();
+    List<String> expectedEvents = Lists.newArrayList();
+    try {
+      DequeueResult<StreamEvent> result = consumer.poll(600, 1, TimeUnit.SECONDS);
+      for (StreamEvent event : result) {
+        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
+        actualEvents.add(msg);
+      }
+    } finally {
+      txContext.finish();
+    }
+
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 100; j++) {
+        expectedEvents.add("New event." + i + " " + j);
+      }
+    }
+
+    Assert.assertEquals(Arrays.toString(expectedEvents.toArray()), Arrays.toString(actualEvents.toArray()));
+
+    txContext.start();
+    try {
+      // Should be no more pending events
+      DequeueResult<StreamEvent> result = consumer.poll(1, 0, TimeUnit.SECONDS);
+      Assert.assertTrue(result.isEmpty());
+    } finally {
+      txContext.finish();
+    }
+
+    consumer.close();
+  }
+
+  private void makeTTLReadFilterConstant(AbstractStreamFileConsumer consumer, final long currentTime) throws Exception {
+    // TODO: hack
+    Field field = AbstractStreamFileConsumer.class.getDeclaredField("readFilter");
+    field.setAccessible(true);
+    AndReadFilter readFilter = (AndReadFilter) field.get(consumer);
+
+    field = AndReadFilter.class.getDeclaredField("filters");
+    field.setAccessible(true);
+    ReadFilter[] readFilters = (ReadFilter[]) field.get(readFilter);
+
+    boolean replacedTTLReadFilter = false;
+    for (int i = 0; i < readFilters.length; i++) {
+      ReadFilter rf = readFilters[i];
+      if (rf instanceof TTLReadFilter) {
+        TTLReadFilter originalFilter = (TTLReadFilter) rf;
+        readFilters[i] = new TTLReadFilter(originalFilter.getTTL()) {
+          @Override
+          protected long getCurrentTime() {
+            return currentTime;
+          }
+        };
+        replacedTTLReadFilter = true;
+      }
+    }
+
+    Assert.assertTrue(replacedTTLReadFilter);
+  }
+
   private TransactionContext createTxContext(TransactionAware... txAwares) {
     return new TransactionContext(getTransactionClient(), txAwares);
   }
@@ -390,7 +492,20 @@ public abstract class StreamConsumerTestBase {
       return System.currentTimeMillis();
     }
   }
-  
+
+  private class ConstantClock extends Clock {
+    private long time;
+
+    private ConstantClock(long time) {
+      this.time = time;
+    }
+
+    @Override
+    public long getTime() {
+      return time;
+    }
+  }
+
   private class IncrementingClock extends Clock {
     private long current;
     private final long increment;
