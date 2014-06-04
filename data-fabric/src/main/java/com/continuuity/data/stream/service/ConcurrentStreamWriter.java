@@ -8,24 +8,32 @@ import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.stream.DefaultStreamEventData;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.StreamPropertyListener;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,23 +68,29 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriter.class);
 
+  private final StreamCoordinator streamCoordinator;
   private final StreamAdmin streamAdmin;
   private final StreamMetaStore streamMetaStore;
-  private final StreamFileWriterFactory writerFactory;
   private final int workerThreads;
   private final MetricsCollector metricsCollector;
   private final ConcurrentMap<String, EventQueue> eventQueues;
+  private final FileWriterSupplierFactory writerSupplierFactory;
+  private final Set<String> generationWatched;
+  private final List<Cancellable> cancellables;
   private final Lock createLock;
 
-  public ConcurrentStreamWriter(StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
-                                StreamFileWriterFactory writerFactory,
+  public ConcurrentStreamWriter(StreamCoordinator streamCoordinator, StreamAdmin streamAdmin,
+                                StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
                                 int workerThreads, MetricsCollector metricsCollector) {
+    this.streamCoordinator = streamCoordinator;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.writerFactory = writerFactory;
     this.workerThreads = workerThreads;
     this.metricsCollector = metricsCollector;
     this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
+    this.writerSupplierFactory = new FileWriterSupplierFactory(writerFactory);
+    this.generationWatched = Sets.newHashSet();
+    this.cancellables = Lists.newArrayList();
     this.createLock = new ReentrantLock();
   }
 
@@ -105,6 +119,10 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   @Override
   public void close() throws IOException {
+    for (Cancellable cancellable : cancellables) {
+      cancellable.cancel();
+    }
+
     for (EventQueue queue : eventQueues.values()) {
       try {
         queue.close();
@@ -123,33 +141,90 @@ public final class ConcurrentStreamWriter implements Closeable {
 
     createLock.lock();
     try {
+      // Double check
+      eventQueue = eventQueues.get(streamName);
+      if (eventQueue != null) {
+        return eventQueue;
+      }
+
       if (!streamMetaStore.streamExists(accountId, streamName)) {
         throw new IllegalArgumentException("Stream not exists");
       }
       StreamUtils.ensureExists(streamAdmin, streamName);
+
+      if (generationWatched.add(streamName)) {
+        cancellables.add(streamCoordinator.addListener(streamName, writerSupplierFactory));
+      }
+
+      eventQueue = new EventQueue(streamName, writerSupplierFactory.create(streamName));
+      eventQueues.put(streamName, eventQueue);
+
+      return eventQueue;
+
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);
     } finally {
       createLock.unlock();
     }
-    eventQueue = new EventQueue(streamName, createWriterSupplier(streamName));
-    EventQueue oldQueue = eventQueues.putIfAbsent(streamName, eventQueue);
-
-    return (oldQueue == null) ? eventQueue : oldQueue;
   }
 
-  private Supplier<FileWriter<StreamEvent>> createWriterSupplier(final String streamName) {
-    return new Supplier<FileWriter<StreamEvent>>() {
-      @Override
-      public FileWriter<StreamEvent> get() {
+  /**
+   * Factory for creating file writer supplier. It also watch for changes in stream generation so that
+   * it can create appropriate file writer supplier.
+   */
+  private final class FileWriterSupplierFactory extends StreamPropertyListener {
+
+    private final StreamFileWriterFactory writerFactory;
+    private final Map<String, Integer> generations;
+
+    FileWriterSupplierFactory(StreamFileWriterFactory writerFactory) {
+      this.writerFactory = writerFactory;
+      this.generations = Collections.synchronizedMap(Maps.<String, Integer>newHashMap());
+    }
+
+    @Override
+    public void generationChanged(String streamName, int generation) {
+      LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamName, generation);
+      generations.put(streamName, generation);
+
+      EventQueue eventQueue = eventQueues.remove(streamName);
+      if (eventQueue != null) {
         try {
-          return writerFactory.create(streamName);
+          eventQueue.close();
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          LOG.warn("Failed to close writer.", e);
         }
       }
-    };
+    }
+
+    @Override
+    public void generationDeleted(String streamName) {
+      // Generation deleted. Remove the cache.
+      // This makes creation of file writer resort to scanning the stream directory for generation id.
+      LOG.debug("Generation for stream '{}' deleted for stream writer", streamName);
+      generations.remove(streamName);
+    }
+
+    Supplier<FileWriter<StreamEvent>> create(final String streamName) {
+      return new Supplier<FileWriter<StreamEvent>>() {
+        @Override
+        public FileWriter<StreamEvent> get() {
+          try {
+            StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+            Integer generation = generations.get(streamName);
+            if (generation == null) {
+              generation = StreamUtils.getGeneration(streamConfig);
+            }
+
+            LOG.info("Create stream writer for {} with generation {}", streamName, generation);
+            return writerFactory.create(streamConfig, generation);
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+    }
   }
 
   /**
@@ -238,10 +313,16 @@ public final class ConcurrentStreamWriter implements Closeable {
           continue;
         }
         try {
-          // Close is only called from the handler destroy method, hence no need to worry about pending events
-          // in the queue, as the http service already closed the connection, hence no guarantee on whether
-          // the event is persisted or not.
           writerSupplier.get().close();
+
+          // Drain the queue with failure. This could happen when
+          // 1. Shutting down of http service, which is fine to set to failure as all connections are closed already.
+          // 2. When stream generation change. In this case, the client would received failure.
+          HandlerStreamEventData data = queue.poll();
+          while (data != null) {
+            data.setState(HandlerStreamEventData.State.FAILURE);
+            data = queue.poll();
+          }
         } finally {
           done = true;
           writerFlag.set(false);

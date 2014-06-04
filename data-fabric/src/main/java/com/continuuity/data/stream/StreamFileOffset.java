@@ -23,14 +23,14 @@ public final class StreamFileOffset {
   private final String namePrefix;
   private final int seqId;
   private final long offset;
-  private final int generationId;
+  private final int generation;
 
   /**
    * Clones from another {@link StreamFileOffset}.
    * @param other The instance to clone from.
    */
   public StreamFileOffset(StreamFileOffset other) {
-    this(other.getEventLocation(), other.getOffset());
+    this(other, other.getOffset());
   }
 
   /**
@@ -40,14 +40,17 @@ public final class StreamFileOffset {
    * @param offset file offset
    */
   public StreamFileOffset(StreamFileOffset other, long offset) {
-    this(other.getEventLocation(), offset);
+    this.eventLocation = other.eventLocation;
+    this.indexLocation = other.indexLocation;
+    this.partitionStart = other.partitionStart;
+    this.partitionEnd = other.partitionEnd;
+    this.namePrefix = other.namePrefix;
+    this.seqId = other.seqId;
+    this.generation = other.generation;
+    this.offset = offset;
   }
 
-  public StreamFileOffset(Location eventLocation) {
-    this(eventLocation, 0L);
-  }
-
-  public StreamFileOffset(Location eventLocation, long offset) {
+  public StreamFileOffset(Location eventLocation, long offset, int generation) {
     Preconditions.checkNotNull(eventLocation, "Event file location cannot be null.");
 
     this.eventLocation = eventLocation;
@@ -55,15 +58,14 @@ public final class StreamFileOffset {
     this.offset = offset;
 
     // See StreamInputFormat for the path format
-    String partitionName = StreamUtils.getPartitionName(eventLocation.toURI());
+    String partitionName = StreamUtils.getPartitionName(eventLocation);
     this.partitionStart = StreamUtils.getPartitionStartTime(partitionName);
     this.partitionEnd = StreamUtils.getPartitionEndTime(partitionName);
 
     this.namePrefix = StreamUtils.getNamePrefix(eventLocation.getName());
     this.seqId = StreamUtils.getSequenceId(eventLocation.getName());
 
-    // TODO: This is plan for stream truncate implementation.
-    this.generationId = 0;
+    this.generation = generation;
   }
 
   public final Location getEventLocation() {
@@ -94,8 +96,8 @@ public final class StreamFileOffset {
     return seqId;
   }
 
-  public int getGenerationId() {
-    return generationId;
+  public int getGeneration() {
+    return generation;
   }
 
   @Override
