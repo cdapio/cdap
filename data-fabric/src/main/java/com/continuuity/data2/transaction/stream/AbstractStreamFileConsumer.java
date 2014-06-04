@@ -368,7 +368,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .toString();
   }
 
-  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig, StreamConfig streamConfig) {
+  private ReadFilter createReadFilter(ConsumerConfig consumerConfig, StreamConfig streamConfig) {
+    return ReadFilters.and(createTtlReadFilter(streamConfig), createBaseReadFilter(consumerConfig));
+  }
+
+  private ReadFilter createBaseReadFilter(final ConsumerConfig consumerConfig) {
     final int groupSize = consumerConfig.getGroupSize();
     final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
 
@@ -383,15 +387,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     // file offset as a way to spread events across consumers
     final int instanceId = consumerConfig.getInstanceId();
 
-    ReadFilter partitionFilter = new ReadFilter() {
+    return new ReadFilter() {
       @Override
       public boolean acceptOffset(long offset) {
         int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
         return instanceId == (hashValue % groupSize);
       }
     };
-
-    return ReadFilters.and(createTtlReadFilter(streamConfig), partitionFilter);
   }
 
   private ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
