@@ -161,8 +161,11 @@ public final class StreamUtils {
    * @param streamBaseLocation the base directory for the stream
    * @param generation generation id
    * @return Location for the given generation
+   *
+   * @see StreamInputFormat
    */
   public static Location createGenerationLocation(Location streamBaseLocation, int generation) throws IOException {
+    // 0 padding generation is just for sorted view in ls. Not carry any special meaning.
     return (generation == 0) ? streamBaseLocation : streamBaseLocation.append(String.format("%06d", generation));
   }
 
@@ -176,6 +179,7 @@ public final class StreamUtils {
    */
   public static Location createPartitionLocation(Location baseLocation,
                                                  long partitionStart, long partitionDuration) throws IOException {
+    // 0 padding is just for sorted view in ls. Not carry any special meaning.
     String path = String.format("%010d.%05d",
                                 TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
                                 TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
@@ -196,6 +200,7 @@ public final class StreamUtils {
    */
   public static Location createStreamLocation(Location partitionLocation, String prefix,
                                               int seqId, StreamFileType type) throws IOException {
+    // 0 padding sequence id is just for sorted view in ls. Not carry any special meaning.
     return partitionLocation.append(String.format("%s.%06d.%s", prefix, seqId, type.getSuffix()));
   }
 

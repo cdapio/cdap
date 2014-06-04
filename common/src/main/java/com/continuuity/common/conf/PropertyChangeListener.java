@@ -4,7 +4,7 @@
 package com.continuuity.common.conf;
 
 /**
- * A listener for watching changes in {@link com.continuuity.common.zookeeper.store.ZKPropertyStore}.
+ * A listener for watching changes in {@link PropertyStore}.
  *
  * @param <T> Type of property
  */

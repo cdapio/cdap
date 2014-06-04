@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import javax.annotation.Nullable;
 
 /**
- * An async function to update property in {@link com.continuuity.common.zookeeper.store.ZKPropertyStore}.
+ * An async function to update property in {@link PropertyStore}.
  *
  * @param <T> Type of property to update
  */

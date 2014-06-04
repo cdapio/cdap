@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of a {@link com.continuuity.common.conf.PropertyChangeListener} that only log for callbacks.
+ * Implementation of a {@link PropertyChangeListener} that only log for callbacks.
  *
  * @param <T> Type of the property
  */

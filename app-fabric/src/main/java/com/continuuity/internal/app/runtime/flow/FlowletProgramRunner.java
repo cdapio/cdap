@@ -639,7 +639,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Initialize to get executed when the flowlet driver starts to start listen to changes in stream properties.
+   * This service is for start/stop listening to changes in stream property, through the help of
+   * {@link StreamCoordinator}, so that it can react to changes and properly reconfigure stream consumers used by
+   * the flowlet. This hook is provided to {@link FlowletProcessDriver} and being start/stop
+   * when the driver start/stop.
    */
   private static final class FlowletServiceHook extends AbstractService {
 
