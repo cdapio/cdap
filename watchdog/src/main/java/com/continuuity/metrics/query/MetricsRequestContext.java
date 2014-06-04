@@ -19,7 +19,7 @@ public class MetricsRequestContext {
   private final String contextPrefix;
   private final TagType tagType;
   private final String tag;
-  private final MetricsRequestParser.ProgramType programType;
+  private final MetricsRequestParser.RequestType programType;
   private final MetricsRequestParser.PathType pathType;
 
   /**
@@ -33,11 +33,11 @@ public class MetricsRequestContext {
   }
 
   private MetricsRequestContext(String appId, MetricsRequestParser.PathType pathType,
-                                MetricsRequestParser.ProgramType programType,
+                                MetricsRequestParser.RequestType requestType,
                                 String programId, String componentId, TagType tagType, String tag) {
     this.appId = appId;
     this.pathType = pathType;
-    this.programType = programType;
+    this.programType = requestType;
     this.programId = programId;
     this.componentId = componentId;
     this.tagType = tagType;
@@ -48,8 +48,10 @@ public class MetricsRequestContext {
       this.contextPrefix = null;
     } else {
       contextParts.add(appId);
-      if (programType != null) {
-        contextParts.add(programType.getCode());
+      if (requestType != null) {
+        if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
+          contextParts.add(requestType.getCode());
+        }
         if (programId != null && !programId.isEmpty()) {
           contextParts.add(programId);
           if (componentId != null && !componentId.isEmpty()) {
@@ -69,7 +71,7 @@ public class MetricsRequestContext {
     return programId;
   }
 
-  public MetricsRequestParser.ProgramType getProgramType() {
+  public MetricsRequestParser.RequestType getProgramType() {
     return programType;
   }
 
@@ -102,7 +104,7 @@ public class MetricsRequestContext {
     private String componentId;
     private TagType tagType;
     private String tag;
-    private MetricsRequestParser.ProgramType programType;
+    private MetricsRequestParser.RequestType requestType;
     private MetricsRequestParser.PathType pathType;
 
     public Builder setAppId(String appId) {
@@ -110,8 +112,8 @@ public class MetricsRequestContext {
       return this;
     }
 
-    public Builder setProgramType(MetricsRequestParser.ProgramType programType) {
-      this.programType = programType;
+    public Builder setRequestType(MetricsRequestParser.RequestType requestType) {
+      this.requestType = requestType;
       return this;
     }
 
@@ -137,7 +139,7 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(appId, pathType, programType, programId, componentId, tagType, tag);
+      return new MetricsRequestContext(appId, pathType, requestType, programId, componentId, tagType, tag);
     }
   }
 }

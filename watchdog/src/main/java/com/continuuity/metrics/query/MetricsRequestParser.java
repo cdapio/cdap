@@ -37,23 +37,14 @@ final class MetricsRequestParser {
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
 
   public enum PathType {
-    APPS("a"),
-    DATASETS("d"),
-    STREAMS("s"),
-    CLUSTER("c"),
-    SERVICES("r");
-    private final String code;
-
-    private PathType(String code) {
-      this.code = code;
-    }
-
-    public String getCode() {
-      return code;
-    }
+    APPS,
+    DATASETS,
+    STREAMS,
+    CLUSTER,
+    SERVICES;
   }
 
-  public enum ProgramType {
+  public enum RequestType {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p"),
@@ -61,7 +52,7 @@ final class MetricsRequestParser {
 
     private final String code;
 
-    private ProgramType(String code) {
+    private RequestType(String code) {
       this.code = code;
     }
 
@@ -170,7 +161,7 @@ final class MetricsRequestParser {
 
     switch(pathType) {
       case APPS:
-        parseAppContext(pathParts, contextBuilder);
+        parseSubContext(pathParts, contextBuilder);
         break;
       case STREAMS:
         if (!pathParts.hasNext()) {
@@ -188,14 +179,14 @@ final class MetricsRequestParser {
           if (!pathParts.next().equals("apps")) {
             throw new MetricsPathException("expecting 'apps' after stream or dataset name");
           }
-          parseAppContext(pathParts, contextBuilder);
+          parseSubContext(pathParts, contextBuilder);
         }
         break;
       case SERVICES:
         if (!pathParts.hasNext()) {
-          throw new MetricsPathException("'service must be followed by a service name");
+          throw new MetricsPathException("'services must be followed by a service name");
         }
-        parseAppContext(pathParts, contextBuilder);
+        parseSubContext(pathParts, contextBuilder);
 
         break;
 
@@ -215,7 +206,7 @@ final class MetricsRequestParser {
   /**
    * pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
    */
-  static void parseAppContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  static void parseSubContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
 
     if (!pathParts.hasNext()) {
@@ -227,12 +218,12 @@ final class MetricsRequestParser {
       return;
     }
 
-    // program-type: flows, procedures, or mapreduce or handlers
+    // request-type: flows, procedures, or mapreduce or handlers
     String pathProgramTypeStr = pathParts.next();
-    ProgramType programType;
+    RequestType requestType;
     try {
-      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      builder.setProgramType(programType);
+      requestType = RequestType.valueOf(pathProgramTypeStr.toUpperCase());
+      builder.setRequestType(requestType);
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
@@ -247,7 +238,7 @@ final class MetricsRequestParser {
       return;
     }
 
-    switch(programType) {
+    switch(requestType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
         MapReduceType mrType;
@@ -264,6 +255,7 @@ final class MetricsRequestParser {
         break;
       case HANDLERS:
         buildHandlerContext(pathParts, builder);
+        break;
     }
 
     if (pathParts.hasNext()) {
