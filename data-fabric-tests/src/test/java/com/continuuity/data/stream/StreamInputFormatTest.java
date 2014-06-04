@@ -39,7 +39,7 @@ public class StreamInputFormatTest {
   private static final long CURRENT_TIME = 2000;
 
   @Test
-  public void testAllEventsWithTTL() throws Exception {
+  public void testTTL() throws Exception {
     File inputDir = tmpFolder.newFolder();
     File outputDir = tmpFolder.newFolder();
 
@@ -71,7 +71,7 @@ public class StreamInputFormatTest {
     // Run MR with TTL = 1500, currentTime = CURRENT_TIME
     runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, 1500);
 
-    // Verify the result. It should have 2500 "Not expired event {timestamp}" for timestamp 1500..1999 by 1
+    // Verify the result. It should have 1500 "nonExpiredEvent {timestamp}" for timestamp 500..1999 by 1.
     Map<String, Integer> output = loadMRResult(outputDir);
     Assert.assertEquals(1501, output.size());
     Assert.assertEquals(null, output.get("expiredEvent"));
@@ -79,6 +79,42 @@ public class StreamInputFormatTest {
     for (long i = (currentTime - ttl); i < currentTime; i++) {
       Assert.assertEquals(1, output.get(Long.toString(i)).intValue());
     }
+  }
+
+  @Test
+  public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
+    File inputDir = tmpFolder.newFolder();
+    File outputDir = tmpFolder.newFolder();
+
+    outputDir.delete();
+
+    final long currentTime = CURRENT_TIME;
+    final long ttl = 1;
+
+    // Write 1000 events in one bucket under one partition, with timestamp currentTime - ttl - 1
+    generateEvents(inputDir, 1000, currentTime - ttl - 1, 0, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        return "expiredEvent " + timestamp;
+      }
+    });
+
+    // Write 1000 events in one bucket under a different partition, with currentTime
+    generateEvents(inputDir, 1000, currentTime, 0, new GenerateEvent() {
+      @Override
+      public String generate(int index, long timestamp) {
+        return "nonExpiredEvent " + timestamp;
+      }
+    });
+
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, ttl);
+
+    // Verify the result. It should have 1000 "nonExpiredEvent {currentTime}".
+    Map<String, Integer> output = loadMRResult(outputDir);
+    Assert.assertEquals(2, output.size());
+    Assert.assertEquals(null, output.get("expiredEvent"));
+    Assert.assertEquals(1000, output.get("nonExpiredEvent").intValue());
+    Assert.assertEquals(1000, output.get(Long.toString(currentTime)).intValue());
   }
 
   @Test
