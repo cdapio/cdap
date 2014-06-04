@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Records gateway requests/response metrics.
@@ -29,7 +28,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final LoadingCache<String, MetricsCollector> collectorCache;
 
-  public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService, String serviceName) {
+  public MetricsReporterHook(final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceName = serviceName;
 
@@ -91,7 +90,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private String createContext(HandlerInfo handlerInfo) {
     //'h' is for handler, used in metrics query handler
-    return String.format("%s.h.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
+    return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
                          handlerInfo.getMethodName());
   }
 
