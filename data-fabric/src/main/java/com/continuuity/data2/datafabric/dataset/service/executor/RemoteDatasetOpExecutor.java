@@ -6,6 +6,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.HttpResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
@@ -55,7 +56,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   public DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
     throws Exception {
 
-    HttpRequests.HttpResponse httpResponse =
+    HttpResponse httpResponse =
       HttpRequests.post(resolve(instanceName, "create"), "",
                         ImmutableMap.of("instance-props", GSON.toJson(props),
                                         "type-meta", GSON.toJson(typeMeta)));
@@ -66,7 +67,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
 
   @Override
   public void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception {
-    HttpRequests.HttpResponse httpResponse =
+    HttpResponse httpResponse =
       HttpRequests.post(resolve(spec.getName(), "drop"), "",
                         ImmutableMap.of("instance-spec", GSON.toJson(spec),
                                         "type-meta", GSON.toJson(typeMeta)));
@@ -86,7 +87,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   private DatasetAdminOpResponse executeAdminOp(String instanceName, String opName)
     throws IOException, HandlerException {
 
-    HttpRequests.HttpResponse httpResponse = HttpRequests.post(resolve(instanceName, opName));
+    HttpResponse httpResponse = HttpRequests.post(resolve(instanceName, opName));
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseMessage());
@@ -107,7 +108,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
                          path));
   }
 
-  private void verifyResponse(HttpRequests.HttpResponse httpResponse) {
+  private void verifyResponse(HttpResponse httpResponse) {
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseMessage());

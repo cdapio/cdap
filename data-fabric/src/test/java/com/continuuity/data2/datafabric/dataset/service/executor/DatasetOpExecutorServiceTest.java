@@ -11,6 +11,7 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
@@ -60,7 +61,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -215,7 +215,7 @@ public class DatasetOpExecutorServiceTest {
     String path = String.format("/data/instances/%s/admin/%s", instanceName, opName);
 
     URL targetUrl = resolve(path);
-    HttpRequests.HttpResponse response = HttpRequests.post(targetUrl);
+    HttpResponse response = HttpRequests.post(targetUrl);
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());
