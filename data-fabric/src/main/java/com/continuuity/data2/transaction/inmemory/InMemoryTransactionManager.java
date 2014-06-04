@@ -327,7 +327,6 @@ public class InMemoryTransactionManager extends AbstractService {
     // copy in memory state
     snapshot = getCurrentState();
     if (metricsCollectionService != null) {
-      LOG.info("MetricsCollection Service is not null");
       metricsCollector.gauge("invalid", invalid.size());
       metricsCollector.gauge("inprogress", inProgress.size());
       metricsCollector.gauge("committing", committingChangeSets.size());
