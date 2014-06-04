@@ -2112,10 +2112,11 @@ in a transaction</p></section>
             
             <section><p>Transaction can be disabled for a Flow by annotating the Flow class with the
 <tt class="docutils literal">&#64;DisableTransaction</tt> annotation:</p>
-<pre><span class="nd">@DisableTransaction</span>
-<span class="kd">class</span> <span class="nc">MyExampleFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
-  <span class="o">...</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;DisableTransaction
+class MyExampleFlow implements Flow {
+  ...
+}
 </pre>
 <p>While this may speed up performance, if—for example—a Flowlet fails, the system would not
 be able to roll back to its previous state</p>

@@ -47,7 +47,7 @@ Flowlet Example 1/2
 - Reads *Double* values, rounds them, and emits the results
 - Simple configuration method, neither initialization nor destruction
 
-.. sourcecode:: java
+::
 
 	class RoundingFlowlet implements Flowlet {
 
@@ -64,7 +64,7 @@ Flowlet Example 1/2
 Flowlet Example 2/2
 ===================
 
-.. sourcecode:: java
+::
 
 	  @Override
 	  public void initialize(FlowletContext context) 
@@ -95,7 +95,7 @@ Flowlet Initialization
 Flowlet Processing
 ======================
 
-.. sourcecode:: java
+::
 
 	  OutputEmitter<Long> output;
 	  @ProcessInput
@@ -138,7 +138,7 @@ A method will be selected based on
 Overloading Flowlet Processing Example
 ======================================
 
-.. sourcecode:: java
+::
 
 	OutputEmitter<Long> output;
 
@@ -159,16 +159,14 @@ Method Selection for Flowlets Emitting Data
 - Flowlets that emit data can specify a name using an annotation on the output emitter
 - In the absence of annotation, the name of the output defaults to "out"
 
-.. sourcecode:: java
+::
 
 	@Output("code")
 	OutputEmitter<String> out;
 
 Data objects emitted through this output are then directed to a
 process method of a receiving Flowlet by annotating that method with the
-origin name:
-
-.. sourcecode:: java
+origin name::
 
 	@ProcessInput("code")
 	public void tokenizeCode(String text) {
@@ -195,7 +193,7 @@ uses the input context to decide which tokenizer to use
 Flowlet Input Context Example
 =============================
 
-.. sourcecode:: java
+::
 
 	@ProcessInput
 	public void tokenize(String text, InputContext context) throws Exception {
@@ -228,9 +226,7 @@ Special type of object that comes in via Streams:
 - Byte array as the body of the event
 
 To consume a Stream with a Flow, define a Flowlet that
-processes data of type ``StreamEvent``:
-
-.. sourcecode:: java
+processes data of type ``StreamEvent``::
 
 	class StreamReader extends AbstractFlowlet {
 	  ...
@@ -256,9 +252,7 @@ Flowlet Method and @Tick Annotation
 Flowlet Method and @Tick Annotation Example
 ===========================================
 
-This ``@Tick`` method in the Flowlet emits random numbers:
-
-.. sourcecode:: java
+This ``@Tick`` method in the Flowlet emits random numbers::
 
 	public class RandomSource extends AbstractFlowlet {
 

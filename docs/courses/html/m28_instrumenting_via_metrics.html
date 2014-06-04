@@ -2641,25 +2641,26 @@ note that you cannot aggregate over this metric</td>
             <header><h1>Adding User-defined Metrics: Flowlet Example</h1></header>
             
             
-            <section><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">NameSaver</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
-  <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">NAME</span> <span class="o">=</span> <span class="o">{</span> <span class="sc">&#39;n&#39;</span><span class="o">,</span> <span class="sc">&#39;a&#39;</span><span class="o">,</span> <span class="sc">&#39;m&#39;</span><span class="o">,</span> <span class="sc">&#39;e&#39;</span> <span class="o">};</span>
+            <section><pre class="literal-block">
+public static class NameSaver extends AbstractFlowlet {
+  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
 
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;whom&quot;</span><span class="o">)</span>
-  <span class="n">KeyValueTable</span> <span class="n">whom</span><span class="o">;</span>
-  <span class="n">Metrics</span> <span class="n">flowletMetrics</span><span class="o">;</span> <span class="c1">// Declare the custom metrics</span>
+  &#64;UseDataSet(&quot;whom&quot;)
+  KeyValueTable whom;
+  Metrics flowletMetrics; // Declare the custom metrics
 
-  <span class="nd">@ProcessInput</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processInput</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
-    <span class="kt">byte</span><span class="o">[]</span> <span class="n">name</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getBody</span><span class="o">());</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">name</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">name</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">whom</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">NAME</span><span class="o">,</span> <span class="n">name</span><span class="o">);</span>
-    <span class="o">}</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">name</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">flowletMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;names.longnames&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-    <span class="o">}</span>
-    <span class="n">flowletMetrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;names.bytes&quot;</span><span class="o">,</span> <span class="n">name</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;ProcessInput
+  public void processInput(StreamEvent event) {
+    byte[] name = Bytes.toBytes(event.getBody());
+    if (name != null &amp;&amp; name.length &gt; 0) {
+      whom.write(NAME, name);
+    }
+    if (name.length &gt; 10) {
+      flowletMetrics.count(&quot;names.longnames&quot;, 1);
+    }
+    flowletMetrics.count(&quot;names.bytes&quot;, name.length);
+  }
+}
 </pre>
 <p>Example of user-defined metrics: <strong>PageViewAnalytics</strong> example</p></section>
             

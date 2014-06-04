@@ -103,7 +103,7 @@ Flowlets, and *connections* are specified before building the Flow.
 Flow Example
 =========================
 
-.. sourcecode:: java
+::
 
 	class MyExampleFlow implements Flow {
 	  @Override
@@ -140,7 +140,7 @@ Connecting Flowlets in a Flow 1/2
 Because the name of each Flowlet defaults to its class name, 
 when building the Flow specification you can simply write:
 
-.. sourcecode:: java
+::
 
 	.withFlowlets()
 	  .add(new RandomGenerator())
@@ -155,7 +155,7 @@ Connecting Flowlets in a Flow 2/2
 
 With multiple Flowlets of the same class, give them explicit names:
 
-.. sourcecode:: java
+::
 
 	.withFlowlets()
 	  .add("random", new RandomGenerator())

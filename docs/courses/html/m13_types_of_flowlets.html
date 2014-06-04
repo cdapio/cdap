@@ -1865,15 +1865,16 @@ function main() {
 <li>Reads <em>Double</em> values, rounds them, and emits the results</li>
 <li>Simple configuration method, neither initialization nor destruction</li>
 </ul>
-<pre><span class="kd">class</span> <span class="nc">RoundingFlowlet</span> <span class="kd">implements</span> <span class="n">Flowlet</span> <span class="o">{</span>
+<pre class="literal-block">
+class RoundingFlowlet implements Flowlet {
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">FlowletSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">FlowletSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;round&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;A rounding Flowlet&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-  <span class="o">}</span>
+  &#64;Override
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+      .setName(&quot;round&quot;)
+      .setDescription(&quot;A rounding Flowlet&quot;)
+      .build();
+  }
 </pre></section>
             
           </div>
@@ -1904,20 +1905,21 @@ function main() {
             <header><h1>Flowlet Example 2/2</h1></header>
             
             
-            <section><pre><span class="nd">@Override</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span>
-  <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+&#64;Override
+public void initialize(FlowletContext context)
+  throws Exception {
+}
 
-<span class="nd">@Override</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
-<span class="o">}</span>
+&#64;Override
+public void destroy() {
+}
 
-<span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
-<span class="o">}</span>
+OutputEmitter&lt;Long&gt; output;
+&#64;ProcessInput
+public void round(Double number) {
+  output.emit(Math.round(number));
+}
 </pre></section>
             
           </div>
@@ -1982,11 +1984,12 @@ function main() {
             <header><h1>Flowlet Processing</h1></header>
             
             
-            <section><pre><span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+OutputEmitter&lt;Long&gt; output;
+&#64;ProcessInput
+public void round(Double number) {
+  output.emit(Math.round(number));
+}
 </pre>
 <ul class="simple">
 <li><tt class="docutils literal">round()</tt>, the method that does the actual processing</li>
@@ -2070,16 +2073,17 @@ methods with different input types</p>
             <header><h1>Overloading Flowlet Processing Example</h1></header>
             
             
-            <section><pre><span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
+            <section><pre class="literal-block">
+OutputEmitter&lt;Long&gt; output;
 
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
-<span class="o">}</span>
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Float</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">((</span><span class="kt">long</span><span class="o">)</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
-<span class="o">}</span>
+&#64;ProcessInput
+public void round(Double number) {
+  output.emit(Math.round(number));
+}
+&#64;ProcessInput
+public void round(Float number) {
+  output.emit((long)Math.round(number));
+}
 </pre></section>
             
           </div>
@@ -2114,16 +2118,18 @@ methods with different input types</p>
 <li>Flowlets that emit data can specify a name using an annotation on the output emitter</li>
 <li>In the absence of annotation, the name of the output defaults to &quot;out&quot;</li>
 </ul>
-<pre><span class="nd">@Output</span><span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">)</span>
-<span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">out</span><span class="o">;</span>
+<pre class="literal-block">
+&#64;Output(&quot;code&quot;)
+OutputEmitter&lt;String&gt; out;
 </pre>
 <p>Data objects emitted through this output are then directed to a
 process method of a receiving Flowlet by annotating that method with the
 origin name:</p>
-<pre><span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">tokenizeCode</span><span class="o">(</span><span class="n">String</span> <span class="n">text</span><span class="o">)</span> <span class="o">{</span>
-  <span class="o">...</span> <span class="c1">// perform fancy code tokenization</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;ProcessInput(&quot;code&quot;)
+public void tokenizeCode(String text) {
+  ... // perform fancy code tokenization
+}
 </pre></section>
             
           </div>
@@ -2191,25 +2197,26 @@ uses the input context to decide which tokenizer to use</p></section>
             <header><h1>Flowlet Input Context Example</h1></header>
             
             
-            <section><pre><span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">tokenize</span><span class="o">(</span><span class="n">String</span> <span class="n">text</span><span class="o">,</span> <span class="n">InputContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-  <span class="n">Tokenizer</span> <span class="n">tokenizer</span><span class="o">;</span>
-  <span class="c1">// If this failed before, fall back to simple white space</span>
-  <span class="k">if</span> <span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getRetryCount</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WhiteSpaceTokenizer</span><span class="o">();</span>
-  <span class="o">}</span>
-  <span class="c1">// Is this code? If its origin is named &quot;code&quot;, then assume yes</span>
-  <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getOrigin</span><span class="o">()))</span> <span class="o">{</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodeTokenizer</span><span class="o">();</span>
-  <span class="o">}</span>
-  <span class="k">else</span> <span class="o">{</span>
-    <span class="c1">// Use the smarter tokenizer</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NaturalLanguageTokenizer</span><span class="o">();</span>
-  <span class="o">}</span>
-  <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">token</span> <span class="o">:</span> <span class="n">tokenizer</span><span class="o">.</span><span class="na">tokenize</span><span class="o">(</span><span class="n">text</span><span class="o">))</span> <span class="o">{</span>
-    <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">token</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+&#64;ProcessInput
+public void tokenize(String text, InputContext context) throws Exception {
+  Tokenizer tokenizer;
+  // If this failed before, fall back to simple white space
+  if (context.getRetryCount() &gt; 0) {
+    tokenizer = new WhiteSpaceTokenizer();
+  }
+  // Is this code? If its origin is named &quot;code&quot;, then assume yes
+  else if (&quot;code&quot;.equals(context.getOrigin())) {
+    tokenizer = new CodeTokenizer();
+  }
+  else {
+    // Use the smarter tokenizer
+    tokenizer = new NaturalLanguageTokenizer();
+  }
+  for (String token : tokenizer.tokenize(text)) {
+    output.emit(token);
+  }
+}
 </pre></section>
             
           </div>
@@ -2247,12 +2254,13 @@ uses the input context to decide which tokenizer to use</p></section>
 </ul>
 <p>To consume a Stream with a Flow, define a Flowlet that
 processes data of type <tt class="docutils literal">StreamEvent</tt>:</p>
-<pre><span class="kd">class</span> <span class="nc">StreamReader</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
-  <span class="o">...</span>
-  <span class="nd">@ProcessInput</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processEvent</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
-    <span class="o">...</span>
-  <span class="o">}</span>
+<pre class="literal-block">
+class StreamReader extends AbstractFlowlet {
+  ...
+  &#64;ProcessInput
+  public void processEvent(StreamEvent event) {
+    ...
+  }
 </pre></section>
             
           </div>
@@ -2321,17 +2329,18 @@ periodically, without arguments</li>
             
             
             <section><p>This <tt class="docutils literal">&#64;Tick</tt> method in the Flowlet emits random numbers:</p>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RandomSource</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+<pre class="literal-block">
+public class RandomSource extends AbstractFlowlet {
 
-  <span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">randomOutput</span><span class="o">;</span>
+  private OutputEmitter&lt;Integer&gt; randomOutput;
 
-  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Random</span> <span class="n">random</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Random</span><span class="o">();</span>
+  private final Random random = new Random();
 
-  <span class="nd">@Tick</span><span class="o">(</span><span class="n">delay</span> <span class="o">=</span> <span class="mi">1L</span><span class="o">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">generate</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
-    <span class="n">randomOutput</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">random</span><span class="o">.</span><span class="na">nextInt</span><span class="o">(</span><span class="mi">10000</span><span class="o">));</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
+  public void generate() throws InterruptedException {
+    randomOutput.emit(random.nextInt(10000));
+  }
+}
 </pre>
 <p><em>from the Continuuity Reactor</em> CountRandom <em>example</em></p></section>
             

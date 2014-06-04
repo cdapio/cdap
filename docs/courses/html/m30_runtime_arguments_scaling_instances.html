@@ -1892,28 +1892,29 @@ in the context</li>
             <header><h1>Runtime Argument Example (2 of 2)</h1></header>
             
             
-            <section><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Greeting</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
+            <section><pre class="literal-block">
+public static class Greeting extends AbstractProcedure {
 
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;whom&quot;</span><span class="o">)</span>
-  <span class="n">KeyValueTable</span> <span class="n">whom</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">String</span> <span class="n">greeting</span><span class="o">;</span>
+  &#64;UseDataSet(&quot;whom&quot;)
+  KeyValueTable whom;
+  private String greeting;
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">ProcedureContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">args</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">();</span>
-    <span class="n">greeting</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;greeting&quot;</span><span class="o">);</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">greeting</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">greeting</span> <span class="o">=</span> <span class="s">&quot;Hello&quot;</span><span class="o">;</span>
-    <span class="o">}</span>
-  <span class="o">}</span>
+  public void initialize(ProcedureContext context) {
+    Map&lt;String, String&gt; args = context.getRuntimeArguments();
+    greeting = args.get(&quot;greeting&quot;);
+    if (greeting == null) {
+      greeting = &quot;Hello&quot;;
+    }
+  }
 
-  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;greet&quot;</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">greet</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
-                    <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-    <span class="kt">byte</span><span class="o">[]</span> <span class="n">name</span> <span class="o">=</span> <span class="n">whom</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">NameSaver</span><span class="o">.</span><span class="na">NAME</span><span class="o">);</span>
-    <span class="n">String</span> <span class="n">toGreet</span> <span class="o">=</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="o">:</span> <span class="s">&quot;World&quot;</span><span class="o">;</span>
-    <span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">greeting</span> <span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="n">toGreet</span> <span class="o">+</span> <span class="s">&quot;!&quot;</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Handle(&quot;greet&quot;)
+  public void greet(ProcedureRequest request,
+                    ProcedureResponder responder) throws Exception {
+    byte[] name = whom.read(NameSaver.NAME);
+    String toGreet = name != null ? new String(name) : &quot;World&quot;;
+    responder.sendJson(greeting + &quot; &quot; + toGreet + &quot;!&quot;);
+  }
+}
 </pre></section>
             
           </div>

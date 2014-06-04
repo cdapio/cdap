@@ -44,9 +44,7 @@ MapReduce in an Application
 ===========================
 
 To process data using MapReduce, specify ``withMapReduce()`` in your
-Application specification:
-
-.. sourcecode:: java
+Application specification::
 
 	public ApplicationSpecification configure() {
 	return ApplicationSpecification.Builder.with()
@@ -67,7 +65,7 @@ implementation of three methods:
 configure() method
 ==================
 
-.. sourcecode:: java
+::
 
 	public class WordCountJob implements MapReduce {
 	  @Override
@@ -95,9 +93,7 @@ beforeSubmit() method
   running the MapReduce job directly on Hadoop
 
 For example, you can specify the Mapper and Reducer classes as
-well as the intermediate data format:
-
-.. sourcecode:: java
+well as the intermediate data format::
 
 	@Override
 	public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -116,7 +112,7 @@ onFinish() method
 - Invoked after the MapReduce job has finished
 - Can perform cleanup or send a notification of job completion, if required:
 
-.. sourcecode:: java
+::
 
 	private static final Logger LOG = LoggerFactory.getLogger(MyMapReduce.class);
 	
@@ -129,7 +125,7 @@ onFinish() method
 - Because many MapReduce jobs do not need this method, the ``AbstractMapReduce``
   class provides a default implementation that does nothing:
 
-.. sourcecode:: java
+::
 
 	@Override
 	public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
@@ -142,9 +138,7 @@ onFinish() method
 Mapping and Reducing (1 of 2)
 =============================
 
-Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop APIs:
-
-.. sourcecode:: java
+Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop APIs::
 
 	public static class TokenizerMapper
 	    extends Mapper<byte[], byte[], Text, IntWritable> {
@@ -166,7 +160,7 @@ Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop API
 Mapping and Reducing (2 of 2)
 =============================
 
-.. sourcecode:: java
+::
 
 	public static class IntSumReducer
 	    extends Reducer<Text, IntWritable, byte[], byte[]> {

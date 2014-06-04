@@ -40,7 +40,7 @@ The DataSet can be built on top two underlying DataSets
 - a first Table (``entryCountTable``) to count all the words and
 - a second Table (``uniqueCountTable``) for the unique count
 
-.. sourcecode:: java
+::
 
 	public class UniqueCountTable extends DataSet {
 
@@ -75,7 +75,7 @@ Now we can begin with the implementation of the ``UniqueCountTable`` logic
 
 Start with a few constants:
 
-.. sourcecode:: java
+::
 
 	// Column name used for storing count of each entry.
 	private static final byte[] ENTRY_COUNT = Bytes.toBytes("count");
@@ -97,7 +97,7 @@ Custom DataSets Example (2 of 3)
   - this is the first time the word has been encountered, hence a new unique word
   - increment the unique counter by 1:
 
-.. sourcecode:: java
+::
 
 	public void updateUniqueCount(String entry) {
 	  long newCount = entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
@@ -113,7 +113,7 @@ Custom DataSets Example (3 of 3)
 
 Finally, write a method to retrieve the number of unique words seen:
 
-.. sourcecode:: java
+::
 
 	public Long readUniqueCount() {
 	  return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT))

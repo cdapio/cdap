@@ -1831,11 +1831,12 @@ sequence until the last job in the sequence is executed</li>
 sequence are executed</li>
 </ul>
 <p>To process one or more MapReduce jobs in sequence, specify <tt class="docutils literal">withWorkflows()</tt> in your application:</p>
-<pre><span class="kd">public</span> <span class="n">ApplicationSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-    <span class="o">...</span>
-    <span class="o">.</span><span class="na">withWorkflows</span><span class="o">()</span>
-      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryWorkflow</span><span class="o">())</span>
+<pre class="literal-block">
+public ApplicationSpecification configure() {
+  return ApplicationSpecification.Builder.with()
+    ...
+    .withWorkflows()
+      .add(new PurchaseHistoryWorkflow())
 </pre></section>
             
           </div>
@@ -1870,21 +1871,22 @@ sequence are executed</li>
 <li>Requires the <tt class="docutils literal">configure()</tt> method</li>
 <li>From within <tt class="docutils literal">configure</tt>, call the <tt class="docutils literal">addSchedule()</tt> method to run a WorkFlow job periodically:</li>
 </ul>
-<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryWorkflow</span> <span class="kd">implements</span> <span class="n">Workflow</span> <span class="o">{</span>
+<pre class="literal-block">
+public static class PurchaseHistoryWorkflow implements Workflow {
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">WorkflowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">WorkflowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow description&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">startWith</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryBuilder</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">then</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryAggregateBuilder</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">last</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseTrendBuilder</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">addSchedule</span><span class="o">(</span><span class="k">new</span> <span class="n">DefaultSchedule</span><span class="o">(</span><span class="s">&quot;FiveMinuteSchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Run every 5 minutes&quot;</span><span class="o">,</span>
-                   <span class="s">&quot;0/5 * * * *&quot;</span><span class="o">,</span> <span class="n">Schedule</span><span class="o">.</span><span class="na">Action</span><span class="o">.</span><span class="na">START</span><span class="o">))</span>
-      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Override
+  public WorkflowSpecification configure() {
+    return WorkflowSpecification.Builder.with()
+      .setName(&quot;PurchaseHistoryWorkflow&quot;)
+      .setDescription(&quot;PurchaseHistoryWorkflow description&quot;)
+      .startWith(new PurchaseHistoryBuilder())
+      .then(new PurchaseHistoryAggregateBuilder())
+      .last(new PurchaseTrendBuilder())
+      .addSchedule(new DefaultSchedule(&quot;FiveMinuteSchedule&quot;, &quot;Run every 5 minutes&quot;,
+                   &quot;0/5 * * * *&quot;, Schedule.Action.START))
+      .build();
+  }
+}
 </pre></section>
             
           </div>
@@ -1918,18 +1920,19 @@ sequence are executed</li>
             <section><p>If there is only one MapReduce job to be run as a part of a WorkFlow,
 use the <tt class="docutils literal">onlyWith()</tt> method after <tt class="docutils literal">setDescription()</tt> when building
 the Workflow:</p>
-<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryWorkflow</span> <span class="kd">implements</span> <span class="n">Workflow</span> <span class="o">{</span>
+<pre class="literal-block">
+public static class PurchaseHistoryWorkflow implements Workflow {
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">WorkflowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">WorkflowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span> <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryWorkflow description&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">onlyWith</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryBuilder</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">addSchedule</span><span class="o">(</span><span class="k">new</span> <span class="n">DefaultSchedule</span><span class="o">(</span><span class="s">&quot;FiveMinuteSchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Run every 5 minutes&quot;</span><span class="o">,</span>
-                   <span class="s">&quot;0/5 * * * *&quot;</span><span class="o">,</span> <span class="n">Schedule</span><span class="o">.</span><span class="na">Action</span><span class="o">.</span><span class="na">START</span><span class="o">))</span>
-      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Override
+  public WorkflowSpecification configure() {
+    return WorkflowSpecification.Builder.with() .setName(&quot;PurchaseHistoryWorkflow&quot;)
+      .setDescription(&quot;PurchaseHistoryWorkflow description&quot;)
+      .onlyWith(new PurchaseHistoryBuilder())
+      .addSchedule(new DefaultSchedule(&quot;FiveMinuteSchedule&quot;, &quot;Run every 5 minutes&quot;,
+                   &quot;0/5 * * * *&quot;, Schedule.Action.START))
+      .build();
+  }
+}
 </pre></section>
             
           </div>

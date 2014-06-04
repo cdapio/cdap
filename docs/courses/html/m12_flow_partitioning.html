@@ -1904,11 +1904,12 @@ atomic and &quot;exactly-once&quot; processing of each input object by each Flow
             
             <section><p>By default, a Flowlet processes a single data object at a time within a single transaction</p>
 <p>Increase throughput by processing batches of data objects within the same transaction:</p>
-<pre><span class="nd">@Batch</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">words</span><span class="o">)</span> <span class="o">{</span>
-  <span class="o">...</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;Batch(100)
+&#64;ProcessInput
+public void process(Iterator&lt;String&gt; words) {
+  ...
+}
 </pre>
 <p>In this example, up to 100 data objects can be read from the input and processed at one time</p></section>
             
@@ -2099,17 +2100,18 @@ access to the queue must be synchronized</li>
             
             
             <section><p>A Flowlet that counts words and uses the default strategy of FIFO:</p>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Counter</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+<pre class="literal-block">
+public class Counter extends AbstractFlowlet {
 
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;wordCounts&quot;</span><span class="o">)</span>
-  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">wordCountsTable</span><span class="o">;</span>
+  &#64;UseDataSet(&quot;wordCounts&quot;)
+  private KeyValueTable wordCountsTable;
 
-  <span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span>
-        <span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;ProcessInput(&quot;wordOut&quot;)
+  public void process(String word) {
+    this.wordCountsTable
+        .increment(Bytes.toBytes(word), 1L);
+  }
+}
 </pre></section>
             
           </div>
@@ -2140,12 +2142,14 @@ access to the queue must be synchronized</li>
             <header><h1>Example Flow Partitioning Strategy: Round-robin 1/2</h1></header>
             
             
-            <section><p>To increase throughput when this Flowlet has many instances, specify round-robin partitioning:</p>
-<pre><span class="nd">@RoundRobin</span>
-<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
-  <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
-<span class="o">}</span>
+            <section><p>To increase throughput when this Flowlet has many instances,
+specify round-robin partitioning:</p>
+<pre class="literal-block">
+&#64;RoundRobin
+&#64;ProcessInput(&quot;wordOut&quot;)
+public void process(String word) {
+  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
+}
 </pre></section>
             
           </div>
@@ -2216,11 +2220,12 @@ for the word <em>scream</em> at the same time, leading to a write conflict</p></
             
             
             <section><p>To avoid conflicts, use hash-based partitioning:</p>
-<pre><span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span>
-<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
-  <span class="k">this</span><span class="o">.</span><span class="na">wordCountsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="mi">1L</span><span class="o">);</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;HashPartition(&quot;wordHash&quot;)
+&#64;ProcessInput(&quot;wordOut&quot;)
+public void process(String word) {
+  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
+}
 </pre>
 <p>Only one of the Flowlet instances will receive the word <em>scream</em>,
 and there are no more write conflicts</p></section>
@@ -2254,15 +2259,16 @@ and there are no more write conflicts</p></section>
             
             
             <section><p>To use, the emitting Flowlet must annotate each data object with the partitioning key:</p>
-<pre><span class="nd">@Output</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
-<span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">wordOutput</span><span class="o">;</span>
-<span class="o">...</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
-  <span class="o">...</span>
-  <span class="c1">// emit the word with the partitioning</span>
-  <span class="c1">// key name &quot;wordHash&quot;</span>
-  <span class="n">wordOutput</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">word</span><span class="o">,</span> <span class="s">&quot;wordHash&quot;</span><span class="o">,</span> <span class="n">word</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;Output(&quot;wordOut&quot;)
+private OutputEmitter&lt;String&gt; wordOutput;
+...
+public void process(StreamEvent event) {
+  ...
+  // emit the word with the partitioning
+  // key name &quot;wordHash&quot;
+  wordOutput.emit(word, &quot;wordHash&quot;, word.hashCode());
+}
 </pre></section>
             
           </div>
@@ -2332,11 +2338,12 @@ as well as by customer ID</li>
             
             
             <section><p>Partitioning can be combined with batch execution:</p>
-<pre><span class="nd">@Batch</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
-<span class="nd">@HashPartition</span><span class="o">(</span><span class="s">&quot;wordHash&quot;</span><span class="o">)</span>
-<span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;wordOut&quot;</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">words</span><span class="o">)</span> <span class="o">{</span>
-   <span class="o">...</span>
+<pre class="literal-block">
+&#64;Batch(100)
+&#64;HashPartition(&quot;wordHash&quot;)
+&#64;ProcessInput(&quot;wordOut&quot;)
+public void process(Iterator&lt;String&gt; words) {
+   ...
 </pre></section>
             
           </div>

@@ -1992,20 +1992,21 @@ Flowlets, and <em>connections</em> are specified before building the Flow.</p></
             <header><h1>Flow Example</h1></header>
             
             
-            <section><pre><span class="kd">class</span> <span class="nc">MyExampleFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">FlowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">FlowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;mySampleFlow&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Flow for showing examples&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;flowlet1&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">MyExampleFlowlet</span><span class="o">())</span>
-        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;flowlet2&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">MyExampleFlowlet2</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">connect</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;myStream&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;flowlet1&quot;</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;flowlet1&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;flowlet2&quot;</span><span class="o">)</span>
-      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-<span class="o">}</span>
+            <section><pre class="literal-block">
+class MyExampleFlow implements Flow {
+  &#64;Override
+  public FlowSpecification configure() {
+    return FlowSpecification.Builder.with()
+      .setName(&quot;mySampleFlow&quot;)
+      .setDescription(&quot;Flow for showing examples&quot;)
+      .withFlowlets()
+        .add(&quot;flowlet1&quot;, new MyExampleFlowlet())
+        .add(&quot;flowlet2&quot;, new MyExampleFlowlet2())
+      .connect()
+        .fromStream(&quot;myStream&quot;).to(&quot;flowlet1&quot;)
+        .from(&quot;flowlet1&quot;).to(&quot;flowlet2&quot;)
+      .build();
+}
 </pre></section>
             
           </div>
@@ -2073,11 +2074,12 @@ Flowlets, and <em>connections</em> are specified before building the Flow.</p></
 </ul>
 <p>Because the name of each Flowlet defaults to its class name,
 when building the Flow specification you can simply write:</p>
-<pre><span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
-  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">RoundingFlowlet</span><span class="o">())</span>
-<span class="o">.</span><span class="na">connect</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;RandomGenerator&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;RoundingFlowlet&quot;</span><span class="o">)</span>
+<pre class="literal-block">
+.withFlowlets()
+  .add(new RandomGenerator())
+  .add(new RoundingFlowlet())
+.connect()
+  .from(&quot;RandomGenerator&quot;).to(&quot;RoundingFlowlet&quot;)
 </pre></section>
             
           </div>
@@ -2109,12 +2111,13 @@ when building the Flow specification you can simply write:</p>
             
             
             <section><p>With multiple Flowlets of the same class, give them explicit names:</p>
-<pre><span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;random&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
-  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;generator&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RandomGenerator</span><span class="o">())</span>
-  <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;rounding&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">RoundingFlowlet</span><span class="o">())</span>
-<span class="o">.</span><span class="na">connect</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;random&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;rounding&quot;</span><span class="o">)</span>
+<pre class="literal-block">
+.withFlowlets()
+  .add(&quot;random&quot;, new RandomGenerator())
+  .add(&quot;generator&quot;, new RandomGenerator())
+  .add(&quot;rounding&quot;, new RoundingFlowlet())
+.connect()
+  .from(&quot;random&quot;).to(&quot;rounding&quot;)
 </pre></section>
             
           </div>

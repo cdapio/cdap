@@ -440,7 +440,7 @@ Adding User-defined Metrics
 Adding User-defined Metrics: Flowlet Example
 ============================================
 
-.. sourcecode:: java
+::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };

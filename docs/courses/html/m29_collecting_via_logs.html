@@ -1827,17 +1827,18 @@ function main() {
 <li>API described at <a class="reference external" href="http://www.slf4j.org/manual.html">http://www.slf4j.org/manual.html</a></li>
 </ul>
 <p>In a Flowlet you can write:</p>
-<pre><span class="kd">private</span> <span class="kd">static</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">WordCounter</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<pre class="literal-block">
+private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
 
-<span class="c1">// ...</span>
-<span class="nd">@ProcessInput</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">line</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">getContext</span><span class="o">().</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">&quot;: Received line &quot;</span> <span class="o">+</span> <span class="n">line</span><span class="o">);</span>
+// ...
+&#64;ProcessInput
+public void process(String line) {
+  LOG.info(this.getContext().getName() + &quot;: Received line &quot; + line);
 
-  <span class="c1">// ... processing</span>
-  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">getContext</span><span class="o">().</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">&quot;: Emitting count &quot;</span> <span class="o">+</span> <span class="n">wordCount</span><span class="o">);</span>
-  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">wordCount</span><span class="o">);</span>
-<span class="o">}</span>
+  // ... processing
+  LOG.info(this.getContext().getName() + &quot;: Emitting count &quot; + wordCount);
+  output.emit(wordCount);
+}
 </pre></section>
             
           </div>

@@ -49,7 +49,7 @@ MapReduce Declaration
 1. Declare the DataSet in the MapReduce job’s configure() method.
    For example, to have access to a DataSet named *catalog*:
 
-.. sourcecode:: java
+::
 
 	public class MyMapReduceJob implements MapReduce {
 	  @Override
@@ -66,7 +66,7 @@ MapReduce Injection
 
 2. Inject the DataSet into the mapper or reducer that uses it:
 
-.. sourcecode:: java
+::
 
 	public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
 	  @UseDataSet("catalog")

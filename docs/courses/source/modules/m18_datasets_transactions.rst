@@ -169,9 +169,7 @@ The Need for Disabling Transactions (2 of 2)
 ============================================
 
 Transaction can be disabled for a Flow by annotating the Flow class with the 
-``@DisableTransaction`` annotation:
-
-.. sourcecode:: java
+``@DisableTransaction`` annotation::
 
 	@DisableTransaction
 	class MyExampleFlow implements Flow {

@@ -1862,13 +1862,14 @@ Procedure can</p>
 <li>Declare the DataSet in the MapReduce job’s configure() method.
 For example, to have access to a DataSet named <em>catalog</em>:</li>
 </ol>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyMapReduceJob</span> <span class="kd">implements</span> <span class="n">MapReduce</span> <span class="o">{</span>
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="n">MapReduceSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">MapReduceSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-      <span class="o">...</span>
-    <span class="o">.</span><span class="na">useDataSet</span><span class="o">(</span><span class="s">&quot;catalog&quot;</span><span class="o">)</span>
-      <span class="o">...</span>
+<pre class="literal-block">
+public class MyMapReduceJob implements MapReduce {
+  &#64;Override
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+      ...
+    .useDataSet(&quot;catalog&quot;)
+      ...
 </pre></section>
             
           </div>
@@ -1902,17 +1903,18 @@ For example, to have access to a DataSet named <em>catalog</em>:</li>
             <section><ol class="arabic simple" start="2">
 <li>Inject the DataSet into the mapper or reducer that uses it:</li>
 </ol>
-<pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">CatalogJoinMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">,</span> <span class="o">...&gt;</span> <span class="o">{</span>
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;catalog&quot;</span><span class="o">)</span>
-  <span class="kd">private</span> <span class="n">ProductCatalog</span> <span class="n">catalog</span><span class="o">;</span>
+<pre class="literal-block">
+public static class CatalogJoinMapper extends Mapper&lt;byte[], Purchase, ...&gt; {
+  &#64;UseDataSet(&quot;catalog&quot;)
+  private ProductCatalog catalog;
 
-  <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">key</span><span class="o">,</span> <span class="n">Purchase</span> <span class="n">purchase</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
-      <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
-    <span class="c1">// join with catalog by product ID</span>
-    <span class="n">Product</span> <span class="n">product</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">purchase</span><span class="o">.</span><span class="na">getProductId</span><span class="o">());</span>
-    <span class="o">...</span>
-  <span class="o">}</span>
+  &#64;Override
+  public void map(byte[] key, Purchase purchase, Context context)
+      throws IOException, InterruptedException {
+    // join with catalog by product ID
+    Product product = catalog.read(purchase.getProductId());
+    ...
+  }
 </pre></section>
             
           </div>

@@ -37,7 +37,7 @@ Logging
 
 In a Flowlet you can write:
 
-.. sourcecode:: java
+::
 
 	private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
 

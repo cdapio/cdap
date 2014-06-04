@@ -56,7 +56,7 @@ Runtime Argument Example (1 of 2)
 Runtime Argument Example (2 of 2)
 =================================
 
-.. sourcecode:: java
+::
 
 	public static class Greeting extends AbstractProcedure {
 

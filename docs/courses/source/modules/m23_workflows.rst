@@ -41,7 +41,7 @@ Workflows
 
 To process one or more MapReduce jobs in sequence, specify ``withWorkflows()`` in your application:
 
-.. sourcecode:: java
+::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -58,7 +58,7 @@ Implement the Workflow Interface
 - Requires the ``configure()`` method
 - From within ``configure``, call the ``addSchedule()`` method to run a WorkFlow job periodically:
 
-.. sourcecode:: java
+::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 
@@ -85,7 +85,7 @@ If there is only one MapReduce job to be run as a part of a WorkFlow,
 use the ``onlyWith()`` method after ``setDescription()`` when building
 the Workflow:
 
-.. sourcecode:: java
+::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 

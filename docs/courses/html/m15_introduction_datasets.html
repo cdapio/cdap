@@ -2036,11 +2036,12 @@ and allows querying that data over ranges of time</li>
             <section><p>To use a DataSet, you must declare it in the Application specification</p>
 <p>To specify that your Application
 uses a <tt class="docutils literal">KeyValueTable</tt> DataSet named <em>myCounters</em>, write:</p>
-<pre><span class="kd">public</span> <span class="n">ApplicationSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">ApplicationSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
-    <span class="o">...</span>
-    <span class="o">.</span><span class="na">withDataSets</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">KeyValueTable</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">))</span>
-    <span class="o">...</span>
+<pre class="literal-block">
+public ApplicationSpecification configure() {
+  return ApplicationSpecification.Builder.with()
+    ...
+    .withDataSets().add(new KeyValueTable(&quot;myCounters&quot;))
+    ...
 </pre></section>
             
           </div>
@@ -2074,13 +2075,14 @@ uses a <tt class="docutils literal">KeyValueTable</tt> DataSet named <em>myCount
             <section><p>To use a DataSet in a Flowlet or a Procedure, instruct the runtime
 system to inject an instance of the DataSet with the <tt class="docutils literal">&#64;UseDataSet</tt>
 annotation:</p>
-<pre><span class="n">Class</span> <span class="n">MyFowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
-  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">counters</span><span class="o">;</span>
-  <span class="o">...</span>
-  <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">counters</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">getBytes</span><span class="o">());</span>
-  <span class="o">}</span>
+<pre class="literal-block">
+Class MyFowlet extends AbstractFlowlet {
+  &#64;UseDataSet(&quot;myCounters&quot;)
+  private KeyValueTable counters;
+  ...
+  void process(String key) {
+    counters.increment(key.getBytes());
+  }
 </pre>
 <p>The runtime system:</p>
 <ul class="simple">

@@ -1856,10 +1856,11 @@ not match exactly what the process method accepts as arguments</p>
             
             
             <section><p>For example, if you have a process method:</p>
-<pre><span class="nd">@ProcessInput</span>
-<span class="n">count</span><span class="o">(</span><span class="n">String</span> <span class="n">word</span><span class="o">)</span> <span class="o">{</span>
-  <span class="o">...</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;ProcessInput
+count(String word) {
+  ...
+}
 </pre>
 <ul class="simple">
 <li>You send data of type <tt class="docutils literal">Long</tt> to this Flowlet</li>
@@ -1895,9 +1896,10 @@ not match exactly what the process method accepts as arguments</p>
             
             
             <section><p>You could write another process method for <tt class="docutils literal">Long</tt> numbers:</p>
-<pre><span class="nd">@ProcessInput</span> <span class="n">count</span><span class="o">(</span><span class="n">Long</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
-<span class="n">count</span><span class="o">(</span><span class="n">number</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
-<span class="o">}</span>
+<pre class="literal-block">
+&#64;ProcessInput count(Long number) {
+count(number.toString());
+}
 </pre>
 <ul class="simple">
 <li>Need to do this for every type that you might possibly want to count</li>
@@ -2048,19 +2050,21 @@ if type A is compatible with type B</li>
             <header><h1>Compatible Conversions 3 of 3</h1></header>
             
             
-            <section><p>Class <tt class="docutils literal">Point</tt> is compatible with <tt class="docutils literal">Coordinate</tt>, because all common fields between the two classes are compatible. Projecting from <tt class="docutils literal">Point</tt> to <tt class="docutils literal">Coordinate</tt>, the color field is dropped;
+            <section><p>Class <tt class="docutils literal">Point</tt> is compatible with <tt class="docutils literal">Coordinate</tt>, because all common fields between the
+two classes are compatible. Projecting from <tt class="docutils literal">Point</tt> to <tt class="docutils literal">Coordinate</tt>, the color field is dropped;
 projecting from <tt class="docutils literal">Coordinate</tt> to <tt class="docutils literal">Point</tt> will leave the <tt class="docutils literal">color</tt> field
 as <tt class="docutils literal">null</tt></p>
-<pre><span class="kd">class</span> <span class="nc">Point</span> <span class="o">{</span>
-  <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">String</span> <span class="n">color</span><span class="o">;</span>
-<span class="o">}</span>
+<pre class="literal-block">
+class Point {
+  private int x;
+  private int y;
+  private String color;
+}
 
-<span class="kd">class</span> <span class="nc">Coordinates</span> <span class="o">{</span>
-  <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
-  <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
-<span class="o">}</span>
+class Coordinates {
+  int x;
+  int y;
+}
 </pre></section>
             
           </div>

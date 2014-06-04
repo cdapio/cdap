@@ -92,7 +92,7 @@ Response
 Example Procedure
 =================
 
-.. sourcecode:: java
+::
 
 	import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
 	...
@@ -121,7 +121,7 @@ In many cases, you will actually respond with JSON
 
 Reactor ``ProcedureResponder`` has convenience methods for returning JSON maps:
 
-.. sourcecode:: java
+::
 
 	// Return a JSON map
 	Map<String, Object> results = new TreeMap<String, Object>();
@@ -137,7 +137,7 @@ Responding to Errors
 
 Convenience method to respond with an error message:
 
-.. sourcecode:: java
+::
 
 	@Handle("getCount")
 	public void getCount(ProcedureRequest request, ProcedureResponder responder)

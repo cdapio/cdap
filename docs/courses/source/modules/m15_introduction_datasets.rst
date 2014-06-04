@@ -126,7 +126,7 @@ To use a DataSet, you must declare it in the Application specification
 To specify that your Application
 uses a ``KeyValueTable`` DataSet named *myCounters*, write:
 
-.. sourcecode:: java
+::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -143,7 +143,7 @@ To use a DataSet in a Flowlet or a Procedure, instruct the runtime
 system to inject an instance of the DataSet with the ``@UseDataSet``
 annotation:
 
-.. sourcecode:: java
+::
 
 	Class MyFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")

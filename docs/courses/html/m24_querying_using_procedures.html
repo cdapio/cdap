@@ -1952,19 +1952,20 @@ stream out the response as bytes</li>
             <header><h1>Example Procedure</h1></header>
             
             
-            <section><pre><span class="kn">import</span> <span class="nn">static</span> <span class="n">com</span><span class="o">.</span><span class="na">continuuity</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">procedure</span><span class="o">.</span><span class="na">ProcedureResponse</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SUCCESS</span><span class="o">;</span>
-<span class="o">...</span>
-<span class="kd">class</span> <span class="nc">HelloWorld</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
+            <section><pre class="literal-block">
+import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
+...
+class HelloWorld extends AbstractProcedure {
 
-  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">wave</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
-                   <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
-    <span class="n">String</span> <span class="n">hello</span> <span class="o">=</span> <span class="s">&quot;Hello &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;who&quot;</span><span class="o">);</span>
-    <span class="n">ProcedureResponse</span><span class="o">.</span><span class="na">Writer</span> <span class="n">writer</span> <span class="o">=</span>
-      <span class="n">responder</span><span class="o">.</span><span class="na">stream</span><span class="o">(</span><span class="k">new</span> <span class="n">ProcedureResponse</span><span class="o">(</span><span class="n">SUCCESS</span><span class="o">));</span>
-    <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">ByteBuffer</span><span class="o">.</span><span class="na">wrap</span><span class="o">(</span><span class="n">hello</span><span class="o">.</span><span class="na">getBytes</span><span class="o">())).</span><span class="na">close</span><span class="o">();</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Handle(&quot;hello&quot;)
+  public void wave(ProcedureRequest request,
+                   ProcedureResponder responder) throws IOException {
+    String hello = &quot;Hello &quot; + request.getArgument(&quot;who&quot;);
+    ProcedureResponse.Writer writer =
+      responder.stream(new ProcedureResponse(SUCCESS));
+    writer.write(ByteBuffer.wrap(hello.getBytes())).close();
+  }
+}
 </pre>
 <ul class="simple">
 <li>This uses the most generic way to create the response, which allows you
@@ -2002,12 +2003,13 @@ to send arbitrary byte content as the response body</li>
             
             <section><p>In many cases, you will actually respond with JSON</p>
 <p>Reactor <tt class="docutils literal">ProcedureResponder</tt> has convenience methods for returning JSON maps:</p>
-<pre><span class="c1">// Return a JSON map</span>
-<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TreeMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;();</span>
-<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">,</span> <span class="n">totalWords</span><span class="o">);</span>
-<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;uniqueWords&quot;</span><span class="o">,</span> <span class="n">uniqueWords</span><span class="o">);</span>
-<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;averageLength&quot;</span><span class="o">,</span> <span class="n">averageLength</span><span class="o">);</span>
-<span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">results</span><span class="o">);</span>
+<pre class="literal-block">
+// Return a JSON map
+Map&lt;String, Object&gt; results = new TreeMap&lt;String, Object&gt;();
+results.put(&quot;totalWords&quot;, totalWords);
+results.put(&quot;uniqueWords&quot;, uniqueWords);
+results.put(&quot;averageLength&quot;, averageLength);
+responder.sendJson(results);
 </pre></section>
             
           </div>
@@ -2039,15 +2041,16 @@ to send arbitrary byte content as the response body</li>
             
             
             <section><p>Convenience method to respond with an error message:</p>
-<pre><span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;getCount&quot;</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getCount</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span>
-                     <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
-  <span class="n">String</span> <span class="n">word</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">);</span>
-  <span class="k">if</span> <span class="o">(</span><span class="n">word</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">responder</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="n">Code</span><span class="o">.</span><span class="na">CLIENT_ERROR</span><span class="o">,</span>
-                    <span class="s">&quot;Method &#39;getCount&#39; requires argument &#39;word&#39;&quot;</span><span class="o">);</span>
-    <span class="k">return</span><span class="o">;</span>
-  <span class="o">}</span>
+<pre class="literal-block">
+&#64;Handle(&quot;getCount&quot;)
+public void getCount(ProcedureRequest request, ProcedureResponder responder)
+                     throws IOException, InterruptedException{
+  String word = request.getArgument(&quot;word&quot;);
+  if (word == null) {
+    responder.error(Code.CLIENT_ERROR,
+                    &quot;Method 'getCount' requires argument 'word'&quot;);
+    return;
+  }
 </pre></section>
             
           </div>

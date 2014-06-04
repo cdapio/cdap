@@ -1830,10 +1830,11 @@ counts how many unique words it has seen</p>
 <li>a first Table (<tt class="docutils literal">entryCountTable</tt>) to count all the words and</li>
 <li>a second Table (<tt class="docutils literal">uniqueCountTable</tt>) for the unique count</li>
 </ul>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">DataSet</span> <span class="o">{</span>
+<pre class="literal-block">
+public class UniqueCountTable extends DataSet {
 
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
+  private Table entryCountTable;
+  private Table uniqueCountTable;
 </pre></section>
             
           </div>
@@ -1906,11 +1907,12 @@ configuration parameters)</li>
             
             <section><p>Now we can begin with the implementation of the <tt class="docutils literal">UniqueCountTable</tt> logic</p>
 <p>Start with a few constants:</p>
-<pre><span class="c1">// Column name used for storing count of each entry.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ENTRY_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+<pre class="literal-block">
+// Column name used for storing count of each entry.
+private static final byte[] ENTRY_COUNT = Bytes.toBytes(&quot;count&quot;);
 
-<span class="c1">// Row and column name used for storing the unique count.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">UNIQUE_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;unique&quot;</span><span class="o">);</span>
+// Row and column name used for storing the unique count.
+private static final byte [] UNIQUE_COUNT = Bytes.toBytes(&quot;unique&quot;);
 </pre></section>
             
           </div>
@@ -1950,12 +1952,13 @@ configuration parameters)</li>
 </ul>
 </li>
 </ul>
-<pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
-  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">entry</span><span class="o">),</span> <span class="n">ENTRY_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+<pre class="literal-block">
+public void updateUniqueCount(String entry) {
+  long newCount = entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
+  if (newCount == 1L) {
+    uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
+  }
+}
 </pre></section>
             
           </div>
@@ -1987,10 +1990,11 @@ configuration parameters)</li>
             
             
             <section><p>Finally, write a method to retrieve the number of unique words seen:</p>
-<pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">))</span>
-                         <span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
-<span class="o">}</span>
+<pre class="literal-block">
+public Long readUniqueCount() {
+  return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT))
+                         .getLong(UNIQUE_COUNT, 0);
+}
 </pre></section>
             
           </div>

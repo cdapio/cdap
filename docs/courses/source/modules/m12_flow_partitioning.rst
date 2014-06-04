@@ -68,7 +68,7 @@ By default, a Flowlet processes a single data object at a time within a single t
 
 Increase throughput by processing batches of data objects within the same transaction:
 
-.. sourcecode:: java
+::
 
 	@Batch(100)
 	@ProcessInput
@@ -148,9 +148,8 @@ Details of Flow Partitioning Strategies 2/2
 Example Flow Partitioning Strategy: FIFO
 ============================================
 
-A Flowlet that counts words and uses the default strategy of FIFO:
+A Flowlet that counts words and uses the default strategy of FIFO::
 
-.. sourcecode:: java
 
 	public class Counter extends AbstractFlowlet {
 
@@ -169,9 +168,8 @@ A Flowlet that counts words and uses the default strategy of FIFO:
 Example Flow Partitioning Strategy: Round-robin 1/2
 ===================================================
 
-To increase throughput when this Flowlet has many instances, specify round-robin partitioning:
-
-.. sourcecode:: java
+To increase throughput when this Flowlet has many instances, 
+specify round-robin partitioning::
 
 	@RoundRobin
 	@ProcessInput("wordOut")
@@ -202,9 +200,7 @@ for the word *scream* at the same time, leading to a write conflict
 Example Flow Partitioning Strategy: Hash-based 1/3
 ==================================================
 
-To avoid conflicts, use hash-based partitioning:
-
-.. sourcecode:: java
+To avoid conflicts, use hash-based partitioning::
 
 	@HashPartition("wordHash")
 	@ProcessInput("wordOut")
@@ -219,9 +215,7 @@ and there are no more write conflicts
 
 Example Flow Partitioning Strategy: Hash-based 2/3
 ==================================================
-To use, the emitting Flowlet must annotate each data object with the partitioning key:
-
-.. sourcecode:: java
+To use, the emitting Flowlet must annotate each data object with the partitioning key::
 
 	@Output("wordOut")
 	private OutputEmitter<String> wordOutput;
@@ -254,9 +248,7 @@ Example Flow Partitioning Strategy: Hash-based 3/3
 Combining Flow Partitioning and Batch Execution
 ==================================================
 
-Partitioning can be combined with batch execution:
-
-.. sourcecode:: java
+Partitioning can be combined with batch execution::
 
 	@Batch(100)
 	@HashPartition("wordHash")
