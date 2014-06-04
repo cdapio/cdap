@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Locations;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamUtils;
 import com.google.common.base.Charsets;
@@ -14,7 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
+import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -22,11 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -42,6 +40,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private static final Gson GSON = new Gson();
 
   private final Location streamBaseLocation;
+  private final StreamCoordinator streamCoordinator;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
 
@@ -50,17 +49,42 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   private final StreamAdmin oldStreamAdmin;
 
   protected AbstractStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+                                    StreamCoordinator streamCoordinator,
                                     StreamConsumerStateStoreFactory stateStoreFactory,
                                     StreamAdmin oldStreamAdmin) {
     this.cConf = cConf;
     this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.streamCoordinator = streamCoordinator;
     this.stateStoreFactory = stateStoreFactory;
     this.oldStreamAdmin = oldStreamAdmin;
   }
 
   @Override
   public void dropAll() throws Exception {
-    // TODO: How to support it properly with opened stream writer?
+    try {
+      oldStreamAdmin.dropAll();
+    } catch (Exception e) {
+      LOG.error("Failed to to truncate old stream.", e);
+    }
+
+    // Simply increment the generation of all streams. The actual deletion of file, just like truncate case,
+    // is done external to this class.
+    List<Location> locations = streamBaseLocation.list();
+    if (locations == null) {
+      return;
+    }
+
+    for (Location streamLocation : locations) {
+      try {
+        StreamConfig streamConfig = loadConfig(streamLocation);
+        streamCoordinator.nextGeneration(streamConfig, StreamUtils.getGeneration(streamConfig)).get();
+      } catch (Exception e) {
+        LOG.error("Failed to truncate stream {}", streamLocation.getName(), e);
+      }
+    }
+
+    // Also drop the state table
+    stateStoreFactory.dropAll();
   }
 
   @Override
@@ -164,15 +188,31 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public StreamConfig getConfig(String streamName) throws IOException {
     Location streamLocation = streamBaseLocation.append(streamName);
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' not exists.", streamName);
+    return loadConfig(streamLocation);
+  }
+
+  @Override
+  public void updateConfig(String streamName, StreamConfig config) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
+    StreamConfig originalConfig = loadConfig(streamLocation);
+    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
+                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Reader reader = new InputStreamReader(configLocation.getInputStream(), Charsets.UTF_8);
+    Location tempLocation = configLocation.getTempFile("tmp");
     try {
-      StreamConfig config = GSON.fromJson(reader, StreamConfig.class);
-      return new StreamConfig(streamName, config.getPartitionDuration(), config.getIndexInterval(), streamLocation);
+      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
+
+      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                               "Rename {} to {} failed", tempLocation, configLocation);
     } finally {
-      Closeables.closeQuietly(reader);
+      if (tempLocation.exists()) {
+        tempLocation.delete();
+      }
     }
   }
 
@@ -195,9 +235,7 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   @Override
   public void create(String name, @Nullable Properties props) throws Exception {
     Location streamLocation = streamBaseLocation.append(name);
-    if (!streamLocation.mkdirs() && !streamLocation.isDirectory()) {
-      throw new IllegalStateException("Failed to create stream '" + name + "' at " + streamLocation.toURI());
-    }
+    Locations.mkdirsIfNotExists(streamLocation);
 
     Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
     if (!configLocation.createNew()) {
@@ -210,43 +248,62 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
                                             cConf.get(Constants.Stream.PARTITION_DURATION)));
     long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
                                                                cConf.get(Constants.Stream.INDEX_INTERVAL)));
+    long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
+                                                     cConf.get(Constants.Stream.TTL)));
 
     Location tmpConfigLocation = configLocation.getTempFile(null);
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, streamLocation);
-    Writer writer = new OutputStreamWriter(tmpConfigLocation.getOutputStream(), Charsets.UTF_8);
+    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation);
+    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+    
     try {
-      GSON.toJson(config, writer);
+      tmpConfigLocation.renameTo(configLocation);
     } finally {
-      writer.close();
+      if (tmpConfigLocation.exists()) {
+        tmpConfigLocation.delete();
+      }
     }
-    tmpConfigLocation.renameTo(configLocation);
   }
 
   @Override
   public void truncate(String name) throws Exception {
-    // TODO: How to support it properly with opened stream writer?
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.truncate(streamName);
     }
+
+    StreamConfig config = getConfig(name);
+    streamCoordinator.nextGeneration(config, StreamUtils.getGeneration(config)).get();
   }
 
   @Override
   public void drop(String name) throws Exception {
-  // TODO: How to support it properly with opened stream writer?
-    String streamName = QueueName.fromStream(name).toURI().toString();
-    if (oldStreamAdmin.exists(streamName)) {
-      oldStreamAdmin.drop(streamName);
-    }
+    // Same as truncate
+    truncate(name);
   }
 
   @Override
   public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
     String streamName = QueueName.fromStream(name).toURI().toString();
     if (oldStreamAdmin.exists(streamName)) {
       oldStreamAdmin.upgrade(streamName, properties);
     }
+  }
+
+  private StreamConfig loadConfig(Location streamLocation) throws IOException {
+    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+
+    StreamConfig config = GSON.fromJson(
+      CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
+      StreamConfig.class);
+
+    return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+                            config.getTTL(), streamLocation);
+  }
+
+  private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {
+    return originalConfig.getIndexInterval() == newConfig.getIndexInterval()
+      && originalConfig.getPartitionDuration() == newConfig.getPartitionDuration();
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,

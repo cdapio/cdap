@@ -9,6 +9,7 @@ import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -31,13 +32,16 @@ public final class StreamHttpService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final StreamCoordinator streamCoordinator;
   private Cancellable cancellable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
+                           StreamCoordinator streamCoordinator,
                            @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
+    this.streamCoordinator = streamCoordinator;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = NettyHttpService.builder()
@@ -57,6 +61,7 @@ public final class StreamHttpService extends AbstractIdleService {
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.STREAM_HANDLER));
     httpService.startAndWait();
+
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
@@ -78,6 +83,7 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     } finally {
       httpService.stopAndWait();
+      streamCoordinator.close();
     }
   }
 

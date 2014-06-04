@@ -9,6 +9,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -42,7 +43,8 @@ public class StreamTailer {
                                              new LocationRuntimeModule().getDistributedModules());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    Location streamLocation = streamAdmin.getConfig(streamName).getLocation();
+    StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+    Location streamLocation = streamConfig.getLocation();
     List<Location> eventFiles = Lists.newArrayList();
 
     for (Location partition : streamLocation.list()) {
@@ -57,8 +59,9 @@ public class StreamTailer {
       }
     }
 
-    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamAdmin.getConfig(streamName),
-      ImmutableList.copyOf(Iterables.transform(eventFiles, createOffsetConverter())));
+    int generation = StreamUtils.getGeneration(streamConfig);
+    MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamConfig,
+      ImmutableList.copyOf(Iterables.transform(eventFiles, createOffsetConverter(generation))));
     List<StreamEvent> events = Lists.newArrayList();
     while (reader.read(events, 10, 100, TimeUnit.MILLISECONDS) >= 0) {
       for (StreamEvent event : events) {
@@ -70,11 +73,11 @@ public class StreamTailer {
     reader.close();
   }
 
-  private static Function<Location, StreamFileOffset> createOffsetConverter() {
+  private static Function<Location, StreamFileOffset> createOffsetConverter(final int generation) {
     return new Function<Location, StreamFileOffset>() {
       @Override
       public StreamFileOffset apply(Location eventLocation) {
-        return new StreamFileOffset(eventLocation);
+        return new StreamFileOffset(eventLocation, 0L, generation);
       }
     };
   }

@@ -39,4 +39,10 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
     }
     return new LevelDBStreamConsumerStateStore(streamConfig, coreTable);
   }
+
+  @Override
+  public synchronized void dropAll() throws IOException {
+    coreTable = null;
+    tableService.dropTable(tableName);
+  }
 }

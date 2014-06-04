@@ -100,8 +100,6 @@ public class StreamClientTest extends GatewayTestBase {
 
   }
 
-  // TODO: (REACTOR-87) Temporarily disable.
-  @Ignore
   @Test
   public void testStreamTruncate() throws OperationException {
     String streamId = "truncate-stream";
