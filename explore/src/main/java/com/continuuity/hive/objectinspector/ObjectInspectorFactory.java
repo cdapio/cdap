@@ -1,6 +1,9 @@
 package com.continuuity.hive.objectinspector;
 
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -18,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * ObjectInspectorFactory is the primary way to create new ObjectInspector
@@ -26,23 +30,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * SerDe classes should call the static functions in this library to create an
  * ObjectInspector to return to the caller of SerDe2.getObjectInspector().
  * <p/>
- * The reason of having caches here is that ObjectInspector is because
- * ObjectInspectors do not have an internal state - so ObjectInspectors with the
+ * The reason of having caches here is that ObjectInspectors
+ * do not have an internal state - so ObjectInspectors with the
  * same construction parameters should result in exactly the same
  * ObjectInspector.
  */
 public final class ObjectInspectorFactory {
 
-  private static ConcurrentHashMap<Type, ObjectInspector> objectInspectorCache =
-      new ConcurrentHashMap<Type, ObjectInspector>();
+  private static final LoadingCache<Type, ObjectInspector> objectInspectorCache =
+      CacheBuilder.newBuilder().build(new CacheLoader<Type, ObjectInspector>() {
+        @Override
+        public ObjectInspector load(Type key) throws Exception {
+          return getReflectionObjectInspectorNoCache(key);
+        }
+      });
 
   public static ObjectInspector getReflectionObjectInspector(Type t) {
-    ObjectInspector oi = objectInspectorCache.get(t);
-    if (oi == null) {
-      oi = getReflectionObjectInspectorNoCache(t);
-      objectInspectorCache.put(t, oi);
+    try {
+      return objectInspectorCache.get(t);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
     }
-    return oi;
   }
 
   private static ObjectInspector getReflectionObjectInspectorNoCache(Type t) {
@@ -52,20 +60,20 @@ public final class ObjectInspectorFactory {
     }
 
     Map<TypeVariable, Type> genericTypes = null;
-    // t has to come from TokenType, otherwise not recognized as ParameterizedType...
     if (t instanceof ParameterizedType) {
       ParameterizedType pt = (ParameterizedType) t;
+      Type rawType = pt.getRawType();
       // List?
-      if (List.class.isAssignableFrom((Class<?>) pt.getRawType())) {
+      if (List.class.isAssignableFrom((Class<?>) rawType)) {
         return getStandardListObjectInspector(getReflectionObjectInspector(pt.getActualTypeArguments()[0]));
       }
       // Map?
-      if (Map.class.isAssignableFrom((Class<?>) pt.getRawType())) {
+      if (Map.class.isAssignableFrom((Class<?>) rawType)) {
         return getStandardMapObjectInspector(getReflectionObjectInspector(pt.getActualTypeArguments()[0]),
                                              getReflectionObjectInspector(pt.getActualTypeArguments()[1]));
       }
       // Otherwise convert t to RawType so we will fall into the following if block.
-      t = pt.getRawType();
+      t = rawType;
 
       ImmutableMap.Builder<TypeVariable, Type> builder = ImmutableMap.builder();
       for (int i = 0; i < pt.getActualTypeArguments().length; i++) {
@@ -76,8 +84,7 @@ public final class ObjectInspectorFactory {
 
     // Must be a class.
     if (!(t instanceof Class)) {
-      throw new RuntimeException(ObjectInspectorFactory.class.getName()
-          + " internal error:" + t);
+      throw new RuntimeException(ObjectInspectorFactory.class.getName() + " internal error:" + t);
     }
     Class<?> c = (Class<?>) t;
 
@@ -106,8 +113,8 @@ public final class ObjectInspectorFactory {
     }
 
     // Must be struct because List and Map need to be ParameterizedType
-    assert (!List.class.isAssignableFrom(c));
-    assert (!Map.class.isAssignableFrom(c));
+    Preconditions.checkState(!List.class.isAssignableFrom(c));
+    Preconditions.checkState(!Map.class.isAssignableFrom(c));
 
     Preconditions.checkState(!c.isInterface(), "Cannot inspect an interface.");
 
@@ -116,8 +123,7 @@ public final class ObjectInspectorFactory {
     // recursive types.
     objectInspectorCache.put(t, oi);
     Field[] fields = ObjectInspectorUtils.getDeclaredNonStaticFields(c);
-    ArrayList<ObjectInspector> structFieldObjectInspectors = new ArrayList<ObjectInspector>(
-        fields.length);
+    List<ObjectInspector> structFieldObjectInspectors = new ArrayList<ObjectInspector>(fields.length);
     for (int i = 0; i < fields.length; i++) {
       if (!oi.shouldIgnoreField(fields[i].getName())) {
         Type newType = fields[i].getGenericType();

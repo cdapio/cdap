@@ -68,7 +68,7 @@ public class ObjectInspectorFactoryTest {
   @Test
   public void objectInspectorFactoryTest() throws Exception {
     // The "this$0" field comes from the fact that some classes are
-    // nested classes - this refers to this test class
+    // nested classes - 'this' refers to this test class
     Assert.assertEquals("array<string>", getObjectName(new TypeToken<List<String>>() { }.getType()));
     Assert.assertEquals("array<struct<address:struct<street:string,this$0:struct<>>,this$0:struct<>>>",
                         getObjectName(new TypeToken<List<DummyEmployee<DummyAddress<String>>>>() { }.getType()));
@@ -91,6 +91,8 @@ public class ObjectInspectorFactoryTest {
 
     assertObjectInspection(DummyStruct.class, a);
 
+    // NOTE: type has to come from TokenType, otherwise, if doing new DummyEmployee<...>().getClass(),
+    // type will not be recognized as ParameterizedType
     assertObjectInspection(new TypeToken<DummyEmployee<DummyAddress<String>>>() { }.getType(),
                            new DummyEmployee<DummyAddress<String>>(new DummyAddress<String>("foo")));
   }
