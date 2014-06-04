@@ -9,4 +9,11 @@ public interface DatasetNamespace {
    * @return namespaced name of the dataset
    */
   String namespace(String name);
+
+  /**
+   * @param name namespaced name of the dataset
+   * @return original name of the dataset
+   */
+  // TODO: possible design issue, see REACTOR-217
+  String fromNamespaced(String name);
 }

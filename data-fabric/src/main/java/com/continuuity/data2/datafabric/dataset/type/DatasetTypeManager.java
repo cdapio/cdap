@@ -154,25 +154,6 @@ public class DatasetTypeManager extends AbstractIdleService {
   }
 
   /**
-   * @param datasetTypeName name of the type
-   * @return instance of {@link DatasetDefinition} of the given type or {@code null} if one doesn't exist
-   */
-  @Nullable
-  public DatasetDefinition getType(final String datasetTypeName) {
-    return getTxExecutor().executeUnchecked(new Callable<DatasetDefinition>() {
-      @Override
-      public DatasetDefinition call() throws Exception {
-        DatasetTypeMeta type = null;
-        type = mds.getType(datasetTypeName);
-        if (type == null) {
-          return null;
-        }
-        return new DatasetDefinitionLoader(locationFactory).load(type);
-      }
-    });
-  }
-
-  /**
    * @return collection of types available in the system
    */
   public Collection<DatasetTypeMeta> getTypes() {

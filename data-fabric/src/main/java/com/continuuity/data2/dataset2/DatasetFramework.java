@@ -6,6 +6,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 import java.io.IOException;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
@@ -27,12 +28,6 @@ import javax.annotation.Nullable;
  * </tt>
  */
 public interface DatasetFramework {
-
-  // Due to a bug in checkstyle, it would emit false positives here of the form
-  // "Unable to get class information for @throws tag '<exn>' (...)".
-  // This comment disables that check up to the corresponding ON comments below
-
-  // CHECKSTYLE OFF: @throws
 
   /**
    * Registers dataset types by adding dataset module to the system.
@@ -67,10 +62,23 @@ public interface DatasetFramework {
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
    * @throws InstanceConflictException if dataset instance with this name already exists
+   * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
   void addInstance(String datasetTypeName, String datasetInstanceName, DatasetInstanceProperties props)
-    throws DatasetManagementException;
+    throws DatasetManagementException, IOException;
+
+  /**
+   * @return names of all dataset instances
+   * @throws DatasetManagementException
+   */
+  Collection<String> getInstances() throws DatasetManagementException;
+
+  /**
+   * @return true if instance exists, false otherwise
+   * @throws DatasetManagementException
+   */
+  boolean hasInstance(String instanceName) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.
@@ -79,11 +87,10 @@ public interface DatasetFramework {
    *       dataset admin to perform such administrative operations
    * @param datasetInstanceName dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
+   * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void deleteInstance(String datasetInstanceName) throws DatasetManagementException;
-
-  // CHECKSTYLE ON
+  void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.

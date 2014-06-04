@@ -1,12 +1,15 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -27,6 +30,8 @@ import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -42,6 +47,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class TestFrameworkTest extends ReactorTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
   @After
   public void cleanup() throws Exception {
@@ -318,12 +324,12 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
   @Test(timeout = 60000L)
-  public void testAppWithAutoDeployDataset() throws Exception {
+  public void testAppWithAutoDeployDatasetModule() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
-  public void testAppWithAutoDeployOfDeployedDataset() throws Exception {
+  public void testAppWithAutoDeployDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
@@ -363,6 +369,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
 
     } finally {
+      TimeUnit.SECONDS.sleep(2);
       applicationManager.stopAll();
     }
   }
@@ -383,7 +390,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     Connection connection = getQueryClient();
     try {
       // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
-      connection.prepareStatement(DatasetsUtil.generateCreateStatement("myTable", kvTable)).execute();
+      connection.prepareStatement(generateCreateStatement("myTable", kvTable)).execute();
 
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
@@ -401,5 +408,22 @@ public class TestFrameworkTest extends ReactorTestBase {
     } finally {
       connection.close();
     }
+  }
+
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+    String hiveSchema;
+    try {
+      hiveSchema = Scannables.hiveSchemaFor(scannable);
+    } catch (UnsupportedTypeException e) {
+      LOG.error(String.format(
+        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+      return null;
+    }
+    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
+    LOG.info("Command for Hive: {}", hiveStatement);
+    return hiveStatement;
   }
 }

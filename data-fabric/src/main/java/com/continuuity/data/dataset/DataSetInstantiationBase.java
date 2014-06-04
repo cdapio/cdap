@@ -24,7 +24,6 @@ import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.continuuity.internal.lang.Reflections;
@@ -148,29 +147,15 @@ public class DataSetInstantiationBase {
 
   private <T extends Dataset> T getOrCreateDataset(String datasetName, DatasetFramework datasetFramework)
     throws DataSetInstantiationException {
-    // First, get admin to check if dataset instance exists. If doesn't exist - create.
-    // If admin is null, then dataset meta doesn't exist, in which case try to create from scratch.
-    DatasetAdmin admin;
     try {
-      admin = datasetFramework.getAdmin(datasetName, classLoader);
-      if (admin != null) {
-        if (!admin.exists()) {
-          admin.create();
-        }
-      } else {
+      if (!datasetFramework.hasInstance(datasetName)) {
         DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
         if (creationSpec == null) {
           return null;
         }
         try {
           datasetFramework.addInstance(creationSpec.getTypeName(), creationSpec.getInstanceName(),
-                                     creationSpec.getProperties());
-          admin = datasetFramework.getAdmin(datasetName, classLoader);
-          if (admin == null) {
-            throw new DataSetInstantiationException("Added instance meta to the system " + datasetName +
-                                                      " but still cannot access it");
-          }
-          admin.create();
+                                       creationSpec.getProperties());
         } catch (Exception e) {
           throw new DataSetInstantiationException("could not create dataset " + datasetName, e);
         }
