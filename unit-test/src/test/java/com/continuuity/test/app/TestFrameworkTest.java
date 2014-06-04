@@ -19,6 +19,7 @@ import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
@@ -391,7 +392,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
 
       // run a query over the dataset
-      results = connection.prepareStatement("select key from mytable where value = '1'").executeQuery();
+      results = connection.prepareStatement("select first from mytable where second = '1'").executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
       Assert.assertTrue(results.next());
