@@ -3,13 +3,19 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.gateway.router.NettyRouter;
@@ -29,13 +35,15 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,13 +53,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public abstract class GatewayTestBase {
-
 
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -72,8 +78,12 @@ public abstract class GatewayTestBase {
 
   @ClassRule
   public static ExternalResource resources = new ExternalResource() {
+
+    private TemporaryFolder tmpFolder = new TemporaryFolder();
+
     @Override
     protected void before() throws Throwable {
+      tmpFolder.create();
       conf = CConfiguration.create();
       Set<String> forwards = ImmutableSet.of("0:" + Constants.Service.GATEWAY, "0:" + WEBAPPSERVICE);
       conf.setInt(Constants.Gateway.PORT, 0);
@@ -83,21 +93,23 @@ public abstract class GatewayTestBase {
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
       conf.set(Constants.Router.ADDRESS, hostname);
       conf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+      conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
       injector = startGateway(conf);
     }
 
     @Override
     protected void after() {
       stopGateway(conf);
+      tmpFolder.delete();
     }
   };
 
-  public static Injector startGateway(CConfiguration conf) {
+  public static Injector startGateway(final CConfiguration conf) {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
-    injector = Guice.createInjector
-      (Modules.override(
+    injector = Guice.createInjector(
+      Modules.override(
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -121,7 +133,7 @@ public abstract class GatewayTestBase {
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
-        new StreamHttpModule()
+        new StreamServiceModule()
       ).with(new AbstractModule() {
                @Override
                protected void configure() {
@@ -134,6 +146,13 @@ public abstract class GatewayTestBase {
                  MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
                  bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
                  bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+
+                 bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
+                 bind(StreamConsumerStateStoreFactory.class)
+                   .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+                 bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+                 bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
+                 bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
                }
              }
       ));

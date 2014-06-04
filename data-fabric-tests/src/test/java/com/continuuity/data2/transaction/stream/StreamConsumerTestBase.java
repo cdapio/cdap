@@ -119,7 +119,7 @@ public abstract class StreamConsumerTestBase {
   }
 
   private List<StreamEventRep> writeEvents(StreamConfig streamConfig, String msgPrefix, int count, Clock clock) throws IOException {
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
     try {
       return writeEvents(writer, streamConfig, msgPrefix, count, clock);
     } finally {
@@ -338,7 +338,7 @@ public abstract class StreamConsumerTestBase {
     Assert.assertEquals(ttl, streamConfig.getPartitionDuration());
 
     List<StreamEventRep> expectedEvents = Lists.newLinkedList();
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
 
     try {
       // Write 10 expired messages
@@ -414,7 +414,7 @@ public abstract class StreamConsumerTestBase {
 
     // Write 500 non-expired messages to stream with timestamp approxEarliestNonExpiredTime..currentTime
     List<StreamEventRep> expectedEvents = Lists.newLinkedList();
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
 
     try {
       expectedEvents.addAll(writeEvents(writer, streamConfig, "New event pre-flush ", 20,

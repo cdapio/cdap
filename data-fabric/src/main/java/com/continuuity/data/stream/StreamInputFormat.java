@@ -31,8 +31,15 @@ import java.util.List;
  *   Each file has path pattern
  * <pre>
  *     [streamName]/[partitionName]/[bucketName].[dat|idx]
+ * OR
+ *     [streamName]/[generation]/[partitionName]/[bucketName].[dat|idx]
  * </pre>
  * Where {@code .dat} is the event data file, {@code .idx} is the accompany index file.
+ *
+ * <br/><br/>
+ * The {@code generation} is an integer, representing the stream generation of the data under it. When a stream
+ * is truncated, the generation increment by one. The generation {@code 0} is a special case that there is
+ * no generation directory.
  *
  * <br/><br/>
  * The {@code partitionName} is formatted as

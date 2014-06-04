@@ -91,7 +91,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Override
   protected void getFileOffsets(Location partitionLocation,
-                                Collection<? super StreamFileOffset> fileOffsets) throws IOException {
+                                Collection<? super StreamFileOffset> fileOffsets,
+                                int generation) throws IOException {
     // TODO: Support dynamic writer instances discovery
     // Current assume it won't change and is based on cConf
     int instances = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 0);
@@ -101,7 +102,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
       String streamFilePrefix = filePrefix + '.' + i;
       Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, streamFilePrefix,
                                                                 0, StreamFileType.EVENT);
-      fileOffsets.add(new StreamFileOffset(eventLocation, 0));
+      fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
     }
   }
 

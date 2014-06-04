@@ -20,6 +20,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -269,12 +270,20 @@ public final class ZKExtOperations {
             @Override
             public void onSuccess(final V content) {
               // When modifier calls completed, try to set the content
+
+              // Modifier decided to abort
               if (content == null) {
                 resultFuture.set(null);
                 return;
               }
               try {
                 byte[] data = codec.encode(content);
+
+                // No change in content. No need to update and simply set the future to complete.
+                if (Arrays.equals(data, result.getData())) {
+                  resultFuture.set(content);
+                  return;
+                }
 
                 Futures.addCallback(zkClient.setData(path, data, version), new FutureCallback<Stat>() {
                   @Override

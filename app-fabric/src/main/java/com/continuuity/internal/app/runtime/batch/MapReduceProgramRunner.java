@@ -26,6 +26,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
@@ -514,7 +515,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
       StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
-      Location streamPath = streamConfig.getLocation();
+      Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                                 StreamUtils.getGeneration(streamConfig));
+
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
       TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());

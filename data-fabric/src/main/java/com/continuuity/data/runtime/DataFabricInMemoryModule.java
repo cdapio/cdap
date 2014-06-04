@@ -6,6 +6,8 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data.stream.InMemoryStreamCoordinator;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -57,6 +59,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
     bind(StreamAdmin.class).to(InMemoryStreamAdmin.class).in(Singleton.class);
 
+    bind(StreamCoordinator.class).to(InMemoryStreamCoordinator.class).in(Singleton.class);
     bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
     bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);
 

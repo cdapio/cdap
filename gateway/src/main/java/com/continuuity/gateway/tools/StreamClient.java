@@ -14,7 +14,6 @@ import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
-
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -409,7 +408,7 @@ public class StreamClient {
     }
 
     // build the full URI for the request and validate it
-    String requestUrl = baseUrl + "/streams/" + destination;
+    String requestUrl = baseUrl + "streams/" + destination;
 
     if ("send".equals(command)) {
       // get the body as a byte array
@@ -512,7 +511,7 @@ public class StreamClient {
           System.err.println("Unexpected response without body.");
           return null;
         }
-        consumer = Long.toString(Bytes.toLong(binaryValue));
+        consumer = Bytes.toString(binaryValue);
       }
       Collector<StreamEvent> collector =
         all ? new AllCollector<StreamEvent>(StreamEvent.class) :
@@ -609,7 +608,7 @@ public class StreamClient {
       System.err.println("Unexpected response without body.");
       return null;
     }
-    return Long.toString(Bytes.toLong(binaryValue));
+    return Bytes.toString(binaryValue);
   }
 
   /**

@@ -17,6 +17,7 @@ import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -54,19 +55,22 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final CyclicBarrier suspendBarrier;
   private final AtomicInteger inflight;
   private final DataFabricFacade dataFabricFacade;
+  private final Service serviceHook;
 
   private Thread runnerThread;
   private ExecutorService processExecutor;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
                        Collection<ProcessSpecification> processSpecs,
-                       Callback txCallback, DataFabricFacade dataFabricFacade) {
+                       Callback txCallback, DataFabricFacade dataFabricFacade,
+                       Service serviceHook) {
     this.flowlet = flowlet;
     this.flowletContext = flowletContext;
     this.loggingContext = flowletContext.getLoggingContext();
     this.processSpecs = processSpecs;
     this.txCallback = txCallback;
     this.dataFabricFacade = dataFabricFacade;
+    this.serviceHook = serviceHook;
     this.inflight = new AtomicInteger(0);
 
     this.suspension = new AtomicReference<CountDownLatch>();
@@ -129,64 +133,69 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   protected void run() {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
-    initFlowlet();
+    serviceHook.startAndWait();
+    try {
+      initFlowlet();
 
-    // Insert all into priority queue, ordered by next deque time.
-    BlockingQueue<FlowletProcessEntry<?>> processQueue =
-      new PriorityBlockingQueue<FlowletProcessEntry<?>>(processSpecs.size());
-    for (ProcessSpecification<?> spec : processSpecs) {
-      processQueue.offer(FlowletProcessEntry.create(spec));
-    }
-    List<FlowletProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
+      // Insert all into priority queue, ordered by next deque time.
+      BlockingQueue<FlowletProcessEntry<?>> processQueue =
+        new PriorityBlockingQueue<FlowletProcessEntry<?>>(processSpecs.size());
+      for (ProcessSpecification<?> spec : processSpecs) {
+        processQueue.offer(FlowletProcessEntry.create(spec));
+      }
+      List<FlowletProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
 
-    while (isRunning()) {
-      CountDownLatch suspendLatch = suspension.get();
-      if (suspendLatch != null) {
+      while (isRunning()) {
+        CountDownLatch suspendLatch = suspension.get();
+        if (suspendLatch != null) {
+          try {
+            suspendBarrier.await();
+            suspendLatch.await();
+          } catch (Exception e) {
+            // Simply continue and let the isRunning() check to deal with that.
+            continue;
+          }
+        }
+
         try {
-          suspendBarrier.await();
-          suspendLatch.await();
-        } catch (Exception e) {
-          // Simply continue and let the isRunning() check to deal with that.
+          // If the queue head need to wait, we had to wait.
+          processQueue.peek().await();
+        } catch (InterruptedException e) {
+          // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
           continue;
         }
-      }
 
-      try {
-        // If the queue head need to wait, we had to wait.
-        processQueue.peek().await();
-      } catch (InterruptedException e) {
-        // Triggered by shutdown, simply continue and let the isRunning() check to deal with that.
-        continue;
-      }
+        processList.clear();
+        processQueue.drainTo(processList);
 
-      processList.clear();
-      processQueue.drainTo(processList);
-
-      // Execute the process method and block until it finished.
-      Future<?> processFuture = processExecutor.submit(createProcessRunner(processQueue, processList));
-      while (!processFuture.isDone()) {
-        try {
-          // Wait uninterruptibly so that stop() won't kill the executing context
-          // We need a timeout so that in case it takes too long to complete, we have chance to force quit it if
-          // it is in shutdown sequence.
-          Uninterruptibles.getUninterruptibly(processFuture, 30, TimeUnit.SECONDS);
-        } catch (ExecutionException e) {
-          LOG.error("Unexpected execution exception.", e);
-        } catch (TimeoutException e) {
-          // If in shutdown sequence, cancel the task by interrupting it.
-          // Otherwise, just keep waiting until it completess
-          if (!isRunning()) {
-            LOG.info("Flowlet {} takes longer than 30 seconds to quite. Force quitting.",
-                     flowletContext.getFlowletId());
-            processFuture.cancel(true);
+        // Execute the process method and block until it finished.
+        Future<?> processFuture = processExecutor.submit(createProcessRunner(processQueue, processList));
+        while (!processFuture.isDone()) {
+          try {
+            // Wait uninterruptibly so that stop() won't kill the executing context
+            // We need a timeout so that in case it takes too long to complete, we have chance to force quit it if
+            // it is in shutdown sequence.
+            Uninterruptibles.getUninterruptibly(processFuture, 30, TimeUnit.SECONDS);
+          } catch (ExecutionException e) {
+            LOG.error("Unexpected execution exception.", e);
+          } catch (TimeoutException e) {
+            // If in shutdown sequence, cancel the task by interrupting it.
+            // Otherwise, just keep waiting until it completess
+            if (!isRunning()) {
+              LOG.info("Flowlet {} takes longer than 30 seconds to quite. Force quitting.",
+                       flowletContext.getFlowletId());
+              processFuture.cancel(true);
+            }
           }
         }
       }
-    }
 
-    // Clear the interrupted flag and execute Flowlet.destroy()
-    Thread.interrupted();
-    destroyFlowlet();
+      // Clear the interrupted flag and execute Flowlet.destroy()
+      Thread.interrupted();
+      destroyFlowlet();
+    } finally {
+      serviceHook.stopAndWait();
+    }
   }
 
   /**
