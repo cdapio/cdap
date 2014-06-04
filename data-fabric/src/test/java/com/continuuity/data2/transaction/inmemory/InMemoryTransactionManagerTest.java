@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -27,6 +28,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   InMemoryTransactionManager txManager = null;
   TransactionStateStorage txStateStorage = null;
 
+
   @Override
   protected TransactionSystemClient getClient() {
     return new InMemoryTxSystemClient(txManager);
@@ -42,7 +44,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     // todo should create two sets of tests, one with LocalFileTxStateStorage and one with InMemoryTxStateStorage
     txStateStorage = new InMemoryTransactionStateStorage();
-    txManager = new InMemoryTransactionManager(conf, txStateStorage);
+    txManager = new InMemoryTransactionManager(conf, txStateStorage, null);
     txManager.startAndWait();
   }
 
@@ -56,7 +58,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 3);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
-    InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
+    InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage(), null);
     txm.startAndWait();
     try {
       Assert.assertEquals(0, txm.getInvalidSize());

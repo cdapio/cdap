@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
@@ -89,6 +90,12 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
     throws IOException, OperationException {
     handleRequest(request, responder);
+  }
+
+  @GET
+  @Path("/reactor/transactions/{metric}")
+  public void handleTransactionMetrics(HttpRequest request, HttpResponder response) throws IOException {
+    handleRequest(request, response);
   }
 
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {

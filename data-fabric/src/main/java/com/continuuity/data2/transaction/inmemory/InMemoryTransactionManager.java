@@ -2,6 +2,9 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TxConstants;
@@ -38,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * This is the central place to manage all active transactions in the system.
@@ -113,6 +117,8 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private long readPointer;
   private long nextWritePointer;
+  private MetricsCollectionService metricsCollectionService;
+  private MetricsCollector metricsCollector;
 
   private final TransactionStateStorage persistor;
 
@@ -140,11 +146,12 @@ public class InMemoryTransactionManager extends AbstractService {
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoOpTransactionStateStorage());
+    this(CConfiguration.create(), new NoOpTransactionStateStorage(), null);
   }
 
   @Inject
-  public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor) {
+  public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor,
+                                    @Nullable MetricsCollectionService metricsCollectionService) {
     this.persistor = persistor;
     cleanupInterval = conf.getInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL,
                                   Constants.Transaction.Manager.DEFAULT_TX_CLEANUP_INTERVAL);
@@ -155,6 +162,10 @@ public class InMemoryTransactionManager extends AbstractService {
     // must always keep at least 1 snapshot
     snapshotRetainCount = Math.max(conf.getInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_RETAIN,
                                                Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_RETAIN), 1);
+    this.metricsCollectionService = metricsCollectionService;
+    if (metricsCollectionService != null) {
+      metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    }
     clear();
   }
 
@@ -315,6 +326,14 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     // copy in memory state
     snapshot = getCurrentState();
+    if (metricsCollectionService != null) {
+      LOG.info("MetricsCollection Service is not null");
+      metricsCollector.gauge("invalid", invalid.size());
+      metricsCollector.gauge("inprogress", inProgress.size());
+      metricsCollector.gauge("committing", committingChangeSets.size());
+      metricsCollector.gauge("committed", committedChangeSets.size());
+    }
+
     LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
     LOG.info("Returning snapshot of state: " + snapshot);
     return snapshot;
