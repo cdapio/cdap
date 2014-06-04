@@ -50,7 +50,7 @@ public final class StreamConfig {
   }
 
   /**
-   * @return The time to live in milliseconds for events in this stream. A value of 0 indicates indefinite TTL.
+   * @return The time to live in milliseconds for events in this stream.
    */
   public long getTTL() {
     return ttl;

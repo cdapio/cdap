@@ -166,8 +166,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
-    this.readFilter = ReadFilters.and(createTtlReadFilter(streamConfig),
-                                      createReadFilter(consumerConfig));
+    this.readFilter = createReadFilter(consumerConfig, streamConfig);
 
     this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
     this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
@@ -368,12 +367,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .add("consumer", consumerConfig)
       .toString();
   }
-  
-  public ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
-    return new TTLReadFilter(streamConfig.getTTL());
-  }
 
-  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
+  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig, StreamConfig streamConfig) {
     final int groupSize = consumerConfig.getGroupSize();
     final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
 
@@ -388,13 +383,19 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     // file offset as a way to spread events across consumers
     final int instanceId = consumerConfig.getInstanceId();
 
-    return new ReadFilter() {
+    ReadFilter partitionFilter = new ReadFilter() {
       @Override
       public boolean acceptOffset(long offset) {
         int hashValue = Math.abs(strategy == DequeueStrategy.HASH ? 0 : ROUND_ROBIN_HASHER.hashLong(offset).hashCode());
         return instanceId == (hashValue % groupSize);
       }
     };
+
+    return ReadFilters.and(createTtlReadFilter(streamConfig), partitionFilter);
+  }
+
+  private ReadFilter createTtlReadFilter(final StreamConfig streamConfig) {
+    return new TTLReadFilter(streamConfig.getTTL());
   }
 
   private void getEvents(List<? extends StreamEventOffset> source,

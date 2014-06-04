@@ -11,7 +11,7 @@ import com.continuuity.data.file.filter.AndReadFilter;
 public final class ReadFilters {
   private ReadFilters() {}
 
-  public static final ReadFilter and(ReadFilter lhs, ReadFilter rhs) {
-    return new AndReadFilter(lhs, rhs);
+  public static final ReadFilter and(ReadFilter...filters) {
+    return new AndReadFilter(filters);
   }
 }
