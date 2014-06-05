@@ -32,8 +32,8 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   private final HBaseTableUtil tableUtil;
 
   @Inject
-  public DistributedDataSetAccessor(@Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
-                                    @Named("HBaseOVCTableHandleHConfig") Configuration hConf,
+  public DistributedDataSetAccessor(CConfiguration cConf,
+                                    Configuration hConf,
                                     LocationFactory locationFactory,
                                     HBaseTableUtil tableUtil)
     throws IOException {

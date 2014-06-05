@@ -1,8 +1,12 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.DatasetDefinition;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
@@ -13,18 +17,10 @@ import java.io.IOException;
  */
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
-  private RemoteDatasetFramework client;
+  private final RemoteDatasetFramework client;
 
   @Inject
   public InMemoryDatasetOpExecutor(RemoteDatasetFramework client) {
-    this.client = client;
-  }
-
-  public InMemoryDatasetOpExecutor() {
-
-  }
-
-  public void setClient(RemoteDatasetFramework client) {
     this.client = client;
   }
 
@@ -34,13 +30,32 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public void create(String instanceName) throws Exception {
-    getAdmin(instanceName).create();
+  public DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
+    throws Exception {
+
+    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+
+    if (def == null) {
+      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+    }
+
+    DatasetInstanceSpec spec = def.configure(instanceName, props);
+    DatasetAdmin admin = def.getAdmin(spec);
+    admin.create();
+
+    return spec;
   }
 
   @Override
-  public void drop(String instanceName) throws Exception {
-    getAdmin(instanceName).drop();
+  public void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception {
+    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+
+    if (def == null) {
+      throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
+    }
+
+    DatasetAdmin admin = def.getAdmin(spec);
+    admin.drop();
   }
 
   @Override

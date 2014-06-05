@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -17,8 +18,8 @@ import org.apache.twill.filesystem.LocationFactory;
 public final class LevelDBStreamFileAdmin extends AbstractStreamFileAdmin {
 
   @Inject
-  LevelDBStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf,
+  LevelDBStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator streamCoordinator,
                          StreamConsumerStateStoreFactory stateStoreFactory, LevelDBStreamAdmin oldStreamAdmin) {
-    super(locationFactory, cConf, stateStoreFactory, oldStreamAdmin);
+    super(locationFactory, cConf, streamCoordinator, stateStoreFactory, oldStreamAdmin);
   }
 }

@@ -55,11 +55,13 @@ define([], function () {
 
 				if (error) {
 
-					$('#warning').html('<div>' + error + '</div>').show();
+					$('#warning .warning-text').html(error);
+					$('#warning').show();
 
 				} else {
 
-					$('#warning').html('<div>Encountered a connection problem.</div>').show();
+					$('#warning .warning-text').html('Encountered a connection problem.');
+					$('#warning').show();
 
 				}
 
@@ -91,7 +93,8 @@ define([], function () {
 			}
 			$.ajax(options).done(function (response, statusText, xhr) {
 				if (response.error && response.error.fatal) {
-					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+					$('#warning .warning-text').html(response.error.fatal);
+					$('#warning').show();
 				} else {
 					callback(response, xhr.status, statusText);
 				}
@@ -133,7 +136,8 @@ define([], function () {
 			$.ajax(options).done(function (response, status) {
 
 				if (response.error && response.error.fatal) {
-					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+					$('#warning .warning-text').html(response.error.fatal);
+					$('#warning').show();
 				} else {
 					callback(response, status);
 				}
@@ -161,7 +165,8 @@ define([], function () {
 				}
 
 				if (response.error) {
-					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
+					$('#warning .warning-text').html(response.error.fatal);
+					$('#warning').show();
 				} else {
 					callback(response, status);
 				}

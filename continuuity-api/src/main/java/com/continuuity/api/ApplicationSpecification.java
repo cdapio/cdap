@@ -22,6 +22,7 @@ import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -126,6 +127,11 @@ public interface ApplicationSpecification {
      * Map from Workflow name to {@link WorkflowSpecification} for all Workflows defined in this Application.
      */
     private final Map<String, WorkflowSpecification> workflows = new HashMap<String, WorkflowSpecification>();
+
+    /**
+     * Map from Service name to {@link TwillSpecification} for the services defined in this Application.
+     */
+    private final Map<String, TwillSpecification> services = new HashMap<String, TwillSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.

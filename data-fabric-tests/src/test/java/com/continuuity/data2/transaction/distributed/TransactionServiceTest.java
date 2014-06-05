@@ -74,7 +74,7 @@ public class TransactionServiceTest {
         new ZKClientModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getDistributedModules(),
-        new DataFabricModules(cConf).getDistributedModules());
+        new DataFabricModules().getDistributedModules());
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
       zkClient.startAndWait();
@@ -175,7 +175,7 @@ public class TransactionServiceTest {
     // we want persisting for this test
     cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true);
 
-    final DataFabricDistributedModule dfModule = new DataFabricDistributedModule(cConf, hConf);
+    final DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
 
     final Injector injector =
       Guice.createInjector(dfModule,

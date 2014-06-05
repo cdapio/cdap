@@ -25,6 +25,7 @@ import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -119,6 +120,7 @@ public class ReactorServiceMain extends DaemonMain {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
       new IOModule(),
       new AuthModule(),
       new KafkaClientModule(),
@@ -127,7 +129,7 @@ public class ReactorServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new HiveRuntimeModule().getDistributedModules()
     );

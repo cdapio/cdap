@@ -268,6 +268,41 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("stream1", request.getTagPrefix());
   }
 
+
+  @Test
+  public void testService() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/appfabric/request.received?aggregate=true"));
+    Assert.assertEquals("appfabric", request.getContextPrefix());
+    Assert.assertEquals("request.received", request.getMetricPrefix());
+  }
+
+
+  @Test
+  public void testHandler() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/appfabric/handlers/AppFabricHttpHandler/response.server-error?aggregate=true"));
+    Assert.assertEquals("appfabric.AppFabricHttpHandler", request.getContextPrefix());
+    Assert.assertEquals("response.server-error", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testMethod() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/metrics/handlers/MetricsQueryHandler/methods/handleComponent/" +
+                   "response.successful?aggregate=true"));
+    Assert.assertEquals("metrics.MetricsQueryHandler.handleComponent", request.getContextPrefix());
+    Assert.assertEquals("response.successful", request.getMetricPrefix());
+  }
+
+  @Test(expected = MetricsPathException.class)
+  public void testInvalidRequest() throws MetricsPathException {
+    //handler instead of handlers
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/services/metrics/handler/MetricsQueryHandler/" +
+                   "response.successful?aggregate=true"));
+  }
+
   @Test
   public void testCluster() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(

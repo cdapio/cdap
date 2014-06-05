@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 
@@ -54,6 +55,11 @@ public class MinimalTxSystemClient implements TransactionSystemClient {
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     throw new TransactionCouldNotTakeSnapshotException("Not snapshot to take.");
+  }
+
+  @Override
+  public String status() {
+    return Constants.Monitor.STATUS_OK;
   }
 
   @Override

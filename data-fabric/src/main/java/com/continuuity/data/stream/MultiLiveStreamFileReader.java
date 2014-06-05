@@ -171,8 +171,9 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       // Use nextOffset location to construct file offset
       // because the actual file location can only be determined by a read to a LiveFileReader,
       // hence located inside nextOffset
-      result.add(new StreamEventOffset(streamEvent,
-                                       new StreamFileOffset(nextOffset.getEventLocation(), streamEvent.getStart())));
+      StreamFileOffset resultOffset = new StreamFileOffset(nextOffset.getEventLocation(),
+                                                           streamEvent.getStart(), nextOffset.getGeneration());
+      result.add(new StreamEventOffset(streamEvent, resultOffset));
       events.clear();
 
       // Updates current offset information to be after the current event.

@@ -8,7 +8,7 @@ define([], function () {
 
 		tagName: 'div',
 		classNames: ['create-btn', 'pull-right'],
-		template: Em.Handlebars.compile('<button class="btn" id="load-app-trigger">Load an App</button>'),
+		template: Em.Handlebars.compile('<button class="btn btn-blue" id="load-app-trigger">Load an app</button>'),
 		entityType: 'Application',
 
 		click: function () {

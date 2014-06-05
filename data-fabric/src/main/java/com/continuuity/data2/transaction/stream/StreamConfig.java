@@ -16,12 +16,15 @@ public final class StreamConfig {
   private final transient String name;
   private final long partitionDuration;
   private final long indexInterval;
+  private final long ttl;
+
   private final transient Location location;
 
-  public StreamConfig(String name, long partitionDuration, long indexInterval, Location location) {
+  public StreamConfig(String name, long partitionDuration, long indexInterval, long ttl, Location location) {
     this.name = name;
     this.partitionDuration = partitionDuration;
     this.indexInterval = indexInterval;
+    this.ttl = ttl;
     this.location = location;
   }
 
@@ -47,6 +50,13 @@ public final class StreamConfig {
   }
 
   /**
+   * @return The time to live in milliseconds for events in this stream.
+   */
+  public long getTTL() {
+    return ttl;
+  }
+
+  /**
    * @return The location of the stream if it is file base stream, or {@code null} otherwise.
    */
   @Nullable
@@ -60,6 +70,7 @@ public final class StreamConfig {
       .add("name", name)
       .add("duration", partitionDuration)
       .add("indexInterval", indexInterval)
+      .add("ttl", ttl)
       .add("location", location)
       .toString();
   }

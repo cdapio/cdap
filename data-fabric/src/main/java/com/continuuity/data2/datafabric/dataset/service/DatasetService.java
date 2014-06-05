@@ -22,7 +22,6 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,6 @@ public class DatasetService extends AbstractIdleService {
   public DatasetService(CConfiguration cConf,
                         LocationFactory locationFactory,
                         DiscoveryService discoveryService,
-                        DiscoveryServiceClient discoveryServiceClient,
                         @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
                         @Named("defaultDatasetModules")
                         SortedMap<String, Class<? extends DatasetModule>> defaultModules,
@@ -66,15 +64,15 @@ public class DatasetService extends AbstractIdleService {
     // todo: refactor once DataSetAccessor is removed.
     this.mdsDatasetFramework =
       new NamespacedDatasetFramework(mdsDatasetFramework,
-                                   new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
+                                     new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     this.defaultModules = defaultModules;
 
     this.typeManager = new DatasetTypeManager(mdsDatasetFramework, txSystemClient, locationFactory, defaultModules);
     this.instanceManager = new DatasetInstanceManager(mdsDatasetFramework, txSystemClient);
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(discoveryServiceClient, typeManager,
-                                                                        instanceManager, opExecutorClient)));
+                                             new DatasetInstanceHandler(typeManager, instanceManager,
+                                                                        opExecutorClient)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

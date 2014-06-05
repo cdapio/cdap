@@ -40,7 +40,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(cConf)
+      new DataFabricLevelDBModule()
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);

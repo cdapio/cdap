@@ -1,0 +1,1509 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Continuuity</title>
+  <link rel="shortcut icon" type="image/x-icon" href="http://www.continuuity.com/wp-content/themes/continuuity/images/favicon.ico">
+
+  <meta name="description" content="">
+  <meta name="author" content="Continuuity, Inc.">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+
+  <script type="text/javascript">
+
+    window.ENV = window.ENV || {};
+    ENV.EXPERIMENTAL_CONTROL_HELPER = true
+
+  </script>
+
+  <script type="text/javascript" src="/core/lib/jquery-1.9.1.js"></script>
+  <script type="text/javascript" src="/third_party/bootstrap/js/bootstrap.js"></script>
+  <script type="text/javascript" src="/core/lib/handlebars.js"></script>
+  <script type="text/javascript" src="/core/lib/ember-1.0.0-rc.5.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
+  <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
+  <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
+  <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
+
+  <script src="/core/lib/rickshaw.js"></script>
+  <script src="/third_party/select2/select2.min.js"></script>
+
+  <link rel="stylesheet" href="/third_party/rickshaw/rickshaw.min.css">
+  <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/third_party/select2/select2.css">
+  <link rel="stylesheet" href="/assets/css/old/main.css">
+
+  <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/dFjjpiFcT5p78aYB5bDzGA.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
+
+</head>
+<body>
+<div id="nav">
+  <a href="#" id="logo"></a>
+  <a href="#" id="product-name"></a>
+  <ul>
+    <li class="overview"><a class="nav-link nav-dash" id="nav-overview" href="#">Overview</a></li>
+    <li><a class="nav-link nav-streams" id="nav-collect" href="#/streams">Collect</a></li>
+    <li><a class="nav-link nav-flows" id="nav-process" href="#/flows">Process</a></li>
+    <li><a class="nav-link nav-datasets" id="nav-store" href="#/datasets">Store</a></li>
+    <li><a class="nav-link nav-queries" id="nav-queries" href="#/procedures">Query</a></li>
+  </ul>
+</div>
+
+<script type="text/x-handlebars" data-template-name="application">
+  <div id="header">
+    <div id="global">
+      {{#if C.Env.security_enabled}}
+        {{#if C.Env.auth_token}}
+          <a href="/logout" id="header-logout">Logout</a>
+        {{else}}
+          <a href="/#/login" id="header-login">Login</a>
+        {{/if}}
+        {{#if C.Env.authenticated}}
+          <a href="https://accounts.continuuity.com/logout">Logout</a>
+          <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
+          <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
+          <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
+        {{else}}
+          <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
+          <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
+        {{/if}}
+      {{/if}}
+      <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
+    </div>
+    {{view C.Embed.Breadcrumb}}
+  </div>
+  <div id="warning"><div>Experiencing connection issues.</div></div>
+  <div id="content-body">
+    {{outlet}}
+  </div>
+  <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
+
+    <a href="http://www.continuuity.com/terms" id="footer-terms" target="blank">Terms</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a href="http://www.continuuity.com/privacy" id="footer-terms" target="blank">Privacy</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
+    <span>&nbsp;·&nbsp;</span>
+    <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
+    {{#if C.isLocal}}
+      <span>&nbsp;·&nbsp;</span>
+      <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
+    {{/if}}
+    <span id="build-number"></span>
+  </div>
+  <div id="drop-hover">
+    <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
+  </div>
+
+  <div id="nux-completed-modal" class="popup-modal">
+    <div class="popup-container">
+      <div id="nux-1">
+        <div class="popup-body">
+          <h2>And you’re done!</h2>
+
+          <h3>Now you’ve completed:</h3>
+
+          <ol>
+            <li>injecting an Event into a Stream;</li>
+            <li>seeing the Event being processed by a Flow; and</li>
+            <li>using a Procedure to query a DataSet to obtain the results.</li>
+          </ol>
+
+          <p>These are the basics of Continuuity Reactor.</p>
+          <p>For a programming quickstart, follow the <a target="_blank" href="http://www.continuuity.com/developers/quickstart">instructions online</a> about modifying the code and redeploying the app.</p>
+
+        </div>
+        <div class="modal-footer">
+          <button onclick="C.Util.NUX.restart();" class="btn">Restart</button>
+          <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Finish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Login">
+  <div id="title">
+    <h1>Login&nbsp;<span>Accounts</span></h1>
+  </div>
+  <div id="panels">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"></div>Log into Reactor</div>
+      <div class="panel-body">
+        <div class="warning">{{warning}}</div>
+        {{view C.Embed.Login}}
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="login-view">
+  <form method="POST" action="/login" id="login-form">
+    <table>
+      <tr>
+        <td>Username</td>
+        <td>{{input type="text" value=username class="username" name="username" }}</td>
+      </tr>
+      <tr>
+        <td>Password</td>
+        <td>{{input type="password" value=password class="password" name="password" }}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <button type="button" class="btn btn-default" id="login-submit-btn">Login</button>
+        </td>
+      </tr>
+    </table>
+  </form>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Overview">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    {{#if C.isEnterprise}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo Overview }}Reactor{{/linkTo}}</li>
+        <li>{{#linkTo Resources }}Resources{{/linkTo}}</li>
+      </ul>
+    {{/if}}
+    <h1>Overview</h1>
+  </div>
+
+  <div id="panels">
+    <div class="quarter" id="quarter1">
+      <div class="panel">
+        <div class="quarter-title">Collect</div>
+        <div class="quarter-value"><strong><span class="value-number">{{value.collect}}</span></strong><span class="value-measure"> EPS</span></div>
+        {{view C.Embed.DashChart kind="collect"}}
+      </div>
+    </div>
+    <div class="quarter" id="quarter2">
+      <div class="panel">
+        <div class="quarter-title">Process</div>
+        <div class="quarter-value"><strong><span class="value-number">{{value.process}}</span></strong><span class="value-measure">%</span></div>
+        {{view C.Embed.DashChart kind="process"}}
+      </div>
+    </div>
+    <div class="quarter" id="quarter3">
+      <div class="panel">
+        <div class="quarter-title">Store</div>
+        <div class="quarter-value"><strong><span class="value-number">{{value.store.label}}</span></strong> <span class="value-measure">{{value.store.unit}}/s</span></div>
+        {{view C.Embed.DashChart kind="store"}}
+      </div>
+    </div>
+    <div class="quarter" id="quarter4">
+      <div class="panel" style="margin-right: 0;">
+        <div class="quarter-title">Query</div>
+        <div class="quarter-value"><strong><span class="value-number">{{value.query}}</span></strong><span class="value-measure"> QPS</span></div>
+        {{view C.Embed.DashChart kind="query"}}
+      </div>
+    </div>
+
+    <div class="panel" style="clear: both;">
+      <div class="panel-head">
+        <input type="file" id="app-upload-input"/>
+        {{view C.Embed.CreateButton entityType="Application"}}
+        <div class="panel-title">Applications</div>
+      </div>
+      {{partial "apps-list"}}
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Resources">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <li>{{#linkTo Overview }}Reactor{{/linkTo}}</li>
+      <li>{{#linkTo Resources }}Resources{{/linkTo}}</li>
+    </ul>
+    <h1>Resources</h1>
+  </div>
+  <div id="panels">
+    <div class="quarter">
+      <div class="panel">
+        <div class="quarter-title">AppFabric</div>
+        <div class="quarter-value"><strong>{{value.containers}}</strong> Containers</div>
+        {{view C.Embed.DashChart kind="containers"}}
+      </div>
+    </div>
+    <div class="quarter">
+      <div class="panel">
+        <div class="quarter-title">Processors</div>
+        <div class="quarter-value"><strong>{{value.cores}}</strong> Cores</div>
+        {{view C.Embed.DashChart kind="cores"}}
+      </div>
+    </div>
+    <div class="quarter">
+      <div class="panel">
+        <div class="quarter-title">Memory</div>
+        <div class="quarter-value"><strong>{{value.memory.label}}</strong>{{value.memory.unit}} / <strong>{{total.memory.label}}</strong>{{total.memory.unit}}</div>
+        {{view C.Embed.DashChart kind="memory"}}
+      </div>
+    </div>
+    <div class="quarter">
+      <div class="panel" style="margin-right: 0;">
+        <div class="quarter-title">DataFabric</div>
+        <div class="quarter-value"><strong>{{value.storage.label}}</strong>{{value.storage.unit}} / <strong>{{total.storage.label}}</strong>{{total.storage.unit}}</div>
+        {{view C.Embed.DashChart kind="storage"}}
+      </div>
+    </div>
+    <div class="panel clearfix" style="clear: both;">
+      {{partial "programs-list"}}
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="App">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <h1>{{model.name}} <span>Application</span></h1>
+  </div>
+
+  <div id="info">
+    <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
+      <div id="action-buttons" class="btn-group pull-right">
+        <button class="btn dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        {{#if C.isLocal}}
+          <button class="btn" style="width:64px;" {{action "promotePrompt"}}><span class="btn-drain"></span><span>Push</span></button>
+        {{/if}}
+
+        <ul class="dropdown-menu">
+          <li><a href="#" {{action "delete" on="click"}}>Delete This Application</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.events.processed" title="Processed"}}</div>
+    <div class="info-box sparkline-box app-busyness">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.busyness" unit="percent" title="Busyness"}}</div>
+    <div class="info-box app-storage" style="padding: 0;text-align: center;">
+      <div class="sparkline-box-title">Storage</div>
+      <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+    </div>
+  </div>
+
+  <div id="panels">
+    <div class="panel" id="collect-panel">
+      <div class="panel-head"><div class="panel-title">Collect</div></div>
+      {{partial "streams-list"}}
+    </div>
+    <div class="panel" id="process-panel">
+
+      <div class="panel-head">
+        {{#if elements.Flow.length}}
+          <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
+            <button {{action startAll "Flow" on="click"}} class="btn start">Start</button>
+            <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+            <button {{action stopAll "Flow" on="click"}} class="btn stop">Stop</button>
+          </div>
+        {{/if}}
+        <div class="panel-title">Process</div>
+      </div>
+      {{partial "flows-list"}}
+
+    </div>
+    <div class="panel" id="store-panel">
+      <div class="panel-head"><div class="panel-title">Store</div></div>
+      {{partial "datasets-list"}}
+    </div>
+    <div class="panel" id ="query-panel">
+      <div class="panel-head">
+        {{#if elements.Procedure.length}}
+          <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
+            <button {{action startAll "Procedure" on="click"}} class="btn start">Start</button>
+            <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
+            <button {{action stopAll "Procedure" on="click"}} class="btn stop">Stop</button>
+          </div>
+        {{/if}}
+        <div class="panel-title">Query</div>
+      </div>
+      {{partial "procedures-list"}}
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="List">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <h1>{{title}} <span>Data</span></h1>
+  </div>
+  <div id="panels">
+    <div class="panel">
+      {{view controller.viewType}}
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Stream">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <h1>{{model.name}} <span>Stream</span></h1>
+  </div>
+  <div id="info">
+    <div class="info-box sparkline-box">{{view C.Embed.Chart title="Arrival Rate" metrics="/reactor/streams/{id}/collect.events"}}</div>
+    <div class="info-box" style="padding: 0;text-align: center;">
+      <div class="sparkline-box-title">Storage</div>
+      <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+    </div>
+    <div class="info-box" style="padding: 0;text-align: center;">
+      <div class="sparkline-box-title">Events</div>
+      <div class="sparkline-box-value" style="padding-top:19px;padding-left:0;width:100px;">{{model.eventsLabel}} {{model.eventsUnits}}<br /><span>Events</span></div>
+    </div>
+  </div>
+  <div id="panels">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+
+      {{partial "flows-list"}}
+
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Workflow">
+  <div id="title">
+    <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <li>{{#linkTo WorkflowStatus model}}Status{{/linkTo}}</li>
+      <li>{{#linkTo Workflow.History model}}History{{/linkTo}}</li>
+    </ul>
+    <h1>{{model.name}} <span>Workflow</span></h1>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="WorkflowStatus">
+
+  <div id="info">
+    <div class="info-box">
+      <div id="workflow-next-run" style="float: left">
+        <div class="sparkline-box-title">Next Scheduled Run</div>
+        <div id="workflow-scheduled-runs">
+
+          {{#if suspended}}
+            <div class="flow-schedule">
+              <strong>SUSPENDED</strong>
+            </div>
+            <div class="sparkline-box-title">Select "Resume" from the dropdown menu</div>
+          {{else}}
+            <div class="flow-schedule">
+              <strong>{{timeToNextRun}}</strong>
+            </div>
+            <div class="sparkline-box-title">{{nextRunLabel}}</div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    <div class="info-box" style="float: right; border: 0;">
+      <div id="action-buttons" class="btn-group pull-right">
+
+        <button class="btn dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li style="min-width:200px; padding:4px 16px 2px;">
+            Full Schedule:
+            {{#each elements.Schedule}}
+              <div class="sparkline-box-title">{{this.time}}</div>
+            {{/each}}
+            {{#unless elements.Schedule.length}}
+              <div class="sparkline-box-title">No Runs</div>
+            {{/unless}}
+          </li>
+          {{#if suspended}}
+            <li><a href="#" {{action "resume" on="click"}}>Resume Schedule</a></li>
+          {{else}}
+            <li><a href="#" {{action "suspend" on="click"}}>Suspend Schedule</a></li>
+          {{/if}}
+        </ul>
+
+        <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+        <button class="btn btn-icon" style="border-right:0;" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+
+      </div>
+      <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+    </div>
+
+  </div>
+
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="batchviz-container">
+        <div id="workflowviz" class="clearfix chart">
+          {{#each elements.Action}}
+            <div class="batch-item" {{bindAttr id="divId"}} {{action loadAction this}} style="cursor: pointer;">
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  {{#if running}}
+                    <div class="window-icon running"></div>
+                  {{else}}
+                    <div class="window-icon"></div>
+                  {{/if}}
+                  <div class="batch-phase">{{name}}</div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Workflow/History">
+
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="object-list">
+        {{#if runs.length}}
+          <table class="table table-condensed">
+            <thead>
+            <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list" {{action "loadRun" runid}}>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <div class="object-list-empty">
+            <div class="object-list-empty-content">
+              <div>No History.</div>
+              <span>This Workflow has not completed a run yet.</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Mapreduce">
+
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <li>{{#linkTo MapreduceStatus model}}Status{{/linkTo}}</li>
+      <li>{{#linkTo Mapreduce.Log model}}Log{{/linkTo}}</li>
+      <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
+    </ul>
+    <h1>{{model.name}} <span>Mapreduce</span></h1>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="MapreduceStatus">
+  <div id="info">
+
+    <div class="info-box" style="float: right; border: 0;">
+      <div id="action-buttons" class="btn-group pull-right">
+        <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+        <button class="btn btn-icon" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+      </div>
+      <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+    </div>
+
+    <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" title="Mapping" unit="percent"}}</div>
+    <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" title="Reducing" unit="percent"}}</div>
+
+  </div>
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="batchviz-container">
+        <div id="batchviz" class="clearfix chart">
+          <div class="batch-item">
+            <div id="batch-map" class="batch-icon batch-map">
+              <div class="info-window">
+                <div class="batch-phase">MAP</div>
+                <div class="mapper-icon"></div>
+                <div>{{model.metricData.mappersEntriesIn}} IN</div>
+                <div>{{model.metricData.mappersEntriesOut}} OUT</div>
+              </div>
+            </div>
+            {{#if model.running}}
+
+              <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
+            {{/if}}
+          </div>
+          <div class="batch-item">
+            <div id="batch-reduce" class="batch-icon batch-reduce">
+              <div class="info-window">
+                <div class="batch-phase">REDUCE</div>
+                <div class="reducer-icon"></div>
+                <div>{{model.metricData.reducersEntriesIn}} IN</div>
+                <div>{{model.metricData.reducersEntriesOut}} OUT</div>
+              </div>
+            </div>
+            {{#if model.running}}
+
+              <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Mapreduce/History">
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="object-list">
+        {{#if runs.length}}
+          <table class="table table-condensed">
+            <thead>
+            <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list">
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <div class="object-list-empty">
+            <div class="object-list-empty-content">
+              <div>No History.</div>
+              <span>This Mapreduce job has not completed a run yet.</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Flow">
+
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <li>{{#linkTo FlowStatus model}}Status{{/linkTo}}</li>
+      <li>{{#linkTo Flow.Log model}}Log{{/linkTo}}</li>
+      <li>{{#linkTo Flow.History model}}History{{/linkTo}}</li>
+    </ul>
+    <h1>{{model.meta.name}} <span>Flow</span></h1>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="FlowStatus">
+
+  <div id="info">
+    <div class="info-box" style="float: right; border: 0;padding-right: 14px;padding-left: 0px;">
+      <div id="action-buttons" class="btn-group pull-right">
+        <button class="btn dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li style="min-width:200px; padding:4px 16px 2px;">
+            {{#each model.getMeta}}
+            <div><strong>{{k}}</strong>: {{v}}
+            {{/each}}
+          </li>
+        </ul>
+
+        <button class="btn start-stop" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+        <button class="btn btn-icon" style="border-right:0;" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+      </div>
+      <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+    </div>
+
+    <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed" title="Processing Rate"}}</div>
+    <div class="info-box sparkline-box app-busyness">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" title="Busyness" unit="percent"}}</div>
+
+  </div>
+
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="flowviz-container">
+
+        <div class="btn-group" style="float: left;">
+          <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
+            {{flowletLabelName}} <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "setFlowletLabel" "rate"}}>Flowlet Rate</a></li>
+            <li><a {{action "setFlowletLabel" "pending"}}>Flowlet Pending</a></li>
+            <li><a {{action "setFlowletLabel" "aggregate"}}>Flowlet Processed</a></li>
+          </ul>
+        </div>
+
+        {{view C.Embed.Visualizer viewName="visualizer"}}
+      </div>
+    </div>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<!-- Flowlet Status Template -->
+
+<script type="text/x-handlebars" data-template-name="FlowStatus/Flowlet">
+
+  <div class="popup-modal">
+
+    <div class="popup-container">
+      <div class="popup-body">
+        <div class="popup-close" {{action close on="click"}}>×</div>
+
+        {{#if controllers.FlowStatus.model.running}}
+          <div class="btn-group pull-right" style="margin-top: 4px;">
+            <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
+            <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        <div class="popup-icon"></div>
+
+        <h1 class="popup-title"> {{model.name}}</h1>
+        <div id="flowlet-popup-tabs">
+          <div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" {{action select "inputs"}}>Inputs</a></div>
+          <div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" {{action select "processed"}}>Processed</a></div>
+          <div id="flowlet-popup-outputs-tab" class="flowlet-popup-tab"><a href="#" {{action select "outputs"}}>Outputs</a></div>
+        </div>
+        <div id="flowlet-popup-tab-content">
+
+          <div id="flowlet-popup-inputs" class="flowlet-popup-tab-content">
+
+            {{#if model.inputs.length}}
+              <table style="width:100%;">
+                <tr>
+                  <td style="height:214px;padding:0;">
+                    <table style="width: 100%;">
+                      <tbody>
+                      {{#each model.inputs}}
+                        <tr>
+                          <td>
+                            {{#each contrib}}
+                              <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                            {{/each}}
+                          </td>
+                          <td class="flowlet-popup-input">
+                            {{id}}
+                          </td>
+                          <td class="flowlet-blue">
+                            {{view C.Embed.Chart grid="true" entityType="Queue" title="Inbound Events per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.in" classNames="sparkline-flowlet-box"}}
+                          </td>
+                        </tr>
+                      {{/each}}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            {{else}}
+              <div class="flowlet-popup-empty">
+                There are no inputs on this flowlet.
+              </div>
+            {{/if}}
+
+          </div>
+
+          <div id="flowlet-popup-processed" class="flowlet-popup-tab-content">
+
+            <table style="width: 100%">
+              <tr>
+                <td class="flowlet-blue">
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed" classNames="sparkline-flowlet-box" title="Processing Rate"}}
+                </td>
+                <td class="flowlet-blue">
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/store.ops" classNames="sparkline-flowlet-box" title="Data Operations"}}
+                </td>
+              </tr>
+              <tr>
+                <td class="flowlet-blue">
+                  {{view C.Embed.Chart grid="true" width="305" unit="percent" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.busyness" classNames="sparkline-flowlet-box" title="Busyness"}}
+                </td>
+                <td class="flowlet-blue">
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.errors" classNames="sparkline-flowlet-box" title="Errors"}}
+                </td>
+              </tr>
+            </table>
+
+          </div>
+
+          <div id="flowlet-popup-outputs" class="flowlet-popup-tab-content">
+            {{#if model.outputs.length}}
+              <table style="width:100%;">
+                <tr>
+                  <td style="height:214px;padding:0;">
+                    <table style="width:100%;">
+                      <tbody>
+                      {{#each model.outputs}}
+                        <tr>
+                          <td class="flowlet-blue">
+                            {{view C.Embed.Chart grid="true" entityType="Queue" title="Outbound Events per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.out" classNames="sparkline-flowlet-box"}}
+                          </td>
+                          <td class="flowlet-popup-input">
+                            {{id}}
+                          </td>
+                          <td>
+                            {{#each contrib}}
+                              <div {{action navigate name on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
+                            {{/each}}
+                          </td>
+                        </tr>
+                      {{/each}}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            {{else}}
+              <div class="flowlet-popup-empty">
+                There are no outputs on this flowlet.
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</script>
+
+<!-- Stream Status Template -->
+
+<script type="text/x-handlebars" data-template-name="FlowStatus/Stream">
+
+  <div class="popup-modal">
+    <div class="popup-container">
+      <div class="popup-body">
+        <div class="popup-close" {{action close on="click"}}>×</div>
+
+        <div class="popup-icon-stream"></div>
+        <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
+
+        <table class="table" class="popup-stream-table">
+          <thead>
+          <th style="width: 100px;text-align: center;">Storage</th>
+          <th style="width: 100px;text-align: center;">Events</th>
+          <th style="width: 295px;">Events per Second</th>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="app-list-count" {{bindAttr title="model.storageRaw"}}>{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
+            <td class="app-list-count" {{bindAttr title="model.eventsRaw"}}>{{model.eventsLabel}}{{model.eventsUnits}}<br /><span>Events</span></td>
+            <td style="padding-right: 0;max-width:295px;">
+              {{view C.Embed.Chart entityType="Stream" width="376" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <div class="popup-inject-wrapper">
+          {{view C.Embed.Injector placeholder="Events injected here will be consumed by all attached programs."}}
+          <button class="btn" style="float: right;" {{action "inject" on="click"}}>Inject</button>
+            <span class="sparkline-box-title">
+            {{view Em.Checkbox checkedBinding=controller.injectOnEnter}} Inject by pressing Enter
+            </span>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Flow/History">
+
+  <div id="panels">
+    <div id="informer"></div>
+    <div class="panel">
+      <div id="object-list">
+        {{#if runs.length}}
+          <table class="table table-condensed">
+            <thead>
+            <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list" {{action "loadRun" runid}}>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <div class="object-list-empty">
+            <div class="object-list-empty-content">
+              <div>No History.</div>
+              <span>This Flow has not completed a run yet.</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+    <div class="panel">
+      <div id="flowviz-container" class="flowviz-fade">
+        {{view C.Embed.Visualizer viewName="visualizer"}}
+      </div>
+    </div>
+  </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Dataset">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <h1>{{model.name}} <span>Dataset</span></h1>
+  </div>
+  <div id="info">
+    <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Bytes)" metrics="/reactor/datasets/{id}/dataset.store.bytes" unit="bytes"}}</div>
+    <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Ops)" metrics="/reactor/datasets/{id}/dataset.store.writes" unit="OPS/S"}}</div>
+    <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (Ops)" metrics="/reactor/datasets/{id}/dataset.store.reads" unit="OPS/S"}}</div>
+
+    <div class="info-box app-storage" style="padding: 0;text-align: center;">
+      <div class="sparkline-box-title">Stored</div>
+      <div class="sparkline-box-value" style="padding-left: 0;padding-top:16px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+    </div>
+
+  </div>
+  <div id="panels">
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+
+      {{partial "flows-list"}}
+
+    </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="Procedure">
+
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+      <li>{{#linkTo ProcedureStatus model}}Status{{/linkTo}}</li>
+      <li>{{#linkTo Procedure.Log model}}Log{{/linkTo}}</li>
+    </ul>
+    <h1>{{model.name}} <span>Procedure</span></h1>
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="ProcedureStatus">
+
+  <div id="info">
+    <div class="info-box" style="float: right; border: 0;">
+      <div id="action-buttons" class="btn-group pull-right">
+        <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+        <button class="btn btn-icon" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+      </div>
+      <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+    </div>
+
+    <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</div>
+    <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</div>
+  </div>
+  <div id="panels">
+
+    <div class="panel">
+      <div class="panel-head">
+
+        {{#if model.running}}
+          <div class="btn-group pull-right">
+            <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
+            <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
+
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+
+          </div>
+        {{/if}}
+
+        <div class="panel-title">Make a Request</div></div>
+
+      <table style="width: 100%" class="top-aligned">
+        <thead>
+        <tr>
+          <th style="width: 140px;text-align: left;">
+            Method
+          </th>
+          <th style="text-align: left;">
+            Parameters
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>
+            {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" id="method-name"}}
+          </td>
+          <td>
+            {{view C.Embed.Injector valueBinding="controllers.Procedure.requestParams"}}
+            <br />
+            {{#if model.running}}
+              <button id="execute-button" {{action "submit"}} class="btn">Execute</button>
+            {{else}}
+              <button disabled="disabled" class="btn">Click "Start" Above</button>
+            {{/if}}
+          </td>
+
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="padding: 10px;">
+      {{view Ember.TextArea valueBinding="responseBody" classNames="well query-response"}}
+    </div>
+
+  </div>
+
+  {{outlet}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="ColorPicker">
+  <input type="text" class="color-picker" {{action setMetricRequestColor controller.metricsRequest.color}} {{ bindAttr value="controller.metricsRequest.color"}} />
+</script>
+
+<script type="text/x-handlebars" data-template-name="Analyze">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <div style="float: right;margin-top: 2px;">
+      <button class="btn pause" {{action togglePause}}>{{pausedLabel}}</button>
+    </div>
+    <h1>Metrics <span>Explorer</span></h1>
+  </div>
+  <div id="panels">
+    <div class="panel" id="analyze-selected">
+      <div class="panel-body clearfix">
+
+        <div class="analyze-selected">
+          <ul>
+
+            {{#each metric in selected}}
+              <li class="analyze-selected-metric">
+                <div class="analyze-selected-metric-remove" {{action removeFromChart metric}}>&times;</div>
+                <div class="analyze-selected-metric-color" style="background: {{unbound metric.color}}"></div>
+                <div class="analyze-selected-metric-element"><a href="{{unbound metric.href}}">{{metric.element}}</a></div>
+                <div class="analyze-selected-metric-name">{{metric.metric}}</div>
+              </li>
+            {{/each}}
+
+            <li class="analyze-selected-metric-add" {{action showConfigure}}>
+              <div class="analyze-selected-metric-color">+</div>
+              <div class="analyze-selected-metric-element">Add</div>
+            </li>
+
+          </ul>
+
+          <div id="analyze-configurator">
+            <input type="hidden" id="elementSelector" />
+            <input type="hidden" id="metricSelector" disabled="disabled" />
+            <button {{bindAttr disabled="configuring.noSelection"}} class="analyze-blue-btn" {{action addToChart}}>Add</button>
+            <button class="analyze-gray-btn" {{action hideConfigure}}>Cancel</button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="panel analyze-chart">
+      <div class="panel-body">
+        {{#if selected.length}}
+          <div id="y_axis"></div>
+          {{view C.Embed.Analyze}}
+        {{else}}
+          <div class="object-list-empty" style="height:500px;padding-top:220px;">
+            <div class="object-list-empty-content">
+              <div>No metrics selected.</div>
+              <span>Please add a metric on the right.</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+
+</script>
+
+
+<script type="text/x-handlebars" data-template-name="PageNotFound">
+
+  <div id="panels">
+
+    <div class="panel">
+
+      <div class="panel-head">
+        <div class="panel-title">Not Found</div>
+      </div>
+      <div class="object-list-empty">
+        <div class="object-list-empty-content">
+          <div>Page not found.</div>
+          <span>Please double check the URL above.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</script>
+
+<!-- Shared -->
+
+<script type="text/x-handlebars" data-template-name="Runnable/Config">
+
+  <div class="popup-modal config-modal">
+    <div class="popup-container">
+      <div class="popup-body">
+        <div class="popup-close" {{action close on="click"}}>×</div>
+        <h2>Runtime Configuration</h2>
+
+        {{view C.Embed.KeyVal}}
+
+      </div>
+      <div class="modal-footer">
+        <button {{action close}} class="btn">Cancel</button>
+        <button {{action clear}} style="margin-right: 5px;" class="btn">Clear</button>
+        {{#if runnable}}
+          {{#if model.running}}
+            <button {{action save}} class="btn">Save and Close</button>
+            <button {{action saveAndRestart}} class="btn">Save and Restart</button>
+          {{else}}
+            <button {{action runOnce}} class="btn">Run Once</button>
+            <button {{action saveAndRun}} class="btn">Save and Run</button>
+          {{/if}}
+        {{else}}
+          <button {{action save}} class="btn">Save and Close</button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="Runnable/Log">
+
+  <div id="panels">
+    <div class="panel" style="padding: 10px;">
+      <ul class="nav nav-tabs">
+        <li {{bindAttr class="logMetrics.ALL.active"}}><a {{ action showLogsByType "ALL" }}>ALL({{logMetrics.ALL.count}})</a></li>
+        <li {{bindAttr class="logMetrics.INFO.active"}}><a {{ action showLogsByType "INFO" }}>INFO({{logMetrics.INFO.count}})</a></li>
+        <li {{bindAttr class="logMetrics.WARN.active"}}><a {{ action showLogsByType "WARN" }}>WARN({{logMetrics.WARN.count}})</a></li>
+        <li {{bindAttr class="logMetrics.ERROR.active"}}><a id="log-error-tab" {{ action showLogsByType "ERROR" }}>ERROR({{logMetrics.ERROR.count}})</a></li>
+        <li {{bindAttr class="logMetrics.DEBUG.active"}}><a {{ action showLogsByType "DEBUG" }}>DEBUG({{logMetrics.DEBUG.count}})</a></li>
+        <li {{bindAttr class="logMetrics.OTHER.active"}}><a {{ action showLogsByType "OTHER" }}>OTHER({{logMetrics.OTHER.count}})</a></li>
+      </ul>
+      <pre id="logView" class="well query-response"></pre>
+    </div>
+  </div>
+
+</script>
+
+<!-- Partials -->
+
+<script type="text/x-handlebars" data-template-name="tree-branch">
+  {{each children itemController="treeNode" itemViewClass="C.TreeNodeView"}}
+</script>
+
+<script data-template-name="tree-node" type="text/x-handlebars">
+
+  <div class="tree-node">
+
+    <div class="tree-chart">
+      {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true"}}
+    </div>
+
+    <div class="tree-count app-list-count">{{coresLabel}}</div>
+
+    <div class="tree-count app-list-count">{{containersLabel}}</div>
+
+    <div class="tree-toggle">
+      {{#if model.children.length}}
+        <span {{bindAttr class=":toggle-icon children.length::leaf"}} {{action toggle}}>
+          {{#if isExpanded}}
+            &#x25BC;
+          {{else}}
+            &#x25B6;
+          {{/if}}
+        </span>
+      {{else}}
+        &#183;
+      {{/if}}
+    </div>
+    <div class="tree-element app-list-name">
+      <a {{bindAttr href="href"}}>{{name}}</a><br />
+      <span class="app-list-status">{{description}}</span>
+    </div>
+
+  </div>
+
+  {{#if isExpanded}}
+    {{control "treeBranch" model}}
+  {{/if}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="_programs-list">
+
+  {{#if structure.children.length}}
+    <table class="table">
+      <thead>
+      <th>Elements</th>
+      <th style="width: 80px;text-align: center;">Containers</th>
+      <th style="width: 80px;text-align: center;">Cores</th>
+      <th style="width: 262px;">Memory</th>
+      </thead>
+    </table>
+    {{control "treeBranch" structure}}
+
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Applications.</div>
+        <span>Please navigate to the Overview screen to load one.</span>
+      </div>
+    </div>
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="_apps-list">
+  {{#if elements.App.length}}
+    <table class="table">
+      <thead>
+      <th>&nbsp;</th>
+      <th style="text-align: center;width:64px;">Collect</th>
+      <th style="text-align: center;width:64px;">Process</th>
+      <th style="text-align: center;width:64px;">Store</th>
+      <th style="text-align: center;width:64px;">Query</th>
+      <th style="width: 262px;">Busyness</th>
+      </thead>
+      <tbody>
+      {{#each elements.App }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a>
+            <br />
+            <span class="app-list-status">{{description}}</span>
+
+          </td>
+          <td class="app-list-count">{{counts.Stream}}</strong></td>
+          <td class="app-list-count">{{counts.Flow}}</strong></td>
+          <td class="app-list-count">{{counts.Dataset}}</strong></td>
+          <td class="app-list-count">{{counts.Procedure}}</strong></td>
+          <td style="max-width:264px;">{{view C.Embed.Chart entityIdBinding=id entityType="App" height="50" metrics="/reactor/apps/{id}/process.busyness" unit="percent"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Applications.</div>
+        <span>Load an Application by clicking the button above.</span>
+      </div>
+    </div>
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="list-page">
+  <div id="title">
+    {{view C.Embed.TimeSelector}}
+    <h1>{{controller.title}} <span>Data</span></h1>
+  </div>
+
+  <div id="panels">
+    <div class="panel">
+      {{outlet}}
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="_streams-list">
+
+  {{#if elements.Stream.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Streams</th>
+      <th style="width: 100px;text-align: center;">Storage</th>
+      <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Events</th>
+      <th style="width: 262px;">Arrival Rate (EPS)</th>
+      </thead>
+      <tbody>
+      {{#each elements.Stream }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Stream</span>
+          </td>
+          <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
+          <td class="app-list-count">{{eventsLabel}}{{eventsUnits}}<br /><span>Events</span></td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Streams.</div>
+        <span>Please create one in code or on the commandline.</span>
+      </div>
+    </div>
+  {{/if}}
+
+</script>
+
+<script type="text/x-handlebars" data-template-name="_flows-list">
+  {{#if elements.Flow.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Flows</th>
+      <th style="width: 262px;">Processing Rate (EPS)</th>
+      <th style="width: 262px;">Busyness</th>
+      </thead>
+      <tbody>
+      {{#each elements.Flow.content }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+          </td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}</td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" unit="percent"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Flows.</div>
+        <span>Add Flows by uploading an Application JAR.</span>
+      </div>
+    </div>
+  {{/if}}
+  {{#if elements.Mapreduce.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Mapreduce</th>
+      <th style="width: 262px;">Mapping Status</th>
+      <th style="width: 262px;">Reducing Status</th>
+      </thead>
+      <tbody>
+      {{#each elements.Mapreduce.content }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+          </td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+  {{#if elements.Workflow.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Workflows</th>
+      </thead>
+      <tbody>
+      {{#each elements.Workflow.content }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+          </td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="_datasets-list">
+  {{#if elements.Dataset.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Datasets</th>
+      <th style="width: 100px;text-align: center;">Storage</th>
+      <th style="width: 262px;">Write Rate (Bytes)</th>
+      </thead>
+      <tbody>
+      {{#each elements.Dataset }}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
+          </td>
+          <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Datasets.</div>
+        <span>Please create one in code or on the commandline.</span>
+      </div>
+    </div>
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="_procedures-list">
+  {{#if elements.Procedure.length}}
+    <table class="table">
+      <thead>
+      <th style="padding-left: 14px;">Procedures</th>
+      <th style="width: 262px;">Request Rate</th>
+      <th style="width: 262px;">Error Rate</th>
+      </thead>
+      <tbody>
+      {{#each elements.Procedure}}
+        <tr>
+          <td class="app-list-name">
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+          </td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</td>
+          <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</td>
+        </tr>
+      {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <div class="object-list-empty">
+      <div class="object-list-empty-content">
+        <div>No Procedures.</div>
+        <span>Add Procedures by uploading an Application JAR.</span>
+      </div>
+    </div>
+  {{/if}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="promote">
+  <div class="popup-container" style="min-height: 246px;width: 430px;">
+    <div class="popup-body" style="min-height: 240px;">
+
+      {{#if promoteSucceeded}}
+        <h2>Push {{finished}}</h2>
+      {{else}}
+        <h2>Push to Cloud</h2>
+      {{/if}}
+      <div class="modal-loading"></div>
+      <div class="modal-push">
+
+        {{#if pushing}}
+          <div style="text-align: center; padding: 26px;height:182px;">
+            <img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
+          </div>
+        {{else}}
+
+          <div id="promote-status" class="popup-description" style="padding: 0">{{finishedMessage}}</div>
+          {{#if promoteSucceeded}}
+            <div class="popup-description" style="padding:0;">
+              {{#if finishedLink}}
+                <br /><a target="_blank" {{bindAttr href="finishedLink"}}>{{finishedLink}}</a>
+              {{/if}}
+            </div>
+          {{else}}
+            <div class="sparkline-box-title" style="padding-left:0;">API Key</div>
+            <div>{{view C.Embed.TextField valueBinding="C.Env.credential" }}</div>
+            {{#if C.Env.credential}}
+              {{#if destinations.length}}
+                <div class="sparkline-box-title" style="padding-left:0;margin-top:8px;">Destination</div>
+                <div>{{view Ember.Select valueBinding="destination" contentBinding="destinations" optionLabelPath="content.name" optionValuePath="content.id"}}</div>
+              {{else}}
+                {{#if loading}}
+                  <div style="text-align: center; padding: 24px 0px 16px;">
+                    <img src="/assets/img/chart-loading.gif" />
+                  </div>
+                {{else}}
+                  <div class="popup-description">
+                    {{#if network}}
+                      There was a problem connecting to Continuuity. Please check your internet connection.
+                    {{else}}
+                      There are no destinations available. Make sure your API Key is correct. If you have not configured any clouds, you can do so on your <a target="_blank" href="https://accounts.continuuity.com/">Account Home page</a>.
+                    {{/if}}
+                  </div>
+                {{/if}}
+              {{/if}}
+            {{else}}
+              <div class="popup-description">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      </div>
+    </div>
+    {{#if promoteSucceeded}}
+      <div class="modal-footer">
+        <button {{action "destroy" target="view"}} class="btn">Done</button>
+      </div>
+    {{else}}
+      {{#unless pushing}}
+        <div class="modal-footer">
+          <button {{action "destroy" target="view"}} class="btn">Cancel</button>
+          {{#if destinations.length}}
+            <button {{action "promoteSubmit"}} class="btn">Push</button>
+          {{/if}}
+        </div>
+      {{/unless}}
+    {{/if}}
+  </div>
+</script>
+
+</body>
+</html>

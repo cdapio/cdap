@@ -51,7 +51,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     // Write out 200 events in 5 files, with interleaving timestamps
     List<FileWriter<StreamEvent>> writers = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
-      FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, "bucket" + i);
+      FileWriter<StreamEvent> writer = createWriter(config, "bucket" + i);
 
       writers.add(writer);
       for (int j = 0; j < 200; j++) {
@@ -70,7 +70,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
       Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
-      sources.add(new StreamFileOffset(eventFile));
+      sources.add(new StreamFileOffset(eventFile, 0L, 0));
     }
 
     // Reads all events written so far.
@@ -133,7 +133,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
     // Write out 200 events in 5 files, with interleaving timestamps
     for (int i = 0; i < 5; i++) {
-      FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, "bucket" + i);
+      FileWriter<StreamEvent> writer = createWriter(config, "bucket" + i);
       for (int j = 0; j < 200; j++) {
         long timestamp = j * 5 + i;
         writer.append(StreamFileTestUtils.createEvent(timestamp, "Testing " + timestamp));
@@ -146,7 +146,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(), 0, Long.MAX_VALUE);
     for (int i = 0; i < 5; i++) {
       Location eventFile = StreamUtils.createStreamLocation(partitionLocation, "bucket" + i, 0, StreamFileType.EVENT);
-      sources.add(new StreamFileOffset(eventFile));
+      sources.add(new StreamFileOffset(eventFile, 0L, 0));
     }
     MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(config, sources);
 
@@ -198,5 +198,10 @@ public abstract class MultiLiveStreamFileReaderTestBase {
     Assert.assertEquals(0, reader.read(events, 10, 2, TimeUnit.SECONDS));
 
     reader.close();
+  }
+
+  private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
+    return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
+                                               prefix, config.getIndexInterval());
   }
 }

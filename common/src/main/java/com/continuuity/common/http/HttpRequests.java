@@ -1,9 +1,11 @@
+/*
+ * Copyright Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.common.http;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.InputSupplier;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public final class HttpRequests {
   public static HttpResponse doRequest(String requestMethod, URL url,
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body,
-                                 @Nullable InputSupplier<? extends InputStream> bodySrc) throws IOException {
+                                 @Nullable InputStream bodySrc) throws IOException {
 
     Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
 
@@ -110,7 +112,7 @@ public final class HttpRequests {
         }
       }
       byte[] responseBody = null;
-      if (conn.getDoInput()) {
+      if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
         InputStream is = conn.getInputStream();
         try {
           responseBody = ByteStreams.toByteArray(is);
@@ -123,33 +125,6 @@ public final class HttpRequests {
       return new HttpResponse(404, conn.getResponseMessage(), null);
     } finally {
       conn.disconnect();
-    }
-  }
-
-  /**
-   * Represents the response from an HTTP request.
-   */
-  public static final class HttpResponse {
-    private final int responseCode;
-    private final String responseMessage;
-    private final byte[] responseBody;
-
-    private HttpResponse(int responseCode, String responseMessage, byte[] responseBody) {
-      this.responseCode = responseCode;
-      this.responseMessage = responseMessage;
-      this.responseBody = responseBody;
-    }
-
-    public int getResponseCode() {
-      return responseCode;
-    }
-
-    public String getResponseMessage() {
-      return responseMessage;
-    }
-
-    public byte[] getResponseBody() {
-      return responseBody;
     }
   }
 
