@@ -33,7 +33,6 @@ public class LevelDBQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),

@@ -25,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -168,10 +169,10 @@ public class LevelDBFilterableOVCTableTest {
 
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, String.valueOf(rollTime));
-    cConf.unset(Constants.CFG_DATA_LEVELDB_DIR);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),

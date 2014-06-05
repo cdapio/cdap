@@ -34,7 +34,7 @@ final class TransactionStateStorageProvider implements Provider<TransactionState
   @Override
   public TransactionStateStorage get() {
     if (cConf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
-      return injector.getInstance(Key.get(LocalFileTransactionStateStorage.class, Names.named("persist")));
+      return injector.getInstance(Key.get(TransactionStateStorage.class, Names.named("persist")));
     } else {
       return injector.getInstance(NoOpTransactionStateStorage.class);
     }
