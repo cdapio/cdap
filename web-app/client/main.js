@@ -134,6 +134,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	C.Router.map(function() {
 
+		this.resource('Test', { path: '/test' } );
+
 		this.resource('Login', { path: '/login' } );
 
 		this.resource('Overview', { path: '/overview' } );

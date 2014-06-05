@@ -101,7 +101,9 @@
         {{view C.Embed.Breadcrumb}}
         <div style="clear:both"></div>
       </div> --}}
+
       {{outlet}}
+
     </div>
     <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
 
@@ -148,6 +150,23 @@
       </div>
     </div>
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Test">
+    <div id="loading-services">
+      <div class="services-box">
+        <div class="animated">
+          <img src="assets/img/loading_services.gif" />Loading Services...
+        </div>
+
+        <ul class="services-list">
+          <li class="appfabric">AppFabric<div></div></li>
+          <li class="streams">Streams<div></div></li>
+          <li class="transactions">Transactions<div></div></li>
+          <li class="metrics">Metrics<div></div></li>
+        </ul>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
