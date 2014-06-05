@@ -265,7 +265,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     long ttl = getTTL(request);
     StreamConfig config = streamAdmin.getConfig(stream);
-    StreamConfig newConfig = new StreamConfig(null, config.getPartitionDuration(),
+    StreamConfig newConfig = new StreamConfig(config.getName(), config.getPartitionDuration(),
                                               config.getIndexInterval(), ttl, null);
     streamAdmin.updateConfig(stream, newConfig);
     responder.sendStatus(HttpResponseStatus.OK);
