@@ -40,7 +40,6 @@ public class LocalQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
     conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
