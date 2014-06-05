@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   static CConfiguration conf = CConfiguration.create();
-  static Injector injector;
 
   InMemoryTransactionManager txManager = null;
   TransactionStateStorage txStateStorage = null;
@@ -50,17 +49,9 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     // todo should create two sets of tests, one with LocalFileTxStateStorage and one with InMemoryTxStateStorage
-    injector = Guice.createInjector(
-      new AbstractModule() {
-      @Override
-      protected void configure() {
-        MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
-        bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-      }
-    });
     txStateStorage = new InMemoryTransactionStateStorage();
     txManager = new InMemoryTransactionManager
-      (conf, txStateStorage, injector.getInstance(MetricsCollectionService.class));
+      (conf, txStateStorage, new NoOpMetricsCollectionService());
     txManager.startAndWait();
   }
 
@@ -75,7 +66,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
     InMemoryTransactionManager txm = new InMemoryTransactionManager
-      (conf, new InMemoryTransactionStateStorage(), injector.getInstance(MetricsCollectionService.class));
+      (conf, new InMemoryTransactionStateStorage(), new NoOpMetricsCollectionService());
     txm.startAndWait();
     try {
       Assert.assertEquals(0, txm.getInvalidSize());

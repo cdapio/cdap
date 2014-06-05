@@ -43,24 +43,10 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractTransactionStateStorageTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionStateStorageTest.class);
   private static Random random = new Random();
-  private static Injector injector;
 
   protected abstract CConfiguration getConfiguration(String testName) throws IOException;
 
   protected abstract AbstractTransactionStateStorage getStorage(CConfiguration conf);
-
-  @Before
-  public void before() {
-    injector = Guice.createInjector
-      (new AbstractModule() {
-         @Override
-         protected void configure() {
-           MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
-           bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-         }
-       }
-      );
-  }
 
   @Test
   public void testSnapshotPersistence() throws Exception {
@@ -132,7 +118,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager
-        (conf, storage, injector.getInstance(MetricsCollectionService.class));
+        (conf, storage, new NoOpMetricsCollectionService());
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -155,7 +141,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // starts a new tx manager
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, injector.getInstance(MetricsCollectionService.class));
+      txManager = new InMemoryTransactionManager(conf, storage2, new NoOpMetricsCollectionService());
       txManager.startAndWait();
 
       // check that the reloaded state matches the old
@@ -199,7 +185,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage3, injector.getInstance(MetricsCollectionService.class));
+      txManager = new InMemoryTransactionManager(conf, storage3, new NoOpMetricsCollectionService());
       txManager.startAndWait();
 
       // verify state again matches (this time should include WAL replay)
@@ -236,7 +222,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage1 = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager
-        (conf, storage1, injector.getInstance(MetricsCollectionService.class));
+        (conf, storage1, new NoOpMetricsCollectionService());
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -256,7 +242,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
       // simulate a failure by starting a new tx manager without stopping first
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, injector.getInstance(MetricsCollectionService.class));
+      txManager = new InMemoryTransactionManager(conf, storage2, new NoOpMetricsCollectionService());
       txManager.startAndWait();
 
       // check that the reloaded state matches the old
