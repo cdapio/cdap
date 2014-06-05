@@ -214,6 +214,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
           }
         } else {
           generationDeleted(name);
+          ttlDeleted(name);
         }
       } finally {
         currentProperty = newProperty;
@@ -247,6 +248,15 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
     public void ttlChanged(String streamName, long ttl) {
       try {
         listener.ttlChanged(streamName, ttl);
+      } catch (Throwable t) {
+        LOG.error("Exception while calling StreamPropertyListener.ttlChanged", t);
+      }
+    }
+
+    @Override
+    public void ttlDeleted(String streamName) {
+      try {
+        listener.ttlDeleted(streamName);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.ttlChanged", t);
       }

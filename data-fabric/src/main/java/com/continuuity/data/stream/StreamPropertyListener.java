@@ -37,4 +37,13 @@ public abstract class StreamPropertyListener {
   public void ttlChanged(String streamName, long ttl) {
     // Default no-op
   }
+
+  /**
+   * Invoked when the stream TTL property is deleted.
+   *
+   * @param streamName Name of the stream
+   */
+  public void ttlDeleted(String streamName) {
+    // Default no-op
+  }
 }
