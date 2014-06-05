@@ -14,12 +14,11 @@ import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 /**
  * Class for handling requests for a single metric in a context.
  */

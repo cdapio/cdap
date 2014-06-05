@@ -15,7 +15,6 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -42,7 +41,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * This is the central place to manage all active transactions in the system.
