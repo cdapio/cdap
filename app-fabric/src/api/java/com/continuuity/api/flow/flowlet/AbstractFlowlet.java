@@ -4,6 +4,8 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import javax.annotation.Nullable;
+
 /**
  * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
  * It uses the result of {@link #getName()} as the Flowlet name and the result of
@@ -15,7 +17,7 @@ package com.continuuity.api.flow.flowlet;
  *   for more control over customizing the {@link FlowletSpecification}.
  * </p>
  */
-public abstract class AbstractFlowlet implements Flowlet {
+public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   private final String name;
   private FlowletContext flowletContext;
@@ -52,6 +54,17 @@ public abstract class AbstractFlowlet implements Flowlet {
   @Override
   public void destroy() {
     // Nothing to do.
+  }
+
+  @Override
+  public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+    // No-op by default
+  }
+
+  @Override
+  public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
+    // Return the policy as specified in the spec
+    return flowletContext.getSpecification().getFailurePolicy();
   }
 
   /**
