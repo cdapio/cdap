@@ -130,6 +130,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.metricsCollectionService = metricsCollectionService;
   }
 
+  @SuppressWarnings("unused")
   @Inject(optional = true)
   void setLogWriter(LogWriter logWriter) {
     CAppender.logWriter = logWriter;
@@ -320,11 +321,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
           Integer processBatchSize = getBatchSize(method);
 
           if (processBatchSize != null) {
-            Preconditions.checkArgument(dataType.getRawType().equals(Iterator.class),
-                                        "Only Iterator is supported.");
-            Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
-                                        "Only ParameterizedType is supported for batch Iterator.");
-            dataType = flowletType.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
+            if (dataType.getRawType().equals(Iterator.class)) {
+              Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
+                                          "Only ParameterizedType is supported for batch Iterator.");
+              dataType = flowletType.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
+            }
             batchSize = processBatchSize;
           }
 

@@ -270,8 +270,18 @@ public class TestFrameworkTest extends ReactorTestBase {
       RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
                                                                   "GenSinkFlow",
                                                                   "SinkFlowlet");
-      sinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+
+      RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+                                                                       "GenSinkFlow",
+                                                                       "BatchSinkFlowlet");
+
+      // Generator generators 99 events + 99 batched events
+      sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, sinkMetrics.getException());
+
+      // Batch sink only get the 99 batch events
+      batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+      Assert.assertEquals(0L, batchSinkMetrics.getException());
 
       Assert.assertEquals(1L, genMetrics.getException());
 
