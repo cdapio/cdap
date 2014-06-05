@@ -1,34 +1,22 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.ning.http.client.Response;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -40,48 +28,13 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
   private static final String STATUS_OK = "OK";
   private static final String STATUS_NOTOK = "NOTOK";
 
-  /**
-   * Timeout to get response from discovered service.
-   */
-  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  private enum Service {
-    METRICS (Constants.Service.METRICS),
-    TRANSACTION (Constants.Service.TRANSACTION),
-    STREAMS (Constants.Service.STREAMS),
-    APPFABRIC (Constants.Service.APP_FABRIC_HTTP);
-
-    private final String name;
-
-    private Service(String name) {
-      this.name = name;
-    }
-
-    public String getName() { return name; }
-
-    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
-  }
-
-  //List of services whose status can be retrieved
-  private List<Service> monitorList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS,
-                                                    Service.APPFABRIC);
-
   @Inject
-  public MonitorHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient,
-                        Map<String, ReactorServiceManager> serviceMap) {
+  public MonitorHandler(Authenticator authenticator, Map<String, ReactorServiceManager> serviceMap) {
     super(authenticator);
-    this.discoveryServiceClient = discoveryServiceClient;
     this.reactorServiceManagementMap = serviceMap;
   }
 
@@ -116,8 +69,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       int instances = reactorServiceManagementMap.get(serviceName).getInstances();
       responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
     } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Invalid Service Name or Operation not valid for this service");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
     }
   }
 
@@ -129,13 +81,16 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
     try {
+      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
       int instance = getInstances(request);
-      if (instance < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+      if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
+        String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
+                                        serviceManager.getMaxInstances());
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
       }
 
-      if (reactorServiceManagementMap.get(serviceName).setInstances(instance)) {
+      if (serviceManager.setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
@@ -152,10 +107,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Service service : monitorList) {
-      String serviceName = String.valueOf(service);
-      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
-      result.put(serviceName, status);
+
+    for (String service : reactorServiceManagementMap.keySet()) {
+      ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
+      if (reactorServiceManager.canCheckStatus()) {
+        String status = reactorServiceManager.isServiceAvailable() ? STATUS_OK : STATUS_NOTOK;
+        result.put(service, status);
+      }
     }
 
     json = (new Gson()).toJson(result);
@@ -167,60 +125,52 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
                       @PathParam("service-id") final String service) {
-    if (discoverService(service)) {
-      //Service is discoverable
-      String response = String.format("%s is OK\n", service);
-      responder.sendString(HttpResponseStatus.OK, response);
+    if (reactorServiceManagementMap.containsKey(service)) {
+      ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
+      if (reactorServiceManager.canCheckStatus()) {
+        if (reactorServiceManager.isServiceAvailable()) {
+          String response = String.format("%s is OK\n", service);
+          responder.sendString(HttpResponseStatus.OK, response);
+        } else {
+          String response = String.format("%s not found\n", service);
+          responder.sendString(HttpResponseStatus.NOT_FOUND, response);
+        }
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
+      }
     } else {
-      String response = String.format("%s not found\n", service);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, service);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
     }
   }
 
-  private boolean discoverService(String serviceName) {
-    try {
-      //TODO: Return true until we make txService health check work in both SingleNode and DistributedMode
-      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
-        return true;
-      }
+  @Path("/system/services")
+  @GET
+  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) {
+    List<Map<String, String>> serviceSpec = new ArrayList<Map<String, String>>();
+    String json;
 
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
-        serviceName).getName());
-      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      Discoverable discoverable = endpointStrategy.pick();
-      //Transaction Service will return null discoverable in SingleNode mode
-      if (discoverable == null) {
-        return false;
-      }
-
-      //Ping the discovered service to check its status.
-      String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort());
-      return checkGetStatus(url).equals(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      return false;
-    } catch (Exception e) {
-      LOG.warn("Unable to ping {} : Reason : {}", serviceName, e.getMessage());
-      return false;
+    for (String service : reactorServiceManagementMap.keySet()) {
+      Map<String, String> spec = new HashMap<String, String>();
+      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
+      String logs = serviceManager.isLogAvailable() ? STATUS_OK : STATUS_NOTOK;
+      String canCheck = serviceManager.canCheckStatus() ? (
+        serviceManager.isServiceAvailable() ? STATUS_OK : STATUS_NOTOK) : "NA";
+      String minInstance = String.valueOf(serviceManager.getMinInstances());
+      String maxInstance = String.valueOf(serviceManager.getMinInstances());
+      String curInstance = String.valueOf(serviceManager.getInstances());
+      spec.put("name", service);
+      spec.put("logs", logs);
+      spec.put("status", canCheck);
+      spec.put("min", minInstance);
+      spec.put("max", maxInstance);
+      spec.put("cur", curInstance);
+      //TODO: Add metric name for Event Rate monitoring
+      serviceSpec.add(spec);
     }
+
+    json = (new Gson()).toJson(serviceSpec);
+    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
 
-  private HttpResponseStatus checkGetStatus(String url) throws Exception {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) SERVICE_PING_RESPONSE_TIMEOUT)
-      .build();
-
-    try {
-      Future<Response> future = client.get();
-      Response response = future.get(SERVICE_PING_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      return HttpResponseStatus.valueOf(response.getStatusCode());
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
-    return HttpResponseStatus.NOT_FOUND;
-  }
 }

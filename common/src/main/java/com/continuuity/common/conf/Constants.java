@@ -148,6 +148,7 @@ public final class Constants {
       public static final String NUM_INSTANCES = "data.tx.num.instances";
       public static final String NUM_CORES = "data.tx.num.cores";
       public static final String MEMORY_MB = "data.tx.memory.mb";
+      public static final String MAX_INSTANCES = "data.tx.max.instances";
     }
 
     /**
@@ -466,6 +467,7 @@ public final class Constants {
     public static final String NUM_INSTANCES = "metrics.num.instances";
     public static final String NUM_CORES = "metrics.num.cores";
     public static final String MEMORY_MB = "metrics.memory.mb";
+    public static final String MAX_INSTANCES = "metrics.max.instances";
   }
 
   /**
@@ -475,6 +477,7 @@ public final class Constants {
     public static final String NUM_INSTANCES = "metrics.processor.num.instances";
     public static final String NUM_CORES = "metrics.processor.num.cores";
     public static final String MEMORY_MB = "metrics.processor.memory.mb";
+    public static final String MAX_INSTANCES = "metrics.processor.max.instances";
   }
 
   /**
@@ -483,6 +486,7 @@ public final class Constants {
   public static final class LogSaver {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
+    public static final String MAX_INSTANCES = "log.saver.max.instances";
   }
 
   /**

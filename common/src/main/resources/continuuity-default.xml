@@ -188,6 +188,12 @@
         <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
     </property>
 
+    <property>
+        <name>reactor.service.max.instances</name>
+        <value>5</value>
+        <description>Maximum Number of Reactor Service Instances</description>
+    </property>
+
     <!-- Reactor Services HTTP handles -->
     <property>
         <name>http.service.connection.backlog</name>
@@ -391,6 +397,11 @@
     <property>
         <name>data.tx.num.instances</name>
         <value>1</value>
+    </property>
+
+    <property>
+        <name>data.tx.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
     </property>
 
     <property>
@@ -619,6 +630,11 @@
     </property>
 
     <property>
+        <name>metrics.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+    </property>
+
+    <property>
         <name>metrics.num.cores</name>
         <value>${reactor.service.num.cores}</value>
     </property>
@@ -636,6 +652,11 @@
         <name>metrics.processor.num.instances</name>
         <value>2</value>
         <description>Number of instances for Metrics Processor Service Twill Runnable</description>
+    </property>
+
+    <property>
+        <name>metrics.processor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
     </property>
 
     <property>
@@ -693,6 +714,11 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
     </property>
 
     <property>
