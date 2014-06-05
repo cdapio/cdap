@@ -258,7 +258,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
       try {
         listener.ttlDeleted(streamName);
       } catch (Throwable t) {
-        LOG.error("Exception while calling StreamPropertyListener.ttlChanged", t);
+        LOG.error("Exception while calling StreamPropertyListener.ttlDeleted", t);
       }
     }
   }
