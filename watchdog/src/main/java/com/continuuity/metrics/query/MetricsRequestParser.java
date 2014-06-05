@@ -187,9 +187,7 @@ final class MetricsRequestParser {
           throw new MetricsPathException("'services must be followed by a service name");
         }
         parseSubContext(pathParts, contextBuilder);
-
         break;
-
     }
 
     if (pathParts.hasNext()) {
