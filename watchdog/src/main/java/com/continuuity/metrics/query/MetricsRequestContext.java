@@ -14,12 +14,12 @@ import java.util.List;
  */
 public class MetricsRequestContext {
   private final String appId;
-  private final String programId;
+  private final String requestId;
   private final String componentId;
   private final String contextPrefix;
   private final TagType tagType;
   private final String tag;
-  private final MetricsRequestParser.RequestType programType;
+  private final MetricsRequestParser.RequestType requestType;
   private final MetricsRequestParser.PathType pathType;
 
   /**
@@ -34,11 +34,11 @@ public class MetricsRequestContext {
 
   private MetricsRequestContext(String appId, MetricsRequestParser.PathType pathType,
                                 MetricsRequestParser.RequestType requestType,
-                                String programId, String componentId, TagType tagType, String tag) {
+                                String requestId, String componentId, TagType tagType, String tag) {
     this.appId = appId;
     this.pathType = pathType;
-    this.programType = requestType;
-    this.programId = programId;
+    this.requestType = requestType;
+    this.requestId = requestId;
     this.componentId = componentId;
     this.tagType = tagType;
     this.tag = tag;
@@ -52,8 +52,8 @@ public class MetricsRequestContext {
         if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
           contextParts.add(requestType.getCode());
         }
-        if (programId != null && !programId.isEmpty()) {
-          contextParts.add(programId);
+        if (requestId != null && !requestId.isEmpty()) {
+          contextParts.add(requestId);
           if (componentId != null && !componentId.isEmpty()) {
             contextParts.add(componentId);
           }
@@ -67,12 +67,12 @@ public class MetricsRequestContext {
     return appId;
   }
 
-  public String getProgramId() {
-    return programId;
+  public String getRequestId() {
+    return requestId;
   }
 
-  public MetricsRequestParser.RequestType getProgramType() {
-    return programType;
+  public MetricsRequestParser.RequestType getRequestType() {
+    return requestType;
   }
 
   public MetricsRequestParser.PathType getPathType() {
@@ -100,7 +100,7 @@ public class MetricsRequestContext {
    */
   public static class Builder {
     private String appId;
-    private String programId;
+    private String requestId;
     private String componentId;
     private TagType tagType;
     private String tag;
@@ -122,8 +122,8 @@ public class MetricsRequestContext {
       return this;
     }
 
-    public Builder setProgramId(String programId) {
-      this.programId = programId;
+    public Builder setRequestId(String requestId) {
+      this.requestId = requestId;
       return this;
     }
 
@@ -139,7 +139,7 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(appId, pathType, requestType, programId, componentId, tagType, tag);
+      return new MetricsRequestContext(appId, pathType, requestType, requestId, componentId, tagType, tag);
     }
   }
 }

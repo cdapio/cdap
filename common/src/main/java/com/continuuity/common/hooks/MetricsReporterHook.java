@@ -89,7 +89,6 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
-    //'h' is for handler, used in metrics query handler
     return String.format("%s.%s.%s", serviceName, getSimpleName(handlerInfo.getHandlerName()),
                          handlerInfo.getMethodName());
   }

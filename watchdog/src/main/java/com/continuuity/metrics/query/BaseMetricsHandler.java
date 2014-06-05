@@ -90,20 +90,20 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     }
     String appId = metricsRequestContext.getAppId();
     if (appId != null) {
-      MetricsRequestParser.RequestType programType = metricsRequestContext.getProgramType();
-      String programId = metricsRequestContext.getProgramId();
+      MetricsRequestParser.RequestType requestType = metricsRequestContext.getRequestType();
+      String requestId = metricsRequestContext.getRequestId();
       String componentId = metricsRequestContext.getComponentId();
 
       // if there was a flowlet in the context
-      if (componentId != null && programType == MetricsRequestParser.RequestType.FLOWS) {
-        if (!flowletExists(accountId, appId, programId, componentId, apiKey)) {
+      if (componentId != null && requestType == MetricsRequestParser.RequestType.FLOWS) {
+        if (!flowletExists(accountId, appId, requestId, componentId, apiKey)) {
           String msg = String.format("application %s with flow %s and flowlet %s not found.",
-                                     appId, programId, componentId);
+                                     appId, requestId, componentId);
           throw new MetricsPathException(msg);
         }
-      } else if (!programExists(programType, accountId, appId, programId, apiKey)) {
-        String programMsg = (programId == null || programType == null) ? "" :
-          " with " + programType.name().toLowerCase() + " " + programId;
+      } else if (!programExists(requestType, accountId, appId, requestId, apiKey)) {
+        String programMsg = (requestId == null || requestType == null) ? "" :
+          " with " + requestType.name().toLowerCase() + " " + requestId;
         String msg = "application " + appId + programMsg + " not found.";
         throw new MetricsPathException(msg);
       }
@@ -111,10 +111,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private boolean serviceExists(String serviceName) {
-    if (existingServices.contains(serviceName)) {
-      return true;
-    }
-    return false;
+    return existingServices.contains(serviceName);
   }
 
   /**
