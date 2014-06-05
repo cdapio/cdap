@@ -12,9 +12,9 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 /**
- *
+ * Base module for stream service bindings
  */
-public class StreamHttpModule extends PrivateModule {
+public class StreamServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {

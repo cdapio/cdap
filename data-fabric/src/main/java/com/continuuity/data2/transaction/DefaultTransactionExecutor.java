@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
@@ -17,6 +18,13 @@ public class DefaultTransactionExecutor extends AbstractTransactionExecutor {
 
   private final Collection<TransactionAware> txAwares;
   private final TransactionSystemClient txClient;
+
+  /**
+   * Convenience constructor, hbas same affect as {@link #DefaultTransactionExecutor(TransactionSystemClient, Iterable)}
+   */
+  public DefaultTransactionExecutor(TransactionSystemClient txClient, TransactionAware... txAwares) {
+    this(txClient, Arrays.asList(txAwares));
+  }
 
   /**
    * Constructor for a transaction executor.

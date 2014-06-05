@@ -68,12 +68,13 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
   @Override
   protected void getFileOffsets(Location partitionLocation,
-                                Collection<? super StreamFileOffset> fileOffsets) throws IOException {
+                                Collection<? super StreamFileOffset> fileOffsets,
+                                int generation) throws IOException {
     // Assumption is it's used in local mode, hence only one instance
     Location eventLocation = StreamUtils.createStreamLocation(partitionLocation,
                                                               cConf.get(Constants.Stream.FILE_PREFIX) + ".0",
                                                               0, StreamFileType.EVENT);
-    fileOffsets.add(new StreamFileOffset(eventLocation, 0));
+    fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
   }
 
   private Object getDBLock(String name) {

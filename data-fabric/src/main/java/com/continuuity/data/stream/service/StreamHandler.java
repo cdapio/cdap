@@ -10,6 +10,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -90,7 +91,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
@@ -101,7 +102,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
-    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
 
@@ -237,8 +238,17 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    // TODO: Implement file removal logic
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    try {
+      streamAdmin.truncate(stream);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+    }
   }
 
   @POST

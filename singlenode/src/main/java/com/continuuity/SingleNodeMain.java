@@ -15,8 +15,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
-import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
@@ -37,7 +37,6 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -309,10 +308,9 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
-      new StreamHttpModule(),
-      new HiveRuntimeModule().getInMemoryModules(),
-      new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule()
+      new SecurityModules().getInMemoryModules(),
+      new StreamServiceModule(),
+      new HiveRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -358,7 +356,7 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamHttpModule(),
+      new StreamServiceModule(),
       new HiveRuntimeModule(configuration).getSingleNodeModules()
     );
   }

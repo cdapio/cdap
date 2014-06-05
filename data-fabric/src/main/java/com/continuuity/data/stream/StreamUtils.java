@@ -7,6 +7,7 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -16,6 +17,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -62,10 +64,12 @@ public final class StreamUtils {
   /**
    * Finds the partition name from the given event file location.
    *
-   * @param uri Location to the event file.
+   * @param eventLocation Location to the event file.
    * @return The partition name.
+   * @see StreamInputFormat
    */
-  public static String getPartitionName(URI uri) {
+  public static String getPartitionName(Location eventLocation) {
+    URI uri = eventLocation.toURI();
     String path = uri.getPath();
     int endIdx = path.lastIndexOf('/');
     Preconditions.checkArgument(endIdx >= 0,
@@ -82,8 +86,10 @@ public final class StreamUtils {
    * Returns the name of the event bucket based on the file name.
    *
    * @param name Name of the file.
+   * @see StreamInputFormat
    */
   public static String getBucketName(String name) {
+    // Strip off the file extension
     int idx = name.lastIndexOf('.');
     return (idx >= 0) ? name.substring(0, idx) : name;
   }
@@ -93,6 +99,7 @@ public final class StreamUtils {
    *
    * @param name Name of the file.
    * @return The prefix part of the stream file.
+   * @see StreamInputFormat
    */
   public static String getNamePrefix(String name) {
     String bucketName = getBucketName(name);
@@ -106,6 +113,7 @@ public final class StreamUtils {
    *
    * @param name Name of the file.
    * @return The sequence number of the stream file.
+   * @see StreamInputFormat
    */
   public static int getSequenceId(String name) {
     String bucketName = getBucketName(name);
@@ -120,7 +128,7 @@ public final class StreamUtils {
    *
    * @return The partition start timestamp in milliseconds.
    *
-   * @see StreamInputFormat for the naming convention.
+   * @see StreamInputFormat
    */
   public static long getPartitionStartTime(String partitionName) {
     int idx = partitionName.indexOf('.');
@@ -135,7 +143,7 @@ public final class StreamUtils {
    *
    * @return the partition end timestamp in milliseconds.
    *
-   * @see StreamInputFormat for the naming convention.
+   * @see StreamInputFormat
    */
   public static long getPartitionEndTime(String partitionName) {
     int idx = partitionName.indexOf('.');
@@ -148,6 +156,20 @@ public final class StreamUtils {
   }
 
   /**
+   * Creates stream base location with the given generation.
+   *
+   * @param streamBaseLocation the base directory for the stream
+   * @param generation generation id
+   * @return Location for the given generation
+   *
+   * @see StreamInputFormat
+   */
+  public static Location createGenerationLocation(Location streamBaseLocation, int generation) throws IOException {
+    // 0 padding generation is just for sorted view in ls. Not carry any special meaning.
+    return (generation == 0) ? streamBaseLocation : streamBaseLocation.append(String.format("%06d", generation));
+  }
+
+  /**
    * Creates the location for the partition directory.
    *
    * @param baseLocation Base location for partition directory.
@@ -157,15 +179,12 @@ public final class StreamUtils {
    */
   public static Location createPartitionLocation(Location baseLocation,
                                                  long partitionStart, long partitionDuration) throws IOException {
+    // 0 padding is just for sorted view in ls. Not carry any special meaning.
     String path = String.format("%010d.%05d",
                                 TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
                                 TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
 
     return baseLocation.append(path);
-  }
-
-  public static Location createPartitionLocation(long partitionStart, StreamConfig streamConfig) throws IOException {
-    return createPartitionLocation(streamConfig.getLocation(), partitionStart, streamConfig.getPartitionDuration());
   }
 
   /**
@@ -181,6 +200,7 @@ public final class StreamUtils {
    */
   public static Location createStreamLocation(Location partitionLocation, String prefix,
                                               int seqId, StreamFileType type) throws IOException {
+    // 0 padding sequence id is just for sorted view in ls. Not carry any special meaning.
     return partitionLocation.append(String.format("%s.%06d.%s", prefix, seqId, type.getSuffix()));
   }
 
@@ -202,7 +222,7 @@ public final class StreamUtils {
    * @param offset The offset object to encode
    */
   public static void encodeOffset(DataOutput out, StreamFileOffset offset) throws IOException {
-    out.writeInt(offset.getGenerationId());
+    out.writeInt(offset.getGeneration());
     out.writeLong(offset.getPartitionStart());
     out.writeLong(offset.getPartitionEnd());
     out.writeUTF(offset.getNamePrefix());
@@ -214,22 +234,25 @@ public final class StreamUtils {
    * Decode a {@link StreamFileOffset} encoded by the {@link #encodeOffset(DataOutput, StreamFileOffset)}
    * method.
    *
-   * @param baseLocation Location of the stream directory.
+   * @param config Stream configuration for the stream that the offset is representing
    * @param in Input for decoding
    * @return A new instance of {@link StreamFileOffset}
    */
-  public static StreamFileOffset decodeOffset(Location baseLocation, DataInput in) throws IOException {
-    // TODO: Currently not in use, plan for truncate implementation.
-    int generationId = in.readInt();
+  public static StreamFileOffset decodeOffset(StreamConfig config, DataInput in) throws IOException {
+    int generation = in.readInt();
     long partitionStart = in.readLong();
     long duration = in.readLong() - partitionStart;
     String prefix = in.readUTF();
     int seqId = in.readInt();
     long offset = in.readLong();
 
+    Location baseLocation = config.getLocation();
+    if (generation > 0) {
+      baseLocation = createGenerationLocation(baseLocation, generation);
+    }
     Location partitionLocation = createPartitionLocation(baseLocation, partitionStart, duration);
     Location eventLocation = createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.EVENT);
-    return new StreamFileOffset(eventLocation, offset);
+    return new StreamFileOffset(eventLocation, offset, generation);
   }
 
   public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
@@ -245,6 +268,36 @@ public final class StreamUtils {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
     }
+  }
+
+  /**
+   * Finds the current generation id of a stream. It scans the stream directory to look for largest generation
+   * number in directory name.
+   *
+   * @param config configuration of the stream
+   * @return the generation id
+   */
+  public static int getGeneration(StreamConfig config) throws IOException {
+    Location streamLocation = config.getLocation();
+
+    // Default generation is 0.
+    int genId = 0;
+    CharMatcher numMatcher = CharMatcher.inRange('0', '9');
+
+    List<Location> locations = streamLocation.list();
+    if (locations == null) {
+      return 0;
+    }
+
+    for (Location location : locations) {
+      if (numMatcher.matchesAllOf(location.getName()) && location.isDirectory()) {
+        int id = Integer.parseInt(location.getName());
+        if (id > genId) {
+          genId = id;
+        }
+      }
+    }
+    return genId;
   }
 
   private StreamUtils() {

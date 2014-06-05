@@ -106,7 +106,7 @@ public abstract class StreamConsumerTestBase {
 
   private void writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
     Map<String, String> headers = ImmutableMap.of();
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig.getName());
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
       writer.append(new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), System.currentTimeMillis()));

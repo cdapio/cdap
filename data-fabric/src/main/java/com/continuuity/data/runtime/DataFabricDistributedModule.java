@@ -4,6 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
+import com.continuuity.data.stream.DistributedStreamCoordinator;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -109,6 +111,9 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
+
+    // Stream bindings
+    bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Singleton.class);
 
     bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
     bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);
