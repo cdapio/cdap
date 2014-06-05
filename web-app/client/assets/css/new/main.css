@@ -1169,7 +1169,7 @@ input[type="text"] {
 
 .dash-app-resource-usage span {
 	font-size: 0.4em;
-	letter-spacing: 0.0em;
+	letter-spacing: 0;
 	margin-left: 2px;
 }
 
@@ -1223,7 +1223,7 @@ input[type="text"] {
 
 .dash-app-sub-health-value span {
 	font-size: 0.4em;
-	letter-spacing: 0.0em;
+	letter-spacing: 0;
 	margin-left: 2px;
 }
 
@@ -1321,7 +1321,7 @@ input[type="text"] {
  * Loading Services
  */
 
-#loading-services {
+#services-loading {
     position: absolute;
     top: 80px;
     right: 0;
@@ -1352,8 +1352,8 @@ input[type="text"] {
 
 .animated img {
 	margin-right: 30px;
-	height: 50px;
-	width: 50px;
+	height: 58px;
+	width: 58px;
 }
 
 .services-list {
@@ -1363,35 +1363,88 @@ input[type="text"] {
 }
 
 .services-list li {
-	line-height: 24px;
+	line-height: 32px;
 	margin-bottom: 40px;
 	float: left;
 	clear: both;
 	width: 100%;
 }
 
-.services-list li div {
+.services-list li img {
 	float: right;
-	height: 24px;
-	width: 24px;
-	margin-left: 100px;
 }
 
-.appfabric div {
-	background: url(../../img/btn_ok.png) no-repeat transparent;
+/*
+ * Reactor Services
+ */
+#reactor-services #panels {
+	padding-top: 40px;
 }
 
-.streams div {
-	background: url(../../img/btn_ok.png) no-repeat transparent;
+#reactor-services th {
+	border-right: 1px solid #C4C5CA;
+	border-bottom: 1px solid #C4C5CA;
+	line-height: 30px;
+	text-align: center;
+	text-transform: none;
 }
 
-.transactions div {
-	background: url(../../img/btn_ok.png) no-repeat transparent;
+#reactor-services th.service-col {
+	font-size: 14px;
+	font-weight: bold;
+	text-align: left;
 }
 
-.metrics div {
-	background: url(../../img/btn_ok.png) no-repeat transparent;
+#reactor-services td {
+	height: 60px;
+	border-right: 1px solid #C4C5CA;
 }
+
+#reactor-services .event-rate-col {
+	border-right: 0;
+}
+
+.status-col img, .logs-col img {
+	display: block;
+	margin: 0 auto;
+}
+
+#reactor-services .instance-wrapper, #reactor-services .instance-wrapper div {
+	height: 30px;
+}
+
+#reactor-services .instance-wrapper div {
+	width: 65px;
+	float: left;
+}
+
+.instance-wrapper {
+	margin: 0 auto;
+	width: 150px;
+}
+
+.instance-wrapper div {
+	display: inline-block;
+}
+
+.instance-num {
+	background-color: #062040;
+	margin-right: 15px;
+	width: 60px;
+}
+
+.instance-num span {
+	color: white;
+	display: block;
+	font-weight: bold;
+	line-height: 30px;
+	text-align: center;
+}
+
+img[src="assets/img/minus.png"] {
+	margin-right: -5px;
+}
+
 /*
  * Bootstrap Overrides
  */
@@ -2069,6 +2122,7 @@ textarea {
 }
 
 .flowlet-popup-empty {
+	background-color: rgb(255, 255, 255);
 	background-color: rgba(255, 255, 255, 0.9);
 	line-height: 214px;
 	text-align: center;
@@ -2259,6 +2313,7 @@ textarea {
 	top: 22px;
 	left: 0;
 	border-radius: 3px;
+	background-color: rgb(255, 255, 255);
 	background-color: rgba(255, 255, 255, 0.95);
 	box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 	width: 215px;
@@ -2365,7 +2420,7 @@ textarea {
 .object-list-empty {
 	padding: 13px 0 14px;
 	text-align: center;
-	border-width: 0px 1px;
+	border-width: 0 1px;
 }
 
 .object-list-empty a {
@@ -2517,7 +2572,7 @@ ol {
 }
 
 .window-title {
-	vertical-align: center;
+	vertical-align: middle;
 	margin: 0 12px;
 	max-height: 24px;
 	overflow: hidden;
