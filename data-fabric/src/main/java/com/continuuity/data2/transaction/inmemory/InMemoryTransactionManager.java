@@ -153,7 +153,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   @Inject
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor,
-                                    @Nullable MetricsCollectionService metricsCollectionService) {
+                                    MetricsCollectionService metricsCollectionService) {
     this.persistor = persistor;
     cleanupInterval = conf.getInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL,
                                   Constants.Transaction.Manager.DEFAULT_TX_CLEANUP_INTERVAL);
@@ -166,7 +166,6 @@ public class InMemoryTransactionManager extends AbstractService {
                                                Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_RETAIN), 1);
     this.metricsCollectionService = metricsCollectionService;
     metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
-
     clear();
   }
 

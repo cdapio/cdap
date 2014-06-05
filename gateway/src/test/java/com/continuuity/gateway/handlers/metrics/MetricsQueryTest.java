@@ -103,7 +103,6 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     }
   }
 
-
   @Test
   public void testGetMetric() throws Exception {
     // Insert some metric

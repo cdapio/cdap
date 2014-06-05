@@ -122,11 +122,9 @@ final class MetricsRequestParser {
       builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
-
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
-
     parseQueryString(requestURI, builder);
     return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
   }
