@@ -4,7 +4,9 @@
 package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.sun.istack.Nullable;
 
 import java.io.IOException;
 
@@ -22,4 +24,5 @@ public interface StreamConsumerFactory {
    * @return a new instance of {@link StreamConsumer}.
    */
   StreamConsumer create(QueueName streamName, String namespace, ConsumerConfig consumerConfig) throws IOException;
+
 }

@@ -520,6 +520,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
+      TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());
       TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
       TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
       jobConf.setInputFormatClass(TextStreamInputFormat.class);
