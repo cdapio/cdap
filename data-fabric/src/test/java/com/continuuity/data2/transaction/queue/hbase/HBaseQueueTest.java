@@ -99,7 +99,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
     final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(cConf, hConf);
+      new DataFabricDistributedModule();
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
     final Module dataFabricModule = Modules.override(dfModule).with(
       new AbstractModule() {

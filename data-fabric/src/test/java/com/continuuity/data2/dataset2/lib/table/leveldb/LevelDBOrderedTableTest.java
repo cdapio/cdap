@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset2.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
@@ -36,8 +37,9 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
+      new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule(conf));
+      new DataFabricLevelDBModule());
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 

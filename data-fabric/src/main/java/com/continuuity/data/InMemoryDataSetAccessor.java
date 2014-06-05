@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   @Inject
-  public InMemoryDataSetAccessor(@Named("DataSetAccessorConfig") CConfiguration conf) {
+  public InMemoryDataSetAccessor(CConfiguration conf) {
     super(conf);
   }
 
