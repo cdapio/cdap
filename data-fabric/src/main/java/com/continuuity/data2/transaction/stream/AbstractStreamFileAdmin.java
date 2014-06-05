@@ -13,6 +13,7 @@ import com.continuuity.data.stream.StreamUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
@@ -22,6 +23,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -69,9 +71,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
     // Simply increment the generation of all streams. The actual deletion of file, just like truncate case,
     // is done external to this class.
-    List<Location> locations = streamBaseLocation.list();
-    if (locations == null) {
-      return;
+    List<Location> locations;
+    try {
+      locations = streamBaseLocation.list();
+    } catch (FileNotFoundException e) {
+      // If the stream base doesn't exists, nothing need to be deleted
+      locations = ImmutableList.of();
     }
 
     for (Location streamLocation : locations) {
