@@ -253,12 +253,11 @@ public class ReactorTestBase {
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
-    return Modules.override(new DataFabricModules(cConf).getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
         protected void configure() {
-          bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(cConf);
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);

@@ -38,7 +38,7 @@ public class LevelDBQueueTest extends QueueTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule(conf));
+      new DataFabricLevelDBModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();

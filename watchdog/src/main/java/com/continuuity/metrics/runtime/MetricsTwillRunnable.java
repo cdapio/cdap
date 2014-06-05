@@ -87,7 +87,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

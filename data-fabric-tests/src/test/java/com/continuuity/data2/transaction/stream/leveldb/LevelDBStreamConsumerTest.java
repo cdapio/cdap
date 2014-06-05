@@ -46,7 +46,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(cConf)
+      new DataFabricLevelDBModule()
     );
 
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);

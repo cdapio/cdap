@@ -31,7 +31,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private final HBaseQueueUtil queueUtil;
 
   @Inject
-  public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
+  public HBaseQueueClientFactory(Configuration hConf,
                                  QueueAdmin queueAdmin, HBaseStreamAdmin streamAdmin) {
     this.hConf = hConf;
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;

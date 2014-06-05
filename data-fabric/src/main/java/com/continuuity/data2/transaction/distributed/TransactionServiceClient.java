@@ -14,12 +14,10 @@ import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
-
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.thrift.TException;
@@ -68,7 +66,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules()
+      new DataFabricModules().getDistributedModules()
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -116,7 +114,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * @throws TException
    */
   @Inject
-  public TransactionServiceClient(@Named("TransactionServerClientConfig") CConfiguration config,
+  public TransactionServiceClient(CConfiguration config,
                                   ThriftClientProvider clientProvider) {
 
     // initialize the retry logic

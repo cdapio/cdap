@@ -76,8 +76,8 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
   private final QueueConstants.QueueType type;
 
   @Inject
-  public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                         @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+  public HBaseQueueAdmin(Configuration hConf,
+                         CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory,
                          HBaseTableUtil tableUtil) throws IOException {
