@@ -48,6 +48,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.http.BodyConsumer;
 import com.continuuity.http.HttpResponder;
@@ -142,7 +143,7 @@ import javax.ws.rs.PathParam;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
@@ -706,23 +707,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
-    }
-  }
-
   /**
    * Starts a Program.
    */
@@ -992,16 +976,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-
-  private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    String instanceCount = "";
-    Map<String, String> arguments = decodeArguments(request);
-    if (!arguments.isEmpty()) {
-      instanceCount = arguments.get("instances");
-    }
-    return Short.parseShort(instanceCount);
   }
 
   private ProgramStatus getProgramStatus(Id.Program id, Type type)

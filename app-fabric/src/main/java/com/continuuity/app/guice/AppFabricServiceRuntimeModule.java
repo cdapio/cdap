@@ -9,6 +9,8 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
+import com.continuuity.common.twill.InMemoryReactorServiceManager;
+import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
@@ -17,6 +19,7 @@ import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.runtime.distributed.TransactionServiceManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
@@ -25,6 +28,9 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.logging.run.LogSaverServiceManager;
+import com.continuuity.metrics.runtime.MetricsProcessorServiceManager;
+import com.continuuity.metrics.runtime.MetricsServiceManager;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -32,6 +38,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -64,6 +71,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(
+                                 InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -77,6 +95,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(
+                                 InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -91,6 +120,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 TransactionServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 MetricsProcessorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
                              }
                            });
   }

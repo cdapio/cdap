@@ -4,7 +4,9 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.common.twill.ReactorServiceManager;
+import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -21,11 +23,15 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -33,10 +39,10 @@ import javax.ws.rs.PathParam;
  * Monitor Handler returns the status of different discoverable services
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class MonitorHandler extends AbstractHttpHandler {
+public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-  private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
   private static final String STATUS_OK = "OK";
   private static final String STATUS_NOTOK = "NOTOK";
 
@@ -53,7 +59,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   private enum Service {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
-    STREAMS (Constants.Service.STREAM_HANDLER),
+    STREAMS (Constants.Service.STREAMS),
     APPFABRIC (Constants.Service.APP_FABRIC_HTTP);
 
     private final String name;
@@ -67,9 +73,77 @@ public class MonitorHandler extends AbstractHttpHandler {
     public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
+  //List of services whose status can be retrieved
+  private List<Service> monitorList = Arrays.asList(Service.METRICS, Service.TRANSACTION, Service.STREAMS,
+                                                    Service.APPFABRIC);
+
   @Inject
-  public MonitorHandler(DiscoveryServiceClient discoveryServiceClient) {
+  public MonitorHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient,
+                        Map<String, ReactorServiceManager> serviceMap) {
+    super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
+    this.reactorServiceManagementMap = serviceMap;
+  }
+
+  /**
+   * Stops Reactor Service
+   */
+  @Path("/system/services/{service-name}/stop")
+  @POST
+  public void stopService(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("service-name") String serviceName) {
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+  }
+
+  /**
+   * Starts Reactor Service
+   */
+  @Path("/system/services/{service-name}/start")
+  @POST
+  public void startService(final HttpRequest request, final HttpResponder responder,
+                           @PathParam("service-name") String serviceName) {
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+  }
+
+  /**
+   * Returns the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @GET
+  public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
+                                 @PathParam("service-name") String serviceName) {
+    if (reactorServiceManagementMap.containsKey(serviceName)) {
+      int instances = reactorServiceManagementMap.get(serviceName).getInstances();
+      responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
+    } else {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Invalid Service Name or Operation not valid for this service");
+    }
+  }
+
+  /**
+   * Sets the number of instances of Reactor Services
+   */
+  @Path("/system/services/{service-name}/instances")
+  @PUT
+  public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
+                                 @PathParam("service-name") String serviceName) {
+    try {
+      int instance = getInstances(request);
+      if (instance < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+
+      if (reactorServiceManagementMap.get(serviceName).setInstances(instance)) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
+      }
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Invalid Service Name Or Operation Not Valid for this service");
+    }
   }
 
   //Return the status of reactor services in JSON format
@@ -78,7 +152,7 @@ public class MonitorHandler extends AbstractHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Service service : Service.values()) {
+    for (Service service : monitorList) {
       String serviceName = String.valueOf(service);
       String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
       result.put(serviceName, status);
