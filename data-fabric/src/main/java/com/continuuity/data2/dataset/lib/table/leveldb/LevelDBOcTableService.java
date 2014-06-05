@@ -79,6 +79,10 @@ public class LevelDBOcTableService {
   public Collection<String> list() throws Exception {
     File baseDir = new File(basePath);
     String[] subDirs = baseDir.list();
+    if (subDirs == null) {
+      return ImmutableList.of();
+    }
+
     ImmutableCollection.Builder<String> builder = ImmutableList.builder();
     for (String dir : subDirs) {
       builder.add(getTableName(dir));
