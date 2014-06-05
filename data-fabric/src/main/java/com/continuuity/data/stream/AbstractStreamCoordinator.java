@@ -9,6 +9,7 @@ import com.continuuity.common.conf.PropertyStore;
 import com.continuuity.common.conf.PropertyUpdater;
 import com.continuuity.common.io.Codec;
 import com.continuuity.common.io.Locations;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -37,9 +38,12 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   // Executor for performing update action asynchronously
   private final Executor updateExecutor;
+  private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
 
-  protected AbstractStreamCoordinator() {
+  protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
+    this.streamAdmin = streamAdmin;
+
     propertyStore = Suppliers.memoize(new Supplier<PropertyStore<StreamProperty>>() {
       @Override
       public PropertyStore<StreamProperty> get() {
@@ -107,6 +111,10 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
                 StreamUtils.getGeneration(streamConfig) :
                 property.getGeneration();
 
+              StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
+                                                        streamConfig.getIndexInterval(), newTTL,
+                                                        streamConfig.getLocation());
+              streamAdmin.updateConfig(newConfig);
               resultFuture.set(new StreamProperty(currentGeneration, newTTL));
             } catch (IOException e) {
               resultFuture.setException(e);
