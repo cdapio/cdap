@@ -46,10 +46,9 @@ public interface StreamAdmin extends DataSetManager {
   StreamConfig getConfig(String streamName) throws IOException;
 
   /**
-   * Updates TTL for the given stream.
-   *
+   * Overwrites existing configuration for the given stream.
    * @param streamName Name of the stream.
-   * @param ttl TTL of the stream.
+   * @param config New configuration of the stream.
    */
-  void updateTTL(String streamName, long ttl) throws IOException;
+  void updateConfig(String streamName, StreamConfig config) throws IOException;
 }

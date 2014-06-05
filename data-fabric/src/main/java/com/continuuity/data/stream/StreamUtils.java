@@ -5,17 +5,12 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.common.io.Locations;
-import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 
 import java.io.DataInput;
@@ -32,8 +27,6 @@ import java.util.concurrent.TimeUnit;
  * TODO: Usage of this class needs to be refactor, as some methods are temporary (e.g. encodeMap/decodeMap).
  */
 public final class StreamUtils {
-
-  private static final Gson GSON = new Gson();
 
   /**
    * Decode a map.
@@ -305,26 +298,6 @@ public final class StreamUtils {
       }
     }
     return genId;
-  }
-
-  public static void overwriteConfig(String streamName, Location streamLocation,
-                                     StreamConfig config) throws IOException {
-
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
-
-    Location configLocation = streamLocation.append("config.json");
-    Location tempLocation = configLocation.getTempFile("tmp");
-    try {
-      CharStreams.write(GSON.toJson(config),
-                        CharStreams.newWriterSupplier(Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
-
-      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
-                               "Rename {} to {} failed", tempLocation, configLocation);
-    } finally {
-      if (tempLocation.exists()) {
-        tempLocation.delete();
-      }
-    }
   }
 
   private StreamUtils() {
