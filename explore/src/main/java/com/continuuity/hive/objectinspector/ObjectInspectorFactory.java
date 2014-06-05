@@ -1,14 +1,12 @@
 package com.continuuity.hive.objectinspector;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
@@ -21,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * ObjectInspectorFactory is the primary way to create new ObjectInspector
@@ -37,20 +34,16 @@ import java.util.concurrent.ExecutionException;
  */
 public final class ObjectInspectorFactory {
 
-  private static final LoadingCache<Type, ObjectInspector> objectInspectorCache =
-      CacheBuilder.newBuilder().build(new CacheLoader<Type, ObjectInspector>() {
-        @Override
-        public ObjectInspector load(Type key) throws Exception {
-          return getReflectionObjectInspectorNoCache(key);
-        }
-      });
+  private static ConcurrentHashMap<Type, ObjectInspector> objectInspectorCache =
+      new ConcurrentHashMap<Type, ObjectInspector>();
 
   public static ObjectInspector getReflectionObjectInspector(Type t) {
-    try {
-      return objectInspectorCache.get(t);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+    ObjectInspector oi = objectInspectorCache.get(t);
+    if (oi == null) {
+      oi = getReflectionObjectInspectorNoCache(t);
+      objectInspectorCache.put(t, oi);
     }
+    return oi;
   }
 
   private static ObjectInspector getReflectionObjectInspectorNoCache(Type t) {
@@ -162,6 +155,62 @@ public final class ObjectInspectorFactory {
     if (result == null) {
       result = new StandardMapObjectInspector(mapKeyObjectInspector, mapValueObjectInspector);
       cachedStandardMapObjectInspector.put(signature, result);
+    }
+    return result;
+  }
+
+  static ConcurrentHashMap<List<ObjectInspector>, StandardUnionObjectInspector>
+      cachedStandardUnionObjectInspector =
+      new ConcurrentHashMap<List<ObjectInspector>, StandardUnionObjectInspector>();
+
+  public static StandardUnionObjectInspector getStandardUnionObjectInspector(
+      List<ObjectInspector> unionObjectInspectors) {
+    StandardUnionObjectInspector result = cachedStandardUnionObjectInspector
+        .get(unionObjectInspectors);
+    if (result == null) {
+      result = new StandardUnionObjectInspector(unionObjectInspectors);
+      cachedStandardUnionObjectInspector.put(unionObjectInspectors, result);
+    }
+    return result;
+  }
+
+  static ConcurrentHashMap<ArrayList<List<?>>, StandardStructObjectInspector> cachedStandardStructObjectInspector =
+      new ConcurrentHashMap<ArrayList<List<?>>, StandardStructObjectInspector>();
+
+  public static StandardStructObjectInspector getStandardStructObjectInspector(
+      List<String> structFieldNames,
+      List<ObjectInspector> structFieldObjectInspectors) {
+    return getStandardStructObjectInspector(structFieldNames, structFieldObjectInspectors, null);
+  }
+
+  public static StandardStructObjectInspector getStandardStructObjectInspector(
+      List<String> structFieldNames,
+      List<ObjectInspector> structFieldObjectInspectors,
+      List<String> structComments) {
+    ArrayList<List<?>> signature = new ArrayList<List<?>>(3);
+    signature.add(structFieldNames);
+    signature.add(structFieldObjectInspectors);
+    if (structComments != null) {
+      signature.add(structComments);
+    }
+    StandardStructObjectInspector result = cachedStandardStructObjectInspector.get(signature);
+    if (result == null) {
+      result = new StandardStructObjectInspector(structFieldNames, structFieldObjectInspectors, structComments);
+      cachedStandardStructObjectInspector.put(signature, result);
+    }
+    return result;
+  }
+
+  static ConcurrentHashMap<List<StructObjectInspector>, UnionStructObjectInspector> cachedUnionStructObjectInspector =
+      new ConcurrentHashMap<List<StructObjectInspector>, UnionStructObjectInspector>();
+
+  public static UnionStructObjectInspector getUnionStructObjectInspector(
+      List<StructObjectInspector> structObjectInspectors) {
+    UnionStructObjectInspector result = cachedUnionStructObjectInspector
+        .get(structObjectInspectors);
+    if (result == null) {
+      result = new UnionStructObjectInspector(structObjectInspectors);
+      cachedUnionStructObjectInspector.put(structObjectInspectors, result);
     }
     return result;
   }

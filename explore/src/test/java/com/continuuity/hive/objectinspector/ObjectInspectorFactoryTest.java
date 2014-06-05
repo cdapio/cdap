@@ -66,7 +66,7 @@ public class ObjectInspectorFactoryTest {
   }
 
   @Test
-  public void objectInspectorFactoryTest() throws Exception {
+  public void reflectionObjectInspectorTest() throws Exception {
     // The "this$0" field comes from the fact that some classes are
     // nested classes - 'this' refers to this test class
     Assert.assertEquals("array<string>", getObjectName(new TypeToken<List<String>>() { }.getType()));
