@@ -13,7 +13,7 @@ import java.util.List;
  * with the request.
  */
 public class MetricsRequestContext {
-  private final String appId;
+  private final String typeId;
   private final String requestId;
   private final String componentId;
   private final String contextPrefix;
@@ -32,10 +32,10 @@ public class MetricsRequestContext {
     QUEUE
   }
 
-  private MetricsRequestContext(String appId, MetricsRequestParser.PathType pathType,
+  private MetricsRequestContext(String typeId, MetricsRequestParser.PathType pathType,
                                 MetricsRequestParser.RequestType requestType,
                                 String requestId, String componentId, TagType tagType, String tag) {
-    this.appId = appId;
+    this.typeId = typeId;
     this.pathType = pathType;
     this.requestType = requestType;
     this.requestId = requestId;
@@ -44,10 +44,10 @@ public class MetricsRequestContext {
     this.tag = tag;
 
     List<String> contextParts = Lists.newArrayListWithCapacity(4);
-    if (appId == null || appId.isEmpty()) {
+    if (typeId == null || typeId.isEmpty()) {
       this.contextPrefix = null;
     } else {
-      contextParts.add(appId);
+      contextParts.add(typeId);
       if (requestType != null) {
         if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
           contextParts.add(requestType.getCode());
@@ -63,8 +63,8 @@ public class MetricsRequestContext {
     }
   }
 
-  public String getAppId() {
-    return appId;
+  public String getTypeId() {
+    return typeId;
   }
 
   public String getRequestId() {
@@ -99,7 +99,7 @@ public class MetricsRequestContext {
    * Builds a metrics context.
    */
   public static class Builder {
-    private String appId;
+    private String typeId;
     private String requestId;
     private String componentId;
     private TagType tagType;
@@ -107,8 +107,8 @@ public class MetricsRequestContext {
     private MetricsRequestParser.RequestType requestType;
     private MetricsRequestParser.PathType pathType;
 
-    public Builder setAppId(String appId) {
-      this.appId = appId;
+    public Builder setTypeId(String typeId) {
+      this.typeId = typeId;
       return this;
     }
 
@@ -139,7 +139,7 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(appId, pathType, requestType, requestId, componentId, tagType, tag);
+      return new MetricsRequestContext(typeId, pathType, requestType, requestId, componentId, tagType, tag);
     }
   }
 }

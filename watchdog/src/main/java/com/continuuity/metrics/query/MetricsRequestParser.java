@@ -212,7 +212,7 @@ final class MetricsRequestParser {
     if (!pathParts.hasNext()) {
       return;
     }
-    builder.setAppId(urlDecode(pathParts.next()));
+    builder.setTypeId(urlDecode(pathParts.next()));
 
     if (!pathParts.hasNext()) {
       return;

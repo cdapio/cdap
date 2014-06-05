@@ -66,8 +66,8 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
 
     if (metricsRequestContext.getPathType() != null) {
       if (metricsRequestContext.getPathType().equals(MetricsRequestParser.PathType.SERVICES)) {
-        if (!serviceExists(metricsRequestContext.getAppId())) {
-          throw new MetricsPathException(String.format("Service %s does not exist", metricsRequestContext.getAppId()));
+        if (!serviceExists(metricsRequestContext.getTypeId())) {
+          throw new MetricsPathException(String.format("Service %s does not exist", metricsRequestContext.getTypeId()));
         }
         return;
       }
@@ -88,23 +88,23 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
           break;
       }
     }
-    String appId = metricsRequestContext.getAppId();
-    if (appId != null) {
+    String typeId = metricsRequestContext.getTypeId();
+    if (typeId != null) {
       MetricsRequestParser.RequestType requestType = metricsRequestContext.getRequestType();
       String requestId = metricsRequestContext.getRequestId();
       String componentId = metricsRequestContext.getComponentId();
 
       // if there was a flowlet in the context
       if (componentId != null && requestType == MetricsRequestParser.RequestType.FLOWS) {
-        if (!flowletExists(accountId, appId, requestId, componentId, apiKey)) {
+        if (!flowletExists(accountId, typeId, requestId, componentId, apiKey)) {
           String msg = String.format("application %s with flow %s and flowlet %s not found.",
-                                     appId, requestId, componentId);
+                                     typeId, requestId, componentId);
           throw new MetricsPathException(msg);
         }
-      } else if (!programExists(requestType, accountId, appId, requestId, apiKey)) {
+      } else if (!programExists(requestType, accountId, typeId, requestId, apiKey)) {
         String programMsg = (requestId == null || requestType == null) ? "" :
           " with " + requestType.name().toLowerCase() + " " + requestId;
-        String msg = "application " + appId + programMsg + " not found.";
+        String msg = "application " + typeId + programMsg + " not found.";
         throw new MetricsPathException(msg);
       }
     }

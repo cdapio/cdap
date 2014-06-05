@@ -89,30 +89,30 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String method_request =
+    String methodRequest =
       "/reactor/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
-    String handler_request =
+    String handlerRequest =
       "/reactor/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
-    String service_request =
+    String serviceRequest =
       "/reactor/services/appfabric/request.received?aggregate=true";
 
-    systemMetrics(method_request);
-    systemMetrics(handler_request);
-    systemMetrics(service_request);
+    systemMetrics(methodRequest);
+    systemMetrics(handlerRequest);
+    systemMetrics(serviceRequest);
   }
 
   @Test
   public void testingInvalidSystemMetrics() throws Exception {
     //appfabrics service does not exist
-    String method_request =
+    String methodRequest =
       "/reactor/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
 
-    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + method_request);
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + methodRequest);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
-      Assert.assertEquals("GET " + method_request + " did not return 404 NOT-FOUND status.",
+      Assert.assertEquals("GET " + methodRequest + " did not return 404 NOT-FOUND status.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
     } finally {
       reader.close();
