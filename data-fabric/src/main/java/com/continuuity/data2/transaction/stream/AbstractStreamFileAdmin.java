@@ -193,30 +193,17 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(String streamName, StreamConfig config) throws IOException {
+  public void updateTTL(String streamName, long ttl) throws IOException {
     Location streamLocation = streamBaseLocation.append(streamName);
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
 
     StreamConfig originalConfig = loadConfig(streamLocation);
-    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
-                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+    StreamConfig config = new StreamConfig(originalConfig.getName(), originalConfig.getPartitionDuration(),
+                                           originalConfig.getIndexInterval(), ttl,
+                                           originalConfig.getLocation());
 
-    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Location tempLocation = configLocation.getTempFile("tmp");
-    try {
-      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
-        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
-
-      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
-                               "Rename {} to {} failed", tempLocation, configLocation);
-    } finally {
-      if (tempLocation.exists()) {
-        tempLocation.delete();
-      }
-    }
-
-    if (originalConfig.getTTL() != config.getTTL()) {
-      streamCoordinator.changeTTL(config, config.getTTL());
+    if (originalConfig.getTTL() != ttl) {
+      streamCoordinator.changeTTL(config, ttl);
     }
   }
 

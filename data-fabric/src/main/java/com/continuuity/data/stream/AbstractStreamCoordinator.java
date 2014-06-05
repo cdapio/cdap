@@ -107,6 +107,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
                 StreamUtils.getGeneration(streamConfig) :
                 property.getGeneration();
 
+              StreamUtils.overwriteConfig(streamConfig.getName(), streamConfig.getLocation(), streamConfig);
               resultFuture.set(new StreamProperty(currentGeneration, newTTL));
             } catch (IOException e) {
               resultFuture.setException(e);

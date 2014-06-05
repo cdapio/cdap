@@ -253,7 +253,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/{stream}/ttl")
-  public void setTtl(HttpRequest request, HttpResponder responder,
+  public void setTTL(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -264,10 +264,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     long ttl = getTTL(request);
-    StreamConfig config = streamAdmin.getConfig(stream);
-    StreamConfig newConfig = new StreamConfig(config.getName(), config.getPartitionDuration(),
-                                              config.getIndexInterval(), ttl, config.getLocation());
-    streamAdmin.updateConfig(stream, newConfig);
+    streamAdmin.updateTTL(stream, ttl);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
