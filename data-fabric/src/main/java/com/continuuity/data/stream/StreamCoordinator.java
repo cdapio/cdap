@@ -30,8 +30,8 @@ public interface StreamCoordinator extends Closeable {
    *
    * @param streamConfig stream configuration
    * @param ttl the new TTL
-   * @return A future that will be completed when the update of generation is done. The future result will carry
-   *         the generation id updated by this method.
+   * @return A future that will be completed when the update of TTL is done. The future result will carry
+   *         the TTL updated by this method.
    */
   ListenableFuture<Long> changeTTL(StreamConfig streamConfig, long ttl);
 
