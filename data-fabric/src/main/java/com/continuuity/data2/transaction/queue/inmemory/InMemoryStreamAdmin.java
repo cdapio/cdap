@@ -35,7 +35,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void updateTTL(StreamConfig streamConfig, long ttl) throws IOException {
+  public void updateTTL(String streamName, long ttl) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
 }

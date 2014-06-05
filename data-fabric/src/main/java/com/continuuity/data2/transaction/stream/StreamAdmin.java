@@ -54,9 +54,9 @@ public interface StreamAdmin extends DataSetManager {
   /**
    * Updates the TTL of the given stream.
    *
-   * @param streamConfig Name of the stream.
+   * @param streamName Name of the stream.
    * @param ttl New TTL of the stream.
    * @throws IOException
    */
-  void updateTTL(StreamConfig streamConfig, long ttl) throws IOException;
+  void updateTTL(String streamName, long ttl) throws IOException;
 }

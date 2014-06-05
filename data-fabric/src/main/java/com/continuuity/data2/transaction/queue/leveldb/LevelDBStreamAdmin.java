@@ -59,7 +59,7 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public void updateTTL(StreamConfig streamConfig, long ttl) throws IOException {
+  public void updateTTL(String streamName, long ttl) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
 }

@@ -72,7 +72,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateTTL(StreamConfig streamConfig, long ttl) throws IOException {
+  public void updateTTL(String streamName, long ttl) throws IOException {
 
   }
 }

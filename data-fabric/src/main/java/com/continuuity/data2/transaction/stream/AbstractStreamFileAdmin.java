@@ -218,7 +218,8 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateTTL(StreamConfig streamConfig, long ttl) throws IOException {
+  public void updateTTL(String streamName, long ttl) throws IOException {
+    StreamConfig streamConfig = getConfig(streamName);
     streamCoordinator.changeTTL(streamConfig, ttl);
   }
 
