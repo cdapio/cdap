@@ -437,12 +437,14 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
       if (isReadBlockLength && !filter.acceptTimestamp(timestamp)) {
         long bytesSkipped = eventInput.skip(length);
-        timestamp = -1L;
-        length = -1;
 
         if (bytesSkipped == length) {
+          timestamp = -1L;
+          length = -1;
           continue;
         } else {
+          timestamp = -1L;
+          length = -1;
           throw new EOFException();
         }
       }
