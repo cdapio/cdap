@@ -97,9 +97,9 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     String serviceRequest =
       "/reactor/services/appfabric/request.received?aggregate=true";
 
-    systemMetrics(methodRequest);
-    systemMetrics(handlerRequest);
-    systemMetrics(serviceRequest);
+    testMetrics(methodRequest);
+    testMetrics(handlerRequest);
+    testMetrics(serviceRequest);
   }
 
   @Test
@@ -120,7 +120,49 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
   }
 
-  private void systemMetrics(String request) throws Exception {
+
+  @Test
+  public void testingUserServiceMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.gauge("reads", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true";
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/reads?aggregate=true";
+      testMetrics(runnableRequest);
+      testMetrics(serviceRequest);
+  }
+
+
+  @Test
+  public void testingInvalidUserServiceMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.gauge("reads", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/service/CounterService/runnables/CountRunnable/reads?aggregate=true";
+
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + runnableRequest);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + runnableRequest + " did not return 404 status.",
+                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+    } finally {
+      reader.close();
+    }
+  }
+
+  private void testMetrics(String request) throws Exception {
     HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + request);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
