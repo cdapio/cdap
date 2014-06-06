@@ -56,7 +56,7 @@ public class ContextManager {
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules()
+      new DataFabricModules().getDistributedModules()
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);

@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app.runtime.flow;
 
+import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
@@ -29,7 +30,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final Flowlet flowlet;
   private final Method method;
   private final boolean hasParam;
-  private final boolean needsBatch;
+  private final boolean batch;
+  private final boolean needsIterator;
   private final boolean needContext;
   private final int maxRetries;
 
@@ -43,7 +45,8 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
     this.maxRetries = maxRetries;
 
     this.hasParam = method.getGenericParameterTypes().length > 0;
-    this.needsBatch = hasParam &&
+    this.batch = method.isAnnotationPresent(Batch.class);
+    this.needsIterator = hasParam &&
       TypeToken.of(method.getGenericParameterTypes()[0]).getRawType().equals(Iterator.class);
     this.needContext = method.getGenericParameterTypes().length == 2;
 
@@ -68,32 +71,24 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
     try {
       Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
 
-      T event = null;
-      if (hasParam) {
-        Iterator<T> dataIterator = input.iterator();
-
-        if (needsBatch) {
-          event = (T) dataIterator;
-        } else {
-          event = dataIterator.next();
-        }
-      }
       InputContext inputContext = input.getInputContext();
 
       try {
         if (hasParam) {
-          if (needContext) {
-            method.invoke(flowlet, event, inputContext);
+          if (needsIterator) {
+            invoke(method, input.iterator(), inputContext);
           } else {
-            method.invoke(flowlet, event);
+            for (T event : input) {
+              invoke(method, event, inputContext);
+            }
           }
         } else {
           method.invoke(flowlet);
         }
 
-        return new ReflectionProcessResult<T>(event, true, null);
+        return createResult(input, null);
       } catch (Throwable t) {
-        return new ReflectionProcessResult<T>(event, false, t.getCause());
+        return createResult(input, t.getCause());
       }
     } catch (Exception e) {
       // System error if we reached here. E.g. failed to dequeue/decode event
@@ -107,15 +102,31 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
     return flowlet.getClass() + "." + method.toString();
   }
 
+  /**
+   * Calls the user process method.
+   */
+  private void invoke(Method method, Object event, InputContext inputContext) throws Exception {
+    if (needContext) {
+      method.invoke(flowlet, event, inputContext);
+    } else {
+      method.invoke(flowlet, event);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private ProcessResult<T> createResult(InputDatum<T> input, Throwable failureCause) {
+    // If the method has param, then object for the result would be iterator or the first event (batch vs no-batch)
+    T event = hasParam ? (batch ? (T) input.iterator() : input.iterator().next()) : null;
+    return new ReflectionProcessResult<T>(event, failureCause);
+  }
+
   private static final class ReflectionProcessResult<V> implements ProcessResult<V> {
 
     private final V event;
-    private final boolean success;
     private final Throwable cause;
 
-    private ReflectionProcessResult(V event, boolean success, Throwable cause) {
+    private ReflectionProcessResult(V event, Throwable cause) {
       this.event = event;
-      this.success = success;
       this.cause = cause;
     }
 
@@ -126,7 +137,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
 
     @Override
     public boolean isSuccess() {
-      return success;
+      return cause == null;
     }
 
     @Override

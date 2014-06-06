@@ -25,8 +25,8 @@ import java.util.List;
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Inject
-  public HBaseStreamAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+  public HBaseStreamAdmin(Configuration hConf,
+                          CConfiguration cConf,
                           DataSetAccessor dataSetAccessor,
                           LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {

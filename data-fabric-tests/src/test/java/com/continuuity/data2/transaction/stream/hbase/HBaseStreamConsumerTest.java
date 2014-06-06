@@ -64,7 +64,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      Modules.override(new DataFabricDistributedModule(cConf, hConf)).with(new AbstractModule() {
+      Modules.override(new DataFabricDistributedModule()).with(new AbstractModule() {
 
         @Override
         protected void configure() {

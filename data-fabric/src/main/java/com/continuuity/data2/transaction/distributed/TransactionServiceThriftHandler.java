@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.rpc.RPCServiceHandler;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
@@ -35,7 +36,6 @@ import java.util.Set;
  */
 public class TransactionServiceThriftHandler implements TTransactionServer.Iface, RPCServiceHandler {
   private InMemoryTransactionManager txManager;
-  private static final String STATUS_OK = "OK";
 
   public TransactionServiceThriftHandler(InMemoryTransactionManager txManager) {
     this.txManager = txManager;
@@ -126,6 +126,6 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
 
   @Override
   public String status() throws TException {
-    return STATUS_OK;
+    return txManager.isRunning() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
   }
 }

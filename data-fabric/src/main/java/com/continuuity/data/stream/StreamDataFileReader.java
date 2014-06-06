@@ -185,13 +185,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
           position = eventInput.getPos();
 
         } catch (IOException e) {
-          if (!(e instanceof EOFException || e instanceof FileNotFoundException)) {
-            throw e;
-          }
-
           if (eventInput != null) {
             eventInput.close();
             eventInput = null;
+          }
+
+          if (!(e instanceof EOFException || e instanceof FileNotFoundException)) {
+            throw e;
           }
 
           // If end of stream file or no timeout is allowed, break the loop.
@@ -233,13 +233,22 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * Opens and initialize this reader.
    */
   private void doOpen() throws IOException {
-    eventInput = eventInputSupplier.getInput();
-    decoder = new BinaryDecoder(eventInput);
+    try {
+      eventInput = eventInputSupplier.getInput();
+      decoder = new BinaryDecoder(eventInput);
 
-    if (position <= 0) {
-      init();
+      if (position <= 0) {
+        init();
+      }
+      eventInput.seek(position);
+    } catch (IOException e) {
+      position = 0;
+      if (eventInput != null) {
+        eventInput.close();
+        eventInput = null;
+      }
+      throw e;
     }
-    eventInput.seek(position);
   }
 
   private long computeSleepNano(long timeout, TimeUnit unit) {

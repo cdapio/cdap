@@ -129,7 +129,7 @@ public class ReactorServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new HiveRuntimeModule().getDistributedModules()
     );

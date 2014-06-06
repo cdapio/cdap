@@ -32,7 +32,7 @@ public class LocalStreamDataFileTest extends StreamDataFileTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(cConf)
+      new DataFabricLevelDBModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

@@ -18,16 +18,13 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -73,10 +70,11 @@ public class SingleNodeMain {
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
-  private final InMemoryTransactionManager transactionManager;
+  private final InMemoryTransactionService txService;
 
-  private final InMemoryHiveMetastore hiveMetastore;
-  private final HiveServer hiveServer;
+  // TODO put it back once hive-exec problems are resolved
+  // private final InMemoryHiveMetastore hiveMetastore;
+  // private final HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
@@ -88,7 +86,7 @@ public class SingleNodeMain {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -101,8 +99,9 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-    hiveServer = injector.getInstance(HiveServer.class);
+    // TODO put it back once hive-exec problems are resolved
+    // hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    // hiveServer = injector.getInstance(HiveServer.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -139,7 +138,7 @@ public class SingleNodeMain {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
-    transactionManager.startAndWait();
+    txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
 
@@ -155,9 +154,10 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
+    // TODO put it back once hive-exec problems are resolved
     // it is important to respect that order: metastore, then HiveServer
-    hiveMetastore.startAndWait();
-    hiveServer.startAndWait();
+    // hiveMetastore.startAndWait();
+    // hiveServer.startAndWait();
 
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
@@ -181,15 +181,16 @@ public class SingleNodeMain {
     gatewayV2.stopAndWait();
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
-    transactionManager.stopAndWait();
+    txService.stopAndWait();
     datasetService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    hiveServer.stopAndWait();
-    hiveMetastore.stopAndWait();
+    // TODO put it back once hive-exec problems are resolved
+    // hiveServer.stopAndWait();
+    // hiveMetastore.stopAndWait();
   }
 
   /**
@@ -309,8 +310,9 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
-      new StreamServiceModule(),
-      new HiveRuntimeModule().getInMemoryModules()
+      new StreamServiceModule()
+      // TODO put it back once hive-exec problems are resolved
+      // new HiveRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -350,14 +352,15 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
-      new DataFabricModules(configuration).getSingleNodeModules(),
+      new DataFabricModules().getSingleNodeModules(),
       new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamServiceModule(),
-      new HiveRuntimeModule(configuration).getSingleNodeModules()
+      new StreamServiceModule()
+      // TODO put it back once hive-exec problems are resolved
+      // new HiveRuntimeModule(configuration).getSingleNodeModules()
     );
   }
 }
