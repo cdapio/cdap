@@ -1,9 +1,11 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -35,10 +37,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
-  private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private static final String STATUS_OK = "OK";
-  private static final String STATUS_NOTOK = "NOTOK";
+  private final TransactionSystemClient txClient;
 
   /**
    * Timeout to get response from discovered service.
@@ -48,9 +48,9 @@ public class MonitorHandler extends AbstractHttpHandler {
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
+  private final long discoveryTimeout;
 
-  private enum Service {
+  private enum ReactorService {
     METRICS (Constants.Service.METRICS),
     TRANSACTION (Constants.Service.TRANSACTION),
     STREAMS (Constants.Service.STREAM_HANDLER),
@@ -58,18 +58,21 @@ public class MonitorHandler extends AbstractHttpHandler {
 
     private final String name;
 
-    private Service(String name) {
+    private ReactorService(String name) {
       this.name = name;
     }
 
     public String getName() { return name; }
 
-    public static Service valueofName(String name) { return valueOf(name.toUpperCase()); }
+    public static ReactorService valueofName(String name) { return valueOf(name.toUpperCase()); }
   }
 
   @Inject
-  public MonitorHandler(DiscoveryServiceClient discoveryServiceClient) {
+  public MonitorHandler(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                        TransactionSystemClient txClient) {
     this.discoveryServiceClient = discoveryServiceClient;
+    this.txClient = txClient;
+    this.discoveryTimeout = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS);
   }
 
   //Return the status of reactor services in JSON format
@@ -78,9 +81,9 @@ public class MonitorHandler extends AbstractHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-    for (Service service : Service.values()) {
+    for (ReactorService service : ReactorService.values()) {
       String serviceName = String.valueOf(service);
-      String status = discoverService(serviceName) ? STATUS_OK : STATUS_NOTOK;
+      String status = discoverService(serviceName) ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       result.put(serviceName, status);
     }
 
@@ -105,19 +108,18 @@ public class MonitorHandler extends AbstractHttpHandler {
 
   private boolean discoverService(String serviceName) {
     try {
-      //TODO: Return true until we make txService health check work in both SingleNode and DistributedMode
-      if (Service.valueofName(serviceName).equals(Service.TRANSACTION)) {
-        return true;
-      }
-
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Service.valueofName(
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(ReactorService.valueofName(
         serviceName).getName());
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
       Discoverable discoverable = endpointStrategy.pick();
-      //Transaction Service will return null discoverable in SingleNode mode
       if (discoverable == null) {
         return false;
+      }
+
+      //For Transaction Service use the TransactionSystemClient to check the txManager's status
+      if (ReactorService.valueofName(serviceName).equals(ReactorService.TRANSACTION)) {
+        return txClient.status().equals(Constants.Monitor.STATUS_OK);
       }
 
       //Ping the discovered service to check its status.

@@ -147,7 +147,6 @@ public abstract class GatewayTestBase {
                  bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
                  bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
 
-                 bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
                  bind(StreamConsumerStateStoreFactory.class)
                    .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
                  bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);

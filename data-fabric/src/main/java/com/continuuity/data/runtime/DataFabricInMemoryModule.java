@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.runtime;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.stream.InMemoryStreamCoordinator;
@@ -30,18 +29,11 @@ import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 
 /**
  * The Guice module of data fabric bindings for in memory execution.
  */
 public class DataFabricInMemoryModule extends AbstractModule {
-
-  private final CConfiguration cConf;
-
-  public DataFabricInMemoryModule(CConfiguration cConf) {
-    this.cConf = cConf;
-  }
 
   @Override
   protected void configure() {
@@ -64,13 +56,9 @@ public class DataFabricInMemoryModule extends AbstractModule {
     bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);
 
     // We don't need caching for in-memory
-    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(cConf);
-    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(cConf);
-    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(cConf);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
   }
-
 }

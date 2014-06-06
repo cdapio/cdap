@@ -1,5 +1,6 @@
 package com.continuuity.data;
 
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -16,9 +17,12 @@ public class InMemoryDataSetAccessorTest extends NamespacingDataSetAccessorTest 
   @BeforeClass
   public static void beforeClass() throws Exception {
     NamespacingDataSetAccessorTest.beforeClass();
-    Injector injector = Guice.createInjector(new DataFabricModules(conf).getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules(),
-                                             new LocationRuntimeModule().getInMemoryModules());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(conf),
+      new DataFabricModules().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new LocationRuntimeModule().getInMemoryModules()
+    );
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }
 

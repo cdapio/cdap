@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.hbase;
 
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data2.queue.ConsumerConfig;
@@ -16,6 +17,7 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
 import com.continuuity.hbase.wd.DistributedScanner;
 import com.google.common.collect.Lists;
+import com.sun.istack.Nullable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -55,8 +57,9 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   public HBaseStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
+                                 @Nullable ReadFilter extraFilter,
                                  AbstractRowKeyDistributor keyDistributor) {
-    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState);
+    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.hTable = hTable;
     this.keyDistributor = keyDistributor;
     this.scanExecutor = createScanExecutor(streamConfig.getName());

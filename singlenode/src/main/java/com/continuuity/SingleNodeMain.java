@@ -18,7 +18,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
@@ -37,7 +37,6 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -74,7 +73,7 @@ public class SingleNodeMain {
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
-  private final InMemoryTransactionManager transactionManager;
+  private final InMemoryTransactionService txService;
 
   private final InMemoryHiveMetastore hiveMetastore;
   private final HiveServer hiveServer;
@@ -89,7 +88,7 @@ public class SingleNodeMain {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -140,7 +139,7 @@ public class SingleNodeMain {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
-    transactionManager.startAndWait();
+    txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
 
@@ -182,7 +181,7 @@ public class SingleNodeMain {
     gatewayV2.stopAndWait();
     metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
-    transactionManager.stopAndWait();
+    txService.stopAndWait();
     datasetService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
@@ -351,7 +350,7 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModule().getSingleNodeModules(),
-      new DataFabricModules(configuration).getSingleNodeModules(),
+      new DataFabricModules().getSingleNodeModules(),
       new DataSetServiceModules().getLocalModule(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),

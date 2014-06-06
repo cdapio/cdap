@@ -59,9 +59,6 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
         protected void configure() {
 
           // Data-fabric bindings
-          bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).to(Configuration.class);
-          bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).to(CConfiguration.class);
-
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
           // txds2

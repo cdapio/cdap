@@ -49,7 +49,7 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
         }
       },
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(cConf, hConf)
+      new DataFabricDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

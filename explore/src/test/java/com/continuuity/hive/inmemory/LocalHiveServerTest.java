@@ -36,7 +36,7 @@ public class LocalHiveServerTest extends HiveServerTest {
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(
-        new DataFabricInMemoryModule(conf),
+        new DataFabricInMemoryModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ConfigModule(conf, hConf),
         new HiveRuntimeModule().getInMemoryModules(),

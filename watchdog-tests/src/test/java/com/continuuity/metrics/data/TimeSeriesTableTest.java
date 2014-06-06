@@ -25,8 +25,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -493,7 +491,7 @@ public class TimeSeriesTableTest {
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricDistributedModule(cConf, testHBase.getConfiguration()),
+                                             new DataFabricDistributedModule(),
                                              new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

@@ -101,7 +101,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new ZKClientModule(),
       new KafkaClientModule(),
       new AuthModule(),
-      createDataFabricModule(cConf, hConf),
+      createDataFabricModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
@@ -109,8 +109,8 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
     );
   }
 
-  private static Module createDataFabricModule(CConfiguration cConf, Configuration hConf) {
-    return Modules.override(new DataFabricModules(cConf, hConf).getDistributedModules()).with(new AbstractModule() {
+  private static Module createDataFabricModule() {
+    return Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // Bind to provider that create new instances of storage and tx manager every time.

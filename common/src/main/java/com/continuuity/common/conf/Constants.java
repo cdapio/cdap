@@ -484,7 +484,16 @@ public final class Constants {
   }
 
   /**
-   *
+   * Monitor constants.
+   */
+  public static final class Monitor {
+    public static final String STATUS_OK = "OK";
+    public static final String STATUS_NOTOK = "NOTOK";
+    public static final String DISCOVERY_TIMEOUT_SECONDS = "monitor.handler.service.discovery.timeout.seconds";
+  }
+
+  /**
+   * Logging constants.
    */
   public static final class Logging {
     public static final String SYSTEM_NAME = "reactor";
