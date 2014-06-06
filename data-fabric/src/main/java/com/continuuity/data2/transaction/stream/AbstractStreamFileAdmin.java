@@ -198,13 +198,14 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(String streamName, StreamConfig config) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamName);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", streamName);
+  public void updateConfig(StreamConfig config) throws IOException {
+    Location streamLocation = config.getLocation();
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", config.getName());
 
     StreamConfig originalConfig = loadConfig(streamLocation);
     Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
-                                "Configuration update for stream '{}' was not valid (can only update ttl)", streamName);
+                                "Configuration update for stream '{}' was not valid (can only update ttl)",
+                                config.getName());
 
     Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
     Location tempLocation = configLocation.getTempFile("tmp");
@@ -219,6 +220,12 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
         tempLocation.delete();
       }
     }
+  }
+
+  @Override
+  public void updateTTL(String streamName, long ttl) throws IOException {
+    StreamConfig streamConfig = getConfig(streamName);
+    streamCoordinator.changeTTL(streamConfig, ttl);
   }
 
   @Override
