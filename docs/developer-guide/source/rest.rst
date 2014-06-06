@@ -996,52 +996,52 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
-Start, Stop, Status, and Runtime Arguments
-------------------------------------------
+Start, Stop, Status, and Runtime Arguments - Services
+-----------------------------------------------------
 Reactor Application can also have customer user services, we can start, stop and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
 	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``<app-id>``
-       - Name of the Application being called
-     * - ``<service-id>``
-       - Name of the service being called
-     * - ``<operation>``
-       - One of ``start`` or ``stop``
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the service being called
+   * - ``<operation>``
+     - One of ``start`` or ``stop``
 
 Examples
 ........
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
+   * - HTTP Method
+     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
    * - Description
      - Start a Service *WhoService* in the Application *HelloWorld*
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
+   * - HTTP Method
+     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
    * - Description
      - Stop the Service *CountService* in the Application *WordCount*
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
    * - Description
      - Get the status of the Service *WhoService* in the Application *HelloWorld*
 
@@ -1096,12 +1096,12 @@ Reactor for the live info of a service's runnable via an HTTP GET method::
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``<app-id>``
+   * - Parameter
+     - Description
+   * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
      - Name of the Service being called
@@ -1217,7 +1217,7 @@ Example
 .. rst2pdf: PageBreak
 
 Scaling Services
-..................
+................
 You can query or change the number of instances of a Service's runnable
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
@@ -1229,12 +1229,12 @@ with the arguments as a JSON string in the body::
 	{ "instances" : <quantity> }
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``<app-id>``
+   * - Parameter
+     - Description
+   * - ``<app-id>``
      - Name of the Application
    * - ``<service-id>``
      - Name of the Service
@@ -1246,11 +1246,11 @@ with the arguments as a JSON string in the body::
 Example
 .......
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
        ``instances``
    * - Description
      - Find out the number of instances of the Procedure *saver*
@@ -1303,11 +1303,11 @@ For Services, you can retrieve the history of a runnable using the following for
 Example
 .......
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
    * - Description
      - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
    * - Returns
@@ -1394,18 +1394,18 @@ Example
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
-You can download the logs that are emitted by the Twill Runnable of Custom-Service in a Reactor Application by
+You can download the logs that are emitted by the Twill Runnable of a Custom-Service in a Reactor Application by
 sending an HTTP GET request::
 
 	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``<app-id>``
+   * - Parameter
+     - Description
+   * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
      - Name of the service being called
@@ -1417,11 +1417,11 @@ sending an HTTP GET request::
 Example
 .......
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
-     * - HTTP Method
-       - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
+   * - HTTP Method
+     - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
@@ -1497,6 +1497,12 @@ Examples
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
    * - Description
      - Using a *User-Defined* metric, *names.bytes*
+
+   * - HTTP Method
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
+       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
+   * - Description
+     - Using a *User-Defined* metric, *names.bytes* in a user-service runnable
 
 Comments
 ........
@@ -1611,6 +1617,12 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
+   * - All Services of an Application
+     - ``/apps/<app-id>/services``
+   * - One Service of an Application
+     - ``/apps/<app-id>/services/<service-id>``
+   * - Runnable of a Services of an Application
+     - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - All elements of an Application
      - ``/apps/<app-id>``
    * - All elements of all Applications
