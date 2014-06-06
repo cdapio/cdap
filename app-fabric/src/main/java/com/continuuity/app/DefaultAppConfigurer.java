@@ -13,6 +13,7 @@ import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
@@ -21,6 +22,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
+import com.continuuity.internal.service.DefaultServiceSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -44,7 +46,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, ProcedureSpecification> procedures = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-  private final Map<String, TwillSpecification> services = Maps.newHashMap();
+  private final Map<String, ServiceSpecification> services = Maps.newHashMap();
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
@@ -135,8 +137,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public void addService(TwillApplication application) {
     Preconditions.checkNotNull(application, "Service cannot be null.");
 
-    TwillSpecification specification = application.configure();
-    services.put(specification.getName(), specification);
+    DefaultServiceSpecification spec = new DefaultServiceSpecification(application.configure());
+    services.put(spec.getName(), spec);
   }
 
   public ApplicationSpecification createApplicationSpec() {
