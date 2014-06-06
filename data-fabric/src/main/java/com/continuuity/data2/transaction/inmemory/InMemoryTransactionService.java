@@ -10,7 +10,6 @@ import com.continuuity.common.logging.ServiceLoggingContext;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -93,11 +92,11 @@ public class InMemoryTransactionService extends AbstractService {
   @Override
   protected void doStart() {
     try {
+      txManager = txManagerProvider.get();
+      txManager.startAndWait();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));
-      txManager = txManagerProvider.get();
-      txManager.startAndWait();
       doRegister();
       LOG.info("Transaction Thrift service started successfully on " + getAddress());
       notifyStarted();

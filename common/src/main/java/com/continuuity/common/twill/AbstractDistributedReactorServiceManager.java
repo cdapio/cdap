@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractDistributedReactorServiceManager implements ReactorServiceManager {
   private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
-  protected final long DISCOVERY_TIMEOUT_SECONDS;
+  protected final long discoveryTimeout;
 
   protected CConfiguration cConf;
   protected TwillRunnerService twillRunnerService;
@@ -30,7 +30,7 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
     this.cConf = cConf;
     this.serviceName = serviceName;
     this.twillRunnerService = twillRunnerService;
-    this.DISCOVERY_TIMEOUT_SECONDS = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS);
+    this.discoveryTimeout = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS);
   }
 
   @Override

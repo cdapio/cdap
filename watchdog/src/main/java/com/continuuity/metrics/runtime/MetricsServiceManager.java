@@ -40,7 +40,7 @@ public class MetricsServiceManager extends AbstractDistributedReactorServiceMana
     try {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
       EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
       Discoverable discoverable = endpointStrategy.pick();
       if (discoverable == null) {
         return false;

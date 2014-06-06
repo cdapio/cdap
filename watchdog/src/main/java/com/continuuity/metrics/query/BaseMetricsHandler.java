@@ -255,7 +255,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     existingServices.add(Constants.Service.APP_FABRIC_HTTP);
     existingServices.add(Constants.Service.DATASET_EXECUTOR);
     existingServices.add(Constants.Service.DATASET_MANAGER);
-    existingServices.add(Constants.Service.STREAM_HANDLER);
+    existingServices.add(Constants.Service.STREAMS);
     existingServices.add(Constants.Service.GATEWAY);
   }
 
