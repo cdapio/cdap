@@ -42,7 +42,7 @@ define([], function () {
 
 			this.entityTypes.add(type);
 
-			this.HTTP.rest(this.__plurals[type], {cache: true}, function (objects) {
+			this.HTTP.rest(this.__plurals[type], function (objects) {
 
 				var i = objects.length;
 				while (i--) {

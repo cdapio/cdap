@@ -134,7 +134,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	C.Router.map(function() {
 
-		this.resource('Test', { path: '/test' } );
+		this.resource('Loading', { path: '/loading' } );
 		this.resource('Test2', { path: '/test2' } );
 
 		this.resource('Login', { path: '/login' } );
@@ -233,9 +233,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 */
 		activate: function() {
 			var routeHandler = this;
-			if (C.Env.security_enabled === true) {
-				C.setupAuth(routeHandler);
-			}
+      C.checkReactorReadiness(routeHandler, function() {
+        if (C.Env.security_enabled) {
+          C.setupAuth(routeHandler);
+        }
+      });
 		},
 
 		/*
@@ -280,7 +282,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
-    TestRoute: basicRouter.extend(),
+    LoadingRoute: basicRouter.extend(),
 
     LoginRoute: basicRouter.extend(),
 
@@ -452,10 +454,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			 * Check auth on every route transition.
 			 */
 			activate: function() {
-				var routeHandler = this;
-				if (C.Env.security_enabled === true) {
-				  C.setupAuth(routeHandler);
-				}
+        var routeHandler = this;
+        C.checkReactorReadiness(routeHandler, function() {
+          if (C.Env.security_enabled) {
+            C.setupAuth(routeHandler);
+          }
+        });
 	  	},
 			/*
 			 * Override to load the Controller once the Route has been activated.
