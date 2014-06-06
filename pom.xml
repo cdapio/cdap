@@ -15,6 +15,13 @@
     <url>http://www.continuuity.com</url>
   </organization>
 
+  <repositories>
+    <repository>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
@@ -23,6 +30,7 @@
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <slf4j.version>1.7.5</slf4j.version>
+    <twill.version>0.3.0-incubating-SNAPSHOT</twill.version>
   </properties>
 
   <modules>
@@ -70,6 +78,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.twill</groupId>
+        <artifactId>twill-api</artifactId>
+        <version>${twill.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

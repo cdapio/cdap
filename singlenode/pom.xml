@@ -60,16 +60,6 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>explore-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
-      <artifactId>explore</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.continuuity</groupId>
       <artifactId>gateway</artifactId>
       <version>${project.version}</version>
     </dependency>
