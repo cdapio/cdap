@@ -102,7 +102,7 @@ public class DatasetOpExecutorServiceTest {
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricModules(cConf, hConf).getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
       Modules.override(new DataSetServiceModules().getInMemoryModule()).with(new AbstractModule() {
         @Override
         protected void configure() {

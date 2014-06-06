@@ -428,7 +428,7 @@ public class AggregatesTableTest {
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
-                                             new DataFabricDistributedModule(cConf, testHBase.getConfiguration()),
+                                             new DataFabricDistributedModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new HbaseTableTestModule());
 

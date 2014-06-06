@@ -1,12 +1,12 @@
 package com.continuuity.performance.tx;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
@@ -30,8 +30,7 @@ public class HBaseTxProvider extends TxProvider {
       hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
     }
     hbaseConf.set("hbase.defaults.for.version.skip", "true");
-    Module module = new DataFabricDistributedModule(hbaseConf);
-    Injector injector = Guice.createInjector(module);
+    Injector injector = Guice.createInjector(new ConfigModule(hbaseConf), new DataFabricDistributedModule());
     return injector.getInstance(Key.get(TransactionSystemClient.class));
   }
 

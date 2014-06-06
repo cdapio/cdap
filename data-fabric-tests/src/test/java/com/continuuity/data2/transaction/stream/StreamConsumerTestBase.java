@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.joda.time.DateTimeConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -315,10 +314,10 @@ public abstract class StreamConsumerTestBase {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
-    final long ttl = DateTimeConstants.MILLIS_PER_DAY;
+    final long ttl = TimeUnit.DAYS.toMillis(1);
     final long currentTime = System.currentTimeMillis();
-    final long increment = DateTimeConstants.MILLIS_PER_SECOND;
-    final long approxEarliestNonExpiredTime = currentTime - DateTimeConstants.MILLIS_PER_HOUR;
+    final long increment = TimeUnit.SECONDS.toMillis(1);
+    final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
@@ -387,10 +386,10 @@ public abstract class StreamConsumerTestBase {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
-    final long ttl = DateTimeConstants.MILLIS_PER_DAY;
+    final long ttl = TimeUnit.DAYS.toMillis(1);
     final long currentTime = System.currentTimeMillis();
-    final long increment = DateTimeConstants.MILLIS_PER_SECOND;
-    final long approxEarliestNonExpiredTime = currentTime - DateTimeConstants.MILLIS_PER_HOUR;
+    final long increment = TimeUnit.SECONDS.toMillis(1);
+    final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
@@ -464,7 +463,7 @@ public abstract class StreamConsumerTestBase {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 2 seconds
-    final long ttl = 2 * DateTimeConstants.MILLIS_PER_SECOND;
+    final long ttl = TimeUnit.SECONDS.toMillis(2);
 
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));

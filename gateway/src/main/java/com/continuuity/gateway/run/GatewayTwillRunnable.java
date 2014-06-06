@@ -151,7 +151,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       new ZKClientModule(),
       new KafkaClientModule(),
       new GatewayModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),

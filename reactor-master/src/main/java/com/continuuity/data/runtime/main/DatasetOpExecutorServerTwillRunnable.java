@@ -58,7 +58,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRu
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new AuthModule());
   }

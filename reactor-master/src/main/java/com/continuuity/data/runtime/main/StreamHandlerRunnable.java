@@ -65,7 +65,7 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
-        new DataFabricModules(cConf, hConf).getDistributedModules(),
+        new DataFabricModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
         new StreamServiceModule()

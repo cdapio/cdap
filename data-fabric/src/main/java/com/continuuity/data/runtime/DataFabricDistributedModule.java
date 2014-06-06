@@ -18,7 +18,6 @@ import com.continuuity.data2.transaction.distributed.ThriftClientProvider;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
-import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
@@ -38,10 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,59 +47,22 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFabricDistributedModule extends AbstractModule {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(DataFabricDistributedModule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataFabricDistributedModule.class);
 
-  private final CConfiguration conf;
+  public DataFabricDistributedModule() {
 
-  private final Configuration hbaseConf;
-
-  /**
-   * Create a module with custom configuration for HBase,
-   * and defaults for Continuuity.
-   */
-  public DataFabricDistributedModule(Configuration conf) {
-    this(CConfiguration.create(), conf);
-  }
-
-  /**
-   * Create a module with custom configuration, which will
-   * be used both for HBase and for Continuuity.
-   */
-  public DataFabricDistributedModule(CConfiguration conf) {
-    this(conf, HBaseConfiguration.create());
-  }
-
-  /**
-   * Create a module with custom configuration for HBase and Continuuity.
-   */
-  public DataFabricDistributedModule(CConfiguration conf, Configuration hbaseConf) {
-    this.conf = conf;
-    this.hbaseConf = hbaseConf;
   }
 
   @Override
   public void configure() {
-    // Bind HBase configuration into ovctable
-    bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
-
-    // Bind Continuuity configuration into ovctable
-    bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(conf);
-
-    // Bind our configurations
-    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerClientConfig")).toInstance(conf);
-    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
-    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
-
     // bind meta data store
     bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
-      bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
-    } else {
-      bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
-    }
+    bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
+      .to(HDFSTransactionStateStorage.class).in(Singleton.class);
+    bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
+
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
@@ -137,7 +96,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     private DiscoveryServiceClient discoveryServiceClient;
 
     @Inject
-    ThriftClientProviderSupplier(@Named("TransactionServerClientConfig") CConfiguration cConf) {
+    ThriftClientProviderSupplier(CConfiguration cConf) {
       this.cConf = cConf;
     }
 
@@ -164,9 +123,4 @@ public class DataFabricDistributedModule extends AbstractModule {
       return clientProvider;
     }
   }
-
-  public CConfiguration getConfiguration() {
-    return this.conf;
-  }
-
 }

@@ -34,7 +34,7 @@ public final class TransactionService extends InMemoryTransactionService {
   private ThriftRPCServer<TransactionServiceThriftHandler, TTransactionServer> server;
 
   @Inject
-  public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
+  public TransactionService(CConfiguration conf,
                             ZKClient zkClient,
                             DiscoveryService discoveryService,
                             Provider<InMemoryTransactionManager> txManagerProvider) {

@@ -1,6 +1,7 @@
 package com.continuuity.data;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.google.inject.Guice;
@@ -24,8 +25,10 @@ public class LocalDataSetAccessorTest extends NamespacingDataSetAccessorTest {
     NamespacingDataSetAccessorTest.beforeClass();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
+      new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule(conf));
+      new DataFabricLevelDBModule()
+    );
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }
 

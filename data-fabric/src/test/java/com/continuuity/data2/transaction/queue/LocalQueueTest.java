@@ -40,14 +40,13 @@ public class LocalQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
     conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new DataFabricLocalModule(conf));
+      new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();
@@ -62,9 +61,10 @@ public class LocalQueueTest extends QueueTest {
   @Test
   public void testInjection() throws IOException {
     Injector injector = Guice.createInjector(
+      new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new DataFabricModules(conf).getSingleNodeModules());
+      new DataFabricModules().getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueue2Producer);
