@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NOSASL</value>
+    </property>
+    <property>
+        <name>hive.metastore.sasl.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.exec.mode.local.auto</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.exec.submitviachild</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>local</value>
+    </property>
+    <property>
+        <name>hive.exec.pre.hooks</name>
+        <value>com.continuuity.hive.hooks.TransactionPreHook</value>
+    </property>
+    <property>
+        <name>hive.exec.post.hooks</name>
+        <value>com.continuuity.hive.hooks.TransactionPostHook</value>
+    </property>
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>${reactor.hive.metastore.warehouse.dir}</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:derby:;databaseName=${reactor.hive.database.dir};create=true</value>
+    </property>
+</configuration>

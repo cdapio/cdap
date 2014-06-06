@@ -19,12 +19,17 @@ dependencies {
 
     compile (libraries.hive_beeline) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
     }
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
     }
     compile libraries.continuuity_hive_exec
-    compile libraries.hive_metastore
+    compile (libraries.hive_metastore) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+    }
 
     compile libraries.thrift
 
@@ -72,4 +77,7 @@ jar.exclude '*.xml'
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        resolutionStrategy.force libraries.google_guava
+    }
 }

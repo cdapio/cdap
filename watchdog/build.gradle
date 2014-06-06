@@ -79,6 +79,9 @@ javadoc {
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        resolutionStrategy.force libraries.google_guava
+    }
 }
 
 // filter duplicated dependency for IDEA export

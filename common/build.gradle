@@ -28,7 +28,9 @@ dependencies {
     // Integration depends on apiJar
     integrationCompile apiJar.outputs.files
 
-    apiCompile libraries.google_guava
+    apiCompile (libraries.google_guava) {
+      force = true
+    }
     apiCompile libraries.google_gson
     apiCompile libraries.jsr_305
 
@@ -48,7 +50,9 @@ dependencies {
     compile libraries.asm
     compile libraries.jsr_305
     compile libraries.slf4j_api
-    compile libraries.google_guava
+    compile (libraries.google_guava) {
+      force = true
+    }
     compile libraries.google_gson
     compile libraries.google_guice
     compile (libraries.hadoop_common) {
@@ -104,6 +108,9 @@ checkstyleTest {
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        resolutionStrategy.force libraries.google_guava
+    }
 }
 
 

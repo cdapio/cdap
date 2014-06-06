@@ -14,8 +14,7 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
-  // TODO reintegreate once hive-exec problems find a proper fix
-  // compile elastic([group: 'com.continuuity', name: 'explore', version: "${version}", changing: true], "explore")
+  compile elastic([group: 'com.continuuity', name: 'explore', version: "${version}", changing: true], "explore")
 
   // Test framework dependencies
   compile libraries.junit
@@ -29,7 +28,10 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
-  testRuntime libraries.hive_jdbc
+  testRuntime (libraries.hive_jdbc) {
+      exclude group: 'org.apache.hive', module: 'hive-exec'
+      exclude group: 'com.google.guava', module: 'guava'
+  }
 }
 
 /**
@@ -58,8 +60,15 @@ sonar {
   }
 }
 
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
 configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        resolutionStrategy.force libraries.google_guava
+    }
 }
 
 uploadArchives {
