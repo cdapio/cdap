@@ -135,7 +135,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	C.Router.map(function() {
 
 		this.resource('Loading', { path: '/loading' } );
-		this.resource('Test2', { path: '/test2' } );
+		this.resource('Services', { path: '/services' } );
 
 		this.resource('Login', { path: '/login' } );
 
@@ -260,7 +260,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Override to unload the Controller once the Route has been deactivated.
 		 */
 		deactivate: function () {
-			this.controller.unload();
+      if ('controller' in this) {
+        this.controller.unload();
+      }
 		},
 		/*
 		 * Override to load a model based on parameter name and inject HTTP resource.

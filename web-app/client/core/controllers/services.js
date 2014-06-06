@@ -18,7 +18,7 @@ define([], function () {
     });
 
     Controller.reopenClass({
-        type: 'Test2',
+        type: 'Services',
         kind: 'Controller'
     });
 

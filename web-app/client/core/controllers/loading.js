@@ -1,5 +1,5 @@
 /*
- * Dataset Controller
+ * Loading screen Controller
  */
 
 define([], function () {
