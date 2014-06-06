@@ -234,6 +234,7 @@ class TableDataset extends AbstractDataset implements Table {
    * @return list of {@link Split}
    */
   @Beta
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     try {
       return table.getSplits(numSplits, start, stop);
