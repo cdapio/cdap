@@ -374,7 +374,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Test
+  @Test(timeout = 60000L)
   public void testSQLQuery() throws Exception {
 
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);

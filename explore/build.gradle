@@ -21,6 +21,10 @@ dependencies {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'
     }
+    compile (libraries.hive_ant) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+    }
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'

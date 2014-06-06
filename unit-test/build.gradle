@@ -15,6 +15,7 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
   compile elastic([group: 'com.continuuity', name: 'explore', version: "${version}", changing: true], "explore")
+  compile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true], "explore-client")
 
   // Test framework dependencies
   compile libraries.junit
@@ -28,10 +29,10 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
-  testRuntime (libraries.hive_jdbc) {
-      exclude group: 'org.apache.hive', module: 'hive-exec'
-      exclude group: 'com.google.guava', module: 'guava'
-  }
+//  testRuntime (libraries.hive_jdbc) {
+//      exclude group: 'org.apache.hive', module: 'hive-exec'
+//      exclude group: 'com.google.guava', module: 'guava'
+//  }
 }
 
 /**
