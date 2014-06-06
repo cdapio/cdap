@@ -7,7 +7,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,12 +43,8 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new ConfigModule(cConf),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class);
-        }
-      }
+      new DataFabricModules().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules()
     );
 
     zkClient = injector.getInstance(ZKClientService.class);
