@@ -101,7 +101,9 @@
         {{view C.Embed.Breadcrumb}}
         <div style="clear:both"></div>
       </div> --}}
+
       {{outlet}}
+
     </div>
     <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
 
@@ -148,6 +150,86 @@
       </div>
     </div>
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Loading">
+    <div id="services-loading">
+      <div class="services-box">
+        <div class="animated">
+          <img src="assets/img/services-loading.gif" />Loading Services...
+        </div>
+        <ul class="services-list">
+          <li class="appfabric">AppFabric
+            <img {{ bindAttr src=appfabricImg }}/>
+          </li>
+          <li class="streams">Streams
+            <img {{ bindAttr src=streamsImg }}/>
+          </li>
+          <li class="transactions">Transactions
+            <img {{ bindAttr src=transactionsImg }}/>
+          </li>
+          <li class="metrics">Metrics
+            <img {{ bindAttr src=metricsImg }}/>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Services">
+  <div id="reactor-services">
+    <div id="panels">
+
+    {{!#each runs}}
+
+      <div class="panel">
+        <table class="table">
+          <thead>
+            <th style="padding-left: 14px; min-width: 350px" class="service-col">AppFabric</th>
+            <th style="min-width: 100px;" class="status-col">Status
+              <!--<a {{!bindAttr href="href"}}>{{name}}</a>-->
+            </th>
+            <th style="min-width: 100px;" class="logs-col">Logs</th>
+            <th style="min-width: 200px;" class="instance-col">Instance</th>
+            <th style="min-width: 282px;" class="event-rate-col">Event Rate</th>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="max-width: 350px;" class="service-col">
+              </td>
+              <td style="max-width: 100px;" class="status-col">
+                <img src="assets/img/services-loading-blue.gif" />
+              </td>
+              <td style="max-width: 100px;" class="logs-col">
+                <a href="#" {{!}}>
+                  <img src="assets/img/log-icon.png" />
+                </a>
+              </td>
+              <td style="max-width: 200px;" class="instance-col">
+                <div class="instance-wrapper">
+                  <div class="instance-num"><span>1</span></div>
+                  <div>
+                    <a href="#" {{!}}>
+                      <img src="assets/img/minus.png" />
+                    </a>
+                    <a href="#" {{!}}>
+                      <img src="assets/img/plus.png" />
+                    </a>
+                  </div>
+                </div>
+              </td>
+              <td style="max-width: 282px;" class="event-rate-col">
+              {{!view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    {{!/each}}
+
+    </div>
+  </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
