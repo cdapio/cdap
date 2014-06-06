@@ -19,6 +19,7 @@ import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import com.continuuity.internal.app.runtime.distributed.TransactionServiceManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
@@ -78,8 +79,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.LOGSAVER).to(
                                  InMemoryLogSaverServiceMananger.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 InMemoryReactorServiceManager.class);
+                                 InMemoryTransactionServiceManager.class);
                                //Using LogSaverServiceManager since status check and logs are not available
+                               //for metrics.processor as well
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
                                  InMemoryLogSaverServiceMananger.class);
                                mapBinder.addBinding(Constants.Service.METRICS).to(
@@ -105,8 +107,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.LOGSAVER).to(
                                  InMemoryLogSaverServiceMananger.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION).to(
-                                 InMemoryReactorServiceManager.class);
+                                 InMemoryTransactionServiceManager.class);
                                //Using LogSaverServiceManager since status check and logs are not available
+                               //for metrics.processor as well
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
                                  InMemoryLogSaverServiceMananger.class);
                                mapBinder.addBinding(Constants.Service.METRICS).to(
