@@ -1,82 +1,8 @@
 /*
  * Main entry point for Reactor UI
- * Defines routes and attaches mocks
  */
 
 define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
-
-	/*
-	 * Determine whether to swap out specific components with mocks.
-	 */
-    var mocks = window.location.search.split('?')[1];
-
-
-	if (mocks) {
-		mocks = mocks.split('=')[1];
-		if (mocks) {
-			mocks = mocks.split(',');
-		} else {
-			mocks = null;
-		}
-	} else {
-		mocks = null;
-	}
-
-	/*
-	 * Inject requested mocks into our controllers.
-	 */
-	if (mocks) {
-
-		Em.Application.initializer({
-			name: "mocks",
-			before: "resources",
-
-			initialize: function(container, application) {
-
-				var i = mocks.length;
-				while (i--) {
-					C.__mocked[mocks[i]] = true;
-					mocks[i] = 'mocks/' + mocks[i].toLowerCase();
-				}
-
-				/*
-				 * Note: This is async. The 'resources' initializer is not.
-				 */
-				require(mocks, function () {
-
-					mocks = [].slice.call(arguments, 0);
-
-					var i = mocks.length, type, resource;
-					while (i--) {
-
-						type = mocks[i].type;
-						container.optionsForType(type, { singleton: true });
-						container.register(type + ':main', mocks[i]);
-						container.typeInjection('controller', type, type + ':main');
-
-						/*
-						 * Check Application-level event handlers on the resource.
-						 * E.g. Socket.on('connect');
-						 */
-						if (typeof C.__handlers[type] === 'object') {
-
-							resource = container.lookup(type + ':main');
-							for (var event in C.__handlers[type]) {
-                if (C.__handlers[type].hasOwnProperty(event)) {
-                    resource.on(event, C.__handlers[type][event]);
-                }
-							}
-							if (typeof resource.connect === 'function') {
-								resource.connect();
-							}
-
-						}
-					}
-				});
-			}
-		});
-
-	}
 
 	/*
 	 * Instantiate the Application.
