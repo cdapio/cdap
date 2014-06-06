@@ -387,6 +387,19 @@ public class TransactionServiceClient implements TransactionSystemClient {
   }
 
   @Override
+  public String status() {
+    try {
+      return this.execute(
+        new Operation<String>("status") {
+          @Override
+          public String execute(TransactionServiceThriftClient client) throws Exception { return client.status(); }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public void resetState() {
     try {
       this.execute(

@@ -16,9 +16,9 @@ public abstract class ReadFilter {
   public static final ReadFilter ALWAYS_ACCEPT = new ReadFilter() { };
 
   /**
-   * Always reject what it sees.
+   * Always reject offset.
    */
-  public static final ReadFilter ALWAYS_REJECT = new ReadFilter() {
+  public static final ReadFilter ALWAYS_REJECT_OFFSET = new ReadFilter() {
     @Override
     public boolean acceptOffset(long offset) {
       return false;
@@ -32,6 +32,16 @@ public abstract class ReadFilter {
    * @return {@code true} to accept, {@code false} to reject.
    */
   public boolean acceptOffset(long offset) {
+    return true;
+  }
+
+  /**
+   * Accept or reject based on event timestamp.
+   *
+   * @param timestamp The timestamp of the event.
+   * @return {@code true} to accept, {@code false} to reject.
+   */
+  public boolean acceptTimestamp(long timestamp) {
     return true;
   }
 }

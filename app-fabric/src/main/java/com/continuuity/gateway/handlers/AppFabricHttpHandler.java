@@ -38,7 +38,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -199,7 +199,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Access Dataset Service
    */
-  private final DatasetManagerServiceClient dsClient;
+  private final DatasetServiceClient dsClient;
 
   /**
    * App fabric output directory.
@@ -243,12 +243,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final ManagerFactory managerFactory;
   private final Scheduler scheduler;
 
-
-
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private static final java.lang.reflect.Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
-
 
   private enum AppFabricServiceStatus {
 
@@ -293,7 +290,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                               DataSetInstantiatorFromMetaData datasetInstantiator,
-                              DatasetManagerServiceClient dsClient) {
+                              DatasetServiceClient dsClient) {
 
     super(authenticator);
     this.locationFactory = locationFactory;

@@ -14,8 +14,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -30,8 +28,6 @@ import java.util.Set;
  *
  */
 public final class ProcessMethodExtractor extends MethodVisitor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ProcessMethodExtractor.class);
 
   private final Map<String, Set<Type>> inputTypes;
   private final Set<FlowletMethod> seenMethods;
@@ -70,11 +66,6 @@ public final class ProcessMethodExtractor extends MethodVisitor {
       return;
     }
 
-    // A process method cannot be a tick method
-    Preconditions.checkArgument(tickAnnotation == null,
-                                "ProcessInput method %s.%s cannot have @Tick.",
-                                inspectType.getRawType().getName(), method);
-
     Type[] methodParams = method.getGenericParameterTypes();
     Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
                                 "Parameter missing from process method %s.%s.",
@@ -94,7 +85,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
                                 inspectType.getRawType().getName(), method);
 
     List<String> inputNames = Lists.newLinkedList();
-    if (processInputAnnotation == null || processInputAnnotation.value().length == 0) {
+    if (processInputAnnotation.value().length == 0) {
       inputNames.add(FlowletDefinition.ANY_INPUT);
     } else {
       Collections.addAll(inputNames, processInputAnnotation.value());
@@ -116,19 +107,12 @@ public final class ProcessMethodExtractor extends MethodVisitor {
     // In batch mode, if the first parameter is an iterator then extract the type information from
     // the iterator's type parameter
     if (method.getAnnotation(Batch.class) != null) {
-      Preconditions.checkArgument(methodParam instanceof ParameterizedType,
-                                  "Iterator needs to be a ParameterizedType for process method %s.%s.",
-                                  type.getRawType().getName(), method);
-
-      ParameterizedType pType = (ParameterizedType) methodParam;
-      Preconditions.checkArgument(pType.getRawType().equals(Iterator.class),
-                                  "Only Iterator type is supported for @Batch %s.%s",
-                                  type.getRawType().getName(), method);
-
-      Preconditions.checkArgument(pType.getActualTypeArguments().length > 0,
-                                  "No type parameter defined for Iterator in @Batch %s.%s.",
-                                  type.getRawType().getName(), method);
-      methodParam = pType.getActualTypeArguments()[0];
+      if (methodParam instanceof ParameterizedType) {
+        ParameterizedType pType = (ParameterizedType) methodParam;
+        if (pType.getRawType().equals(Iterator.class)) {
+          methodParam = pType.getActualTypeArguments()[0];
+        }
+      }
     } else {
       // Check to see if there is an method param which is a type of iterator.
       // This check is needed because we don't support type projection with iterator.

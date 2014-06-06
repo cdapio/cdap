@@ -5,7 +5,7 @@ import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
@@ -16,10 +16,12 @@ import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -29,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -38,14 +41,14 @@ import java.util.Map;
 public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
-  private final DatasetManagerServiceClient client;
+  private final DatasetServiceClient client;
   private final Map<String, DatasetModule> modulesCache;
   private final DatasetDefinitionRegistry registry;
   private final LocationFactory locationFactory;
   private final DatasetNamespace namespace;
 
   @Inject
-  public RemoteDatasetFramework(DatasetManagerServiceClient client,
+  public RemoteDatasetFramework(DatasetServiceClient client,
                                 CConfiguration conf,
                                 LocationFactory locationFactory,
                                 DatasetDefinitionRegistry registry) {
@@ -85,6 +88,21 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public Collection<String> getInstances() throws DatasetManagementException {
+    Collection<DatasetInstanceSpec> allInstances = client.getAllInstances();
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    for (DatasetInstanceSpec spec : allInstances) {
+      builder.add(spec.getName());
+    }
+    return builder.build();
+  }
+
+  @Override
+  public boolean hasInstance(String instanceName) throws DatasetManagementException {
+    return client.getInstance(namespace(instanceName)) != null;
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     client.deleteInstance(namespace(datasetInstanceName));
   }
@@ -119,8 +137,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return namespace.namespace(datasetInstanceName);
   }
 
-  private <T extends DatasetDefinition> T getDatasetDefinition(DatasetTypeMeta implementationInfo,
-                                                               ClassLoader classLoader)
+  // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
+  public <T extends DatasetDefinition> T getDatasetDefinition(DatasetTypeMeta implementationInfo,
+                                                              ClassLoader classLoader)
     throws DatasetManagementException {
 
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();

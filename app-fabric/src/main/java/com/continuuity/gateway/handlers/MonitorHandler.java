@@ -1,22 +1,33 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.ReactorServiceManager;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -29,8 +40,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
-  private static final String STATUS_OK = "OK";
-  private static final String STATUS_NOTOK = "NOTOK";
+  private final String OK = Constants.Monitor.STATUS_OK;
+  private final String NOTOK = Constants.Monitor.STATUS_NOTOK;
 
   @Inject
   public MonitorHandler(Authenticator authenticator, Map<String, ReactorServiceManager> serviceMap) {
@@ -107,11 +118,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     String json;
-
     for (String service : reactorServiceManagementMap.keySet()) {
       ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
       if (reactorServiceManager.canCheckStatus()) {
-        String status = reactorServiceManager.isServiceAvailable() ? STATUS_OK : STATUS_NOTOK;
+        String status = reactorServiceManager.isServiceAvailable() ? OK : NOTOK;
         result.put(service, status);
       }
     }
@@ -152,9 +162,9 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     for (String service : reactorServiceManagementMap.keySet()) {
       Map<String, String> spec = new HashMap<String, String>();
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
-      String logs = serviceManager.isLogAvailable() ? STATUS_OK : STATUS_NOTOK;
+      String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       String canCheck = serviceManager.canCheckStatus() ? (
-        serviceManager.isServiceAvailable() ? STATUS_OK : STATUS_NOTOK) : "NA";
+        serviceManager.isServiceAvailable() ? OK : NOTOK) : "NA";
       String minInstance = String.valueOf(serviceManager.getMinInstances());
       String maxInstance = String.valueOf(serviceManager.getMinInstances());
       String curInstance = String.valueOf(serviceManager.getInstances());
@@ -172,5 +182,4 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
-
 }

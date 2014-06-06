@@ -4,8 +4,10 @@ import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Wrapper for {@link DatasetFramework} that namespaces dataset instances names.
@@ -33,13 +35,29 @@ public class NamespacedDatasetFramework implements DatasetFramework {
 
   @Override
   public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
-    throws DatasetManagementException {
+    throws DatasetManagementException, IOException {
 
     delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
+  public Collection<String> getInstances() throws DatasetManagementException {
+    Collection<String> instances = delegate.getInstances();
+    // client may pass the name back e.g. do delete instance, so we need to un-namespace it
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    for (String instance : instances) {
+      builder.add(namespace.fromNamespaced(instance));
+    }
+    return builder.build();
+  }
+
+  @Override
+  public boolean hasInstance(String instanceName) throws DatasetManagementException {
+    return delegate.hasInstance(namespace(instanceName));
+  }
+
+  @Override
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException {
     delegate.deleteInstance(namespace(datasetInstanceName));
   }
 

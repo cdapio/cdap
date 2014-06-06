@@ -333,6 +333,7 @@ public final class Constants {
   public static final class Stream {
     /* Begin CConfiguration keys */
     public static final String BASE_DIR = "stream.base.dir";
+    public static final String TTL = "stream.event.ttl";
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
@@ -490,7 +491,16 @@ public final class Constants {
   }
 
   /**
-   *
+   * Monitor constants.
+   */
+  public static final class Monitor {
+    public static final String STATUS_OK = "OK";
+    public static final String STATUS_NOTOK = "NOTOK";
+    public static final String DISCOVERY_TIMEOUT_SECONDS = "monitor.handler.service.discovery.timeout.seconds";
+  }
+
+  /**
+   * Logging constants.
    */
   public static final class Logging {
     public static final String SYSTEM_NAME = "reactor";

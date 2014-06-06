@@ -49,8 +49,10 @@ public final class GenSinkApp2 implements Application {
         .withFlowlets()
         .add(new GenFlowlet())
         .add(new SinkFlowlet())
+        .add(new BatchSinkFlowlet())
         .connect()
         .from(new GenFlowlet()).to(new SinkFlowlet())
+        .from(new GenFlowlet()).to(new BatchSinkFlowlet())
         .build();
     }
   }
@@ -87,7 +89,6 @@ public final class GenSinkApp2 implements Application {
         if (i == 10) {
           throw new IllegalStateException("10 hitted");
         }
-        return;
       }
     }
   }
@@ -112,10 +113,8 @@ public final class GenSinkApp2 implements Application {
 
     @Batch(10)
     @ProcessInput("batch")
-    public void processBatch(Iterator<U> events) {
-      while (events.hasNext()) {
-        LOG.info(events.next().toString());
-      }
+    public void processBatch(U event) {
+      LOG.info(event.toString());
     }
   }
 
@@ -131,6 +130,21 @@ public final class GenSinkApp2 implements Application {
     @Override
     public void process(String event) throws InterruptedException {
       // Nothing. Just override to avoid deployment failure.
+    }
+  }
+
+  /**
+   * Consume batch event of type integer. This is for batch consume with Iterator.
+   */
+  public static final class BatchSinkFlowlet extends AbstractFlowlet {
+    private static final Logger LOG = LoggerFactory.getLogger(BatchSinkFlowlet.class);
+
+    @Batch(10)
+    @ProcessInput("batch")
+    public void processBatch(Iterator<Integer> events) {
+      while (events.hasNext()) {
+        LOG.info("Iterator batch: {}", events.next().toString());
+      }
     }
   }
 }
