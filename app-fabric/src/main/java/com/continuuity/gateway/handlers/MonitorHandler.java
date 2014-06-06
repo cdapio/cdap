@@ -156,7 +156,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       String canCheck = serviceManager.canCheckStatus() ? (
         serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
       String minInstance = String.valueOf(serviceManager.getMinInstances());
-      String maxInstance = String.valueOf(serviceManager.getMinInstances());
+      String maxInstance = String.valueOf(serviceManager.getMaxInstances());
       String curInstance = String.valueOf(serviceManager.getInstances());
       spec.put("name", service);
       spec.put("logs", logs);
