@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.hooks.TransactionPostHook;
@@ -14,6 +14,7 @@ import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -80,7 +81,7 @@ public class HiveRuntimeModule extends RuntimeModule {
     System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
 
     try {
-      // Select a random free port hive metastore to run
+      // Select a random free port for hive metastore to run
       final int hiveMetaStorePort = PortDetector.findFreePort();
       System.setProperty(HiveConf.ConfVars.METASTOREURIS.toString(), "thrift://localhost:" + hiveMetaStorePort);
 
@@ -168,7 +169,7 @@ public class HiveRuntimeModule extends RuntimeModule {
          return true;
        }
      },
-     DatasetManagerServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
+     DatasetServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
      new HBaseTableUtilFactory().get().getClass().getCanonicalName());
 
     return Joiner.on(',').join(uris);
