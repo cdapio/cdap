@@ -392,13 +392,11 @@ a, a:visited {
 	text-align: center;
 	font-size: 14px;
 	color: #fff;
-	border: 1px solid #f4cece;
 	border-top: 0;
 	padding: 15px 8px;
 	line-height: 16px;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	border-bottom: 1px solid #eff0f0;
 	pointer-events: all;
 	border-radius: 10px;
 	font-weight: bold;
@@ -1323,13 +1321,14 @@ input[type="text"] {
 
 #services-loading {
     position: absolute;
-    top: 80px;
     right: 0;
     bottom: 0;
-    left: 120px;
+    width: 100%;
+    height: 100%;
     background-color: black;
     color: white;
     opacity: 0.8;
+    z-index: 3;
 }
 
 .services-box {

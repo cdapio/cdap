@@ -280,6 +280,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
       }
     }),
 
+    TestRoute: basicRouter.extend(),
+
     LoginRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
