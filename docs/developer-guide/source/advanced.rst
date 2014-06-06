@@ -23,10 +23,19 @@ By default, a Flowlet processes a single data object at a time within a single t
 
 	@Batch(100)
 	@ProcessInput
+	public void process(String words) {
+	  ...
+
+For the batch example above, the **process** method will be called up to 100 times with different data objects read from the input per transaction.
+
+If you are interested to know when a batch begins and ends, you can use **Iterator** as the method argument::
+
+	@Batch(100)
+	@ProcessInput
 	public void process(Iterator<String> words) {
 	  ...
 
-For the batch example above, up to 100 data objects can be read from the input and processed at one time.
+In this case, the **process** will be called once per transaction and the **Iterator** will contain up to 100 data objects read from the input.
 
 Flowlets and Instances
 ----------------------
