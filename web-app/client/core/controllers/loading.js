@@ -51,7 +51,9 @@ define([], function () {
         }, 1000);
       },
 
-      unload: function () {}
+      unload: function () {
+        clearInterval(this.interval);
+      }
 
     });
 
