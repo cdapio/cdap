@@ -63,7 +63,7 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
   protected FileReader<PositionStreamEvent, StreamFileOffset> renewReader() throws IOException {
     // If no reader has yet opened, start with the beginning offset.
     if (reader == null) {
-      reader = new StreamPositionTransformFileReader(streamConfig.getLocation(), beginOffset);
+      reader = new StreamPositionTransformFileReader(beginOffset);
       reader.initialize();
       return reader;
     }
@@ -78,17 +78,22 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     nextCheckTime = now + newFileCheckInterval;
 
     // See if there is a higher sequence file available.
-    StreamPositionTransformFileReader nextReader = createReader(reader.getPartitionLocation(),
-                                                                offset.getNamePrefix(),
-                                                                offset.getSequenceId() + 1, true);
+    Location eventLocation = StreamUtils.createStreamLocation(reader.getPartitionLocation(),
+                                                              offset.getNamePrefix(),
+                                                              offset.getSequenceId() + 1,
+                                                              StreamFileType.EVENT);
+
+    StreamPositionTransformFileReader nextReader = createReader(eventLocation, true, offset.getGeneration());
 
     // If no higher sequence file and if current time is later than partition end time, see if there is new partition.
     if (nextReader == null && now > offset.getPartitionEnd()) {
       // Always create a new reader for the next partition when the current reader partition times up.
-      Location partitionLocation = StreamUtils.createPartitionLocation(streamConfig.getLocation(),
-                                                                       offset.getPartitionEnd(),
-                                                                       streamConfig.getPartitionDuration());
-      nextReader = createReader(partitionLocation, offset.getNamePrefix(), 0, false);
+      eventLocation = StreamUtils.createStreamLocation(
+        StreamUtils.createPartitionLocation(Locations.getParent(reader.getPartitionLocation()),
+                                            offset.getPartitionEnd(), streamConfig.getPartitionDuration()),
+        offset.getNamePrefix(), 0, StreamFileType.EVENT);
+
+      nextReader = createReader(eventLocation, false, offset.getGeneration());
     }
 
     if (nextReader != null) {
@@ -99,19 +104,17 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
   }
 
   /**
-   * Returns a new reader if that exists, or null.
+   * Returns a new reader if that exists, or null, unless checkExists is false.
    */
-  private StreamPositionTransformFileReader createReader(Location partitionLocation, String prefix,
-                                                         int seqId, boolean checkExists) throws IOException {
-
-    Location eventLocation = StreamUtils.createStreamLocation(partitionLocation, prefix, seqId, StreamFileType.EVENT);
-
+  private StreamPositionTransformFileReader createReader(Location eventLocation,
+                                                         boolean checkExists,
+                                                         int generation) throws IOException {
     if (checkExists && !eventLocation.exists()) {
       return null;
     }
 
     StreamPositionTransformFileReader reader =
-      new StreamPositionTransformFileReader(streamConfig.getLocation(), new StreamFileOffset(eventLocation));
+      new StreamPositionTransformFileReader(new StreamFileOffset(eventLocation, 0L, generation));
     reader.initialize();
     return reader;
   }
@@ -124,15 +127,12 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
     private final Location partitionLocation;
     private StreamFileOffset offset;
 
-    private StreamPositionTransformFileReader(Location streamLocation, StreamFileOffset offset) throws IOException {
+    private StreamPositionTransformFileReader(StreamFileOffset offset) throws IOException {
       this.reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(offset.getEventLocation()),
                                                           Locations.newInputSupplier(offset.getIndexLocation()),
                                                           offset.getOffset());
       this.offset = new StreamFileOffset(offset);
-
-      long duration = offset.getPartitionEnd() - offset.getPartitionStart();
-      this.partitionLocation = StreamUtils.createPartitionLocation(streamLocation,
-                                                                   offset.getPartitionStart(), duration);
+      this.partitionLocation = Locations.getParent(offset.getEventLocation());
 
       LOG.debug("Stream reader created for {}", offset.getEventLocation().toURI());
     }

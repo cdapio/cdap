@@ -1,5 +1,8 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
@@ -19,16 +22,20 @@ public interface DatasetOpExecutor extends Service {
   /**
    * Creates dataset.
    * @param instanceName Name of the dataset instance.
+   * @param typeMeta Data set type meta
+   * @param props Data set instance properties
    * @throws IOException
    */
-  void create(String instanceName) throws Exception;
+  DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
+    throws Exception;
 
   /**
    * Drops dataset.
-   * @param instanceName Name of the dataset instance.
+   * @param typeMeta Data set type meta
+   * @param spec Data set instance spec
    * @throws IOException
    */
-  void drop(String instanceName) throws Exception;
+  void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception;
 
   /**
    * Deletes all data of the dataset.

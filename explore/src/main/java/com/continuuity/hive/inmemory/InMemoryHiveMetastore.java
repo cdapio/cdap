@@ -9,6 +9,10 @@ import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
  * Hive Metastore running in memory.
  */
@@ -17,18 +21,32 @@ public class InMemoryHiveMetastore extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryHiveMetastore.class);
 
   private final int hiveMetastorePort;
+  private final ExecutorService executorService;
 
   @Inject
   public InMemoryHiveMetastore(@Named(Constants.Hive.METASTORE_PORT) int hiveMetastorePort) {
     this.hiveMetastorePort = hiveMetastorePort;
+
+    this.executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable runnable) {
+        Thread t = new Thread(runnable);
+        t.setDaemon(true);
+        return t;
+      }
+    });
   }
 
   @Override
   protected void startUp() throws Exception {
 
+    // Default min threads is 200, we don't need that many in singlenode or tests
+    System.setProperty("hive.metastore.server.min.threads", "5");
+    System.setProperty("hive.metastore.server.max.threads", "50");
+
     LOG.debug("Starting hive metastore on port {}...", hiveMetastorePort);
-    Thread metaStoreRunner = new Thread(
-        new Runnable() {
+
+    executorService.execute(new Runnable() {
           @Override
           public void run() {
             try {
@@ -39,13 +57,12 @@ public class InMemoryHiveMetastore extends AbstractIdleService {
             }
           }
         });
-    metaStoreRunner.setDaemon(true);
-    metaStoreRunner.start();
     RuntimeHiveServer.waitForPort("localhost", hiveMetastorePort);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    // do nothing since HiveMetaStore DB connection gets closed when its client's connection closes.
+    // TODO this call does not close hive metastore - find a way to do it
+    executorService.shutdown();
   }
 }

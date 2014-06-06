@@ -118,7 +118,7 @@ public class TimeSeriesCleanupTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(cConf),
+      new DataFabricLevelDBModule(),
       new ConfigModule(cConf),
       new PrivateModule() {
 

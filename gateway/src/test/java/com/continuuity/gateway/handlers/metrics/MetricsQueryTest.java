@@ -77,6 +77,62 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     }
   }
 
+
+  @Test
+  public void testingSystemMetrics() throws Exception {
+    // Insert system metric
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                "appfabric.AppFabricHttpHandler.getAllApps",
+                                                                "0");
+    collector.gauge("request.received", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String methodRequest =
+      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+        "request.received?aggregate=true";
+    String handlerRequest =
+      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
+    String serviceRequest =
+      "/reactor/services/appfabric/request.received?aggregate=true";
+
+    systemMetrics(methodRequest);
+    systemMetrics(handlerRequest);
+    systemMetrics(serviceRequest);
+  }
+
+  @Test
+  public void testingInvalidSystemMetrics() throws Exception {
+    //appfabrics service does not exist
+    String methodRequest =
+      "/reactor/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+        "request.received?aggregate=true";
+
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + methodRequest);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + methodRequest + " did not return 404 NOT-FOUND status.",
+                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+    } finally {
+      reader.close();
+    }
+
+  }
+
+  private void systemMetrics(String request) throws Exception {
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + request);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + request + " did not return 200 status.",
+                          HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      Assert.assertEquals("GET " + request + " returned unexpected results.", 1, json.get("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
+
   @Test
   public void testGetMetric() throws Exception {
     // Insert some metric

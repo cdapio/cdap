@@ -36,7 +36,7 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
     // tests should interact with HDFS as the current user
     conf.unset(Constants.CFG_HDFS_USER);
     conf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
-    DataFabricDistributedModule dfModule = new DataFabricDistributedModule(conf, testHBase.getConfiguration());
+    DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
     Module module = Modules.override(dfModule).with(
       new AbstractModule() {
         @Override

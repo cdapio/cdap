@@ -59,7 +59,7 @@ public class LevelDBOcTableService {
    * For guice injecting configuration object to this singleton.
    */
   @Inject
-  public void setConfiguration(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+  public void setConfiguration(CConfiguration config) throws IOException {
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
@@ -79,6 +79,10 @@ public class LevelDBOcTableService {
   public Collection<String> list() throws Exception {
     File baseDir = new File(basePath);
     String[] subDirs = baseDir.list();
+    if (subDirs == null) {
+      return ImmutableList.of();
+    }
+
     ImmutableCollection.Builder<String> builder = ImmutableList.builder();
     for (String dir : subDirs) {
       builder.add(getTableName(dir));

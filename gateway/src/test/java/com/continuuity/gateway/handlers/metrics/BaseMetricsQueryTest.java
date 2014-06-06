@@ -19,6 +19,7 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.logging.read.LogReader;
@@ -71,6 +72,7 @@ public class BaseMetricsQueryTest {
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
+      new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),

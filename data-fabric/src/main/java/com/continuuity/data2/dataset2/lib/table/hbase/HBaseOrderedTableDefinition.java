@@ -21,7 +21,6 @@ public class HBaseOrderedTableDefinition
   extends AbstractDatasetDefinition<HBaseOrderedTable, HBaseOrderedTableAdmin> {
 
   @Inject
-  @Named("HBaseOVCTableHandleHConfig")
   private Configuration hConf;
   @Inject
   private HBaseTableUtil hBaseTableUtil;

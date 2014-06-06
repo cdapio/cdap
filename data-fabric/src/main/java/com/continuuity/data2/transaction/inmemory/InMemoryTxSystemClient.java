@@ -1,12 +1,12 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +80,11 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
       LOG.error("Snapshot could not be taken", e);
       throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
     }
+  }
+
+  @Override
+  public String status() {
+    return txManager.isRunning() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
   }
 
   @Override

@@ -184,7 +184,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
         MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
-        MetricsRequestParser.parseAppContext(pathParts, builder);
+        MetricsRequestParser.parseSubContext(pathParts, builder);
         MetricsRequestContext metricsRequestContext = builder.build();
         contextPrefix = metricsRequestContext.getContextPrefix();
         validatePathElements(request, metricsRequestContext);

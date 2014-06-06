@@ -14,6 +14,8 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,18 +60,32 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
-    throws InstanceConflictException {
+    throws InstanceConflictException, IOException {
     if (instances.get(datasetInstanceName) != null) {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
     DatasetDefinition def = registry.get(datasetType);
-    instances.put(datasetInstanceName, def.configure(datasetInstanceName, props));
+    DatasetInstanceSpec spec = def.configure(datasetInstanceName, props);
+    instances.put(datasetInstanceName, spec);
+    def.getAdmin(spec).create();
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException {
-    instances.remove(datasetInstanceName);
+  public Collection<String> getInstances() {
+    return Collections.unmodifiableSet(instances.keySet());
+  }
+
+  @Override
+  public boolean hasInstance(String instanceName) throws DatasetManagementException {
+    return instances.containsKey(instanceName);
+  }
+
+  @Override
+  public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
+    DatasetInstanceSpec spec = instances.remove(datasetInstanceName);
+    DatasetDefinition def = registry.get(spec.getType());
+    def.getAdmin(spec).create();
   }
 
   @Override
