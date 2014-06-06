@@ -39,7 +39,7 @@ public class InMemoryTransactionService extends AbstractService {
   protected final int maxReadBufferBytes;
 
   @Inject
-  public InMemoryTransactionService(@Named("TransactionServerConfig") CConfiguration conf,
+  public InMemoryTransactionService(CConfiguration conf,
                             DiscoveryService discoveryService,
                             Provider<InMemoryTransactionManager> txManagerProvider) {
 
