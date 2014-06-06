@@ -64,11 +64,12 @@ public class TableTest extends DataSetTestBase {
     DataSet t3 = new Table("t3");
     DataSet t4 = new Table("t4");
     DataSet tBatch = new Table("tBatch");
+    DataSet tBatchWrite = new Table("tBatchWrite");
     DataSet scanTable = new Table("scanTable");
     DataSet rowConflictTable = new Table("rowConflict", Table.ConflictDetection.ROW);
     DataSet columnConflictTable = new Table("columnConflict", Table.ConflictDetection.COLUMN);
     DataSet noneConflictTable = new Table("noneConflict", Table.ConflictDetection.NONE);
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable,
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, tBatchWrite, scanTable,
                                          rowConflictTable, columnConflictTable, noneConflictTable));
     table = instantiator.getDataSet("test");
   }
@@ -432,6 +433,31 @@ public class TableTest extends DataSetTestBase {
     Assert.assertTrue(splits.size() <= 5);
     // read each split and verify the keys
     verifySplits(t, splits, keysToVerify);
+  }
+
+  @Test
+  public void testBatchWrite() throws Exception {
+    Table t = instantiator.getDataSet("tBatchWrite");
+
+    // start a transaction
+    TransactionContext txContext = newTransaction();
+
+    // data is not there
+    Assert.assertNull(t.get(key1).get(col1));
+
+    // NOTE: using BatchWriteable.write() method
+    t.write(key1, new Put(key1, col1, val1));
+
+    // commit transaction
+    commitTransaction(txContext);
+
+    // start a sync transaction
+    txContext = newTransaction();
+
+    // data was written and now readable
+    Assert.assertArrayEquals(val1, t.get(key1).get(col1));
+
+    commitTransaction(txContext);
   }
 
   @Test
