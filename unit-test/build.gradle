@@ -29,10 +29,6 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
-//  testRuntime (libraries.hive_jdbc) {
-//      exclude group: 'org.apache.hive', module: 'hive-exec'
-//      exclude group: 'com.google.guava', module: 'guava'
-//  }
 }
 
 /**
@@ -43,6 +39,7 @@ javadoc {
 
 test {
     jvmArgs '-Xmx3048m'
+    jvmArgs "-XX:MaxPermSize=2048m"
 }
 
 /**
