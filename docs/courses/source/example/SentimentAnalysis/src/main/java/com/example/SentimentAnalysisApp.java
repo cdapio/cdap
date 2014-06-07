@@ -397,7 +397,7 @@ public class SentimentAnalysisApp implements Application {
     /**
      * A Mapper that reads the sentiments from the text-sentiments
      * DataSet and creates key value pairs, where the key is the
-     * sentiment and value is the occurence of a sentence. The Mapper
+     * sentiment and value is the occurrence of a sentence. The Mapper
      * receives a key value pair (<byte[], TimeseriesTable.Entry>)
      * from the input DataSet and outputs data in another key value
      * pair (<Text, IntWritable>) to the Reducer.

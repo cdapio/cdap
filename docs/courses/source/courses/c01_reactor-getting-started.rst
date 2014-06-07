@@ -5,19 +5,26 @@
 Getting Started With Continuuity Reactor
 ========================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
+.. rst2pdf: CutStart
 .. Slide Presentation HTML Generation
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 .. landslide: return c01_return.html
 
-.. Presentation PDF Generation
-.. rst2pdf: config ../_theme/pdf-generation/pdf_config
-.. rst2pdf: stylesheets ../_theme/pdf-generation/pdf_stylesheet
-
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
+.. |br| raw:: html
+
+   <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br| unicode:: U+0020 .. space
 
 ----
 
@@ -70,6 +77,8 @@ Upon completion of this course you should be able to:
 - Complete common operations tasks and procedures
 
 ----
+
+.. rst2pdf: CutStart
 
 .. landslide: COURSE MODULES START HERE
 
@@ -174,7 +183,7 @@ Upon completion of this course you should be able to:
 .. landslide: module link: ../modules/m24_mapreduce_transactions.rst
 .. landslide: module: Workflows
 .. landslide: module link: ../modules/m25_workflows.rst
-.. landslide: exercise: Building An Application Using MapReduce Jobs and Workflows
+.. landslide: exercise: Building An Application Using MapReduce and Workflows
 .. landslide: exercise link: ../exercises/e09_mapreduce_workflow_exercise.rst
 
 
@@ -270,10 +279,13 @@ Upon completion of this course you should be able to:
 .. landslide: COURSE MODULES END HERE
 
 ----
+.. rst2pdf: CutStop
 
 Conclusion
 ==========
+.. rst2pdf: CutStart
 .fx: center_title_slide
+.. rst2pdf: CutStop
 
 ----
 
@@ -318,5 +330,6 @@ Thank you!
 
 Please complete the Evaluation Forms and return them to the instructor.
 
+.. rst2pdf: CutStart
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
-
+.. rst2pdf: CutStop

@@ -1,13 +1,14 @@
 # Makefile for Reactor Training Course
 
 # You can set these variables from the command line
-BUILDDIR      = build
-HTMLDIR       = html
-SOURCEDIR     = source
-STAGE_SERVER  = stg-web101.sw.joyent.continuuity.net
-SPHINXBUILD   = sphinx-build
-LANDSLIDE     = landslide
-RST2PDF       = rst2pdf
+BUILD_DIR      = build
+HTML_DIR       = html
+PDF_DIR        = pdf
+SOURCE_DIR     = source
+STAGE_SERVER   = stg-web101.sw.joyent.continuuity.net
+SPHINXBUILD    = sphinx-build
+LANDSLIDE      = landslide
+RST2PDF        = rst2pdf
 
 # User-friendly checks for software installs
 # sphinx-build
@@ -24,40 +25,52 @@ $(error The '$(RST2PDF)' command was not found. Make sure you have $(RST2PDF) in
 endif
 
 # Internal variables
-BUILD_HTML_DIR = $(BUILDDIR)/$(HTMLDIR)
+BUILD_HTML_DIR = $(BUILD_DIR)/$(HTML_DIR)
+BUILD_PDF_DIR = $(BUILD_DIR)/$(PDF_DIR)
 USER          := $(shell whoami)
 
 
-.PHONY: help clean dist html zip
-
-_dist:
-	cp $(SOURCEDIR)/index.html $(BUILD_HTML_DIR)
-
-_html: _makedirs
-	cp -R $(HTMLDIR) $(BUILDDIR)
-
-_makedirs:
-	mkdir -p $(BUILDDIR)
-	
-_upload:
-	rsync -vz $(BUILD_HTML_DIR).zip $(USER)@$(STAGE_SERVER):$(HTMLDIR).zip
-
-_zip:
-	cd $(BUILDDIR) && \
-	zip -j html html/*
+.PHONY: help clean dist html pdf zip
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  clean      delete all build results"
 	@echo "  dist       to make HTML files, copy index file and package them into a zip"
-	@echo "  html       to make HTML files"
+	@echo "  html       to make HTML files (not completed, merely stages in build dir)"
+	@echo "  pdf        to make PDF files (not completed, merely stages in build dir)"
 	@echo "  upload     upload zip to $(USER)@$(STAGE_SERVER)"
-	@echo "  zip        to zip HTML files into an archive"
+	@echo "  zip        to zip files into an archive"
+
+_dist:
+	cp $(SOURCE_DIR)/index.html $(BUILD_HTML_DIR)
+
+# Doesn't actual create HTML, copies files instead
+_html: _makedirs
+	cp -R $(HTML_DIR) $(BUILD_DIR)
+
+_makedirs:
+	mkdir -p $(BUILD_DIR)
+	
+# Doesn't actual create PDFs, copies files instead
+_pdf: _makedirs
+	cp -R $(PDF_DIR) $(BUILD_DIR)
+
+_upload:
+	rsync -vz $(BUILD_HTML_DIR).zip $(USER)@$(STAGE_SERVER):$(HTML_DIR).zip
+	rsync -vz $(BUILD_PDF_DIR).zip $(USER)@$(STAGE_SERVER):$(PDF_DIR).zip
+
+_zip_html:
+	cd $(BUILD_DIR) && \
+	zip -j html html/*
+
+_zip_pdf:
+	cd $(BUILD_DIR) && \
+	zip -j pdf pdf/*
 
 clean:
-	rm -rf $(BUILDDIR)/*
+	rm -rf $(BUILD_DIR)/*
 	
-dist: _html _dist zip
+dist: _html _dist _pdf zip
 	@echo "Dist finished."
 	@echo
 
@@ -66,11 +79,17 @@ html: _html
 	@echo "Build finished. The HTML pages are in $(BUILD_HTML_DIR)."
 	@echo
 
-zip: _zip
+pdf: _pdf
 	@echo
-	@echo "The HTML pages are archived in $(BUILD_HTML_DIR).zip"
+	@echo "Build finished. The PDF files are in $(BUILD_PDF_DIR)."
+	@echo
+
+zip: _zip_html _zip_pdf
+	@echo
+	@echo "The pages are archived in $(BUILD_HTML_DIR).zip and $(BUILD_PDF_DIR).zip "
 	@echo
 
 upload: _upload
 	@echo
 	@echo "Upload complete."
+	@echo

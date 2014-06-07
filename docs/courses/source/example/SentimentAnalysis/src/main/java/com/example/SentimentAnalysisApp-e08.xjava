@@ -277,7 +277,7 @@ public class SentimentAnalysisApp implements Application {
     throws Exception {
       String sentiment = request.getArgument("sentiment");
       if (sentiment == null) {
-        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
+        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent.");
         return;
       }
       

@@ -2,18 +2,24 @@
 Flow Partitioning
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_m13| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -278,9 +284,9 @@ with the arguments as a JSON string in the body:
 	{ "instances" : <quantity> }
 
 Parameter : Description
-  ``<app-id>`` : Name of the Application being called |br_m13|
-  ``<flow-id>`` : Name of the Flow |br_m13|
-  ``<flowlet-id>`` : Name of the Flowlet |br_m13|
+  ``<app-id>`` : Name of the Application being called |br|
+  ``<flow-id>`` : Name of the Flow |br|
+  ``<flowlet-id>`` : Name of the Flowlet |br|
   ``<quantity>`` : Number of instances to be used
 
 ----
@@ -331,7 +337,7 @@ A Flowlet icon in the DAG shows:
 - The number of instances of that Flowlet in the small circle in the upper right of the icon:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_13_flowlet_icon.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -342,7 +348,7 @@ Clicking on a Flowlet’s icon in the DAG brings up the configuration dialog for
 the number of instance of the Flowlet:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_27_dag1.png
-   :width: 600px
+   :width: 80%
 
 -----
 
@@ -361,4 +367,4 @@ You should now be able to:
 Module Completed
 ================
 
-`Chapter Index <return.html#m13>`__
+`Chapter Index <return.html#m12>`__

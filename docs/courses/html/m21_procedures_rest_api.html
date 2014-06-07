@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Workflows</title>
+    <title>Procedure REST API</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1736,16 +1736,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Workflows</h1></header>
+            <header><h1>Procedure REST API</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
-<table border="1" class="borderless docutils">
+            <section><table border="1" class="borderless docutils">
 <colgroup>
 <col width="50%" />
 <col width="50%" />
@@ -1768,7 +1767,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1778,7 +1777,7 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1786,11 +1785,11 @@ function main() {
             <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at:</p>
+            <section><p>In this module, you will cover:</p>
 <ul class="simple">
-<li>What are Workflows</li>
-<li>Creating a Workflow</li>
-<li>Implementing a Workflow</li>
+<li>The Procedure REST API</li>
+<li>Calling Procedures from external systems</li>
+<li>Interpreting the results</li>
 </ul></section>
             
           </div>
@@ -1803,7 +1802,7 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -1813,161 +1812,19 @@ function main() {
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Workflows</h1></header>
+            <header><h1>Procedure REST API</h1></header>
             
             
-            <section><ul class="simple">
-<li><strong>Workflows</strong> are used to execute a series of <cite>MapReduce</cite> jobs</li>
-<li>A Workflow is given a sequence of jobs that follow each other, with an
-optional schedule to run the Workflow periodically</li>
-<li><strong>On successful execution</strong> of a job, the control is transferred to the next job in
-sequence until the last job in the sequence is executed</li>
-<li><strong>On failure</strong>, the execution is stopped at the failed job and no subsequent jobs in the
-sequence are executed</li>
-</ul>
-<p>To process one or more MapReduce jobs in sequence, specify <tt class="docutils literal">withWorkflows()</tt> in your application:</p>
-<pre class="literal-block">
-public ApplicationSpecification configure() {
-  return ApplicationSpecification.Builder.with()
-    ...
-    .withWorkflows()
-      .add(new PurchaseHistoryWorkflow())
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/7
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Implement the Workflow Interface</h1></header>
-            
-            
-            <section><ul class="simple">
-<li>Requires the <tt class="docutils literal">configure()</tt> method</li>
-<li>From within <tt class="docutils literal">configure</tt>, call the <tt class="docutils literal">addSchedule()</tt> method to run a WorkFlow job periodically:</li>
-</ul>
-<pre class="literal-block">
-public static class PurchaseHistoryWorkflow implements Workflow {
-
-  &#64;Override
-  public WorkflowSpecification configure() {
-    return WorkflowSpecification.Builder.with()
-      .setName(&quot;PurchaseHistoryWorkflow&quot;)
-      .setDescription(&quot;PurchaseHistoryWorkflow description&quot;)
-      .startWith(new PurchaseHistoryBuilder())
-      .then(new PurchaseHistoryAggregateBuilder())
-      .last(new PurchaseTrendBuilder())
-      .addSchedule(new DefaultSchedule(&quot;FiveMinuteSchedule&quot;, &quot;Run every 5 minutes&quot;,
-                   &quot;0/5 * * * *&quot;, Schedule.Action.START))
-      .build();
-  }
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/7
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Workflow with a single MapReduce Job</h1></header>
-            
-            
-            <section><p>If there is only one MapReduce job to be run as a part of a WorkFlow,
-use the <tt class="docutils literal">onlyWith()</tt> method after <tt class="docutils literal">setDescription()</tt> when building
-the Workflow:</p>
-<pre class="literal-block">
-public static class PurchaseHistoryWorkflow implements Workflow {
-
-  &#64;Override
-  public WorkflowSpecification configure() {
-    return WorkflowSpecification.Builder.with() .setName(&quot;PurchaseHistoryWorkflow&quot;)
-      .setDescription(&quot;PurchaseHistoryWorkflow description&quot;)
-      .onlyWith(new PurchaseHistoryBuilder())
-      .addSchedule(new DefaultSchedule(&quot;FiveMinuteSchedule&quot;, &quot;Run every 5 minutes&quot;,
-                   &quot;0/5 * * * *&quot;, Schedule.Action.START))
-      .build();
-  }
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/7
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Module Summary</h1></header>
-            
-            
-            <section><p>You should be able to:</p>
+            <section><p>Used to send queries to and receive results from the methods of an Application’s Procedures</p>
+<p>To call a method in an Application's Procedure:</p>
 <ul class="simple">
-<li>Define a Workflow</li>
-<li>Create Workflows</li>
-<li>Implement Workflows</li>
+<li>Send the method name as part of the request URL</li>
+<li>Send the arguments as a JSON string in the body of the request</li>
 </ul></section>
             
           </div>
@@ -1980,25 +1837,47 @@ public static class PurchaseHistoryWorkflow implements Workflow {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/7
+              3/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Module Completed</h1></header>
+            <header><h1>Executing Procedures</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m23">Chapter Index</a></p></section>
+            <section><p>The request is an HTTP POST:</p>
+<p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/apps/&lt;app-id&gt;/procedures/</span></tt> <br /> <tt class="docutils literal"><span class="pre">&nbsp;&nbsp;&nbsp;&lt;procedure-id&gt;/methods/&lt;method-id&gt;</span></tt></p>
+<dl class="docutils">
+<dt>Parameter</dt>
+<dd><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></dd>
+<dt>Description</dt>
+<dd>Name of the Application being called</dd>
+<dt>Parameter</dt>
+<dd><tt class="docutils literal"><span class="pre">&lt;procedure-id&gt;</span></tt></dd>
+<dt>Description</dt>
+<dd>Name of the Procedure being called</dd>
+<dt>Parameter</dt>
+<dd><tt class="docutils literal"><span class="pre">&lt;method-id&gt;</span></tt></dd>
+<dt>Description</dt>
+<dd>Name of the method being called</dd>
+</dl>
+<p>HTTP Responses</p>
+<dl class="docutils">
+<dt>Status Code <span class="classifier-delimiter">:</span> <span class="classifier">Description</span></dt>
+<dd><tt class="docutils literal">200 OK</tt> : The event successfully called the method, and the body contains the results <br />
+<tt class="docutils literal">400 Bad Request</tt> : The Application, Procedure and method exist, but the arguments are not as expected <br />
+<tt class="docutils literal">404 Not Found</tt> : The Application, Procedure, or method does not exist</dd>
+</dl></section>
             
           </div>
           <div class="presenter_notes">
@@ -2010,7 +1889,106 @@ public static class PurchaseHistoryWorkflow implements Workflow {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m23_workflows.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Procedure Example</h1></header>
+            
+            
+            <section><p><tt class="docutils literal">POST <span class="pre">&lt;base-url&gt;/apps/WordCount/procedures/</span></tt> <br /> <tt class="docutils literal"><span class="pre">&nbsp;&nbsp;&nbsp;RetrieveCounts/methods/getCount</span></tt></p>
+<p>Calls the <tt class="docutils literal">getCount()</tt> method of the <em>RetrieveCounts</em> Procedure in the <em>WordCount</em> Application
+with the arguments as a JSON string in the body:</p>
+<pre><span class="p">{</span><span class="nt">&quot;word&quot;</span><span class="p">:</span><span class="s2">&quot;a&quot;</span><span class="p">}</span>
+</pre>
+<p>The response will have the results—if any—in the body</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
+            
+            
+            <section><p>You should now be able to:</p>
+<ul class="simple">
+<li>Call Procedures from external systems</li>
+<li>Interpret results from Procedure calls</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Completed</h1></header>
+            
+            
+            <section><p><a class="reference external" href="return.html#m21">Chapter Index</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m21_procedures_rest_api.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
@@ -2029,7 +2007,7 @@ public static class PurchaseHistoryWorkflow implements Workflow {
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Workflows</a></th>
+        <th><a href="#slide1">Procedure REST API</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2041,19 +2019,19 @@ public static class PurchaseHistoryWorkflow implements Workflow {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Workflows</a></th>
+        <th><a href="#slide3">Procedure REST API</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Implement the Workflow Interface</a></th>
+        <th><a href="#slide4">Executing Procedures</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Workflow with a single MapReduce Job</a></th>
+        <th><a href="#slide5">Procedure Example</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       

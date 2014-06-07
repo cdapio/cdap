@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Building An Application Using Procedures</title>
+    <title>MapReduce and Transactions</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1736,16 +1736,15 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Building An Application Using Procedures</h1></header>
+            <header><h1>MapReduce and Transactions</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
-<table border="1" class="borderless docutils">
+            <section><table border="1" class="borderless docutils">
 <colgroup>
 <col width="50%" />
 <col width="50%" />
@@ -1768,31 +1767,29 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/10
+              1/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Objectives</h1></header>
+            <header><h1>Module Objectives</h1></header>
             
             
-            <section><p>In this exercise, you will:</p>
+            <section><p>In this module, you will look at:</p>
 <ul class="simple">
-<li>Add a Procedure to the example application project</li>
-<li>The Procedure returns either the aggregates timeseries sentiment data or
-specific sentences for a given sentiment</li>
-<li>Build, deploy and run the Procedure</li>
-<li>Retrieve results from the DataSets using the Procedure</li>
+<li>MapReduce, DataSets and Transactions</li>
+<li>Key difference of MapReduce in Transactions</li>
+<li>Failure of a MapReduce Job</li>
 </ul></section>
             
           </div>
@@ -1805,301 +1802,32 @@ specific sentences for a given sentiment</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/10
+              2/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Transactions in MapReduce</h1></header>
             
             
-            <section><ul class="simple">
-<li>Add imports</li>
-<li>Modify the <tt class="docutils literal">ApplicationSpecification</tt></li>
-<li>Add the Procedure</li>
-<li>Build and deploy</li>
-<li>Run the application and use the Dashboard to retrieve queries</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              3/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Application Specification</h1></header>
-            
-            
-            <section><p>Change the ApplicationSpecification, replacing <tt class="docutils literal">.noProcedure()</tt> with:</p>
-<pre class="literal-block">
-.withProcedures()
-  .add(new SentimentAnalysisProcedure())
-</pre>
-<p>Add these imports:</p>
-<pre class="literal-block">
-import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
-import com.google.common.collect.Maps;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import com.continuuity.api.ResourceSpecification;
-</pre>
-<p><tt class="docutils literal">ResourceSpecification</tt> sets the minimum amount of memory (512MB) and cores (1)
-used by an instance</p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Add Procedure to <tt class="docutils literal">SentimentAnalysisApp</tt></h1></header>
-            
-            
-            <section><pre class="literal-block">
-public static class SentimentAnalysisProcedure extends AbstractProcedure {
-
-  &#64;UseDataSet(&quot;sentiments&quot;)
-  private Table sentiments;
-
-  &#64;UseDataSet(&quot;text-sentiments&quot;)
-  private SimpleTimeseriesTable textSentiments;
-
-  &#64;Handle(&quot;aggregates&quot;)
-
-  &#64;Handle(&quot;sentiments&quot;)
-
-  &#64;Override
-  public ProcedureSpecification configure() {
-    return ProcedureSpecification.Builder.with()
-      .setName(&quot;sentiment-query&quot;)
-      .setDescription(&quot;Sentiments Procedure&quot;)
-      .withResources(ResourceSpecification.BASIC)
-      .build();
-  }
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;aggregates&quot;)</span></tt></h1></header>
-            
-            
-            <section><pre class="literal-block">
-&#64;Handle(&quot;aggregates&quot;)
-public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response)
-  throws Exception {
-  Row row = sentiments.get(new Get(&quot;aggregate&quot;));
-  Map&lt;byte[], byte[]&gt; result = row.getColumns();
-  if (result == null) {
-    response.error(ProcedureResponse.Code.FAILURE, &quot;No sentiments processed.&quot;);
-    return;
-  }
-  Map&lt;String, Long&gt; resp = Maps.newHashMap();
-  for (Map.Entry&lt;byte[], byte[]&gt; entry : result.entrySet()) {
-    resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
-  }
-  response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              6/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;sentiments&quot;)</span></tt></h1></header>
-            
-            
-            <section><pre class="literal-block">
-&#64;Handle(&quot;sentiments&quot;)
-public void getSentiments(ProcedureRequest request, ProcedureResponder response)
-  throws Exception {
-  String sentiment = request.getArgument(&quot;sentiment&quot;);
-  if (sentiment == null) {
-    response.error(ProcedureResponse.Code.CLIENT_ERROR, &quot;No sentiment sent&quot;);
-    return;
-  }
-
-  long time = System.currentTimeMillis();
-  List&lt;SimpleTimeseriesTable.Entry&gt; entries =
-    textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
-                        time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
-                        time);
-
-  Map&lt;String, Long&gt; textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
-  for (SimpleTimeseriesTable.Entry entry : entries) {
-    textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
-  }
-  response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              7/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Build, Deploy and Run</h1></header>
-            
-            
-            <section><ul class="simple">
-<li>Build the App using <tt class="docutils literal">mvn clean package</tt></li>
-<li>If Reactor is running, stop or reset it; otherwise start Reactor</li>
-<li>Deploy the App by dragging and dropping</li>
-<li>Use the Continuuity Reactor Dashboard to start and query the Procedure</li>
-<li>Test the Procedure <tt class="docutils literal">sentiments</tt> by sending the parameters <tt class="docutils literal"><span class="pre">{&quot;sentiment&quot;:&quot;positive&quot;}</span></tt>
-(or <tt class="docutils literal">neutral</tt> or <tt class="docutils literal">negative</tt>)</li>
-<li>Test the Procedure <tt class="docutils literal">aggregates</tt> (no parameters) to see how many results have been
-obtained</li>
-<li>You may need to resend the sentences of earlier exercises if there is no data in the
-DataSets</li>
-</ul></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              8/10
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Exercise Summary</h1></header>
-            
-            
-            <section><p>You should now be able to:</p>
+            <section><p>For a MapReduce job that interacts with DataSets, the system creates a long-running transaction</p>
+<p>Similar to the transaction of a Flowlet or a Procedure, here are rules to follow:</p>
 <ul class="simple">
-<li>Add a Procedure to an application project</li>
-<li>Build, deploy and run the Procedure</li>
-<li>Retrieve results from DataSets using Procedures</li>
+<li>Reads can only see the writes of other transactions that were committed
+at the time the long-running transaction was started</li>
+<li>All writes of the long-running transaction are committed atomically,
+and only become visible to others after they are committed</li>
+<li>The long-running transaction can read its own writes</li>
 </ul></section>
             
           </div>
@@ -2112,25 +1840,35 @@ DataSets</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              9/10
+              3/7
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Completed</h1></header>
+            <header><h1>Key Difference of MapReduce in Transactions</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e08">Chapter Index</a></p></section>
+            <section><p>However, there is a key difference between Flowlets and Procedures: <br />
+<strong>long-running transactions do not participate in conflict detection</strong></p>
+<ul class="simple">
+<li>If another transaction overlaps with the long-running transaction and writes to the same
+row, it will not cause a conflict but simply overwrite it</li>
+<li>It is not efficient to fail the long-running job based on a single conflict</li>
+<li>Because of this, it is not recommended to write to the same DataSet from both real-time
+and MapReduce programs</li>
+<li>It is better to use different DataSets, or at least ensure that the real-time processing
+writes to a disjoint set of columns</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -2142,11 +1880,110 @@ DataSets</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e08_procedures_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              10/10
+              4/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>What Happens If A Job Fails?</h1></header>
+            
+            
+            <section><p><strong>Important:</strong></p>
+<p>MapReduce framework will reattempt a task (Mapper or Reducer) if it fails</p>
+<p>If the task is writing to a DataSet, the reattempt of the task will most likely
+repeat the writes that were already performed in the failed attempt</p>
+<p>Highly advisable that all writes performed by MapReduce programs be idempotent</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
+            
+            
+            <section><p>You should now understand:</p>
+<ul class="simple">
+<li>MapReduce, DataSets and Transactions</li>
+<li>Key difference of MapReduce in Transactions</li>
+<li>Failure of a MapReduce Job</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/7
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Completed</h1></header>
+            
+            
+            <section><p><a class="reference external" href="return.html#m24">Chapter Index</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m24_mapreduce_transactions.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/7
             </aside>
           </footer>
         </div>
@@ -2161,62 +1998,44 @@ DataSets</li>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Building An Application Using Procedures</a></th>
+        <th><a href="#slide1">MapReduce and Transactions</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Exercise Objectives</a></th>
+        <th><a href="#slide2">Module Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Transactions in MapReduce</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Application Specification</a></th>
+        <th><a href="#slide4">Key Difference of MapReduce in Transactions</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Add Procedure to <tt class="docutils literal">SentimentAnalysisApp</tt></a></th>
+        <th><a href="#slide5">What Happens If A Job Fails?</a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;aggregates&quot;)</span></tt></a></th>
+        <th><a href="#slide6">Module Summary</a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;sentiments&quot;)</span></tt></a></th>
+        <th><a href="#slide7">Module Completed</a></th>
         <td><a href="#slide7">7</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-8">
-        <th><a href="#slide8">Build, Deploy and Run</a></th>
-        <td><a href="#slide8">8</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-9">
-        <th><a href="#slide9">Exercise Summary</a></th>
-        <td><a href="#slide9">9</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-10">
-        <th><a href="#slide10">Exercise Completed</a></th>
-        <td><a href="#slide10">10</a></td>
       </tr>
       
       

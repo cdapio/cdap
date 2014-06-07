@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>MapReduce and Transactions</title>
+    <title>Building An Application Using MapReduce <br /> and Workflows</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1736,12 +1736,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>MapReduce and Transactions</h1></header>
+            <header><h1>Building An Application Using MapReduce <br /> and Workflows</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1768,29 +1768,30 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/7
+              1/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Module Objectives</h1></header>
+            <header><h1>Exercise Objectives</h1></header>
             
             
-            <section><p>In this module, you will look at:</p>
+            <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>MapReduce, DataSets and Transactions</li>
-<li>Key difference of MapReduce in Transactions</li>
-<li>Failure of a MapReduce Job</li>
+<li>Add a MapReduce job and Workflow to the example project</li>
+<li>Run the MapReduce job</li>
+<li>Run the Workflow</li>
+<li>View operations and results in Reactor Dashboard</li>
 </ul></section>
             
           </div>
@@ -1803,32 +1804,35 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/7
+              2/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Transactions in MapReduce</h1></header>
+            <header><h1>Exercise Steps</h1></header>
             
             
-            <section><p>For a MapReduce job that interacts with DataSets, the system creates a long-running transaction</p>
-<p>Similar to the transaction of a Flowlet or a Procedure, here are rules to follow:</p>
-<ul class="simple">
-<li>Reads can only see the writes of other transactions that were committed
-at the time the long-running transaction was started</li>
-<li>All writes of the long-running transaction are committed atomically,
-and only become visible to others after they are committed</li>
-<li>The long-running transaction can read its own writes</li>
+            <section><ul class="simple">
+<li>Add imports</li>
+<li>Modify <tt class="docutils literal">pom.xml</tt></li>
+<li>Modify <tt class="docutils literal">ApplicationSpecification</tt></li>
+<li>Modify the Procedure</li>
+<li>Define the MapReduce job</li>
+<li>Define <tt class="docutils literal">beforeSubmit</tt></li>
+<li>Define <tt class="docutils literal">Mapper</tt></li>
+<li>Define <tt class="docutils literal">Reducer</tt></li>
+<li>Define the Workflow</li>
+<li>Build, deploy, run and test</li>
 </ul></section>
             
           </div>
@@ -1841,34 +1845,507 @@ and only become visible to others after they are committed</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/7
+              3/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Key Difference of MapReduce in Transactions</h1></header>
+            <header><h1>Add Imports</h1></header>
             
             
-            <section><p>However, there is a key difference between Flowlets and Procedures: <br />
-<strong>long-running transactions do not participate in conflict detection</strong></p>
-<ul class="simple">
-<li>If another transaction overlaps with the long-running transaction and writes to the same
-row, it will not cause a conflict but simply overwrite it</li>
-<li>It is not efficient to fail the long-running job based on a single conflict</li>
-<li>Because of this, it is not recommended to write to the same DataSet from both real-time
-and MapReduce programs</li>
-<li>It is better to use different DataSets, or at least ensure that the real-time processing
-writes to a disjoint set of columns</li>
+            <section><p>Add these imports:</p>
+<pre class="literal-block">
+import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.schedule.Schedule;
+import com.continuuity.api.workflow.Workflow;
+import com.continuuity.api.workflow.WorkflowSpecification;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.MD5Hash;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Modify <tt class="docutils literal">pom.xml</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+&lt;dependency&gt;
+  &lt;groupId&gt;org.apache.hadoop&lt;/groupId&gt;
+  &lt;artifactId&gt;hadoop-common&lt;/artifactId&gt;
+  &lt;version&gt;${hadoop.version}&lt;/version&gt;
+  &lt;scope&gt;provided&lt;/scope&gt;
+  &lt;exclusions&gt;
+    &lt;exclusion&gt;
+      &lt;groupId&gt;io.netty&lt;/groupId&gt;
+      &lt;artifactId&gt;netty&lt;/artifactId&gt;
+    &lt;/exclusion&gt;
+    &lt;exclusion&gt;
+      &lt;groupId&gt;com.sun.jersey&lt;/groupId&gt;
+      &lt;artifactId&gt;jersey-server&lt;/artifactId&gt;
+    &lt;/exclusion&gt;
+    &lt;exclusion&gt;
+      &lt;groupId&gt;org.jboss.netty&lt;/groupId&gt;
+      &lt;artifactId&gt;netty&lt;/artifactId&gt;
+    &lt;/exclusion&gt;
+  &lt;/exclusions&gt;
+&lt;/dependency&gt;
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Modify <tt class="docutils literal">ApplicationSpecification</tt></h1></header>
+            
+            
+            <section><p>Replace <tt class="docutils literal">.noMapReduce()</tt> with:</p>
+<pre class="literal-block">
+.withMapReduce()
+  .add(new SentimentAnalysisMapReduce())
+</pre>
+<p>Replace <tt class="docutils literal">.noWorkflow()</tt> with:</p>
+<pre class="literal-block">
+.withWorkflows()
+  .add(new SentimentAnalysisWorkflow())
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Modify <tt class="docutils literal">SentimentAnalysisProcedure</tt></h1></header>
+            
+            
+            <section><p>Add a new handler:</p>
+<pre class="literal-block">
+&#64;Handle(&quot;reductions&quot;)
+    public void sentimentReductions(ProcedureRequest request, ProcedureResponder response)
+    throws Exception {
+      String sentiment = request.getArgument(&quot;sentiment&quot;);
+      if (sentiment == null) {
+        response.error(ProcedureResponse.Code.CLIENT_ERROR, &quot;No sentiment sent.&quot;);
+        return;
+      }
+      byte[] count = sentiments.get(Bytes.toBytes(sentiment), Bytes.toBytes(sentiment));
+      Map&lt;String, Long&gt; resp = Maps.newHashMap();
+      if (count == null) {
+        resp.put(sentiment, 0L);
+      } else {
+        resp.put(sentiment, Bytes.toLong(count));
+      }
+      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+    }
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Add MapReduce Job</h1></header>
+            
+            
+            <section><pre class="literal-block">
+public static class SentimentAnalysisMapReduce extends AbstractMapReduce {
+
+  // Annotation indicates the DataSets used in this MapReduce
+  &#64;UseDataSet(&quot;text-sentiments&quot;)
+  private SimpleTimeseriesTable textSentiments;
+  &#64;UseDataSet(&quot;sentiments&quot;)
+  private Table sentiments;
+
+  private static String sentiment_arg;
+
+  &#64;Override
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+    .setName(&quot;SentimentCountMapReduce&quot;)
+    .setDescription(&quot;Sentiment count MapReduce job&quot;)
+    .useInputDataSet(&quot;text-sentiments&quot;) // Specify the DataSet for Mapper to read.
+    .useOutputDataSet(&quot;sentiments&quot;) // Specify the DataSet for Reducer to write.
+    .setMapperMemoryMB(512)
+    .setReducerMemoryMB(1024)
+    .build();
+  }
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Define the <tt class="docutils literal">beforeSubmit</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+&#64;Override
+public void beforeSubmit(MapReduceContext context) throws Exception {
+  Job job = context.getHadoopJob();
+  sentiment_arg = context.getRuntimeArguments().get(&quot;sentiment&quot;);
+  if (sentiment_arg == null) {
+    sentiment_arg = &quot;positive&quot;;
+  }
+  LOG.info(&quot;Start of MapReduce job for sentiment \&quot;&quot; + sentiment_arg + &quot;\&quot;&quot;);
+
+  long endTime = System.currentTimeMillis();
+  long startTime = endTime - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
+  context.setInput(textSentiments, textSentiments.getInput(1, Bytes.toBytes(sentiment_arg),
+                                                           startTime,
+                                                           endTime));
+  job.setMapperClass(SentimentMapper.class);
+  job.setMapOutputKeyClass(Text.class); // Sets output key of the Reducer class
+  job.setMapOutputValueClass(IntWritable.class); // Sets output value of the Reducer class
+  job.setReducerClass(SentimentReducer.class);
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Define <tt class="docutils literal">Mapper</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+/**
+ * A Mapper that reads the sentiments from the text-sentiments
+ * DataSet and creates key value pairs, where the key is the
+ * sentiment and value is the occurrence of a sentence. The Mapper
+ * receives a key value pair (&lt;byte[], TimeseriesTable.Entry&gt;)
+ * from the input DataSet and outputs data in another key value
+ * pair (&lt;Text, IntWritable&gt;) to the Reducer.
+ */
+public static class SentimentMapper extends Mapper&lt;byte[], TimeseriesTable.Entry,
+                                                   Text, IntWritable&gt; {
+  // The output value
+  private static final IntWritable ONE = new IntWritable(1);
+
+  &#64;Override
+  public void map(byte[] key, TimeseriesTable.Entry entry, Context context)
+  throws IOException, InterruptedException {
+    // Send the key value pair to Reducer.
+    String sentiment = Bytes.toString(key);
+    context.write(new Text(sentiment), ONE);
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Define <tt class="docutils literal">Reducer</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+/**
+ * Aggregates the number of sentences per sentiment and store the results in a Table.
+ */
+public static class SentimentReducer extends Reducer&lt;Text, IntWritable, byte[], Put&gt; {
+  public void reduce(Text sentiment, Iterable&lt;IntWritable&gt; values, Context context)
+  throws IOException, InterruptedException {
+    long count = 0L;
+    // Get the count of sentences
+    for (IntWritable val : values) {
+      count += val.get();
+    }
+    // Store aggregated results in output DataSet.
+    // Each sentiment's aggregated result is stored using the sentiment as a key.
+    context.write(Bytes.toBytes(sentiment.toString()),
+                  new Put(Bytes.toBytes(sentiment_arg),
+                          Bytes.toBytes(sentiment_arg), count ));
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              11/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Define <tt class="docutils literal">onFinish</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+  &#64;Override
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    LOG.info(&quot;Action taken on MapReduce job for sentiment \&quot;&quot; + sentiment_arg + &quot;\&quot;: &quot; +
+             (succeeded ? &quot;&quot; : &quot;un&quot;) + &quot;successful completion&quot;);
+  }
+
+} // Closes class SentimentAnalysisMapReduce
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              12/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Define <tt class="docutils literal">SentimentAnalysisWorkflow</tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+/**
+ * Implements a simple Workflow with one Workflow action to run
+ * the SentimentAnalysisMapReduce MapReduce job with a schedule
+ * that runs every day at 11:00 A.M.
+ */
+public class SentimentAnalysisWorkflow implements Workflow {
+
+  &#64;Override
+  public WorkflowSpecification configure() {
+    return WorkflowSpecification.Builder.with()
+    .setName(&quot;SentimentAnalysisWorkflow&quot;)
+    .setDescription(&quot;SentimentAnalysisWorkflow description&quot;)
+    .onlyWith(new SentimentAnalysisMapReduce())
+    .addSchedule(new Schedule(&quot;DailySchedule&quot;, &quot;Run every day at 11:00 A.M.&quot;, &quot;0 11 * * *&quot;,
+                              Schedule.Action.START))
+    .build();
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              13/16
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Build, Deploy and Test</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Build using <tt class="docutils literal">mvn clean package</tt></li>
+<li>Deploy the jar to Reactor after stopping any existing Flows and Procedures</li>
+<li>Run the MapReduce job, using the Dashboard to set the sentiment
+it reduces as a Runtime Argument</li>
+<li>Check the results using the Procedure's <cite>reductions</cite> handler, passing
+in the same sentiment you are checking as a parameter</li>
+<li>Run the Workflow manually</li>
 </ul></section>
             
           </div>
@@ -1881,63 +2358,30 @@ writes to a disjoint set of columns</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              4/7
+              14/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>What Happens If A Job Fails?</h1></header>
+            <header><h1>Exercise Summary</h1></header>
             
             
-            <section><p><strong>Important:</strong></p>
-<p>MapReduce framework will reattempt a task (Mapper or Reducer) if it fails</p>
-<p>If the task is writing to a DataSet, the reattempt of the task will most likely
-repeat the writes that were already performed in the failed attempt</p>
-<p>Highly advisable that all writes performed by MapReduce programs be idempotent</p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/7
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Module Summary</h1></header>
-            
-            
-            <section><p>You should now understand:</p>
+            <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>MapReduce, DataSets and Transactions</li>
-<li>Key difference of MapReduce in Transactions</li>
-<li>Failure of a MapReduce Job</li>
+<li>Add MapReduce jobs and Workflows to a project</li>
+<li>Run MapReduce jobs</li>
+<li>Run Workflows</li>
+<li>View operations and results in the Reactor Dashboard</li>
 </ul></section>
             
           </div>
@@ -1950,25 +2394,25 @@ repeat the writes that were already performed in the failed attempt</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              6/7
+              15/16
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Module Completed</h1></header>
+            <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#m22">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#e09">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1980,11 +2424,11 @@ repeat the writes that were already performed in the failed attempt</p>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_transactions.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_mapreduce_workflow_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              7/7
+              16/16
             </aside>
           </footer>
         </div>
@@ -1999,44 +2443,98 @@ repeat the writes that were already performed in the failed attempt</p>
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">MapReduce and Transactions</a></th>
+        <th><a href="#slide1">Building An Application Using MapReduce <br /> and Workflows</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
       
       <tr id="toc-row-2">
-        <th><a href="#slide2">Module Objectives</a></th>
+        <th><a href="#slide2">Exercise Objectives</a></th>
         <td><a href="#slide2">2</a></td>
       </tr>
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Transactions in MapReduce</a></th>
+        <th><a href="#slide3">Exercise Steps</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Key Difference of MapReduce in Transactions</a></th>
+        <th><a href="#slide4">Add Imports</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">What Happens If A Job Fails?</a></th>
+        <th><a href="#slide5">Modify <tt class="docutils literal">pom.xml</tt></a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Module Summary</a></th>
+        <th><a href="#slide6">Modify <tt class="docutils literal">ApplicationSpecification</tt></a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Module Completed</a></th>
+        <th><a href="#slide7">Modify <tt class="docutils literal">SentimentAnalysisProcedure</tt></a></th>
         <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Add MapReduce Job</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Define the <tt class="docutils literal">beforeSubmit</tt></a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Define <tt class="docutils literal">Mapper</tt></a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Define <tt class="docutils literal">Reducer</tt></a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-12">
+        <th><a href="#slide12">Define <tt class="docutils literal">onFinish</tt></a></th>
+        <td><a href="#slide12">12</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-13">
+        <th><a href="#slide13">Define <tt class="docutils literal">SentimentAnalysisWorkflow</tt></a></th>
+        <td><a href="#slide13">13</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-14">
+        <th><a href="#slide14">Build, Deploy and Test</a></th>
+        <td><a href="#slide14">14</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-15">
+        <th><a href="#slide15">Exercise Summary</a></th>
+        <td><a href="#slide15">15</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-16">
+        <th><a href="#slide16">Exercise Completed</a></th>
+        <td><a href="#slide16">16</a></td>
       </tr>
       
       

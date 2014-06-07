@@ -2,14 +2,24 @@
 Flows and Flowlets
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
 .. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
+.. |br| raw:: html
+
+   <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -126,8 +136,7 @@ Flow Example in Dashboard
 =========================
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_24_app_crawler_detail_dag.png
-
-..   :width: 600px
+   :width: 100%
    
 ----
 

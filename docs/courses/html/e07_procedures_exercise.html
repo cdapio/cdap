@@ -25,7 +25,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Building An Application Using External Processes</title>
+    <title>Building An Application Using Procedures</title>
     <!-- Fonts -->
      <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
     <!-- Styles -->
@@ -1736,12 +1736,12 @@ function main() {
     </div>
     <div class="slides" id="display-slides-container" style="display: none">
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Building An Application Using External Processes</h1></header>
+            <header><h1>Building An Application Using Procedures</h1></header>
             
             
             <section><!-- Slide Presentation HTML Generation -->
@@ -1768,17 +1768,17 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              1/17
+              1/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -1788,9 +1788,11 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Add external processing to the example Reactor Application</li>
-<li>Modify the build system to include the external files</li>
-<li>Build, deploy and run the modifications</li>
+<li>Add a Procedure to the example application project</li>
+<li>The Procedure returns either the aggregates timeseries sentiment data or
+specific sentences for a given sentiment</li>
+<li>Build, deploy and run the Procedure</li>
+<li>Retrieve results from the DataSets using the Procedure</li>
 </ul></section>
             
           </div>
@@ -1803,39 +1805,30 @@ function main() {
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              2/17
+              2/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Adding External Processing to An Application</h1></header>
+            <header><h1>Exercise Steps</h1></header>
             
             
             <section><ul class="simple">
-<li>To complete the Sentiment Analysis Application, add external processing using a natural
-language toolkit (NLTK)</li>
-<li>The NLTK is included as part of the Continuuity Reactor SDK examples</li>
-</ul>
-<p>Copy from the Sentiment Analysis example in the Continuuity Reactor SDK these directories:</p>
-<pre class="literal-block">
-/examples/SentimentAnalysis/lib
-/examples/SentimentAnalysis/sentiment
-</pre>
-<ul class="simple">
-<li>Place them in the top level of your <tt class="docutils literal">SentimentAnalysis</tt>'s directory</li>
-<li>The <tt class="docutils literal">lib</tt> directory contains two archives with natural language toolkit
-and a supporting data serialization implementation, both written in Python</li>
-<li>The <tt class="docutils literal">sentiment</tt> directory contains data for the natural language toolkit</li>
+<li>Add imports</li>
+<li>Modify the <tt class="docutils literal">ApplicationSpecification</tt></li>
+<li>Add the Procedure</li>
+<li>Build and deploy</li>
+<li>Run the application and use the Dashboard to retrieve queries</li>
 </ul></section>
             
           </div>
@@ -1848,471 +1841,40 @@ and a supporting data serialization implementation, both written in Python</li>
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              3/17
+              3/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>The <tt class="docutils literal">Unzipper</tt></h1></header>
+            <header><h1>Application Specification</h1></header>
             
             
-            <section><p>Copy from the Sentiment Analysis example in the Continuuity Reactor SDK:</p>
+            <section><p>Change the ApplicationSpecification, replacing <tt class="docutils literal">.noProcedure()</tt> with:</p>
 <pre class="literal-block">
-/examples/SentimentAnalysis/src/main/java/.../Unzipper.java
+.withProcedures()
+  .add(new SentimentAnalysisProcedure())
 </pre>
-<p>This file is used to unzip the archives of the <tt class="docutils literal">lib</tt> directory</p>
-<ul class="simple">
-<li>Place in the matching location in your project</li>
-<li>Update the package statement in the files to reflect its new location</li>
-</ul>
-<pre class="literal-block">
-package com.example;
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              4/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Update the <tt class="docutils literal">pom.xml</tt> (1 of 2)</h1></header>
-            
-            
-            <section><p>Update the <tt class="docutils literal">pom.xml</tt> so these files get built and included in the Jar</p>
-<p>In the <tt class="docutils literal">pom.xml</tt> add to the <tt class="docutils literal">properties</tt> element a property <tt class="docutils literal">archive</tt>:</p>
-<pre><span class="nt">&lt;archive&gt;</span>sentiment-process.zip<span class="nt">&lt;/archive&gt;</span>
-</pre>
-<p>To the <tt class="docutils literal">dependencies</tt> element, add an additional dependency:</p>
-<pre><span class="nt">&lt;dependency&gt;</span>
-    <span class="nt">&lt;groupId&gt;</span>org.apache.ant<span class="nt">&lt;/groupId&gt;</span>
-    <span class="nt">&lt;artifactId&gt;</span>ant-compress<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>1.2<span class="nt">&lt;/version&gt;</span>
-<span class="nt">&lt;/dependency&gt;</span>
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              5/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Update the <tt class="docutils literal">pom.xml</tt> (2 of 2)</h1></header>
-            
-            
-            <section><p>To the <tt class="docutils literal">build</tt> element, add two plugins to the list of plugins:</p>
-<pre><span class="nt">&lt;plugin&gt;</span>
-    <span class="nt">&lt;artifactId&gt;</span>maven-resources-plugin<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>2.6<span class="nt">&lt;/version&gt;</span>
-    <span class="nt">&lt;executions&gt;</span>
-        ...
-    <span class="nt">&lt;/executions&gt;</span>
-<span class="nt">&lt;/plugin&gt;</span>
-
-<span class="nt">&lt;plugin&gt;</span>
-    <span class="nt">&lt;groupId&gt;</span>org.codehaus.mojo<span class="nt">&lt;/groupId&gt;</span>
-    <span class="nt">&lt;artifactId&gt;</span>truezip-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>1.1<span class="nt">&lt;/version&gt;</span>
-    <span class="nt">&lt;executions&gt;</span>
-        ...
-    <span class="nt">&lt;/executions&gt;</span>
-<span class="nt">&lt;/plugin&gt;</span>
-</pre>
-<p>Copy the complete <tt class="docutils literal">plugins</tt> from the SDK's <tt class="docutils literal">SentimentAnalysis pom.xml</tt></p></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              6/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Using the NLTK</h1></header>
-            
-            
-            <section><p>To use the NLTK, modify the <tt class="docutils literal">Analyze</tt> Flowlet to pass sentences through the NLTK for
-suffixing with a sentiment</p>
 <p>Add these imports:</p>
 <pre class="literal-block">
-import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
-import java.io.File;
-import com.continuuity.api.flow.flowlet.FlowletContext;
-import java.io.InputStream;
-import com.google.common.base.Throwables;
-import org.apache.commons.io.FileUtils;
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              7/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Revised <tt class="docutils literal">Analyze</tt> Flowlet</h1></header>
-            
-            
-            <section><pre class="literal-block">
-public static class Analyze extends ExternalProgramFlowlet&lt;String, String&gt; {
-  private static final Logger LOG = LoggerFactory.getLogger(Analyze.class);
-
-  &#64;Output(&quot;sentiments&quot;)
-  private OutputEmitter&lt;String&gt; sentiment;
-
-  private File workDir;
-
-  &#64;Override
-  protected ExternalProgram init(FlowletContext context) {...}
-  &#64;Override
-  protected String encode(String input) {...}
-  &#64;Override
-  protected String processResult(String result) {...}
-  &#64;Override
-  protected OutputEmitter&lt;String&gt; getOutputEmitter() {...}
-  &#64;Override
-  protected void finish() {...}
-
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              8/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">init</tt> method</h1></header>
-            
-            
-            <section><pre class="literal-block">
-&#64;Override
-protected ExternalProgram init(FlowletContext context) {
-  try {
-    InputStream in = this.getClass().getClassLoader()
-                         .getResourceAsStream(&quot;sentiment-process.zip&quot;);
-    if (in != null) {
-      workDir = new File(&quot;work&quot;);
-      Unzipper.unzip(in, workDir);
-      File bash = new File(&quot;/bin/bash&quot;);
-      if (!bash.exists()) {
-        bash = new File(&quot;/usr/bin/bash&quot;);
-      }
-      if (bash.exists()) {
-        File program = new File(workDir, &quot;sentiment/score-sentence&quot;);
-        return new ExternalProgram(bash, program.getAbsolutePath());
-      }
-    }
-    throw new RuntimeException(&quot;Unable to start process&quot;);
-  } catch (IOException e) {
-    throw Throwables.propagate(e);
-  }
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              9/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">encode</tt> method</h1></header>
-            
-            
-            <section><pre class="literal-block">
-/**
- * This method will be called for each input event to transform the given input
- * into string before sending to external program for processing.
- *
- * &#64;param input The input event.
- * &#64;return A UTF-8 encoded string of the input, or null if to skip this input.
- */
-&#64;Override
-protected String encode(String input) {
-  return input;
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              10/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">processResult</tt> method</h1></header>
-            
-            
-            <section><pre class="literal-block">
-/**
- * This method will be called when the external program returns the result. Child
- * class can do its own processing in this method or could return an object of type
- * for emitting to next Flowlet with the
- * {&#64;link com.continuuity.api.flow.flowlet.OutputEmitter} returned by
- * {&#64;link #getOutputEmitter()}.
- *
- * &#64;param result The result from the external program.
- * &#64;return The output to emit or {&#64;code null} if nothing to emit.
- */
-&#64;Override
-protected String processResult(String result) {
-  return result;
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              11/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">getOutputEmitter</tt> method</h1></header>
-            
-            
-            <section><pre class="literal-block">
-/**
- * Child class can override this method to return an OutputEmitter for writing data
- * to the next Flowlet.
- *
- */
-&#64;Override
-protected OutputEmitter&lt;String&gt; getOutputEmitter() {
-  return sentiment;
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              12/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1><tt class="docutils literal">finish</tt> method</h1></header>
-            
-            
-            <section><pre class="literal-block">
-&#64;Override
-protected void finish() {
-  try {
-    LOG.info(&quot;Deleting work dir {}&quot;, workDir);
-    FileUtils.deleteDirectory(workDir);
-  } catch (IOException e) {
-    LOG.error(&quot;Could not delete work dir {}&quot;, workDir);
-    throw Throwables.propagate(e);
-  }
-}
-</pre></section>
-            
-          </div>
-          <div class="presenter_notes">
-            <header><h1>Presenter Notes</h1></header>
-            <section>
-            
-            </section>
-          </div>
-          <footer>
-            
-            <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
-            </aside>
-            
-            <aside class="page_number">
-              13/17
-            </aside>
-          </footer>
-        </div>
-      </div>
-      
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
-      <div class="slide-wrapper">
-        <div class="slide">
-          <div class="inner">
-            
-            <header><h1>Build and Deploy</h1></header>
-            
-            
-            <section><p>Build the updated project using:</p>
-<pre><span class="go">mvn clean package</span>
+import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.procedure.ProcedureSpecification;
+import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import com.continuuity.api.ResourceSpecification;
 </pre>
-<p>Reset the Continuuity Reactor by starting it up (if it is not already running) and
-using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutils literal">Overview</tt> tab of the Dashboard</p>
-<p>Drag and drop the application jar on the Dashboard</p></section>
+<p><tt class="docutils literal">ResourceSpecification</tt> sets the minimum amount of memory (512MB) and cores (1)
+used by an instance</p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2324,36 +1886,46 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              14/17
+              4/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Run Modified Application</h1></header>
+            <header><h1>Add Procedure to <tt class="docutils literal">SentimentAnalysisApp</tt></h1></header>
             
             
-            <section><p>Send sentences (without sentiments) using <tt class="docutils literal">curl</tt> (each a single line) and watch them run through the Flow system:</p>
-<pre><span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
-<span class="go">  &quot;Continuuity Reactor is awesome&quot;</span>
-<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+            <section><pre class="literal-block">
+public static class SentimentAnalysisProcedure extends AbstractProcedure {
 
-<span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
-<span class="go">  &quot;I have hard time building apps on Hadoop&quot;</span>
-<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+  &#64;UseDataSet(&quot;sentiments&quot;)
+  private Table sentiments;
 
-<span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
-<span class="go">  &quot;Hadoop is a Big Data platform&quot;</span>
-<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+  &#64;UseDataSet(&quot;text-sentiments&quot;)
+  private SimpleTimeseriesTable textSentiments;
+
+  &#64;Handle(&quot;aggregates&quot;)
+
+  &#64;Handle(&quot;sentiments&quot;)
+
+  &#64;Override
+  public ProcedureSpecification configure() {
+    return ProcedureSpecification.Builder.with()
+      .setName(&quot;sentiment-query&quot;)
+      .setDescription(&quot;Sentiments Procedure&quot;)
+      .withResources(ResourceSpecification.BASIC)
+      .build();
+  }
+}
 </pre></section>
             
           </div>
@@ -2366,17 +1938,156 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              15/17
+              5/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;aggregates&quot;)</span></tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+&#64;Handle(&quot;aggregates&quot;)
+public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response)
+  throws Exception {
+  Row row = sentiments.get(new Get(&quot;aggregate&quot;));
+  Map&lt;byte[], byte[]&gt; result = row.getColumns();
+  if (result == null) {
+    response.error(ProcedureResponse.Code.FAILURE, &quot;No sentiments processed.&quot;);
+    return;
+  }
+  Map&lt;String, Long&gt; resp = Maps.newHashMap();
+  for (Map.Entry&lt;byte[], byte[]&gt; entry : result.entrySet()) {
+    resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
+  }
+  response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;sentiments&quot;)</span></tt></h1></header>
+            
+            
+            <section><pre class="literal-block">
+&#64;Handle(&quot;sentiments&quot;)
+public void getSentiments(ProcedureRequest request, ProcedureResponder response)
+  throws Exception {
+  String sentiment = request.getArgument(&quot;sentiment&quot;);
+  if (sentiment == null) {
+    response.error(ProcedureResponse.Code.CLIENT_ERROR, &quot;No sentiment sent.&quot;);
+    return;
+  }
+
+  long time = System.currentTimeMillis();
+  List&lt;SimpleTimeseriesTable.Entry&gt; entries =
+    textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
+                        time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
+                        time);
+
+  Map&lt;String, Long&gt; textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
+  for (SimpleTimeseriesTable.Entry entry : entries) {
+    textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
+  }
+  response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Build, Deploy and Run</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Build the App using <tt class="docutils literal">mvn clean package</tt></li>
+<li>If Reactor is running, stop or reset it; otherwise start Reactor</li>
+<li>Deploy the App by dragging and dropping</li>
+<li>Use the Continuuity Reactor Dashboard to start and query the Procedure</li>
+<li>Test the Procedure <tt class="docutils literal">sentiments</tt> by sending the parameters <tt class="docutils literal"><span class="pre">{&quot;sentiment&quot;:&quot;positive&quot;}</span></tt>
+(or <tt class="docutils literal">neutral</tt> or <tt class="docutils literal">negative</tt>)</li>
+<li>Test the Procedure <tt class="docutils literal">aggregates</tt> (no parameters) to see how many results have been
+obtained</li>
+<li>You may need to resend the sentences of earlier exercises if there is no data in the
+DataSets</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2386,9 +2097,9 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Add external processing to a Reactor Application</li>
-<li>Modify the build system to include external files</li>
-<li>Build, deploy and run the modifications</li>
+<li>Add a Procedure to an application project</li>
+<li>Build, deploy and run the Procedure</li>
+<li>Retrieve results from DataSets using Procedures</li>
 </ul></section>
             
           </div>
@@ -2401,17 +2112,17 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              16/17
+              9/10
             </aside>
           </footer>
         </div>
       </div>
       
-      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst -->
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst -->
       <div class="slide-wrapper">
         <div class="slide">
           <div class="inner">
@@ -2419,7 +2130,7 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
             <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e09">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#e07">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -2431,11 +2142,11 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
           <footer>
             
             <aside class="source">
-              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e09_external_processing_exercise.rst_temp.rst</a>
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e07_procedures_exercise.rst_temp.rst</a>
             </aside>
             
             <aside class="page_number">
-              17/17
+              10/10
             </aside>
           </footer>
         </div>
@@ -2450,7 +2161,7 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
       <caption>Table of Contents</caption>
       
       <tr id="toc-row-1">
-        <th><a href="#slide1">Building An Application Using External Processes</a></th>
+        <th><a href="#slide1">Building An Application Using Procedures</a></th>
         <td><a href="#slide1">1</a></td>
       </tr>
       
@@ -2462,92 +2173,50 @@ using the <tt class="docutils literal">Reset</tt> link on the <tt class="docutil
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Adding External Processing to An Application</a></th>
+        <th><a href="#slide3">Exercise Steps</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">The <tt class="docutils literal">Unzipper</tt></a></th>
+        <th><a href="#slide4">Application Specification</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Update the <tt class="docutils literal">pom.xml</tt> (1 of 2)</a></th>
+        <th><a href="#slide5">Add Procedure to <tt class="docutils literal">SentimentAnalysisApp</tt></a></th>
         <td><a href="#slide5">5</a></td>
       </tr>
       
       
       <tr id="toc-row-6">
-        <th><a href="#slide6">Update the <tt class="docutils literal">pom.xml</tt> (2 of 2)</a></th>
+        <th><a href="#slide6">Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;aggregates&quot;)</span></tt></a></th>
         <td><a href="#slide6">6</a></td>
       </tr>
       
       
       <tr id="toc-row-7">
-        <th><a href="#slide7">Using the NLTK</a></th>
+        <th><a href="#slide7">Implement <tt class="docutils literal"><span class="pre">&#64;Handle(&quot;sentiments&quot;)</span></tt></a></th>
         <td><a href="#slide7">7</a></td>
       </tr>
       
       
       <tr id="toc-row-8">
-        <th><a href="#slide8">Revised <tt class="docutils literal">Analyze</tt> Flowlet</a></th>
+        <th><a href="#slide8">Build, Deploy and Run</a></th>
         <td><a href="#slide8">8</a></td>
       </tr>
       
       
       <tr id="toc-row-9">
-        <th><a href="#slide9"><tt class="docutils literal">init</tt> method</a></th>
+        <th><a href="#slide9">Exercise Summary</a></th>
         <td><a href="#slide9">9</a></td>
       </tr>
       
       
       <tr id="toc-row-10">
-        <th><a href="#slide10"><tt class="docutils literal">encode</tt> method</a></th>
+        <th><a href="#slide10">Exercise Completed</a></th>
         <td><a href="#slide10">10</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-11">
-        <th><a href="#slide11"><tt class="docutils literal">processResult</tt> method</a></th>
-        <td><a href="#slide11">11</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-12">
-        <th><a href="#slide12"><tt class="docutils literal">getOutputEmitter</tt> method</a></th>
-        <td><a href="#slide12">12</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-13">
-        <th><a href="#slide13"><tt class="docutils literal">finish</tt> method</a></th>
-        <td><a href="#slide13">13</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-14">
-        <th><a href="#slide14">Build and Deploy</a></th>
-        <td><a href="#slide14">14</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-15">
-        <th><a href="#slide15">Run Modified Application</a></th>
-        <td><a href="#slide15">15</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-16">
-        <th><a href="#slide16">Exercise Summary</a></th>
-        <td><a href="#slide16">16</a></td>
-      </tr>
-      
-      
-      <tr id="toc-row-17">
-        <th><a href="#slide17">Exercise Completed</a></th>
-        <td><a href="#slide17">17</a></td>
       </tr>
       
       

@@ -5,6 +5,7 @@ Building An Application Using Procedures
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
+.. rst2pdf: CutStart
 .. Slide Presentation HTML Generation
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
@@ -14,10 +15,12 @@ Building An Application Using Procedures
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
 
-.. |br2| raw:: html
-
-   <br /><br />
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -129,7 +132,7 @@ Implement ``@Handle("sentiments")``
 	      throws Exception {
 	      String sentiment = request.getArgument("sentiment");
 	      if (sentiment == null) {
-	        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
+	        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent.");
 	        return;
 	      }
 	
@@ -178,5 +181,5 @@ You should now be able to:
 Exercise Completed
 ==================
 
-`Chapter Index <return.html#e08>`__
+`Chapter Index <return.html#e07>`__
 

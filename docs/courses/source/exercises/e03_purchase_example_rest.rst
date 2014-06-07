@@ -5,6 +5,7 @@ Continuuity Reactor Purchase Example Using REST
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
+.. rst2pdf: CutStart
 .. Slide Presentation HTML Generation
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
@@ -14,10 +15,12 @@ Continuuity Reactor Purchase Example Using REST
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
 
-.. |br2| raw:: html
-
-   <br /><br />
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 

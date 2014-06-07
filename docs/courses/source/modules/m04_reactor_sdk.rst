@@ -2,10 +2,10 @@
 Continuuity Reactor SDK
 =======================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
@@ -14,6 +14,12 @@ Continuuity Reactor SDK
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -97,7 +103,7 @@ Continuuity Reactor Dashboard
   connecting to ``http://localhost:9999``
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
-   :width: 600px
+   :width: 80%
 
 ----
 
