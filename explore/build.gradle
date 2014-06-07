@@ -20,19 +20,27 @@ dependencies {
     compile (libraries.hive_beeline) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
     compile (libraries.hive_ant) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
     compile libraries.continuuity_hive_exec
     compile (libraries.hive_metastore) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
         exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
 
     compile libraries.thrift
