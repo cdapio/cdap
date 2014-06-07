@@ -4,6 +4,7 @@
 BUILD_DIR      = build
 HTML_DIR       = html
 PDF_DIR        = pdf
+EXAMPLE_DIR    = example
 SOURCE_DIR     = source
 STAGE_SERVER   = stg-web101.sw.joyent.continuuity.net
 SPHINXBUILD    = sphinx-build
@@ -25,9 +26,10 @@ $(error The '$(RST2PDF)' command was not found. Make sure you have $(RST2PDF) in
 endif
 
 # Internal variables
-BUILD_HTML_DIR = $(BUILD_DIR)/$(HTML_DIR)
-BUILD_PDF_DIR = $(BUILD_DIR)/$(PDF_DIR)
-USER          := $(shell whoami)
+BUILD_HTML_DIR    = $(BUILD_DIR)/$(HTML_DIR)
+BUILD_PDF_DIR     = $(BUILD_DIR)/$(PDF_DIR)
+BUILD_EXAMPLE_DIR = $(BUILD_DIR)/$(EXAMPLE_DIR)
+USER             := $(shell whoami)
 
 
 .PHONY: help clean dist html pdf zip
@@ -38,7 +40,7 @@ help:
 	@echo "  dist       to make HTML files, copy index file and package them into a zip"
 	@echo "  html       to make HTML files (not completed, merely stages in build dir)"
 	@echo "  pdf        to make PDF files (not completed, merely stages in build dir)"
-	@echo "  upload     upload zip to $(USER)@$(STAGE_SERVER)"
+	@echo "  upload     upload zips to $(USER)@$(STAGE_SERVER)"
 	@echo "  zip        to zip files into an archive"
 
 _dist:
@@ -59,6 +61,13 @@ _upload:
 	rsync -vz $(BUILD_HTML_DIR).zip $(USER)@$(STAGE_SERVER):$(HTML_DIR).zip
 	rsync -vz $(BUILD_PDF_DIR).zip $(USER)@$(STAGE_SERVER):$(PDF_DIR).zip
 
+_example: _makedirs
+	cp -R $(SOURCE_DIR)/$(EXAMPLE_DIR) $(BUILD_DIR)
+
+_zip_example:
+	cd $(BUILD_DIR) && \
+	zip -r example example/*
+
 _zip_html:
 	cd $(BUILD_DIR) && \
 	zip -j html html/*
@@ -70,7 +79,7 @@ _zip_pdf:
 clean:
 	rm -rf $(BUILD_DIR)/*
 	
-dist: _html _dist _pdf zip
+dist: _html _pdf _example _dist zip
 	@echo "Dist finished."
 	@echo
 
@@ -79,14 +88,19 @@ html: _html
 	@echo "Build finished. The HTML pages are in $(BUILD_HTML_DIR)."
 	@echo
 
+example: _example
+	@echo
+	@echo "Build finished. The example files are in $(BUILD_EXAMPLE_DIR)."
+	@echo
+
 pdf: _pdf
 	@echo
 	@echo "Build finished. The PDF files are in $(BUILD_PDF_DIR)."
 	@echo
 
-zip: _zip_html _zip_pdf
+zip: _zip_html _zip_pdf _zip_example
 	@echo
-	@echo "The pages are archived in $(BUILD_HTML_DIR).zip and $(BUILD_PDF_DIR).zip "
+	@echo "The files are archived in $(BUILD_DIR)."
 	@echo
 
 upload: _upload
