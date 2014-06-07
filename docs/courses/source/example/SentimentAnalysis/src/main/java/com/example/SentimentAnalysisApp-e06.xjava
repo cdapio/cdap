@@ -89,13 +89,13 @@ public class SentimentAnalysisApp implements Application {
       .setName("analysis")
       .setDescription("Analysis of text to generate sentiments")
       .withFlowlets()
-      .add(new Normalization())
-      .add(new Analyze())
-      .add(new Update())
+        .add(new Normalization())
+        .add(new Analyze())
+        .add(new Update())
       .connect()
-      .fromStream("sentence").to(new Normalization())
-      .from(new Normalization()).to(new Analyze())
-      .from(new Analyze()).to(new Update())
+        .fromStream("sentence").to(new Normalization())
+        .from(new Normalization()).to(new Analyze())
+        .from(new Analyze()).to(new Update())
       .build();
     }
   }

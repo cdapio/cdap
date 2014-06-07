@@ -50,22 +50,6 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import com.continuuity.api.mapreduce.AbstractMapReduce;
-import com.continuuity.api.mapreduce.MapReduceContext;
-import com.continuuity.api.mapreduce.MapReduceSpecification;
-
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MD5Hash;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-
-import com.continuuity.api.schedule.Schedule;
-import com.continuuity.api.workflow.Workflow;
-import com.continuuity.api.workflow.WorkflowSpecification;
-
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.google.common.collect.Maps;
@@ -79,6 +63,23 @@ import com.continuuity.api.flow.flowlet.FlowletContext;
 import java.io.InputStream;
 import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
+
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.MD5Hash;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import com.continuuity.api.data.dataset.table.Put;
+
+import com.continuuity.api.schedule.Schedule;
+import com.continuuity.api.workflow.Workflow;
+import com.continuuity.api.workflow.WorkflowSpecification;
 
 /**
  * Application that analyzes sentiment of sentences as positive, negative or neutral.
@@ -105,15 +106,12 @@ public class SentimentAnalysisApp implements Application {
       .add(new SimpleTimeseriesTable("text-sentiments"))
     .withFlows()
       .add(new SentimentAnalysisFlow())
-//    .noProcedure()
     .withProcedures()
       .add(new SentimentAnalysisProcedure())
-    .noMapReduce()
-//    .withMapReduce()
-//    .add(new SentimentAnalysisMapReduce())
-    .noWorkflow()
-//    .withWorkflows()
-//        .add(new SentimentAnalysisWorkflow())
+    .withMapReduce()
+      .add(new SentimentAnalysisMapReduce())
+    .withWorkflows()
+      .add(new SentimentAnalysisWorkflow())
     .build();
   }
   
@@ -125,13 +123,13 @@ public class SentimentAnalysisApp implements Application {
       .setName("analysis")
       .setDescription("Analysis of text to generate sentiments")
       .withFlowlets()
-      .add(new Normalization())
-      .add(new Analyze())
-      .add(new Update())
+        .add(new Normalization())
+        .add(new Analyze())
+        .add(new Update())
       .connect()
-      .fromStream("sentence").to(new Normalization())
-      .from(new Normalization()).to(new Analyze())
-      .from(new Analyze()).to(new Update())
+        .fromStream("sentence").to(new Normalization())
+        .from(new Normalization()).to(new Analyze())
+        .from(new Analyze()).to(new Update())
       .build();
     }
   }
@@ -288,7 +286,81 @@ public class SentimentAnalysisApp implements Application {
       }
     }
   }
-  
+
+  public static class SentimentAnalysisProcedure extends AbstractProcedure {
+    
+    @UseDataSet("sentiments")
+    private Table sentiments;
+    
+    @UseDataSet("text-sentiments")
+    private SimpleTimeseriesTable textSentiments;
+    
+    @Handle("aggregates")
+    public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response)
+    throws Exception {
+      Row row = sentiments.get(new Get("aggregate"));
+      Map<byte[], byte[]> result = row.getColumns();
+      if (result == null) {
+        response.error(ProcedureResponse.Code.FAILURE, "No sentiments processed.");
+        return;
+      }
+      Map<String, Long> resp = Maps.newHashMap();
+      for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
+        resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
+      }
+      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+    }
+    
+    @Handle("sentiments")
+    public void getSentiments(ProcedureRequest request, ProcedureResponder response)
+    throws Exception {
+      String sentiment = request.getArgument("sentiment");
+      if (sentiment == null) {
+        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent.");
+        return;
+      }
+      
+      long time = System.currentTimeMillis();
+      List<SimpleTimeseriesTable.Entry> entries =
+      textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
+                          time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
+                          time);
+      
+      Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
+      for (SimpleTimeseriesTable.Entry entry : entries) {
+        textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
+      }
+      response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
+    }
+
+    @Handle("reductions")
+    public void sentimentReductions(ProcedureRequest request, ProcedureResponder response)
+    throws Exception {
+      String sentiment = request.getArgument("sentiment");
+      if (sentiment == null) {
+        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent.");
+        return;
+      }
+      byte[] count = sentiments.get(Bytes.toBytes(sentiment), Bytes.toBytes(sentiment));
+      Map<String, Long> resp = Maps.newHashMap();
+      if (count == null) {
+        resp.put(sentiment, 0L);
+      } else {
+        resp.put(sentiment, Bytes.toLong(count));
+      }
+      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+    }
+    
+    @Override
+    public ProcedureSpecification configure() {
+      return ProcedureSpecification.Builder.with()
+      .setName("sentiment-query")
+      .setDescription("Sentiments Procedure")
+      .withResources(ResourceSpecification.BASIC)
+      .build();
+    }
+  }
+
   public static class SentimentAnalysisMapReduce extends AbstractMapReduce {
     
     // Annotation indicates the DataSets used in this MapReduce
@@ -297,12 +369,14 @@ public class SentimentAnalysisApp implements Application {
     
     @UseDataSet("sentiments")
     private Table sentiments;
-    
+
+    private static String sentiment_arg;
+
     @Override
     public MapReduceSpecification configure() {
       return MapReduceSpecification.Builder.with()
-      .setName("SentimentCountMapReduce")
-      .setDescription("Sentiment count MapReduce job")
+      .setName("SentimentAnalysisMapReduce")
+      .setDescription("MapReduce job that audits the Sentiment Analysis Flow")
       // Specify the DataSet for Mapper to read.
       .useInputDataSet("text-sentiments")
       // Specify the DataSet for Reducer to write.
@@ -316,9 +390,19 @@ public class SentimentAnalysisApp implements Application {
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       
+      sentiment_arg = context.getRuntimeArguments().get("sentiment");
+      if (sentiment_arg == null) {
+        sentiment_arg = "positive";
+      }
+      LOG.info("Start of MapReduce job for sentiment \"" + sentiment_arg + "\"");
+
       // A Mapper processes sentiments from the stored sentences
-      context.setInput(textSentiments, textSentiments.getSplits());
-      
+      long endTime = System.currentTimeMillis();
+      long startTime = endTime - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
+      context.setInput(textSentiments, textSentiments.getInput(1, Bytes.toBytes(sentiment_arg),
+                                                               startTime,
+                                                               endTime));
+
       job.setMapperClass(SentimentMapper.class);
       
       // Set the output key of the Reducer class
@@ -353,25 +437,30 @@ public class SentimentAnalysisApp implements Application {
     }
     
     /**
-     * Aggregate the number of sentences per sentiment and store the results in a Table.
+     * Aggregates the number of sentences per sentiment and store the results in a Table.
      */
-    public static class SentimentReducer extends Reducer<Text, IntWritable, byte[],
-    IntWritable> {
+    public static class SentimentReducer extends Reducer<Text, IntWritable, byte[], Put> {
       public void reduce(Text sentiment, Iterable<IntWritable> values, Context context)
       throws IOException, InterruptedException {
-        int count = 0;
+        long count = 0L;
         // Get the count of sentences
         for (IntWritable val : values) {
           count += val.get();
         }
         // Store aggregated results in output DataSet.
-        // Each sentiment's aggregated result is stored in a different row.
-        // Each result, the number of sentences, is an entry of the row.
-        // context.write(ROW_KEY, new TimeseriesTable.Entry(ROW_KEY, Bytes.toBytes(count), key.get()));
-        context.write(Bytes.toBytes(sentiment.toString()), new IntWritable(count));
+        // Each sentiment's aggregated result is stored using the sentiment as a key.
+        context.write(Bytes.toBytes(sentiment.toString()),
+                      new Put(Bytes.toBytes(sentiment_arg),
+                              Bytes.toBytes(sentiment_arg), count ));
       }
     }
-    
+
+    @Override
+    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      LOG.info("Action taken on MapReduce job for sentiment \"" + sentiment_arg + "\": " +
+               (succeeded ? "" : "un") + "successful completion");
+    }
+
   } // Closes class SentimentAnalysisMapReduce
   
   /**
@@ -393,67 +482,5 @@ public class SentimentAnalysisApp implements Application {
     }
   }
 
-  public static class SentimentAnalysisProcedure extends AbstractProcedure {
-
-    private static final Logger LOG =
-    LoggerFactory.getLogger(SentimentAnalysisProcedure.class);
-    
-    @UseDataSet("sentiments")
-    private Table sentiments;
-    
-    @UseDataSet("text-sentiments")
-    private SimpleTimeseriesTable textSentiments;
-    
-    @Handle("aggregates")
-    public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response)
-    throws Exception {
-      Row row = sentiments.get(new Get("aggregate"));
-      Map<byte[], byte[]> result = row.getColumns();
-      if (result == null) {
-        response.error(ProcedureResponse.Code.FAILURE, "No sentiments processed.");
-        return;
-      }
-      Map<String, Long> resp = Maps.newHashMap();
-      for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
-        resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
-      }
-      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
-    }
-    
-    @Handle("sentiments")
-    public void getSentiments(ProcedureRequest request, ProcedureResponder response)
-    throws Exception {
-      String sentiment = request.getArgument("sentiment");
-      if (sentiment == null) {
-        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
-        return;
-      }
-      
-      long time = System.currentTimeMillis();
-      List<SimpleTimeseriesTable.Entry> entries =
-      textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
-                          time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
-                          time);
-      LOG.info("sentiment:{}, entries:{}", sentiment, entries.size());
-      Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
-      for (SimpleTimeseriesTable.Entry entry : entries) {
-        textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
-      }
-      response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
-    }
-    
-    @Override
-    public ProcedureSpecification configure() {
-      return ProcedureSpecification.Builder.with()
-      .setName("sentiment-query")
-      .setDescription("Sentiments Procedure")
-      .withResources(ResourceSpecification.BASIC)
-      .build();
-    }
-  }
-  
-  
-  
-  
 }
 

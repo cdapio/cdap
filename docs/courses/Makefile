@@ -1,21 +1,31 @@
 # Makefile for Reactor Training Course
 
-# You can set these variables from the command line.
+# You can set these variables from the command line
 BUILDDIR      = build
 HTMLDIR       = html
 SOURCEDIR     = source
 STAGE_SERVER  = stg-web101.sw.joyent.continuuity.net
+SPHINXBUILD   = sphinx-build
+LANDSLIDE     = landslide
+RST2PDF       = rst2pdf
 
-# User-friendly check for sphinx-build
-#ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
-#$(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
-#endif
+# User-friendly checks for software installs
+# sphinx-build
+ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
+$(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
+endif
+# landslide
+ifeq ($(shell which $(LANDSLIDE) >/dev/null 2>&1; echo $$?), 1)
+$(error The '$(LANDSLIDE)' command was not found. Make sure you have $(LANDSLIDE) installed. If you don't have $(LANDSLIDE) installed, install it from reactor/tools/$(LANDSLIDE)/)
+endif
+# rst2pdf
+ifeq ($(shell which $(RST2PDF) >/dev/null 2>&1; echo $$?), 1)
+$(error The '$(RST2PDF)' command was not found. Make sure you have $(RST2PDF) installed. If you don't have $(RST2PDF) installed, install it from reactor/tools/$(RST2PDF)/)
+endif
 
-
-# Internal variables.
+# Internal variables
 BUILD_HTML_DIR = $(BUILDDIR)/$(HTMLDIR)
 USER          := $(shell whoami)
-#ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 
 .PHONY: help clean dist html zip

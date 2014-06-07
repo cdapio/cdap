@@ -2,22 +2,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>SentimentAnalysis</artifactId>
+    <artifactId>BigData</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Reactor App Project</name>
 
     <properties>
-        <app.main.class>com.example.SentimentAnalysisApp</app.main.class>
+        <app.main.class>com.example.WordCountApp</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hadoop.version>2.2.0</hadoop.version>
+        <hadoop.version>[2.0.2-alpha, 2.2.0]</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <continuuity.reactor.version>2.1.0</continuuity.reactor.version>
+        <continuuity.reactor.version>2.2.0</continuuity.reactor.version>
         <power.pack.version>[0.9.0,)</power.pack.version>
-        
-        <archive>sentiment-process.zip</archive>
-        
     </properties>
 
    <repositories>
@@ -36,13 +33,6 @@
     </repositories>
 
     <dependencies>
-      
-      <dependency>
-        <groupId>org.apache.ant</groupId>
-        <artifactId>ant-compress</artifactId>
-        <version>1.2</version>
-      </dependency>
-      
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>continuuity-api</artifactId>
@@ -112,26 +102,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <version>${hadoop.version}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.sun.jersey</groupId>
-                    <artifactId>jersey-server</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.jboss.netty</groupId>
-                    <artifactId>netty</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -277,79 +247,6 @@
                     </execution>
                 </executions>
             </plugin>
-            
-            <plugin>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
-              <executions>
-                <execution>
-                  <id>copy-resources</id>
-                  <phase>generate-resources</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <outputDirectory>${project.build.directory}/assemble-sentiment/sentiment</outputDirectory>
-                    <resources>
-                      <resource>
-                        <directory>${basedir}/sentiment</directory>
-                        <filtering>true</filtering>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-            
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>truezip-maven-plugin</artifactId>
-              <version>1.1</version>
-              <executions>
-                <execution>
-                  <id>copy-out-fileset</id>
-                  <goals>
-                    <goal>copy</goal>
-                  </goals>
-                  <phase>generate-resources</phase>
-                  <configuration>
-                    <filesets>
-                      <fileset>
-                        <directory>${basedir}/lib/nltk.zip</directory>
-                        <outputDirectory>
-                          ${project.build.directory}/assemble-sentiment/sentiment
-                        </outputDirectory>
-                      </fileset>
-                      <fileset>
-                        <directory>${basedir}/lib/yaml.zip</directory>
-                        <outputDirectory>
-                          ${project.build.directory}/assemble-sentiment/sentiment
-                        </outputDirectory>
-                      </fileset>
-                    </filesets>
-                  </configuration>
-                </execution>
-                <execution>
-                  <id>copy-into</id>
-                  <goals>
-                    <goal>copy</goal>
-                  </goals>
-                  <phase>process-resources</phase>
-                  <configuration>
-                    <filesets>
-                      <fileset>
-                        <directory>${project.build.directory}/assemble-sentiment</directory>
-                        <includes>
-                          <include>**</include>
-                        </includes>
-                        <outputDirectory>${project.build.outputDirectory}/${archive}</outputDirectory>
-                      </fileset>
-                    </filesets>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-            
         </plugins>
     </build>
 

@@ -36,8 +36,8 @@ Getting Started With Continuuity Reactor
 - Chapter 3: Ingesting Data into Continuuity Reactor
 - Chapter 4: Real-time Processing Using Flows
 - Chapter 5: Storing Data Using DataSets
-- Chapter 6: Batch Processing Using MapReduce and Workflows
-- Chapter 7: Querying Using Procedures
+- Chapter 6: Querying Using Procedures
+- Chapter 7: Batch Processing Using MapReduce and Workflows
 
 .. *Lunch Break*
 
@@ -63,8 +63,8 @@ Upon completion of this course you should be able to:
 - Describe Continuuity Reactor capabilities
 - Explain Reactor programming paradigms
 - Understand real-time processing using Flows
-- Perform batch processing using MapReduce jobs
 - Serve data using Procedures
+- Perform batch processing using MapReduce jobs and Workflows
 - Build basic Reactor applications
 - Understand Reactor application debugging and testing strategies
 - Complete common operations tasks and procedures
@@ -152,30 +152,30 @@ Upon completion of this course you should be able to:
 .. landslide: exercise link: ../exercises/e06_datasets_exercise.rst
 
 .. chapter 6
-.. landslide: chapter: Batch Processing Using MapReduce and Workflows
-.. ................................................
-.. landslide: module: Introduction to MapReduce and Workflows
-.. landslide: module link: ../modules/m20_mapreduce_workflows.rst
-.. landslide: module: MapReduce and DataSets
-.. landslide: module link: ../modules/m21_mapreduce_datasets.rst
-.. landslide: module: MapReduce and Transactions
-.. landslide: module link: ../modules/m22_mapreduce_transactions.rst
-.. landslide: module: Workflows
-.. landslide: module link: ../modules/m23_workflows.rst
-.. landslide: exercise: Building An Application Using MapReduce Jobs and Workflows
-.. landslide: exercise link: ../exercises/e07_mapreduce_workflow_exercise.rst
-
-.. chapter 7
 .. landslide: chapter: Querying Using Procedures
 .. ................................................
 .. landslide: module: Querying Using Procedures
-.. landslide: module link: ../modules/m24_querying_using_procedures.rst
+.. landslide: module link: ../modules/m20_querying_using_procedures.rst
 .. landslide: module: Procedures REST API
-.. landslide: module link: ../modules/m25_procedures_rest_api.rst
+.. landslide: module link: ../modules/m21_procedures_rest_api.rst
 .. landslide: exercise: Building An Application Using Procedures
-.. landslide: exercise link: ../exercises/e08_procedures_exercise.rst
+.. landslide: exercise link: ../exercises/e07_procedures_exercise.rst
 .. landslide: exercise: Building An Application Using External Processes
-.. landslide: exercise link: ../exercises/e09_external_processing_exercise.rst
+.. landslide: exercise link: ../exercises/e08_external_processing_exercise.rst
+
+.. chapter 7
+.. landslide: chapter: Batch Processing Using MapReduce and Workflows
+.. ................................................
+.. landslide: module: Introduction to MapReduce and Workflows
+.. landslide: module link: ../modules/m22_mapreduce_workflows.rst
+.. landslide: module: MapReduce and DataSets
+.. landslide: module link: ../modules/m23_mapreduce_datasets.rst
+.. landslide: module: MapReduce and Transactions
+.. landslide: module link: ../modules/m24_mapreduce_transactions.rst
+.. landslide: module: Workflows
+.. landslide: module link: ../modules/m25_workflows.rst
+.. landslide: exercise: Building An Application Using MapReduce Jobs and Workflows
+.. landslide: exercise link: ../exercises/e09_mapreduce_workflow_exercise.rst
 
 
 .. landslide: section: Reactor In Production
@@ -298,8 +298,8 @@ You should now be able to:
 - Build basic Reactor applications
 - Create an application using ingesting with Streams
 - Understand real-time processing using Flows
-- Perform batch processing using MapReduce
 - Serve data using Procedures
+- Perform batch processing using MapReduce jobs and Workflows
 - Understand Reactor application testing strategies
 
 ----
