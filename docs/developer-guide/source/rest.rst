@@ -1013,7 +1013,7 @@ status using HTTP POST and GET methods::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
-     - Name of the service being called
+     - Name of the Service being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
