@@ -996,9 +996,9 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
-Services:Start, Stop, Status, and Runtime Arguments
------------------------------------------------------
-Reactor Application can also have services that can be started, stopped and queried for their
+Services: Start, Stop, Status, and Runtime Arguments
+----------------------------------------------------
+Reactor Application can have Services that can be started, stopped and queried for their
 status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
@@ -1297,7 +1297,7 @@ Example
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
-For Services, you can retrieve the history of a Twill Runnable using the following format,
+For Services, you can retrieve the history of a Twill Runnable using::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
 
