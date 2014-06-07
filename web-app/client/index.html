@@ -159,18 +159,12 @@
           <img src="assets/img/services-loading.gif" />Loading Services...
         </div>
         <ul class="services-list">
-          <li class="appfabric">AppFabric
-            <img {{ bindAttr src=appfabricImg }}/>
+          {{#each serviceStatuses}}
+          <li class="service">
+            <span class="lowercasify">{{this.name}}</span>
+            <img {{ bindAttr src=this.imgSrc }}/>
           </li>
-          <li class="streams">Streams
-            <img {{ bindAttr src=streamsImg }}/>
-          </li>
-          <li class="transactions">Transactions
-            <img {{ bindAttr src=transactionsImg }}/>
-          </li>
-          <li class="metrics">Metrics
-            <img {{ bindAttr src=metricsImg }}/>
-          </li>
+          {{/each}}
         </ul>
       </div>
     </div>
