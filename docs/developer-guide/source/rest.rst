@@ -996,6 +996,73 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
+Services: Start, Stop, Status, and Runtime Arguments
+----------------------------------------------------
+Reactor Application can have Services that can be started, stopped and queried for their
+status using HTTP POST and GET methods::
+
+	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<operation>``
+     - One of ``start`` or ``stop``
+
+Examples
+........
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
+   * - Description
+     - Start a Service *WhoService* in the Application *HelloWorld*
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
+   * - Description
+     - Stop the Service *CountService* in the Application *WordCount*
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
+   * - Description
+     - Get the status of the Service *WhoService* in the Application *HelloWorld*
+
+
+To save the runtime arguments so that the Reactor will use them every time you start the Service,
+issue an HTTP PUT with the parameter ``runtimeargs``::
+
+	PUT <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
+
+with the arguments as a JSON string in the body::
+
+	{"foo":"bar","this":"that"}
+
+To retrieve the runtime arguments saved for an Application's Service, issue an HTTP GET request to the Service's URL
+using the same parameter ``runtimeargs``::
+
+	GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
+
+This will return the saved runtime arguments in JSON format.
+
 Container Information
 ---------------------
 
@@ -1023,6 +1090,31 @@ Example::
 
 The response is formatted in JSON; an example of this is shown in the 
 `Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+
+
+To find out the address of a Service's container host and the container's debug port, you can query the
+Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
+
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable being called
+
+Example::
+
+	GET <base-url>/apps/WordCount/services/CounterService/runnables/CountRunnable/live-info
+
+The response is formatted in JSON.
 
 .. rst2pdf: PageBreak
 
@@ -1118,11 +1210,52 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/``
+     - ``GET <base-url>/apps/HelloWorld/procedures/Greeting/instances``
        ``instances``
    * - Description
-     - Find out the number of instances of the Procedure *saver*
-       in the Flow *WhoFlow* of the Application *HelloWorld*
+     - Find out the number of instances of the Procedure *Greeting*
+       in the Application *HelloWorld*
+
+.. rst2pdf: PageBreak
+
+Scaling Services
+................
+You can query or change the number of instances of a Service's runnable
+by using the ``instances`` parameter with HTTP GET and PUT methods::
+
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+	PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+
+with the arguments as a JSON string in the body::
+
+	{ "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<service-id>``
+     - Name of the Service
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
+       ``instances``
+   * - Description
+     - Retreive the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -1163,6 +1296,24 @@ Example
 
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
+
+For Services, you can retrieve the history of a Twill Runnable using::
+
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+   * - Description
+     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
+   * - Returns
+     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
 For Workflows, you can also retrieve:
 
@@ -1244,6 +1395,41 @@ Example
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
+You can download the logs that are emitted by the Twill Runnable of a Service in a Reactor Application by
+sending an HTTP GET request::
+
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/logs?start=<ts>&stop=<ts>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable being called
+   * - ``<ts>``
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
+       ``logs?start=1382576400&stop=1382576700``
+   * - Description
+     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
+       of the *CountTokens* Application,
+       beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
+       ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
+
 Comments
 ........
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. A line of the log may look like this::
@@ -1312,6 +1498,12 @@ Examples
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
    * - Description
      - Using a *User-Defined* metric, *names.bytes*
+
+   * - HTTP Method
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
+       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
+   * - Description
+     - Using a *User-Defined* metric, *names.bytes* in a Service's Twill Runnable
 
 Comments
 ........
@@ -1426,6 +1618,12 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
+   * - One Twill Runnable
+     - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
+   * - One Service
+     - ``/apps/<app-id>/services/<service-id>``
+   * - All Services of an Application
+     - ``/apps/<app-id>/services``
    * - All elements of an Application
      - ``/apps/<app-id>``
    * - All elements of all Applications
