@@ -94,7 +94,7 @@ final class MetricsRequestParser {
   static String stripVersionAndMetricsFromPath(String path) {
     // +9 for "/metrics/"
     int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
-    return path.substring(startPos, path.length());
+    return path.substring(startPos - 1, path.length());
   }
 
   static MetricsRequest parse(URI requestURI) throws MetricsPathException {
@@ -114,11 +114,11 @@ final class MetricsRequestParser {
     String strippedPath = uriPath.substring(0, index);
 
     MetricsRequestContext metricsRequestContext;
-    if (strippedPath.startsWith("reactor/cluster")) {
+    if (strippedPath.startsWith("/reactor/cluster")) {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
-    } else if (strippedPath.startsWith("reactor/transactions")) {
+    } else if (strippedPath.startsWith("/reactor/transactions")) {
       builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
