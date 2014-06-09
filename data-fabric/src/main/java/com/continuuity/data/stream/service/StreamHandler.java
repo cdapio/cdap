@@ -42,10 +42,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -53,8 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -253,7 +248,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @POST
   @Path("/{stream}/ttl")
-  public void setTtl(HttpRequest request, HttpResponder responder,
+  public void setTTL(HttpRequest request, HttpResponder responder,
                      @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
@@ -264,10 +259,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     long ttl = getTTL(request);
-    StreamConfig config = streamAdmin.getConfig(stream);
-    StreamConfig newConfig = new StreamConfig(null, config.getPartitionDuration(),
-                                              config.getIndexInterval(), ttl, null);
-    streamAdmin.updateConfig(stream, newConfig);
+    streamAdmin.updateTTL(stream, ttl);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

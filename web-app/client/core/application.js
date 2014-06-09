@@ -71,7 +71,7 @@ function(Components, Embeddables, HTTP, Util) {
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('version', {cache: true}, this.checkVersion);
+				this.HTTP.get('version', this.checkVersion);
 			},
 
 			checkVersion: function(version) {
@@ -138,7 +138,7 @@ function(Components, Embeddables, HTTP, Util) {
 
 		initialize: function (http) {
 			var self = this;
-			http.get('environment', {cache: true}, function (response) {
+			http.get('environment', function (response) {
 				 self.setupEnvironment(response);
 			});
 
@@ -162,6 +162,26 @@ function(Components, Embeddables, HTTP, Util) {
 				}
 			});
 		},
+
+    /**
+     * Determines readiness of Reactor by polling all services and checking status.
+     * @param routeHandler Object Ember route handler.
+     * @param callback Function to execute.
+     */
+    checkReactorReadiness: function (routeHandler, callback) {
+      HTTP.create().rest('system/services/status', function (statuses) {
+        if (routeHandler !== undefined && 'routeName' in routeHandler) {
+          if (C.Util.isLoadingComplete(statuses)) {
+            routeHandler.transitionTo(routeHandler.routeName);
+          } else {
+            routeHandler.transitionTo('Loading');
+          }
+        }
+        if (callback && typeof callback === 'function') {
+          callback();
+        }
+      });
+    },
 
 		setupEnvironment: function (env) {
 

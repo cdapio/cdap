@@ -872,18 +872,34 @@ define([], function () {
 		},
 
 		/**
-		 * Pauses the thread for a predetermined amount of time, useful whenever execution needs to be
-		 * delayed.
+		 * Pauses the thread for a predetermined amount of time.
+     * !!! This will freeze the single running js thread, use carefully.!!!
 		 * @param  {number} milliseconds
 		 */
 		threadSleep: function (milliseconds) {
 			var time = new Date().getTime() + milliseconds;
 			while (new Date().getTime() <= time) {
-
 				$.noop();
-
 			}
 		},
+
+    /**
+     * Checks if loading is complete.
+     * @param statuses Object containing statuses.
+     * @return {boolean}
+     */
+    isLoadingComplete: function (statuses) {
+      for (var item in statuses) {
+        if (statuses[item] !== 'OK') {
+          return false;
+        }
+      }
+      return true;
+    },
+
+    capitaliseFirstLetter: function (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    },
 
 		reset: function () {
 

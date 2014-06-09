@@ -5,7 +5,9 @@
 var util = require("util"),
   fs = require('fs'),
   xml2js = require('xml2js'),
-  sys = require('sys');
+  sys = require('sys'),
+  argv = require('optimist').argv,
+  nock = require('nock');
 
 var WebAppServer = require('../common/server');
 
@@ -86,6 +88,16 @@ DevServer.prototype.start = function() {
 
       this.logger.info('Listening on port', this.config['dashboard.bind.port']);
       this.logger.info(this.config);
+
+      /**
+       * If mocks are enabled, use mock injector to simulate some responses.
+       */
+      var enableMocks = !!(argv.enableMocks === 'true');
+      if (enableMocks) {
+        this.logger.info('Webapp running with mocks enabled.');
+        HttpMockInjector = require('../../test/httpMockInjector');
+        new HttpMockInjector(nock, this.config['gateway.server.address'], this.config['gateway.server.port']);
+      }
 
     }.bind(this));
 
