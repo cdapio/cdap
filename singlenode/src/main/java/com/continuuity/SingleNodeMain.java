@@ -75,8 +75,8 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
 
-  private final InMemoryHiveMetastore hiveMetastore;
-  private final HiveServer hiveServer;
+  private InMemoryHiveMetastore hiveMetastore;
+  private HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
@@ -101,8 +101,12 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-    hiveServer = injector.getInstance(HiveServer.class);
+    boolean exploreEnabled = configuration.getBoolean(Constants.Hive.EXPLORE_ENABLED,
+                                                      Constants.Hive.DEFAULT_EXPLORE_ENABLED);
+    if (exploreEnabled) {
+      hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+      hiveServer = injector.getInstance(HiveServer.class);
+    }
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -155,9 +159,11 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
-    // it is important to respect that order: metastore, then HiveServer
-    hiveMetastore.startAndWait();
-    hiveServer.startAndWait();
+    if (hiveMetastore != null && hiveServer != null) {
+      // it is important to respect that order: metastore, then HiveServer
+      hiveMetastore.startAndWait();
+      hiveServer.startAndWait();
+    }
 
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
@@ -188,8 +194,10 @@ public class SingleNodeMain {
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    hiveServer.stopAndWait();
-    hiveMetastore.stopAndWait();
+    if (hiveMetastore != null && hiveServer != null) {
+      hiveServer.stopAndWait();
+      hiveMetastore.stopAndWait();
+    }
   }
 
   /**

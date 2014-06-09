@@ -153,8 +153,12 @@ public class ReactorServiceMain extends DaemonMain {
         Injector injector = baseInjector.createChildInjector();
 
         // TODO reintegrate once hive issues in distributed mode are fixed
-        // hiveServer = injector.getInstance(HiveServer.class);
-        // hiveServer.startAndWait();
+        // boolean exploreEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED,
+        //                                           Constants.Hive.DEFAULT_EXPLORE_ENABLED);
+        // if (exploreEnabled) {
+        //   hiveServer = injector.getInstance(HiveServer.class);
+        //   hiveServer.startAndWait();
+        // }
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
