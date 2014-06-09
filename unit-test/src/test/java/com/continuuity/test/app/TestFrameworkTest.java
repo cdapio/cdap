@@ -1,15 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
-import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -35,8 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -178,6 +172,12 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
+  }
+
+  @Test
+  public void testAppwithServices() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    LOG.info("Deployed.");
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
