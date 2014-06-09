@@ -60,6 +60,7 @@ public class ProgramClassLoader extends URLClassLoader {
     "com.continuuity",
     // Guava
     "com.google.common",
+    "org.apache.twill",
   };
 
   private static final String[] CLASS_PREFER_LIST = new String[] {
