@@ -10,7 +10,9 @@ import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.hooks.TransactionPostHook;
 import com.continuuity.hive.hooks.TransactionPreHook;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.hive.metastore.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.MockHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
@@ -47,13 +49,16 @@ public class HiveRuntimeModule extends RuntimeModule {
   private static final Logger LOG = LoggerFactory.getLogger(HiveRuntimeModule.class);
 
   private final CConfiguration conf;
+  private final boolean exploreEnabled;
 
   public HiveRuntimeModule(CConfiguration conf) {
     this.conf = conf;
+    this.exploreEnabled = conf.getBoolean(Constants.Hive.EXPLORE_ENABLED,
+                                          Constants.Hive.DEFAULT_EXPLORE_ENABLED);
   }
 
   public HiveRuntimeModule() {
-    this.conf = CConfiguration.create();
+    this(CConfiguration.create());
   }
 
   /**
@@ -62,41 +67,52 @@ public class HiveRuntimeModule extends RuntimeModule {
    * @param databaseDir directory of the hive tables data.
    */
   private Module getLocalModules(File warehouseDir, File databaseDir) {
-    LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
-    System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
+    if (!exploreEnabled) {
+      LOG.info("Explore functionality is disabled.");
+      return new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(HiveMetastore.class).to(MockHiveMetastore.class).in(Scopes.SINGLETON);
+          bind(HiveServer.class).to(MockHiveServer.class).in(Scopes.SINGLETON);
+        }
+      };
+    } else {
+      LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
+      System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
 
-    String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
-    LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
-    System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
+      String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
+      LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
+      System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
 
-    // Some more local mode settings
-    System.setProperty(HiveConf.ConfVars.LOCALMODEAUTO.toString(), "true");
-    System.setProperty(HiveConf.ConfVars.SUBMITVIACHILD.toString(), "false");
-    System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
+      // Some more local mode settings
+      System.setProperty(HiveConf.ConfVars.LOCALMODEAUTO.toString(), "true");
+      System.setProperty(HiveConf.ConfVars.SUBMITVIACHILD.toString(), "false");
+      System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
 
-    // Disable security
-    // TODO: verify if auth=NOSASL is really needed
-    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
-    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
-    System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
+      // Disable security
+      // TODO: verify if auth=NOSASL is really needed
+      System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
+      System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+      System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
 
-    try {
-      // Select a random free port for hive metastore to run
-      final int hiveMetaStorePort = PortDetector.findFreePort();
-      System.setProperty(HiveConf.ConfVars.METASTOREURIS.toString(), "thrift://localhost:" + hiveMetaStorePort);
+      try {
+        // Select a random free port for hive metastore to run
+        final int hiveMetaStorePort = PortDetector.findFreePort();
+        System.setProperty(HiveConf.ConfVars.METASTOREURIS.toString(), "thrift://localhost:" + hiveMetaStorePort);
 
-      return Modules.combine(new HiveModule(),
-                             new AbstractModule() {
-                               @Override
-                               protected void configure() {
-                                 bind(int.class).annotatedWith(Names.named(Constants.Hive.METASTORE_PORT))
-                                     .toInstance(hiveMetaStorePort);
-                                 bind(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
-                               }
-                             }
-      );
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+        return Modules.combine(new HiveModule(),
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(int.class).annotatedWith(Names.named(Constants.Hive.METASTORE_PORT))
+                    .toInstance(hiveMetaStorePort);
+                bind(HiveMetastore.class).to(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
+              }
+            }
+        );
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
@@ -119,9 +135,8 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    // Hive is optional - if its libraries are not there, reactor still runs
-    if (!HiveServer.isHivePresent()) {
-      LOG.warn("HiveServer2 not present in classpath, disabling explore functionality.");
+    if (!exploreEnabled) {
+      LOG.info("Explore functionality is disabled.");
       return new AbstractModule() {
         @Override
         protected void configure() {
@@ -130,10 +145,13 @@ public class HiveRuntimeModule extends RuntimeModule {
       };
     } else {
       try {
+        // This will throw exceptions if the checks don't pass
+        HiveServer.checkHiveVersion();
+
         String auxJarsPath = generateAuxJarsClasspath();
         System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-                  System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+            System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
         return new HiveModule();
       } catch (Exception e) {

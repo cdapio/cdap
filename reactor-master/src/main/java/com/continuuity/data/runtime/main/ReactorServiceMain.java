@@ -133,7 +133,7 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
       // TODO reintegrate once hive issues in distributed mode are fixed
-      // new HiveRuntimeModule().getDistributedModules()
+      // new HiveRuntimeModule(cConf).getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -153,12 +153,8 @@ public class ReactorServiceMain extends DaemonMain {
         Injector injector = baseInjector.createChildInjector();
 
         // TODO reintegrate once hive issues in distributed mode are fixed
-        // boolean exploreEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED,
-        //                                           Constants.Hive.DEFAULT_EXPLORE_ENABLED);
-        // if (exploreEnabled) {
-        //   hiveServer = injector.getInstance(HiveServer.class);
-        //   hiveServer.startAndWait();
-        // }
+        // hiveServer = injector.getInstance(HiveServer.class);
+        // hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();

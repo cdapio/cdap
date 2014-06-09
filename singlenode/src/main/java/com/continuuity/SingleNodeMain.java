@@ -26,7 +26,8 @@ import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.hive.metastore.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -75,7 +76,7 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
 
-  private InMemoryHiveMetastore hiveMetastore;
+  private HiveMetastore hiveMetastore;
   private HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
@@ -101,12 +102,8 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    boolean exploreEnabled = configuration.getBoolean(Constants.Hive.EXPLORE_ENABLED,
-                                                      Constants.Hive.DEFAULT_EXPLORE_ENABLED);
-    if (exploreEnabled) {
-      hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-      hiveServer = injector.getInstance(HiveServer.class);
-    }
+    hiveMetastore = injector.getInstance(HiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -194,8 +191,10 @@ public class SingleNodeMain {
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    if (hiveMetastore != null && hiveServer != null) {
+    if (hiveServer != null) {
       hiveServer.stopAndWait();
+    }
+    if (hiveMetastore != null) {
       hiveMetastore.stopAndWait();
     }
   }

@@ -1,4 +1,4 @@
-package com.continuuity.hive.inmemory;
+package com.continuuity.hive.metastore;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.hive.server.RuntimeHiveServer;
@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * Hive Metastore running in memory.
  */
-public class InMemoryHiveMetastore extends AbstractIdleService {
+public class InMemoryHiveMetastore extends HiveMetastore {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryHiveMetastore.class);
 
