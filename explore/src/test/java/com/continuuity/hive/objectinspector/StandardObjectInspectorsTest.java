@@ -17,6 +17,11 @@
  */
 package com.continuuity.hive.objectinspector;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import junit.framework.Assert;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -32,7 +37,10 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * TestStandardObjectInspectors.
@@ -91,6 +99,34 @@ public class StandardObjectInspectorsTest {
       throw e;
     }
 
+  }
+
+  @Test
+  public void testCollectionObjectInspector() throws Throwable {
+    // Test with sets
+    ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(
+        new TypeToken<Set<String>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    StandardListObjectInspector loi = (StandardListObjectInspector) oi;
+
+    Set<String> set = Sets.newHashSet("foo", "bar", "foobar");
+    List<?> inspectedSet = loi.getList(set);
+    Assert.assertTrue(inspectedSet.contains("foo"));
+    Assert.assertTrue(inspectedSet.contains("bar"));
+    Assert.assertTrue(inspectedSet.contains("foobar"));
+
+    // Test with queues
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(
+        new TypeToken<Queue<String>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    Queue<String> queue = new LinkedList<String>();
+    queue.add("foo");
+    queue.add("bar");
+    List<?> inspectedQueue = loi.getList(set);
+    Assert.assertEquals("bar", inspectedQueue.get(0));
+    Assert.assertEquals("foo", inspectedQueue.get(1));
   }
 
   @Test
