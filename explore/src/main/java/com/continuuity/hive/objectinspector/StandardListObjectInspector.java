@@ -1,5 +1,6 @@
 package com.continuuity.hive.objectinspector;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.SettableListObjectInspector;
 
@@ -82,11 +83,11 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     // so we have to do differently.
     if (!(data instanceof List)) {
       if (data instanceof Collection) {
-        // NOTE since the parameter of the collection is lost at runtime,
-        // we cannot use new ArrayList<?>(data)
-        data = java.util.Arrays.asList(((Collection) data).toArray());
-      } else {
+        data = Lists.newArrayList(data);
+      } else if (data instanceof Object[]) {
         data = java.util.Arrays.asList((Object[]) data);
+      } else {
+        throw new UnsupportedOperationException("Data object is neither a Collection nor an array.");
       }
     }
     List<?> list = (List<?>) data;
