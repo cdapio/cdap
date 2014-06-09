@@ -138,6 +138,9 @@ public class ObjectStore<T> extends AbstractDataset
     return new ObjectScanner(split);
   }
 
+  /**
+   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link ObjectStore}.
+   */
   public class ObjectRowMaker implements Scannables.RowMaker<byte[], T, ImmutablePair<byte[], T>> {
     @Override
     public ImmutablePair<byte[], T> makeRow(byte[] key, T value) {
