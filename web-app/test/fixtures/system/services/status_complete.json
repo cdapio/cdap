@@ -2,5 +2,6 @@
   "APPFABRIC": "OK",
   "STREAMS": "OK",
   "TRANSACTION": "OK",
-  "METRICS": "OK"
+  "METRICS": "OK",
+  "RANDOMSERVICE": "OK"
 }
