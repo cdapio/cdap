@@ -48,7 +48,8 @@ final class MetricsRequestParser {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p"),
-    HANDLERS("h");
+    HANDLERS("h"),
+    SERVICES("s");
 
     private final String code;
 
@@ -216,7 +217,7 @@ final class MetricsRequestParser {
       return;
     }
 
-    // request-type: flows, procedures, or mapreduce or handlers
+    // request-type: flows, procedures, or mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
     RequestType requestType;
     try {
@@ -254,11 +255,24 @@ final class MetricsRequestParser {
       case HANDLERS:
         buildHandlerContext(pathParts, builder);
         break;
+      case SERVICES:
+        buildUserServiceContext(pathParts, builder);
     }
 
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
     }
+  }
+
+  private static void buildUserServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("runnables")) {
+      throw new MetricsPathException("expecting 'runnables' after the service name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("runnables must be followed by a runnable name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
   }
 
 
@@ -274,9 +288,6 @@ final class MetricsRequestParser {
       throw new MetricsPathException("methods must be followed by a method name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
-    if (pathParts.hasNext()) {
-      throw new MetricsPathException("too many path after method name");
-    }
   }
 
   /**
