@@ -35,6 +35,7 @@ final class MetricsRequestParser {
   private static final String LINEAR_INTERPOLATOR = "linear";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+  private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
 
   public enum PathType {
     APPS,
@@ -94,8 +95,8 @@ final class MetricsRequestParser {
    * @return request path stripped of version and metrics.
    */
   static String stripVersionAndMetricsFromPath(String path) {
-    // +9 for "/metrics/"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
+    // +8 for "/metrics"
+    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -120,10 +121,13 @@ final class MetricsRequestParser {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
+    } else if (strippedPath.startsWith("/reactor/transactions")) {
+      builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
+      builder.setScope(MetricsScope.REACTOR);
+      metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
-
     parseQueryString(requestURI, builder);
     return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
   }

@@ -21,8 +21,8 @@ public class MetricsRequestParserTest {
 
   @Test
   public void testPathStrip() {
-    String expected = "reactor/apps/app1/flows/flow1/metric?aggregate=true";
-    String path = Constants.Gateway.GATEWAY_VERSION + "/metrics/" + expected;
+    String expected = "/reactor/apps/app1/flows/flow1/metric?aggregate=true";
+    String path = Constants.Gateway.GATEWAY_VERSION + "/metrics" + expected;
     Assert.assertEquals(expected, MetricsRequestParser.stripVersionAndMetricsFromPath(path));
   }
 
@@ -336,6 +336,15 @@ public class MetricsRequestParserTest {
       URI.create("/reactor/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     Assert.assertEquals("-.cluster", request.getContextPrefix());
     Assert.assertEquals("resources.total.storage", request.getMetricPrefix());
+  }
+
+
+  @Test
+  public void testTransactions() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/transactions/invalid?count=1&start=12345678&interpolate=step"));
+    Assert.assertEquals("transactions", request.getContextPrefix());
+    Assert.assertEquals("invalid", request.getMetricPrefix());
   }
 
   @Test

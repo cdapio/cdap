@@ -176,6 +176,32 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
   }
 
   @Test
+  public void testingTransactoinMetrics() throws Exception {
+    // Insert system metric  (stream.handler is the service name)
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    collector.gauge("inprogress", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String request = "/reactor/transactions/inprogress?aggregate=true";
+    systemMetrics(request);
+  }
+
+  private void systemMetrics(String request) throws Exception {
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + request);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + request + " did not return 200 status.",
+                          HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      Assert.assertEquals("GET " + request + " returned unexpected results.", 1, json.get("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
+
+  @Test
   public void testGetMetric() throws Exception {
     // Insert some metric
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
