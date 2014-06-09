@@ -92,9 +92,9 @@ final class MetricsRequestParser {
    * @return request path stripped of version and metrics.
    */
   static String stripVersionAndMetricsFromPath(String path) {
-    // +9 for "/metrics/"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
-    return path.substring(startPos - 1, path.length());
+    // +8 for "/metrics"
+    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
+    return path.substring(startPos, path.length());
   }
 
   static MetricsRequest parse(URI requestURI) throws MetricsPathException {
