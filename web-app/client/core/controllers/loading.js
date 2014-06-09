@@ -12,10 +12,7 @@ define([], function () {
       load: function () {
         var self = this;
 
-        this.set('appfabricImg', this.loadingSrc);
-        this.set('streamsImg', this.loadingSrc);
-        this.set('transactionsImg', this.loadingSrc);
-        this.set('metricsImg', this.loadingSrc);
+        self.set('serviceStatuses', []);
 
         /**
          * Check if all services have been loaded periodically and transition page
