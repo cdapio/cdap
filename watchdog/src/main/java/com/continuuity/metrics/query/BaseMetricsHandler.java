@@ -13,6 +13,7 @@ import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.metadata.MetaDataEntry;
 import com.continuuity.metadata.MetaDataTable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Set;
 
 /**
  * Base metrics handler that can validate metrics path for existence of elements like streams, datasets, and programs.
@@ -31,10 +33,14 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
   private final MetaDataTable metaDataTable;
+  private Set<String> existingServices;
+
+
   //TODO: Note: MetadataTable is introduced in the dependency as a temproary solution. REACTOR-12 jira has details
   protected BaseMetricsHandler(Authenticator authenticator, MetaDataTable metaDataTable) {
     super(authenticator);
     this.metaDataTable = metaDataTable;
+    getExistingServices();
   }
 
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
@@ -57,38 +63,55 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     String accountId = getAuthenticatedAccountId(request);
     // check for existance of elements in the path
-    String dataName = metricsRequestContext.getTag();
-    if (dataName != null) {
-      if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.STREAM) {
-        if (!streamExists(accountId, dataName)) {
-          throw new MetricsPathException("stream " + dataName + " not found");
+
+    if (metricsRequestContext.getPathType() != null) {
+      if (metricsRequestContext.getPathType().equals(MetricsRequestParser.PathType.SERVICES)) {
+        if (!serviceExists(metricsRequestContext.getTypeId())) {
+          throw new MetricsPathException(String.format("Service %s does not exist", metricsRequestContext.getTypeId()));
         }
-      } else if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.DATASET) {
-        if (!datasetExists(accountId, dataName)) {
-          throw new MetricsPathException("dataset " + dataName + " not found");
-        }
+        return;
       }
     }
-    String appId = metricsRequestContext.getAppId();
-    if (appId != null) {
-      MetricsRequestParser.ProgramType programType = metricsRequestContext.getProgramType();
-      String programId = metricsRequestContext.getProgramId();
+
+    String tagName = metricsRequestContext.getTag();
+    if (tagName != null) {
+      switch (metricsRequestContext.getTagType()) {
+        case STREAM:
+          if (!streamExists(accountId, tagName)) {
+            throw new MetricsPathException("stream " + tagName + " not found");
+          }
+          break;
+        case DATASET:
+          if (!datasetExists(accountId, tagName)) {
+            throw new MetricsPathException("dataset " + tagName + " not found");
+          }
+          break;
+      }
+    }
+    String typeId = metricsRequestContext.getTypeId();
+    if (typeId != null) {
+      MetricsRequestParser.RequestType requestType = metricsRequestContext.getRequestType();
+      String requestId = metricsRequestContext.getRequestId();
       String componentId = metricsRequestContext.getComponentId();
 
       // if there was a flowlet in the context
-      if (componentId != null && programType == MetricsRequestParser.ProgramType.FLOWS) {
-        if (!flowletExists(accountId, appId, programId, componentId, apiKey)) {
+      if (componentId != null && requestType == MetricsRequestParser.RequestType.FLOWS) {
+        if (!flowletExists(accountId, typeId, requestId, componentId, apiKey)) {
           String msg = String.format("application %s with flow %s and flowlet %s not found.",
-                                     appId, programId, componentId);
+                                     typeId, requestId, componentId);
           throw new MetricsPathException(msg);
         }
-      } else if (!programExists(programType, accountId, appId, programId, apiKey)) {
-        String programMsg = (programId == null || programType == null) ? "" :
-          " with " + programType.name().toLowerCase() + " " + programId;
-        String msg = "application " + appId + programMsg + " not found.";
+      } else if (!programExists(requestType, accountId, typeId, requestId, apiKey)) {
+        String programMsg = (requestId == null || requestType == null) ? "" :
+          " with " + requestType.name().toLowerCase() + " " + requestId;
+        String msg = "application " + typeId + programMsg + " not found.";
         throw new MetricsPathException(msg);
       }
     }
+  }
+
+  private boolean serviceExists(String serviceName) {
+    return existingServices.contains(serviceName);
   }
 
   /**
@@ -176,7 +199,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
    * @return true if the program exists, false if not.
    * @throws ServerException
    */
-  private boolean programExists(MetricsRequestParser.ProgramType type, String accountId,
+  private boolean programExists(MetricsRequestParser.RequestType type, String accountId,
                                 String appId, String programId, String apiKey)
     throws ServerException {
     Preconditions.checkNotNull(appId, "must specify an app name to check existence for");
@@ -225,5 +248,16 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     }
     return request;
   }
+
+  private void getExistingServices() {
+    existingServices = Sets.newHashSet();
+    existingServices.add(Constants.Service.METRICS);
+    existingServices.add(Constants.Service.APP_FABRIC_HTTP);
+    existingServices.add(Constants.Service.DATASET_EXECUTOR);
+    existingServices.add(Constants.Service.DATASET_MANAGER);
+    existingServices.add(Constants.Service.STREAM_HANDLER);
+    existingServices.add(Constants.Service.GATEWAY);
+  }
+
 
 }

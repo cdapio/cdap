@@ -4,21 +4,24 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.HttpResponse;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -26,10 +29,10 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -38,13 +41,13 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link com.continuuity.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetManagerServiceClient {
+public class DatasetServiceClient {
   private static final Gson GSON = new Gson();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public DatasetManagerServiceClient(final DiscoveryServiceClient discoveryClient) {
+  public DatasetServiceClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -57,27 +60,38 @@ public class DatasetManagerServiceClient {
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
     HttpResponse response = doGet("instances/" + instanceName);
-    if (HttpResponseStatus.NOT_FOUND.getCode() == response.responseCode) {
+    if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve dataset instance %s info, details: %s",
                                                          instanceName, getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.responseBody, Charsets.UTF_8), DatasetInstanceMeta.class);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetInstanceMeta.class);
+  }
+
+  public Collection<DatasetInstanceSpec> getAllInstances() throws DatasetManagementException {
+    HttpResponse response = doGet("instances");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         getDetails(response)));
+    }
+
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                         new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
     HttpResponse response = doGet("types/" + typeName);
-    if (HttpResponseStatus.NOT_FOUND.getCode() == response.responseCode) {
+    if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve dataset type %s info, details: %s",
                                                          typeName, getDetails(response)));
     }
-    return GSON.fromJson(new String(response.responseBody, Charsets.UTF_8), DatasetTypeMeta.class);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetInstanceProperties props)
@@ -86,11 +100,11 @@ public class DatasetManagerServiceClient {
     HttpResponse response = doPost("instances/" + datasetInstanceName,
                                    GSON.toJson(props),
                                    ImmutableMap.of("type-name", datasetType));
-    if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
                                                          datasetInstanceName, getDetails(response)));
     }
@@ -98,11 +112,11 @@ public class DatasetManagerServiceClient {
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     HttpResponse response = doDelete("instances/" + datasetInstanceName);
-    if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
                                                          datasetInstanceName, getDetails(response)));
     }
@@ -128,11 +142,11 @@ public class DatasetManagerServiceClient {
       Closeables.closeQuietly(is);
     }
 
-    if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
                                                       moduleName, getDetails(response)));
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
                                                       moduleName, getDetails(response)));
     }
@@ -142,11 +156,11 @@ public class DatasetManagerServiceClient {
   public void deleteModule(String moduleName) throws DatasetManagementException {
     HttpResponse response = doDelete("modules/" + moduleName);
 
-    if (HttpResponseStatus.CONFLICT.getCode() == response.responseCode) {
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to delete module %s due to conflict, details: %s",
                                                       moduleName, getDetails(response)));
     }
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete module %s, details: %s",
                                                          moduleName, getDetails(response)));
     }
@@ -155,7 +169,7 @@ public class DatasetManagerServiceClient {
   public void deleteModules() throws DatasetManagementException {
     HttpResponse response = doDelete("modules");
 
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete modules, details: %s",
                                                          getDetails(response)));
     }
@@ -164,7 +178,7 @@ public class DatasetManagerServiceClient {
   public void deleteInstances() throws DatasetManagementException {
     HttpResponse response = doDelete("instances");
 
-    if (HttpResponseStatus.OK.getCode() != response.responseCode) {
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
                                                          getDetails(response)));
     }
@@ -184,7 +198,7 @@ public class DatasetManagerServiceClient {
     return doRequest(resource, "DELETE", null, null, null);
   }
 
-  private DatasetManagerServiceClient.HttpResponse doRequest(String resource, String requestMethod,
+  private HttpResponse doRequest(String resource, String requestMethod,
                                                              @Nullable Map<String, String> headers,
                                                              @Nullable String body,
                                                              @Nullable InputStream bodySrc)
@@ -195,49 +209,7 @@ public class DatasetManagerServiceClient {
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      conn.setRequestMethod(requestMethod);
-
-      if (headers != null) {
-        for (Map.Entry<String, String> header : headers.entrySet()) {
-          conn.setRequestProperty(header.getKey(), header.getValue());
-        }
-      }
-
-      conn.setDoInput(true);
-
-      if (body != null || bodySrc != null) {
-        conn.setDoOutput(true);
-      }
-
-      conn.connect();
-      try {
-        if (body != null || bodySrc != null) {
-          OutputStream os = conn.getOutputStream();
-          try {
-            if (body != null) {
-              os.write(body.getBytes(Charsets.UTF_8));
-            } else {
-              ByteStreams.copy(bodySrc, os);
-            }
-          } finally {
-            os.close();
-          }
-        }
-        byte[] responseBody = null;
-        if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
-          InputStream is = conn.getInputStream();
-          try {
-            responseBody = ByteStreams.toByteArray(is);
-          } finally {
-            is.close();
-          }
-        }
-        return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(), responseBody);
-
-      } finally {
-        conn.disconnect();
-      }
+      return HttpRequests.doRequest(requestMethod, url, headers, body, bodySrc);
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
@@ -249,8 +221,9 @@ public class DatasetManagerServiceClient {
 
   private String getDetails(HttpResponse response) throws DatasetManagementException {
     return String.format("Response code: %s, message:'%s', body: '%s'",
-                         response.responseCode, response.responseMessage,
-                         response.responseBody == null ? "null" : new String(response.responseBody, Charsets.UTF_8));
+                         response.getResponseCode(), response.getResponseMessage(),
+                         response.getResponseBody() == null ?
+                           "null" : new String(response.getResponseBody(), Charsets.UTF_8));
 
   }
 
@@ -258,17 +231,5 @@ public class DatasetManagerServiceClient {
     InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
-  }
-
-  private final class HttpResponse {
-    private int responseCode;
-    private String responseMessage;
-    private byte[] responseBody;
-
-    private HttpResponse(int responseCode, String responseMessage, byte[] responseBody) {
-      this.responseCode = responseCode;
-      this.responseMessage = responseMessage;
-      this.responseBody = responseBody;
-    }
   }
 }

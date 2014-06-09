@@ -10,6 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.ServiceLoggingContext;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
@@ -40,6 +41,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
   private MetricsQueryService metricsQueryService;
   private ZKClientService zkClient;
   private KafkaClientService kafkaClient;
+  private MetricsCollectionService metricsCollectionService;
 
   public MetricsTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -66,6 +68,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
 
       // Get the Metric Services
       metricsQueryService = injector.getInstance(MetricsQueryService.class);
+      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -78,6 +81,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
   public void getServices(List<? super Service> services) {
     services.add(zkClient);
     services.add(kafkaClient);
+    services.add(metricsCollectionService);
     services.add(metricsQueryService);
   }
 
@@ -87,7 +91,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

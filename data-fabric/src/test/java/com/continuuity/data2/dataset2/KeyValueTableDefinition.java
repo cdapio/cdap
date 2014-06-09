@@ -64,7 +64,8 @@ public class KeyValueTableDefinition
     }
 
     public String get(String key) throws Exception {
-      return Bytes.toString(table.get(Bytes.toBytes(key), COL));
+      byte[] value = table.get(Bytes.toBytes(key), COL);
+      return value == null ? null : Bytes.toString(value);
     }
   }
 

@@ -48,7 +48,7 @@ public class HttpRequestsTest {
 
   private void doGet(String path, Matcher<Object> expectedResponseCode, Matcher<Object> expectedMessage,
                      Matcher<Object> expectedBody) throws Exception {
-    HttpRequests.HttpResponse response = HttpRequests.get(getBaseURI().resolve(path).toURL());
+    HttpResponse response = HttpRequests.get(getBaseURI().resolve(path).toURL());
     Assert.assertTrue("Response code - expected: " + expectedResponseCode.toString()
                         + " actual: " + response.getResponseCode(),
                       expectedResponseCode.matches(response.getResponseCode()));

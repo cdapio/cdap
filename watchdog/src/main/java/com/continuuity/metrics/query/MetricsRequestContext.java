@@ -13,13 +13,14 @@ import java.util.List;
  * with the request.
  */
 public class MetricsRequestContext {
-  private final String appId;
-  private final String programId;
+  private final String typeId;
+  private final String requestId;
   private final String componentId;
   private final String contextPrefix;
   private final TagType tagType;
   private final String tag;
-  private final MetricsRequestParser.ProgramType programType;
+  private final MetricsRequestParser.RequestType requestType;
+  private final MetricsRequestParser.PathType pathType;
 
   /**
    * Represents the tag type for metrics context.
@@ -27,27 +28,32 @@ public class MetricsRequestContext {
   public enum TagType {
     STREAM,
     DATASET,
+    SERVICE,
     QUEUE
   }
 
-  private MetricsRequestContext(String appId, MetricsRequestParser.ProgramType programType,
-                                String programId, String componentId, TagType tagType, String tag) {
-    this.appId = appId;
-    this.programType = programType;
-    this.programId = programId;
+  private MetricsRequestContext(String typeId, MetricsRequestParser.PathType pathType,
+                                MetricsRequestParser.RequestType requestType,
+                                String requestId, String componentId, TagType tagType, String tag) {
+    this.typeId = typeId;
+    this.pathType = pathType;
+    this.requestType = requestType;
+    this.requestId = requestId;
     this.componentId = componentId;
     this.tagType = tagType;
     this.tag = tag;
 
     List<String> contextParts = Lists.newArrayListWithCapacity(4);
-    if (appId == null || appId.isEmpty()) {
+    if (typeId == null || typeId.isEmpty()) {
       this.contextPrefix = null;
     } else {
-      contextParts.add(appId);
-      if (programType != null) {
-        contextParts.add(programType.getCode());
-        if (programId != null && !programId.isEmpty()) {
-          contextParts.add(programId);
+      contextParts.add(typeId);
+      if (requestType != null) {
+        if (!requestType.equals(MetricsRequestParser.RequestType.HANDLERS)) {
+          contextParts.add(requestType.getCode());
+        }
+        if (requestId != null && !requestId.isEmpty()) {
+          contextParts.add(requestId);
           if (componentId != null && !componentId.isEmpty()) {
             contextParts.add(componentId);
           }
@@ -57,16 +63,20 @@ public class MetricsRequestContext {
     }
   }
 
-  public String getAppId() {
-    return appId;
+  public String getTypeId() {
+    return typeId;
   }
 
-  public String getProgramId() {
-    return programId;
+  public String getRequestId() {
+    return requestId;
   }
 
-  public MetricsRequestParser.ProgramType getProgramType() {
-    return programType;
+  public MetricsRequestParser.RequestType getRequestType() {
+    return requestType;
+  }
+
+  public MetricsRequestParser.PathType getPathType() {
+    return pathType;
   }
 
   public String getComponentId() {
@@ -89,25 +99,31 @@ public class MetricsRequestContext {
    * Builds a metrics context.
    */
   public static class Builder {
-    private String appId;
-    private String programId;
+    private String typeId;
+    private String requestId;
     private String componentId;
     private TagType tagType;
     private String tag;
-    private MetricsRequestParser.ProgramType programType;
+    private MetricsRequestParser.RequestType requestType;
+    private MetricsRequestParser.PathType pathType;
 
-    public Builder setAppId(String appId) {
-      this.appId = appId;
+    public Builder setTypeId(String typeId) {
+      this.typeId = typeId;
       return this;
     }
 
-    public Builder setProgramType(MetricsRequestParser.ProgramType programType) {
-      this.programType = programType;
+    public Builder setRequestType(MetricsRequestParser.RequestType requestType) {
+      this.requestType = requestType;
       return this;
     }
 
-    public Builder setProgramId(String programId) {
-      this.programId = programId;
+    public Builder setPathType(MetricsRequestParser.PathType pathType) {
+      this.pathType = pathType;
+      return this;
+    }
+
+    public Builder setRequestId(String requestId) {
+      this.requestId = requestId;
       return this;
     }
 
@@ -123,7 +139,7 @@ public class MetricsRequestContext {
     }
 
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(appId, programType, programId, componentId, tagType, tag);
+      return new MetricsRequestContext(typeId, pathType, requestType, requestId, componentId, tagType, tag);
     }
   }
 }

@@ -11,21 +11,31 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.HttpResponse;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
-import com.continuuity.data2.datafabric.dataset.client.DatasetManagerServiceClient;
+import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.lib.table.Get;
+import com.continuuity.internal.data.dataset.lib.table.Put;
+import com.continuuity.internal.data.dataset.lib.table.Table;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -50,7 +60,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +79,7 @@ public class DatasetOpExecutorServiceTest {
   private DatasetService managerService;
   private RemoteDatasetFramework dsFramework;
   private TimeLimitEndpointStrategy endpointStrategy;
+  private InMemoryTransactionManager txManager;
 
   @Before
   public void setUp() throws IOException {
@@ -91,7 +102,7 @@ public class DatasetOpExecutorServiceTest {
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricModules(cConf, hConf).getInMemoryModules(),
+      new DataFabricModules().getInMemoryModules(),
       Modules.override(new DataSetServiceModules().getInMemoryModule()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -112,21 +123,18 @@ public class DatasetOpExecutorServiceTest {
       }
     });
 
-    InMemoryTransactionManager transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.startAndWait();
+    txManager = injector.getInstance(InMemoryTransactionManager.class);
+    txManager.startAndWait();
 
     managerService = injector.getInstance(DatasetService.class);
     managerService.startAndWait();
 
     // initialize client
-    DatasetOpExecutor opExecutor = injector.getInstance(DatasetOpExecutor.class);
-
-    DatasetManagerServiceClient serviceClient = new DatasetManagerServiceClient(
+    DatasetServiceClient serviceClient = new DatasetServiceClient(
       injector.getInstance(DiscoveryServiceClient.class));
 
     dsFramework = new RemoteDatasetFramework(
-      serviceClient,
-      cConf,
+      serviceClient, cConf,
       injector.getInstance(LocationFactory.class),
       new InMemoryDatasetDefinitionRegistry());
 
@@ -146,41 +154,77 @@ public class DatasetOpExecutorServiceTest {
   }
 
   @Test
-  public void testRest() throws IOException, URISyntaxException, DatasetManagementException {
+  public void testRest() throws Exception {
+    ReactorDatasetNamespace dsNameSpace =
+      new ReactorDatasetNamespace(CConfiguration.create(), DataSetAccessor.Namespace.USER);
+
+    // NOTE: we need to use namespace so that we can later get access thru dsFramework that is namespaced
+    String bob = dsNameSpace.namespace("bob");
+
     // check non-existence with 404
-    testAdminOp("bob", "exists", 404, null);
+    testAdminOp(bob, "exists", 404, null);
 
-    // add instance and check non-existence with 200
+    // add instance, should automatically create an instance
     dsFramework.addInstance("table", "bob", DatasetInstanceProperties.EMPTY);
-    testAdminOp("bob", "exists", 200, false);
+    testAdminOp(bob, "exists", 200, true);
 
-    testAdminOp("joe", "exists", 404, null);
+    testAdminOp(dsNameSpace.namespace("joe"), "exists", 404, null);
 
-    // create and check existence
-    testAdminOp("bob", "create", 200, null);
-    testAdminOp("bob", "exists", 200, true);
+    // check truncate
+    final Table table = dsFramework.getDataset("bob", null);
+    TransactionExecutor txExecutor =
+      new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
+                                     ImmutableList.of((TransactionAware) table));
 
-    // check various operations
-    testAdminOp("bob", "truncate", 200, null);
-    testAdminOp("bob", "upgrade", 200, null);
+    // writing smth to table
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        table.put(new Put("key1", "col1", "val1"));
+      }
+    });
+
+    // verify that we can read the data
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals("val1", table.get(new Get("key1", "col1")).getString("col1"));
+      }
+    });
+
+    testAdminOp(bob, "truncate", 200, null);
+
+    // verify that data is no longer there
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertTrue(table.get(new Get("key1", "col1")).isEmpty());
+      }
+    });
+
+    // check upgrade
+    testAdminOp(bob, "upgrade", 200, null);
 
     // drop and check non-existence
-    testAdminOp("bob", "drop", 200, null);
-    testAdminOp("bob", "exists", 200, false);
+    dsFramework.deleteInstance("bob");
+    testAdminOp(bob, "exists", 404, null);
   }
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
+    String path = String.format("/data/instances/%s/admin/%s", instanceName, opName);
 
-    InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
-    URI baseUri = new URI("http://" + socketAddress.getHostName() + ":" + socketAddress.getPort());
-    String template =  Constants.Gateway.GATEWAY_VERSION + "/data/instances/%s/admin/%s";
-    URL targetUrl = baseUri.resolve(String.format(template, instanceName, opName)).toURL();
-
-    HttpRequests.HttpResponse response = HttpRequests.post(targetUrl);
+    URL targetUrl = resolve(path);
+    HttpResponse response = HttpRequests.post(targetUrl);
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());
+  }
+
+  private URL resolve(String path) throws URISyntaxException, MalformedURLException {
+    InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
+    return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
+                                 socketAddress.getPort(), Constants.Gateway.GATEWAY_VERSION, path));
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {

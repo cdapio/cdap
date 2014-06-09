@@ -20,7 +20,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
-import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -104,6 +104,7 @@ public class ReactorTestBase {
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
+
   private static InMemoryHiveMetastore hiveMetastore;
   private static HiveServer hiveServer;
 
@@ -201,7 +202,7 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new StreamHttpModule() {
+                                    new StreamServiceModule() {
                                       @Override
                                       protected void configure() {
                                         super.configure();
@@ -245,18 +246,18 @@ public class ReactorTestBase {
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
+
     // it is important to respect that order: metastore, then HiveServer
     hiveMetastore.startAndWait();
     hiveServer.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
-    return Modules.override(new DataFabricModules(cConf).getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
         protected void configure() {
-          bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(cConf);
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
           bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
@@ -378,11 +379,7 @@ public class ReactorTestBase {
     String jdbcUser = "hive";
     String jdbcPassword = "";
 
-    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl" +
-                                           // TODO remove these once they are configured in hive-site.xml
-                                           "?hive.exec.pre.hooks=com.continuuity.hive.hooks.TransactionPreHook;" +
-                                           "hive.exec.post.hooks=com.continuuity.hive.hooks.TransactionPostHook",
-                                         host, port);
+    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
 
     return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
   }

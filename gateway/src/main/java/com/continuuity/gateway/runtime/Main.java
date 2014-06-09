@@ -76,7 +76,7 @@ public class Main extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new GatewayModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new AbstractModule() {
         @Override

@@ -4,7 +4,6 @@ import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNot
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.internal.io.ByteBufferInputStream;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -24,7 +23,6 @@ import java.util.Collection;
  * This class also instruments the thrift calls with metrics.
  */
 public class TransactionServiceThriftClient {
-
   private static final Function<byte[], ByteBuffer> BYTES_WRAPPER = new Function<byte[], ByteBuffer>() {
     @Override
     public ByteBuffer apply(byte[] input) {
@@ -101,6 +99,8 @@ public class TransactionServiceThriftClient {
     ByteBuffer buffer = client.getSnapshot();
     return new ByteBufferInputStream(buffer);
   }
+
+  public String status() throws TException { return client.status(); }
 
   public void resetState() throws TException {
     client.resetState();

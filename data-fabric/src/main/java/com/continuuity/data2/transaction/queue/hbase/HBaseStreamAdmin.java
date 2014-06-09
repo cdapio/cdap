@@ -25,8 +25,8 @@ import java.util.List;
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Inject
-  public HBaseStreamAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
+  public HBaseStreamAdmin(Configuration hConf,
+                          CConfiguration cConf,
                           DataSetAccessor dataSetAccessor,
                           LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {
@@ -67,7 +67,12 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(String streamName, StreamConfig config) throws IOException {
+  public void updateConfig(StreamConfig config) throws IOException {
+
+  }
+
+  @Override
+  public void updateTTL(String streamName, long ttl) throws IOException {
 
   }
 }

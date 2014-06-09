@@ -124,4 +124,8 @@ checkstyleMain {
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
 }

@@ -80,11 +80,11 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     server.startAndWait();
 
     injector = Guice.createInjector(
-      new ConfigModule(cConf),
+      new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules());
+      new DataFabricModules().getDistributedModules());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();

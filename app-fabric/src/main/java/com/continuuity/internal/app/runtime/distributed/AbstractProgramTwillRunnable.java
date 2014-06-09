@@ -298,7 +298,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

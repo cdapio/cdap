@@ -41,7 +41,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(cConf, hConf)
+      new DataFabricDistributedModule()
     );
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);

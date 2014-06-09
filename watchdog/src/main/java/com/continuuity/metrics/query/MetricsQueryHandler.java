@@ -57,28 +57,29 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
 
   // ex: /reactor/apps/appX/flows/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{metric}")
   public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
   // ex: /reactor/apps/appX/flows/flowY/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{metric}")
   public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
   // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{metric}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
   // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
+  // ex2: /reactor/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
