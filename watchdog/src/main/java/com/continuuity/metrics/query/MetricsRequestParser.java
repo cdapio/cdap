@@ -273,9 +273,6 @@ final class MetricsRequestParser {
       throw new MetricsPathException("runnables must be followed by a runnable name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
-    if (pathParts.hasNext()) {
-      throw new MetricsPathException("too many path after the runnable name");
-    }
   }
 
 
@@ -291,9 +288,6 @@ final class MetricsRequestParser {
       throw new MetricsPathException("methods must be followed by a method name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
-    if (pathParts.hasNext()) {
-      throw new MetricsPathException("too many path after method name");
-    }
   }
 
   /**

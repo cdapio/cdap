@@ -245,9 +245,13 @@ public class MetricsRequestParserTest {
   public void testInvalidUserServices() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/service/serve1/reads?summary=true"));
-    Assert.assertEquals("app1.s.serve1", request.getContextPrefix());
   }
 
+  @Test(expected = MetricsPathException.class)
+  public void testInvalidUserServicesTooManyPath() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/services/serve1/runnables/run1/random/reads?summary=true"));
+  }
 
   @Test
   public void testDataset() throws MetricsPathException  {
