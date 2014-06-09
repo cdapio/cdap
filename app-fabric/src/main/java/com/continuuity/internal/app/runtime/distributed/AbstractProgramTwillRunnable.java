@@ -112,7 +112,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   protected abstract Class<T> getProgramClass();
 
-  /**
+  /**xz
    * Provides sets of configurations to put into the specification. Children classes can override
    * this method to provides custom configurations.
    */
@@ -175,7 +175,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
-      LOG.info("Runnable initialized: " + name);
+      LOG.info("Runnable initializezxd: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
