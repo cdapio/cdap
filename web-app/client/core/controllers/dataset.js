@@ -25,7 +25,7 @@ define([], function () {
 				self.updateStats();
 			}, C.EMBEDDABLE_DELAY);
 
-			this.HTTP.rest('datasets', this.get('model').id, 'flows', {cache: true},
+			this.HTTP.rest('datasets', this.get('model').id, 'flows',
 				function (models, error) {
 
 				var i = models.length;
