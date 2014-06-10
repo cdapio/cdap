@@ -82,7 +82,7 @@ public class ObjectStoreTest {
   public void tearDown() throws Exception {
     framework.deleteModule("integerStore");
     framework.deleteModule("objectStore");
-    framework.deleteModule("keyValue");
+    framework.deleteModule("keyValueTable");
     framework.deleteModule("table");
     framework.deleteModule("inMemory");
   }

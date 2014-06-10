@@ -135,7 +135,7 @@ public class ObjectStore<T> extends AbstractDataset
 
   @Override
   public SplitReader<byte[], T> createSplitReader(Split split) {
-    return new ObjectScanner(split);
+    return new ObjectScanner(kvTable.createSplitReader(split));
   }
 
   /**
@@ -156,8 +156,8 @@ public class ObjectStore<T> extends AbstractDataset
     // the underlying KeyValueTable's split reader
     private SplitReader<byte[], byte[]> reader;
 
-    public ObjectScanner(Split split) {
-      this.reader = kvTable.createSplitReader(split);
+    public ObjectScanner(SplitReader<byte[], byte[]> reader) {
+      this.reader = reader;
     }
 
     @Override
