@@ -17,7 +17,8 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
@@ -83,12 +84,31 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void createDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties) {
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
     datasetInstances.put(datasetInstanceName,
                          new DatasetInstanceCreationSpec(datasetInstanceName, typeName, properties));
+  }
+
+  @Override
+  public void createDataSet(String datasetInstanceName,
+                            Class<? extends Dataset> datasetClass,
+                            DatasetProperties properties) {
+
+    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
+    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    datasetInstances.put(datasetInstanceName,
+                         new DatasetInstanceCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override

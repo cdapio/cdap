@@ -10,7 +10,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
@@ -21,7 +21,7 @@ import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
@@ -63,11 +63,11 @@ public class HiveServerIntegrationTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
-    datasetFramework.register(moduleName, InMemoryTableModule.class);
-    datasetFramework.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
+    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
+    datasetFramework.addModule("keyValue", new KeyValueTableDefinition.KeyValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
+    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
@@ -131,7 +131,7 @@ public class HiveServerIntegrationTest {
   @Test
   public void testHiveDatasetsJoin() throws Exception {
     // Performing admin operations to create another dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table_2", DatasetInstanceProperties.EMPTY);
+    datasetFramework.addInstance("keyValueTable", "my_table_2", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table_2", null);
     admin.create();
 

@@ -8,6 +8,8 @@ import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.ModuleConflictException;
+import com.continuuity.data2.dataset2.SingleTypeModule;
+import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
@@ -43,11 +45,22 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
       // note: using app class loader to load module class
       JarClassLoader classLoader = new JarClassLoader(input.getArchive());
       @SuppressWarnings("unchecked")
-      Class<? extends DatasetModule> moduleClass =
-        (Class<DatasetModule>) classLoader.loadClass(module.getValue());
+      Class<?> clazz = classLoader.loadClass(module.getValue());
       String moduleName = module.getKey();
       try {
-        datasetFramework.register(moduleName, moduleClass);
+        // note: we can deploy module or create module from Dataset class
+        // note: it seems dangerous to instantiate dataset module here, but this will be fine when we move deploy into
+        //       isolated user's environment (e.g. separate yarn container)
+        if (DatasetModule.class.isAssignableFrom(clazz)) {
+          datasetFramework.addModule(moduleName, (DatasetModule) clazz.newInstance());
+        } else if (Dataset.class.isAssignableFrom(clazz)) {
+          datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
+        } else {
+          String msg = String.format(
+            "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset",
+            clazz.getName());
+          throw new IllegalArgumentException(msg);
+        }
       } catch (ModuleConflictException e) {
         LOG.info("Not deploying module " + moduleName + " as it already exists");
       }

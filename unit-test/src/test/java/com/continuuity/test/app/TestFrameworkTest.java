@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -22,7 +22,6 @@ import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
@@ -355,15 +354,26 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetType() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
+  }
+
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyProcedure");
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {

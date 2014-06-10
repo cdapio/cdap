@@ -18,14 +18,14 @@ import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
-import com.google.common.collect.ImmutableList;
+import com.continuuity.internal.data.dataset.module.EmbeddedDataset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -54,7 +54,7 @@ public class AppsWithDataset {
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -65,8 +65,31 @@ public class AppsWithDataset {
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetInstanceProperties.EMPTY);
+      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
       addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
+      addProcedure(new MyProcedure());
+    }
+  }
+
+  /**
+   *
+   */
+  public static class AppWithAutoDeployType extends AbstractApplication {
+    @Override
+    public void configure() {
+      createDataSet("myTable", KeyValueTableDefinition.KeyValueTable.class.getName(), DatasetProperties.EMPTY);
+      addDatasetType(KeyValueTableDefinition.KeyValueTable.class);
+      addProcedure(new MyProcedure());
+    }
+  }
+
+  /**
+   *
+   */
+  public static class AppWithAutoDeployTypeShortcut extends AbstractApplication {
+    @Override
+    public void configure() {
+      createDataSet("myTable", KeyValueTableDefinition.KeyValueTable.class, DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -152,12 +175,12 @@ public class AppsWithDataset {
     extends CompositeDatasetDefinition<KeyValueTableDefinition.KeyValueTable> {
 
     public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDefinition) {
-      super(name, ImmutableMap.of("table", tableDefinition));
+      super(name, ImmutableMap.of("data", tableDefinition));
     }
 
     @Override
-    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetInstanceSpec spec) throws IOException {
-      return new KeyValueTable(spec.getName(), getDataset("table", Table.class, spec));
+    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
+      return new KeyValueTable(spec, getDataset("data", Table.class, spec));
     }
 
     /**
@@ -169,8 +192,9 @@ public class AppsWithDataset {
 
       private final Table table;
 
-      public KeyValueTable(String instanceName, Table table) {
-        super(instanceName, (Dataset) table);
+      public KeyValueTable(DatasetSpecification spec,
+                           @EmbeddedDataset("data") Table table) {
+        super(spec.getName(), (Dataset) table);
         this.table = table;
       }
 

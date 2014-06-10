@@ -7,7 +7,8 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import org.apache.twill.api.TwillApplication;
 
@@ -52,13 +53,32 @@ public interface ApplicationConfigurer {
   void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
+   * Same as {@link #addDatasetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
+   * The module will have single dataset type of name equals to name of the class in datasetClass param.
+   * @param datasetClass class of the dataset. Name of the module is same as name of the class in datasetClass param.
+   */
+  void addDatasetType(Class<? extends Dataset> datasetClass);
+
+  /**
    * Adds a dataset instance to be created automatically (if not exists) by application components.
    * See {@link com.continuuity.internal.data.dataset.DatasetDefinition} for more details.
    * @param datasetInstanceName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
-  void createDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties);
+  void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties);
+
+  /**
+   * Adds a dataset instance to be created automatically (if not exists) by application components
+   * and deploys dataset type as per {@link #addDatasetType(Class)} using datasetClass parameter as dataset class.
+   *
+   * @param datasetInstanceName dataset instance name
+   * @param datasetClass dataset class to create type from
+   * @param props dataset instance properties
+   */
+  void createDataSet(String datasetInstanceName,
+                     Class<? extends Dataset> datasetClass,
+                     DatasetProperties props);
 
   /**
    * Adds a {@link Flow} to the Application.

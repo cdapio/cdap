@@ -3,12 +3,11 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -26,7 +25,7 @@ import java.util.Set;
 public class InMemoryDatasetFramework implements DatasetFramework {
   private final Set<String> modules = Sets.newHashSet();
   private final DatasetDefinitionRegistry registry;
-  private final Map<String, DatasetInstanceSpec> instances = Maps.newHashMap();
+  private final Map<String, DatasetSpecification> instances = Maps.newHashMap();
 
   public InMemoryDatasetFramework() {
     this(new InMemoryDatasetDefinitionRegistry());
@@ -38,18 +37,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void register(String moduleName, Class<? extends DatasetModule> moduleClass)
+  public synchronized void addModule(String moduleName, DatasetModule module)
     throws ModuleConflictException {
 
     if (modules.contains(moduleName)) {
       throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
     }
-    try {
-      DatasetModule module = moduleClass.newInstance();
-      module.register(registry);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    module.register(registry);
   }
 
   @Override
@@ -59,16 +53,16 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
+  public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws InstanceConflictException, IOException {
     if (instances.get(datasetInstanceName) != null) {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
     DatasetDefinition def = registry.get(datasetType);
-    DatasetInstanceSpec spec = def.configure(datasetInstanceName, props);
-    instances.put(datasetInstanceName, spec);
+    DatasetSpecification spec = def.configure(datasetInstanceName, props);
     def.getAdmin(spec).create();
+    instances.put(datasetInstanceName, spec);
   }
 
   @Override
@@ -83,7 +77,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
-    DatasetInstanceSpec spec = instances.remove(datasetInstanceName);
+    DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
     def.getAdmin(spec).create();
   }
@@ -92,7 +86,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
     throws IOException {
 
-    DatasetInstanceSpec spec = instances.get(datasetInstanceName);
+    DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
@@ -104,7 +98,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
     throws IOException {
 
-    DatasetInstanceSpec spec = instances.get(datasetInstanceName);
+    DatasetSpecification spec = instances.get(datasetInstanceName);
     if (spec == null) {
       return null;
     }
