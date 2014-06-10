@@ -152,4 +152,96 @@ To make your custom handler class available to the authentication service, copy 
 additional dependency jars) to the ``security/lib/`` directory within your Reactor installation
 (typically under ``/opt/continuuity``).
 
+Example Configuration
+=======================
+For example, this is what your ``continuuity-site.xml`` will include when configured to enable security and SSL, and
+to authenticate using LDAP. ::
 
+  <property>
+    <name>security.enabled</name>
+    <value>true</value>
+  </property>
+
+  <!--
+   SSL configuration.
+  -->
+  <property>
+    <name>security.server.ssl.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>security.server.ssl.keystore.path</name>
+    <value>/home/john/keystore.jks</value>
+    <description>Path to the SSL keystore.</description>
+  </property>
+
+  <property>
+    <name>security.server.ssl.keystore.password</name>
+    <value>password</value>
+    <description>Password for the SSL keystore.</description>
+  </property>
+
+  <!--
+   LDAP configuration.
+  -->
+  <property>
+    <name>security.authentication.handlerClassName</name>
+    <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
+  </property>
+
+  <property>
+    <name>security.authentication.loginmodule.className</name>
+    <value>org.eclipse.jetty.plus.jaas.spi.LdapLoginModule</value>
+  </property>
+
+  <property>
+    <name>security.authentication.handler.debug</name>
+    <value>true</value>
+  </property>
+
+  <!--
+    Override the following properties to use your LDAP server. Any optional parameters, described above,
+    may also be added.
+  -->
+  <property>
+    <name>security.authentication.handler.hostname</name>
+    <value>example.com</value>
+    <description>Hostname of the LDAP server.</description>
+  </property>
+
+  <property>
+    <name>security.authentication.handler.port</name>
+    <value>389</value>
+    <description>Port number of the LDAP server.</description>
+  </property>
+
+  <property>
+    <name>security.authentication.handler.userBaseDn</name>
+    <value>ou=people,dc=example,dc=com</value>
+  </property>
+
+  <property>
+    <name>security.authentication.handler.userRdnAttribute</name>
+    <value>cn</value>
+  </property>
+
+  <property>
+    <name>security.authentication.handler.userObjectClass</name>
+    <value>inetorgperson</value>
+  </property>
+
+Testing Security
+=================
+To ensure that you've configured security correctly, you may run a few simple tests :
+
+* Visiting the Reactor WebUI should redirect you to a login page that prompts for credentials. Entering the credentials
+  should let you work with Reactor normally.
+* You can also manually verify that the security components are working as expected:
+  ::
+    curl -v http://<reactor-hostname>:10000/v2/apps
+    # Returns a 401 Unauthorized response.
+    curl -v -u <username>:<password> http://<reactor-hostname>:10009
+    # Returns a 200 OK response with an AccessToken string as the body.
+    curl -v -H "Authorization: Bearer <AccessToken>" http://<reactor-hostname>:10000/v2/apps
+    # Returns a 200 OK response.
