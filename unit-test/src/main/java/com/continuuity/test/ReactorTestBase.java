@@ -211,7 +211,7 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
-                                    new HiveRuntimeModule(configuration).getInMemoryModules(),
+                                    new HiveRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),

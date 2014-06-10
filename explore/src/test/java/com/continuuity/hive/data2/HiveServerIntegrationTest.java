@@ -191,7 +191,7 @@ public class HiveServerIntegrationTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule(configuration).getInMemoryModules(),
+      new HiveRuntimeModule().getInMemoryModules(),
       new HiveClientModule(configuration)
     );
   }

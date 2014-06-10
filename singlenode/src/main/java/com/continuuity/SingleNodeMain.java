@@ -364,7 +364,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceModule(),
-      new HiveRuntimeModule(configuration).getSingleNodeModules()
+      new HiveRuntimeModule().getSingleNodeModules()
     );
   }
 }

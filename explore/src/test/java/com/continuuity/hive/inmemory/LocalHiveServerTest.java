@@ -41,7 +41,7 @@ public class LocalHiveServerTest extends HiveServerTest {
         new DataFabricInMemoryModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ConfigModule(conf, hConf),
-        new HiveRuntimeModule(conf).getInMemoryModules(),
+        new HiveRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getInMemoryModule(),
