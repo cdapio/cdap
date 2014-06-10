@@ -279,12 +279,15 @@ Upon completion of this course you should be able to:
 .. landslide: COURSE MODULES END HERE
 
 ----
+
 .. rst2pdf: CutStop
 
 Conclusion
 ==========
 .. rst2pdf: CutStart
+
 .fx: center_title_slide
+
 .. rst2pdf: CutStop
 
 ----
