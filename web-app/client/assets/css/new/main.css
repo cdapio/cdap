@@ -441,6 +441,10 @@ a, a:visited {
 	border-bottom: 1px solid #CECED0;
 }
 
+#global .topmenu-top-padding {
+  padding-top: 3px;
+}
+
 #global {
 	float: right;
 	padding: 3px;
@@ -456,9 +460,7 @@ a, a:visited {
 	margin-left: 12px;
 	float: right;
 	height: 36px;
-	padding-left: 12px;
 	text-decoration: none;
- 	min-width: 60px;
 }
 
 #global .metrics-link {
@@ -470,25 +472,19 @@ a, a:visited {
 
 #global .metrics-link:hover {
 	background-image: url('/assets/img/v2/metrics_active_icon.png');
-	background-repeat: no-repeat;
-	padding-left: 40px;
-	white-space: nowrap;
 }
 
 #global .user-link {
 	background-image: url('/assets/img/v2/account_icon.png');
 	background-position: 8px 0;
 	background-repeat: no-repeat;
-	padding-left: 40px;
+	padding-left: 50px;
+  padding-top: 3px;
 	white-space: nowrap;
 }
 
 #global .user-link:hover {
 	background-image: url('/assets/img/v2/account_active_icon.png');
-	background-position: 8px 0;
-	background-repeat: no-repeat;
-	padding-left: 40px;
-	white-space: nowrap;
 }
 
 #global .support-link {
@@ -500,9 +496,6 @@ a, a:visited {
 
 #global .support-link:hover {
 	background-image: url('/assets/img/v2/support_active_icon.png');
-	background-repeat: no-repeat;
-	padding-left: 40px;
-	white-space: nowrap;
 }
 
 #global a:last-child {
