@@ -17,9 +17,6 @@
 
   <!-- copied from apache hadoop, won't fix style to keep diff minimal -->
   <suppress checks=".*" files=".*/LocalJobRunnerWithFix.java" />
-  <suppress checks=".*" files=".*/StandardUnionObjectInspector.java" />
-  <suppress checks=".*" files=".*/StandardObjectInspectorsTest.java" />
-  <suppress checks=".*" files=".*/FullMapEqualComparerTest.java" />
 
   <!-- do not check thrift generated files -->
   <suppress checks=".*" files=".*/transaction/distributed/thrift/.*" />
