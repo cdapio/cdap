@@ -59,7 +59,7 @@ public class FullMapEqualComparerTest extends TestCase {
       int rc21 = ObjectInspectorUtils.compare(o2, oi, o1, oi, new CrossMapEqualComparer());
       assertTrue(rc21 > 0);
     }
-    {// anti-symmetric
+    { // anti-symmetric
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new FullMapEqualComparer());
       assertTrue(rc12 > 0);
       int rc21 = ObjectInspectorUtils.compare(o2, oi, o1, oi, new FullMapEqualComparer());
@@ -100,7 +100,7 @@ public class FullMapEqualComparerTest extends TestCase {
       int rc13 = ObjectInspectorUtils.compare(o1, oi, o3, oi, new CrossMapEqualComparer());
       assertTrue(rc13 < 0);
     }
-    {// transitive
+    { // transitive
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new FullMapEqualComparer());
       assertTrue(rc12 > 0);
       int rc23 = ObjectInspectorUtils.compare(o2, oi, o3, oi, new FullMapEqualComparer());

@@ -175,14 +175,14 @@ public class StandardObjectInspectorsTest {
     fieldObjectInspectors
         .add(PrimitiveObjectInspectorFactory.javaBooleanObjectInspector);
     ArrayList<String> fieldComments = new ArrayList<String>(3);
-    if(testComments) {
+    if (testComments) {
       fieldComments.add("firstInteger comment");
       fieldComments.add("secondString comment");
       fieldComments.add("thirdBoolean comment");
     } else { // should have null for non-specified comments
-      for(int i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         fieldComments.add(null);
-    }
+      }
     }
 
     StandardStructObjectInspector soi1 = testComments ?
@@ -195,7 +195,7 @@ public class StandardObjectInspectorsTest {
         ObjectInspectorFactory
         .getStandardStructObjectInspector((ArrayList<String>) fieldNames
         .clone(), (ArrayList<ObjectInspector>) fieldObjectInspectors
-        .clone(), (ArrayList<String>)fieldComments.clone())
+        .clone(), (ArrayList<String>) fieldComments.clone())
         : ObjectInspectorFactory
         .getStandardStructObjectInspector((ArrayList<String>) fieldNames
         .clone(), (ArrayList<ObjectInspector>) fieldObjectInspectors
