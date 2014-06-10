@@ -104,14 +104,14 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
   }
 
   /**
-   * Compare the value for key with an expected value, and,
-   * if they match, to replace the value with a new value. If they don't
-   * match, this operation fails with status code WRITE_CONFLICT.
+   * Compares-and-swaps (atomically) the value of the specified row and column
+   * by looking for the specified expected value and if found, replacing with
+   * the specified new value.
    *
-   * An expected value of null means that the key must not exist. A new value
-   * of null means that the key shall be deleted instead of replaced.
-   *
-   * @param key the key to delete
+   * @param key key to modify
+   * @param oldValue expected value before change
+   * @param newValue value to set
+   * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
   public boolean swap(byte[] key, byte[] oldValue, byte[] newValue) {
     return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
