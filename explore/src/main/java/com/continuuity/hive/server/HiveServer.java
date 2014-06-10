@@ -30,7 +30,7 @@ public abstract class HiveServer extends AbstractIdleService {
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {
-      throw new RuntimeException("Hive jars not present in classpath");
+      throw new RuntimeException("Hive jars not present in classpath", e);
     }
   }
 }
