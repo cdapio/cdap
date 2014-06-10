@@ -12,10 +12,7 @@ define([], function () {
       load: function () {
         var self = this;
 
-        this.set('appfabricImg', this.loadingSrc);
-        this.set('streamsImg', this.loadingSrc);
-        this.set('transactionsImg', this.loadingSrc);
-        this.set('metricsImg', this.loadingSrc);
+        self.set('serviceStatuses', []);
 
         /**
          * Check if all services have been loaded periodically and transition page
@@ -23,22 +20,30 @@ define([], function () {
          */
         this.interval = setInterval(function() {
           self.HTTP.rest('system/services/status', function (statuses) {
+            self.set('statuses', statuses);
             if (!('APPFABRIC' in statuses
               && 'STREAMS' in statuses
               && 'TRANSACTION' in statuses
               && 'METRICS' in statuses)) {
-              $(".warning-text").text('Could not get Reactor status. Please restart Reactor.');
+              $(".warning-text").text('Could not get core Reactor services. Please restart Reactor.');
               return;
             }
-            var appfabricImg = statuses.APPFABRIC === 'OK' ? self.completeSrc : self.loadingSrc;
-            var streamsImg = statuses.STREAMS === 'OK' ? self.completeSrc : self.loadingSrc;
-            var transactionsImg = statuses.TRANSACTION === 'OK' ? self.completeSrc : self.loadingSrc;
-            var metricsImg = statuses.METRICS === 'OK' ? self.completeSrc : self.loadingSrc;
 
-            self.set('appfabricImg', appfabricImg);
-            self.set('streamsImg', streamsImg);
-            self.set('transactionsImg', transactionsImg);
-            self.set('metricsImg', metricsImg);
+            var serviceStatuses = [];
+            for (item in statuses) {
+              if (statuses.hasOwnProperty(item)) {
+                var imgSrc = statuses[item] === 'OK' ? self.completeSrc : self.loadingSrc;
+                serviceStatuses.push({
+                  name: item,
+                  status: statuses[item],
+                  imgSrc: imgSrc
+                });
+              }
+            }
+
+            self.set('serviceStatuses', serviceStatuses);
+
+
 
             if (C.Util.isLoadingComplete(statuses)) {
               setTimeout(function() {

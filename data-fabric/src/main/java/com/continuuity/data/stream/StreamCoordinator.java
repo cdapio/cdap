@@ -26,6 +26,16 @@ public interface StreamCoordinator extends Closeable {
   ListenableFuture<Integer> nextGeneration(StreamConfig streamConfig, int lowerBound);
 
   /**
+   * Changes the TTL of the given stream.
+   *
+   * @param streamConfig stream configuration
+   * @param ttl the new TTL
+   * @return A future that will be completed when the update of TTL is done. The future result will carry
+   *         the TTL updated by this method.
+   */
+  ListenableFuture<Long> changeTTL(StreamConfig streamConfig, long ttl);
+
+  /**
    * Receives event for changes in stream properties.
    *
    * @param listener listener to get called when there is change in stream properties.

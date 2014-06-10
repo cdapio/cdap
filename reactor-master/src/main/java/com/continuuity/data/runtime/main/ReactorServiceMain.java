@@ -90,7 +90,8 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
-  private HiveServer hiveServer;
+  // TODO reintegrate once hive issues in distributed mode are fixed
+  // private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
@@ -130,8 +131,9 @@ public class ReactorServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new HiveRuntimeModule().getDistributedModules()
+      new MetricsClientRuntimeModule().getDistributedModules()
+      // TODO reintegrate once hive issues in distributed mode are fixed
+      // new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -150,8 +152,9 @@ public class ReactorServiceMain extends DaemonMain {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
 
-        hiveServer = injector.getInstance(HiveServer.class);
-        hiveServer.startAndWait();
+        // TODO reintegrate once hive issues in distributed mode are fixed
+        // hiveServer = injector.getInstance(HiveServer.class);
+        // hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -176,9 +179,10 @@ public class ReactorServiceMain extends DaemonMain {
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
         }
-        if (hiveServer != null) {
-          hiveServer.stopAndWait();
-        }
+        // TODO reintegrate once hive issues in distributed mode are fixed
+        // if (hiveServer != null) {
+          // hiveServer.stopAndWait();
+        // }
         isLeader.set(false);
       }
     });

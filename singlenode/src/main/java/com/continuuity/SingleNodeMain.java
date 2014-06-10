@@ -25,6 +25,9 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -72,9 +75,8 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
 
-  // TODO put it back once hive-exec problems are resolved
-  // private final InMemoryHiveMetastore hiveMetastore;
-  // private final HiveServer hiveServer;
+  private final InMemoryHiveMetastore hiveMetastore;
+  private final HiveServer hiveServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
@@ -99,9 +101,8 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    // TODO put it back once hive-exec problems are resolved
-    // hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-    // hiveServer = injector.getInstance(HiveServer.class);
+    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -154,10 +155,9 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
-    // TODO put it back once hive-exec problems are resolved
     // it is important to respect that order: metastore, then HiveServer
-    // hiveMetastore.startAndWait();
-    // hiveServer.startAndWait();
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
 
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
@@ -188,9 +188,8 @@ public class SingleNodeMain {
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    // TODO put it back once hive-exec problems are resolved
-    // hiveServer.stopAndWait();
-    // hiveMetastore.stopAndWait();
+    hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
   }
 
   /**
@@ -310,9 +309,8 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
-      new StreamServiceModule()
-      // TODO put it back once hive-exec problems are resolved
-      // new HiveRuntimeModule().getInMemoryModules()
+      new StreamServiceModule(),
+      new HiveRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -358,9 +356,8 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamServiceModule()
-      // TODO put it back once hive-exec problems are resolved
-      // new HiveRuntimeModule(configuration).getSingleNodeModules()
+      new StreamServiceModule(),
+      new HiveRuntimeModule(configuration).getSingleNodeModules()
     );
   }
 }

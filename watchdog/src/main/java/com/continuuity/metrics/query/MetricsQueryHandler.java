@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-
 /**
  * Class for handling requests for a single metric in a context.
  */
@@ -90,6 +89,12 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
     throws IOException, OperationException {
     handleRequest(request, responder);
+  }
+
+  @GET
+  @Path("/reactor/transactions/{metric}")
+  public void handleTransactionMetrics(HttpRequest request, HttpResponder response) throws IOException {
+    handleRequest(request, response);
   }
 
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {

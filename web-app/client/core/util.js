@@ -888,13 +888,17 @@ define([], function () {
      * @param statuses Object containing statuses.
      * @return {boolean}
      */
-    isLoadingComplete: function(statuses) {
+    isLoadingComplete: function (statuses) {
       for (var item in statuses) {
         if (statuses[item] !== 'OK') {
           return false;
         }
       }
       return true;
+    },
+
+    capitaliseFirstLetter: function (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
     },
 
 		reset: function () {
