@@ -35,6 +35,7 @@ public class LocalHiveServerTest extends HiveServerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
+    conf.set(Constants.Hive.CFG_LOCAL_DATA_DIR, System.getProperty("java.io.tmpdir"));
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(
@@ -46,7 +47,7 @@ public class LocalHiveServerTest extends HiveServerTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getInMemoryModule(),
         new AuthModule(),
-        new HiveClientModule(conf));
+        new HiveClientModule());
     hiveServer = injector.getInstance(HiveServer.class);
     hiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveClient = injector.getInstance(HiveClient.class);

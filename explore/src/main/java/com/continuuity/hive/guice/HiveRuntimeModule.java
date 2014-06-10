@@ -15,16 +15,17 @@ import com.continuuity.hive.metastore.MockHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -56,21 +57,20 @@ public class HiveRuntimeModule extends RuntimeModule {
    */
   private Module getLocalModule() {
     return Modules.combine(new HiveServerModule(),
-        new PrivateModule() {
+        new AbstractModule() {
           @Override
           protected void configure() {
             bind(HiveMetastore.class).annotatedWith(Names.named("hive")).
               to(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
             bind(HiveMetastore.class).toProvider(HiveMetastoreProvider.class).in(Scopes.SINGLETON);
-            expose(HiveMetastore.class);
           }
 
           @Provides
           @Named(Constants.Hive.METASTORE_PORT)
           private int providesHiveMetastorePort(CConfiguration cConf) {
             // Would be better to do it in a local specific HiveServerProvider rather than using this little hack.
-            File warehouseDir = new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "warehouse");
-            File databaseDir = new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "hive"), "database");
+            File warehouseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "warehouse");
+            File databaseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "database");
 
             LOG.debug("Setting {} to {}",
                       HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
@@ -163,7 +163,7 @@ public class HiveRuntimeModule extends RuntimeModule {
   /**
    * Common Hive Module for both singlenode and distributed mode.
    */
-  private static final class HiveServerModule extends PrivateModule {
+  private static final class HiveServerModule extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -178,7 +178,6 @@ public class HiveRuntimeModule extends RuntimeModule {
 
       bind(HiveServer.class).annotatedWith(Names.named("hive")).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
       bind(HiveServer.class).toProvider(HiveServerProvider.class).in(Scopes.SINGLETON);
-      expose(HiveServer.class);
     }
 
     @Provides
@@ -200,7 +199,6 @@ public class HiveRuntimeModule extends RuntimeModule {
       this.cConf = cConf;
       this.injector = injector;
     }
-
 
     @Override
     public HiveServer get() {
@@ -230,6 +228,10 @@ public class HiveRuntimeModule extends RuntimeModule {
     @Override
     public HiveMetastore get() {
       boolean exploreEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED);
+      if (exploreEnabled) {
+        // This will throw exceptions if the checks don't pass
+        HiveServer.checkHiveVersion();
+      }
       return exploreEnabled ?
         injector.getInstance(Key.get(HiveMetastore.class, Names.named("hive"))) :
         injector.getInstance(MockHiveMetastore.class);

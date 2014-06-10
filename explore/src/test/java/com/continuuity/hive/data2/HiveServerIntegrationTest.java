@@ -49,6 +49,7 @@ public class HiveServerIntegrationTest {
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Hive.CFG_LOCAL_DATA_DIR, System.getProperty("java.io.tmpdir"));
     cConf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     Injector injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -192,7 +193,7 @@ public class HiveServerIntegrationTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new HiveRuntimeModule().getInMemoryModules(),
-      new HiveClientModule(configuration)
+      new HiveClientModule()
     );
   }
 
