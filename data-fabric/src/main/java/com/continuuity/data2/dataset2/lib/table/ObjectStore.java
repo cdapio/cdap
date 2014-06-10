@@ -13,6 +13,7 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;

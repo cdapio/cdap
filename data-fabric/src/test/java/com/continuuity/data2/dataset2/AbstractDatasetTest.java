@@ -9,16 +9,23 @@ import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  *
  */
 public class AbstractDatasetTest {
+
+  private static final Gson GSON = new Gson();
 
   private DatasetFramework framework;
 
@@ -62,4 +69,29 @@ public class AbstractDatasetTest {
     return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
   }
 
+  protected void createMultiObjectStoreInstance(String instanceName, Type type) throws Exception {
+    TypeRepresentation typeRep = new TypeRepresentation(type);
+    Schema schema = new ReflectionSchemaGenerator().generate(type);
+    createInstance("multiObjectStore", instanceName, new DatasetInstanceProperties.Builder()
+      .property("type", GSON.toJson(typeRep))
+      .property("schema", GSON.toJson(schema)).build());
+  }
+
+  protected void createObjectStoreInstance(String instanceName, Type type) throws Exception {
+    TypeRepresentation typeRep = new TypeRepresentation(type);
+    Schema schema = new ReflectionSchemaGenerator().generate(type);
+    createInstance("objectStore", instanceName, new DatasetInstanceProperties.Builder()
+      .property("type", GSON.toJson(typeRep))
+      .property("schema", GSON.toJson(schema)).build());
+  }
+
+  protected void createIndexedObjectStoreInstance(String instanceName, Type type) throws Exception {
+    TypeRepresentation typeRep = new TypeRepresentation(type);
+    Schema schema = new ReflectionSchemaGenerator().generate(type);
+    createInstance("indexedObjectStore", instanceName, new DatasetInstanceProperties.Builder()
+      .property("objectStore", new DatasetInstanceProperties.Builder()
+        .property("type", GSON.toJson(typeRep))
+        .property("schema", GSON.toJson(schema)).build())
+      .build());
+  }
 }
