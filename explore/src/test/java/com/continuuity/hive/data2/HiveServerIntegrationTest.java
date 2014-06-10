@@ -18,7 +18,7 @@ import com.continuuity.hive.HiveClientTestUtils;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetProperties;
@@ -41,16 +41,18 @@ import java.util.List;
 public class HiveServerIntegrationTest {
   private static InMemoryTransactionManager transactionManager;
   private static HiveServer hiveServer;
-  private static InMemoryHiveMetastore inMemoryHiveMetastore;
+  private static HiveMetastore inMemoryHiveMetastore;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static HiveClient hiveClient;
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
+    Injector injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    inMemoryHiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
     hiveClient = injector.getInstance(HiveClient.class);
 
@@ -189,8 +191,8 @@ public class HiveServerIntegrationTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule().getInMemoryModules(),
-      new HiveClientModule()
+      new HiveRuntimeModule(configuration).getInMemoryModules(),
+      new HiveClientModule(configuration)
     );
   }
 

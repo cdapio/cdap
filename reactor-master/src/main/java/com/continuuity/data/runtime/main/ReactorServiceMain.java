@@ -133,7 +133,7 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
       // TODO reintegrate once hive issues in distributed mode are fixed
-      // new HiveRuntimeModule().getDistributedModules()
+      // new HiveRuntimeModule(cConf).getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
