@@ -53,7 +53,7 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
 
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
-    return new KeyValueScanner(split);
+    return new KeyValueScanner(table.createSplitReader(split));
   }
 
   /**
@@ -64,8 +64,8 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
     // the underlying KeyValueTable's split reader
     private SplitReader<byte[], Row> reader;
 
-    public KeyValueScanner(Split split) {
-      this.reader = table.createSplitReader(split);
+    public KeyValueScanner(SplitReader<byte[], Row> reader) {
+      this.reader = reader;
     }
 
     @Override
