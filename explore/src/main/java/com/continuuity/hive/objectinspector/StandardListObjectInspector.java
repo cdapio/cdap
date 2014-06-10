@@ -58,6 +58,9 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
           }
           ite.next();
         }
+        if (!ite.hasNext()) {
+          return null;
+        }
         return ite.next();
       } else if (data instanceof Object[]) {
         Object[] list = (Object[]) data;
@@ -66,7 +69,8 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
         }
         return list[index];
       } else {
-        throw new UnsupportedOperationException("Data object is neither a Collection nor an array.");
+        throw new UnsupportedOperationException("Data object " + data.getClass() +
+                                                " is neither a Collection nor an array.");
       }
     } else {
       List<?> list = (List<?>) data;
@@ -90,7 +94,8 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
         Object[] list = (Object[]) data;
         return list.length;
       } else {
-        throw new UnsupportedOperationException("Data object is neither a Collection nor an array.");
+        throw new UnsupportedOperationException("Data object " + data.getClass() +
+                                                " is neither a Collection nor an array.");
       }
     } else {
       List<?> list = (List<?>) data;

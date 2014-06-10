@@ -117,7 +117,7 @@ public class StandardObjectInspectorsTest {
       Assert.assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
                           loi.getListElementObjectInspector());
 
-      // Hash set
+      // Test set inspection
       HashSet<Integer> set = new HashSet<Integer>();
       set.add(0);
       set.add(1);
@@ -157,7 +157,7 @@ public class StandardObjectInspectorsTest {
       Assert.assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
           loi.getListElementObjectInspector());
 
-      // Hash set
+      // Test queue inspection
       Queue<Integer> queue = new ArrayDeque<Integer>();
       queue.add(0);
       queue.add(1);
