@@ -2,7 +2,6 @@ package com.continuuity.hive.client.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.hive.client.DisabledHiveClient;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.HiveCommandExecutor;
 import com.continuuity.hive.client.NoOpHiveClient;
@@ -24,7 +23,7 @@ public class HiveClientModule extends AbstractModule {
   @Override
   protected void configure() {
     if (!exploreEnabled) {
-      bind(HiveClient.class).to(DisabledHiveClient.class);
+      bind(HiveClient.class).to(NoOpHiveClient.class);
     } else {
       bind(HiveClient.class).to(HiveCommandExecutor.class);
     }

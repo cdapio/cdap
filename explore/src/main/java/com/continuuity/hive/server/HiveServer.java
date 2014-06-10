@@ -1,9 +1,9 @@
 package com.continuuity.hive.server;
 
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.continuuity.common.conf.StringUtils;
 
-import java.lang.reflect.Method;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.hive.common.util.HiveVersionInfo;
 
 /**
  * Hive Server 2 service.
@@ -18,19 +18,19 @@ public abstract class HiveServer extends AbstractIdleService {
    */
   public static void checkHiveVersion() {
     try {
-      Class<?> hiveVersionClass = Class.forName("org.apache.hive.common.util.HiveVersionInfo");
-      Method m = hiveVersionClass.getMethod("getVersion");
-      String version = (String) m.invoke(null);
+      String version = HiveVersionInfo.getVersion();
       for (int i = 0; i < SUPPORTED_VERSIONS.length; i++) {
         if (version.startsWith(SUPPORTED_VERSIONS[i])) {
           return;
         }
       }
-      throw new RuntimeException("Hive version " + version + " is not supported.");
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Hive jars not present in classpath");
+      throw new RuntimeException("Hive version " + version + " is not supported. " +
+                                 "Versions supported begin with one of the following: " +
+                                 StringUtils.arrayToString(SUPPORTED_VERSIONS));
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Throwable e) {
-      Throwables.propagate(e);
+      throw new RuntimeException("Hive jars not present in classpath");
     }
   }
 }

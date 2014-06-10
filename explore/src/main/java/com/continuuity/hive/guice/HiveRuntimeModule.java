@@ -77,6 +77,9 @@ public class HiveRuntimeModule extends RuntimeModule {
         }
       };
     } else {
+      // This will throw exceptions if the checks don't pass
+      HiveServer.checkHiveVersion();
+
       LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
       System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
 
