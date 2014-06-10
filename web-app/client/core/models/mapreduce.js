@@ -220,7 +220,7 @@ define(['core/lib/date', 'core/models/program'],
       var app_id = model_id[0];
       var mapreduce_id = model_id[1];
 
-      http.rest('apps', app_id, 'mapreduce', mapreduce_id, {cache: true}, function (model, error) {
+      http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
 
         var model = self.transformModel(model);
         model.app = app_id;

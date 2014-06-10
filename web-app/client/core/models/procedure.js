@@ -68,7 +68,7 @@ define(['core/models/program'], function (Program) {
 			var app_id = model_id[0];
 			var procedure_id = model_id[1];
 
-			http.rest('apps', app_id, 'procedures', procedure_id, {cache: true}, function (model, error) {
+			http.rest('apps', app_id, 'procedures', procedure_id, function (model, error) {
 				var model = self.transformModel(model);
 				model.applicationId = app_id;
 				model = C.Procedure.create(model);

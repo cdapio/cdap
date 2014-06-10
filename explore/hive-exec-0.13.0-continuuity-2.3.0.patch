@@ -1,0 +1,217 @@
+From 01913729221a0f2b00ba855fc8b9ecac83d23250 Mon Sep 17 00:00:00 2001
+From: Julien Guery <julien@continuuity.com>
+Date: Thu, 5 Jun 2014 18:34:06 -0700
+Subject: [PATCH 1/2] Fix some operations in local mode
+
+---
+ ql/pom.xml                                         | 40 +++++++++++++++-------
+ .../apache/hadoop/hive/ql/exec/mr/ExecDriver.java  |  8 +++--
+ .../apache/hadoop/hive/ql/exec/mr/MapRedTask.java  |  2 +-
+ .../hadoop/hive/ql/exec/mr/MapredLocalTask.java    | 11 ++++++
+ 4 files changed, 45 insertions(+), 16 deletions(-)
+
+diff --git a/ql/pom.xml b/ql/pom.xml
+index 3efe463..c86377f 100644
+--- a/ql/pom.xml
++++ b/ql/pom.xml
+@@ -23,7 +23,9 @@
+     <relativePath>../pom.xml</relativePath>
+   </parent>
+ 
++  <groupId>com.continuuity</groupId>
+   <artifactId>hive-exec</artifactId>
++  <version>0.13.0-SNAPSHOT</version>
+   <packaging>jar</packaging>
+   <name>Hive Query Language</name>
+ 
+@@ -38,27 +40,27 @@
+     <dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-ant</artifactId>
+-      <version>${project.version}</version>
++      <version>${project.parent.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-common</artifactId>
+-      <version>${project.version}</version>
++      <version>${project.parent.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-metastore</artifactId>
+-      <version>${project.version}</version>
++      <version>${project.parent.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-serde</artifactId>
+-      <version>${project.version}</version>
++      <version>${project.parent.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-shims</artifactId>
+-      <version>${project.version}</version>
++      <version>${project.parent.version}</version>
+     </dependency>
+     <!-- inter-project -->
+     <dependency>
+@@ -497,16 +499,20 @@
+             <configuration>
+               <artifactSet>
+                 <includes>
++                  <!-- Here we removed all the packaged dependencies
++                       that can enter in conflict with reactor dependencies -->
++
+                   <!-- order is meant to be the same as the ant build -->
+                   <include>org.apache.hive:hive-common</include>
+                   <include>org.apache.hive:hive-exec</include>
+                   <include>org.apache.hive:hive-serde</include>
+                   <include>com.esotericsoftware.kryo:kryo</include>
+                   <include>com.twitter:parquet-hadoop-bundle</include>
+-                  <include>org.apache.thrift:libthrift</include>
+-                  <include>commons-lang:commons-lang</include>
++                  <!--<include>org.apache.thrift:libthrift</include>-->
++                  <!--<include>commons-lang:commons-lang</include>-->
+                   <include>org.json:json</include>
+-                  <include>org.apache.avro:avro-mapred</include>
++                  <!-- NOTE keep avro in mind - might need it sometime -->
++                  <!--<include>org.apache.avro:avro-mapred</include>-->
+                   <include>org.apache.hive.shims:hive-shims-0.20</include>
+                   <include>org.apache.hive.shims:hive-shims-0.20S</include>
+                   <include>org.apache.hive.shims:hive-shims-0.23</include>
+@@ -515,11 +521,11 @@
+                   <include>org.apache.hive.shims:hive-shims-common-secure</include>
+                   <include>com.googlecode.javaewah:JavaEWAH</include>
+                   <include>javolution:javolution</include>
+-                  <include>com.google.protobuf:protobuf-java</include>
+-                  <include>org.iq80.snappy:snappy</include>
+-                  <include>org.codehaus.jackson:jackson-core-asl</include>
+-                  <include>org.codehaus.jackson:jackson-mapper-asl</include>
+-                  <include>com.google.guava:guava</include>
++                  <!--<include>com.google.protobuf:protobuf-java</include>-->
++                  <!--<include>org.iq80.snappy:snappy</include>-->
++                  <!--<include>org.codehaus.jackson:jackson-core-asl</include>-->
++                  <!--<include>org.codehaus.jackson:jackson-mapper-asl</include>-->
++                  <!--<include>com.google.guava:guava</include>-->
+                 </includes>
+               </artifactSet>
+               <relocations>
+@@ -567,4 +573,12 @@
+     </plugins>
+   </build>
+ 
++  <distributionManagement>
++    <snapshotRepository>
++      <id>snapshots</id>
++      <name>Internal Releases</name>
++      <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
++    </snapshotRepository>
++  </distributionManagement>
++
+ </project>
+diff --git a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/ExecDriver.java b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/ExecDriver.java
+index 179ad29..9888f7f 100644
+--- a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/ExecDriver.java
++++ b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/ExecDriver.java
+@@ -614,9 +614,8 @@ private static void setupChildLog4j(Configuration conf) {
+     }
+   }
+ 
+-  @SuppressWarnings("unchecked")
+-  public static void main(String[] args) throws IOException, HiveException {
+ 
++  public static int doMain(String[] args) throws IOException, HiveException {
+     String planFileName = null;
+     String jobConfFileName = null;
+     boolean noLog = false;
+@@ -739,7 +738,12 @@ public static void main(String[] args) throws IOException, HiveException {
+       ExecDriver ed = new ExecDriver(plan, conf, isSilent);
+       ret = ed.execute(new DriverContext());
+     }
++    return ret;
++  }
+ 
++  @SuppressWarnings("unchecked")
++  public static void main(String[] args) throws IOException, HiveException {
++    int ret = doMain(args);
+     if (ret != 0) {
+       System.exit(ret);
+     }
+diff --git a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapRedTask.java b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapRedTask.java
+index 326654f..150b931 100644
+--- a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapRedTask.java
++++ b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapRedTask.java
+@@ -127,7 +127,7 @@ public int execute(DriverContext driverContext) {
+         }
+       }
+ 
+-      runningViaChild = ShimLoader.getHadoopShims().isLocalMode(conf) ||
++      runningViaChild = !ShimLoader.getHadoopShims().isLocalMode(conf) ||
+         conf.getBoolVar(HiveConf.ConfVars.SUBMITVIACHILD);
+ 
+       if(!runningViaChild) {
+diff --git a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapredLocalTask.java b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapredLocalTask.java
+index 55ce0fc..3e2d77f 100644
+--- a/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapredLocalTask.java
++++ b/ql/src/java/org/apache/hadoop/hive/ql/exec/mr/MapredLocalTask.java
+@@ -254,6 +254,17 @@ public int execute(DriverContext driverContext) {
+ 
+       LOG.info("Executing: " + cmdLine);
+ 
++      boolean runningViaChild = !ShimLoader.getHadoopShims().isLocalMode(conf) ||
++          conf.getBoolVar(HiveConf.ConfVars.SUBMITVIACHILD);
++
++      if(!runningViaChild) {
++        // we are not running this mapred task via child jvm
++        // so directly invoke ExecDriver
++        return ExecDriver.doMain(new String[] {"-localtask", "-plan", planPath.toString(),
++                                               "-jobconffile",
++                                               hiveConfArgs.split(" ")[2]});
++      }
++
+       // Run ExecDriver in another JVM
+       executor = Runtime.getRuntime().exec(cmdLine, env, new File(workDir));
+ 
+-- 
+1.8.5.2 (Apple Git-48)
+
+
+From 849af86be72c31e1ef79bd6eff71e69ecf8842ea Mon Sep 17 00:00:00 2001
+From: Julien Guery <julien@continuuity.com>
+Date: Fri, 6 Jun 2014 15:29:32 -0700
+Subject: [PATCH 2/2] Modify version number
+
+---
+ ql/pom.xml | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/ql/pom.xml b/ql/pom.xml
+index c86377f..a55de0b 100644
+--- a/ql/pom.xml
++++ b/ql/pom.xml
+@@ -25,7 +25,7 @@
+ 
+   <groupId>com.continuuity</groupId>
+   <artifactId>hive-exec</artifactId>
+-  <version>0.13.0-SNAPSHOT</version>
++  <version>0.13.0-continuuity-2.3.0-SNAPSHOT</version>
+   <packaging>jar</packaging>
+   <name>Hive Query Language</name>
+ 
+@@ -574,6 +574,11 @@
+   </build>
+ 
+   <distributionManagement>
++    <repository>
++      <id>continuuity-releases</id>
++      <name>Internal Releases</name>
++      <url>https://repository.continuuity.com/content/repositories/releases-public/</url>
++    </repository>
+     <snapshotRepository>
+       <id>snapshots</id>
+       <name>Internal Releases</name>
+-- 
+1.8.5.2 (Apple Git-48)
+
