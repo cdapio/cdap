@@ -80,6 +80,7 @@ public class ServiceRunnableProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runtimeSpec, "Runtime Spec missing for Runnable \"%s\"", runnableName);
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
+      LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getMainClass().getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
