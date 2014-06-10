@@ -17,7 +17,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data.stream.service.StreamServiceModule;
+import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -68,7 +68,7 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
         new DataFabricModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
-        new StreamServiceModule()
+        new StreamServiceRuntimeModule().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
