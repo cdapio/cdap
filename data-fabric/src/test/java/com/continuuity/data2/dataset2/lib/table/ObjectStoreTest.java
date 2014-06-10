@@ -4,15 +4,9 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
-import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -27,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
@@ -39,75 +32,71 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Test for {@link ObjectStore}.
  */
-public class ObjectStoreTest {
+public class ObjectStoreTest extends AbstractDatasetTest {
 
   private static final Gson GSON = new Gson();
   private static final byte[] a = { 'a' };
 
-  private InMemoryDatasetFramework framework;
-
   @Before
   public void setUp() throws Exception {
-    framework = new InMemoryDatasetFramework();
-    framework.register("inMemory", InMemoryTableModule.class);
-    framework.register("table", TableModule.class);
-    framework.register("keyValueTable", KeyValueTableModule.class);
-    framework.register("objectStore", ObjectStoreModule.class);
-    framework.register("integerStore", IntegerStoreModule.class);
+    super.setUp();
+    registerModule("keyValueTable", KeyValueTableModule.class);
+    registerModule("objectStore", ObjectStoreModule.class);
+    registerModule("integerStore", IntegerStoreModule.class);
+  }
 
-    framework.addInstance("keyValueTable", "kv", DatasetInstanceProperties.EMPTY);
-    addIntegerStoreInstance("ints");
-    addObjectStoreInstance("strings", String.class);
-    addObjectStoreInstance("batch", String.class);
-    addObjectStoreInstance("customs", new TypeToken<Custom>() { }.getType());
-    addObjectStoreInstance("customlist", new TypeToken<List<Custom>>() { }.getType());
-    addObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
-    addObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
+  @After
+  public void tearDown() throws Exception {
+    deleteModule("integerStore");
+    deleteModule("objectStore");
+    deleteModule("keyValueTable");
+    super.tearDown();
   }
 
   private void addObjectStoreInstance(String instanceName, Type type) throws Exception {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    framework.addInstance("objectStore", instanceName, new DatasetInstanceProperties.Builder()
+    createInstance("objectStore", instanceName, new DatasetInstanceProperties.Builder()
       .property("type", GSON.toJson(typeRep))
       .property("schema", GSON.toJson(schema))
       .build());
   }
 
   private void addIntegerStoreInstance(String instanceName) throws Exception {
-    framework.addInstance("integerStore", instanceName, DatasetInstanceProperties.EMPTY);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    framework.deleteModule("integerStore");
-    framework.deleteModule("objectStore");
-    framework.deleteModule("keyValueTable");
-    framework.deleteModule("table");
-    framework.deleteModule("inMemory");
+    createInstance("integerStore", instanceName, DatasetInstanceProperties.EMPTY);
   }
 
   @Test
   public void testStringStore() throws Exception {
-    ObjectStore<String> stringStore = getDataSet("strings");
+    addObjectStoreInstance("strings", String.class);
+    
+    ObjectStore<String> stringStore = getInstance("strings");
     String string = "this is a string";
     stringStore.write(a, string);
     String result = stringStore.read(a);
     Assert.assertEquals(string, result);
+
+    deleteInstance("strings");
   }
 
   @Test
   public void testPairStore() throws Exception {
-    ObjectStore<ImmutablePair<Integer, String>> pairStore = getDataSet("pairs");
+    addObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+
+    ObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
     Assert.assertEquals(pair, result);
+
+    deleteInstance("pairs");
   }
 
   @Test
   public void testCustomStore() throws Exception {
-    ObjectStore<Custom> customStore = getDataSet("customs");
+    addObjectStoreInstance("customs", new TypeToken<Custom>() { }.getType());
+
+    ObjectStore<Custom> customStore = getInstance("customs");
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
     Custom result = customStore.read(a);
@@ -116,21 +105,29 @@ public class ObjectStoreTest {
     customStore.write(a, custom);
     result = customStore.read(a);
     Assert.assertEquals(custom, result);
+
+    deleteInstance("customs");
   }
 
   @Test
   public void testInnerStore() throws Exception {
-    ObjectStore<CustomWithInner.Inner<Integer>> innerStore = getDataSet("inners");
+    addObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
+
+    ObjectStore<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
     Assert.assertEquals(inner, result);
+
+    deleteInstance("inners");
   }
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
+    addObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+
     // note: due to type erasure, this succeeds
-    final ObjectStore<Custom> store = getDataSet("pairs");
+    final ObjectStore<Custom> store = getInstance("pairs");
     TransactionExecutor storeTxnl = newTransactionExecutor(store);
     // but now it must fail with incompatible type
     try {
@@ -147,7 +144,7 @@ public class ObjectStoreTest {
     }
 
     // write a correct object to the pair store
-    final ObjectStore<ImmutablePair<Integer, String>> pairStore = getDataSet("pairs");
+    final ObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     TransactionExecutor pairStoreTxnl = newTransactionExecutor(store);
 
     final ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
@@ -179,6 +176,8 @@ public class ObjectStoreTest {
     } catch (TransactionFailureException e) {
       // expected
     }
+
+    deleteInstance("pairs");
   }
 
   @Test
@@ -194,7 +193,9 @@ public class ObjectStoreTest {
       }
     };
 
-    KeyValueTable kvTable = getDataSet("kv");
+    createInstance("keyValueTable", "kv", DatasetInstanceProperties.EMPTY);
+
+    KeyValueTable kvTable = getInstance("kv");
     Type type = Custom.class;
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
@@ -203,11 +204,15 @@ public class ObjectStoreTest {
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+
+    deleteInstance("kv");
   }
 
   @Test
   public void testBatchCustomList() throws Exception {
-    final ObjectStore<List<Custom>> customStore = getDataSet("customlist");
+    addObjectStoreInstance("customlist", new TypeToken<List<Custom>>() { }.getType());
+
+    final ObjectStore<List<Custom>> customStore = getInstance("customlist");
     TransactionExecutor txnl = newTransactionExecutor(customStore);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -253,11 +258,15 @@ public class ObjectStoreTest {
         Assert.assertTrue(keysWritten.isEmpty());
       }
     });
+
+    deleteInstance("customlist");
   }
 
   @Test
   public void testBatchReads() throws Exception {
-    final ObjectStore<String> t = getDataSet("batch");
+    addObjectStoreInstance("batch", String.class);
+
+    final ObjectStore<String> t = getInstance("batch");
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -298,6 +307,8 @@ public class ObjectStoreTest {
         verifySplits(t, splits, keysToVerify);
       }
     });
+
+    deleteInstance("batch");
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
@@ -324,17 +335,12 @@ public class ObjectStoreTest {
 
   @Test
   public void testSubclass() throws Exception {
-    IntegerStore ints = getDataSet("ints");
+    addIntegerStoreInstance("ints");
+
+    IntegerStore ints = getInstance("ints");
     ints.write(42, 101);
     Assert.assertEquals((Integer) 101, ints.read(42));
-  }
 
-  private <T extends Dataset> T getDataSet(String datasetName) throws IOException {
-    return framework.getDataset(datasetName, null);
-  }
-
-  private TransactionExecutor newTransactionExecutor(TransactionAware table) {
-    Preconditions.checkArgument(table != null);
-    return new DefaultTransactionExecutor(new MinimalTxSystemClient(), table);
+    deleteInstance("ints");
   }
 }

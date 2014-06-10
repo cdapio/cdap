@@ -113,7 +113,7 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
-  public boolean swap(byte[] key, byte[] oldValue, byte[] newValue) {
+  public boolean swap(byte[] key, byte[] oldValue, byte[] newValue) throws Exception {
     return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
   }
 

@@ -3,24 +3,16 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
-import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
@@ -28,7 +20,7 @@ import java.util.SortedSet;
 /**
  * Key value table test.
  */
-public class KeyValueTableTest {
+public class KeyValueTableTest extends AbstractDatasetTest {
 
   static final byte[] KEY1 = Bytes.toBytes("KEY1");
   static final byte[] KEY2 = Bytes.toBytes("KEY2");
@@ -37,28 +29,20 @@ public class KeyValueTableTest {
   static final byte[] VAL2 = Bytes.toBytes("VAL2");
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
-  private InMemoryDatasetFramework framework;
   private KeyValueTable kvTable;
 
   @Before
   public void setUp() throws Exception {
-    framework = new InMemoryDatasetFramework();
-    framework.register("inMemory", InMemoryTableModule.class);
-    framework.register("table", TableModule.class);
-    framework.register("keyValueTable", KeyValueTableModule.class);
-
-    framework.addInstance("keyValueTable", "test", DatasetInstanceProperties.EMPTY);
-    framework.addInstance("keyValueTable", "t1", DatasetInstanceProperties.EMPTY);
-    framework.addInstance("keyValueTable", "t2", DatasetInstanceProperties.EMPTY);
-    framework.addInstance("keyValueTable", "tBatch", DatasetInstanceProperties.EMPTY);
-    kvTable = getDataSet("test");
+    super.setUp();
+    registerModule("keyValueTable", KeyValueTableModule.class);
+    createInstance("keyValueTable", "test", DatasetInstanceProperties.EMPTY);
+    kvTable = getInstance("test");
   }
 
   @After
   public void tearDown() throws Exception {
-    framework.deleteModule("keyValueTable");
-    framework.deleteModule("table");
-    framework.deleteModule("inMemory");
+    deleteModule("keyValueTable");
+    super.tearDown();
   }
 
   @Test
@@ -181,8 +165,11 @@ public class KeyValueTableTest {
 
   @Test
   public void testTransactionAcrossTables() throws Exception {
-    final KeyValueTable table1 = getDataSet("t1");
-    final KeyValueTable table2 = getDataSet("t2");
+    createInstance("keyValueTable", "t1", DatasetInstanceProperties.EMPTY);
+    createInstance("keyValueTable", "t2", DatasetInstanceProperties.EMPTY);
+
+    final KeyValueTable table1 = getInstance("t1");
+    final KeyValueTable table2 = getInstance("t2");
     TransactionExecutor txnl = newTransactionExecutor(table1, table2);
 
     // write a value to table1 and verify it
@@ -225,8 +212,8 @@ public class KeyValueTableTest {
     });
 
     // verify synchronously that old value are still there
-    final KeyValueTable table1v2 = getDataSet("t1");
-    final KeyValueTable table2v2 = getDataSet("t2");
+    final KeyValueTable table1v2 = getInstance("t1");
+    final KeyValueTable table2v2 = getInstance("t2");
     TransactionExecutor txnlv2 = newTransactionExecutor(table1v2, table2v2);
     txnlv2.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -235,11 +222,16 @@ public class KeyValueTableTest {
         Assert.assertArrayEquals(VAL2, table2v2.read(KEY2));
       }
     });
+
+    deleteInstance("t1");
+    deleteInstance("t2");
   }
 
   @Test
   public void testBatchReads() throws Exception {
-    final KeyValueTable t = getDataSet("tBatch");
+    createInstance("keyValueTable", "tBatch", DatasetInstanceProperties.EMPTY);
+
+    final KeyValueTable t = getInstance("tBatch");
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -283,6 +275,8 @@ public class KeyValueTableTest {
         verifySplits(t, splits, keysToVerify);
       }
     });
+
+    deleteInstance("tBatch");
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
@@ -305,15 +299,6 @@ public class KeyValueTableTest {
       System.out.println("Remaining [" + keysToVerify.size() + "]: " + keysToVerify);
     }
     Assert.assertTrue(keysToVerify.isEmpty());
-  }
-
-  private <T extends Dataset> T getDataSet(String datasetName) throws IOException {
-    return framework.getDataset(datasetName, null);
-  }
-
-  private TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
-    Preconditions.checkArgument(tables != null);
-    return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
   }
 
 }
