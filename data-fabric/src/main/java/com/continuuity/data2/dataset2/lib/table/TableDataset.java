@@ -210,6 +210,11 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) throws Exception {
+    return table.compareAndSwap(row, column, expectedValue, newValue);
+  }
+
+  @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) {
     try {
       return table.scan(startRow, stopRow);
@@ -234,6 +239,7 @@ class TableDataset extends AbstractDataset implements Table {
    * @return list of {@link Split}
    */
   @Beta
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     try {
       return table.getSplits(numSplits, start, stop);

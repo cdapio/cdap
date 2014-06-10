@@ -61,6 +61,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
+    instances.put(datasetInstanceName, spec);
     def.getAdmin(spec).create();
     instances.put(datasetInstanceName, spec);
   }

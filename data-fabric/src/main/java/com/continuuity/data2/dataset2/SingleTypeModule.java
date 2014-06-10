@@ -100,7 +100,7 @@ public class SingleTypeModule implements DatasetModule {
     final DatasetCtorParam[] ctorParams = new DatasetCtorParam[paramTypes.length];
     for (int i = 0; i < paramTypes.length; i++) {
       if (DatasetSpecification.class.isAssignableFrom(paramTypes[i])) {
-        ctorParams[i] = new DatasetInstanceSpecParam();
+        ctorParams[i] = new DatasetSpecificationParam();
         continue;
       }
       for (Annotation ann : paramAnns[i]) {
@@ -146,7 +146,7 @@ public class SingleTypeModule implements DatasetModule {
     Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException;
   }
 
-  private static final class DatasetInstanceSpecParam implements DatasetCtorParam {
+  private static final class DatasetSpecificationParam implements DatasetCtorParam {
     @Override
     public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) {
       return spec;
