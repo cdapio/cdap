@@ -28,7 +28,6 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
-import com.sun.istack.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -39,6 +38,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link com.continuuity.data2.transaction.stream.StreamConsumerFactory} that reads from stream file
