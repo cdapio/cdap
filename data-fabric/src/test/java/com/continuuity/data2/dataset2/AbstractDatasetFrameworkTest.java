@@ -107,14 +107,14 @@ public abstract class AbstractDatasetFrameworkTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals("value1", table.read("key1"));
+        Assert.assertEquals("value1", Bytes.toString(table.read("key1")));
       }
     });
     admin.truncate();
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(null, table.read("key1"));
+        Assert.assertEquals(null, Bytes.toString(table.read("key1")));
       }
     });
 

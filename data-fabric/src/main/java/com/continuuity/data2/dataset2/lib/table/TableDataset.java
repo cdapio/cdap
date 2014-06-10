@@ -210,6 +210,16 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
+    try {
+      return table.compareAndSwap(row, column, expectedValue, newValue);
+    } catch (Exception e) {
+      LOG.debug("compareAndSwap failed for table: " + getName() + ", row: " + Bytes.toStringBinary(row), e);
+      throw new DataSetException("compareAndSwap failed", e);
+    }
+  }
+
+  @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) {
     try {
       return table.scan(startRow, stopRow);

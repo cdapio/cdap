@@ -173,4 +173,16 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    */
   @Beta
   List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
+
+  /**
+   * Compare the value for key with an expected value, and,
+   * if they match, to replace the value with a new value. If they don't
+   * match, this operation fails with status code WRITE_CONFLICT.
+   *
+   * An expected value of null means that the key must not exist. A new value
+   * of null means that the key shall be deleted instead of replaced.
+   *
+   * @param key the key to delete
+   */
+  boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue);
 }

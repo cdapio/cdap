@@ -1,6 +1,5 @@
 package com.continuuity.data2.dataset2.lib.table;
 
-import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.Split;
@@ -10,13 +9,15 @@ import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * This class implements a key/value map on top of {@link Table}. Supported
  * operations are read and write.
  */
 public class KeyValueTable extends AbstractDataset implements BatchReadable<byte[], byte[]> {
-  private static final byte[] COL = new byte[0];
+  // the fixed single column to use for the key
+  static final byte[] KEY_COLUMN = { 'c' };
 
   private final Table table;
 
@@ -25,21 +26,95 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
     this.table = table;
   }
 
-  public void write(byte[] key, byte[] value) throws Exception {
-    table.put(key, COL, value);
+  /**
+   * Read the value for a given key.
+   * @param key the key to read for
+   * @return the value for that key, or null if no value was found
+   */
+  @Nullable
+  public byte[] read(String key) {
+    return read(Bytes.toBytes(key));
   }
 
-  public void write(String key, String value) throws Exception {
-    table.put(Bytes.toBytes(key), COL, Bytes.toBytes(value));
+  /**
+   * Read the value for a given key.
+   * @param key the key to read for
+   * @return the value for that key, or null if no value was found
+   */
+  @Nullable
+  public byte[] read(byte[] key) {
+    return table.get(key, KEY_COLUMN);
   }
 
-  public byte[] read(byte[] key) throws Exception {
-    return table.get(key, COL);
+  /**
+   * Increment the value for a given key and return the resulting value.
+   * @param key the key to increment
+   * @return the incremented value of that key
+   */
+  public long incrementAndGet(byte[] key, long value) {
+    return this.table.increment(key, KEY_COLUMN, value);
   }
 
-  public String read(String key) throws Exception {
-    byte[] value = table.get(Bytes.toBytes(key), COL);
-    return value == null ? null : Bytes.toString(value);
+  /**
+   * Write a value to a key.
+   *
+   * @param key the key
+   * @param value the new value
+   */
+  public void write(byte[] key, byte[] value) {
+    this.table.put(key, KEY_COLUMN, value);
+  }
+
+  /**
+   * Write a value to a key.
+   *
+   * @param key the key
+   * @param value the new value
+   */
+  public void write(String key, String value) {
+    this.table.put(Bytes.toBytes(key), KEY_COLUMN, Bytes.toBytes(value));
+  }
+
+  /**
+   * Write a value to a key.
+   *
+   * @param key the key
+   * @param value the new value
+   */
+  public void write(String key, byte[] value) {
+    this.table.put(Bytes.toBytes(key), KEY_COLUMN, value);
+  }
+
+  /**
+   * Increment the value tof a key. The key must either not exist yet, or its
+   * current value must be 8 bytes long to be interpretable as a long.
+   * @param key the key
+   * @param value the new value
+   */
+  public void increment(byte[] key, long value) {
+    this.table.increment(key, KEY_COLUMN, value);
+  }
+
+  /**
+   * Delete a key.
+   * @param key the key to delete
+   */
+  public void delete(byte[] key) {
+    this.table.delete(key, KEY_COLUMN);
+  }
+
+  /**
+   * Compare the value for key with an expected value, and,
+   * if they match, to replace the value with a new value. If they don't
+   * match, this operation fails with status code WRITE_CONFLICT.
+   *
+   * An expected value of null means that the key must not exist. A new value
+   * of null means that the key shall be deleted instead of replaced.
+   *
+   * @param key the key to delete
+   */
+  public boolean swap(byte[] key, byte[] oldValue, byte[] newValue) {
+    return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
   }
 
   @Override
@@ -85,7 +160,7 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
 
     @Override
     public byte[] getCurrentValue() throws InterruptedException {
-      return this.reader.getCurrentValue().get(COL);
+      return this.reader.getCurrentValue().get(KEY_COLUMN);
     }
 
     @Override
