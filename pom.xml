@@ -55,6 +55,7 @@
     <module>explore</module>
     <module>reactor-master</module>
     <module>singlenode</module>
+    <module>web-app</module>
   </modules>
 
   <dependencyManagement>
