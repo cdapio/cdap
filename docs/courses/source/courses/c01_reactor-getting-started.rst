@@ -284,6 +284,7 @@ Upon completion of this course you should be able to:
 
 Conclusion
 ==========
+
 .. rst2pdf: CutStart
 
 .fx: center_title_slide
