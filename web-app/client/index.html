@@ -262,6 +262,37 @@
     </form>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="AccessToken">
+    <div id="title">
+      <h1>Access Token&nbsp;</h1>
+    </div>
+    <div id="panels">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title"></div>Access Token</div>
+        <div class="panel-body">
+          <div class="warning">{{warning}}</div>
+          {{view C.Embed.AccessToken}}
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="access-token-view">
+    <table>
+      <tr>
+        <td>Username</td>
+      </tr>
+      <tr>
+        <td>Password</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+        </td>
+      </tr>
+    </table>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Overview">
     <div id="title">
       {{view C.Embed.TimeSelector}}

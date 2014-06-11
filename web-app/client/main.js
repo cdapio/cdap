@@ -64,6 +64,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		this.resource('Services', { path: '/services' } );
 
 		this.resource('Login', { path: '/login' } );
+		this.resource('AccessToken', { path: '/accesstoken' } );
 
 		this.resource('Overview', { path: '/overview' } );
 
@@ -213,6 +214,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
     LoadingRoute: basicRouter.extend(),
 
     LoginRoute: basicRouter.extend(),
+
+    AccessTokenRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
 
