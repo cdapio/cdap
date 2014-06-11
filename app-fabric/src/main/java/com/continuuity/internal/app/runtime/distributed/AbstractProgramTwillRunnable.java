@@ -175,7 +175,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
-      LOG.info("Runnable initializezxd: " + name);
+      LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
