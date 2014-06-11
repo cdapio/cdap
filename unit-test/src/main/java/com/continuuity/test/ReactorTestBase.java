@@ -33,7 +33,8 @@ import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsume
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.hive.metastore.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
@@ -65,7 +66,6 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -105,7 +105,7 @@ public class ReactorTestBase {
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
 
-  private static InMemoryHiveMetastore hiveMetastore;
+  private static HiveMetastore hiveMetastore;
   private static HiveServer hiveServer;
 
 
@@ -180,6 +180,7 @@ public class ReactorTestBase {
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -210,7 +211,7 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
-                                    new HiveRuntimeModule().getInMemoryModules(),
+                                    new HiveRuntimeModule(configuration).getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
@@ -244,7 +245,7 @@ public class ReactorTestBase {
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    hiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
 
     // it is important to respect that order: metastore, then HiveServer

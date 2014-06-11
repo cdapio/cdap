@@ -823,6 +823,10 @@
         <name>hive.server.bind.address</name>
         <value>localhost</value>
     </property>
+    <property>
+        <name>reactor.explore.enabled</name>
+        <value>true</value>
+    </property>
 
     <!--
         External Authentication Settings

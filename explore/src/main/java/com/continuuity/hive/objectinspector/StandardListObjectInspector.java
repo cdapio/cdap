@@ -1,9 +1,13 @@
 package com.continuuity.hive.objectinspector;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.SettableListObjectInspector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,15 +43,35 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     if (data == null) {
       return null;
     }
-    // We support both List<Object> and Object[]
+    // We support both List<Object>, Object[] and Collection<Object>
     // so we have to do differently.
-    boolean isArray = !(data instanceof List);
-    if (isArray) {
-      Object[] list = (Object[]) data;
-      if (index < 0 || index >= list.length) {
-        return null;
+    if (!(data instanceof List)) {
+      if (data instanceof Collection) {
+        Collection<?> collection = (Collection<?>) data;
+        if (index < 0 || index >= collection.size()) {
+          return null;
+        }
+        Iterator<?> ite = collection.iterator();
+        for (int i = 0; i < index; i++) {
+          if (!ite.hasNext()) {
+            return null;
+          }
+          ite.next();
+        }
+        if (!ite.hasNext()) {
+          return null;
+        }
+        return ite.next();
+      } else if (data instanceof Object[]) {
+        Object[] list = (Object[]) data;
+        if (index < 0 || index >= list.length) {
+          return null;
+        }
+        return list[index];
+      } else {
+        throw new UnsupportedOperationException("Data object " + data.getClass() +
+                                                " is neither a Collection nor an array.");
       }
-      return list[index];
     } else {
       List<?> list = (List<?>) data;
       if (index < 0 || index >= list.size()) {
@@ -61,12 +85,18 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     if (data == null) {
       return -1;
     }
-    // We support both List<Object> and Object[]
+    // We support both List<Object>, Object[] and Collection<Object>
     // so we have to do differently.
-    boolean isArray = !(data instanceof List);
-    if (isArray) {
-      Object[] list = (Object[]) data;
-      return list.length;
+    if (!(data instanceof List)) {
+      if (data instanceof Collection) {
+        return ((Collection) data).size();
+      } else if (data instanceof Object[]) {
+        Object[] list = (Object[]) data;
+        return list.length;
+      } else {
+        throw new UnsupportedOperationException("Data object " + data.getClass() +
+                                                " is neither a Collection nor an array.");
+      }
     } else {
       List<?> list = (List<?>) data;
       return list.size();
@@ -77,10 +107,16 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     if (data == null) {
       return null;
     }
-    // We support both List<Object> and Object[]
+    // We support List<Object>, Object[], and Collection<Object>
     // so we have to do differently.
     if (!(data instanceof List)) {
-      data = java.util.Arrays.asList((Object[]) data);
+      if (data instanceof Collection) {
+        data = Lists.newArrayList((Collection<?>) data);
+      } else if (data instanceof Object[]) {
+        data = java.util.Arrays.asList((Object[]) data);
+      } else {
+        throw new UnsupportedOperationException("Data object is neither a Collection nor an array.");
+      }
     }
     List<?> list = (List<?>) data;
     return list;
@@ -104,6 +140,12 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
 
   @Override
   public Object resize(Object list, int newSize) {
+    if (!(list instanceof List) && (list instanceof Collection)) {
+      // NOTE: no use-case should enter this statement,
+      // because the list comes from the create method
+      // but it's better to be safe than sorry.
+      list = Lists.newArrayList((Collection<?>) list);
+    }
     List<Object> a = (List<Object>) list;
     while (a.size() < newSize) {
       a.add(null);
@@ -111,13 +153,21 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
     while (a.size() > newSize) {
       a.remove(a.size() - 1);
     }
+    // Return the modified list, but the list param will not be modified
     return a;
   }
 
   @Override
   public Object set(Object list, int index, Object element) {
+    if (!(list instanceof List) && (list instanceof Collection)) {
+      // NOTE: no use-case should enter this statement,
+      // because the list comes from the create method
+      // but it's better to be safe than sorry.
+      list = Lists.newArrayList((Collection<?>) list);
+    }
     List<Object> a = (List<Object>) list;
     a.set(index, element);
+    // Return the modified list, but the list param will not be modified
     return a;
   }
 

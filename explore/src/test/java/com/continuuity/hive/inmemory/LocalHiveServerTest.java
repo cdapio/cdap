@@ -13,6 +13,7 @@ import com.continuuity.hive.HiveServerTest;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
@@ -27,11 +28,12 @@ public class LocalHiveServerTest extends HiveServerTest {
 
   private final HiveServer hiveServer;
   private final HiveClient hiveClient;
-  private final InMemoryHiveMetastore hiveMetastore;
+  private final HiveMetastore hiveMetastore;
   private final InMemoryTransactionManager transactionManager;
 
   public LocalHiveServerTest() {
     CConfiguration conf = CConfiguration.create();
+    conf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
     Configuration hConf = new Configuration();
 
@@ -39,14 +41,14 @@ public class LocalHiveServerTest extends HiveServerTest {
         new DataFabricInMemoryModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ConfigModule(conf, hConf),
-        new HiveRuntimeModule().getInMemoryModules(),
+        new HiveRuntimeModule(conf).getInMemoryModules(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getInMemoryModule(),
         new AuthModule(),
-        new HiveClientModule());
+        new HiveClientModule(conf));
     hiveServer = injector.getInstance(HiveServer.class);
-    hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    hiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveClient = injector.getInstance(HiveClient.class);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
   }
