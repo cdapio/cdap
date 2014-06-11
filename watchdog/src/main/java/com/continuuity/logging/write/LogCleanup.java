@@ -24,8 +24,7 @@ public final class LogCleanup implements Runnable {
   private final Location logBaseDir;
   private final long retentionDurationMs;
 
-  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location logBaseDir,
-             long retentionDurationMs) {
+  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location logBaseDir, long retentionDurationMs) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.logBaseDir = logBaseDir;
     this.retentionDurationMs = retentionDurationMs;
