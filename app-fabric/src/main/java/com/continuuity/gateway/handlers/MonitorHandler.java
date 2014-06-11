@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -129,11 +131,9 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
       if (reactorServiceManager.canCheckStatus()) {
         if (reactorServiceManager.isServiceAvailable()) {
-          String response = String.format("%s is OK\n", service);
-          responder.sendString(HttpResponseStatus.OK, response);
+          responder.sendString(HttpResponseStatus.OK, STATUSOK);
         } else {
-          String response = String.format("%s not found\n", service);
-          responder.sendString(HttpResponseStatus.NOT_FOUND, response);
+          responder.sendString(HttpResponseStatus.NOT_FOUND, STATUSNOTOK);
         }
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
@@ -148,8 +148,9 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getServiceSpec(final HttpRequest request, final HttpResponder responder) {
     List<Map<String, String>> serviceSpec = new ArrayList<Map<String, String>>();
     String json;
-
-    for (String service : reactorServiceManagementMap.keySet()) {
+    SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
+    List<String> serviceList = new ArrayList<String>(services);
+    for (String service : serviceList) {
       Map<String, String> spec = new HashMap<String, String>();
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
       String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
