@@ -147,8 +147,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     this.scheduledExecutor =
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
-    this.logCleanup = new LogCleanup(locationFactory, fileMetaDataManager,
-                                     logBaseDir, retentionDurationMs);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
 
   }
 
