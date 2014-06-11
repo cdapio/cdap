@@ -3,8 +3,6 @@
  */
 package com.continuuity.data.runtime;
 
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.stream.InMemoryStreamCoordinator;
