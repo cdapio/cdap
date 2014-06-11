@@ -36,6 +36,7 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.twill.internal.utils.Dependencies;
+import org.jruby.compiler.ir.targets.JVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +144,11 @@ public class HiveRuntimeModule extends RuntimeModule {
     }
 
     private String generateAuxJarsClasspath() throws IOException {
+      // Here we find the transitive dependencies and remove all paths that come from the boot class path -
+      // those paths are not needed because the new JVM will have them in its boot class path.
+      // It could even be wrong to keep them because in the target container, the boot class path may be different
+      // (for example, if Hadoop uses a different Java version that Reactor).
+
       final Set<URL> uris = Sets.newHashSet();
 
       ImmutableSet.Builder<String> builder = ImmutableSet.builder();
