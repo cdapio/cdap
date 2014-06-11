@@ -1,0 +1,133 @@
+apply plugin: 'java'
+
+/**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
+}
+
+/**
+ * Enabling building of other jar from common
+ */
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+    // Integration depends on apiJar
+    integrationCompile apiJar.outputs.files
+
+    apiCompile libraries.google_guava
+    apiCompile libraries.google_gson
+    apiCompile libraries.jsr_305
+
+    // Self dependencies.
+    compile apiJar.outputs.files
+
+    // Other dependencies
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+    compile libraries.google_guice_multibindings
+
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+    compile libraries.asm
+    compile libraries.jsr_305
+    compile libraries.slf4j_api
+    compile libraries.google_guava
+    compile libraries.google_gson
+    compile libraries.google_guice
+    compile (libraries.hadoop_common) {
+        exclude group: 'commons-logging'
+        exclude group: 'junit'
+    }
+    compile libraries.hadoop_annotations
+    compile (libraries.hadoop_hdfs) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.hadoop_yarn_common
+    compile libraries.hadoop_yarn_api
+    compile (libraries.thrift) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.jcl_over_slf4j
+    compile libraries.avro
+    compile libraries.avro_ipc
+    compile libraries.flume_ng_sdk
+    compile libraries.flume_ng_core
+    compile libraries.jetty
+    compile libraries.mina_core
+    compile libraries.findbugs_jsr311
+    compile libraries.twill_discovery_api
+    compile libraries.twill_discovery_core
+    compile libraries.twill_zookeeper
+    compile (libraries.twill_yarn) {
+        exclude group: 'org.apache.hadoop'
+    }
+    compile (libraries.commons_beanutils_core) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.netty
+    compile libraries.apache_http_core
+    compile libraries.apache_http_client
+
+    testCompile libraries.hadoop_minicluster
+
+    // For metrics
+    compile "com.yammer.metrics:metrics-core:2.1.5"
+    compile libraries.continuuity_netty_http
+}
+
+checkstyleTest {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+    }
+}
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
+}
+
+
+task generateSources {
+    outputDir = file("$buildDir/generated-sources")
+    outputs.dir outputDir
+    doFirst {
+        outputDir.exists() || outputDir.mkdirs()
+        packageDir = file("$outputDir/com/continuuity/common")
+        packageDir.exists() || packageDir.mkdirs()
+        buildTime = System.currentTimeMillis()
+        new File(packageDir, "BuildInfo.java").write("""
+package com.continuuity.common;
+
+public final class BuildInfo {
+  public static final String VERSION = "${project.version}";
+  public static final long BUILD_TIME = ${buildTime}L;
+}
+        """)
+    }
+}
+compileJava.dependsOn generateSources
+compileJava.source generateSources.outputs.files, sourceSets.main.java

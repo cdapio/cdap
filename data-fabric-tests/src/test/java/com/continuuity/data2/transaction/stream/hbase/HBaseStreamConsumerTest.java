@@ -11,6 +11,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;

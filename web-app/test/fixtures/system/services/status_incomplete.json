@@ -1,0 +1,7 @@
+{
+  "APPFABRIC": "NOT OK",
+  "STREAMS": "OK",
+  "TRANSACTION": "OK",
+  "METRICS": "OK",
+  "RANDOMSERVICE": "NOT OK"
+}

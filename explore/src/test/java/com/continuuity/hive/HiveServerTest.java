@@ -1,6 +1,7 @@
 package com.continuuity.hive;
 
 import com.continuuity.hive.client.HiveClient;
+import com.continuuity.hive.server.HiveServer;
 
 import junit.framework.Assert;
 import org.junit.After;
@@ -50,5 +51,11 @@ public abstract class HiveServerTest {
                                              "first.*second.*1.*one.*2.*two.*3.*three.*4.*four.*5.*five");
 
     getHiveClient().sendCommand("drop table test;", null, null);
+  }
+
+  @Test
+  public void testHiveVersion() throws Exception {
+    // This would throw an exception if it didn't pass
+    HiveServer.checkHiveVersion();
   }
 }

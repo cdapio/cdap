@@ -18,7 +18,7 @@ import com.continuuity.hive.HiveClientTestUtils;
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.inmemory.InMemoryHiveMetastore;
+import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -41,16 +42,20 @@ import java.util.List;
 public class HiveServerIntegrationTest {
   private static InMemoryTransactionManager transactionManager;
   private static HiveServer hiveServer;
-  private static InMemoryHiveMetastore inMemoryHiveMetastore;
+  private static HiveMetastore inMemoryHiveMetastore;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static HiveClient hiveClient;
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+              new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+    cConf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
+    Injector injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    inMemoryHiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
+    inMemoryHiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveServer = injector.getInstance(HiveServer.class);
     hiveClient = injector.getInstance(HiveClient.class);
 

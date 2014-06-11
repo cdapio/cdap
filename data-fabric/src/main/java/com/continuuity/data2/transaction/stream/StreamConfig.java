@@ -28,6 +28,14 @@ public final class StreamConfig {
     this.location = location;
   }
 
+  public StreamConfig() {
+    this.name = null;
+    this.partitionDuration = 0;
+    this.indexInterval = 0;
+    this.ttl = Long.MAX_VALUE;
+    this.location = null;
+  }
+
   /**
    * @return Name of the stream.
    */

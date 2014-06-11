@@ -8,6 +8,7 @@ import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -66,6 +67,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
 
     DatasetDefinition def = registry.get(datasetType);
+    Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
     DatasetInstanceSpec spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec).create();

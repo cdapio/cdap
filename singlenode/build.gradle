@@ -18,8 +18,7 @@ dependencies {
        	compile elastic([ group: 'com.continuuity', name: 'gateway', version: "${version}" , changing: true], "gateway")
         compile elastic([ group: 'com.continuuity', name: 'watchdog', version: "${version}" , changing: true], "watchdog")
 
-        // TODO put it back once hive-exec problems are resolved
-        // compile elastic([ group: 'com.continuuity', name: 'explore', version: "${version}" , changing: true], "explore")
+        compile elastic([ group: 'com.continuuity', name: 'explore', version: "${version}" , changing: true], "explore")
 
         compile libraries.slf4j_api
         compile libraries.logback_core
@@ -43,5 +42,8 @@ jar.exclude '*.xml'
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        resolutionStrategy.force libraries.google_guava
+    }
 }
 
