@@ -13,6 +13,8 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.gateway.auth.AuthModule;
@@ -49,6 +51,12 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DataFabricModules().getInMemoryModules());
     install(new DataSetServiceModules().getInMemoryModule());
     install(new ConfigModule(cConf, hConf));
+    install(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+      }
+    });
     install(new IOModule());
     install(new AuthModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
@@ -60,7 +68,6 @@ public final class AppFabricTestModule extends AbstractModule {
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-    install(new MetricsClientRuntimeModule().getNoopModules());
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new LoggingModules().getInMemoryModules());
     install(new MetricsHandlerModule());

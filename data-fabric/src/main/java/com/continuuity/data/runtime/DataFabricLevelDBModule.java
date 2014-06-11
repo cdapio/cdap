@@ -3,6 +3,8 @@
  */
 package com.continuuity.data.runtime;
 
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.stream.InMemoryStreamCoordinator;
@@ -53,6 +55,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
 
     bind(InMemoryTransactionManager.class).in(Singleton.class);
+    bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
