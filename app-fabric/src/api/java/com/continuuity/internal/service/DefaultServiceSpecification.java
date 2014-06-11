@@ -15,14 +15,16 @@ import javax.annotation.Nullable;
 public class DefaultServiceSpecification implements ServiceSpecification {
 
   private final TwillSpecification specification;
+  private final String className;
 
-  public DefaultServiceSpecification(TwillSpecification specification) {
+  public DefaultServiceSpecification(String className, TwillSpecification specification) {
     this.specification = specification;
+    this.className = className;
   }
 
   @Override
   public String getClassName() {
-    return specification.getClass().getSimpleName();
+    return className;
   }
 
   @Override

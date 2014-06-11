@@ -137,7 +137,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public void addService(TwillApplication application) {
     Preconditions.checkNotNull(application, "Service cannot be null.");
 
-    DefaultServiceSpecification spec = new DefaultServiceSpecification(application.configure());
+    DefaultServiceSpecification spec = new DefaultServiceSpecification(application.getClass().getName(),
+                                                                       application.configure());
     services.put(spec.getName(), spec);
   }
 
