@@ -158,12 +158,14 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Check auth on every route transition.
 		 */
 		activate: function() {
-			var routeHandler = this;
-      C.checkReactorReadiness(routeHandler, function() {
-        if (C.Env.security_enabled) {
-          C.setupAuth(routeHandler);
-        }
-      });
+		  var routeHandler = this;
+		  if (C.Env.security_enabled) {
+		    C.setupAuth(routeHandler, function(){
+		      C.checkReactorReadiness(routeHandler);
+		    })
+		  } else {
+		    C.checkReactorReadiness(routeHandler);
+		  }
 		},
 
 		/*
@@ -381,14 +383,16 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			/**
 			 * Check auth on every route transition.
 			 */
-			activate: function() {
+      activate: function() {
         var routeHandler = this;
-        C.checkReactorReadiness(routeHandler, function() {
-          if (C.Env.security_enabled) {
-            C.setupAuth(routeHandler);
-          }
-        });
-	  	},
+        if (C.Env.security_enabled) {
+          C.setupAuth(routeHandler, function(){
+            C.checkReactorReadiness(routeHandler);
+          })
+        } else {
+          C.checkReactorReadiness(routeHandler);
+        }
+      },
 			/*
 			 * Override to load the Controller once the Route has been activated.
 			 */
