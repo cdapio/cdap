@@ -83,16 +83,6 @@ public final class DatasetInstanceSpec {
   }
 
   /**
-   * Lookup a required custom property of the dataset.
-   * @param key the name of the property
-   * @return the value of the property
-   */
-  public String getRequiredProperty(String key) {
-    Preconditions.checkArgument(properties.containsKey(key), "Missing required property " + key);
-    return properties.get(key);
-  }
-
-  /**
    * Lookup a custom property of the dataset.
    * @param key the name of the property
    * @param defaultValue the value to return if property does not exist
@@ -100,16 +90,6 @@ public final class DatasetInstanceSpec {
    */
   public String getProperty(String key, String defaultValue) {
     return properties.containsKey(key) ? getProperty(key) : defaultValue;
-  }
-
-  /**
-   * Lookup a custom property of the dataset.
-   * @param key the name of the property
-   * @param defaultValue the value to return if property does not exist
-   * @return the value of the property or defaultValue if the property does not exist
-   */
-  public int getIntProperty(String key, int defaultValue) {
-    return Integer.parseInt(getProperty(key, Integer.toString(defaultValue)));
   }
 
   /**
