@@ -4,10 +4,10 @@
 
 package com.continuuity.logging.write;
 
+import com.continuuity.common.io.Locations;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +24,10 @@ public final class LogCleanup implements Runnable {
   private final Location logBaseDir;
   private final long retentionDurationMs;
 
-  public LogCleanup(LocationFactory locationFactory, FileMetaDataManager fileMetaDataManager, Location logBaseDir,
+  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location logBaseDir,
              long retentionDurationMs) {
     this.fileMetaDataManager = fileMetaDataManager;
-    this.logBaseDir = LocationUtils.normalize(locationFactory, logBaseDir);
+    this.logBaseDir = logBaseDir;
     this.retentionDurationMs = retentionDurationMs;
 
     LOG.info("Log base dir = {}", logBaseDir.toURI());
@@ -49,7 +49,7 @@ public final class LogCleanup implements Runnable {
                                                 LOG.info(String.format("Deleting log file %s", location.toURI()));
                                                 location.delete();
                                               }
-                                              parentDirs.add(LocationUtils.getParent(location));
+                                              parentDirs.add(getParent(location));
                                             } catch (IOException e) {
                                               LOG.error(
                                                 String.format("Got exception when deleting path %s",
@@ -67,6 +67,11 @@ public final class LogCleanup implements Runnable {
     } catch (Throwable e) {
       LOG.error("Got exception when cleaning up. Will try again later.", e);
     }
+  }
+
+  Location getParent(Location location) {
+    Location parent = Locations.getParent(location);
+    return (parent == null) ? location : parent;
   }
 
   /**
@@ -89,7 +94,7 @@ public final class LogCleanup implements Runnable {
         LOG.info("Deleted empty dir {}", dir.toURI());
 
         // See if parent dir is empty, and needs deleting
-        Location parent = LocationUtils.getParent(dir);
+        Location parent = getParent(dir);
         LOG.debug("Deleting parent dir {}", parent);
         deleteEmptyDir(parent);
       } else {
