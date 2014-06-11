@@ -5,6 +5,7 @@ import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.DatasetSpecification;
+import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
@@ -13,21 +14,21 @@ import com.google.gson.Gson;
 import java.io.IOException;
 
 /**
- * DatasetDefinition for {@link ObjectStore}.
+ * DatasetDefinition for {@link com.continuuity.data2.dataset2.lib.table.MultiObjectStore}.
  *
- * @param <T> Type of object that the {@link ObjectStore} will store.
+ * @param <T> Type of object that the {@link com.continuuity.data2.dataset2.lib.table.MultiObjectStore} will store.
  */
-public class ObjectStoreDefinition<T>
-  extends AbstractDatasetDefinition<ObjectStore<T>, DatasetAdmin> {
+public class MultiObjectStoreDefinition<T>
+  extends AbstractDatasetDefinition<MultiObjectStore<T>, DatasetAdmin> {
 
   private static final Gson GSON = new Gson();
 
-  private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
+  private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public ObjectStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+  public MultiObjectStoreDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
-    Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
-    this.tableDef = keyValueDef;
+    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+    this.tableDef = tableDef;
   }
 
   @Override
@@ -46,13 +47,13 @@ public class ObjectStoreDefinition<T>
   }
 
   @Override
-  public ObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec);
+  public MultiObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
+    DatasetSpecification tableSpec = spec.getSpecification("table");
+    Table table = tableDef.getDataset(tableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new ObjectStore<T>(spec.getName(), table, typeRep, schema);
+    return new MultiObjectStore<T>(spec.getName(), table, typeRep, schema);
   }
 
 }

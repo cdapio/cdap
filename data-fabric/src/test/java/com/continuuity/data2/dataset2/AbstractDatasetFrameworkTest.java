@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.lib.table.KeyValueTable;
-import com.continuuity.data2.dataset2.lib.table.KeyValueTableModule;
 import com.continuuity.data2.dataset2.module.lib.TableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -77,8 +77,7 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("table", new TableModule());
-    framework.addModule("keyValue", new KeyValueTableModule());
+    framework.addModule("default", new CoreDatasetsModule());
 
     // Creating instance
     framework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
@@ -87,8 +86,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance("my_table");
-    framework.deleteModule("keyValue");
-    framework.deleteModule("table");
+    framework.deleteModule("default");
     framework.deleteModule("inMemory");
   }
 

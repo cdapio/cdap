@@ -6,6 +6,7 @@ import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
+import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 
@@ -17,9 +18,10 @@ public class KeyValueTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
+  public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
-    this.tableDef = orderedTableDefinition;
+    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+    this.tableDef = tableDef;
   }
 
   @Override
