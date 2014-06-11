@@ -21,7 +21,6 @@ import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
-import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnDesc;
@@ -90,7 +89,6 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
       handleMap.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf));
       return handle;
     } catch (Exception e) {
-      // TODO: fix exception handling
       throw new ExploreException(e);
     }
   }
@@ -99,8 +97,7 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
   public Status getStatus(Handle handle) throws ExploreException {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
-      OperationState operationState = cliService.getOperationStatus(operationHandle);
-      Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      Status status = HiveCompat.getStatus(cliService, operationHandle);
       LOG.debug("Status of handle {} is {}", handle, status);
       return status;
     } catch (HiveSQLException e) {

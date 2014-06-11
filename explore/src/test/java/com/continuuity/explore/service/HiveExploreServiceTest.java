@@ -25,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,6 +54,8 @@ public class HiveExploreServiceTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
+    // TODO: remove this once guice module is consolidated.
+    System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
     hiveExploreService = injector.getInstance(HiveExploreService.class);
     hiveExploreService.start();
 
@@ -219,7 +222,7 @@ public class HiveExploreServiceTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new HiveRuntimeModule().getInMemoryModules(),
-      new HiveClientModule()
+      new HiveClientModule(configuration)
     );
   }
 }
