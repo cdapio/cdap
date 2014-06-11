@@ -38,16 +38,14 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("keyValueTable", KeyValueTableModule.class);
-    registerModule("objectStore", ObjectStoreModule.class);
+    registerModule("core", CoreDatasetsModule.class);
     registerModule("integerStore", IntegerStoreModule.class);
   }
 
   @After
   public void tearDown() throws Exception {
     deleteModule("integerStore");
-    deleteModule("objectStore");
-    deleteModule("keyValueTable");
+    deleteModule("core");
     super.tearDown();
   }
 

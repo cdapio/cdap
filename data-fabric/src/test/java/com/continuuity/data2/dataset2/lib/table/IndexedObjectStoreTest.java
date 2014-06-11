@@ -20,16 +20,12 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("keyValueTable", KeyValueTableModule.class);
-    registerModule("objectStore", ObjectStoreModule.class);
-    registerModule("indexedObjectStore", IndexedObjectStoreModule.class);
+    registerModule("core", CoreDatasetsModule.class);
   }
 
   @After
   public void tearDown() throws Exception {
-    deleteModule("indexedObjectStore");
-    deleteModule("objectStore");
-    deleteModule("keyValueTable");
+    deleteModule("core");
     super.tearDown();
   }
 

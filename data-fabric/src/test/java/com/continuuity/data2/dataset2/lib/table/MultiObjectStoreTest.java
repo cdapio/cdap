@@ -3,7 +3,6 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -39,13 +38,13 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("multiObjectStore", MultiObjectStoreModule.class);
+    registerModule("core", CoreDatasetsModule.class);
   }
 
   @After
   public void tearDown() throws Exception {
     super.tearDown();
-    deleteModule("multiObjectStore");
+    deleteModule("core");
   }
 
   @Test

@@ -45,7 +45,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    registerModule("indexedTable", IndexedTableModule.class);
+    registerModule("core", CoreDatasetsModule.class);
     createInstance("indexedTable", "tab", new DatasetInstanceProperties.Builder()
       .property("columnToIndex", idxColString)
       .build());
@@ -55,6 +55,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
   @After
   public void tearDown() throws Exception {
     deleteInstance("tab");
+    deleteModule("core");
     super.tearDown();
   }
 
