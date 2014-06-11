@@ -1,10 +1,8 @@
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.lib.table.KeyValueTable;
-import com.continuuity.data2.dataset2.lib.table.KeyValueTableModule;
-import com.continuuity.data2.dataset2.lib.table.ObjectStore;
-import com.continuuity.data2.dataset2.lib.table.ObjectStoreModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -13,19 +11,11 @@ import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.TypeRepresentation;
-import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -86,7 +76,7 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     framework.register("inMemory", InMemoryTableModule.class);
-    framework.register("keyValue", KeyValueTableModule.class);
+    framework.register("default", CoreDatasetsModule.class);
 
     // Creating instance
     framework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
@@ -120,7 +110,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance("my_table");
-    framework.deleteModule("keyValue");
+    framework.deleteModule("default");
     framework.deleteModule("inMemory");
   }
 

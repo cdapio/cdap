@@ -24,9 +24,10 @@ public class ObjectStoreDefinition<T>
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public ObjectStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
+  public ObjectStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
     super(name);
-    this.tableDef = keyValueTableDefinition;
+    Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
+    this.tableDef = keyValueDef;
   }
 
   @Override

@@ -7,25 +7,42 @@ import com.continuuity.hive.client.HiveCommandExecutor;
 import com.continuuity.hive.client.NoOpHiveClient;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Provider;
+import com.google.inject.name.Names;
 
 /**
  * Guice module for hive client.
  */
 public class HiveClientModule extends AbstractModule {
 
-  private final boolean exploreEnabled;
-
-  public HiveClientModule(CConfiguration conf) {
-    this.exploreEnabled = conf.getBoolean(Constants.Hive.EXPLORE_ENABLED,
-                                          Constants.Hive.DEFAULT_EXPLORE_ENABLED);
-  }
-
   @Override
   protected void configure() {
-    if (!exploreEnabled) {
-      bind(HiveClient.class).to(NoOpHiveClient.class);
-    } else {
-      bind(HiveClient.class).to(HiveCommandExecutor.class);
+    bind(HiveClient.class).annotatedWith(Names.named("runtime-client")).to(HiveCommandExecutor.class);
+    bind(HiveClient.class).toProvider(HiveClientProvider.class);
+  }
+
+  private static final class HiveClientProvider implements Provider<HiveClient> {
+
+    private final CConfiguration configuration;
+    private final Injector injector;
+
+    @Inject
+    private HiveClientProvider(CConfiguration configuration, Injector injector) {
+      this.configuration = configuration;
+      this.injector = injector;
+    }
+
+    @Override
+    public HiveClient get() {
+      boolean exploreEnabled = configuration.getBoolean(Constants.Hive.EXPLORE_ENABLED);
+      if (!exploreEnabled) {
+        return injector.getInstance(NoOpHiveClient.class);
+      } else {
+        return injector.getInstance(Key.get(HiveClient.class, Names.named("runtime-client")));
+      }
     }
   }
 }
