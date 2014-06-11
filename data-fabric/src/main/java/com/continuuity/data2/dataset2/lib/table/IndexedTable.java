@@ -1,6 +1,5 @@
 package com.continuuity.data2.dataset2.lib.table;
 
-import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.data.dataset.lib.table.Delete;
@@ -31,10 +30,6 @@ public class IndexedTable extends AbstractDataset {
   // the secondary index column
   private byte[] column;
 
-  // String representation of the column, mainly for storing into spec.
-  @Property
-  private String columnName;
-
   /**
    * Configuration time constructor.
    * @param name the name of the table
@@ -46,7 +41,6 @@ public class IndexedTable extends AbstractDataset {
     super(name, table, index);
     this.table = table;
     this.index = index;
-    this.columnName = columnToIndex;
     this.column = Bytes.toBytes(columnToIndex);
   }
 
