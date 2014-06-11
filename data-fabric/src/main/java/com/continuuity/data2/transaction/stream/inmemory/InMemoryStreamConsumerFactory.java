@@ -4,7 +4,6 @@
 package com.continuuity.data2.transaction.stream.inmemory;
 
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -12,7 +11,6 @@ import com.continuuity.data2.transaction.stream.QueueToStreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.google.inject.Inject;
-import com.sun.istack.Nullable;
 
 import java.io.IOException;
 
