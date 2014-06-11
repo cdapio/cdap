@@ -209,7 +209,7 @@ public class LogCleanupTest {
   }
 
   private Location createFile(Location path) throws Exception {
-    Location parent = LocationUtils.getParent(locationFactory, path);
+    Location parent = LocationUtils.getParent(path);
     parent.mkdirs();
 
     path.createNew();

@@ -1,5 +1,6 @@
 package com.continuuity.logging.write;
 
+import com.continuuity.common.io.Locations;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -16,15 +17,8 @@ class LocationUtils {
     return path;
   }
 
-  static Location getParent(LocationFactory locationFactory, Location location) {
-    String path = location.toURI().getRawPath();
-    if (path.length() > 1 && path.endsWith("/")) {
-      path = path.replaceAll("/+$", "");
-    }
-
-    if (path.equals("/")) {
-      return location;
-    }
-    return locationFactory.create(path.substring(0, path.lastIndexOf("/")));
+  static Location getParent(Location location) {
+    Location parent = Locations.getParent(location);
+    return (parent == null) ? location : parent;
   }
 }

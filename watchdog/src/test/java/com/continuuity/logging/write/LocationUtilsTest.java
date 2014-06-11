@@ -38,25 +38,25 @@ public class LocationUtilsTest {
   @Test
   public void testGetParent() throws Exception {
     Assert.assertEquals(locationFactory.create("/").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/")).toURI());
     Assert.assertEquals(locationFactory.create("/").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("//")).toURI());
+                        LocationUtils.getParent(locationFactory.create("//")).toURI());
 
 
 
     Assert.assertEquals(locationFactory.create("/").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp")).toURI());
     Assert.assertEquals(locationFactory.create("/").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp/")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp/")).toURI());
     Assert.assertEquals(locationFactory.create("/").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp//")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp//")).toURI());
 
     Assert.assertEquals(locationFactory.create("/tmp").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp/a")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp/a")).toURI());
     Assert.assertEquals(locationFactory.create("/tmp").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp/a/")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp/a/")).toURI());
     Assert.assertEquals(locationFactory.create("/tmp").toURI(),
-                        LocationUtils.getParent(locationFactory, locationFactory.create("/tmp/a///")).toURI());
+                        LocationUtils.getParent(locationFactory.create("/tmp/a///")).toURI());
 
 
   }
