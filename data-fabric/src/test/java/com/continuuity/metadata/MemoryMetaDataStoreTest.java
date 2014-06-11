@@ -8,8 +8,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
 /**
