@@ -2,7 +2,7 @@ package com.continuuity.hive.metastore;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.hive.server.RuntimeHiveServer;
-import com.google.common.util.concurrent.AbstractIdleService;
+
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.hive.conf.HiveConf;

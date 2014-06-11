@@ -180,6 +180,8 @@ public class ReactorTestBase {
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
     configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
 
     // Windows specific requirements
@@ -211,7 +213,7 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
-                                    new HiveRuntimeModule(configuration).getInMemoryModules(),
+                                    new HiveRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),

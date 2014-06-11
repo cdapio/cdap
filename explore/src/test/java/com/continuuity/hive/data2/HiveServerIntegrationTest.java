@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -49,6 +50,8 @@ public class HiveServerIntegrationTest {
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+              new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
     cConf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     Injector injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -191,8 +194,8 @@ public class HiveServerIntegrationTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule(configuration).getInMemoryModules(),
-      new HiveClientModule(configuration)
+      new HiveRuntimeModule().getInMemoryModules(),
+      new HiveClientModule()
     );
   }
 
