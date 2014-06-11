@@ -113,7 +113,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      responder.sendStatus(HttpResponseStatus.OK);
+      responder.sendJson(HttpResponseStatus.OK, streamAdmin.getConfig(stream));
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
