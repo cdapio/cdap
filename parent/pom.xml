@@ -992,6 +992,11 @@
 
     <profile>
       <id>dist</id>
+      <properties>
+        <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
+        <stage.opt.dir>${stage.dir}/opt/continuuity/${project.artifactId}</stage.opt.dir>
+        <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+      </properties>
       <build>
         <pluginManagement>
           <plugins>
@@ -1003,7 +1008,7 @@
                 <execution>
                   <id>jar</id>
                   <configuration>
-                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                    <outputDirectory>${stage.lib.dir}</outputDirectory>
                   </configuration>
                   <goals>
                     <goal>jar</goal>
@@ -1023,12 +1028,119 @@
                     <goal>copy-dependencies</goal>
                   </goals>
                   <configuration>
-                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                    <outputDirectory>${stage.lib.dir}</outputDirectory>
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus</excludeGroupIds>
                     <silent>true</silent>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <executions>
+                <execution>
+                  <id>copy-opt</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.opt.dir}</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions</directory>
+                        <includes>
+                          <include>VERSION</include>
+                        </includes>
+                        <filtering>true</filtering>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src</directory>
+                        <includes>
+                          <include>LICENSE-2.0.txt</include>
+                        </includes>
+                      </resource>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/common/bin</directory>
+                        <targetPath>bin</targetPath>
+                      </resource>
+                      <resource>
+                        <directory>bin</directory>
+                        <targetPath>bin</targetPath>
+                        <excludes>
+                          <exclude>node</exclude>
+                        </excludes>
+                      </resource>
+                      <resource>
+                        <directory>conf</directory>
+                        <targetPath>conf</targetPath>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
+    <profile>
+      <id>rpm-prepare</id>
+      <properties>
+        <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
+        <stage.init.dir>${stage.dir}/etc/rc.d/init.d</stage.init.dir>
+        <service.name>${project.artifactId}</service.name>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <executions>
+                <execution>
+                  <id>copy-etc</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
+                        <includes>
+                          <include>continuuity-service</include>
+                        </includes>
+                        <filtering>true</filtering>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <execution>
+                  <id>rename-service</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                  <configuration>
+                    <target>
+                      <copy file="${project.build.directory}/continuuity-service" tofile="${stage.init.dir}/continuuity-${service.name}" />
+                    </target>
                   </configuration>
                 </execution>
               </executions>
