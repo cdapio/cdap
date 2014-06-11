@@ -21,6 +21,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.File;
+
 /**
  *
  */
@@ -35,7 +37,8 @@ public class LocalHiveServerTest extends HiveServerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
-    conf.set(Constants.Hive.CFG_LOCAL_DATA_DIR, System.getProperty("java.io.tmpdir"));
+    conf.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+             new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(

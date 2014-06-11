@@ -30,7 +30,7 @@ public class HiveClientModule extends AbstractModule {
     private final Injector injector;
 
     @Inject
-    public HiveClientProvider(CConfiguration configuration, Injector injector) {
+    private HiveClientProvider(CConfiguration configuration, Injector injector) {
       this.configuration = configuration;
       this.injector = injector;
     }

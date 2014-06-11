@@ -799,7 +799,7 @@
     </property>
     <property>
         <name>reactor.explore.enabled</name>
-        <value>true</value>
+        <value>false</value>
     </property>
     <property>
         <name>hive.local.data.dir</name>

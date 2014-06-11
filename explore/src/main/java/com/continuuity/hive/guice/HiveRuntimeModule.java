@@ -55,42 +55,20 @@ public class HiveRuntimeModule extends RuntimeModule {
   /**
    * Sets up modules for running hive in singlenode or in-memory mode.
    */
-  private Module getLocalModule() {
-    return Modules.combine(new HiveServerModule(),
+  private Module getLocalModule(final boolean inMemory) {
+    return Modules.combine(
+        new HiveServerModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(HiveMetastore.class).annotatedWith(Names.named("hive")).
-              to(InMemoryHiveMetastore.class).in(Scopes.SINGLETON);
             bind(HiveMetastore.class).toProvider(HiveMetastoreProvider.class).in(Scopes.SINGLETON);
+            bind(HiveServerProvider.class).to(HiveLocalServerProvider.class).in(Scopes.SINGLETON);
+            bind(boolean.class).annotatedWith(Names.named("inmemory")).toInstance(inMemory);
           }
 
           @Provides
           @Named(Constants.Hive.METASTORE_PORT)
-          private int providesHiveMetastorePort(CConfiguration cConf) {
-            // Would be better to do it in a local specific HiveServerProvider rather than using this little hack.
-            File warehouseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "warehouse");
-            File databaseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "database");
-
-            LOG.debug("Setting {} to {}",
-                      HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
-            System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
-
-            String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
-            LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
-            System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
-
-            // Some more local mode settings
-            System.setProperty(HiveConf.ConfVars.LOCALMODEAUTO.toString(), "true");
-            System.setProperty(HiveConf.ConfVars.SUBMITVIACHILD.toString(), "false");
-            System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
-
-            // Disable security
-            // TODO: verify if auth=NOSASL is really needed
-            System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
-            System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
-            System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
-
+          private int providesHiveMetastorePort() {
             // Select a random free port for hive metastore to run
             final int hiveMetaStorePort = Networks.getRandomPort();
             if (hiveMetaStorePort < 0) {
@@ -106,60 +84,26 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return getLocalModule();
+    return getLocalModule(true);
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return getLocalModule();
+    return getLocalModule(false);
   }
 
   @Override
   public Module getDistributedModules() {
-    try {
-      String auxJarsPath = generateAuxJarsClasspath();
-      System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-          System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
-
-      return new HiveServerModule();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return Modules.combine(
+        new HiveServerModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(HiveServerProvider.class).to(HiveDistributedServerProvider.class).in(Scopes.SINGLETON);
+          }
+        });
   }
 
-  private String generateAuxJarsClasspath() throws IOException {
-    final Set<URL> uris = Sets.newHashSet();
-
-    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
-    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
-      File file = new File(classpath);
-      builder.add(file.getAbsolutePath());
-      try {
-        builder.add(file.getCanonicalPath());
-      } catch (IOException e) {
-        // Ignore the exception and proceed.
-      }
-    }
-
-    final Set<String> bootstrapClassPaths = builder.build();
-    Dependencies.findClassDependencies(this.getClass().getClassLoader(),
-     new Dependencies.ClassAcceptor() {
-       @Override
-       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-         if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
-           return false;
-         }
-
-         uris.add(classPathUrl);
-         return true;
-       }
-     },
-     DatasetServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
-     new HBaseTableUtilFactory().get().getClass().getCanonicalName());
-
-    return Joiner.on(',').join(uris);
-  }
   /**
    * Common Hive Module for both singlenode and distributed mode.
    */
@@ -167,16 +111,6 @@ public class HiveRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
-
-      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
-
-
-      bind(HiveServer.class).annotatedWith(Names.named("hive")).to(RuntimeHiveServer.class).in(Scopes.SINGLETON);
       bind(HiveServer.class).toProvider(HiveServerProvider.class).in(Scopes.SINGLETON);
     }
 
@@ -189,7 +123,83 @@ public class HiveRuntimeModule extends RuntimeModule {
   }
 
   @Singleton
-  private static final class HiveServerProvider implements Provider<HiveServer> {
+  private static final class HiveDistributedServerProvider extends HiveServerProvider {
+
+    @Inject
+    private HiveDistributedServerProvider(CConfiguration cConf, Injector injector) {
+      super(cConf, injector);
+    }
+
+    @Override
+    protected void setProperties() {
+      try {
+        String auxJarsPath = generateAuxJarsClasspath();
+        System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
+        LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
+            System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    private String generateAuxJarsClasspath() throws IOException {
+      final Set<URL> uris = Sets.newHashSet();
+
+      ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+      for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+        File file = new File(classpath);
+        builder.add(file.getAbsolutePath());
+        try {
+          builder.add(file.getCanonicalPath());
+        } catch (IOException e) {
+          // Ignore the exception and proceed.
+        }
+      }
+
+      final Set<String> bootstrapClassPaths = builder.build();
+      Dependencies.findClassDependencies(this.getClass().getClassLoader(),
+          new Dependencies.ClassAcceptor() {
+            @Override
+            public boolean accept(String className, URL classUrl, URL classPathUrl) {
+              if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+                return false;
+              }
+
+              uris.add(classPathUrl);
+              return true;
+            }
+          },
+          DatasetServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
+          new HBaseTableUtilFactory().get().getClass().getCanonicalName());
+
+      return Joiner.on(',').join(uris);
+    }
+  }
+
+  @Singleton
+  private static final class HiveLocalServerProvider extends HiveServerProvider {
+
+    @Inject
+    private HiveLocalServerProvider(CConfiguration cConf, Injector injector) {
+      super(cConf, injector);
+    }
+
+    @Override
+    protected void setProperties() {
+      // Some more local mode settings
+      System.setProperty(HiveConf.ConfVars.LOCALMODEAUTO.toString(), "true");
+      System.setProperty(HiveConf.ConfVars.SUBMITVIACHILD.toString(), "false");
+      System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
+
+      // Disable security
+      // TODO: verify if auth=NOSASL is really needed
+      System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
+      System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
+      System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
+    }
+  }
+
+  private abstract static class HiveServerProvider implements Provider<HiveServer> {
 
     private final CConfiguration cConf;
     private final Injector injector;
@@ -200,16 +210,28 @@ public class HiveRuntimeModule extends RuntimeModule {
       this.injector = injector;
     }
 
+    protected abstract void setProperties();
+
     @Override
     public HiveServer get() {
       boolean exploreEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED);
-      if (exploreEnabled) {
-        // This will throw exceptions if the checks don't pass
-        HiveServer.checkHiveVersion();
+      if (!exploreEnabled) {
+        return injector.getInstance(MockHiveServer.class);
       }
-      return exploreEnabled ?
-        injector.getInstance(Key.get(HiveServer.class, Names.named("hive"))) :
-        injector.getInstance(MockHiveServer.class);
+      // This will throw exceptions if the checks don't pass
+      HiveServer.checkHiveVersion();
+
+      // Common configuration settings
+      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
+      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
+                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
+
+      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
+      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
+                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
+
+      setProperties();
+      return injector.getInstance(RuntimeHiveServer.class);
     }
   }
 
@@ -225,16 +247,37 @@ public class HiveRuntimeModule extends RuntimeModule {
       this.injector = injector;
     }
 
+    private static final long seed = System.currentTimeMillis();
     @Override
     public HiveMetastore get() {
       boolean exploreEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED);
-      if (exploreEnabled) {
-        // This will throw exceptions if the checks don't pass
-        HiveServer.checkHiveVersion();
+      if (!exploreEnabled) {
+        return injector.getInstance(MockHiveMetastore.class);
       }
-      return exploreEnabled ?
-        injector.getInstance(Key.get(HiveMetastore.class, Names.named("hive"))) :
-        injector.getInstance(MockHiveMetastore.class);
+      // This will throw exceptions if the checks don't pass
+      HiveServer.checkHiveVersion();
+
+      File warehouseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "warehouse");
+      File databaseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "database");
+
+      boolean useSeed = injector.getInstance(Key.get(boolean.class, Names.named("inmemory")));
+      if (useSeed) {
+        // This seed is required to make all tests pass when launched together, and when several of them
+        // start a hive metastore / hive server.
+        // TODO try to remove once maven is there
+        warehouseDir = new File(warehouseDir, Long.toString(seed));
+        databaseDir = new File(databaseDir, Long.toString(seed));
+      }
+
+      LOG.debug("Setting {} to {}",
+          HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
+      System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
+
+      String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
+      LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
+      System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
+
+      return injector.getInstance(InMemoryHiveMetastore.class);
     }
   }
 }
