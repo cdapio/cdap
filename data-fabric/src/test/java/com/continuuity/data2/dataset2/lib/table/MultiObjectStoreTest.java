@@ -12,6 +12,7 @@ import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -131,7 +132,7 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
-    createMultiObjectStoreInstance("pairs", Custom.class);
+    createMultiObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     // note: due to type erasure, this succeeds
     final MultiObjectStore<Custom> store = getInstance("pairs");
