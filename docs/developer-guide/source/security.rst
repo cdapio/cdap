@@ -218,7 +218,7 @@ to authenticate using LDAP. ::
 
   <property>
     <name>security.authentication.handler.userBaseDn</name>
-    <value>ou=people,dc=example,dc=com</value>
+    <value>ou=people,dc=example</value>
   </property>
 
   <property>
@@ -237,11 +237,13 @@ To ensure that you've configured security correctly, you may run a few simple te
 
 * Visiting the Reactor WebUI should redirect you to a login page that prompts for credentials. Entering the credentials
   should let you work with Reactor normally.
-* You can also manually verify that the security components are working as expected:
-  ::
-    curl -v http://<reactor-hostname>:10000/v2/apps
-    # Returns a 401 Unauthorized response.
-    curl -v -u <username>:<password> http://<reactor-hostname>:10009
-    # Returns a 200 OK response with an AccessToken string as the body.
-    curl -v -H "Authorization: Bearer <AccessToken>" http://<reactor-hostname>:10000/v2/apps
-    # Returns a 200 OK response.
+* You can also manually verify that the security components are working as expected :
+
+::
+
+  curl -v http://<reactor-hostname>:10000/v2/apps
+  # Returns a 401 Unauthorized response.
+  curl -v -u <username>:<password> http://<reactor-hostname>:10009
+  # Returns a 200 OK response with an AccessToken string as the body.
+  curl -v -H "Authorization: Bearer <AccessToken>" http://<reactor-hostname>:10000/v2/apps
+  # Returns a 200 OK response.
