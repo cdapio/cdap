@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Has methods to set/get objects into Configuration object.
@@ -25,4 +26,17 @@ public class ConfigurationUtil {
     LOG.debug("De-serializing {} {}", key, value);
     return codec.decode(value == null ? null : value.getBytes(Charsets.UTF_8));
   }
+
+  public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
+    String value = new String(codec.encode(obj), Charsets.UTF_8);
+    LOG.debug("Serializing {} {}", key, value);
+    conf.put(key, value);
+  }
+
+  public static <T> T get(Map<String, String> conf, String key, Codec<T> codec) throws IOException {
+    String value = conf.get(key);
+    LOG.debug("De-serializing {} {}", key, value);
+    return codec.decode(value == null ? null : value.getBytes(Charsets.UTF_8));
+  }
+
 }

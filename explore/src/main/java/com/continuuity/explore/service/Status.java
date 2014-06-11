@@ -1,0 +1,67 @@
+package com.continuuity.explore.service;
+
+import com.google.common.base.Objects;
+
+/**
+ * Represents the status of an operation submitted to {@link ExploreService}.
+ */
+public class Status {
+  private final State state;
+  private final boolean hasResults;
+
+  public Status(State state, boolean hasResults) {
+    this.state = state;
+    this.hasResults = hasResults;
+  }
+
+  public State getState() {
+    return state;
+  }
+
+  public boolean hasResults() {
+    return hasResults;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("state", state)
+      .add("hasResults", hasResults)
+      .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Status that = (Status) o;
+
+    return Objects.equal(this.state, that.state) &&
+      Objects.equal(this.hasResults, that.hasResults);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(state, hasResults);
+  }
+
+  /**
+   * Represents the state of an operation.
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public enum State {
+    INITIALIZED,
+    RUNNING,
+    FINISHED,
+    CANCELED,
+    CLOSED,
+    ERROR,
+    UNKNOWN,
+    PENDING
+  }
+}
