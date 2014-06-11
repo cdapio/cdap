@@ -220,6 +220,22 @@ progress::-moz-progress-bar {
  	float: right;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.none-text-decoration {
+  text-decoration: none;
+}
+
+.none-text-decoration:hover {
+  text-decoration: none;
+}
+
+.none-text-decoration:focus {
+  text-decoration: none;
+}
+
 .gf3-font {
 	color: #555;
 }
@@ -314,6 +330,10 @@ a, a:visited {
 
 #nav ul li {
   text-align: center;
+}
+
+.center-align {
+  text-align: center !important;
 }
 
 #nav ul li .nav-link {
@@ -453,6 +473,7 @@ a, a:visited {
 	line-height: 36px;
 	font-size: 14px;
  	margin-top: 17px;
+  margin-right: 20px;
 }
 
 #global a {
@@ -1312,6 +1333,23 @@ input[type="text"] {
  * Loading Services
  */
 
+span.service-icon {
+  height: 32px;
+  width: 32px;
+  background-repeat: no-repeat;
+  border: none !important;
+  float: right;
+  display: inline-block;
+}
+
+span.service-icon.loading {
+  background-image: url('/assets/img/services-loading-darkBg.gif');
+}
+
+span.service-icon.complete {
+  background-image: url('/assets/img/ok-icon.png');
+}
+
 #services-loading {
     position: absolute;
     right: 0;
@@ -1356,14 +1394,10 @@ input[type="text"] {
 
 .services-list li {
 	line-height: 32px;
-	margin-bottom: 40px;
+	margin-bottom: 20px;
 	float: left;
 	clear: both;
 	width: 100%;
-}
-
-.services-list li img {
-	float: right;
 }
 
 /*
@@ -1377,8 +1411,6 @@ input[type="text"] {
 	border-right: 1px solid #C4C5CA;
 	border-bottom: 1px solid #C4C5CA;
 	line-height: 30px;
-	text-align: center;
-	text-transform: none;
 }
 
 #reactor-services th.service-col {

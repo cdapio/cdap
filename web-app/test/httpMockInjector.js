@@ -51,8 +51,11 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
    * Systems call mocks.
    */
 //  nock(clientAddr, options)
+//    .defaultReplyHeaders({
+//      'Content-Type': 'application/json'
+//    })
 //    .get('/v2/system/services/status')
-//    .times(4)
+//    .times(0)
 //    .reply(200, system.services.statusIncomplete);
 
   nock(clientAddr, options)
@@ -77,11 +80,17 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/appfabric/logs/next')
     .reply(200, system.services.appfabric.logsNext);
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/appfabric/logs/prev')
     .reply(200, system.services.appfabric.logsPrev);
 
@@ -97,11 +106,17 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/metrics/logs/next')
     .reply(200, system.services.metrics.logsNext);
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/metrics/logs/prev')
     .reply(200, system.services.metrics.logsPrev);
 
@@ -117,11 +132,17 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/transaction/logs/next')
     .reply(200, system.services.transaction.logsNext);
 
   nock(clientAddr, options)
     .persist()
+    .filteringPath(function(path){
+      return '/';
+    })
     .get('/v2/system/services/transaction/logs/prev')
     .reply(200, system.services.transaction.logsPrev);
 

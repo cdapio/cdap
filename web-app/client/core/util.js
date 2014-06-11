@@ -32,6 +32,9 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+    warningContainer: $('#warning'),
+    warningSpan: $('#warning .warning-text'),
+
 		/**
      * Looks up unique id for a record or generates it and adds it to index.
      * @param  {string} recordName.
@@ -59,6 +62,18 @@ define([], function () {
 			return result;
 
 		},
+
+    /**
+     * Shows warning popup.
+     * @param errorHTML HTML to show in the warning.
+     */
+    showWarning: function(errorHTML) {
+      var self = this;
+      self.warningContainer.fadeOut(100, function() {
+        self.warningSpan.html(errorHTML);
+        self.warningContainer.show();
+      });
+    },
 
 		enc: function (string) {
 
