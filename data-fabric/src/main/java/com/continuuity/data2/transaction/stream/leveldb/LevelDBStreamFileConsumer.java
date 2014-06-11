@@ -19,12 +19,12 @@ import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumerState;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.google.common.collect.Maps;
-import com.sun.istack.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  *

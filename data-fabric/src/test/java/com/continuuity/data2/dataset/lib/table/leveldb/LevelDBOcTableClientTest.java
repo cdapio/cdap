@@ -4,6 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
@@ -11,6 +13,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -39,7 +42,13 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
     injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule()
+      new DataFabricLevelDBModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
     );
     service = injector.getInstance(LevelDBOcTableService.class);
   }

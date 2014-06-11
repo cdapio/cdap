@@ -17,8 +17,14 @@
  */
 package com.continuuity.hive.objectinspector;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import junit.framework.Assert;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -30,9 +36,14 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.UnionTypeInfo;
 import org.junit.Test;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * TestStandardObjectInspectors.
@@ -91,6 +102,114 @@ public class StandardObjectInspectorsTest {
       throw e;
     }
 
+  }
+
+  @Test
+  public void testStandardSetObjectInspector() throws Throwable {
+    try {
+      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(
+          new TypeToken<Set<Integer>>() { }.getType());
+      Assert.assertTrue(oi instanceof StandardListObjectInspector);
+      StandardListObjectInspector loi = (StandardListObjectInspector) oi;
+
+      // metadata
+      Assert.assertEquals(Category.LIST, loi.getCategory());
+      Assert.assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+                          loi.getListElementObjectInspector());
+
+      // Test set inspection
+      HashSet<Integer> set = new HashSet<Integer>();
+      set.add(0);
+      set.add(1);
+      set.add(2);
+      set.add(3);
+      Assert.assertEquals(4, loi.getList(set).size());
+      Assert.assertEquals(4, loi.getListLength(set));
+      Assert.assertEquals(0, loi.getListElement(set, 0));
+      Assert.assertEquals(3, loi.getListElement(set, 3));
+      Assert.assertNull(loi.getListElement(set, -1));
+      Assert.assertNull(loi.getListElement(set, 4));
+
+      // Settable
+      List<String> list = (List<String>) loi.set(set, 0, 5);
+      Assert.assertFalse(set.contains(5));
+      Assert.assertTrue(list.contains(5));
+
+      list = (List<String>) loi.resize(set, 5);
+      Assert.assertEquals(4, set.size());
+      Assert.assertEquals(5, list.size());
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+  @Test
+  public void testStandardQueueObjectInspector() throws Throwable {
+    try {
+      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(
+          new TypeToken<Queue<Integer>>() { }.getType());
+      Assert.assertTrue(oi instanceof StandardListObjectInspector);
+      StandardListObjectInspector loi = (StandardListObjectInspector) oi;
+
+      // metadata
+      Assert.assertEquals(Category.LIST, loi.getCategory());
+      Assert.assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+          loi.getListElementObjectInspector());
+
+      // Test queue inspection
+      Queue<Integer> queue = new ArrayDeque<Integer>();
+      queue.add(0);
+      queue.add(1);
+      queue.add(2);
+      queue.add(3);
+      Assert.assertEquals(4, loi.getList(queue).size());
+      Assert.assertEquals(4, loi.getListLength(queue));
+      Assert.assertEquals(0, loi.getListElement(queue, 0));
+      Assert.assertEquals(3, loi.getListElement(queue, 3));
+      Assert.assertNull(loi.getListElement(queue, -1));
+      Assert.assertNull(loi.getListElement(queue, 4));
+
+      // Settable
+      List<String> list = (List<String>) loi.set(queue, 0, 5);
+      Assert.assertFalse(queue.contains(5));
+      Assert.assertTrue(list.contains(5));
+
+      list = (List<String>) loi.resize(queue, 5);
+      Assert.assertEquals(4, queue.size());
+      Assert.assertEquals(5, list.size());
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+  @Test
+  public void testCollectionObjectInspector() throws Throwable {
+    // Test with sets
+    ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(
+        new TypeToken<Set<String>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    StandardListObjectInspector loi = (StandardListObjectInspector) oi;
+
+    Set<String> set = Sets.newHashSet("foo", "bar", "foobar");
+    List<?> inspectedSet = loi.getList(set);
+    Assert.assertTrue(inspectedSet.contains("foo"));
+    Assert.assertTrue(inspectedSet.contains("bar"));
+    Assert.assertTrue(inspectedSet.contains("foobar"));
+
+    // Test with queues
+    oi = ObjectInspectorFactory.getReflectionObjectInspector(
+        new TypeToken<Queue<String>>() { }.getType());
+    Assert.assertTrue(oi instanceof StandardListObjectInspector);
+    loi = (StandardListObjectInspector) oi;
+
+    Queue<String> queue = new LinkedList<String>();
+    queue.add("foo");
+    queue.add("bar");
+    List<?> inspectedQueue = loi.getList(set);
+    Assert.assertEquals("bar", inspectedQueue.get(0));
+    Assert.assertEquals("foo", inspectedQueue.get(1));
   }
 
   @Test

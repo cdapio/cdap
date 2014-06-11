@@ -16,6 +16,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,8 +57,8 @@ public final class ObjectInspectorFactory {
     if (t instanceof ParameterizedType) {
       ParameterizedType pt = (ParameterizedType) t;
       Type rawType = pt.getRawType();
-      // List?
-      if (List.class.isAssignableFrom((Class<?>) rawType)) {
+      // Collection?
+      if (Collection.class.isAssignableFrom((Class<?>) rawType)) {
         return getStandardListObjectInspector(getReflectionObjectInspector(pt.getActualTypeArguments()[0]));
       }
       // Map?
