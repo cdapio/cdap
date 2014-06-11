@@ -4,6 +4,8 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
@@ -58,6 +60,7 @@ public class DataSetTestBase {
                              @Override
                              protected void configure() {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
+                               bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
                              }
                            });
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();

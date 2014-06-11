@@ -32,6 +32,10 @@ import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.hive.metastore.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
@@ -62,7 +66,6 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -102,9 +105,8 @@ public class ReactorTestBase {
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
 
-  // TODO put it back once hive-exec problems are resolved
-  // private static InMemoryHiveMetastore hiveMetastore;
-  // private static HiveServer hiveServer;
+  private static HiveMetastore hiveMetastore;
+  private static HiveServer hiveServer;
 
 
   /**
@@ -178,6 +180,7 @@ public class ReactorTestBase {
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -208,8 +211,7 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
-                                    // TODO put it back once hive-exec problems are resolved
-                                    // new HiveRuntimeModule().getInMemoryModules(),
+                                    new HiveRuntimeModule(configuration).getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
@@ -243,13 +245,12 @@ public class ReactorTestBase {
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    hiveMetastore = injector.getInstance(HiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
 
-    // TODO put it back once hive-exec problems are resolved
-    // hiveMetastore = injector.getInstance(InMemoryHiveMetastore.class);
-    // hiveServer = injector.getInstance(HiveServer.class);
     // it is important to respect that order: metastore, then HiveServer
-    // hiveMetastore.startAndWait();
-    // hiveServer.startAndWait();
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -292,9 +293,8 @@ public class ReactorTestBase {
 
   @AfterClass
   public static final void finish() {
-    // TODO put it back once hive-exec problems are resolved
-    // hiveServer.stopAndWait();
-    // hiveMetastore.stopAndWait();
+    hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     datasetService.stopAndWait();
@@ -380,11 +380,7 @@ public class ReactorTestBase {
     String jdbcUser = "hive";
     String jdbcPassword = "";
 
-    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl" +
-                                           // TODO remove these once they are configured in hive-site.xml
-                                           "?hive.exec.pre.hooks=com.continuuity.hive.hooks.TransactionPreHook;" +
-                                           "hive.exec.post.hooks=com.continuuity.hive.hooks.TransactionPostHook",
-                                         host, port);
+    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
 
     return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
   }

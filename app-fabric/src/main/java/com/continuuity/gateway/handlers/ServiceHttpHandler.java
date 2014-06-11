@@ -5,6 +5,7 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -129,6 +130,24 @@ public class ServiceHttpHandler extends AbstractHttpHandler {
     JsonObject object = new JsonObject();
     object.addProperty("status", "RUNNING");
     responder.sendJson(HttpResponseStatus.OK, object);
+  }
+
+  /**
+   * twill app history
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/history")
+  public void history(HttpRequest request, HttpResponder responder,
+                      @PathParam("app-id") String appId) {
+    JsonArray history = new JsonArray();
+    JsonObject object = new JsonObject();
+    object.addProperty("runid", "123");
+    object.addProperty("start", "75644443");
+    object.addProperty("end", "75644499");
+    object.addProperty("status", "STOPPED");
+    history.add(object);
+
+    responder.sendJson(HttpResponseStatus.OK, history);
   }
 
   /**

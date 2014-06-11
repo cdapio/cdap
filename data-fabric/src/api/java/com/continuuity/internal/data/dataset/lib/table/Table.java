@@ -1,9 +1,12 @@
 package com.continuuity.internal.data.dataset.lib.table;
 
+import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.internal.data.dataset.Dataset;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -159,4 +162,28 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return instance of {@link Scanner}
    */
   Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
+
+  /**
+   * Returns splits for a range of keys in the table.
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param stop If non-null, the returned splits will only cover keys that are less.
+   * @return list of {@link Split}
+   */
+  @Beta
+  List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
+
+
+  /**
+   * Compares-and-swaps (atomically) the value of the specified row and column
+   * by looking for the specified expected value and if found, replacing with
+   * the specified new value.
+   *
+   * @param key key to modify
+   * @param oldValue expected value before change
+   * @param newValue value to set
+   * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
+   */
+  boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue) throws Exception;
 }

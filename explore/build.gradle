@@ -19,12 +19,29 @@ dependencies {
 
     compile (libraries.hive_beeline) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
+    }
+    compile (libraries.hive_ant) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
     compile (libraries.hive_jdbc) {
         exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
     }
     compile libraries.continuuity_hive_exec
-    compile libraries.hive_metastore
+    compile (libraries.hive_metastore) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
+    }
 
     compile libraries.thrift
 
@@ -72,4 +89,8 @@ jar.exclude '*.xml'
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
 }

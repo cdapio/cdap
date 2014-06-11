@@ -1,82 +1,8 @@
 /*
  * Main entry point for Reactor UI
- * Defines routes and attaches mocks
  */
 
 define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
-
-	/*
-	 * Determine whether to swap out specific components with mocks.
-	 */
-    var mocks = window.location.search.split('?')[1];
-
-
-	if (mocks) {
-		mocks = mocks.split('=')[1];
-		if (mocks) {
-			mocks = mocks.split(',');
-		} else {
-			mocks = null;
-		}
-	} else {
-		mocks = null;
-	}
-
-	/*
-	 * Inject requested mocks into our controllers.
-	 */
-	if (mocks) {
-
-		Em.Application.initializer({
-			name: "mocks",
-			before: "resources",
-
-			initialize: function(container, application) {
-
-				var i = mocks.length;
-				while (i--) {
-					C.__mocked[mocks[i]] = true;
-					mocks[i] = 'mocks/' + mocks[i].toLowerCase();
-				}
-
-				/*
-				 * Note: This is async. The 'resources' initializer is not.
-				 */
-				require(mocks, function () {
-
-					mocks = [].slice.call(arguments, 0);
-
-					var i = mocks.length, type, resource;
-					while (i--) {
-
-						type = mocks[i].type;
-						container.optionsForType(type, { singleton: true });
-						container.register(type + ':main', mocks[i]);
-						container.typeInjection('controller', type, type + ':main');
-
-						/*
-						 * Check Application-level event handlers on the resource.
-						 * E.g. Socket.on('connect');
-						 */
-						if (typeof C.__handlers[type] === 'object') {
-
-							resource = container.lookup(type + ':main');
-							for (var event in C.__handlers[type]) {
-                if (C.__handlers[type].hasOwnProperty(event)) {
-                    resource.on(event, C.__handlers[type][event]);
-                }
-							}
-							if (typeof resource.connect === 'function') {
-								resource.connect();
-							}
-
-						}
-					}
-				});
-			}
-		});
-
-	}
 
 	/*
 	 * Instantiate the Application.
@@ -133,6 +59,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 * Models are determined by the dynamic route and loaded automatically.
 	 */
 	C.Router.map(function() {
+
+		this.resource('Loading', { path: '/loading' } );
+		this.resource('Services', { path: '/services' } );
 
 		this.resource('Login', { path: '/login' } );
 
@@ -230,9 +159,11 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 */
 		activate: function() {
 			var routeHandler = this;
-			if (C.Env.security_enabled === true) {
-				C.setupAuth(routeHandler);
-			}
+      C.checkReactorReadiness(routeHandler, function() {
+        if (C.Env.security_enabled) {
+          C.setupAuth(routeHandler);
+        }
+      });
 		},
 
 		/*
@@ -255,7 +186,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		 * Override to unload the Controller once the Route has been deactivated.
 		 */
 		deactivate: function () {
-			this.controller.unload();
+      if ('controller' in this) {
+        this.controller.unload();
+      }
 		},
 		/*
 		 * Override to load a model based on parameter name and inject HTTP resource.
@@ -276,6 +209,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
         this.transitionTo('Overview');
       }
     }),
+
+    LoadingRoute: basicRouter.extend(),
 
     LoginRoute: basicRouter.extend(),
 
@@ -447,10 +382,12 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			 * Check auth on every route transition.
 			 */
 			activate: function() {
-				var routeHandler = this;
-				if (C.Env.security_enabled === true) {
-				  C.setupAuth(routeHandler);
-				}
+        var routeHandler = this;
+        C.checkReactorReadiness(routeHandler, function() {
+          if (C.Env.security_enabled) {
+            C.setupAuth(routeHandler);
+          }
+        });
 	  	},
 			/*
 			 * Override to load the Controller once the Route has been activated.

@@ -12,6 +12,7 @@ import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.internal.data.dataset.Dataset;
@@ -24,7 +25,9 @@ import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -160,26 +163,7 @@ public class AppsWithDataset {
     /**
      * Custom dataset example: key-value table
      */
-    public static class KeyValueTable extends AbstractDataset implements RowScannable<KeyValueTable.Entry> {
-
-      // TODO remove this and use ImmutablePair instead, to test object inspection on parameterized types
-      public static class Entry {
-        private final String key;
-        private final String value;
-
-        public Entry(String key, String value) {
-          this.key = key;
-          this.value = value;
-        }
-
-        public String getKey() {
-          return key;
-        }
-
-        public String getValue() {
-          return value;
-        }
-      }
+    public static class KeyValueTable extends AbstractDataset implements RowScannable<ImmutablePair<String, String>> {
 
       private static final byte[] COL = new byte[0];
 
@@ -200,7 +184,7 @@ public class AppsWithDataset {
 
       @Override
       public Type getRowType() {
-        return Entry.class;
+        return new TypeToken<ImmutablePair<String, String>>() { }.getType();
       }
 
       @Override
@@ -209,13 +193,13 @@ public class AppsWithDataset {
       }
 
       @Override
-      public SplitRowScanner<Entry> createSplitScanner(Split split) {
+      public SplitRowScanner<ImmutablePair<String, String>> createSplitScanner(Split split) {
         return Scannables.splitRowScanner(
           table.createSplitReader(split),
-          new Scannables.RowMaker<byte[], Row, Entry>() {
+          new Scannables.RowMaker<byte[], Row, ImmutablePair<String, String>>() {
             @Override
-            public Entry makeRow(byte[] key, Row row) {
-              return new Entry(Bytes.toString(key), Bytes.toString(row.get(COL)));
+            public ImmutablePair<String, String> makeRow(byte[] key, Row row) {
+              return ImmutablePair.of(Bytes.toString(key), Bytes.toString(row.get(COL)));
             }
           });
       }

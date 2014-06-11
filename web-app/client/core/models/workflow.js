@@ -60,7 +60,7 @@ define(['core/models/program'], function (Program) {
       var app_id = model_id[0];
       var workflowId = model_id[1];
 
-      http.rest('apps', app_id, 'workflows', workflowId, {cache: true}, function (model, error) {
+      http.rest('apps', app_id, 'workflows', workflowId, function (model, error) {
         model.app = app_id;
         model = C.Workflow.create(model);
 
