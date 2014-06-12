@@ -9,6 +9,9 @@ define([], function () {
     load: function () {
       this.set('warning', '');
       this.set('username', '');
+      this.set('password', '');
+      this.set('token', '');
+      this.set('token_expires', '');
     },
 
     isValid: function () {
@@ -21,14 +24,15 @@ define([], function () {
 
     submit: function() {
       var self = this;
-      console.log('here');
-      this.HTTP.post('accesstoken', {}, function(responseData, status) {
-        self.set('warning', responseData);
+      data = { 'username': self.get('username'), 'password': self.get('password') };
+      this.HTTP.post('accesstoken', data, function(responseData, status) {
+        self.set('token', responseData.access_token);
+        self.set('token_expires', responseData.expires_in);
       });
     },
 
     unload: function () {
-      //pass
+      this.set('token', '');
     }
 
   });

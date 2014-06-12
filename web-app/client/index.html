@@ -271,16 +271,13 @@
         <div class="panel-head"><div class="panel-title"></div>Access Token</div>
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
-          {{view C.Embed.AccessToken}}
-          <button {{ action submit username password }} >Click here</button>
         </div>
       </div>
     </div>
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="access-token-view">
-    <form method="POST" action="/accesstoken" id="access-token-form">
-    <table>
+    {{#if token}}
+      <div>{{token}}</div>
+    {{else}}
+      <table>
       <tr>
         <td>Username</td>
         <td>{{input type="text" value=username class="username" name="username" }}</td>
@@ -292,11 +289,11 @@
       <tr>
         <td></td>
         <td>
-        <button type="button" class="btn btn-blank btn-default" id="access-token-submit-btn">Login</button>
+        <button {{action 'submit' on="click"}}>Login</button>
         </td>
       </tr>
-    </table>
-    </form>
+      </table>
+    {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="Overview">
