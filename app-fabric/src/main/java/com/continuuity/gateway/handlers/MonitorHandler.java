@@ -34,6 +34,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
   private static final String NOTAPPLICABLE = "NA";
+  private static final Gson GSON = new Gson();
 
   @Inject
   public MonitorHandler(Authenticator authenticator, Map<String, ReactorServiceManager> serviceMap) {
@@ -118,7 +119,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       }
     }
 
-    json = (new Gson()).toJson(result);
+    json = (GSON).toJson(result);
     responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
@@ -169,7 +170,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       serviceSpec.add(spec);
     }
 
-    json = (new Gson()).toJson(serviceSpec);
+    json = (GSON).toJson(serviceSpec);
     responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
