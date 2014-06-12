@@ -38,7 +38,6 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.twill.internal.utils.Dependencies;
-import org.jruby.compiler.ir.targets.JVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

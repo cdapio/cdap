@@ -2,10 +2,8 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

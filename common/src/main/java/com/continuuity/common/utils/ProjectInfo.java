@@ -8,6 +8,9 @@ import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -18,22 +21,27 @@ public final class ProjectInfo {
   private static final Logger LOG = LoggerFactory.getLogger(ProjectInfo.class);
   private static final Version VERSION;
 
-  // Initialize VERSION from the generated BuildInfo.
+  // Initialize VERSION from build.properties file.
   static {
     Version version = new Version(null);
     try {
-      Class<?> clz = Class.forName("com.continuuity.common.BuildInfo");
-      Long buildTime = (Long) clz.getField("BUILD_TIME").get(null);
-      String versionStr = (String) clz.getField("VERSION").get(null);
+      Properties buildProp = new Properties();
+      InputStream input = ProjectInfo.class.getResourceAsStream("/build.properties");
+      try {
+        buildProp.load(input);
 
-      if (buildTime != null && versionStr != null) {
-        version = new Version(String.format("%s-%d", versionStr, buildTime));
-      } else {
-        LOG.warn("No BuildInfo available. Build time: {}, version: {}", buildTime, versionStr);
+        String versionStr = buildProp.getProperty("project.info.version");
+        String buildTimeStr = buildProp.getProperty("project.info.build.time");
+
+        if (versionStr != null && buildTimeStr != null) {
+          long buildTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(buildTimeStr).getTime();
+          version = new Version(String.format("%s-%d", versionStr, buildTime));
+        }
+      } finally {
+        input.close();
       }
-
     } catch (Exception e) {
-      LOG.warn("No BuildInfo available: {}", e.getMessage());
+      LOG.warn("No BuildInfo available: {}", e.getMessage(), e);
     }
     VERSION = version;
   }

@@ -12,7 +12,7 @@ import com.continuuity.data2.dataset2.AbstractDatasetFrameworkTest;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -64,8 +64,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new LocalLocationFactory(),
                                  discoveryService,
                                  new InMemoryDatasetFramework(),
-                                 ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-                                   "memoryTable", InMemoryTableModule.class),
+                                 ImmutableSortedMap.<String, DatasetModule>of(
+                                   "memoryTable", new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
                                  opExecutorClient);

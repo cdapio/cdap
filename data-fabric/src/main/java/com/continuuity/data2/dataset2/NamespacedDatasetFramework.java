@@ -2,7 +2,7 @@ package com.continuuity.data2.dataset2;
 
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.collect.ImmutableList;
 
@@ -22,10 +22,10 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void register(String moduleName, Class<? extends DatasetModule> moduleClass)
+  public void addModule(String moduleName, DatasetModule module)
     throws DatasetManagementException {
 
-    delegate.register(moduleName, moduleClass);
+    delegate.addModule(moduleName, module);
   }
 
   @Override
@@ -34,7 +34,7 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
+  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException {
 
     delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
