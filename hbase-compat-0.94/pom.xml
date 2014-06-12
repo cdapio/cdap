@@ -96,6 +96,27 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>rpm-prepare</id>
+      <properties>
+        <service.name>${project.artifactId}-server</service.name>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
 </project>
