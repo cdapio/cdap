@@ -14,14 +14,6 @@ define([], function () {
       this.set('token_expires', '');
     },
 
-    isValid: function () {
-      if (!this.get('username') || !this.get('password')) {
-        this.set('warning', 'You must specify username and password.');
-        return false;
-      }
-      return true;
-    },
-
     submit: function() {
       var self = this;
       data = { 'username': self.get('username'), 'password': self.get('password') };

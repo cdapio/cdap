@@ -160,7 +160,7 @@ function(Components, Embeddables, HTTP, Util) {
 				if (routeHandler !== undefined && !C.Env.get('auth_token') && 'routeName' in routeHandler) {
 					routeHandler.transitionTo('Login');
 				}
-				if (callback && typeof callback === 'function') {
+				if (typeof callback === 'function') {
 				  callback();
 				}
 			});
