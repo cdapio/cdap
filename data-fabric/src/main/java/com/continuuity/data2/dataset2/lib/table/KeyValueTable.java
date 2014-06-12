@@ -2,12 +2,18 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.batch.SplitRowScanner;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
+import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -15,7 +21,10 @@ import javax.annotation.Nullable;
  * This class implements a key/value map on top of {@link Table}. Supported
  * operations are read and write.
  */
-public class KeyValueTable extends AbstractDataset implements BatchReadable<byte[], byte[]> {
+public class KeyValueTable extends AbstractDataset implements
+  BatchReadable<byte[], byte[]>,
+  RowScannable<ImmutablePair<byte[], byte[]>> {
+
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
 
@@ -118,8 +127,18 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
   }
 
   @Override
+  public Type getRowType() {
+    return new TypeToken<ImmutablePair<byte[], byte[]>>() { }.getType();
+  }
+
+  @Override
   public List<Split> getSplits() {
     return table.getSplits();
+  }
+
+  @Override
+  public SplitRowScanner<ImmutablePair<byte[], byte[]>> createSplitScanner(Split split) {
+    return Scannables.splitRowScanner(createSplitReader(split), new KeyValueRowMaker());
   }
 
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
@@ -129,6 +148,16 @@ public class KeyValueTable extends AbstractDataset implements BatchReadable<byte
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
     return new KeyValueScanner(table.createSplitReader(split));
+  }
+
+  /**
+   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link ObjectStore}.
+   */
+  public class KeyValueRowMaker implements Scannables.RowMaker<byte[], byte[], ImmutablePair<byte[], byte[]>> {
+    @Override
+    public ImmutablePair<byte[], byte[]> makeRow(byte[] key, byte[] value) {
+      return new ImmutablePair<byte[], byte[]>(key, value);
+    }
   }
 
   /**

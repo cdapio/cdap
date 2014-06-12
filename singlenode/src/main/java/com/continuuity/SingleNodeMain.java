@@ -27,7 +27,6 @@ import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.metastore.HiveMetastore;
-import com.continuuity.hive.metastore.InMemoryHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -38,6 +37,7 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -285,13 +285,16 @@ public class SingleNodeMain {
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
-    SingleNodeMain main = new SingleNodeMain(modules, configuration, webAppPath);
+    SingleNodeMain main = null;
     try {
+      main = new SingleNodeMain(modules, configuration, webAppPath);
       main.startUp(args);
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
       LOG.error("Failed to start server", e);
-      main.shutDown();
+      if (main != null) {
+        main.shutDown();
+      }
       System.exit(-2);
     }
   }
@@ -364,7 +367,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceModule(),
-      new HiveRuntimeModule(configuration).getSingleNodeModules()
+      new HiveRuntimeModule().getSingleNodeModules()
     );
   }
 }
