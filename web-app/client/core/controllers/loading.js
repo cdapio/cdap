@@ -44,7 +44,7 @@ define([], function () {
 
             if (C.Util.isLoadingComplete(statuses)) {
               setTimeout(function() {
-                clearInterval(this.interval);
+                clearInterval(self.interval);
                 self.transitionToRoute('Overview');
               }, 500);
             }

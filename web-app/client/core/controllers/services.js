@@ -19,7 +19,9 @@ define([], function () {
       self.HTTP.rest('system/services', function (services) {
         var servicesArr = [];
         services.map(function(service) {
-          servicesArr.push({
+          servicesArr.push(C.Service.create({
+            modelId: service.name,
+            id: service.name,
             name: service.name,
             status: service.status,
             min: service.min,
@@ -30,7 +32,7 @@ define([], function () {
             statusNotOk: !!(service.status === 'NOT OK'),
             logsStatusOk: !!(service.logs === 'OK'),
             logsStatusNotOk: !!(service.logs === 'NOT OK')
-          });
+          }));
         });
         self.set('services', servicesArr);
       });

@@ -153,24 +153,6 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Loading">
-    <div id="services-loading">
-      <div class="services-box">
-        <div class="animated">
-          <img src="assets/img/services-loading.gif" />Loading Services...
-        </div>
-        <ul class="services-list">
-          {{#each serviceStatuses}}
-          <li class="service">
-            <span class="lowercasify">{{this.name}}</span>
-            <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
-          </li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-  </script>
-
   <script type="text/x-handlebars" data-template-name="Services">
   <div id="reactor-services">
     <div id="panels">
@@ -186,36 +168,36 @@
             <th style="min-width: 282px;" class="event-rate-col">Metrics</th>
           </thead>
           <tbody>
-          {{#each services}}
+          {{#each service in services}}
             <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{this.name}}</a>
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{service.name}}</a>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if statusOk}}
+                {{#if service.statusOk}}
                   <img src="assets/img/running-icon.png" />
                 {{ else }}
-                  {{#if statusNotOk}}
+                  {{#if service.statusNotOk}}
                     <img src="assets/img/services-loading-blue.gif" />
                   {{ else }}
-                    {{this.status}}
+                    {{service.status}}
                   {{/if}}
                 {{/if}}
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if logsStatusOk}}
-                  <img src="assets/img/log-icon.png" />
+                {{#if service.logsStatusOk}}
+                {{#linkTo 'Service.Log' service}}<img src="assets/img/log-icon.png" />{{/linkTo}}
                 {{ else }}
-                  {{this.logs}}
+                  {{service.logs}}
                 {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.cur}}</span></div>
+                  <div class="instance-num"><span>{{service.cur}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action decreaseInstance service.name service.cur }}>
                       <img src="assets/img/minus.png" />
                     </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action increaseInstance service.name service.cur }}>
                       <img src="assets/img/plus.png" />
                     </a>
                   </div>
@@ -233,6 +215,19 @@
 
     </div>
   </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Service">
+
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo Service.Log model}}Log{{/linkTo}}</li>
+      </ul>
+      <h1><span>Service</span> {{model.name}}</h1>
+    </div>
+
+    {{outlet}}
+
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
@@ -1603,6 +1598,24 @@
           </div>
         {{/unless}}
       {{/if}}
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Loading">
+    <div id="services-loading">
+      <div class="services-box">
+        <div class="animated">
+          <img src="assets/img/services-loading.gif" />Loading Services...
+        </div>
+        <ul class="services-list">
+          {{#each serviceStatuses}}
+          <li class="service">
+            <span class="lowercasify">{{this.name}}</span>
+            <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+          </li>
+          {{/each}}
+        </ul>
+      </div>
     </div>
   </script>
 
