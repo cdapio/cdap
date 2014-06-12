@@ -304,7 +304,8 @@ public class ASMDatumCodecTest {
     PipedInputStream is = new PipedInputStream(os);
 
     DatumWriter<Record[][]> writer = getWriter(type);
-    Record[][] writeValue = new Record[][] {{ new Record(10, "testing", ImmutableList.of("a", "b", "c"), TestEnum.VALUE2)}};
+    Record[][] writeValue = new Record[][] {{ new Record(10, "testing",
+                                                         ImmutableList.of("a", "b", "c"), TestEnum.VALUE2)}};
     writer.encode(writeValue, new BinaryEncoder(os));
 
     ReflectionDatumReader<Record[][]> reader = new ReflectionDatumReader<Record[][]>(getSchema(type), type);
