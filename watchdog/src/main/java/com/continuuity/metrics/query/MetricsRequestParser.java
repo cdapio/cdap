@@ -35,22 +35,26 @@ final class MetricsRequestParser {
   private static final String LINEAR_INTERPOLATOR = "linear";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+  private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
 
-  private enum PathType {
+  public enum PathType {
     APPS,
     DATASETS,
     STREAMS,
-    CLUSTER
+    CLUSTER,
+    SERVICES;
   }
 
-  public enum ProgramType {
+  public enum RequestType {
     FLOWS("f"),
     MAPREDUCE("b"),
-    PROCEDURES("p");
+    PROCEDURES("p"),
+    HANDLERS("h"),
+    SERVICES("s");
 
     private final String code;
 
-    private ProgramType(String code) {
+    private RequestType(String code) {
       this.code = code;
     }
 
@@ -91,8 +95,8 @@ final class MetricsRequestParser {
    * @return request path stripped of version and metrics.
    */
   static String stripVersionAndMetricsFromPath(String path) {
-    // +9 for "/metrics/"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
+    // +8 for "/metrics"
+    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -117,10 +121,13 @@ final class MetricsRequestParser {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
+    } else if (strippedPath.startsWith("/reactor/transactions")) {
+      builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
+      builder.setScope(MetricsScope.REACTOR);
+      metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
-
     parseQueryString(requestURI, builder);
     return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
   }
@@ -152,13 +159,14 @@ final class MetricsRequestParser {
     PathType pathType;
     try {
       pathType = PathType.valueOf(pathTypeStr.toUpperCase());
+      contextBuilder.setPathType(pathType);
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
 
     switch(pathType) {
       case APPS:
-        parseAppContext(pathParts, contextBuilder);
+        parseSubContext(pathParts, contextBuilder);
         break;
       case STREAMS:
         if (!pathParts.hasNext()) {
@@ -176,8 +184,14 @@ final class MetricsRequestParser {
           if (!pathParts.next().equals("apps")) {
             throw new MetricsPathException("expecting 'apps' after stream or dataset name");
           }
-          parseAppContext(pathParts, contextBuilder);
+          parseSubContext(pathParts, contextBuilder);
         }
+        break;
+      case SERVICES:
+        if (!pathParts.hasNext()) {
+          throw new MetricsPathException("'services must be followed by a service name");
+        }
+        parseSubContext(pathParts, contextBuilder);
         break;
     }
 
@@ -195,24 +209,24 @@ final class MetricsRequestParser {
   /**
    * pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
    */
-  static void parseAppContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  static void parseSubContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
 
     if (!pathParts.hasNext()) {
       return;
     }
-    builder.setAppId(urlDecode(pathParts.next()));
+    builder.setTypeId(urlDecode(pathParts.next()));
 
     if (!pathParts.hasNext()) {
       return;
     }
 
-    // program-type: flows, procedures, or mapreduce
+    // request-type: flows, procedures, or mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
-    ProgramType programType;
+    RequestType requestType;
     try {
-      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      builder.setProgramType(programType);
+      requestType = RequestType.valueOf(pathProgramTypeStr.toUpperCase());
+      builder.setRequestType(requestType);
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
@@ -221,13 +235,13 @@ final class MetricsRequestParser {
     if (!pathParts.hasNext()) {
       return;
     }
-    builder.setProgramId(urlDecode(pathParts.next()));
+    builder.setRequestId(urlDecode(pathParts.next()));
 
     if (!pathParts.hasNext()) {
       return;
     }
 
-    switch(programType) {
+    switch(requestType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
         MapReduceType mrType;
@@ -242,11 +256,42 @@ final class MetricsRequestParser {
       case FLOWS:
         buildFlowletContext(pathParts, builder);
         break;
+      case HANDLERS:
+        buildHandlerContext(pathParts, builder);
+        break;
+      case SERVICES:
+        buildUserServiceContext(pathParts, builder);
     }
 
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
     }
+  }
+
+  private static void buildUserServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("runnables")) {
+      throw new MetricsPathException("expecting 'runnables' after the service name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("runnables must be followed by a runnable name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
+  }
+
+
+  /**
+   * At this point, pathParts should look like methods/{method-name}
+   */
+  private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("methods")) {
+      throw new MetricsPathException("expecting 'methods' after the handler name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("methods must be followed by a method name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
   }
 
   /**

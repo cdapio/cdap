@@ -1,0 +1,90 @@
+apply plugin: 'java'
+
+archivesBaseName = 'continuuity-test'
+
+project.evaluationDependsOn(':app-fabric')
+
+/**
+ * Specify all the dependencies for smartyFacts & main.
+ */
+dependencies {
+  // Dependencies for smartyFacts & main
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
+
+  compile elastic([group: 'com.continuuity', name: 'explore', version: "${version}", changing: true], "explore")
+  compile elastic([group: 'com.continuuity', name: 'explore-client', version: "${version}", changing: true], "explore-client")
+
+  // Test framework dependencies
+  compile libraries.junit
+  compile libraries.asm
+  compile libraries.google_gson
+  compile libraries.google_guice
+  compile libraries.google_guice_assistedinject
+  compile libraries.google_guice_multibindings
+  compile libraries.google_guava
+  compile libraries.jsr_305
+
+  // Test dependencies
+  testCompile libraries.junit
+}
+
+/**
+ * Generates API javadoc.
+ */
+javadoc {
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+    jvmArgs "-XX:MaxPermSize=2048m"
+}
+
+/**
+ * Excludes stubs from clover.
+ */
+clover {
+  excludes << '**/manager/stubs/*'
+}
+
+/**
+ * Excludes stubs from sonar report exclusion.
+ */
+sonar {
+  project {
+    sourceExclusions = '**/manager/stubs/*'
+  }
+}
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
+}
+
+uploadArchives {
+    repositories {
+        repositories.mavenDeployer {
+            repository(url: "https://repository.continuuity.com/service/local/staging/deploy/maven2") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            snapshotRepository(url: "https://repository.continuuity.com/content/repositories/snapshots") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            pom.whenConfigured { pom ->
+                // Removes groovy dependency and test dependencies from generated pom file
+                pom.dependencies = pom.dependencies.findAll { dep ->
+                    dep.artifactId != 'groovy-all' && dep.scope != 'test'
+                }
+            }
+        }
+    }
+}

@@ -36,13 +36,13 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
-      addDataSetService(
-      addLogSaverService(
-       addStreamService(
-         addTransactionService(
-           addMetricsProcessor (
-             addMetricsService(
-              TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
+      addDatasetOpExecutor(
+        addLogSaverService(
+         addStreamService(
+           addTransactionService(
+             addMetricsProcessor (
+               addMetricsService(
+                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
@@ -86,7 +86,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(instances)
       .build();
 
-    return builder.add(new MetricsProcessorTwillRunnable("metrics.processor", "cConf.xml", "hConf.xml"),
+    return builder.add(new MetricsProcessorTwillRunnable(Constants.Service.METRICS_PROCESSOR, "cConf.xml", "hConf.xml"),
                        metricsProcessorSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
@@ -136,26 +136,6 @@ public class ReactorTwillApplication implements TwillApplication {
       .apply();
   }
 
-
-  private TwillSpecification.Builder.RunnableSetter addDataSetService(TwillSpecification.Builder.MoreRunnable builder) {
-    int numCores = cConf.getInt(Constants.Dataset.Container.NUM_CORES, 1);
-    int memoryMb = cConf.getInt(Constants.Dataset.Container.MEMORY_MB, 1024);
-    int instances = cConf.getInt(Constants.Dataset.Container.NUM_INSTANCES, 1);
-
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(numCores)
-      .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
-
-    return builder.add(new DataSetServiceTwillRunnable("dsservice", "cConf.xml", "hConf.xml"), resourceSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
-  }
-
   private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES, 1))
@@ -164,6 +144,23 @@ public class ReactorTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(new StreamHandlerRunnable("stream", "cConf.xml", "hConf.xml"), resourceSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addDatasetOpExecutor(
+    TwillSpecification.Builder.MoreRunnable builder) {
+
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+      .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES, 1))
+      .setMemory(cConf.getInt(Constants.Dataset.Executor.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(cConf.getInt(Constants.Dataset.Executor.CONTAINER_INSTANCES, 1))
+      .build();
+
+    return builder.add(
+      new DatasetOpExecutorServerTwillRunnable("dataset.executor", "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

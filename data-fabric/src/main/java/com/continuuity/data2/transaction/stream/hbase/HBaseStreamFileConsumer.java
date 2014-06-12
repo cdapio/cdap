@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.stream.hbase;
 
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data2.queue.ConsumerConfig;
@@ -31,6 +32,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -55,8 +57,9 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   public HBaseStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
+                                 @Nullable ReadFilter extraFilter,
                                  AbstractRowKeyDistributor keyDistributor) {
-    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState);
+    super(streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.hTable = hTable;
     this.keyDistributor = keyDistributor;
     this.scanExecutor = createScanExecutor(streamConfig.getName());

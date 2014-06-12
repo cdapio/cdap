@@ -49,7 +49,7 @@ public class DFSMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderT
         }
       },
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(cConf, hConf)
+      new DataFabricDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

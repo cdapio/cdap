@@ -26,14 +26,16 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
@@ -90,7 +92,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DataSetAccessor dataSetAccessor;
-  private final DatasetManager datasetManager;
+  private final DatasetFramework datasetFramework;
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -103,7 +105,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DataSetAccessor dataSetAccessor,
-                                DatasetManager datasetManager,
+                                DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory) {
@@ -113,7 +115,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.dataSetAccessor = dataSetAccessor;
-    this.datasetManager = datasetManager;
+    this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -152,7 +154,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager,
+    DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
     Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
@@ -512,9 +514,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     } else if (batchReadable instanceof StreamBatchReadable) {
       // TODO: It's a hack for stream
       StreamBatchReadable stream = (StreamBatchReadable) batchReadable;
-      Location streamPath = streamAdmin.getConfig(stream.getStreamName()).getLocation();
+      StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+      Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                                 StreamUtils.getGeneration(streamConfig));
+
       LOG.info("Using stream as input from {}", streamPath.toURI());
 
+      TextStreamInputFormat.setTTL(jobConf, streamConfig.getTTL());
       TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
       TextStreamInputFormat.setTimeRange(jobConf, stream.getStartTime(), stream.getEndTime());
       jobConf.setInputFormatClass(TextStreamInputFormat.class);

@@ -3,6 +3,7 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -15,11 +16,16 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -50,6 +56,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,8 +90,11 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
+  // TODO reintegrate once hive issues in distributed mode are fixed
+  // private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private DatasetService dsService;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -104,10 +115,13 @@ public class ReactorServiceMain extends DaemonMain {
 
     serviceName = twillApplication.configure().getName();
 
+    cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
       new IOModule(),
       new AuthModule(),
       new KafkaClientModule(),
@@ -115,13 +129,17 @@ public class ReactorServiceMain extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataSetServiceModules().getDistributedModule(),
+      new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
+      // TODO reintegrate once hive issues in distributed mode are fixed
+      // new HiveRuntimeModule(cConf).getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
+    dsService = baseInjector.getInstance(DatasetService.class);
   }
 
   @Override
@@ -133,6 +151,10 @@ public class ReactorServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
+
+        // TODO reintegrate once hive issues in distributed mode are fixed
+        // hiveServer = injector.getInstance(HiveServer.class);
+        // hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -149,30 +171,49 @@ public class ReactorServiceMain extends DaemonMain {
       @Override
       public void follower() {
         LOG.info("Became follower.");
+
+        dsService.stopAndWait();
         if (twillRunnerService != null) {
           twillRunnerService.stopAndWait();
         }
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
         }
+        // TODO reintegrate once hive issues in distributed mode are fixed
+        // if (hiveServer != null) {
+          // hiveServer.stopAndWait();
+        // }
         isLeader.set(false);
       }
     });
+    leaderElection.start();
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
+
+    dsService.stopAndWait();
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
-    leaderElection.cancel();
+
+    leaderElection.stopAndWait();
     Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
   }
 
   @Override
   public void destroy() {
+  }
+
+  private InetAddress getLocalHost() {
+    try {
+      return InetAddress.getLocalHost();
+    } catch (UnknownHostException e) {
+      LOG.error("Error obtaining localhost address", e);
+      throw Throwables.propagate(e);
+    }
   }
 
   private TwillApplication createTwillApplication() {
@@ -220,6 +261,15 @@ public class ReactorServiceMain extends DaemonMain {
       twillController = twillPreparer.start();
 
       twillController.addListener(new ServiceListenerAdapter() {
+
+        @Override
+        public void running() {
+          if (!dsService.isRunning()) {
+            LOG.info("Starting dataset service");
+            dsService.startAndWait();
+          }
+        }
+
         @Override
         public void failed(Service.State from, Throwable failure) {
           LOG.error("{} failed with exception... restarting with back-off.", serviceName, failure);
@@ -322,5 +372,4 @@ public class ReactorServiceMain extends DaemonMain {
     }
     return file;
   }
-
 }

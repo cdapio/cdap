@@ -127,8 +127,7 @@ public class FileLogAppender extends LogAppender {
                                                          inactiveIntervalMs);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      LogCleanup logCleanup = new LogCleanup(locationFactory, fileMetaDataManager,
-                                       logBaseDir, retentionDurationMs);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
                                             logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {

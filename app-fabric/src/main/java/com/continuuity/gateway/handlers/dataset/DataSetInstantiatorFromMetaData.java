@@ -11,7 +11,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.dataset2.manager.inmemory.InMemoryDatasetManager;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -74,7 +74,7 @@ public final class DataSetInstantiatorFromMetaData {
       return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor),
                                           // NOTE: it is fine using "empty" ds manager here, we access datasets V2
                                           //       differently (thru dataset manager that talks to ds service)
-                                          new InMemoryDatasetManager());
+                                          new InMemoryDatasetFramework());
     }
   }
 

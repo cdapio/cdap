@@ -1,0 +1,83 @@
+apply plugin:'java'
+
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+
+    compile libraries.google_guava
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+
+    compile (libraries.hive_beeline) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
+    }
+    compile (libraries.hive_ant) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
+    }
+    compile (libraries.hive_jdbc) {
+        exclude group: 'org.apache.hive', module: 'hive-exec'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'asm', module: 'asm-commons'
+        exclude group: 'asm', module: 'asm-tree'
+    }
+    compile libraries.thrift
+
+    testCompile libraries.junit
+}
+
+sourceSets{
+    main{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+
+    test{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+    }
+}
+
+javadoc {
+    classpath += sourceSets.api.output
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+}
+
+checkstyleMain {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+        exclude '**/thrift/**'
+    }
+}
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
+}

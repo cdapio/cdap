@@ -6,8 +6,8 @@ import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * Unit-test for {@link DatasetTypeHandler}
  */
-public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
+public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
@@ -127,7 +127,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
     Assert.assertEquals(1, getTypes().value.size());
 
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("module2"));
-    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getType("datasetType1").status);
 
     Assert.assertEquals(0, getModules().value.size());
@@ -216,17 +216,17 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
   private static DatasetDefinition createDefinition(String name) {
     return new AbstractDatasetDefinition(name) {
       @Override
-      public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
+      public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return null;
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetInstanceSpec spec) {
+      public Dataset getDataset(DatasetSpecification spec) {
         return null;
       }
     };

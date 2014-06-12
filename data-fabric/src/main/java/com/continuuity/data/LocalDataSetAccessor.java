@@ -22,7 +22,7 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
   private final LevelDBOcTableService service;
 
   @Inject
-  public LocalDataSetAccessor(@Named("DataSetAccessorConfig") CConfiguration conf,
+  public LocalDataSetAccessor(CConfiguration conf,
                               LevelDBOcTableService service) {
     super(conf);
     this.service = service;

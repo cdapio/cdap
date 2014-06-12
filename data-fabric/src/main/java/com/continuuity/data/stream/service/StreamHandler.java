@@ -10,6 +10,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -18,6 +19,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
@@ -38,6 +40,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -46,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +68,10 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
+  private static final Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -78,7 +86,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
@@ -89,7 +97,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
-    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
 
@@ -105,7 +113,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      responder.sendStatus(HttpResponseStatus.OK);
+      responder.sendJson(HttpResponseStatus.OK, streamAdmin.getConfig(stream));
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -225,8 +233,44 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    // TODO: Implement file removal logic
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    try {
+      streamAdmin.truncate(stream);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+    }
+  }
+
+  @POST
+  @Path("/{stream}/ttl")
+  public void setTTL(HttpRequest request, HttpResponder responder,
+                     @PathParam("stream") String stream) throws Exception {
+
+    String accountId = getAuthenticatedAccountId(request);
+
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    long ttl = getTTL(request);
+    streamAdmin.updateTTL(stream, ttl);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private long getTTL(HttpRequest request) throws IOException {
+    Map<String, String> arguments = GSON.fromJson(
+      request.getContent().toString(Charsets.UTF_8), MAP_STRING_STRING_TYPE);
+    if (arguments.containsKey("ttl")) {
+      return Long.parseLong(arguments.get("ttl"));
+    }
+
+    return Long.MAX_VALUE;
   }
 
   /**

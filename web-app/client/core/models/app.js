@@ -93,7 +93,7 @@ define(['core/models/element'], function (Element) {
 
 			var promise = Ember.Deferred.create();
 
-			http.rest('apps', model_id, {cache: true}, function (model, error) {
+			http.rest('apps', model_id, function (model, error) {
 
 				model = C.App.create(model);
 				promise.resolve(model);

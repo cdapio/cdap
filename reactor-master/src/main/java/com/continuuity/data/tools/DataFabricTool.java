@@ -70,7 +70,7 @@ public class DataFabricTool {
       Injector injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new LocationRuntimeModule().getDistributedModules(),
-        new DataFabricModules(cConf, hConf).getDistributedModules(),
+        new DataFabricModules().getDistributedModules(),
         new AbstractModule() {
           @Override
           protected void configure() {

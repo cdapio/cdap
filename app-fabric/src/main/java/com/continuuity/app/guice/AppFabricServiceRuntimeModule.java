@@ -4,6 +4,7 @@
 package com.continuuity.app.guice;
 
 import com.continuuity.app.authorization.AuthorizationFactory;
+import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -13,9 +14,11 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
-import com.continuuity.internal.app.deploy.SyncManagerFactory;
+import com.continuuity.internal.app.deploy.LocalManager;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
@@ -31,10 +34,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import org.apache.twill.filesystem.Location;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -101,7 +107,13 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
-      bind(ManagerFactory.class).to(SyncManagerFactory.class);
+
+      install(
+        new FactoryModuleBuilder()
+          .implement(new TypeLiteral<Manager<Location, ApplicationWithPrograms>>() { },
+                     new TypeLiteral<LocalManager<Location, ApplicationWithPrograms>>() { })
+          .build(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { })
+      );
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
@@ -112,6 +124,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(ServiceHttpHandler.class);
     }
 
     @Provides

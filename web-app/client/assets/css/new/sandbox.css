@@ -1,0 +1,15 @@
+/*
+ * Copyright (c) 2014 Continuuity, Inc.
+ */
+
+#nav {
+	background: #062040;
+}
+#nav li {
+	border-color: #88c5db !important;
+}
+
+#product-name:after {
+	letter-spacing: 0.2em;
+	content: 'Sandbox Reactor';
+}

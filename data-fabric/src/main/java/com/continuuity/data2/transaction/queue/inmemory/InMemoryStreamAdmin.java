@@ -5,6 +5,8 @@ import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.io.IOException;
+
 /**
  * admin for queues in memory.
  */
@@ -23,6 +25,17 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public StreamConfig getConfig(String streamName) {
-    return new StreamConfig(streamName, Long.MAX_VALUE, Long.MAX_VALUE, null);
+    // TODO: add support for queue-based stream
+    throw new UnsupportedOperationException("Not yet supported");
+  }
+
+  @Override
+  public void updateConfig(StreamConfig config) throws IOException {
+    throw new UnsupportedOperationException("Not yet supported");
+  }
+
+  @Override
+  public void updateTTL(String streamName, long ttl) throws IOException {
+    throw new UnsupportedOperationException("Not yet supported");
   }
 }

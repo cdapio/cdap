@@ -59,10 +59,6 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
     this.partitionDuration = partitionDuration;
   }
 
-  public TimePartitionedStreamFileWriter(StreamConfig config, String fileNamePrefix) {
-    this(config.getLocation(), config.getPartitionDuration(), fileNamePrefix, config.getIndexInterval());
-  }
-
   @Override
   protected TimePartition getPartition(StreamEvent event) {
     long eventPartitionStart = StreamUtils.getPartitionStartTime(event.getTimestamp(), partitionDuration);

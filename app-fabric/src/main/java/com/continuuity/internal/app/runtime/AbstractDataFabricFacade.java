@@ -8,7 +8,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
@@ -40,14 +40,14 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private final Id.Program programId;
 
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
-                                  DataSetAccessor dataSetAccessor, DatasetManager datasetManager, 
+                                  DataSetAccessor dataSetAccessor, DatasetFramework datasetFramework,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
                                   LocationFactory locationFactory, Program program) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor, datasetManager);
+    this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor, datasetFramework);
     this.programId = program.getId();
   }
 
@@ -109,10 +109,10 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private DataSetInstantiator createDataSetContext(Program program,
                                                    LocationFactory locationFactory,
                                                    DataSetAccessor dataSetAccessor,
-                                                   DatasetManager datasetManager) {
+                                                   DatasetFramework datasetFramework) {
     try {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetManager,
+      DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                         program.getMainClass().getClassLoader());
       dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values(),
                                       program.getSpecification().getDatasets().values());
