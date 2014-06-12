@@ -841,7 +841,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
-      short instances = getInstances(request);
+      int instances = getInstances(request);
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
@@ -857,13 +857,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void setProgramInstances(Id.Program programId, short instances) throws Exception {
+  private void setProgramInstances(Id.Program programId, int instances) throws Exception {
     try {
       store.setProcedureInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, Type.PROCEDURE);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                            ImmutableMap.of(programId.getId(), (int) instances)).get();
+                                            ImmutableMap.of(programId.getId(), instances)).get();
       }
     } catch (Throwable throwable) {
       LOG.warn("Exception when getting instances for {}.{} to {}. {}",
@@ -912,7 +912,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
                                   @PathParam("flowlet-id") final String flowletId) {
-    Short instances = 0;
+    int instances = 0;
     try {
       instances = getInstances(request);
       if (instances < 1) {
@@ -928,13 +928,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programID = Id.Program.from(accountId, appId, flowId);
       int oldInstances = store.getFlowletInstances(programID, flowletId);
-      if (oldInstances != (int) instances) {
+      if (oldInstances != instances) {
         store.setFlowletInstances(programID, flowletId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, Type.FLOW);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
                                               ImmutableMap.of("flowlet", flowletId,
-                                                              "newInstances", String.valueOf((int) instances),
+                                                              "newInstances", String.valueOf(instances),
                                                               "oldInstances", String.valueOf(oldInstances))).get();
         }
       }

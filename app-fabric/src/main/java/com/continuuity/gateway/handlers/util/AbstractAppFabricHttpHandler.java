@@ -38,13 +38,13 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     super(authenticator);
   }
 
-  protected short getInstances(HttpRequest request) throws IOException, NumberFormatException {
+  protected int getInstances(HttpRequest request) throws IOException, NumberFormatException {
     String instanceCount = "";
     Map<String, String> arguments = decodeArguments(request);
     if (!arguments.isEmpty()) {
       instanceCount = arguments.get("instances");
     }
-    return Short.parseShort(instanceCount);
+    return Integer.parseInt(instanceCount);
   }
 
   protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {
