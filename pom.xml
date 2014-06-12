@@ -56,6 +56,9 @@
     <module>reactor-master</module>
     <module>singlenode</module>
     <module>web-app</module>
+    <module>tx-core</module>
+    <module>tx-hbase-compat-0.94</module>
+    <module>tx-hbase-compat-0.96</module>
   </modules>
 
   <dependencyManagement>
@@ -101,7 +104,7 @@
               <phase>process-test-classes</phase>
               <configuration>
                 <configLocation>checkstyle.xml</configLocation>
-                <suppressionsLocation>suppressions.xml</suppressionsLocation>
+                <suppressionsLocation>${project.parent.basedir}/../suppressions.xml</suppressionsLocation>
                 <encoding>UTF-8</encoding>
                 <consoleOutput>true</consoleOutput>
                 <failsOnError>true</failsOnError>
