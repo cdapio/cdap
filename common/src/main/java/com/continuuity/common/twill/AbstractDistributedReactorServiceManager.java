@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * Abstract class that can be extended by individual Reactor Services to implement their management methods.
  */
 public abstract class AbstractDistributedReactorServiceManager implements ReactorServiceManager {
-  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
   protected final long discoveryTimeout;
 
   protected CConfiguration cConf;
@@ -84,6 +84,7 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
       URL endpoint = new URL(url);
       HttpURLConnection httpConn = (HttpURLConnection) endpoint.openConnection();
       httpConn.setConnectTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
+      httpConn.setReadTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
       return (HttpResponseStatus.valueOf(httpConn.getResponseCode()));
     } catch (SocketTimeoutException s) {
       return HttpResponseStatus.NOT_FOUND;
