@@ -8,8 +8,8 @@ import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
@@ -34,20 +34,20 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("key-value-table", properties.getProperties("key-value-table")))
+      .datasets(tableDef.configure("key-value-table", properties))
       .build();
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return tableDef.getAdmin(spec.getSpecification("key-value-table"));
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetInstanceSpec spec) throws IOException {
+  public KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
     Table table = tableDef.getDataset(spec.getSpecification("key-value-table"));
     return new KeyValueTable(spec.getName(), table);
   }
@@ -110,7 +110,7 @@ public class KeyValueTableDefinition
   }
 
   /**
-   * KeyValueTableModule
+   * Module
    */
   public static class KeyValueTableModule implements DatasetModule {
     @Override

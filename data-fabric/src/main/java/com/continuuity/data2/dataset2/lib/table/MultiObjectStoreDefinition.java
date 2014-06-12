@@ -3,8 +3,8 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
@@ -32,23 +32,23 @@ public class MultiObjectStoreDefinition<T>
   }
 
   @Override
-  public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Preconditions.checkArgument(properties.getProperties().containsKey("type"));
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties.getProperties("table")))
+      .datasets(tableDef.configure("table", properties))
       .build();
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return tableDef.getAdmin(spec.getSpecification("table"));
   }
 
   @Override
-  public MultiObjectStore<T> getDataset(DatasetInstanceSpec spec) throws IOException {
-    DatasetInstanceSpec tableSpec = spec.getSpecification("table");
+  public MultiObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
+    DatasetSpecification tableSpec = spec.getSpecification("table");
     Table table = tableDef.getDataset(tableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
