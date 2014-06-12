@@ -222,7 +222,7 @@ public class HiveExploreServiceTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new HiveRuntimeModule().getInMemoryModules(),
-      new HiveClientModule(configuration)
+      new HiveClientModule()
     );
   }
 }

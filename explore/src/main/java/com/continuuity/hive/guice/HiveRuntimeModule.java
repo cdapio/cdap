@@ -6,6 +6,8 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.explore.service.ExploreService;
+import com.continuuity.explore.service.HiveExploreService;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.hooks.TransactionPostHook;
 import com.continuuity.hive.hooks.TransactionPreHook;

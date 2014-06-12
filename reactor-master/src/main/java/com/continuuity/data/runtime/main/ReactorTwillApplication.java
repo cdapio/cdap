@@ -36,13 +36,14 @@ public class ReactorTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     return
-      addDatasetOpExecutor(
-        addLogSaverService(
-         addStreamService(
-           addTransactionService(
-             addMetricsProcessor (
-               addMetricsService(
-                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))))
+      addExploreService(
+        addDatasetOpExecutor(
+          addLogSaverService(
+           addStreamService(
+             addTransactionService(
+               addMetricsProcessor (
+                 addMetricsService(
+                  TwillSpecification.Builder.with().setName(NAME).withRunnable())))))))
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
@@ -161,6 +162,23 @@ public class ReactorTwillApplication implements TwillApplication {
 
     return builder.add(
       new DatasetOpExecutorServerTwillRunnable("dataset.executor", "cConf.xml", "hConf.xml"), resourceSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addExploreService(TwillSpecification.Builder.MoreRunnable builder) {
+
+    // TODO change the constants
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+      .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES, 1))
+      .setMemory(cConf.getInt(Constants.Dataset.Executor.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(cConf.getInt(Constants.Dataset.Executor.CONTAINER_INSTANCES, 1))
+      .build();
+
+    // TODO change name of twill runnable?
+    return builder.add(new ExploreServiceTwillRunnable("hive.service", "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

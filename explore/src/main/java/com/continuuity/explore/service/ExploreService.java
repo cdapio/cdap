@@ -1,11 +1,13 @@
 package com.continuuity.explore.service;
 
+import com.google.common.util.concurrent.Service;
+
 import java.util.List;
 
 /**
  * Interface for exploring datasets.
  */
-public interface ExploreService {
+public interface ExploreService extends Service {
 
   Handle execute(String statement) throws ExploreException;
 
