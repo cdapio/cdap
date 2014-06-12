@@ -27,7 +27,6 @@ public class DataFabricLocalModule extends AbstractModule {
       protected void configure() {
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
-        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         install(new DataSetsModules().getLocalModule());
       }
     }));
