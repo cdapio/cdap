@@ -3,8 +3,12 @@ package com.continuuity.internal.migrate;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -13,6 +17,7 @@ import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.HbaseTableTestModule;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.transport.MetricsRecord;
@@ -147,16 +152,20 @@ public class MetricsTableMigrator20to21Test {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, testHBase.getConfiguration()),
       new DataFabricDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new HbaseTableTestModule(),
+      new ZKClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       }
     );

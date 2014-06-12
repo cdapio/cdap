@@ -6,7 +6,11 @@ package com.continuuity.metrics.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -18,6 +22,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -485,14 +490,25 @@ public class TimeSeriesTableTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
-    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
-                                             new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricDistributedModule(),
-                                             new HbaseTableTestModule());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf, testHBase.getConfiguration()),
+      new LocationRuntimeModule().getDistributedModules(),
+      new DataFabricDistributedModule(),
+      new HbaseTableTestModule(),
+      new ZKClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
+    );
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);
   }
