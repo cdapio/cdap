@@ -6,8 +6,8 @@ import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
@@ -216,17 +216,17 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private static DatasetDefinition createDefinition(String name) {
     return new AbstractDatasetDefinition(name) {
       @Override
-      public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
+      public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return null;
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetInstanceSpec spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetInstanceSpec spec) {
+      public Dataset getDataset(DatasetSpecification spec) {
         return null;
       }
     };

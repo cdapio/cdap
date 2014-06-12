@@ -12,22 +12,22 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * A {@link DatasetInstanceSpec} is a hierarchical meta data object that contains all
+ * A {@link DatasetSpecification} is a hierarchical meta data object that contains all
  * meta data needed to instantiate a dataset at runtime. It is hierarchical
  * because it also contains the specification for any underlying datasets that
- * are used in the implementation of the dataset. {@link DatasetInstanceSpec}
+ * are used in the implementation of the dataset. {@link DatasetSpecification}
  * consists of:
  * <li>fixed fields such as the dataset instance name and the dataset type name</li>
  * <li>custom string properties that vary from dataset to dataset,
  *   and that the dataset implementation depends on</li>
- * <li>a {@link DatasetInstanceSpec} for each underlying dataset. For instance,
+ * <li>a {@link DatasetSpecification} for each underlying dataset. For instance,
  *   if a dataset implements an indexed table using two base Tables,
  *   one for the data and one for the index, then these two tables have
  *   their own spec, which must be carried along with the spec for the
  *   indexed table.</li>
- * {@link DatasetInstanceSpec} uses a builder pattern for construction.
+ * {@link DatasetSpecification} uses a builder pattern for construction.
  */
-public final class DatasetInstanceSpec {
+public final class DatasetSpecification {
 
   // the name of the dataset
   private final String name;
@@ -38,7 +38,11 @@ public final class DatasetInstanceSpec {
   private final SortedMap<String, String> properties;
   // the meta data for embedded datasets
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
-  private final SortedMap<String, DatasetInstanceSpec> datasetSpecs;
+  private final SortedMap<String, DatasetSpecification> datasetSpecs;
+
+  public static Builder builder(String name, String typeName) {
+    return new Builder(name, typeName);
+  }
 
   /**
    * Private constructor, only to be used by the builder.
@@ -47,10 +51,10 @@ public final class DatasetInstanceSpec {
    * @param properties the custom properties
    * @param datasetSpecs the specs of embedded datasets
    */
-  private DatasetInstanceSpec(String name,
-                              String type,
-                              SortedMap<String, String> properties,
-                              SortedMap<String, DatasetInstanceSpec> datasetSpecs) {
+  private DatasetSpecification(String name,
+                               String type,
+                               SortedMap<String, String> properties,
+                               SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -106,7 +110,7 @@ public final class DatasetInstanceSpec {
    * @return the specification for the named embedded dataset,
    *    or null if not found.
    */
-  public DatasetInstanceSpec getSpecification(String dsName) {
+  public DatasetSpecification getSpecification(String dsName) {
     return datasetSpecs.get(dsName);
   }
 
@@ -117,10 +121,10 @@ public final class DatasetInstanceSpec {
     if (other == this) {
       return true;
     }
-    if (!(other instanceof DatasetInstanceSpec)) {
+    if (!(other instanceof DatasetSpecification)) {
       return false;
     }
-    DatasetInstanceSpec ds = (DatasetInstanceSpec) other;
+    DatasetSpecification ds = (DatasetSpecification) other;
     return this.getName().equals(ds.getName())
         && this.properties.equals(ds.properties)
         && this.datasetSpecs.equals(ds.datasetSpecs);
@@ -142,9 +146,9 @@ public final class DatasetInstanceSpec {
     private final String name;
     private final String type;
     private final TreeMap<String, String> properties;
-    private final TreeMap<String, DatasetInstanceSpec> dataSetSpecs;
+    private final TreeMap<String, DatasetSpecification> dataSetSpecs;
 
-    public Builder(String name, String typeName) {
+    private Builder(String name, String typeName) {
       this.name = name;
       this.type = typeName;
       this.properties = Maps.newTreeMap();
@@ -156,7 +160,7 @@ public final class DatasetInstanceSpec {
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
-    public Builder datasets(DatasetInstanceSpec... specs) {
+    public Builder datasets(DatasetSpecification... specs) {
       return datasets(Lists.newArrayList(specs));
     }
 
@@ -165,8 +169,8 @@ public final class DatasetInstanceSpec {
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
-    public Builder datasets(Collection<? extends DatasetInstanceSpec> specs) {
-      for (DatasetInstanceSpec spec : specs) {
+    public Builder datasets(Collection<? extends DatasetSpecification> specs) {
+      for (DatasetSpecification spec : specs) {
         this.dataSetSpecs.put(spec.getName(), spec);
       }
       return this;
@@ -198,33 +202,33 @@ public final class DatasetInstanceSpec {
      * constructor.
      * @return a complete DataSetSpecification
      */
-    public DatasetInstanceSpec build() {
-      return namespace(new DatasetInstanceSpec(this.name, this.type, this.properties, this.dataSetSpecs));
+    public DatasetSpecification build() {
+      return namespace(new DatasetSpecification(this.name, this.type, this.properties, this.dataSetSpecs));
     }
 
     /**
-     * Prefixes all DataSets embedded inside the given {@link DatasetInstanceSpec} with the name of the enclosing
+     * Prefixes all DataSets embedded inside the given {@link DatasetSpecification} with the name of the enclosing
      * DataSet.
      */
-    private DatasetInstanceSpec namespace(DatasetInstanceSpec spec) {
+    private DatasetSpecification namespace(DatasetSpecification spec) {
       return namespace(null, spec);
     }
 
     /*
      * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the given namespace.
      */
-    private DatasetInstanceSpec namespace(String namespace, DatasetInstanceSpec spec) {
+    private DatasetSpecification namespace(String namespace, DatasetSpecification spec) {
       // Name of the DataSetSpecification is prefixed with namespace if namespace is present.
       String name = (namespace == null) ? spec.getName() : namespace + '.' + spec.getName();
       // If no namespace is given, starts with using the DataSet name.
       namespace = (namespace == null) ? spec.getName() : namespace;
 
-      TreeMap<String, DatasetInstanceSpec> specifications = Maps.newTreeMap();
-      for (Map.Entry<String, DatasetInstanceSpec> entry : spec.datasetSpecs.entrySet()) {
+      TreeMap<String, DatasetSpecification> specifications = Maps.newTreeMap();
+      for (Map.Entry<String, DatasetSpecification> entry : spec.datasetSpecs.entrySet()) {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetInstanceSpec(name, type, spec.properties, specifications);
+      return new DatasetSpecification(name, type, spec.properties, specifications);
     }
   }
 }

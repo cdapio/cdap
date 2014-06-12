@@ -1,27 +1,18 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.BatchWritable;
-import com.continuuity.api.data.batch.Split;
-import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitReaderAdapter;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Increment;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Row;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.List;
 
 public class UniqueCountTableDefinition
   extends CompositeDatasetDefinition<UniqueCountTableDefinition.UniqueCountTable> {
@@ -32,7 +23,7 @@ public class UniqueCountTableDefinition
   }
 
   @Override
-  public UniqueCountTable getDataset(DatasetInstanceSpec spec) throws IOException {
+  public UniqueCountTable getDataset(DatasetSpecification spec) throws IOException {
     return new UniqueCountTable(spec.getName(),
                                 getDataset("entryCountTable", Table.class, spec),
                                 getDataset("uniqueCountTable", Table.class, spec));
