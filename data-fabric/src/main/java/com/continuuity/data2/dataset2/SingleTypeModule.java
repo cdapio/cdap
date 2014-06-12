@@ -75,9 +75,9 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
 public class SingleTypeModule implements DatasetModule {
   private static final Logger LOG = LoggerFactory.getLogger(SingleTypeModule.class);
 
-  private final Class<? extends com.continuuity.internal.data.dataset.Dataset> dataSetClass;
+  private final Class<? extends Dataset> dataSetClass;
 
-  public SingleTypeModule(Class<? extends com.continuuity.internal.data.dataset.Dataset> dataSetClass) {
+  public SingleTypeModule(Class<? extends Dataset> dataSetClass) {
     this.dataSetClass = dataSetClass;
   }
 
