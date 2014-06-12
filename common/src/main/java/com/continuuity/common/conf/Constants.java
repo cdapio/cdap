@@ -559,9 +559,9 @@ public final class Constants {
    * Explore module configuration.
    */
   public static final class Explore {
-    public static final String CCONF_CODEC_KEY = "reactor.cconfiguration";
-    public static final String HCONF_CODEC_KEY = "reactor.hconfiguration";
-    public static final String TX_QUERY_CODEC_KEY = "reactor.hive.query.tx.id";
+    public static final String CCONF_KEY = "reactor.cconfiguration";
+    public static final String HCONF_KEY = "reactor.hconfiguration";
+    public static final String TX_QUERY_KEY = "reactor.hive.query.tx.id";
 
     public static final String DATASET_NAME = "reactor.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";

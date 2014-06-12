@@ -28,7 +28,7 @@ public interface ExploreService {
    * Fetch the schema of the result of a Hive operation. This can be called only after the state of the operation is
    *               {@link Status.State#FINISHED}.
    * @param handle handle returned by {@link #execute(String)}.
-   * @return list of {@link ColumnDesc} representing the schema of the results.
+   * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
    * @throws ExploreException
    */
   List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException;

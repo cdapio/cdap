@@ -30,26 +30,6 @@ public class Status {
       .toString();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    Status that = (Status) o;
-
-    return Objects.equal(this.state, that.state) &&
-      Objects.equal(this.hasResults, that.hasResults);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(state, hasResults);
-  }
-
   /**
    * Represents the state of an operation.
    */

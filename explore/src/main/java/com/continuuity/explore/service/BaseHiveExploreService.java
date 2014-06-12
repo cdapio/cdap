@@ -33,30 +33,31 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final HiveConf hiveConf;
 
   // TODO: timeout operations
   private final ConcurrentMap<Handle, OperationInfo> handleMap = Maps.newConcurrentMap();
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf) {
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.hiveConf = hiveConf;
     ContextManager.initialize(txClient, datasetFramework);
   }
 
   /**
    * @return configuration for a hive session that contains a transaction, and serialized reactor configuration and
-   * HBase configuration.
+   * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
    */
   protected Map<String, String> getSessionConf() throws IOException {
-    HiveConf hiveConf = new HiveConf();
     Map<String, String> sessionConf = Maps.newHashMap();
 
-    Transaction tx = startTransaction(hiveConf);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE, tx);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE, cConf);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE, hConf);
+    Transaction tx = startTransaction();
+    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
+    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
+    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
     return sessionConf;
   }
 
@@ -114,7 +115,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  private Transaction startTransaction(HiveConf hiveConf) throws IOException {
+  private Transaction startTransaction() throws IOException {
     TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
     Transaction tx = txClient.startLong();
     LOG.debug("Transaction {} started.", tx);
@@ -125,21 +126,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       OperationInfo opInfo = handleMap.get(handle);
       Transaction tx = ConfigurationUtil.get(opInfo.getSessionConf(),
-                                             Constants.Explore.TX_QUERY_CODEC_KEY,
+                                             Constants.Explore.TX_QUERY_KEY,
                                              TxnCodec.INSTANCE);
       LOG.debug("Closing transaction {} for handle {}", tx, handle);
 
-      TransactionSystemClient txClient = ContextManager.getTxClient(new HiveConf());
-      // Transaction doesn't involve any changes
-      if (txClient.canCommit(tx, ImmutableList.<byte[]>of())) {
-        if (!txClient.commit(tx)) {
-          txClient.abort(tx);
-          LOG.info("Aborting transaction: {}", tx);
-        }
-      } else {
-        // Very unlikely with empty changes
-        txClient.invalidate(tx.getWritePointer());
-        LOG.info("Invalidating transaction: {}", tx);
+      TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
+      // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
+      // SplitReader may have.
+      if (txClient.canCommit(tx, ImmutableList.<byte[]>of()) || !txClient.commit(tx)) {
+
+        txClient.abort(tx);
+        LOG.info("Aborting transaction: {}", tx);
       }
     } catch (Throwable e) {
       LOG.error("Got exception while closing transaction.", e);

@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
 /**
- *
+ * Tests Hive13ExploreService.
  */
 public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
@@ -151,7 +151,7 @@ public class HiveExploreServiceTest {
     runCommand("select key, value from kv_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "STRUCT", 2, null)),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
@@ -159,7 +159,7 @@ public class HiveExploreServiceTest {
     runCommand("select * from kv_table",
                true,
                Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
-                                  new ColumnDesc("kv_table.value", "STRUCT", 2, null)),
+                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));

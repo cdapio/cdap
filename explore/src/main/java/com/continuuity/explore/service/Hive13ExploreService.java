@@ -32,19 +32,20 @@ import java.util.concurrent.TimeUnit;
 public class Hive13ExploreService extends BaseHiveExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(Hive13ExploreService.class);
 
+  private final HiveConf hiveConf;
   private final CLIService cliService;
 
   @Inject
   public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf) {
-    super(txClient, datasetFramework, cConf, hConf);
+                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+    this.hiveConf = hiveConf;
     this.cliService = new CLIService();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", Hive13ExploreService.class.getSimpleName());
-    HiveConf hiveConf = new HiveConf();
     cliService.init(hiveConf);
     cliService.start();
     TimeUnit.SECONDS.sleep(5);
@@ -64,7 +65,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.debug("Executing statement: {} with handle {}", statement, handle);
+      LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
     } catch (Exception e) {
       throw new ExploreException(e);
@@ -78,7 +79,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
       OperationStatus operationStatus = cliService.getOperationStatus(operationHandle);
       Status status = new Status(Status.State.valueOf(operationStatus.getState().toString()),
                                  operationHandle.hasResultSet());
-      LOG.debug("Status of handle {} is {}", handle, status);
+      LOG.trace("Status of handle {} is {}", handle, status);
       return status;
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
@@ -88,14 +89,14 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Getting schema for handle {}", handle);
+      LOG.trace("Getting schema for handle {}", handle);
       ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
-        for (ColumnDescriptor tColumnDesc : tableSchema.getColumnDescriptors()) {
-          listBuilder.add(new ColumnDesc(tColumnDesc.getName(), tColumnDesc.getType().getName(),
-                                         tColumnDesc.getOrdinalPosition(), tColumnDesc.getComment()));
+        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
         }
       }
       return listBuilder.build();
@@ -107,7 +108,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   public List<Row> nextResults(Handle handle, int size) throws ExploreException {
     try {
-      LOG.debug("Getting results for handle {}", handle);
+      LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         RowSet rowSet = cliService.fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
@@ -127,7 +128,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   public void cancel(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Cancelling operation {}", handle);
+      LOG.trace("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
@@ -137,7 +138,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   public void close(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Closing operation {}", handle);
+      LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(getOperationHandle(handle));
     } catch (HiveSQLException e) {
       throw new ExploreException(e);

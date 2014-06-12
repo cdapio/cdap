@@ -9,18 +9,17 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
+import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnDesc;
+import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TPrimitiveTypeEntry;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
-import org.apache.hive.service.cli.thrift.TTableSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static org.apache.hive.service.cli.thrift.TCLIServiceConstants.TYPE_NAMES;
 
 /**
  * Hive 12 implementation of {@link ExploreService}. There are 2 changes compared to Hive 13 implementation -
@@ -43,19 +40,20 @@ import static org.apache.hive.service.cli.thrift.TCLIServiceConstants.TYPE_NAMES
 public class Hive12ExploreService extends BaseHiveExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(Hive12ExploreService.class);
 
+  private final HiveConf hiveConf;
   private final CLIService cliService;
 
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf) {
-    super(txClient, datasetFramework, cConf, hConf);
+                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf);
+    this.hiveConf = hiveConf;
     this.cliService = new CLIService();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", Hive12ExploreService.class.getSimpleName());
-    HiveConf hiveConf = new HiveConf();
     cliService.init(hiveConf);
     cliService.start();
     TimeUnit.SECONDS.sleep(5);
@@ -75,7 +73,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());
       Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
-      LOG.debug("Executing statement: {} with handle {}", statement, handle);
+      LOG.trace("Executing statement: {} with handle {}", statement, handle);
       return handle;
     } catch (Exception e) {
       throw new ExploreException(e);
@@ -92,7 +90,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Object retStatus = cliService.getOperationStatus(operationHandle);
       OperationState operationState = (OperationState) retStatus;
       Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
-      LOG.debug("Status of handle {} is {}", handle, status);
+      LOG.trace("Status of handle {} is {}", handle, status);
       return status;
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
@@ -102,14 +100,14 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Override
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Getting schema for handle {}", handle);
+      LOG.trace("Getting schema for handle {}", handle);
       ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        TTableSchema tableSchema = cliService.getResultSetMetadata(operationHandle).toTTableSchema();
-        for (TColumnDesc tColumnDesc : tableSchema.getColumns()) {
-          listBuilder.add(new ColumnDesc(tColumnDesc.getColumnName(), getType(tColumnDesc),
-                                         tColumnDesc.getPosition(), tColumnDesc.getComment()));
+        TableSchema tableSchema = cliService.getResultSetMetadata(operationHandle);
+        for (ColumnDescriptor colDesc : tableSchema.getColumnDescriptors()) {
+          listBuilder.add(new ColumnDesc(colDesc.getName(), colDesc.getTypeName(),
+                                         colDesc.getOrdinalPosition(), colDesc.getComment()));
         }
       }
       return listBuilder.build();
@@ -121,7 +119,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Override
   public List<Row> nextResults(Handle handle, int size) throws ExploreException {
     try {
-      LOG.debug("Getting results for handle {}", handle);
+      LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         RowSet rowSet = cliService.fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
@@ -147,7 +145,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Override
   public void cancel(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Cancelling operation {}", handle);
+      LOG.trace("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
@@ -157,7 +155,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Override
   public void close(Handle handle) throws ExploreException {
     try {
-      LOG.debug("Closing operation {}", handle);
+      LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(getOperationHandle(handle));
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
@@ -198,11 +196,5 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       throw new ExploreException("Unknown column value encountered: " + tColumnValue);
     }
     return obj;
-  }
-
-  private String getType(TColumnDesc tColumnDesc) {
-    TPrimitiveTypeEntry primitiveTypeEntry =
-      tColumnDesc.getTypeDesc().getTypes().get(0).getPrimitiveEntry();
-    return TYPE_NAMES.get(primitiveTypeEntry.getType());
   }
 }
