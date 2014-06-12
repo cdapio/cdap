@@ -28,18 +28,18 @@ public class KeyValueTableDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
+      .datasets(tableDef.configure("kv", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+    return tableDef.getAdmin(spec.getSpecification("kv"));
   }
 
   @Override
   public KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("table"));
+    Table table = tableDef.getDataset(spec.getSpecification("kv"));
     return new KeyValueTable(spec.getName(), table);
   }
 }
