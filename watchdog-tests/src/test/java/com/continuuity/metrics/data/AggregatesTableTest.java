@@ -429,6 +429,7 @@ public class AggregatesTableTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),

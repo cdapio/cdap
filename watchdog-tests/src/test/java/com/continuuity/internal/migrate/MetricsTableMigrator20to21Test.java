@@ -16,7 +16,7 @@ import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
-import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.HbaseTableTestModule;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.transport.MetricsRecord;
@@ -24,10 +24,8 @@ import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -151,6 +149,7 @@ public class MetricsTableMigrator20to21Test {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(
@@ -160,12 +159,7 @@ public class MetricsTableMigrator20to21Test {
       new DataFabricDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-        }
-      }
+      new HbaseTableTestModule()
     );
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

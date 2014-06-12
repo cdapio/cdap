@@ -489,6 +489,7 @@ public class TimeSeriesTableTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
