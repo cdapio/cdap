@@ -12,9 +12,9 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.TableModule;
-import com.continuuity.data2.dataset2.module.lib.hbase.HBaseTableModule;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
+import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
@@ -38,11 +38,11 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
+        bind(new TypeLiteral<SortedMap<String, DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-memory", InMemoryTableModule.class,
-            "table", TableModule.class)
+          ImmutableSortedMap.<String, DatasetModule>of(
+            "orderedTable-memory", new InMemoryOrderedTableModule(),
+            "table", new TableModule())
         );
 
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
@@ -63,11 +63,11 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
+        bind(new TypeLiteral<SortedMap<String, DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-memory", LevelDBTableModule.class,
-            "table", TableModule.class)
+          ImmutableSortedMap.<String, DatasetModule>of(
+            "orderedTable-memory", new LevelDBOrderedTableModule(),
+            "table", new TableModule())
         );
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
@@ -96,11 +96,11 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<SortedMap<String, Class<? extends DatasetModule>>>() { })
+        bind(new TypeLiteral<SortedMap<String, DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-            "orderedTable-hbase", HBaseTableModule.class,
-            "table", TableModule.class)
+          ImmutableSortedMap.<String, DatasetModule>of(
+            "orderedTable-hbase", new HBaseOrderedTableModule(),
+            "table", new TableModule())
         );
         bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode

@@ -1,13 +1,14 @@
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import org.junit.Test;
  *
  */
 public abstract class AbstractDatasetFrameworkTest {
+
   protected abstract DatasetFramework getFramework();
 
   @Test
@@ -24,10 +26,10 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
     String moduleName = "inMemory";
 
-    framework.register(moduleName, InMemoryTableModule.class);
+    framework.addModule(moduleName, new InMemoryOrderedTableModule());
 
     // Creating instance
-    framework.addInstance("orderedTable", "my_table", DatasetInstanceProperties.EMPTY);
+    framework.addInstance("orderedTable", "my_table", DatasetProperties.EMPTY);
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
@@ -66,16 +68,52 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
 
-    framework.register("inMemory", InMemoryTableModule.class);
-    framework.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
+    framework.addModule("inMemory", new InMemoryOrderedTableModule());
+    framework.addModule("table", new TableModule());
+    framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
 
     // Creating instance
-    framework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
+    framework.addInstance(SimpleKVTable.class.getName(),
+                          "my_table", DatasetProperties.EMPTY);
+
+    testCompositeDataset(framework);
+
+    // cleanup
+    framework.deleteInstance("my_table");
+    framework.deleteModule("keyValue");
+    framework.deleteModule("table");
+    framework.deleteModule("inMemory");
+  }
+
+  @Test
+  public void testDoubleCompositeDataset() throws Exception {
+    // Configuring Dataset types
+    DatasetFramework framework = getFramework();
+
+    framework.addModule("inMemory", new InMemoryOrderedTableModule());
+    framework.addModule("table", new TableModule());
+    framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
+    framework.addModule("doubleKeyValue", new SingleTypeModule(DoubleWrappedKVTable.class));
+
+    // Creating instance
+    framework.addInstance(DoubleWrappedKVTable.class.getName(), "my_table", DatasetProperties.EMPTY);
+
+    testCompositeDataset(framework);
+
+    // cleanup
+    framework.deleteInstance("my_table");
+    framework.deleteModule("doubleKeyValue");
+    framework.deleteModule("keyValue");
+    framework.deleteModule("table");
+    framework.deleteModule("inMemory");
+  }
+
+  private void testCompositeDataset(DatasetFramework framework) throws Exception {
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
-    final KeyValueTableDefinition.KeyValueTable table = framework.getDataset("my_table", null);
+    final KeyValueTable table = framework.getDataset("my_table", null);
     Assert.assertNotNull(table);
 
     TransactionExecutor txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
@@ -98,11 +136,6 @@ public abstract class AbstractDatasetFrameworkTest {
         Assert.assertEquals(null, table.get("key1"));
       }
     });
-
-    // cleanup
-    framework.deleteInstance("my_table");
-    framework.deleteModule("keyValue");
-    framework.deleteModule("inMemory");
   }
 
 }

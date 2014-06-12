@@ -3,7 +3,6 @@ package com.continuuity.hive.client;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-
 import com.google.inject.Inject;
 import org.apache.hive.beeline.BeeLine;
 import org.apache.twill.discovery.Discoverable;
@@ -11,7 +10,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -45,12 +43,13 @@ public class HiveCommandExecutor implements HiveClient {
         "-u", BeeLine.BEELINE_DEFAULT_JDBC_URL +
         hiveDiscoverable.getSocketAddress().getHostName() +
         ":" + hiveDiscoverable.getSocketAddress().getPort() +
-        "/default;auth=noSasl?" +
-        "hive.exec.pre.hooks=com.continuuity.hive.hooks.TransactionPreHook;" +
-        "hive.exec.post.hooks=com.continuuity.hive.hooks.TransactionPostHook",
+      // TODO: fix auth=noSasl for distributed mode
+        "/default;auth=noSasl?",
         "-n", "hive",
         "--outputformat=table",
         "-e", cmd};
+
+    LOG.debug("Executing command - {}", args);
 
     BeeLine beeLine = new BeeLine();
     if (out != null) {

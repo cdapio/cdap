@@ -9,6 +9,7 @@ import com.continuuity.common.conf.PropertyStore;
 import com.continuuity.common.conf.PropertyUpdater;
 import com.continuuity.common.io.Codec;
 import com.continuuity.common.io.Locations;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -37,9 +38,12 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   // Executor for performing update action asynchronously
   private final Executor updateExecutor;
+  private final StreamAdmin streamAdmin;
   private final Supplier<PropertyStore<StreamProperty>> propertyStore;
 
-  protected AbstractStreamCoordinator() {
+  protected AbstractStreamCoordinator(StreamAdmin streamAdmin) {
+    this.streamAdmin = streamAdmin;
+
     propertyStore = Suppliers.memoize(new Supplier<PropertyStore<StreamProperty>>() {
       @Override
       public PropertyStore<StreamProperty> get() {
@@ -71,11 +75,12 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
           @Override
           public void run() {
             try {
+              long currentTTL = (property == null) ? streamConfig.getTTL() : property.getTTL();
               int newGeneration = ((property == null) ? lowerBound : property.getGeneration()) + 1;
               // Create the generation directory
               Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                                newGeneration));
-              resultFuture.set(new StreamProperty(newGeneration));
+              resultFuture.set(new StreamProperty(newGeneration, currentTTL));
             } catch (IOException e) {
               resultFuture.setException(e);
             }
@@ -87,6 +92,41 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
       @Override
       public Integer apply(StreamProperty property) {
         return property.getGeneration();
+      }
+    });
+  }
+
+  @Override
+  public ListenableFuture<Long> changeTTL(final StreamConfig streamConfig, final long newTTL) {
+    return Futures.transform(propertyStore.get().update(streamConfig.getName(), new PropertyUpdater<StreamProperty>() {
+      @Override
+      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
+        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
+        updateExecutor.execute(new Runnable() {
+
+          @Override
+          public void run() {
+            try {
+              int currentGeneration = (property == null) ?
+                StreamUtils.getGeneration(streamConfig) :
+                property.getGeneration();
+
+              StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
+                                                        streamConfig.getIndexInterval(), newTTL,
+                                                        streamConfig.getLocation());
+              streamAdmin.updateConfig(newConfig);
+              resultFuture.set(new StreamProperty(currentGeneration, newTTL));
+            } catch (IOException e) {
+              resultFuture.setException(e);
+            }
+          }
+        });
+        return resultFuture;
+      }
+    }), new Function<StreamProperty, Long>() {
+      @Override
+      public Long apply(StreamProperty property) {
+        return property.getTTL();
       }
     });
   }
@@ -106,20 +146,33 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
    */
   private static final class StreamProperty {
 
+    /**
+     * Generation of the stream. {@code null} to ignore this field.
+     */
     private final int generation;
+    /**
+     * TTL of the stream. {@code null} to ignore this field.
+     */
+    private final long ttl;
 
-    private StreamProperty(int generation) {
+    private StreamProperty(int generation, long ttl) {
       this.generation = generation;
+      this.ttl = ttl;
     }
 
     public int getGeneration() {
       return generation;
     }
 
+    public long getTTL() {
+      return ttl;
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("generation", generation)
+        .add("ttl", ttl)
         .toString();
     }
   }
@@ -157,29 +210,22 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
     }
 
     @Override
-    public void onChange(String name, StreamProperty property) {
+    public void onChange(String name, StreamProperty newProperty) {
       try {
-        if (property == null) {
-          // Property is deleted
-          if (currentProperty != null) {
-            // Fire all delete events
-            generationDeleted(name);
+        if (newProperty != null) {
+          if (currentProperty == null || currentProperty.getGeneration() < newProperty.getGeneration()) {
+            generationChanged(name, newProperty.getGeneration());
           }
-          return;
-        }
 
-        if (currentProperty == null) {
-          // Fire all events
-          generationChanged(name, property.getGeneration());
-          return;
-        }
-
-        // Inspect individual stream property to determine what needs to be fired
-        if (currentProperty.getGeneration() < property.getGeneration()) {
-          generationChanged(name, property.getGeneration());
+          if (currentProperty == null || currentProperty.getTTL() != newProperty.getTTL()) {
+            ttlChanged(name, newProperty.getTTL());
+          }
+        } else {
+          generationDeleted(name);
+          ttlDeleted(name);
         }
       } finally {
-        currentProperty = property;
+        currentProperty = newProperty;
       }
     }
 
@@ -193,7 +239,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
       try {
         listener.generationChanged(streamName, generation);
       } catch (Throwable t) {
-        LOG.error("Exception while calling StreamPropertyListener", t);
+        LOG.error("Exception while calling StreamPropertyListener.generationChanged", t);
       }
     }
 
@@ -202,7 +248,25 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
       try {
         listener.generationDeleted(streamName);
       } catch (Throwable t) {
-        LOG.error("Exception while calling StreamPropertyListener", t);
+        LOG.error("Exception while calling StreamPropertyListener.generationDeleted", t);
+      }
+    }
+
+    @Override
+    public void ttlChanged(String streamName, long ttl) {
+      try {
+        listener.ttlChanged(streamName, ttl);
+      } catch (Throwable t) {
+        LOG.error("Exception while calling StreamPropertyListener.ttlChanged", t);
+      }
+    }
+
+    @Override
+    public void ttlDeleted(String streamName) {
+      try {
+        listener.ttlDeleted(streamName);
+      } catch (Throwable t) {
+        LOG.error("Exception while calling StreamPropertyListener.ttlDeleted", t);
       }
     }
   }
