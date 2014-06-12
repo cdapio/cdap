@@ -7,7 +7,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
@@ -38,8 +38,8 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("core", CoreDatasetsModule.class);
-    registerModule("integerStore", IntegerStoreModule.class);
+    addModule("core", new CoreDatasetsModule());
+    addModule("integerStore", new IntegerStoreModule());
   }
 
   @After
@@ -50,7 +50,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   }
 
   private void addIntegerStoreInstance(String instanceName) throws Exception {
-    createInstance("integerStore", instanceName, DatasetInstanceProperties.EMPTY);
+    createInstance("integerStore", instanceName, DatasetProperties.EMPTY);
   }
 
   @Test
@@ -180,7 +180,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
       }
     };
 
-    createInstance("keyValueTable", "kv", DatasetInstanceProperties.EMPTY);
+    createInstance("keyValueTable", "kv", DatasetProperties.EMPTY);
 
     KeyValueTable kvTable = getInstance("kv");
     Type type = Custom.class;

@@ -32,7 +32,7 @@ import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Table;
@@ -162,7 +162,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp(bob, "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetInstanceProperties.EMPTY);
+    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
     testAdminOp(bob, "exists", 200, true);
 
     testAdminOp(dsNameSpace.namespace("joe"), "exists", 404, null);

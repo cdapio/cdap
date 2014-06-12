@@ -1,6 +1,6 @@
 package com.continuuity.api.data;
 
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 
 /**
  * Information for creating dataset instance.
@@ -8,9 +8,9 @@ import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 public final class DatasetInstanceCreationSpec {
   private final String instanceName;
   private final String typeName;
-  private final DatasetInstanceProperties props;
+  private final DatasetProperties props;
 
-  public DatasetInstanceCreationSpec(String instanceName, String typeName, DatasetInstanceProperties props) {
+  public DatasetInstanceCreationSpec(String instanceName, String typeName, DatasetProperties props) {
     this.instanceName = instanceName;
     this.typeName = typeName;
     this.props = props;
@@ -24,7 +24,7 @@ public final class DatasetInstanceCreationSpec {
     return typeName;
   }
 
-  public DatasetInstanceProperties getProperties() {
+  public DatasetProperties getProperties() {
     return props;
   }
 }

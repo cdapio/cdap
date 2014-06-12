@@ -11,7 +11,7 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -80,8 +80,8 @@ public abstract class DatasetServiceTestBase {
                                  new LocalLocationFactory(),
                                  discoveryService,
                                  new InMemoryDatasetFramework(),
-                                 ImmutableSortedMap.<String, Class<? extends DatasetModule>>of(
-                                   "memoryTable", InMemoryTableModule.class),
+                                 ImmutableSortedMap.<String, DatasetModule>of(
+                                   "memoryTable", new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework));
