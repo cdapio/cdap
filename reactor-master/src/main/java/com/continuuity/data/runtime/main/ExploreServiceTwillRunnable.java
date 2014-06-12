@@ -23,6 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -30,6 +32,7 @@ import java.util.List;
  *
  */
 public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceTwillRunnable.class);
 
   private Injector injector;
 
@@ -42,13 +45,14 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     CConfiguration cConf = getCConfiguration();
     Configuration hConf = getConfiguration();
 
+    LOG.info("Initializing runnable {}", name);
+
     // Set the host name to the one provided by Twill
     // TODO move the constant
     cConf.set(Constants.Hive.SERVER_ADDRESS, context.getHost().getHostName());
 
     // NOTE: twill client will try to load all the classes present here - including hive classes
     // but it will fail and ignore those classes silently
-
     injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new IOModule(), new ZKClientModule(),
@@ -60,7 +64,7 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
         new HiveRuntimeModule().getDistributedModules(),
         new AuthModule());
 
-    // TODO remove that - just used to load hive server provider
+    // TODO remove that - just a way to call hive server provider and put some settings
     injector.getInstance(HiveServer.class);
   }
 

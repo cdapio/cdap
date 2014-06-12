@@ -68,6 +68,8 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
     HiveConf hiveConf = new HiveConf();
     cliService.init(hiveConf);
     cliService.start();
+
+
   }
 
   @Override

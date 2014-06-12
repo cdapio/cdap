@@ -21,6 +21,7 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.explore.service.ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.server.HiveServer;
@@ -133,7 +134,7 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
       // TODO reintegrate once hive issues in distributed mode are fixed
-      // new HiveRuntimeModule(cConf).getDistributedModules()
+      // new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -327,6 +328,7 @@ public class ReactorServiceMain extends DaemonMain {
 
     // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
     String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
+    LOG.info("Hive classpath = {}", hiveClassPathStr);
     if (hiveClassPathStr != null) {
       preparer = preparer.withClassPaths(hiveClassPathStr);
     }

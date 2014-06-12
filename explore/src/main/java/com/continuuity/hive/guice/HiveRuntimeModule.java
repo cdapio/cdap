@@ -17,6 +17,7 @@ import com.continuuity.hive.metastore.MockHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
+import com.continuuity.internal.lang.ClassLoaders;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -125,20 +126,7 @@ public class HiveRuntimeModule extends RuntimeModule {
         new AbstractModule() {
           @Override
           protected void configure() {
-
-            // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-            String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
-            LOG.debug("Hive classpath = {}", hiveClassPathStr);
-            if (hiveClassPathStr == null) {
-              // todo throw exception
-            }
-            Iterable<URL> hiveClassPath = getClassPath(hiveClassPathStr);
-            ClassLoader hiveClassLoader =
-                new URLClassLoader(Iterables.toArray(Iterables.concat(hiveClassPath), URL.class),
-                                   this.getClass().getClassLoader());
-
-            bind(ClassLoader.class).annotatedWith(Names.named("hive-classloader")).toInstance(hiveClassLoader);
-
+            bind(ExploreService.class).to(HiveExploreService.class).in(Scopes.SINGLETON);
             bind(HiveServerProvider.class).to(HiveDistributedServerProvider.class).in(Scopes.SINGLETON);
           }
         });
@@ -166,21 +154,19 @@ public class HiveRuntimeModule extends RuntimeModule {
   @Singleton
   private static final class HiveDistributedServerProvider extends HiveServerProvider {
 
-    private final ClassLoader hiveClassLoader;
-
     @Inject
     private HiveDistributedServerProvider(CConfiguration cConf, Injector injector) {
       super(cConf, injector);
-      this.hiveClassLoader = injector.getInstance(Key.get(ClassLoader.class, Names.named("hive-classloader")));
     }
 
     @Override
     protected void setProperties() {
       try {
         String auxJarsPath = generateAuxJarsClasspath();
+        // TODO replace HiveConf constant with the string?
         System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-            System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+                  System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -272,13 +258,13 @@ public class HiveRuntimeModule extends RuntimeModule {
       HiveServer.checkHiveVersion();
 
       // Common configuration settings
-      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
-
-      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
-      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
-                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
+//      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
+//      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
+//                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
+//
+//      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
+//      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
+//                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
 
       setProperties();
       return injector.getInstance(RuntimeHiveServer.class);
