@@ -4,11 +4,11 @@ import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.internal.data.dataset.Dataset;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetSpecification;
+import com.continuuity.internal.data.dataset.module.DataSetType;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
-import com.continuuity.internal.data.dataset.module.DatasetType;
-import com.continuuity.internal.data.dataset.module.EmbeddedDataset;
-import com.google.common.base.Preconditions;
+import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -28,6 +28,9 @@ import java.util.Map;
  * NOTE: all admin ops of the dataset will be delegated to embedded datasets;
  *       {@link com.continuuity.internal.data.dataset.DatasetProperties} will be propagated to embedded datasets as well
  *
+ * NOTE: must have exactly one constructor with parameter types of
+ *       (DatasetSpecification, [0..n] @EmbeddedDataset Dataset)
+ *
  * <p>
  * Example of usage:
  *
@@ -41,14 +44,14 @@ datasetFramework.addModule("myModule", new SingleTypeModule(SimpleKVTable.class)
 // ...
 
 
-&#64;DatasetType("KVTable")
+&#64;DataSetType("KVTable")
 public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
   private static final byte[] COL = new byte[0];
 
   private final Table table;
 
   public SimpleKVTable(DatasetSpecification spec,
-                       &#64;EmbeddedDataset("data") Table table) {
+                       &#64;EmbeddedDataSet("data") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }
@@ -66,7 +69,7 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
  * }
  * </pre>
  *
- * See {@link DatasetType} and {@link EmbeddedDataset} for more details on their usage.
+ * See {@link DataSetType} and {@link EmbeddedDataSet} for more details on their usage.
  *
  */
 public class SingleTypeModule implements DatasetModule {
@@ -84,11 +87,10 @@ public class SingleTypeModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    Constructor[] ctors = dataSetClass.getConstructors();
-    Preconditions.checkArgument(ctors.length == 1, "Dataset class %s must have one constructor", dataSetClass);
-    final Constructor ctor = ctors[0];
 
-    DatasetType typeAnn = dataSetClass.getAnnotation(DatasetType.class);
+    final Constructor ctor = findSuitableCtorOrFail(dataSetClass);
+
+    DataSetType typeAnn = dataSetClass.getAnnotation(DataSetType.class);
     // default type name to dataset class name
     String typeName = typeAnn != null ? typeAnn.value() : dataSetClass.getName();
 
@@ -97,6 +99,9 @@ public class SingleTypeModule implements DatasetModule {
     Class<?>[] paramTypes = ctor.getParameterTypes();
     Annotation[][] paramAnns = ctor.getParameterAnnotations();
 
+    // computing parameters for dataset constructor:
+    // if param is of type DatasetSpecification we'll need to set spec as a value
+    // if param has EmbeddedDataSet annotation we need to set instance of embedded dataset as a value
     final DatasetCtorParam[] ctorParams = new DatasetCtorParam[paramTypes.length];
     for (int i = 0; i < paramTypes.length; i++) {
       if (DatasetSpecification.class.isAssignableFrom(paramTypes[i])) {
@@ -104,9 +109,9 @@ public class SingleTypeModule implements DatasetModule {
         continue;
       }
       for (Annotation ann : paramAnns[i]) {
-        if (ann instanceof EmbeddedDataset) {
-          String type = ((EmbeddedDataset) ann).type();
-          if (EmbeddedDataset.DEFAULT_TYPE_NAME.equals(type)) {
+        if (ann instanceof EmbeddedDataSet) {
+          String type = ((EmbeddedDataSet) ann).type();
+          if (EmbeddedDataSet.DEFAULT_TYPE_NAME.equals(type)) {
             // default to dataset class name
             type = paramTypes[i].getName();
           }
@@ -116,8 +121,8 @@ public class SingleTypeModule implements DatasetModule {
             LOG.error(msg);
             throw new IllegalStateException(msg);
           }
-          defs.put(((EmbeddedDataset) ann).value(), def);
-          ctorParams[i] = new DatasetParam(((EmbeddedDataset) ann).value());
+          defs.put(((EmbeddedDataSet) ann).value(), def);
+          ctorParams[i] = new DatasetParam(((EmbeddedDataSet) ann).value());
           break;
         }
       }
@@ -125,14 +130,14 @@ public class SingleTypeModule implements DatasetModule {
 
     CompositeDatasetDefinition def = new CompositeDatasetDefinition(typeName, defs) {
       @Override
-      public com.continuuity.internal.data.dataset.Dataset getDataset(DatasetSpecification spec) throws IOException {
+      public Dataset getDataset(DatasetSpecification spec) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
           params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec) : null;
         }
 
         try {
-          return (com.continuuity.internal.data.dataset.Dataset) ctor.newInstance(params);
+          return (Dataset) ctor.newInstance(params);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -142,7 +147,58 @@ public class SingleTypeModule implements DatasetModule {
     registry.add(def);
   }
 
-  private static interface DatasetCtorParam {
+  @VisibleForTesting
+  static Constructor findSuitableCtorOrFail(Class<? extends Dataset> dataSetClass) {
+    Constructor[] ctors = dataSetClass.getConstructors();
+    Constructor suitableCtor = null;
+    for (Constructor ctor : ctors) {
+      Class<?>[] paramTypes = ctor.getParameterTypes();
+      Annotation[][] paramAnns = ctor.getParameterAnnotations();
+      boolean firstParamIsSpec = paramTypes.length > 0 &&
+        DatasetSpecification.class.isAssignableFrom(paramTypes[0]);
+
+      if (firstParamIsSpec) {
+        boolean otherParamsAreDatasets = true;
+        // checking type of the param
+        for (int i = 1; i < paramTypes.length; i++) {
+          if (!Dataset.class.isAssignableFrom(paramTypes[i])) {
+            otherParamsAreDatasets = false;
+            break;
+          }
+          // checking that annotation is there
+          boolean hasAnnotation = false;
+          for (Annotation ann : paramAnns[i]) {
+            if (ann instanceof EmbeddedDataSet) {
+              hasAnnotation = true;
+              break;
+            }
+          }
+          if (!hasAnnotation) {
+            otherParamsAreDatasets = false;
+          }
+        }
+        if (otherParamsAreDatasets) {
+          if (suitableCtor != null) {
+            throw new IllegalArgumentException(
+              String.format("Dataset class %s must have single constructor with parameter types of" +
+                              " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+          }
+
+          suitableCtor = ctor;
+        }
+      }
+    }
+
+    if (suitableCtor == null) {
+      throw new IllegalArgumentException(
+        String.format("Dataset class %s must have single constructor with parameter types of" +
+                        " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+    }
+
+    return suitableCtor;
+  }
+
+  private interface DatasetCtorParam {
     Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec) throws IOException;
   }
 

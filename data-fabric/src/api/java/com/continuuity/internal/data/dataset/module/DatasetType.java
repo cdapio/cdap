@@ -22,9 +22,9 @@ import java.lang.annotation.Target;
  * <pre>
  * {@code
 
- &#64;DatasetType("KVTable")
+ &#64;DataSetType("KVTable")
  public class SimpleKVTable extends AbstractDataset {
-   public SimpleKVTable(DatasetSpecification spec, @EmbeddedDataset("data") Table table) {
+   public SimpleKVTable(DatasetSpecification spec, @EmbeddedDataSet("data") Table table) {
      super(spec.getName(), table);
    }
 
@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface DatasetType {
+public @interface DataSetType {
   /**
    * Returns name of the dataset type.
    */

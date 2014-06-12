@@ -41,12 +41,12 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
   public void process(ApplicationSpecLocation input) throws Exception {
     // deploy dataset modules
     ApplicationSpecification specification = input.getSpecification();
-    for (Map.Entry<String, String> module : specification.getDatasetModules().entrySet()) {
+    for (Map.Entry<String, String> moduleEntry : specification.getDatasetModules().entrySet()) {
       // note: using app class loader to load module class
       JarClassLoader classLoader = new JarClassLoader(input.getArchive());
       @SuppressWarnings("unchecked")
-      Class<?> clazz = classLoader.loadClass(module.getValue());
-      String moduleName = module.getKey();
+      Class<?> clazz = classLoader.loadClass(moduleEntry.getValue());
+      String moduleName = moduleEntry.getKey();
       try {
         // note: we can deploy module or create module from Dataset class
         // note: it seems dangerous to instantiate dataset module here, but this will be fine when we move deploy into

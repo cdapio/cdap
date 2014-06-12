@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
  * {@code
 
   public class SimpleKVTable extends AbstractDataset {
-    public SimpleKVTable(DatasetSpecification spec, @EmbeddedDataset("data") Table table) {
+    public SimpleKVTable(DatasetSpecification spec, @EmbeddedDataSet("data") Table table) {
       super(spec.getName(), table);
     }
 
@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface EmbeddedDataset {
+public @interface EmbeddedDataSet {
 
   static final String DEFAULT_TYPE_NAME = "";
 

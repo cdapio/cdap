@@ -3,7 +3,7 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.data.dataset.module.EmbeddedDataset;
+import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -15,7 +15,7 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
   private final Table table;
 
   public SimpleKVTable(DatasetSpecification spec,
-                       @EmbeddedDataset("data") Table table) {
+                       @EmbeddedDataSet("data") Table table) {
     super(spec.getName(), table);
     this.table = table;
   }

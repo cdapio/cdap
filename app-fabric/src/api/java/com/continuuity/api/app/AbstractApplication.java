@@ -68,17 +68,17 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addDatasetModule(String, Class)
+   * @see ApplicationConfigurer#addDataSetModule(String, Class)
    */
-  protected void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
+  protected void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDataSetModule(moduleName, moduleClass);
   }
 
   /**
-   * @see ApplicationConfigurer#addDatasetType(Class)
+   * @see ApplicationConfigurer#addDataSetType(Class)
    */
-  protected void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
+  protected void addDataSetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDataSetType(datasetClass);
   }
 
   /**

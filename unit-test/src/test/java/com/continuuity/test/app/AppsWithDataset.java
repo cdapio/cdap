@@ -25,7 +25,7 @@ import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 
-import com.continuuity.internal.data.dataset.module.EmbeddedDataset;
+import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -66,7 +66,7 @@ public class AppsWithDataset {
     @Override
     public void configure() {
       createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
-      addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
+      addDataSetModule("my-kv", KeyValueTableDefinition.Module.class);
       addProcedure(new MyProcedure());
     }
   }
@@ -78,7 +78,7 @@ public class AppsWithDataset {
     @Override
     public void configure() {
       createDataSet("myTable", KeyValueTableDefinition.KeyValueTable.class.getName(), DatasetProperties.EMPTY);
-      addDatasetType(KeyValueTableDefinition.KeyValueTable.class);
+      addDataSetType(KeyValueTableDefinition.KeyValueTable.class);
       addProcedure(new MyProcedure());
     }
   }
@@ -193,7 +193,7 @@ public class AppsWithDataset {
       private final Table table;
 
       public KeyValueTable(DatasetSpecification spec,
-                           @EmbeddedDataset("data") Table table) {
+                           @EmbeddedDataSet("data") Table table) {
         super(spec.getName(), (Dataset) table);
         this.table = table;
       }

@@ -50,14 +50,14 @@ public interface ApplicationConfigurer {
    * @param moduleName name of the module to deploy
    * @param moduleClass class of the module
    */
-  void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
+  void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
 
   /**
-   * Same as {@link #addDatasetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
+   * Same as {@link #addDataSetModule(String, Class)} but uses {@link Dataset} as a base for {@link DatasetModule}.
    * The module will have single dataset type of name equals to name of the class in datasetClass param.
    * @param datasetClass class of the dataset. Name of the module is same as name of the class in datasetClass param.
    */
-  void addDatasetType(Class<? extends Dataset> datasetClass);
+  void addDataSetType(Class<? extends Dataset> datasetClass);
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components.
@@ -70,7 +70,7 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components
-   * and deploys dataset type as per {@link #addDatasetType(Class)} using datasetClass parameter as dataset class.
+   * and deploys dataset type as per {@link #addDataSetType(Class)} using datasetClass parameter as dataset class.
    *
    * @param datasetInstanceName dataset instance name
    * @param datasetClass dataset class to create type from

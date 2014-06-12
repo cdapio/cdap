@@ -39,8 +39,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   // TODO: to be removed after datasets API v1 is abandoned
   private final Map<String, DataSetSpecification> dataSets = Maps.newHashMap();
-  private final Map<String, String> datasetModules = Maps.newHashMap();
-  private final Map<String, DatasetInstanceCreationSpec> datasetInstances = Maps.newHashMap();
+  private final Map<String, String> dataSetModules = Maps.newHashMap();
+  private final Map<String, DatasetInstanceCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
   private final Map<String, ProcedureSpecification> procedures = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
@@ -77,16 +77,16 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+  public void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    datasetModules.put(moduleName, moduleClass.getName());
+    dataSetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+  public void addDataSetType(Class<? extends Dataset> datasetClass) {
     Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -94,7 +94,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    datasetInstances.put(datasetInstanceName,
+    dataSetInstances.put(datasetInstanceName,
                          new DatasetInstanceCreationSpec(datasetInstanceName, typeName, properties));
   }
 
@@ -106,9 +106,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    datasetInstances.put(datasetInstanceName,
+    dataSetInstances.put(datasetInstanceName,
                          new DatasetInstanceCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -161,7 +161,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   public ApplicationSpecification createApplicationSpec() {
     return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                               datasetModules, datasetInstances,
+                                               dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, workflows, services);
   }
 }
