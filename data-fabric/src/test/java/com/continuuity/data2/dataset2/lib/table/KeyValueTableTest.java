@@ -34,14 +34,14 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("keyValueTable", KeyValueTableModule.class);
+    registerModule("core", CoreDatasetsModule.class);
     createInstance("keyValueTable", "test", DatasetInstanceProperties.EMPTY);
     kvTable = getInstance("test");
   }
 
   @After
   public void tearDown() throws Exception {
-    deleteModule("keyValueTable");
+    deleteModule("core");
     super.tearDown();
   }
 
