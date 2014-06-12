@@ -10,15 +10,16 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -61,11 +62,11 @@ public class HiveExploreServiceTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
-    datasetFramework.register(moduleName, InMemoryTableModule.class);
-    datasetFramework.register("keyValue", KeyStructValueTableDefinition.KeyStructValueTableModule.class);
+    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
+    datasetFramework.addModule("keyValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
+    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();

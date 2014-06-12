@@ -114,8 +114,12 @@ public class KeyStructValueTableDefinition
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
       KeyValue that = (KeyValue) o;
 
@@ -149,8 +153,12 @@ public class KeyStructValueTableDefinition
 
       @Override
       public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
 
         Value that = (Value) o;
 
