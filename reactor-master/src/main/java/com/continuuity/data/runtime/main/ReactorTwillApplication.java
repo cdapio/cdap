@@ -10,6 +10,8 @@ import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -17,6 +19,7 @@ import java.io.File;
  * TwillApplication wrapper for Reactor YARN Services.
  */
 public class ReactorTwillApplication implements TwillApplication {
+  private static final Logger LOG = LoggerFactory.getLogger(ReactorServiceMain.class);
   private static final String NAME = "reactor.services";
 
   private final CConfiguration cConf;
@@ -24,10 +27,13 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private final File hConfFile;
 
-  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile) {
+  private final boolean runHiveService;
+
+  public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
+    this.runHiveService = runHiveService;
   }
 
   @Override
@@ -35,15 +41,22 @@ public class ReactorTwillApplication implements TwillApplication {
     // It is always present in continuuity-default.xml
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
-    return
-      addExploreService(
+    TwillSpecification.Builder.RunnableSetter runnableSetter =
         addDatasetOpExecutor(
-          addLogSaverService(
-           addStreamService(
-             addTransactionService(
-               addMetricsProcessor (
-                 addMetricsService(
-                  TwillSpecification.Builder.with().setName(NAME).withRunnable())))))))
+            addLogSaverService(
+                addStreamService(
+                    addTransactionService(
+                        addMetricsProcessor (
+                            addMetricsService(
+                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+
+    if (runHiveService) {
+      LOG.info("Adding explore runnable.");
+      runnableSetter = addExploreService(runnableSetter);
+    } else {
+      LOG.info("Explore module disabled - will not launch explore runnable.");
+    }
+    return runnableSetter
         .anyOrder()
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();

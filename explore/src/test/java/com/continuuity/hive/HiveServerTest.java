@@ -56,6 +56,6 @@ public abstract class HiveServerTest {
   @Test
   public void testHiveVersion() throws Exception {
     // This would throw an exception if it didn't pass
-    HiveServer.checkHiveVersion();
+    HiveServer.checkHiveVersion(this.getClass().getClassLoader());
   }
 }

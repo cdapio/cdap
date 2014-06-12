@@ -89,26 +89,6 @@ public class HiveRuntimeModule extends RuntimeModule {
     );
   }
 
-  static Iterable<URL> getClassPath(String hiveClassPath) {
-    if (hiveClassPath == null) {
-      return null;
-    }
-
-    return Iterables.transform(Splitter.on(':').split(hiveClassPath), STRING_URL_FUNCTION);
-  }
-
-  private static final Function<String, URL> STRING_URL_FUNCTION =
-      new Function<String, URL>() {
-        @Override
-        public URL apply(String input) {
-          try {
-            return new File(input).toURI().toURL();
-          } catch (MalformedURLException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      };
-
   @Override
   public Module getInMemoryModules() {
     return getLocalModule(true);
@@ -255,16 +235,8 @@ public class HiveRuntimeModule extends RuntimeModule {
         return injector.getInstance(MockHiveServer.class);
       }
       // This will throw exceptions if the checks don't pass
-      HiveServer.checkHiveVersion();
-
-      // Common configuration settings
-//      System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.toString(), TransactionPreHook.class.getCanonicalName());
-//      LOG.debug("Setting {} to {}", HiveConf.ConfVars.PREEXECHOOKS.toString(),
-//                System.getProperty(HiveConf.ConfVars.PREEXECHOOKS.toString()));
-//
-//      System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString(), TransactionPostHook.class.getCanonicalName());
-//      LOG.debug("Setting {} to {}", HiveConf.ConfVars.POSTEXECHOOKS.toString(),
-//                System.getProperty(HiveConf.ConfVars.POSTEXECHOOKS.toString()));
+      // TODO remove that in distributed mode
+      HiveServer.checkHiveVersion(this.getClass().getClassLoader());
 
       setProperties();
       return injector.getInstance(RuntimeHiveServer.class);
@@ -291,7 +263,7 @@ public class HiveRuntimeModule extends RuntimeModule {
         return injector.getInstance(MockHiveMetastore.class);
       }
       // This will throw exceptions if the checks don't pass
-      HiveServer.checkHiveVersion();
+      HiveServer.checkHiveVersion(this.getClass().getClassLoader());
 
       File warehouseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "warehouse");
       File databaseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "database");

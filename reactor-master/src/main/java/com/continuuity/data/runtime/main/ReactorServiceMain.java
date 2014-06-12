@@ -91,8 +91,6 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
-  // TODO reintegrate once hive issues in distributed mode are fixed
-  // private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
@@ -101,6 +99,7 @@ public class ReactorServiceMain extends DaemonMain {
   private TwillApplication twillApplication;
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
+  private boolean isHiveEnabled;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
@@ -109,6 +108,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
+    isHiveEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED);
     twillApplication = createTwillApplication();
     if (twillApplication == null) {
       throw new IllegalArgumentException("TwillApplication cannot be null");
@@ -133,8 +133,6 @@ public class ReactorServiceMain extends DaemonMain {
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
-      // TODO reintegrate once hive issues in distributed mode are fixed
-      // new HiveRuntimeModule().getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -152,10 +150,6 @@ public class ReactorServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
-
-        // TODO reintegrate once hive issues in distributed mode are fixed
-        // hiveServer = injector.getInstance(HiveServer.class);
-        // hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -180,10 +174,6 @@ public class ReactorServiceMain extends DaemonMain {
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
         }
-        // TODO reintegrate once hive issues in distributed mode are fixed
-        // if (hiveServer != null) {
-          // hiveServer.stopAndWait();
-        // }
         isLeader.set(false);
       }
     });
@@ -219,7 +209,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication() {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf());
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
@@ -322,16 +312,30 @@ public class ReactorServiceMain extends DaemonMain {
     return iterable;
   }
 
-  private TwillPreparer getPreparer() {
-    TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
-        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+  private TwillPreparer addHiveDependenciesToPreparer(TwillPreparer preparer) {
+    if (!isHiveEnabled) {
+      return preparer;
+    }
+
+    // TODO ship hive jars instead of just passing hive class path: hive jars
+    // may not be at the same location on every machine of the cluster.
 
     // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
     String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
-    LOG.info("Hive classpath = {}", hiveClassPathStr);
-    if (hiveClassPathStr != null) {
-      preparer = preparer.withClassPaths(hiveClassPathStr);
+    LOG.debug("Hive classpath = {}", hiveClassPathStr);
+    if (hiveClassPathStr == null) {
+      throw new RuntimeException("Env variable HIVE_CLASSPATH is not set.");
     }
+
+    HiveServer.checkHiveVersion(HiveServer.buildHiveClassLoader(hiveClassPathStr));
+
+    return preparer.withClassPaths(hiveClassPathStr);
+  }
+
+  private TwillPreparer getPreparer() {
+    TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
+        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    preparer = addHiveDependenciesToPreparer(preparer);
 
     return prepare(preparer);
   }
