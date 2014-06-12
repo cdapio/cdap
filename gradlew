@@ -6,6 +6,43 @@
 ##
 ##############################################################################
 
+echo "Gradle is deprecated. Use Maven instead"
+echo ""
+echo "Clean all modules:"
+echo "    mvn clean"
+echo ""
+echo "Build all modules:"
+echo "    mvn package"
+echo ""
+echo "Run checkstyle, skipping tests:"
+echo "    mvn package -DskipTests"
+echo ""
+echo "Build a particular module:"
+echo "    mvn package -pl [module] -am"
+echo ""
+echo "Run selected test:"
+echo "    mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test"
+echo "See http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html for more"
+echo ""
+echo "Show dependency tree:"
+echo "    mvn package dependency:tree -DskipTests"
+echo ""
+echo "Show dependency tree for a particular module:"
+echo "    mvn package dependency:tree -DskipTests -pl [module] -am"
+echo ""
+echo "Show test output to stdout:"
+echo "    mvn -Dsurefire.redirectTestOutputToFile=false ..."
+echo ""
+echo "Offline mode:"
+echo "    mvn -o ...."
+echo ""
+echo "Change version:"
+echo "mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false"
+echo ""
+echo "Say bye-bye to gradle"
+
+exit 0
+
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS="-Dhttp.proxyUser=gradle -Dhttp.proxyPassword={DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
 #GRADLE_OPTS="${GRADLE_OPTS} -Xmx1024m -Dorg.gradle.daemon=true"
