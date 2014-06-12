@@ -15,7 +15,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 /**
- *
+ * Guice bindings for running in single-node mode (persistence to local disk and in-memory client).
  */
 public class TransactionLocalModule extends AbstractModule {
   public TransactionLocalModule() {

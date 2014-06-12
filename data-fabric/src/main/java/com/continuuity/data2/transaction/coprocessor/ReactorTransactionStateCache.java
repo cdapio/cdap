@@ -8,7 +8,10 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.IOException;
 
 /**
- *
+ * Extends the {@link com.continuuity.data2.transaction.coprocessor.TransactionStateCache} implementation for
+ * transaction coprocessors with a version that reads transaction configuration properties from
+ * {@link ConfigurationTable}.  This allows the coprocessors to pick up configuration changes without requiring
+ * a restart.
  */
 public class ReactorTransactionStateCache extends TransactionStateCache {
   private String tableNamespace;

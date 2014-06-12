@@ -15,7 +15,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 
 /**
- *
+ * Guice bindings for running in distributed mode on a cluster.
  */
 public class TransactionDistributedModule extends AbstractModule {
 

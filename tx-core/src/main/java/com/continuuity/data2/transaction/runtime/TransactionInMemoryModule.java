@@ -14,7 +14,8 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 /**
- *
+ * Guice bindings for running completely in-memory (no persistence).  This should only be used for
+ * test classes, as the transaction state cannot be recovered in the case of a failure.
  */
 public class TransactionInMemoryModule extends AbstractModule {
   public TransactionInMemoryModule() {
