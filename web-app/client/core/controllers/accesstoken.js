@@ -1,5 +1,5 @@
 /*
- * Login Controller
+ * Access Token Controller used to give users long-lasting tokens. 
  */
 
 define([], function () {
