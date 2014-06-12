@@ -28,6 +28,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
@@ -116,12 +117,8 @@ public class DatasetOpExecutorServiceTest {
           bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         }
       }),
-      new AuthModule(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-      }
-    });
+      new AuthModule(),
+      new TransactionMetricsModule());
 
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();

@@ -11,6 +11,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -187,6 +188,7 @@ public class LevelDBFilterableOVCTableTest {
         }
       },
       new LocationRuntimeModule().getSingleNodeModules(),
+      new TransactionMetricsModule(),
       new PrivateModule() {
 
         @Override

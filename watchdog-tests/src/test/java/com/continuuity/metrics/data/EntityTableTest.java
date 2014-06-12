@@ -9,14 +9,13 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
-import com.google.inject.AbstractModule;
+import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -86,21 +85,14 @@ public class EntityTableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.unset(Constants.CFG_HDFS_USER);
-    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, testHBase.getConfiguration()),
-      new DataFabricDistributedModule(),
-      new LocationRuntimeModule().getDistributedModules(),
-      new ZKClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-        }
-      }
-    );
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
+                                             new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new ZKClientModule(),
+                                             new DataFabricDistributedModule(),
+                                             new LocationRuntimeModule().getDistributedModules(),
+                                             new TransactionMetricsModule());
 
     accessor = injector.getInstance(DataSetAccessor.class);
   }
