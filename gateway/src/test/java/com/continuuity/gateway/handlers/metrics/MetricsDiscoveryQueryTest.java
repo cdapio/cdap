@@ -92,14 +92,12 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
   }
 
   @Test
-  public void testInvalidPathReturns404() throws Exception {
+  public void testMalformedPathReturns404() throws Exception {
     String base = "/v2/metrics/available";
     String[] resources = {
       base + "/apps/WordCount/flow/WordCounter",
       base + "/apps/WordCount/flows/WordCounter/flowlets",
       base + "/apps/WordCount/flows/WordCounter/flowlet/splitter",
-      base + "/apps/WordCoun/flows/WordCounter",
-      base + "/apps/WordCount/flows/WordCounter/flowlets/splitte"
     };
     for (String resource : resources) {
       HttpResponse response = MetricsServiceTestsSuite.doGet(resource);
