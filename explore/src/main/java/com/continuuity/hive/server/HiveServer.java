@@ -1,23 +1,36 @@
 package com.continuuity.hive.server;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.continuuity.common.conf.StringUtils;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.hive.common.util.HiveVersionInfo;
 
 /**
  * Hive Server 2 service.
  */
 public abstract class HiveServer extends AbstractIdleService {
 
+  // todo populate this with whatever hive version CDH4.3 runs with
+  private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
+
   /**
-   * Use a class loader to verify that HiveServer2 is present in the classpath.
-   * @return true if HiveServer2 is present, false otherwise.
+   * Check that Hive is in the class path - with a right version.
    */
-  public static boolean isHivePresent() {
+  public static void checkHiveVersion() {
     try {
-      Class.forName("org.apache.hive.service.server.HiveServer2");
-      return true;
-    } catch (ClassNotFoundException e) {
-      return false;
+      String version = HiveVersionInfo.getVersion();
+      for (int i = 0; i < SUPPORTED_VERSIONS.length; i++) {
+        if (version.startsWith(SUPPORTED_VERSIONS[i])) {
+          return;
+        }
+      }
+      throw new RuntimeException("Hive version " + version + " is not supported. " +
+                                 "Versions supported begin with one of the following: " +
+                                 StringUtils.arrayToString(SUPPORTED_VERSIONS));
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Throwable e) {
+      throw new RuntimeException("Hive jars not present in classpath", e);
     }
   }
 }

@@ -17,7 +17,6 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
 import com.continuuity.hbase.wd.DistributedScanner;
 import com.google.common.collect.Lists;
-import com.sun.istack.Nullable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -33,6 +32,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
