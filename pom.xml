@@ -104,7 +104,7 @@
               <phase>process-test-classes</phase>
               <configuration>
                 <configLocation>checkstyle.xml</configLocation>
-                <suppressionsLocation>${project.parent.basedir}/../suppressions.xml</suppressionsLocation>
+                <suppressionsLocation>suppressions.xml</suppressionsLocation>
                 <encoding>UTF-8</encoding>
                 <consoleOutput>true</consoleOutput>
                 <failsOnError>true</failsOnError>

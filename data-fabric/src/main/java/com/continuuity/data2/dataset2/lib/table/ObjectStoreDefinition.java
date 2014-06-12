@@ -36,18 +36,18 @@ public class ObjectStoreDefinition<T>
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
+      .datasets(tableDef.configure("objects", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+    return tableDef.getAdmin(spec.getSpecification("objects"));
   }
 
   @Override
   public ObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification kvTableSpec = spec.getSpecification("table");
+    DatasetSpecification kvTableSpec = spec.getSpecification("objects");
     KeyValueTable table = tableDef.getDataset(kvTableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);

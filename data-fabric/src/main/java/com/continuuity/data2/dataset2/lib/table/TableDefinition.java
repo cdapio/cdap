@@ -26,18 +26,18 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
+      .datasets(tableDef.configure("", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+    return tableDef.getAdmin(spec.getSpecification(""));
   }
 
   @Override
   public Table getDataset(DatasetSpecification spec) throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification("table"));
+    OrderedTable table = tableDef.getDataset(spec.getSpecification(""));
     return new TableDataset(spec.getName(), table);
   }
 }

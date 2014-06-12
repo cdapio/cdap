@@ -7,6 +7,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
@@ -16,6 +18,7 @@ import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
@@ -178,6 +181,12 @@ public class LevelDBFilterableOVCTableTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new DataFabricLevelDBModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      },
       new LocationRuntimeModule().getSingleNodeModules(),
       new TransactionMetricsModule(),
       new PrivateModule() {
