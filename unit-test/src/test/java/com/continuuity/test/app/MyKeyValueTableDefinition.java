@@ -9,7 +9,7 @@ import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.table.TableDefinition;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Row;
@@ -33,7 +33,7 @@ public class MyKeyValueTableDefinition
   }
 
   @Override
-  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetInstanceSpec spec) throws IOException {
+  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
     return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(), getDataset("table", Table.class, spec));
   }
 

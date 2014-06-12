@@ -10,8 +10,8 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -58,8 +58,8 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
 
   @Override
   protected LevelDBOrderedTableAdmin getTableAdmin(String name) throws IOException {
-    DatasetInstanceSpec spec =
-      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetInstanceProperties.EMPTY);
+    DatasetSpecification spec =
+      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
     return new LevelDBOrderedTableAdmin(spec, service);
   }
 

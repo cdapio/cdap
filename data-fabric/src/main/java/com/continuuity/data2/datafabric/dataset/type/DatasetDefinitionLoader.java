@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
@@ -56,7 +57,7 @@ public class DatasetDefinitionLoader {
       DatasetModule module;
       try {
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-        module = (DatasetModule) moduleClass.newInstance();
+        module = DatasetModules.getDatasetModule(moduleClass);
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

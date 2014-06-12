@@ -7,7 +7,8 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import org.apache.twill.api.TwillApplication;
 
@@ -67,25 +68,33 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addDatasetModule(String, Class)
+   * @see ApplicationConfigurer#addDataSetModule(String, Class)
    */
-  protected void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
+  protected void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDataSetModule(moduleName, moduleClass);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, String, DatasetInstanceProperties)
+   * @see ApplicationConfigurer#addDataSetType(Class)
    */
-  protected void createDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties) {
+  protected void addDataSetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDataSetType(datasetClass);
+  }
+
+  /**
+   * @see ApplicationConfigurer#createDataSet(String, String, com.continuuity.internal.data.dataset.DatasetProperties)
+   */
+  protected void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
     configurer.createDataSet(datasetInstanceName, typeName, properties);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, String, DatasetInstanceProperties), this one passes
-   * {@link DatasetInstanceProperties#EMPTY} as properties.
+   * @see ApplicationConfigurer#createDataSet(String, Class, com.continuuity.internal.data.dataset.DatasetProperties)
    */
-  protected void createDataSet(String datasetInstanceName, String typeName) {
-    configurer.createDataSet(datasetInstanceName, typeName, DatasetInstanceProperties.EMPTY);
+  protected void createDataSet(String datasetInstanceName,
+                               Class<? extends Dataset> datasetClass,
+                               DatasetProperties props) {
+    configurer.createDataSet(datasetInstanceName, datasetClass, props);
   }
 
   /**

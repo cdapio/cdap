@@ -39,7 +39,7 @@ import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -336,7 +336,7 @@ public class ReactorTestBase {
   @Beta
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetFramework.register(moduleName, datasetModule);
+    datasetFramework.addModule(moduleName, datasetModule.newInstance());
   }
 
 
@@ -352,7 +352,7 @@ public class ReactorTestBase {
   @Beta
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
-                                                       DatasetInstanceProperties props) throws Exception {
+                                                       DatasetProperties props) throws Exception {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, null);

@@ -7,12 +7,11 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -39,7 +38,7 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("core", CoreDatasetsModule.class);
+    addModule("core", new CoreDatasetsModule());
   }
 
   @After
@@ -191,7 +190,7 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
     };
 
     // create an instance that uses the dummy class loader
-    createInstance("table", "table", DatasetInstanceProperties.EMPTY);
+    createInstance("table", "table", DatasetProperties.EMPTY);
 
     Table table = getInstance("table");
     Type type = Custom.class;

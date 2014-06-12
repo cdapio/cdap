@@ -4,14 +4,11 @@ import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 
@@ -37,16 +34,16 @@ public class IndexedObjectStoreDefinition<T>
   }
 
   @Override
-  public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties.getProperties("table")),
-                objectStoreDef.configure("objectStore", properties.getProperties("objectStore")))
+      .datasets(tableDef.configure("table", properties),
+                objectStoreDef.configure("objectStore", properties))
       .build();
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
       tableDef.getAdmin(spec.getSpecification("table")),
       objectStoreDef.getAdmin(spec.getSpecification("objectStore"))
@@ -54,9 +51,9 @@ public class IndexedObjectStoreDefinition<T>
   }
 
   @Override
-  public IndexedObjectStore<T> getDataset(DatasetInstanceSpec spec) throws IOException {
-    DatasetInstanceSpec tableSpec = spec.getSpecification("table");
-    DatasetInstanceSpec objectStoreSpec = spec.getSpecification("objectStore");
+  public IndexedObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
+    DatasetSpecification tableSpec = spec.getSpecification("table");
+    DatasetSpecification objectStoreSpec = spec.getSpecification("objectStore");
 
     Table index = tableDef.getDataset(tableSpec);
     ObjectStore<T> objectStore = objectStoreDef.getDataset(objectStoreSpec);

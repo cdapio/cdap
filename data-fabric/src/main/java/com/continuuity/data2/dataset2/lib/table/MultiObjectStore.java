@@ -20,13 +20,10 @@ import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

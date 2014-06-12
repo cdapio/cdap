@@ -3,9 +3,8 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.TableTest;
-import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.lib.table.Delete;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Put;
@@ -45,9 +44,9 @@ public class IndexedTableTest extends AbstractDatasetTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    registerModule("core", CoreDatasetsModule.class);
-    createInstance("indexedTable", "tab", new DatasetInstanceProperties.Builder()
-      .property("columnToIndex", idxColString)
+    addModule("core", new CoreDatasetsModule());
+    createInstance("indexedTable", "tab", DatasetProperties.builder()
+      .add("columnToIndex", idxColString)
       .build());
     table = getInstance("tab");
   }
