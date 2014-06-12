@@ -322,9 +322,16 @@ public class ReactorServiceMain extends DaemonMain {
   }
 
   private TwillPreparer getPreparer() {
-    return prepare(twillRunnerService.prepare(twillApplication)
-                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-    );
+    TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
+        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+
+    // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
+    if (hiveClassPathStr != null) {
+      preparer = preparer.withClassPaths(hiveClassPathStr);
+    }
+
+    return prepare(preparer);
   }
 
   private void backOffRun() {

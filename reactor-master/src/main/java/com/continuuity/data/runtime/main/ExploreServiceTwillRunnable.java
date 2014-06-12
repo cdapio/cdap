@@ -13,6 +13,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.util.concurrent.Service;
@@ -45,6 +46,9 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     // TODO move the constant
     cConf.set(Constants.Hive.SERVER_ADDRESS, context.getHost().getHostName());
 
+    // NOTE: twill client will try to load all the classes present here - including hive classes
+    // but it will fail and ignore those classes silently
+
     injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new IOModule(), new ZKClientModule(),
@@ -55,6 +59,9 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
         new DataFabricModules().getDistributedModules(),
         new HiveRuntimeModule().getDistributedModules(),
         new AuthModule());
+
+    // TODO remove that - just used to load hive server provider
+    injector.getInstance(HiveServer.class);
   }
 
   @Override

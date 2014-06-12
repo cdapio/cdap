@@ -18,10 +18,12 @@ import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -45,7 +47,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Set;
 
 /**
@@ -84,6 +88,26 @@ public class HiveRuntimeModule extends RuntimeModule {
     );
   }
 
+  static Iterable<URL> getClassPath(String hiveClassPath) {
+    if (hiveClassPath == null) {
+      return null;
+    }
+
+    return Iterables.transform(Splitter.on(':').split(hiveClassPath), STRING_URL_FUNCTION);
+  }
+
+  private static final Function<String, URL> STRING_URL_FUNCTION =
+      new Function<String, URL>() {
+        @Override
+        public URL apply(String input) {
+          try {
+            return new File(input).toURI().toURL();
+          } catch (MalformedURLException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+
   @Override
   public Module getInMemoryModules() {
     return getLocalModule(true);
@@ -101,6 +125,20 @@ public class HiveRuntimeModule extends RuntimeModule {
         new AbstractModule() {
           @Override
           protected void configure() {
+
+            // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
+            String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
+            LOG.debug("Hive classpath = {}", hiveClassPathStr);
+            if (hiveClassPathStr == null) {
+              // todo throw exception
+            }
+            Iterable<URL> hiveClassPath = getClassPath(hiveClassPathStr);
+            ClassLoader hiveClassLoader =
+                new URLClassLoader(Iterables.toArray(Iterables.concat(hiveClassPath), URL.class),
+                                   this.getClass().getClassLoader());
+
+            bind(ClassLoader.class).annotatedWith(Names.named("hive-classloader")).toInstance(hiveClassLoader);
+
             bind(HiveServerProvider.class).to(HiveDistributedServerProvider.class).in(Scopes.SINGLETON);
           }
         });
@@ -113,6 +151,7 @@ public class HiveRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
+      bind(ExploreService.class).to(HiveExploreService.class).in(Scopes.SINGLETON);
       bind(HiveServer.class).toProvider(HiveServerProvider.class).in(Scopes.SINGLETON);
     }
 
@@ -127,9 +166,12 @@ public class HiveRuntimeModule extends RuntimeModule {
   @Singleton
   private static final class HiveDistributedServerProvider extends HiveServerProvider {
 
+    private final ClassLoader hiveClassLoader;
+
     @Inject
     private HiveDistributedServerProvider(CConfiguration cConf, Injector injector) {
       super(cConf, injector);
+      this.hiveClassLoader = injector.getInstance(Key.get(ClassLoader.class, Names.named("hive-classloader")));
     }
 
     @Override
@@ -162,6 +204,7 @@ public class HiveRuntimeModule extends RuntimeModule {
           // Ignore the exception and proceed.
         }
       }
+
 
       final Set<String> bootstrapClassPaths = builder.build();
       Dependencies.findClassDependencies(this.getClass().getClassLoader(),
