@@ -14,13 +14,15 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.gateway.handlers.ServiceHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
-import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
+import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
+import com.continuuity.internal.app.runtime.schedule.LocalSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
@@ -37,6 +39,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.Location;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -60,19 +63,42 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new AppFabricServiceModule();
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return new AppFabricServiceModule();
+
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
   }
 
   @Override
   public Module getDistributedModules() {
-    return new AppFabricServiceModule();
-  }
 
+
+    return Modules.combine(new AppFabricServiceModule(),
+                           new AbstractModule() {
+                             @Override
+                             protected void configure() {
+                               bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
+                               bind(Scheduler.class).to(SchedulerService.class);
+                             }
+                           });
+  }
   /**
    * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
@@ -93,14 +119,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
 
-      bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
-      bind(Scheduler.class).to(SchedulerService.class);
-
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(ServiceHttpHandler.class);
     }
 
     @Provides

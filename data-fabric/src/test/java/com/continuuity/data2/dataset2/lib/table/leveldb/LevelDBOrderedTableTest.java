@@ -2,13 +2,17 @@ package com.continuuity.data2.dataset2.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -33,11 +37,17 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
-    conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
+      new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule(conf));
+      new DataFabricLevelDBModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      });
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 
@@ -48,8 +58,8 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
 
   @Override
   protected LevelDBOrderedTableAdmin getTableAdmin(String name) throws IOException {
-    DatasetInstanceSpec spec =
-      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetInstanceProperties.EMPTY);
+    DatasetSpecification spec =
+      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
     return new LevelDBOrderedTableAdmin(spec, service);
   }
 

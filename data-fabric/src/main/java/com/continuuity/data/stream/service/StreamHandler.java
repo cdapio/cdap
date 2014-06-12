@@ -10,6 +10,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
@@ -18,6 +19,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
@@ -25,6 +27,7 @@ import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
@@ -37,6 +40,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -45,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -62,8 +68,12 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
+  private static final Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
 
+  private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
 
@@ -76,17 +86,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
-                       StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
+                       StreamCoordinator streamCoordinator, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore,
                        StreamConsumerFactory streamConsumerFactory, StreamFileWriterFactory writerFactory,
                        TransactionExecutorFactory executorFactory, MetricsCollectionService metricsCollectionService) {
     super(authenticator);
+    this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.dequeuerCache = createDequeuerCache(streamConsumerFactory, executorFactory);
+    this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
-    this.streamWriter = new ConcurrentStreamWriter(streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
   }
 
@@ -102,7 +113,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      responder.sendStatus(HttpResponseStatus.OK);
+      responder.sendJson(HttpResponseStatus.OK, streamAdmin.getConfig(stream));
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
@@ -114,6 +125,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                      @PathParam("stream") String stream) throws Exception {
 
     String accountID = getAuthenticatedAccountId(request);
+
+    // Verify stream name
+    if (!isValidName(stream)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+      return;
+    }
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(stream);
@@ -145,7 +163,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   @Path("/{stream}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream") String stream) throws Exception {
-    getAuthenticatedAccountId(request);
+    String accountId = getAuthenticatedAccountId(request);
 
     // Get the consumer Id
     String consumerId = request.getHeader(Constants.Stream.Headers.CONSUMER_ID);
@@ -154,16 +172,17 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       groupId = Long.parseLong(consumerId);
     } catch (Exception e) {
       LOG.trace("Invalid consumerId: {}", consumerId, e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid or missing consumer id");
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid or missing consumer id");
       return;
     }
 
     // See if the consumer id is valid
     StreamDequeuer dequeuer;
     try {
-      dequeuer = dequeuerCache.get(new ConsumerCacheKey(stream, groupId));
+      dequeuer = dequeuerCache.get(new ConsumerCacheKey(accountId, stream, groupId));
     } catch (Exception e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Consumer not exists.");
+      LOG.trace("Failed to get consumer", e);
+      responder.sendError(HttpResponseStatus.NOT_FOUND, "Stream or consumer not exists.");
       return;
     }
 
@@ -200,7 +219,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       .putLong(System.nanoTime())
       .hash().asLong();
 
-    streamAdmin.configureInstances(QueueName.fromStream(stream), groupId, 1);
+    streamAdmin.configureInstances(QueueName.fromStream(stream), groupId,
+                                   cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1));
 
     String consumerId = Long.toString(groupId);
     responder.sendByteArray(HttpResponseStatus.OK, consumerId.getBytes(Charsets.UTF_8),
@@ -213,14 +233,51 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        @PathParam("stream") String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
 
-    // TODO: Implement file removal logic
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    try {
+      streamAdmin.truncate(stream);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+    }
+  }
+
+  @POST
+  @Path("/{stream}/ttl")
+  public void setTTL(HttpRequest request, HttpResponder responder,
+                     @PathParam("stream") String stream) throws Exception {
+
+    String accountId = getAuthenticatedAccountId(request);
+
+    if (!streamMetaStore.streamExists(accountId, stream)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      return;
+    }
+
+    long ttl = getTTL(request);
+    streamAdmin.updateTTL(stream, ttl);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private long getTTL(HttpRequest request) throws IOException {
+    Map<String, String> arguments = GSON.fromJson(
+      request.getContent().toString(Charsets.UTF_8), MAP_STRING_STRING_TYPE);
+    if (arguments.containsKey("ttl")) {
+      return Long.parseLong(arguments.get("ttl"));
+    }
+
+    return Long.MAX_VALUE;
   }
 
   /**
    * Creates a loading cache for stream consumers. Used by the dequeue REST API.
    */
   private LoadingCache<ConsumerCacheKey, StreamDequeuer> createDequeuerCache(
+    final CConfiguration cConf,
     final StreamConsumerFactory consumerFactory, final TransactionExecutorFactory executorFactory) {
     return CacheBuilder
       .newBuilder()
@@ -240,12 +297,31 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }).build(new CacheLoader<ConsumerCacheKey, StreamDequeuer>() {
         @Override
         public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
-          ConsumerConfig config = new ConsumerConfig(key.getGroupId(), 0, 1, DequeueStrategy.FIFO, null);
+          if (!streamMetaStore.streamExists(key.getAccountId(), key.getStreamName())) {
+            throw new IllegalStateException("Stream not exists");
+          }
+
+          // TODO: Deal with dynamic resize of stream handler instances
+          int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
+          ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
+                                                     cConf.getInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0),
+                                                     groupSize, DequeueStrategy.FIFO, null);
+
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
           return new StreamDequeuer(consumer, executorFactory);
         }
       });
+  }
+
+
+  private boolean isValidName(String streamName) {
+    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
@@ -265,12 +341,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   private static final class ConsumerCacheKey {
+    private final String accountId;
     private final String streamName;
     private final long groupId;
 
-    private ConsumerCacheKey(String streamName, long groupId) {
+    private ConsumerCacheKey(String accountId, String streamName, long groupId) {
+      this.accountId = accountId;
       this.streamName = streamName;
       this.groupId = groupId;
+    }
+
+    public String getAccountId() {
+      return accountId;
     }
 
     public String getStreamName() {
@@ -329,8 +411,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
         @Override
         public StreamEvent call() throws Exception {
-          DequeueResult<StreamEvent> poll = consumer.poll(1, 0, TimeUnit.SECONDS);
-          return poll.isEmpty() ? null : poll.iterator().next();
+          synchronized (StreamDequeuer.this) {
+            DequeueResult<StreamEvent> poll = consumer.poll(1, 0, TimeUnit.SECONDS);
+            return poll.isEmpty() ? null : poll.iterator().next();
+          }
         }
       });
     }

@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import java.io.Closeable;
+
 /**
  * A method that instantiates a dataset at runtime.
  */
@@ -14,6 +16,6 @@ public interface DataSetContext {
    *         the default constructor throws an exception, or the dataset cannot be opened (for example,
    *         if one of the underlying tables in the DataFabric cannot be accessed).
    */
-  public <T extends DataSet> T getDataSet(String name)
+  public <T extends Closeable> T getDataSet(String name)
       throws DataSetInstantiationException;
 }

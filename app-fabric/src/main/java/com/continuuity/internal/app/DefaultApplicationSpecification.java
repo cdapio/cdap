@@ -1,6 +1,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -8,6 +9,8 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -20,10 +23,14 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final String description;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, DataSetSpecification> datasets;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetInstanceCreationSpec> datasetInstances;
   private final Map<String, FlowSpecification> flows;
   private final Map<String, ProcedureSpecification> procedures;
   private final Map<String, MapReduceSpecification> mapReduces;
   private final Map<String, WorkflowSpecification> workflows;
+  private final Map<String, TwillSpecification> services;
+
 
   public DefaultApplicationSpecification(String name, String description,
                                          Map<String, StreamSpecification> streams,
@@ -32,14 +39,34 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ProcedureSpecification> procedures,
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, WorkflowSpecification> workflows) {
+    this(name, description, streams, datasets,
+         Maps.<String, String>newHashMap(),
+         Maps.<String, DatasetInstanceCreationSpec>newHashMap(),
+         flows, procedures, mapReduces, workflows, Maps.<String, TwillSpecification>newHashMap());
+
+  }
+
+  public DefaultApplicationSpecification(String name, String description,
+                                         Map<String, StreamSpecification> streams,
+                                         Map<String, DataSetSpecification> datasets,
+                                         Map<String, String> datasetModules,
+                                         Map<String, DatasetInstanceCreationSpec> datasetInstances,
+                                         Map<String, FlowSpecification> flows,
+                                         Map<String, ProcedureSpecification> procedures,
+                                         Map<String, MapReduceSpecification> mapReduces,
+                                         Map<String, WorkflowSpecification> workflows,
+                                         Map<String, TwillSpecification> services) {
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
     this.datasets = ImmutableMap.copyOf(datasets);
+    this.datasetModules = ImmutableMap.copyOf(datasetModules);
+    this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
     this.flows = ImmutableMap.copyOf(flows);
     this.procedures = ImmutableMap.copyOf(procedures);
     this.mapReduces = ImmutableMap.copyOf(mapReduces);
     this.workflows = ImmutableMap.copyOf(workflows);
+    this.services = ImmutableMap.copyOf(services);
   }
 
   public static DefaultApplicationSpecification from(com.continuuity.api.ApplicationSpecification spec) {
@@ -70,6 +97,16 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   @Override
+  public Map<String, String> getDatasetModules() {
+    return datasetModules;
+  }
+
+  @Override
+  public Map<String, DatasetInstanceCreationSpec> getDatasets() {
+    return datasetInstances;
+  }
+
+  @Override
   public Map<String, FlowSpecification> getFlows() {
     return flows;
   }
@@ -87,5 +124,9 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, WorkflowSpecification> getWorkflows() {
     return workflows;
+  }
+
+  public Map<String, TwillSpecification> getServices() {
+    return services;
   }
 }

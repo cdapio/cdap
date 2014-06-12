@@ -2,7 +2,6 @@ package com.continuuity.common.zookeeper;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -81,9 +80,10 @@ public class LeaderElectionTest {
                   followerSem.release();
                 }
               });
+              leaderElection.start();
 
-              stopLatch[idx].await();
-              leaderElection.cancel();
+              stopLatch[idx].await(10, TimeUnit.SECONDS);
+              leaderElection.stopAndWait();
 
             } catch (Exception e) {
               LOG.error(e.getMessage(), e);
@@ -93,14 +93,14 @@ public class LeaderElectionTest {
       }
 
       barrier.await();
-      leaderSem.acquire(1);
-      followerSem.acquire(participantCount - 1);
+      leaderSem.tryAcquire(10, TimeUnit.SECONDS);
+      followerSem.tryAcquire(participantCount - 1, 10, TimeUnit.SECONDS);
 
       // Continuously stopping leader until there is one left.
       for (int i = 0; i < participantCount - 1; i++) {
         stopLatch[currentLeader.get()].countDown();
-        leaderSem.acquire(1);
-        followerSem.acquire(1);
+        leaderSem.tryAcquire(10, TimeUnit.SECONDS);
+        followerSem.tryAcquire(10, TimeUnit.SECONDS);
       }
 
       stopLatch[currentLeader.get()].countDown();
@@ -147,8 +147,12 @@ public class LeaderElectionTest {
         }));
       }
 
-      leaderSem.acquire();
-      followerSem.acquire();
+      for (LeaderElection leaderElection : leaderElections) {
+        leaderElection.start();
+      }
+
+      leaderSem.tryAcquire(10, TimeUnit.SECONDS);
+      followerSem.tryAcquire(10, TimeUnit.SECONDS);
 
       int leader = leaderIdx.get();
       int follower = 1 - leader;
@@ -158,10 +162,10 @@ public class LeaderElectionTest {
                          zkClients.get(follower).getConnectString(), 5000);
 
       // Cancel the leader
-      leaderElections.get(leader).cancel();
+      leaderElections.get(leader).stopAndWait();
 
       // Now follower should still be able to become leader.
-      leaderSem.acquire();
+      leaderSem.tryAcquire(10, TimeUnit.SECONDS);
 
       leader = leaderIdx.get();
       follower = 1 - leader;
@@ -178,12 +182,13 @@ public class LeaderElectionTest {
           followerSem.release();
         }
       }));
+      leaderElections.get(follower).start();
 
       // Cancel the follower first.
-      leaderElections.get(follower).cancel();
+      leaderElections.get(follower).stopAndWait();
 
       // Cancel the leader.
-      leaderElections.get(leader).cancel();
+      leaderElections.get(leader).stopAndWait();
 
       // Since the follower has been cancelled before leader, there should be no leader.
       Assert.assertFalse(leaderSem.tryAcquire(2, TimeUnit.SECONDS));
@@ -218,8 +223,9 @@ public class LeaderElectionTest {
             followerSem.release();
           }
         });
+        leaderElection.start();
 
-        leaderSem.acquire();
+        leaderSem.tryAcquire(10, TimeUnit.SECONDS);
 
         int zkPort = ownZKServer.getLocalAddress().getPort();
 
@@ -227,21 +233,21 @@ public class LeaderElectionTest {
         ownZKServer.stopAndWait();
 
         // Right after disconnect, it should become follower
-        followerSem.acquire();
+        followerSem.tryAcquire(10, TimeUnit.SECONDS);
 
         ownZKServer = InMemoryZKServer.builder().setDataDir(zkDataDir).setPort(zkPort).build();
         ownZKServer.startAndWait();
 
         // Right after reconnect, it should be leader again.
-        leaderSem.acquire();
+        leaderSem.tryAcquire(10, TimeUnit.SECONDS);
 
         // Now disconnect it again, but then cancel it before reconnect, it shouldn't become leader
         ownZKServer.stopAndWait();
 
         // Right after disconnect, it should become follower
-        followerSem.acquire();
+        followerSem.tryAcquire(10, TimeUnit.SECONDS);
 
-        ListenableFuture<?> cancelFuture = leaderElection.asyncCancel();
+        ListenableFuture<?> cancelFuture = leaderElection.stop();
 
         ownZKServer = InMemoryZKServer.builder().setDataDir(zkDataDir).setPort(zkPort).build();
         ownZKServer.startAndWait();

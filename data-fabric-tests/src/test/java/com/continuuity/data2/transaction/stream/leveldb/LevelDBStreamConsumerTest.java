@@ -7,13 +7,17 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerTestBase;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -35,6 +39,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionSystemClient txClient;
   private static InMemoryTransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
+  private static StreamFileWriterFactory fileWriterFactory;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -44,7 +49,13 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(cConf)
+      new DataFabricLevelDBModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
     );
 
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
@@ -52,6 +63,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
+    fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
     txManager.startAndWait();
   }
@@ -82,7 +94,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   @Override
-  protected String getStreamFilePrefix() {
-    return cConf.get(Constants.Stream.FILE_PREFIX);
+  protected StreamFileWriterFactory getFileWriterFactory() {
+    return fileWriterFactory;
   }
 }

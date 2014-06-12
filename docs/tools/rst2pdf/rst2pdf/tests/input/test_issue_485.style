@@ -1,0 +1,12 @@
+    {
+  "styles" : [
+    ["bodytext" , {
+      "spaceBefore":0,
+      "spaceAfter": 0
+    }],
+    ["image" , {
+      "spaceBefore":12,
+      "spaceAfter": 18
+    }]
+  ]  
+}

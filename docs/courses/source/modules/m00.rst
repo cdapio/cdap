@@ -2,7 +2,18 @@
 placeholder
 ============================================
 
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
+
+.. Slide Presentation HTML Generation
+.. landslide: theme ../_theme/slides-generation/
+.. landslide: build ../../html/
+
 .. include:: ../_slide-fragments/continuuity_logo.rst
+
+.. |br_m00| raw:: html
+
+   <br />
 
 ----
 
@@ -37,3 +48,10 @@ You should be able describe:
 - Procedures
 - MapReduce Jobs
 - Workflows
+
+----
+
+Module Completed
+================
+
+`Chapter Index <return.html#m00>`__

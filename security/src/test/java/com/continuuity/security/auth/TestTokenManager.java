@@ -1,8 +1,8 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.security.io.Codec;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.slf4j.Logger;

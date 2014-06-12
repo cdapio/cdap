@@ -172,7 +172,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
     if (encoded != null && encoded.length > 0) {
       DataInputStream input = new DataInputStream(new ByteArrayInputStream(encoded));
       while (input.available() > 0) {
-        offsets.add(StreamUtils.decodeOffset(streamConfig.getLocation(), input));
+        offsets.add(StreamUtils.decodeOffset(streamConfig, input));
       }
     }
     return offsets.build();

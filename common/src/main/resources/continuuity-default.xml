@@ -174,6 +174,14 @@
         <description>Number of netty server worker threads</description>
     </property>
 
+    <!-- Monitor Handler Parameters -->
+
+    <property>
+      <name>monitor.handler.service.discovery.timeout.seconds</name>
+      <value>1</value>
+      <description>Timeout in seconds for service discovery used in Monitor Handler Service Status check</description>
+    </property>
+
     <!-- Reactor YARN Services Parameters -->
 
     <property>
@@ -221,7 +229,7 @@
 
     <property>
         <name>stream.flume.threads</name>
-        <value>20</value>
+        <value>100</value>
     </property>
 
     <property>
@@ -240,6 +248,13 @@
         <name>stream.index.interval</name>
         <value>10000</value>
         <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
+    </property>
+
+    <property>
+        <name>stream.event.ttl</name>
+        <!-- Long.MAX_VALUE !-->
+        <value>9223372036854775807</value>
+        <description>Default time to live in milliseconds for stream events</description>
     </property>
 
     <property>
@@ -310,13 +325,6 @@
         <value>15165</value>
         <description>The port number for the transaction
             service</description>
-    </property>
-
-    <property>
-        <name>data.tx.command.port</name>
-        <value>15175</value>
-        <description>The port number for the transaction
-            service command endpoint</description>
     </property>
 
     <property>
@@ -498,18 +506,6 @@
 
     <!-- App Fabric related changes -->
     <property>
-        <name>app.bind.port</name>
-        <value>45000</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
-    <property>
-        <name>app.command.port</name>
-        <value>45010</value>
-        <description>App Fabric Server Port</description>
-    </property>
-
-    <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
@@ -519,6 +515,24 @@
         <name>app.output.dir</name>
         <value>/programs</value>
         <description>Directory where all archives are stored.</description>
+    </property>
+
+    <property>
+        <name>dataset.service.output.dir</name>
+        <value>/datasets</value>
+        <description>Directory where all dataset modules archives are stored.</description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>DataSet service hostname</description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.port</name>
+        <value>45055</value>
+        <description>DataSet service port</description>
     </property>
 
     <property>
@@ -776,6 +790,23 @@
         <value>10000</value>
     </property>
 
+    <!---
+         Hive Server Settings.
+     -->
+    <property>
+        <name>hive.server.bind.address</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>reactor.explore.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>hive.local.data.dir</name>
+        <value>${local.data.dir}/hive</value>
+    </property>
+
+
     <!--
         External Authentication Settings
     -->
@@ -790,7 +821,12 @@
     </property>
 
     <property>
-        <name>security.server.port</name>
+      <name>security.auth.server.address</name>
+      <value>127.0.0.1</value>
+    </property>
+
+    <property>
+        <name>security.auth.server.port</name>
         <value>10009</value>
     </property>
 
@@ -808,6 +844,24 @@
     <property>
         <name>security.data.keyfile.path</name>
         <value>${local.data.dir}/security/keyfile</value>
+    </property>
+
+    <!--
+     External Authentication login module settings
+    -->
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+    </property>
+
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+    </property>
+
+    <property>
+      <name>security.authentication.basic.realmfile</name>
+      <value></value>
     </property>
 
     <property>
@@ -836,5 +890,25 @@
         <name>security.realm</name>
         <value>continuuity</value>
         <description>Security realm used for authentication</description>
+    </property>
+
+    <property>
+      <name>security.server.ssl.enabled</name>
+      <value>false</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.port</name>
+      <value>10010</value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.path</name>
+      <value></value>
+    </property>
+
+    <property>
+      <name>security.server.ssl.keystore.password</name>
+      <value></value>
     </property>
 </configuration>

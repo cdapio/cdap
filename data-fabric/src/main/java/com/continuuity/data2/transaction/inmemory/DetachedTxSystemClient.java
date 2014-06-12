@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
@@ -78,6 +79,11 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     throw new TransactionCouldNotTakeSnapshotException(
         "Snapshot not implemented in detached transaction system client");
+  }
+
+  @Override
+  public String status() {
+    return Constants.Monitor.STATUS_OK;
   }
 
   @Override

@@ -7,6 +7,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -71,6 +72,130 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
       Assert.assertEquals(6, resultObj.getAsJsonPrimitive("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
+
+
+  @Test
+  public void testingSystemMetrics() throws Exception {
+    // Insert system metric
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                "appfabric.AppFabricHttpHandler.getAllApps",
+                                                                "0");
+    collector.gauge("request.received", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String methodRequest =
+      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+        "request.received?aggregate=true";
+    String handlerRequest =
+      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
+    String serviceRequest =
+      "/reactor/services/appfabric/request.received?aggregate=true";
+
+    testMetrics(methodRequest);
+    testMetrics(handlerRequest);
+    testMetrics(serviceRequest);
+  }
+
+  @Test
+  public void testingInvalidSystemMetrics() throws Exception {
+    //appfabrics service does not exist
+    String methodRequest =
+      "/reactor/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+        "request.received?aggregate=true";
+
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + methodRequest);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + methodRequest + " did not return 404 NOT-FOUND status.",
+                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+    } finally {
+      reader.close();
+    }
+
+  }
+
+
+  @Test
+  public void testingUserServiceMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.gauge("reads", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true";
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/reads?aggregate=true";
+      testMetrics(runnableRequest);
+      testMetrics(serviceRequest);
+  }
+
+
+  @Test
+  public void testingInvalidUserServiceMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.gauge("reads", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/service/CounterService/runnables/CountRunnable/reads?aggregate=true";
+
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + runnableRequest);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + runnableRequest + " did not return 404 status.",
+                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+    } finally {
+      reader.close();
+    }
+  }
+
+  private void testMetrics(String request) throws Exception {
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + request);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + request + " did not return 200 status.",
+                          HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      Assert.assertEquals("GET " + request + " returned unexpected results.", 1, json.get("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
+
+  @Test
+  public void testingTransactoinMetrics() throws Exception {
+    // Insert system metric  (stream.handler is the service name)
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    collector.gauge("inprogress", 1);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String request = "/reactor/transactions/inprogress?aggregate=true";
+    systemMetrics(request);
+  }
+
+  private void systemMetrics(String request) throws Exception {
+    HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + request);
+    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
+    try {
+      Assert.assertEquals("GET " + request + " did not return 200 status.",
+                          HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      Assert.assertEquals("GET " + request + " returned unexpected results.", 1, json.get("data").getAsInt());
     } finally {
       reader.close();
     }

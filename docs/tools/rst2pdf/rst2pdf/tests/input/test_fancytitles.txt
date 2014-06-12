@@ -1,0 +1,10 @@
+Section 1
+==========
+
+The titles of these sections should be pretty.
+
+Section 2
+==========
+
+The titles of these sections should be pretty.
+

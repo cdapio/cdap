@@ -69,6 +69,51 @@ WebAppServer.prototype.configSet = false;
 var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 
 /**
+ * Security Globals
+ */
+var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
+
+WebAppServer.prototype.setSecurityStatus = function(setAddress) {
+  // Hit any endpoint to check if authentication is enabled.
+  var options = {
+    host: this.config['gateway.server.address'],
+    port: this.config['gateway.server.port'],
+    path: '/' + this.API_VERSION + '/apps',
+    method: 'GET'
+  };
+
+  var req = this.lib.request(options, function (response) {
+      var data = '';
+      response.on("data", function(chunk) {
+          data += chunk;
+      });
+
+      response.on('end', function () {
+        if (response.statusCode === 401) {
+          SECURITY_ENABLED = true;
+          AUTH_SERVER_ADDRESSES = JSON.parse(data).auth_uri;
+        } else {
+          SECURITY_ENABLED = false;
+        }
+        if (typeof setAddress === 'function') {
+          setAddress();
+        }
+      });
+  });
+  req.end();
+};
+
+/**
+ * Randomly picks and returns an Authentication service to connect to.
+ */
+WebAppServer.prototype.getAuthServerAddress = function() {
+  if (AUTH_SERVER_ADDRESSES.length === 0) {
+    return null;
+  }
+  return AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)];
+}
+
+/**
  * Sets version if a version file exists.
  */
 WebAppServer.prototype.setEnvironment = function(id, product, version, callback) {
@@ -83,15 +128,14 @@ WebAppServer.prototype.setEnvironment = function(id, product, version, callback)
   this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
   this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
-  Env.getAddress(function (address) {
-
-    IP_ADDRESS = address;
-    if (typeof callback === 'function') {
-      callback(PRODUCT_VERSION, address);
-    }
-
+  this.setSecurityStatus(function() {
+    Env.getAddress(function (address) {
+      IP_ADDRESS = address;
+      if (typeof callback === 'function') {
+        callback(PRODUCT_VERSION, address);
+      }
+    }.bind(this));
   }.bind(this));
-
 };
 
 /**
@@ -149,6 +193,13 @@ WebAppServer.prototype.getServerInstance = function(app) {
   return this.lib.createServer(app);
 };
 
+WebAppServer.prototype.checkAuth = function(req, res, next) {
+  if (!('token' in req.cookies)) {
+    req.cookies.token = 'DUMMY';
+  }
+  next();
+};
+
 /**
  * Binds individual expressjs routes. Any additional routes should be added here.
  */
@@ -204,7 +255,7 @@ WebAppServer.prototype.bindRoutes = function() {
   /**
    * User Metrics Discovery
    */
-  this.app.get('/rest/metrics/user/*', function (req, res) {
+  this.app.get('/rest/metrics/user/*', this.checkAuth, function (req, res) {
 
     var path = req.url.slice(18);
 
@@ -215,7 +266,10 @@ WebAppServer.prototype.bindRoutes = function() {
       port: self.config['gateway.server.port'],
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     var request = self.lib.request(options, function(response) {
@@ -262,7 +316,7 @@ WebAppServer.prototype.bindRoutes = function() {
   /*
    * REST DELETE handler.
    */
-  this.app.del('/rest/*', function (req, res) {
+  this.app.del('/rest/*', this.checkAuth, function (req, res) {
 
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
@@ -270,7 +324,10 @@ WebAppServer.prototype.bindRoutes = function() {
     request({
       method: 'DELETE',
       url: 'http://' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     }, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
@@ -290,13 +347,16 @@ WebAppServer.prototype.bindRoutes = function() {
   /*
    * REST PUT handler.
    */
-  this.app.put('/rest/*', function (req, res) {
+  this.app.put('/rest/*', this.checkAuth, function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
       url: 'http://' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     if (req.body) {
@@ -325,13 +385,16 @@ WebAppServer.prototype.bindRoutes = function() {
   /**
    * Promote handler.
    */
-  this.app.post('/rest/apps/:appId/promote', function (req, res) {
+  this.app.post('/rest/apps/:appId/promote', this.checkAuth, function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
       url: 'http://' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     if (req.body) {
@@ -340,7 +403,8 @@ WebAppServer.prototype.bindRoutes = function() {
       };
       opts.body = JSON.stringify(opts.body) || '';
       opts.headers = {
-        'X-Continuuity-ApiKey': req.body.apiKey
+        'X-Continuuity-ApiKey': req.body.apiKey,
+        'Authorization': 'Bearer ' + req.cookies.token
       };
     }
 
@@ -362,13 +426,16 @@ WebAppServer.prototype.bindRoutes = function() {
   /*
    * REST POST handler.
    */
-  this.app.post('/rest/*', function (req, res) {
+  this.app.post('/rest/*', this.checkAuth, function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
       url: 'http://' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     if (req.body) {
@@ -397,7 +464,7 @@ WebAppServer.prototype.bindRoutes = function() {
   /*
    * REST GET handler.
    */
-  this.app.get('/rest/*', function (req, res) {
+  this.app.get('/rest/*', this.checkAuth, function (req, res) {
 
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
@@ -405,7 +472,10 @@ WebAppServer.prototype.bindRoutes = function() {
     var opts = {
       method: 'GET',
       url: 'http://' + path,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     request(opts, function (error, response, body) {
@@ -426,7 +496,7 @@ WebAppServer.prototype.bindRoutes = function() {
   /*
    * Metrics Handler
    */
-  this.app.post('/metrics', function (req, res) {
+  this.app.post('/metrics', this.checkAuth, function (req, res) {
 
     var pathList = req.body;
     var accountID = 'developer';
@@ -454,7 +524,8 @@ WebAppServer.prototype.bindRoutes = function() {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': content.length,
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : ''
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
       }
     };
 
@@ -496,14 +567,17 @@ WebAppServer.prototype.bindRoutes = function() {
   /**
    * Upload an Application archive.
    */
-  this.app.post('/upload/:file', function (req, res) {
+  this.app.post('/upload/:file', this.checkAuth, function (req, res) {
     var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
     var opts = {
       method: 'POST',
       url: url,
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     var x = request.post(opts);
@@ -518,7 +592,10 @@ WebAppServer.prototype.bindRoutes = function() {
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     var request = self.lib.request(options, function (response) {
@@ -545,14 +622,17 @@ WebAppServer.prototype.bindRoutes = function() {
 
   });
 
-  this.app.post('/unrecoverable/reset', function (req, res) {
+  this.app.post('/unrecoverable/reset', this.checkAuth, function (req, res) {
 
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
 
     var opts = {
       method: 'POST',
       url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
-      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
     };
 
     request(opts, function (error, response, body) {
@@ -573,7 +653,8 @@ WebAppServer.prototype.bindRoutes = function() {
       'product_id': PRODUCT_ID,
       'product_name': PRODUCT_NAME,
       'product_version': PRODUCT_VERSION,
-      'ip': IP_ADDRESS
+      'ip': IP_ADDRESS,
+      'security_enabled': SECURITY_ENABLED
     };
 
     if (req.session.account_id) {
@@ -610,6 +691,108 @@ WebAppServer.prototype.bindRoutes = function() {
     res.send('OK');
 
   });
+
+  // Security endpoints.
+  this.app.get('/getsession', function (req, res) {
+    var token = '';
+    if ('token' in req.cookies && req.cookies.token !== 'DUMMY') {
+      token = req.cookies.token;
+    }
+
+    var options = {
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
+      path: '/' + self.API_VERSION + '/deploy/status',
+      method: 'GET',
+      headers: {
+        'X-Continuuity-ApiKey': '',
+        'Authorization': 'Bearer ' + token
+      }
+    };
+
+    var request = self.lib.request(options, function (response) {
+        var data = '';
+        response.on("data", function(chunk) {
+            data += chunk;
+        });
+
+        response.on('end', function () {
+          if (response.statusCode === 401) {
+            AUTH_SERVER_ADDRESSES  = JSON.parse(data).auth_uri;
+            token = '';
+            res.clearCookie('token');
+          }
+          res.send({token: token});
+        });
+    });
+    request.end();
+
+  });
+
+  this.app.post('/validatelogin', function (req, res) {
+      var auth_uri = self.getAuthServerAddress();
+      if (auth_uri === null) {
+        res.send(500, "No Authentication service to connect to was found.");
+      } else {
+        var post = req.body;
+        var options = {
+          url: auth_uri,
+          auth: {
+            user: post.username,
+            password: post.password
+          },
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false
+        }
+        request(options, function (nerr, nres, nbody) {
+          if (nerr || nres.statusCode !== 200) {
+            res.send(401);
+          } else {
+            res.send(200);
+          }
+        });
+      }
+   });
+
+   this.app.post('/login', function (req, res) {
+      req.session.regenerate(function () {
+        var auth_uri = self.getAuthServerAddress();
+        if (auth_uri === null) {
+          res.send(500, "No Authentication service to connect to was found.");
+        } else {
+          var post = req.body;
+          var options = {
+            url: auth_uri,
+            auth: {
+              user: post.username,
+              password: post.password
+            },
+            rejectUnauthorized: false,
+            requestCert: true,
+            agent: false
+          }
+
+          request(options, function (nerr, nres, nbody) {
+            if (nerr || nres.statusCode !== 200) {
+              res.locals.errorMessage = "Please specify a valid username and password";
+              res.redirect('/#/login');
+            } else {
+              var nbody = JSON.parse(nbody);
+              res.cookie('token', nbody.access_token, { httpOnly: true } );
+              res.redirect('/#/overview');
+            }
+          });
+        }
+      });
+   });
+
+  this.app.get('/logout', this.checkAuth, function (req, res) {
+      req.session.regenerate(function () {
+        res.clearCookie('token');
+        res.redirect('/#/login');
+      })
+   });
 
   /**
    * Check for new version.

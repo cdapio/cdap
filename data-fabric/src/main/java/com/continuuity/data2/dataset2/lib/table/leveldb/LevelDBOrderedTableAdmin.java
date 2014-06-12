@@ -2,7 +2,7 @@ package com.continuuity.data2.dataset2.lib.table.leveldb;
 
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ public class LevelDBOrderedTableAdmin implements DatasetAdmin {
   private final LevelDBOcTableService service;
   private final String name;
 
-  public LevelDBOrderedTableAdmin(DatasetInstanceSpec spec, LevelDBOcTableService service) throws IOException {
+  public LevelDBOrderedTableAdmin(DatasetSpecification spec, LevelDBOcTableService service) throws IOException {
     this.service = service;
     this.name = spec.getName();
   }

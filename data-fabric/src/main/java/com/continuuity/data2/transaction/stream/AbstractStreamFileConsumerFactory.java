@@ -6,6 +6,8 @@ package com.continuuity.data2.transaction.stream;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
+import com.continuuity.data.file.filter.TTLReadFilter;
 import com.continuuity.data.stream.MultiLiveStreamFileReader;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -15,6 +17,7 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -27,6 +30,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Abstract base class for implementing {@link StreamConsumerFactory} using
@@ -68,7 +72,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   protected abstract StreamConsumer create(
     String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
     StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
-    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException;
+    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+    @Nullable ReadFilter extraFilter) throws IOException;
 
   /**
    * Deletes process states table.
@@ -82,13 +87,16 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    *
    * @param partitionLocation Location of the partition directory
    * @param fileOffsets for collecting stream file offsets
+   * @param generation the stream generation
    */
   protected abstract void getFileOffsets(Location partitionLocation,
-                                         Collection<? super StreamFileOffset> fileOffsets) throws IOException;
+                                         Collection<? super StreamFileOffset> fileOffsets,
+                                         int generation) throws IOException;
 
   @Override
   public final StreamConsumer create(QueueName streamName, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
+
     StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName.getSimpleName());
 
     String tableName = getTableName(streamName, namespace);
@@ -96,7 +104,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
     StreamConsumer newConsumer = create(tableName, streamConfig, consumerConfig,
-                                        stateStore, consumerState, createReader(streamConfig, consumerState));
+                                        stateStore, consumerState, createReader(streamConfig, consumerState),
+                                        new TTLReadFilter(streamConfig.getTTL()));
 
     try {
       // The old stream admin uses full URI of queue name as the name for checking existence
@@ -150,25 +159,45 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     return String.format("%s.%s.%s", tablePrefix, streamName.getSimpleName(), namespace);
   }
 
-  private MultiLiveStreamFileReader createReader(StreamConfig streamConfig,
+  private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,
                                                  StreamConsumerState consumerState) throws IOException {
     Location streamLocation = streamConfig.getLocation();
     Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
 
+    // Look for the latest stream generation
+    final int generation = StreamUtils.getGeneration(streamConfig);
+    streamLocation = StreamUtils.createGenerationLocation(streamLocation, generation);
+
+    final long currentTime = System.currentTimeMillis();
+
     if (!Iterables.isEmpty(consumerState.getState())) {
-      LOG.info("Create file reader with consumer state: {}", consumerState);
-      // Has existing offsets, just resume from there.
-      MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
-      reader.initialize();
-      return reader;
+      // See if any offset has a different generation or is expired. If so, don't use the old states.
+      boolean useStoredStates = Iterables.all(consumerState.getState(), new Predicate<StreamFileOffset>() {
+        @Override
+        public boolean apply(StreamFileOffset input) {
+          boolean isExpired = input.getPartitionEnd() + streamConfig.getTTL() < currentTime;
+          boolean sameGeneration = generation == input.getGeneration();
+          return !isExpired && sameGeneration;
+        }
+      });
+
+      if (useStoredStates) {
+        LOG.info("Create file reader with consumer state: {}", consumerState);
+        // Has existing offsets, just resume from there.
+        MultiLiveStreamFileReader reader = new MultiLiveStreamFileReader(streamConfig, consumerState.getState());
+        reader.initialize();
+        return reader;
+      }
     }
 
     // TODO: Support starting from some time rather then from beginning.
     // Otherwise, search for files with the smallest partition start time
     // If no partition exists for the stream, start with one partition earlier than current time to make sure
     // no event will be lost if events start flowing in about the same time.
-    long startTime = StreamUtils.getPartitionStartTime(System.currentTimeMillis() - streamConfig.getPartitionDuration(),
+    long startTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getPartitionDuration(),
                                                        streamConfig.getPartitionDuration());
+    long earliestNonExpiredTime = StreamUtils.getPartitionStartTime(currentTime - streamConfig.getTTL(),
+                                                                    streamConfig.getPartitionDuration());
 
     for (Location partitionLocation : streamLocation.list()) {
       if (!partitionLocation.isDirectory()) {
@@ -177,7 +206,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       }
 
       long partitionStartTime = StreamUtils.getPartitionStartTime(partitionLocation.getName());
-      if (partitionStartTime < startTime) {
+      boolean isPartitionExpired = partitionStartTime < earliestNonExpiredTime;
+      if (!isPartitionExpired && partitionStartTime < startTime) {
         startTime = partitionStartTime;
       }
     }
@@ -188,7 +218,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     Location partitionLocation = StreamUtils.createPartitionLocation(streamLocation,
                                                                      startTime, streamConfig.getPartitionDuration());
     List<StreamFileOffset> fileOffsets = Lists.newArrayList();
-    getFileOffsets(partitionLocation, fileOffsets);
+    getFileOffsets(partitionLocation, fileOffsets, generation);
 
     LOG.info("Empty consumer state. Create file reader with file offsets: groupId={}, instanceId={} states={}",
              consumerState.getGroupId(), consumerState.getInstanceId(), fileOffsets);

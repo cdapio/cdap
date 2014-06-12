@@ -9,14 +9,12 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Records gateway requests/response metrics.
@@ -30,8 +28,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final LoadingCache<String, MetricsCollector> collectorCache;
 
-  @Inject
-  public MetricsReporterHook(@Nullable final MetricsCollectionService metricsCollectionService, String serviceName) {
+  public MetricsReporterHook(final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceName = serviceName;
 

@@ -290,6 +290,7 @@ Comments
 
   Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
+.. rst2pdf: PageBreak
 
 Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
@@ -358,6 +359,12 @@ but the command-line tool ``stream-client`` demonstrates how to view *all*, the 
 
 For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
+
+Run at the command line::
+
+	$ stream-client --help
+
+for usage and documentation of options.
 
 Data HTTP API
 =============
@@ -971,7 +978,7 @@ When starting an element, you can optionally specify runtime arguments as a JSON
 
 with the arguments as a JSON string in the body::
 
-	{“foo”:”bar”,”this”:”that”}
+	{"foo":"bar","this":"that"}
 
 The Continuuity Reactor will use these these runtime arguments only for this single invocation of the element.
 To save the runtime arguments so that the Reactor will use them every time you start the element,
@@ -981,13 +988,133 @@ issue an HTTP PUT with the parameter ``runtimeargs``::
 
 with the arguments as a JSON string in the body::
 
-	{“foo”:”bar”,”this”:”that”}
+	{"foo":"bar","this":"that"}
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
+
+Services: Start, Stop, Status, and Runtime Arguments
+----------------------------------------------------
+Reactor Application can have Services that can be started, stopped and queried for their
+status using HTTP POST and GET methods::
+
+	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<operation>``
+     - One of ``start`` or ``stop``
+
+Examples
+........
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
+   * - Description
+     - Start a Service *WhoService* in the Application *HelloWorld*
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
+   * - Description
+     - Stop the Service *CountService* in the Application *WordCount*
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
+   * - Description
+     - Get the status of the Service *WhoService* in the Application *HelloWorld*
+
+
+To save the runtime arguments so that the Reactor will use them every time you start the Service,
+issue an HTTP PUT with the parameter ``runtimeargs``::
+
+	PUT <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
+
+with the arguments as a JSON string in the body::
+
+	{"foo":"bar","this":"that"}
+
+To retrieve the runtime arguments saved for an Application's Service, issue an HTTP GET request to the Service's URL
+using the same parameter ``runtimeargs``::
+
+	GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
+
+This will return the saved runtime arguments in JSON format.
+
+Container Information
+---------------------
+
+To find out the address of an element's container host and the container’s debug port, you can query
+the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
+
+	GET <base-url>/apps/<app-id>/<element-type>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<element-type>``
+     - One of either ``flows`` or ``procedures``
+   * - ``<element-id>``
+     - Name of the element (*Flow* or *Procedure*)
+
+Example::
+
+	GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+
+The response is formatted in JSON; an example of this is shown in the 
+`Continuuity Reactor Testing and Debugging Guide <debugging.html#debugging-reactor-applications>`_.
+
+
+To find out the address of a Service's container host and the container's debug port, you can query the
+Reactor for the live info of a Service's Twill Runnable via an HTTP GET method::
+
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/live-info
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable being called
+
+Example::
+
+	GET <base-url>/apps/WordCount/services/CounterService/runnables/CountRunnable/live-info
+
+The response is formatted in JSON.
 
 .. rst2pdf: PageBreak
 
@@ -1083,11 +1210,52 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/``
+     - ``GET <base-url>/apps/HelloWorld/procedures/Greeting/instances``
        ``instances``
    * - Description
-     - Find out the number of instances of the Procedure *saver*
-       in the Flow *WhoFlow* of the Application *HelloWorld*
+     - Find out the number of instances of the Procedure *Greeting*
+       in the Application *HelloWorld*
+
+.. rst2pdf: PageBreak
+
+Scaling Services
+................
+You can query or change the number of instances of a Service's runnable
+by using the ``instances`` parameter with HTTP GET and PUT methods::
+
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+	PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+
+with the arguments as a JSON string in the body::
+
+	{ "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<service-id>``
+     - Name of the Service
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/instances``
+       ``instances``
+   * - Description
+     - Retreive the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -1129,6 +1297,24 @@ Example
 The *runid* field is a UUID that uniquely identifies a run within the Continuuity Reactor,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
+For Services, you can retrieve the history of a Twill Runnable using::
+
+  GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/history
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/history``
+   * - Description
+     - Retrieve the history of the Runnable *WhoRunnable* of the Service *WhoService* of the Application *HelloWorld*
+   * - Returns
+     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+
 For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
@@ -1155,7 +1341,7 @@ Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
 
 with the API Key in the header::
 
-	X-Continuuity-ApiKey: <api-key> {“hostname”:”<sandbox>.continuuity.net”}
+	X-Continuuity-ApiKey: <api-key> {"hostname":"<sandbox>.continuuity.net"}
 
 .. list-table::
    :widths: 20 80
@@ -1191,9 +1377,9 @@ running in the Continuuity Reactor. To do that, send an HTTP GET request::
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, or ``mapreduce``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce* job) being called
    * - ``<ts>``
-     - *Start* and *stop* time, given as seconds since the start of the Epoch
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
 Example
 .......
@@ -1206,6 +1392,41 @@ Example
        ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
+       beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
+       ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
+
+You can download the logs that are emitted by the Twill Runnable of a Service in a Reactor Application by
+sending an HTTP GET request::
+
+	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/logs?start=<ts>&stop=<ts>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<runnable-id>``
+     - Name of the Twill Runnable being called
+   * - ``<ts>``
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/CountTokens/services/CountTokensService/runnables/CountTokensRunnable/``
+       ``logs?start=1382576400&stop=1382576700``
+   * - Description
+     - Return the logs for all the events of the Runnable CountTokensRunnable from the Service *CountTokensService*
+       of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -1225,7 +1446,15 @@ As Applications process data, the Continuuity Reactor collects metrics about the
 
 Other metrics are user-defined and differ from Application to Application. 
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-`Continuuity Reactor Operations Guide <operations>`_.
+Continuuity Reactor Operations Guide.
+
+
+.. rst2pdf: CutStart
+
+(:doc:`Operations Guide </operations>`)
+
+.. rst2pdf: CutStop
+
 
 Metrics Requests
 ----------------
@@ -1269,6 +1498,12 @@ Examples
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
    * - Description
      - Using a *User-Defined* metric, *names.bytes*
+
+   * - HTTP Method
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
+       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
+   * - Description
+     - Using a *User-Defined* metric, *names.bytes* in a Service's Twill Runnable
 
 Comments
 ........
@@ -1383,6 +1618,12 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
+   * - One Twill Runnable
+     - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
+   * - One Service
+     - ``/apps/<app-id>/services/<service-id>``
+   * - All Services of an Application
+     - ``/apps/<app-id>/services``
    * - All elements of an Application
      - ``/apps/<app-id>``
    * - All elements of all Applications
@@ -1414,7 +1655,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - A single DataSet in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
    * - A single DataSet in the context of a specific Application
-     - ``/datasets/<dataset-id><any application context>``
+     - ``/datasets/<dataset-id>/<any application context>``
    * - A single DataSet across all Applications
      - ``/datasets/<dataset-id>``
    * - All DataSets across all Applications
@@ -1513,12 +1754,11 @@ These metrics are available in the DataSets context:
    * - ``store.writes``
      - Write operations performed
 
-
 Monitor HTTP API
 ================
 Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
 
-	GET <base-url>/monitor/<endpoint>
+	GET <base-url>/system/services/<service-id>/status
 
 The status of these Reactor services can be checked.
 
@@ -1527,7 +1767,7 @@ The status of these Reactor services can be checked.
    :widths: 20 20 60
    
    * - Service Name
-     - Endpoint
+     - Service-Id
      - Description of the Service
    * - ``Metrics``
      - ``metrics``
@@ -1551,7 +1791,7 @@ Example
    :stub-columns: 1
    
    * - HTTP Method
-     - ``GET <base-url>/monitor/metrics``
+     - ``GET <base-url>/system/services/metrics/status``
    * - Description
      - Returns the status of the Metrics Service
 
@@ -1575,7 +1815,7 @@ Where to Go Next
 Now that you've seen Continuuity Reactor's HTTP REST API, 
 the last of our documentation is:
 
-- `Continuuity Reactor Javadocs <javadocs>`__,
+- `Continuuity Reactor Javadocs <javadocs/index.html>`__,
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop

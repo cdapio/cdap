@@ -54,6 +54,11 @@ public class Main extends DaemonMain {
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
+    // Set the HTTP keep alive max connection property to allow more keep-alive connections
+    if (System.getProperty("http.maxConnections") == null) {
+      System.setProperty("http.maxConnections", cConf.get(Constants.Gateway.STREAM_FLUME_THREADS));
+    }
+
     String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       LOG.error("No zookeeper quorum provided.");
@@ -71,7 +76,7 @@ public class Main extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new GatewayModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new AbstractModule() {
         @Override

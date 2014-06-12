@@ -5,6 +5,7 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
@@ -47,7 +48,8 @@ public class DFSMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderT
           bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
         }
       },
-      new DataFabricDistributedModule(cConf, hConf)
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataFabricDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

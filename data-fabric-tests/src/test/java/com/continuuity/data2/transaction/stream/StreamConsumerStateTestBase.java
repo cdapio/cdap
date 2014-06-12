@@ -193,10 +193,12 @@ public abstract class StreamConsumerStateTestBase {
     List<StreamFileOffset> offsets = Lists.newArrayList();
     long partitionDuration = config.getPartitionDuration();
     for (int i = 0; i < numOffsets; i++) {
-      Location partitionLocation = StreamUtils.createPartitionLocation((partitionBaseTime + i) * partitionDuration,
-                                                                       config);
+      Location partitionLocation = StreamUtils.createPartitionLocation(config.getLocation(),
+                                                                       (partitionBaseTime + i) * partitionDuration,
+                                                                       config.getPartitionDuration());
+
       offsets.add(new StreamFileOffset(StreamUtils.createStreamLocation(partitionLocation,
-                                                                        "file", 0, StreamFileType.EVENT), i * 1000));
+                                                                        "file", 0, StreamFileType.EVENT), i * 1000, 0));
     }
 
     return new StreamConsumerState(groupId, instanceId, offsets);

@@ -6,6 +6,7 @@ package com.continuuity.app;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
@@ -16,6 +17,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -47,6 +49,20 @@ public interface ApplicationSpecification {
   Map<String, DataSetSpecification> getDataSets();
 
   /**
+   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.module.DatasetModule} name
+   *         to {@link com.continuuity.internal.data.dataset.module.DatasetModule} class name for
+   *         dataset modules configured for the Application.
+   */
+  Map<String, String> getDatasetModules();
+
+  /**
+   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.Dataset} name to
+   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.internal.data.dataset.Dataset}s
+   *         configured for the Application.
+   */
+  Map<String, DatasetInstanceCreationSpec> getDatasets();
+
+  /**
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
    *         for {@link Flow}s configured for the Application.
    */
@@ -69,4 +85,10 @@ public interface ApplicationSpecification {
    *         for {@link Workflow}s configured for the Application.
    */
   Map<String, WorkflowSpecification> getWorkflows();
+
+  /**
+   * @return An immutable {@link Map} from {@link TwillApplication} name to {@link TwillSpecification}
+   *         for services configured for the Application.
+   */
+  Map<String, TwillSpecification> getServices();
 }

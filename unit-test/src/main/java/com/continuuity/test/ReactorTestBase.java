@@ -1,7 +1,10 @@
 package com.continuuity.test;
 
-import com.continuuity.api.Application;
+import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
@@ -12,16 +15,32 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.runtime.DataSetServiceModules;
+import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
+import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.service.StreamHandler;
-import com.continuuity.data.stream.service.StreamHttpModule;
+import com.continuuity.data.stream.service.StreamServiceModule;
+import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
+import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
+import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.hive.metastore.InMemoryHiveMetastore;
+import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
@@ -36,6 +55,7 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -47,6 +67,9 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -58,6 +81,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -75,6 +101,12 @@ public class ReactorTestBase {
   private static LogAppenderInitializer logAppenderInitializer;
   private static AppFabricHttpHandler httpHandler;
   private static SchedulerService schedulerService;
+  private static DatasetService datasetService;
+  private static DatasetFramework datasetFramework;
+  private static DiscoveryServiceClient discoveryClient;
+
+  private static HiveMetastore hiveMetastore;
+  private static HiveServer hiveServer;
 
 
   /**
@@ -85,15 +117,26 @@ public class ReactorTestBase {
    * @param applicationClz The application class
    * @return An {@link com.continuuity.test.ApplicationManager} to manage the deployed application.
    */
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+  protected ApplicationManager deployApplication(Class<?> applicationClz,
                                                  File...bundleEmbeddedJars) {
-
-    Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
+    
+    Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
+      Object appInstance = applicationClz.newInstance();
+      ApplicationSpecification appSpec;
 
-      ApplicationSpecification appSpec =
-        Specifications.from(applicationClz.newInstance().configure());
+      if (appInstance instanceof Application) {
+        Application app = (Application) appInstance;
+        DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+        app.configure(configurer, new ApplicationContext());
+        appSpec = configurer.createApplicationSpec();
+      } else if (appInstance instanceof com.continuuity.api.Application) {
+        appSpec = Specifications.from(((com.continuuity.api.Application) appInstance).configure());
+      } else {
+        throw new IllegalArgumentException("Application class does not represent application: "
+                                             + applicationClz.getName());
+      }
 
       Location deployedJar = AppFabricTestHelper.deployApplication(httpHandler, locationFactory, appSpec.getName(),
                                                                    applicationClz, bundleEmbeddedJars);
@@ -116,20 +159,30 @@ public class ReactorTestBase {
   }
 
   @BeforeClass
-  public static final void init() throws IOException {
+  public static void init() throws Exception {
     testAppDir = tmpFolder.newFolder();
 
-    File outputDir = new File(testAppDir, "app");
+    File appDir = new File(testAppDir, "app");
+    File datasetDir = new File(testAppDir, "dataset");
     File tmpDir = new File(testAppDir, "tmp");
 
-    outputDir.mkdirs();
+    appDir.mkdirs();
+    datasetDir.mkdirs();
     tmpDir.mkdirs();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+
+    configuration.set(Constants.AppFabric.OUTPUT_DIR, appDir.getAbsolutePath());
+    configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
+    configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -144,6 +197,7 @@ public class ReactorTestBase {
     }
 
     injector = Guice.createInjector(createDataFabricModule(configuration),
+                                    new DataSetServiceModules().getInMemoryModule(),
                                     new ConfigModule(configuration),
                                     new IOModule(),
                                     new AuthModule(),
@@ -151,7 +205,7 @@ public class ReactorTestBase {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new StreamHttpModule() {
+                                    new StreamServiceModule() {
                                       @Override
                                       protected void configure() {
                                         super.configure();
@@ -159,6 +213,7 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
+                                    new HiveRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
@@ -186,18 +241,31 @@ public class ReactorTestBase {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+    datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
+    discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
+    hiveMetastore = injector.getInstance(HiveMetastore.class);
+    hiveServer = injector.getInstance(HiveServer.class);
+
+    // it is important to respect that order: metastore, then HiveServer
+    hiveMetastore.startAndWait();
+    hiveServer.startAndWait();
   }
 
-  private static Module createDataFabricModule(CConfiguration cConf) {
-    return Modules.override(new DataFabricModules(cConf).getSingleNodeModules())
+  private static Module createDataFabricModule(final CConfiguration cConf) {
+    return Modules.override(new DataFabricModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
         protected void configure() {
-          // Use in memory dataset instead
-          bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
+          bind(StreamConsumerStateStoreFactory.class)
+            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
+          bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }
       });
   }
@@ -227,7 +295,11 @@ public class ReactorTestBase {
 
   @AfterClass
   public static final void finish() {
+    hiveServer.stopAndWait();
+    hiveMetastore.stopAndWait();
     metricsQueryService.stopAndWait();
+    metricsCollectionService.startAndWait();
+    datasetService.stopAndWait();
     schedulerService.stopAndWait();
     logAppenderInitializer.close();
     cleanDir(testAppDir);
@@ -254,5 +326,66 @@ public class ReactorTestBase {
       bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
     }
   }
+
+  /**
+   * Deploys {@link DatasetModule}.
+   * @param moduleName name of the module
+   * @param datasetModule module class
+   * @throws Exception
+   */
+  @Beta
+  protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
+    throws Exception {
+    datasetFramework.addModule(moduleName, datasetModule.newInstance());
+  }
+
+
+  /**
+   * Adds instance of data set.
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param props properties
+   * @param <T> type of the dataset admin
+   * @return
+   * @throws Exception
+   */
+  @Beta
+  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+                                                       String datasetInstanceName,
+                                                       DatasetProperties props) throws Exception {
+
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
+    return datasetFramework.getAdmin(datasetInstanceName, null);
+  }
+
+  /**
+   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   */
+  @Beta
+  protected final Connection getQueryClient() throws Exception {
+
+    // this makes sure the hive JDBC driver is loaded
+    Class.forName("org.apache.hive.jdbc.HiveDriver");
+
+    InetSocketAddress address = null;
+    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.HIVE);
+    for (Discoverable discoverable : discovered) {
+       address = discoverable.getSocketAddress();
+    }
+
+    if (null == address) {
+      throw new IOException("Hive server could not be discovered.");
+    }
+
+    String host = "localhost";
+    int port = address.getPort();
+    String jdbcUser = "hive";
+    String jdbcPassword = "";
+
+    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
+
+    return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
+  }
+
 }
 

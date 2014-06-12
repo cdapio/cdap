@@ -305,6 +305,12 @@ public class RuntimeTable extends Table {
     return new TableScanner();
   }
 
+  @Override
+  public void write(byte[] key, Put put) {
+    Preconditions.checkArgument(Bytes.equals(key, put.getRow()), "The key should be the same as row in Put");
+    put(put);
+  }
+
   /**
    * Table splits are simply a start and stop key.
    */

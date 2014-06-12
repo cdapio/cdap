@@ -3,6 +3,7 @@ package com.continuuity.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -13,7 +14,6 @@ import org.junit.Test;
  */
 public abstract class NamespacingDataSetAccessorTest {
   protected abstract DataSetAccessor getDataSetAccessor();
-  protected abstract String getRawName(DataSetClient dsClient);
 
   static CConfiguration conf = CConfiguration.create();
 
@@ -51,4 +51,11 @@ public abstract class NamespacingDataSetAccessorTest {
       getRawName((DataSetClient) myTable).startsWith("test." + DataSetAccessor.Namespace.SYSTEM.getName()));
   }
 
+  private String getRawName(DataSetClient dsClient) {
+    if (dsClient instanceof OrderedColumnarTable) {
+      return ((BufferingOcTableClient) dsClient).getTableName();
+    }
+
+    throw new RuntimeException("Unknown DataSetClient type: " + dsClient.getClass());
+  }
 }

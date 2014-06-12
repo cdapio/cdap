@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.file.FileReader;
+import com.continuuity.data.file.ReadFilter;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamFileType;
@@ -30,6 +31,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nullable;
 
 /**
  * A {@link com.continuuity.data2.transaction.stream.StreamConsumerFactory} that reads from stream file
@@ -56,14 +58,16 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   @Override
   protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                   StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
-                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader) throws IOException {
+                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                                  @Nullable ReadFilter extraFilter) throws IOException {
 
     tableService.ensureTableExists(tableName);
 
     LevelDBOcTableCore tableCore = new LevelDBOcTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
     return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader,
-                                         stateStore, beginConsumerState, tableCore, dbLock);
+                                         stateStore, beginConsumerState, extraFilter,
+                                         tableCore, dbLock);
   }
 
   @Override
@@ -73,12 +77,13 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
   @Override
   protected void getFileOffsets(Location partitionLocation,
-                                Collection<? super StreamFileOffset> fileOffsets) throws IOException {
+                                Collection<? super StreamFileOffset> fileOffsets,
+                                int generation) throws IOException {
     // Assumption is it's used in local mode, hence only one instance
     Location eventLocation = StreamUtils.createStreamLocation(partitionLocation,
-                                                              cConf.get(Constants.Stream.FILE_PREFIX),
+                                                              cConf.get(Constants.Stream.FILE_PREFIX) + ".0",
                                                               0, StreamFileType.EVENT);
-    fileOffsets.add(new StreamFileOffset(eventLocation, 0));
+    fileOffsets.add(new StreamFileOffset(eventLocation, 0, generation));
   }
 
   private Object getDBLock(String name) {

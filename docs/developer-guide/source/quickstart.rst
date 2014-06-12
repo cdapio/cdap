@@ -1,12 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introducing new developers to Continuuity Reactor
 
 ===============================
-Continuuity Reactor Quick Start
+Quick Start
 ===============================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 This Quick Start will guide you through installing Continuuity Reactor,
@@ -22,7 +21,7 @@ injecting an Event into a Flow and querying a Procedure to obtain results.
 
 The example code for the *ResponseCodeAnalytics* that we'll be using is located in ``/examples/ResponseCodeAnalytics``.
 
-Step 1 : Installation and Startup
+Step 1: Installation and Startup
 ---------------------------------
 Download and unpack the SDK from `Continuuity.com </download>`_.
 
@@ -40,7 +39,7 @@ View the Reactor Dashboard in a browser window::
 
 Take the tour: you will be guided through the Dashboard, injecting HTTP log events and querying a Procedure to get a count of status codes.
 
-Step 2 : The Dashboard
+Step 2: The Dashboard
 ----------------------
 When you first open the Dashboard, you'll be greeted with:
 
@@ -126,6 +125,7 @@ Add to the class ``LogCountFlowlet`` the following ``count`` method::
     // Annotation indicates that this method can process incoming data
     @ProcessInput
     public void count(String ip) {
+    
       // Increment the number of occurrences of the client IP address by 1
       statusCodes.increment(Bytes.toBytes("clientIPKey"), Bytes.toBytes(ip), 1L);
     }
@@ -141,6 +141,7 @@ To the class ``StatusCodeProcedure``, add the following ``getClientIPCounts`` me
 
       // Get the row using the row key
       if (row != null) {
+      
         // Get the number of occurrences of each client IP address
         for (Map.Entry<byte[], byte[]> colValue : row.getColumns().entrySet()) {
           statusCountMap.put(Bytes.toString(colValue.getKey()), Bytes.toLong(colValue.getValue()));
@@ -191,5 +192,5 @@ Where to Go Next
 ----------------
 Now that you've had a look at Continuuity Reactor, take a look at:
 
-- `Continuuity Reactor Programming Guide <programming>`__,
-  an introduction to programming applications for the Continuuity Reactor.
+- `Developer Examples <examples/index.html>`__,
+  three different examples to run and experiment with.

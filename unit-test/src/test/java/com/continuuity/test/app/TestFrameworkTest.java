@@ -1,10 +1,15 @@
 package com.continuuity.test.app;
 
+import com.continuuity.api.app.Application;
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.data2.OperationException;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -22,11 +27,16 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +47,16 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class TestFrameworkTest extends ReactorTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
+  @After
+  public void cleanup() throws Exception {
+    // Sleep a second before clear. There is a race between removal of RuntimeInfo
+    // in the AbstractProgramRuntimeService class and the clear() method, which loops all RuntimeInfo.
+    // The reason for the race is because removal is done through callback.
+    TimeUnit.SECONDS.sleep(1);
+    clear();
+  }
 
   @Test
   public void testFlowRuntimeArguments() throws Exception {
@@ -60,7 +79,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -149,23 +167,30 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
-      // Sleep a second before clear. There is a race between removal of RuntimeInfo
-      // in the AbstractProgramRuntimeService class and the clear() method, which loops all RuntimeInfo.
-      // The reason for the race is because removal is done through callback.
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
   @Test(timeout = 360000)
-  public void testApp() throws InterruptedException, IOException, TimeoutException, OperationException {
-    ApplicationManager applicationManager = deployApplication(WordCountApp2.class);
+  public void testApp() throws InterruptedException, IOException, TimeoutException {
+    testApp(WordCountApp2.class, false, "text2");
+  }
+
+  @Test(timeout = 360000)
+  public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
+    testApp(WordCountAppV2.class, true, "text");
+  }
+
+  // todo: passing stream name as a workaround for not cleaning up streams during reset()
+  private void testApp(Class<?> app, boolean datasetV2, String streamName)
+    throws IOException, TimeoutException, InterruptedException {
+
+    ApplicationManager applicationManager = deployApplication(app);
 
     try {
       applicationManager.startFlow("WordCountFlow");
 
       // Send some inputs to streams
-      StreamWriter streamWriter = applicationManager.getStreamWriter("text");
+      StreamWriter streamWriter = applicationManager.getStreamWriter(streamName);
       for (int i = 0; i < 100; i++) {
         streamWriter.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
       }
@@ -185,16 +210,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
       Gson gson = new Gson();
       Map<String, Long> result = gson.fromJson(procedureClient.query("wordfreq",
-                                                                     ImmutableMap.of("word", "text:testing")),
+                                                                     ImmutableMap.of("word", streamName + ":testing")),
                                                resultType);
 
-      Assert.assertEquals(100L, result.get("text:testing").longValue());
-
-      // Verify by looking into dataset
-      DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
-
-      Assert.assertEquals(100L,
-                          Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
+      Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
@@ -218,10 +237,21 @@ public class TestFrameworkTest extends ReactorTestBase {
       // The stream MR only consume the body, not the header.
       Assert.assertEquals(3 * 100L, totalCount);
 
+      // Verify by looking into dataset
+      // todo: ugly workaround, refactor when datasets v1 gone
+      if (!datasetV2) {
+        DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
+        Assert.assertEquals(100L,
+                            Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
+      } else {
+        DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
+          applicationManager.getDataSet("mydataset");
+        Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
+      }
+
+
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -240,15 +270,23 @@ public class TestFrameworkTest extends ReactorTestBase {
       RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
                                                                   "GenSinkFlow",
                                                                   "SinkFlowlet");
-      sinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+
+      RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+                                                                       "GenSinkFlow",
+                                                                       "BatchSinkFlowlet");
+
+      // Generator generators 99 events + 99 batched events
+      sinkMetrics.waitForProcessed(198, 5, TimeUnit.SECONDS);
       Assert.assertEquals(0L, sinkMetrics.getException());
+
+      // Batch sink only get the 99 batch events
+      batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+      Assert.assertEquals(0L, batchSinkMetrics.getException());
 
       Assert.assertEquals(1L, genMetrics.getException());
 
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
-      clear();
     }
   }
 
@@ -293,5 +331,120 @@ public class TestFrameworkTest extends ReactorTestBase {
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
 
     dataSetManager.flush();
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetModule() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    // we should be fine if module is already there. Deploy of module should not happen
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoCreateDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithExistingDataset() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetType() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
+  }
+
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyProcedure");
+  }
+
+  private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
+    ApplicationManager applicationManager = deployApplication(app);
+
+    try {
+      // Query the result
+      ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
+      ProcedureClient procedureClient = procedureManager.getClient();
+
+      procedureClient.query("set", ImmutableMap.of("key", "key1", "value", "value1"));
+
+      String response = procedureClient.query("get", ImmutableMap.of("key", "key1"));
+      Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
+
+    } finally {
+      TimeUnit.SECONDS.sleep(2);
+      applicationManager.stopAll();
+    }
+  }
+
+  @Test(timeout = 60000L)
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+      appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+    kvTable.put("a", "1");
+    kvTable.put("b", "2");
+    kvTable.put("c", "1");
+    myTableManager.flush();
+
+    Connection connection = getQueryClient();
+    try {
+      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
+      connection.prepareStatement(generateCreateStatement("myTable", kvTable)).execute();
+
+      // list the tables and make sure the table is there
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
+
+      // run a query over the dataset
+      results = connection.prepareStatement("select first from mytable where second = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      connection.close();
+    }
+  }
+
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+    String hiveSchema;
+    try {
+      hiveSchema = Scannables.hiveSchemaFor(scannable);
+    } catch (UnsupportedTypeException e) {
+      LOG.error(String.format(
+        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+      return null;
+    }
+    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
+    LOG.info("Command for Hive: {}", hiveStatement);
+    return hiveStatement;
   }
 }

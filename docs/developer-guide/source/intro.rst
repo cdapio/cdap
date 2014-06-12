@@ -1,12 +1,11 @@
-.. :Author: John Jackson
+.. :Author: Continuuity, Inc.
    :Description: Introduction to Continuuity Reactor
 
 ===================================
-Introduction to Continuuity Reactor
+Introduction
 ===================================
 
 .. reST Editor: .. section-numbering::
-
 .. reST Editor: .. contents::
 
 The Challenge of Big Data Applications
@@ -114,12 +113,12 @@ Reactor Components
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four 
 basic abstractions:
 
-- `Streams </developers/programming#streams>`__ for real-time data collection from any external system;
-- `Flows </developers/programming#flows>`__ for performing elastically scalable, real-time stream
+- `Streams <programming.html#streams>`__ for real-time data collection from any external system;
+- `Flows <programming.html#flows>`__ for performing elastically scalable, real-time stream
   or batch processing;
-- `DataSets </developers/programming#datasets>`__ for storing data in simple and scalable ways without
+- `DataSets <programming.html#datasets>`__ for storing data in simple and scalable ways without
   worrying about details of the storage schema; and
-- `Procedures </developers/programming#procedures>`__ for exposing data to external systems through
+- `Procedures <programming.html#procedures>`__ for exposing data to external systems through
   stored queries.
 
 These are grouped into Applications for configuring and packaging.
@@ -133,7 +132,7 @@ In the next section, we will compare three application architectures and their p
 This will give you a good understanding of the benefit of architecting
 Big Data applications using Continuuity Reactor.
 
-Architecture Comparison: Building a Big Data Application
+Architecture Comparison: Building A Big Data Application
 ============================================================
 Consider the problem of building a real-time log analytic application that takes access 
 logs from Apache™ web servers and computes simple analyses on the logs, such as computing 
@@ -190,11 +189,11 @@ between infrastructure components and application code.
 
 Reactor functions as a middle-tier application platform, exposing simple, high-level 
 abstractions to perform data collection, processing, storage and query. Logs are collected
-by `Streams </developers/programming#streams>`__, while `Flows </developers/programming#flows>`__ 
+by `Streams <programming.html#streams>`__, while `Flows <programming.html#flows>`__
 do basic aggregation and realtime analysis. Advanced, off-line
-aggregation is performed by `Map Reduce jobs </developers/programming#mapreduce>`__ and 
-`Workflow </developers/programming#workflows>`__ components. 
-`Procedures </developers/programming#procedures>`__ provide
+aggregation is performed by `Map Reduce jobs <programming.html#mapreduce>`__ and 
+`Workflow <programming.html#workflows>`__ components. 
+`Procedures <programming.html#procedures>`__ provide
 stored queries. The application can now be scaled independent of the underlying
 infrastructure.
 
@@ -211,5 +210,6 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Developer Examples <examples>`__,
-  three different examples to run and experiment with.
+- `Continuuity Reactor Quick Start <quickstart.html>`_,
+  which guides you through installing Continuuity Reactor and
+  running and modifying an example application.

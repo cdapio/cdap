@@ -8,6 +8,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.ReadFilter;
+import com.continuuity.data.file.ReadFilters;
 import com.continuuity.data.stream.ForwardingStreamEvent;
 import com.continuuity.data.stream.StreamEventOffset;
 import com.continuuity.data.stream.StreamFileOffset;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -139,7 +141,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   private final StreamConsumerState consumerState;
   private final List<StreamEventOffset> eventCache;
   private Transaction transaction;
-  private long initWritePointer;
   private List<PollStreamEvent> polledEvents;
   private long nextPersistStateTime;
   private boolean committed;
@@ -153,11 +154,13 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * @param reader For reading stream events. This class is responsible for closing the reader.
    * @param consumerStateStore The state store for saving consumer state
    * @param beginConsumerState Consumer state to begin with.
+   * @param extraFilter Extra {@link ReadFilter} that is ANDed with default read filter and applied first.
    */
   protected AbstractStreamFileConsumer(StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                        FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                        StreamConsumerStateStore consumerStateStore,
-                                       StreamConsumerState beginConsumerState) {
+                                       StreamConsumerState beginConsumerState,
+                                       @Nullable ReadFilter extraFilter) {
 
     LOG.info("Create consumer {}, reader offsets: {}", consumerConfig, reader.getPosition());
     this.streamName = QueueName.fromStream(streamConfig.getName());
@@ -165,7 +168,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
     this.reader = reader;
-    this.readFilter = createReadFilter(consumerConfig);
+    this.readFilter = createReadFilter(consumerConfig, extraFilter);
 
     this.entryStates = Maps.newTreeMap(ROW_PREFIX_COMPARATOR);
     this.entryStatesScanCompleted = Sets.newTreeSet(ROW_PREFIX_COMPARATOR);
@@ -174,7 +177,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     this.consumerState = beginConsumerState;
     this.lastPersistedState = new StreamConsumerState(beginConsumerState);
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX, Bytes.toBytes(consumerConfig.getGroupId()));
-    this.initWritePointer = -1L;
   }
 
   protected void doClose() throws IOException {
@@ -271,9 +273,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   @Override
   public final void startTx(Transaction tx) {
     transaction = tx;
-    if (initWritePointer < 0) {
-      initWritePointer = tx.getWritePointer();
-    }
 
     if (polledEvents == null) {
       polledEvents = Lists.newArrayList();
@@ -371,7 +370,17 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       .toString();
   }
 
-  private ReadFilter createReadFilter(final ConsumerConfig consumerConfig) {
+  private ReadFilter createReadFilter(ConsumerConfig consumerConfig, @Nullable ReadFilter extraFilter) {
+    ReadFilter baseFilter = createBaseReadFilter(consumerConfig);
+
+    if (extraFilter != null) {
+      return ReadFilters.and(extraFilter, baseFilter);
+    } else {
+      return baseFilter;
+    }
+  }
+
+  private ReadFilter createBaseReadFilter(final ConsumerConfig consumerConfig) {
     final int groupSize = consumerConfig.getGroupSize();
     final DequeueStrategy strategy = consumerConfig.getDequeueStrategy();
 
@@ -500,15 +509,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     StateScanner scanner = scanStates(row, stopRow);
     try {
-      // Scan until MAX_SCAN_ROWS or it hits a state written later than this consumer starts
+      // Scan until MAX_SCAN_ROWS or exhausted the scanner
       int rowCached = 0;
       while (scanner.nextStateRow() && rowCached < MAX_SCAN_ROWS) {
-        int cached = storeInitState(scanner.getRow(), scanner.getState(), rowStates);
-        if (cached < 0) {
-          entryStatesScanCompleted.add(row);
-          break;
-        } else {
-          rowCached += cached;
+        if (storeInitState(scanner.getRow(), scanner.getState(), rowStates)) {
+          rowCached++;
         }
       }
 
@@ -528,24 +533,24 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
    * @param row Entry row key
    * @param stateValue Entry state value
    * @param cache The cache to fill it if the row key and state value needs to be cached.
-   * @return {@code 0} if the entry is not stored into cache, {@code 1} if the entry is stored.
-   *         Returning {@code -1} to indicate that's the end of the init cache phase, hence no further scanning
-   *         is needed for the given row prefix.
+   * @return {@code true} if the entry is stored into cache, {@code false} if the entry is not stored.
    */
-  private int storeInitState(byte[] row, byte[] stateValue, Map<byte[], byte[]> cache) {
+  private boolean storeInitState(byte[] row, byte[] stateValue, Map<byte[], byte[]> cache) {
     // Logic is adpated from QueueEntryRow.canConsume(), with modification.
 
     if (stateValue == null) {
       // State value shouldn't be null, as the row is only written with state value.
-      return 0;
+      return false;
     }
 
+    long offset = Bytes.toLong(row, row.length - Longs.BYTES);
     long stateWritePointer = QueueEntryRow.getStateWritePointer(stateValue);
 
-    // The entry is written after this consumer started,
-    // hence no need to to cache the entry and no further scanning is needed.
-    if (stateWritePointer >= initWritePointer) {
-      return -1;
+    // If the entry offset is not accepted by the read filter, this consumer won't see this entry in future read.
+    // If it is written after the current transaction, it happens with the current consumer config.
+    // In both cases, no need to cache
+    if (!readFilter.acceptOffset(offset) || stateWritePointer >= transaction.getWritePointer()) {
+      return false;
     }
 
     // If state is PROCESSED and committed, need to memorize it so that it can be skipped.
@@ -553,7 +558,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
       // No need to store the state value.
       cache.put(row, null);
-      return 1;
+      return true;
     }
 
     // Special case for FIFO.
@@ -569,10 +574,10 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         // Otherwise memorize the value for checkAndPut operation in claim entry.
         cache.put(row, stateValue);
       }
-      return 1;
+      return true;
     }
 
-    return 0;
+    return false;
   }
 
   /**

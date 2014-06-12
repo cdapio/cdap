@@ -1,0 +1,8 @@
+styles: with-border:
+        backColor: white
+        borderColor: black
+        borderPadding: [10, 20, 30, 40]
+        borderWidth: 0.5
+        commands: []
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+        parent: figure

@@ -16,8 +16,7 @@ public class HDFSTransactionStateStorageProvider implements Provider<HDFSTransac
   private final Configuration hConf;
 
   @Inject
-  public HDFSTransactionStateStorageProvider(@Named("TransactionServerConfig") CConfiguration config,
-                                             @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
+  public HDFSTransactionStateStorageProvider(CConfiguration config, Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
   }

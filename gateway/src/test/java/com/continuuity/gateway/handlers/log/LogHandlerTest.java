@@ -1,6 +1,6 @@
 package com.continuuity.gateway.handlers.log;
 
-import com.continuuity.gateway.handlers.metrics.MetricsServiceTestsSuite;
+import com.continuuity.gateway.MetricsServiceTestsSuite;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;

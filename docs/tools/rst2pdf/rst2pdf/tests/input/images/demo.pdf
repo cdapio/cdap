@@ -1,0 +1,7498 @@
+%PDF-1.3
+%“Œ‹ž ReportLab Generated PDF document http://www.reportlab.com
+% 'BasicFonts': class PDFDictionary 
+1 0 obj
+% The standard fonts dictionary
+<< /F1 2 0 R
+ /F2 3 0 R
+ /F3 4 0 R
+ /F4 6 0 R
+ /F5 73 0 R
+ /F6 74 0 R >>
+endobj
+% 'F1': class PDFType1Font 
+2 0 obj
+% Font Helvetica
+<< /BaseFont /Helvetica
+ /Encoding /WinAnsiEncoding
+ /Name /F1
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'F2': class PDFType1Font 
+3 0 obj
+% Font Helvetica-Bold
+<< /BaseFont /Helvetica-Bold
+ /Encoding /WinAnsiEncoding
+ /Name /F2
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'F3': class PDFType1Font 
+4 0 obj
+% Font Times-Roman
+<< /BaseFont /Times-Roman
+ /Encoding /WinAnsiEncoding
+ /Name /F3
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'Annot.NUMBER1': class PDFDictionary 
+5 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (mailto:goodger@python.org) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 153.7323
+ 662.5936
+ 526.5827
+ 674.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'F4': class PDFType1Font 
+6 0 obj
+% Font Helvetica-BoldOblique
+<< /BaseFont /Helvetica-BoldOblique
+ /Encoding /WinAnsiEncoding
+ /Name /F4
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'Page1': class PDFPage 
+7 0 obj
+% Page dictionary
+<< /Annots [ 5 0 R ]
+ /Contents 181 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Annot.NUMBER2': class LinkAnnotation 
+8 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 150.0236
+ 0 ]
+ /Rect [ 62.69291
+ 726.5936
+ 171.0629
+ 738.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER3': class LinkAnnotation 
+9 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 150.0236
+ 0 ]
+ /Rect [ 527.0227
+ 726.5936
+ 532.5827
+ 738.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER4': class LinkAnnotation 
+10 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 117.0236
+ 0 ]
+ /Rect [ 82.69291
+ 708.5936
+ 159.9529
+ 720.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER5': class LinkAnnotation 
+11 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 117.0236
+ 0 ]
+ /Rect [ 527.0227
+ 708.5936
+ 532.5827
+ 720.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER6': class LinkAnnotation 
+12 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 82.69291
+ 690.5936
+ 153.8329
+ 702.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER7': class LinkAnnotation 
+13 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 527.0227
+ 690.5936
+ 532.5827
+ 702.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER8': class LinkAnnotation 
+14 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 670.6772
+ 0 ]
+ /Rect [ 62.69291
+ 672.5936
+ 148.8329
+ 684.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER9': class LinkAnnotation 
+15 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 670.6772
+ 0 ]
+ /Rect [ 527.0227
+ 672.5936
+ 532.5827
+ 684.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER10': class LinkAnnotation 
+16 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 637.6772
+ 0 ]
+ /Rect [ 82.69291
+ 654.5936
+ 156.6229
+ 666.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER11': class LinkAnnotation 
+17 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 637.6772
+ 0 ]
+ /Rect [ 527.0227
+ 654.5936
+ 532.5827
+ 666.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER12': class LinkAnnotation 
+18 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 589.6772
+ 0 ]
+ /Rect [ 102.6929
+ 636.5936
+ 193.2929
+ 648.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER13': class LinkAnnotation 
+19 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 589.6772
+ 0 ]
+ /Rect [ 527.0227
+ 636.5936
+ 532.5827
+ 648.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER14': class LinkAnnotation 
+20 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 334.6772
+ 0 ]
+ /Rect [ 82.69291
+ 618.5936
+ 153.2829
+ 630.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER15': class LinkAnnotation 
+21 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 334.6772
+ 0 ]
+ /Rect [ 527.0227
+ 618.5936
+ 532.5827
+ 630.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER16': class LinkAnnotation 
+22 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 82.69291
+ 600.5936
+ 182.7429
+ 612.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER17': class LinkAnnotation 
+23 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 527.0227
+ 600.5936
+ 532.5827
+ 612.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER18': class LinkAnnotation 
+24 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 447.0236
+ 0 ]
+ /Rect [ 82.69291
+ 582.5936
+ 169.9529
+ 594.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER19': class LinkAnnotation 
+25 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 447.0236
+ 0 ]
+ /Rect [ 527.0227
+ 582.5936
+ 532.5827
+ 594.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER20': class LinkAnnotation 
+26 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 319.0236
+ 0 ]
+ /Rect [ 82.69291
+ 564.5936
+ 149.9429
+ 576.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER21': class LinkAnnotation 
+27 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 319.0236
+ 0 ]
+ /Rect [ 527.0227
+ 564.5936
+ 532.5827
+ 576.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER22': class LinkAnnotation 
+28 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 205.0236
+ 0 ]
+ /Rect [ 82.69291
+ 546.5936
+ 157.7329
+ 558.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER23': class LinkAnnotation 
+29 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 205.0236
+ 0 ]
+ /Rect [ 527.0227
+ 546.5936
+ 532.5827
+ 558.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER24': class LinkAnnotation 
+30 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 629.2236
+ 0 ]
+ /Rect [ 82.69291
+ 528.5936
+ 164.3929
+ 540.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER25': class LinkAnnotation 
+31 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 629.2236
+ 0 ]
+ /Rect [ 527.0227
+ 528.5936
+ 532.5827
+ 540.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER26': class LinkAnnotation 
+32 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 422.8236
+ 0 ]
+ /Rect [ 82.69291
+ 510.5936
+ 156.0629
+ 522.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER27': class LinkAnnotation 
+33 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 422.8236
+ 0 ]
+ /Rect [ 527.0227
+ 510.5936
+ 532.5827
+ 522.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER28': class LinkAnnotation 
+34 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 82.69291
+ 492.5936
+ 164.4029
+ 504.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER29': class LinkAnnotation 
+35 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Rect [ 527.0227
+ 492.5936
+ 532.5827
+ 504.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER30': class LinkAnnotation 
+36 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 651.0236
+ 0 ]
+ /Rect [ 82.69291
+ 474.5936
+ 176.6229
+ 486.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER31': class LinkAnnotation 
+37 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 651.0236
+ 0 ]
+ /Rect [ 527.0227
+ 474.5936
+ 532.5827
+ 486.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER32': class LinkAnnotation 
+38 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 551.8236
+ 0 ]
+ /Rect [ 82.69291
+ 456.5936
+ 140.5029
+ 468.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER33': class LinkAnnotation 
+39 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 551.8236
+ 0 ]
+ /Rect [ 527.0227
+ 456.5936
+ 532.5827
+ 468.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER34': class LinkAnnotation 
+40 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 233.8236
+ 0 ]
+ /Rect [ 82.69291
+ 438.5936
+ 154.9629
+ 450.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER35': class LinkAnnotation 
+41 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 233.8236
+ 0 ]
+ /Rect [ 527.0227
+ 438.5936
+ 532.5827
+ 450.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER36': class LinkAnnotation 
+42 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 203.8236
+ 0 ]
+ /Rect [ 82.69291
+ 420.5936
+ 149.3929
+ 432.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER37': class LinkAnnotation 
+43 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 203.8236
+ 0 ]
+ /Rect [ 527.0227
+ 420.5936
+ 532.5827
+ 432.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER38': class LinkAnnotation 
+44 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 155.8236
+ 0 ]
+ /Rect [ 82.69291
+ 402.5936
+ 144.3929
+ 414.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER39': class LinkAnnotation 
+45 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 155.8236
+ 0 ]
+ /Rect [ 527.0227
+ 402.5936
+ 532.5827
+ 414.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER40': class LinkAnnotation 
+46 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 705.0236
+ 0 ]
+ /Rect [ 102.6929
+ 384.5936
+ 246.6429
+ 396.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER41': class LinkAnnotation 
+47 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 705.0236
+ 0 ]
+ /Rect [ 527.0227
+ 384.5936
+ 532.5827
+ 396.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER42': class LinkAnnotation 
+48 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 648.0236
+ 0 ]
+ /Rect [ 102.6929
+ 366.5936
+ 246.6429
+ 378.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER43': class LinkAnnotation 
+49 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 648.0236
+ 0 ]
+ /Rect [ 527.0227
+ 366.5936
+ 532.5827
+ 378.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER44': class LinkAnnotation 
+50 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 591.0236
+ 0 ]
+ /Rect [ 82.69291
+ 348.5936
+ 154.3829
+ 360.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER45': class LinkAnnotation 
+51 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 591.0236
+ 0 ]
+ /Rect [ 527.0227
+ 348.5936
+ 532.5827
+ 360.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER46': class LinkAnnotation 
+52 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 399.0236
+ 0 ]
+ /Rect [ 102.6929
+ 330.5936
+ 210.5229
+ 342.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER47': class LinkAnnotation 
+53 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 399.0236
+ 0 ]
+ /Rect [ 527.0227
+ 330.5936
+ 532.5827
+ 342.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER48': class LinkAnnotation 
+54 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 342.0236
+ 0 ]
+ /Rect [ 102.6929
+ 312.5936
+ 171.6229
+ 324.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER49': class LinkAnnotation 
+55 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 342.0236
+ 0 ]
+ /Rect [ 527.0227
+ 312.5936
+ 532.5827
+ 324.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER50': class LinkAnnotation 
+56 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 159.3036
+ 0 ]
+ /Rect [ 102.6929
+ 294.5936
+ 193.8529
+ 306.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER51': class LinkAnnotation 
+57 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 159.3036
+ 0 ]
+ /Rect [ 527.0227
+ 294.5936
+ 532.5827
+ 306.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER52': class LinkAnnotation 
+58 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 498.0236
+ 0 ]
+ /Rect [ 102.6929
+ 276.5936
+ 272.2129
+ 288.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER53': class LinkAnnotation 
+59 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 498.0236
+ 0 ]
+ /Rect [ 527.0227
+ 276.5936
+ 532.5827
+ 288.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER54': class LinkAnnotation 
+60 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 274.6236
+ 0 ]
+ /Rect [ 102.6929
+ 258.5936
+ 214.9829
+ 270.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER55': class LinkAnnotation 
+61 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 274.6236
+ 0 ]
+ /Rect [ 527.0227
+ 258.5936
+ 532.5827
+ 270.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER56': class LinkAnnotation 
+62 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 247.6236
+ 0 ]
+ /Rect [ 102.6929
+ 240.5936
+ 219.9729
+ 252.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER57': class LinkAnnotation 
+63 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 247.6236
+ 0 ]
+ /Rect [ 527.0227
+ 240.5936
+ 532.5827
+ 252.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER58': class LinkAnnotation 
+64 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 202.6236
+ 0 ]
+ /Rect [ 102.6929
+ 222.5936
+ 237.2129
+ 234.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER59': class LinkAnnotation 
+65 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 202.6236
+ 0 ]
+ /Rect [ 527.0227
+ 222.5936
+ 532.5827
+ 234.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER60': class LinkAnnotation 
+66 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 741.0236
+ 0 ]
+ /Rect [ 82.69291
+ 204.5936
+ 212.2029
+ 216.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER61': class LinkAnnotation 
+67 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 741.0236
+ 0 ]
+ /Rect [ 521.4627
+ 204.5936
+ 532.5827
+ 216.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER62': class LinkAnnotation 
+68 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 675.0236
+ 0 ]
+ /Rect [ 82.69291
+ 186.5936
+ 158.8329
+ 198.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER63': class LinkAnnotation 
+69 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 675.0236
+ 0 ]
+ /Rect [ 521.4627
+ 186.5936
+ 532.5827
+ 198.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER64': class LinkAnnotation 
+70 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 609.0236
+ 0 ]
+ /Rect [ 62.69291
+ 168.5936
+ 146.6029
+ 180.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER65': class LinkAnnotation 
+71 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 609.0236
+ 0 ]
+ /Rect [ 521.4627
+ 168.5936
+ 532.5827
+ 180.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Page2': class PDFPage 
+72 0 obj
+% Page dictionary
+<< /Annots [ 8 0 R
+ 9 0 R
+ 10 0 R
+ 11 0 R
+ 12 0 R
+ 13 0 R
+ 14 0 R
+ 15 0 R
+ 16 0 R
+ 17 0 R
+ 18 0 R
+ 19 0 R
+ 20 0 R
+ 21 0 R
+ 22 0 R
+ 23 0 R
+ 24 0 R
+ 25 0 R
+ 26 0 R
+ 27 0 R
+ 28 0 R
+ 29 0 R
+ 30 0 R
+ 31 0 R
+ 32 0 R
+ 33 0 R
+ 34 0 R
+ 35 0 R
+ 36 0 R
+ 37 0 R
+ 38 0 R
+ 39 0 R
+ 40 0 R
+ 41 0 R
+ 42 0 R
+ 43 0 R
+ 44 0 R
+ 45 0 R
+ 46 0 R
+ 47 0 R
+ 48 0 R
+ 49 0 R
+ 50 0 R
+ 51 0 R
+ 52 0 R
+ 53 0 R
+ 54 0 R
+ 55 0 R
+ 56 0 R
+ 57 0 R
+ 58 0 R
+ 59 0 R
+ 60 0 R
+ 61 0 R
+ 62 0 R
+ 63 0 R
+ 64 0 R
+ 65 0 R
+ 66 0 R
+ 67 0 R
+ 68 0 R
+ 69 0 R
+ 70 0 R
+ 71 0 R ]
+ /Contents 182 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'F5': class PDFType1Font 
+73 0 obj
+% Font Helvetica-Oblique
+<< /BaseFont /Helvetica-Oblique
+ /Encoding /WinAnsiEncoding
+ /Name /F5
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'F6': class PDFType1Font 
+74 0 obj
+% Font Courier
+<< /BaseFont /Courier
+ /Encoding /WinAnsiEncoding
+ /Name /F6
+ /Subtype /Type1
+ /Type /Font >>
+endobj
+% 'Annot.NUMBER66': class PDFDictionary 
+75 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 233.4736
+ 548.2472
+ 330.1836
+ 560.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER67': class PDFDictionary 
+76 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org/) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 442.9442
+ 548.2472
+ 474.0742
+ 560.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER68': class LinkAnnotation 
+77 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 303.8043
+ 0 ]
+ /Rect [ 481.6545
+ 548.2472
+ 486.1025
+ 560.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER69': class LinkAnnotation 
+78 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 136.6436
+ 0 ]
+ /Rect [ 147.4589
+ 536.2472
+ 185.2489
+ 548.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER70': class PDFDictionary 
+79 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 404.3747
+ 536.2472
+ 483.3567
+ 548.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER71': class LinkAnnotation 
+80 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 453.8043
+ 0 ]
+ /Rect [ 207.3064
+ 524.2472
+ 211.7544
+ 536.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER72': class LinkAnnotation 
+81 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 387.8043
+ 0 ]
+ /Rect [ 343.0478
+ 524.2472
+ 347.4958
+ 536.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER73': class LinkAnnotation 
+82 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 423.8043
+ 0 ]
+ /Rect [ 459.3392
+ 524.2472
+ 463.7872
+ 536.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER74': class LinkAnnotation 
+83 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 375.8043
+ 0 ]
+ /Rect [ 523.3607
+ 524.2472
+ 526.4727
+ 536.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'FormXob.c8d097da4771654d12a9611e9af76669': class PDFImageXObject 
+84 0 obj
+<< /BitsPerComponent 8
+ /ColorSpace /DeviceRGB
+ /Filter [ /ASCII85Decode
+ /FlateDecode ]
+ /Height 16
+ /Length 99
+ /Mask [ 255
+ 255
+ 255
+ 255
+ 255
+ 255 ]
+ /Subtype /Image
+ /Type /XObject
+ /Width 16 >>
+stream
+Gatmt9+h4I#XZ*%V/<(u@uBmr=V8?K0\Z^q/;*/(FTbVb3Ll+WIX_`d$OKqrhCOVS4K[m&h"\hN?W/1;46b`nm1lV<!HV&h2?~>endstream
+
+endobj
+% 'Annot.NUMBER75': class LinkAnnotation 
+85 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 327.8043
+ 0 ]
+ /Rect [ 156.3279
+ 512.2472
+ 194.6779
+ 524.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER76': class LinkAnnotation 
+86 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 163.0536
+ 0 ]
+ /Rect [ 495.9027
+ 512.2472
+ 528.2802
+ 524.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER77': class PDFDictionary 
+87 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org/dev/peps/pep-0287) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 111.268
+ 446.2472
+ 150.9631
+ 458.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER78': class PDFDictionary 
+88 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.faqs.org/rfcs/rfc2822.html) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 246.3336
+ 446.2472
+ 292.1287
+ 458.2472 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Page3': class PDFPage 
+89 0 obj
+% Page dictionary
+<< /Annots [ 75 0 R
+ 76 0 R
+ 77 0 R
+ 78 0 R
+ 79 0 R
+ 80 0 R
+ 81 0 R
+ 82 0 R
+ 83 0 R
+ 85 0 R
+ 86 0 R
+ 87 0 R
+ 88 0 R ]
+ /Contents 183 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ]
+ /XObject << /FormXob.c8d097da4771654d12a9611e9af76669 84 0 R >> >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Page4': class PDFPage 
+90 0 obj
+% Page dictionary
+<< /Contents 184 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Page5': class PDFPage 
+91 0 obj
+% Page dictionary
+<< /Contents 185 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Annot.NUMBER79': class LinkAnnotation 
+92 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 327.8043
+ 0 ]
+ /Rect [ 210.7929
+ 171.3936
+ 249.1429
+ 183.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER80': class LinkAnnotation 
+93 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 595.7022
+ 0 ]
+ /Rect [ 508.6827
+ 123.3936
+ 530.4777
+ 135.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER81': class LinkAnnotation 
+94 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 595.7022
+ 0 ]
+ /Rect [ 62.69291
+ 111.3936
+ 96.03291
+ 123.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER82': class LinkAnnotation 
+95 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 353.1429
+ 525.4972
+ 0 ]
+ /Rect [ 134.3929
+ 111.3936
+ 237.2129
+ 123.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER83': class LinkAnnotation 
+96 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 163.0536
+ 0 ]
+ /Rect [ 352.9003
+ 93.39362
+ 386.8003
+ 105.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER84': class LinkAnnotation 
+97 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 679.1122
+ 0 ]
+ /Rect [ 509.7927
+ 93.39362
+ 531.0739
+ 105.3936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER85': class LinkAnnotation 
+98 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 679.1122
+ 0 ]
+ /Rect [ 62.69291
+ 81.39362
+ 104.3729
+ 93.39362 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Page6': class PDFPage 
+99 0 obj
+% Page dictionary
+<< /Annots [ 92 0 R
+ 93 0 R
+ 94 0 R
+ 95 0 R
+ 96 0 R
+ 97 0 R
+ 98 0 R ]
+ /Contents 186 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Annot.NUMBER86': class PDFDictionary 
+100 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org/) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 350.8129
+ 756.5936
+ 381.9429
+ 768.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER87': class LinkAnnotation 
+101 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 303.8043
+ 0 ]
+ /Rect [ 384.7229
+ 756.5936
+ 389.1709
+ 768.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER88': class LinkAnnotation 
+102 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 163.0536
+ 0 ]
+ /Rect [ 271.6729
+ 738.5936
+ 323.3629
+ 750.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER89': class LinkAnnotation 
+103 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 163.0536
+ 0 ]
+ /Rect [ 417.2929
+ 738.5936
+ 453.9729
+ 750.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER90': class LinkAnnotation 
+104 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 399.0236
+ 0 ]
+ /Rect [ 62.69291
+ 555.5936
+ 175.5129
+ 567.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER91': class LinkAnnotation 
+105 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 399.0236
+ 0 ]
+ /Rect [ 527.0227
+ 555.5936
+ 532.5827
+ 567.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER92': class LinkAnnotation 
+106 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 342.0236
+ 0 ]
+ /Rect [ 62.69291
+ 537.5936
+ 133.2929
+ 549.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER93': class LinkAnnotation 
+107 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 342.0236
+ 0 ]
+ /Rect [ 527.0227
+ 537.5936
+ 532.5827
+ 549.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER94': class LinkAnnotation 
+108 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 159.3036
+ 0 ]
+ /Rect [ 62.69291
+ 519.5936
+ 159.9429
+ 531.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER95': class LinkAnnotation 
+109 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 159.3036
+ 0 ]
+ /Rect [ 527.0227
+ 519.5936
+ 532.5827
+ 531.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER96': class LinkAnnotation 
+110 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 498.0236
+ 0 ]
+ /Rect [ 62.69291
+ 501.5936
+ 242.2129
+ 513.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER97': class LinkAnnotation 
+111 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 498.0236
+ 0 ]
+ /Rect [ 527.0227
+ 501.5936
+ 532.5827
+ 513.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER98': class LinkAnnotation 
+112 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 274.6236
+ 0 ]
+ /Rect [ 62.69291
+ 483.5936
+ 180.5029
+ 495.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER99': class LinkAnnotation 
+113 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 274.6236
+ 0 ]
+ /Rect [ 527.0227
+ 483.5936
+ 532.5827
+ 495.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER100': class LinkAnnotation 
+114 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 247.6236
+ 0 ]
+ /Rect [ 62.69291
+ 465.5936
+ 184.4129
+ 477.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER101': class LinkAnnotation 
+115 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 247.6236
+ 0 ]
+ /Rect [ 527.0227
+ 465.5936
+ 532.5827
+ 477.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER102': class LinkAnnotation 
+116 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 202.6236
+ 0 ]
+ /Rect [ 62.69291
+ 447.5936
+ 203.8429
+ 459.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER103': class LinkAnnotation 
+117 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 202.6236
+ 0 ]
+ /Rect [ 527.0227
+ 447.5936
+ 532.5827
+ 459.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER104': class PDFDictionary 
+118 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://docutils.sourceforge.net/docs/ref/rst/directives.html) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 62.69291
+ 414.5936
+ 312.7929
+ 426.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER105': class LinkAnnotation 
+119 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 439.8436
+ 0 ]
+ /Rect [ 491.4527
+ 369.5936
+ 529.2527
+ 381.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER106': class LinkAnnotation 
+120 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 773.4586
+ 0 ]
+ /Rect [ 312.8329
+ 357.5936
+ 386.2129
+ 369.5936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'FormXob.3214b96a331e44bc5d44c2adc18563e6': class PDFImageXObject 
+121 0 obj
+<< /BitsPerComponent 8
+ /ColorSpace /DeviceRGB
+ /Filter [ /ASCII85Decode
+ /FlateDecode ]
+ /Height 49
+ /Length 2432
+ /Mask [ 255
+ 255
+ 255
+ 255
+ 255
+ 255 ]
+ /Subtype /Image
+ /Type /XObject
+ /Width 516 >>
+stream
+Gb"/$96/iB%.!jFSM&X\F<ZVI!K_b2Lh.di7m62(CG6S6?AW#bi9AU@^R4['#(o/0IcT[%neTF^#D9kmd(]nY%=&t+RtJQ8)i3B/nMQ];a6185&Bm$;K=Be4#>=un\Z`hs4['#*[pTt4(jnN/+7-WD1u9(irX`TZG[kGP%C;hI!<-TpT6'^)^jS7-'D.X\EJRtBOlX3hr>a%Ac9ou`5^uAN\7#/goN=<O(0I@;V3i8DM9gPWnFN9/\,T@W>=#'P\):60NfM&j"a6F+9@9@6DYB%_cGo5780D\bq[RRKT8#.N.Jd9<NJ,m-M@QX@4$"!CC]2@Vjd>D#k<Kic<ZGX)4$"#G(>*V)pAX5_^,)CBg!Pq\=R-L4-RZmJHj`P6c$/=A0fqE/o+ot%`^^5UEh$RpK#'CiNfM&ih?)!)P#9`gKS!>O5L)WTU_%l?OA_ds&;fn=^kU.-GF2s:gZth6:JKT%BeB7Ud-Y8R!M+2k`$OWI\RtJr@+Jf/eHVsiZ"K,j36<L>2hJTZ%Hnh\KHU:i-l[O[U!L4]EO90W.A:.&<o7nCfi!fL;nG?4Xci,GABKtS7Wb$'V^!^f3([geC/JT^>RDXk+)'W4"1Q2dD^^X3PMh,`l4b0i[TMWh#VQ2u9GtPbaY"e'-Q=i\%IYRcaWW/[HJl0o>.?"S.%N9Yf7R]RJhoj+B]bP4(dSa&S61"qU%RkFf_&TZ&>F>1cAq)=$uYhu+CTob,`l$Re[&FO-cAPi+tp\DS7(!?WJdW-K+^YIPTk!7,b]p8j1"`*CnM6KkMX,@+6.D$J9VfR?>qgAR0"P*l__&-6E1E0OJiH10jL<L9.)KI.UF8dmM7i&3$&>/Za%4"i9lZGH?[E8:#b8e`o<ua35JriS)'3I;Kp;QbN`-\CM$$QK#U%Xi^kCsG0k@qAMOud)-;K7j$@!7^67=3.])R=C:Q5'GnKER\i2bRcG0Sq;5_rC>u2HB%N\YOPF<eNPk]o]HIdE[EN$p%AcF]Yje8kDb3D$*\N)b6,$H/lG[?Fr$Q0o4m6/=F0^O*Y8TR4E*'=hX:V.('Q16o/b?7!?d1p:CV64alIX-+D3p.e@T`S!R&SN=h>o%dJ0I%!m]k'VmTkp5?+f,F*ZYieu]F*o>059\@It&%JoTLDSli(/;MM/7hPQWtE7mIn@auA%$MOCV"X2kTYj0T+A<?QteXQq-F;@e4J994R:%m`>Dg@Zq!`$l<'<XF4c:lg,\'G]`8pCoDb*@H%mBISg3<$Xl<<=E'4H;e0k2Hp5q]ocB%q\:URacWJnY.G*27ChbJ`QV=`F;__(eX++a<gj@8/Fk6q?#hk#8_o[`GtM8)W)ub7D35UNd$^h,qQT696>_Rl[EqmPY_kfqB+_&UKj`K'1uQun>Wb0V79TsaB;.<K_l?pp/1=,$X@;(S"te\j<\"ICj2SJ>"r,$#kFI=j=pRLeML2-0X)8ZXTI>r-(7JkV1qN6]/L'hI(R7I7Yj`@[Zd9J%+Uema]2&4,l;f&9M@peBTm?.K0%bkG_IpnpYUm'C)E`8VMG!)+e0]TGFfUT-7>Zu2co`o_[%]1QY^)R+N4X%OD:LOLM2Gu)Zk.u;6uCA-<OW>"TMlMA?,=';>!3%!l:]"&=af(`X33SC_7MpFS^N9n[gIsg;A3q"W>c%UUe9bTQ#TYa4)TgUYBMkSZpe.(6YE,Ol,0NJQ]TBB:"%M@2aspQ8EJYM_/RT!prS[IK,(`r'J6s\V.:0,4&VG!BCY8+Pn[OMA@t[?%<C`:3NoT*$iT?*Y*=9%$mOkK56QquZ_:!4"hNA!,P,e,?t_(X/OF])"C&bdJc@$T]#H<YX+QoF/^6Nh,3SVe.>SR$\#I87'^[;qEbFO#TrkT.mEe2Ql3P[i5m#ph>g`t?m\-@?bH9\nZ;]\,9-P@cgj8N(`->"^CJj-fL?dL(l<FcA6rZZ9Bc,nNg82aiFUt3-_J(_/P,qUP+F)P%#RBa3LQkh^7bsbe=K/I*W5.TV6<nYd%=0q5Ro1t5mmr6?Nu674#m!)LY!SW:+@aG`D346:5$M=8O,3'PF]u7pL^118I-U:kq"_AbYq&7k,scd;A)SG:THqrc'L)`=#_ZDN&Q`rUI($Vf,nWbD?-F?A4fha"3.h0GG92m\[1kF8U%IL;+GcXo=p8@Z;+:+E5k312jV5$N]%l>r&XGh(M;k=;/QXMJ"7?1PO?J(B%E>qi^h7/NP_YN`&A"\!i!MoR==f_,E4I9@UH>H=TK*TQ4ZE\@Y1pT)U"tqZSPBff&ZH?AGRB.UDCfQj;$!)uU4dWSMKVu3+W`0I[<,<e:NPAB>(UfdeYRB/&Z15=,*\70]!k\dU6gM**9"iQ+-RLt,3g/)b8;C^gCUJF0<9o>W&eGX/@'V"X:f?Z<a?'G"P4>IW/,oE^N@h`SUW=1$lU7;b4P.J<q.^3P5`:9\S35Y~>endstream
+
+endobj
+% 'Page7': class PDFPage 
+122 0 obj
+% Page dictionary
+<< /Annots [ 100 0 R
+ 101 0 R
+ 102 0 R
+ 103 0 R
+ 104 0 R
+ 105 0 R
+ 106 0 R
+ 107 0 R
+ 108 0 R
+ 109 0 R
+ 110 0 R
+ 111 0 R
+ 112 0 R
+ 113 0 R
+ 114 0 R
+ 115 0 R
+ 116 0 R
+ 117 0 R
+ 118 0 R
+ 119 0 R
+ 120 0 R ]
+ /Contents 187 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ]
+ /XObject << /FormXob.3214b96a331e44bc5d44c2adc18563e6 121 0 R >> >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Page8': class PDFPage 
+123 0 obj
+% Page dictionary
+<< /Contents 188 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Annot.NUMBER107': class PDFDictionary 
+124 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org/) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 156.6129
+ 218.1936
+ 306.7129
+ 230.1936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER108': class LinkAnnotation 
+125 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 303.8043
+ 0 ]
+ /Rect [ 309.4929
+ 218.1936
+ 313.9409
+ 230.1936 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Page9': class PDFPage 
+126 0 obj
+% Page dictionary
+<< /Annots [ 124 0 R
+ 125 0 R ]
+ /Contents 189 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ] >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'Annot.NUMBER109': class LinkAnnotation 
+127 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 206.6329
+ 537.4972
+ 0 ]
+ /Rect [ 77.58291
+ 440.5543
+ 83.14291
+ 452.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER110': class LinkAnnotation 
+128 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 384.9423
+ 423.8043
+ 0 ]
+ /Rect [ 88.70291
+ 440.5543
+ 94.26291
+ 452.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER111': class LinkAnnotation 
+129 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 457.3189
+ 537.4972
+ 0 ]
+ /Rect [ 77.58291
+ 410.5543
+ 83.14291
+ 422.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER112': class LinkAnnotation 
+130 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 319.3823
+ 399.8043
+ 0 ]
+ /Rect [ 88.70291
+ 410.5543
+ 94.26291
+ 422.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER113': class LinkAnnotation 
+131 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 453.8043
+ 0 ]
+ /Rect [ 406.3039
+ 410.5543
+ 410.7519
+ 422.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER114': class LinkAnnotation 
+132 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 423.8043
+ 0 ]
+ /Rect [ 319.3823
+ 386.5543
+ 323.8303
+ 398.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER115': class LinkAnnotation 
+133 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 153.7323
+ 423.8043
+ 0 ]
+ /Rect [ 462.2203
+ 386.5543
+ 483.3403
+ 398.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER116': class LinkAnnotation 
+134 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 341.7009
+ 537.4972
+ 0 ]
+ /Rect [ 68.69291
+ 374.5543
+ 74.25291
+ 386.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER117': class LinkAnnotation 
+135 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 520.6669
+ 537.4972
+ 0 ]
+ /Rect [ 68.69291
+ 362.5543
+ 72.58291
+ 374.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER118': class LinkAnnotation 
+136 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 68.69291
+ 351.8043
+ 0 ]
+ /Rect [ 217.1123
+ 350.5543
+ 221.5603
+ 362.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER119': class LinkAnnotation 
+137 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 144 0 R
+ /XYZ
+ 217.1123
+ 363.8043
+ 0 ]
+ /Rect [ 68.69291
+ 338.5543
+ 74.25291
+ 350.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER120': class LinkAnnotation 
+138 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 150.5029
+ 525.4972
+ 0 ]
+ /Rect [ 110.3729
+ 314.5543
+ 115.9329
+ 326.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER121': class LinkAnnotation 
+139 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 99 0 R
+ /XYZ
+ 208.0129
+ 184.6436
+ 0 ]
+ /Rect [ 121.4929
+ 314.5543
+ 127.0529
+ 326.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER122': class LinkAnnotation 
+140 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 89 0 R
+ /XYZ
+ 448.0529
+ 561.4972
+ 0 ]
+ /Rect [ 77.58291
+ 290.5543
+ 83.14291
+ 302.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER123': class LinkAnnotation 
+141 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 122 0 R
+ /XYZ
+ 384.7229
+ 769.8436
+ 0 ]
+ /Rect [ 88.70291
+ 290.5543
+ 94.26291
+ 302.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER124': class LinkAnnotation 
+142 0 obj
+<< /Border [ 0
+ 0
+ 0 ]
+ /Contents ()
+ /Dest [ 126 0 R
+ /XYZ
+ 309.4929
+ 231.4436
+ 0 ]
+ /Rect [ 99.82291
+ 290.5543
+ 105.3829
+ 302.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Annot.NUMBER125': class PDFDictionary 
+143 0 obj
+<< /A << /S /URI
+ /Type /Action
+ /URI (http://www.python.org/) >>
+ /Border [ 0
+ 0
+ 0 ]
+ /Rect [ 153.7323
+ 290.5543
+ 253.2223
+ 302.5543 ]
+ /Subtype /Link
+ /Type /Annot >>
+endobj
+% 'Page10': class PDFPage 
+144 0 obj
+% Page dictionary
+<< /Annots [ 127 0 R
+ 128 0 R
+ 129 0 R
+ 130 0 R
+ 131 0 R
+ 132 0 R
+ 133 0 R
+ 134 0 R
+ 135 0 R
+ 136 0 R
+ 137 0 R
+ 138 0 R
+ 139 0 R
+ 140 0 R
+ 141 0 R
+ 142 0 R
+ 143 0 R ]
+ /Contents 190 0 R
+ /MediaBox [ 0
+ 0
+ 595.2756
+ 841.8898 ]
+ /Parent 180 0 R
+ /Resources << /Font 1 0 R
+ /ProcSet [ /PDF
+ /Text
+ /ImageB
+ /ImageC
+ /ImageI ]
+ /XObject << /FormXob.c8d097da4771654d12a9611e9af76669 84 0 R >> >>
+ /Rotate 0
+ /Trans <<  >>
+ /Type /Page >>
+endobj
+% 'R145': class PDFCatalog 
+145 0 obj
+% Document Root
+<< /Outlines 147 0 R
+ /PageLabels 191 0 R
+ /PageMode /UseNone
+ /Pages 180 0 R
+ /Type /Catalog >>
+endobj
+% 'R146': class PDFInfo 
+146 0 obj
+<< /Author (David Goodger; Me; Myself; I)
+ /CreationDate (D:20100309115851+03'00')
+ /Keywords ()
+ /Producer (ReportLab http://www.reportlab.com)
+ /Subject (\(unspecified\))
+ /Title (reStructuredText Demonstration) >>
+endobj
+% 'R147': class PDFOutlines 
+147 0 obj
+<< /Count 37
+ /First 148 0 R
+ /Last 179 0 R
+ /Type /Outlines >>
+endobj
+% 'Outline.0': class OutlineEntryObject 
+148 0 obj
+<< /Count 2
+ /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 150.0236
+ 0 ]
+ /First 149 0 R
+ /Last 150 0 R
+ /Next 151 0 R
+ /Parent 147 0 R
+ /Title (\376\377\0001\000\240\000\240\000\240\000S\000t\000r\000u\000c\000t\000u\000r\000a\000l\000 \000E\000l\000e\000m\000e\000n\000t\000s) >>
+endobj
+% 'Outline.33.0': class OutlineEntryObject 
+149 0 obj
+<< /Dest [ 72 0 R
+ /XYZ
+ 62.69291
+ 117.0236
+ 0 ]
+ /Next 150 0 R
+ /Parent 148 0 R
+ /Title (\376\377\0001\000.\0001\000\240\000\240\000\240\000S\000e\000c\000t\000i\000o\000n\000 \000T\000i\000t\000l\000e) >>
+endobj
+% 'Outline.33.1': class OutlineEntryObject 
+150 0 obj
+<< /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Parent 148 0 R
+ /Prev 149 0 R
+ /Title (\376\377\0001\000.\0002\000\240\000\240\000\240\000T\000r\000a\000n\000s\000i\000t\000i\000o\000n\000s) >>
+endobj
+% 'Outline.1': class OutlineEntryObject 
+151 0 obj
+<< /Count 27
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 670.6772
+ 0 ]
+ /First 152 0 R
+ /Last 178 0 R
+ /Next 179 0 R
+ /Parent 147 0 R
+ /Prev 148 0 R
+ /Title (\376\377\0002\000\240\000\240\000\240\000B\000o\000d\000y\000 \000E\000l\000e\000m\000e\000n\000t\000s) >>
+endobj
+% 'Outline.34.0': class OutlineEntryObject 
+152 0 obj
+<< /Count 1
+ /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 637.6772
+ 0 ]
+ /First 153 0 R
+ /Last 153 0 R
+ /Next 154 0 R
+ /Parent 151 0 R
+ /Title (\376\377\0002\000.\0001\000\240\000\240\000\240\000P\000a\000r\000a\000g\000r\000a\000p\000h\000s) >>
+endobj
+% 'Outline.35.0': class OutlineEntryObject 
+153 0 obj
+<< /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 589.6772
+ 0 ]
+ /Parent 152 0 R
+ /Title (\376\377\0002\000.\0001\000.\0001\000\240\000\240\000\240\000I\000n\000l\000i\000n\000e\000 \000M\000a\000r\000k\000u\000p) >>
+endobj
+% 'Outline.34.1': class OutlineEntryObject 
+154 0 obj
+<< /Dest [ 89 0 R
+ /XYZ
+ 62.69291
+ 334.6772
+ 0 ]
+ /Next 155 0 R
+ /Parent 151 0 R
+ /Prev 152 0 R
+ /Title (\376\377\0002\000.\0002\000\240\000\240\000\240\000B\000u\000l\000l\000e\000t\000 \000L\000i\000s\000t\000s) >>
+endobj
+% 'Outline.34.2': class OutlineEntryObject 
+155 0 obj
+<< /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Next 156 0 R
+ /Parent 151 0 R
+ /Prev 154 0 R
+ /Title (\376\377\0002\000.\0003\000\240\000\240\000\240\000E\000n\000u\000m\000e\000r\000a\000t\000e\000d\000 \000L\000i\000s\000t\000s) >>
+endobj
+% 'Outline.34.3': class OutlineEntryObject 
+156 0 obj
+<< /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 447.0236
+ 0 ]
+ /Next 157 0 R
+ /Parent 151 0 R
+ /Prev 155 0 R
+ /Title (\376\377\0002\000.\0004\000\240\000\240\000\240\000D\000e\000f\000i\000n\000i\000t\000i\000o\000n\000 \000L\000i\000s\000t\000s) >>
+endobj
+% 'Outline.34.4': class OutlineEntryObject 
+157 0 obj
+<< /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 319.0236
+ 0 ]
+ /Next 158 0 R
+ /Parent 151 0 R
+ /Prev 156 0 R
+ /Title (\376\377\0002\000.\0005\000\240\000\240\000\240\000F\000i\000e\000l\000d\000 \000L\000i\000s\000t\000s) >>
+endobj
+% 'Outline.34.5': class OutlineEntryObject 
+158 0 obj
+<< /Dest [ 90 0 R
+ /XYZ
+ 62.69291
+ 205.0236
+ 0 ]
+ /Next 159 0 R
+ /Parent 151 0 R
+ /Prev 157 0 R
+ /Title (\376\377\0002\000.\0006\000\240\000\240\000\240\000O\000p\000t\000i\000o\000n\000 \000L\000i\000s\000t\000s) >>
+endobj
+% 'Outline.34.6': class OutlineEntryObject 
+159 0 obj
+<< /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 629.2236
+ 0 ]
+ /Next 160 0 R
+ /Parent 151 0 R
+ /Prev 158 0 R
+ /Title (\376\377\0002\000.\0007\000\240\000\240\000\240\000L\000i\000t\000e\000r\000a\000l\000 \000B\000l\000o\000c\000k\000s) >>
+endobj
+% 'Outline.34.7': class OutlineEntryObject 
+160 0 obj
+<< /Dest [ 91 0 R
+ /XYZ
+ 62.69291
+ 422.8236
+ 0 ]
+ /Next 161 0 R
+ /Parent 151 0 R
+ /Prev 159 0 R
+ /Title (\376\377\0002\000.\0008\000\240\000\240\000\240\000L\000i\000n\000e\000 \000B\000l\000o\000c\000k\000s) >>
+endobj
+% 'Outline.34.8': class OutlineEntryObject 
+161 0 obj
+<< /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 765.0236
+ 0 ]
+ /Next 162 0 R
+ /Parent 151 0 R
+ /Prev 160 0 R
+ /Title (\376\377\0002\000.\0009\000\240\000\240\000\240\000B\000l\000o\000c\000k\000 \000Q\000u\000o\000t\000e\000s) >>
+endobj
+% 'Outline.34.9': class OutlineEntryObject 
+162 0 obj
+<< /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 651.0236
+ 0 ]
+ /Next 163 0 R
+ /Parent 151 0 R
+ /Prev 161 0 R
+ /Title (\376\377\0002\000.\0001\0000\000\240\000\240\000\240\000D\000o\000c\000t\000e\000s\000t\000 \000B\000l\000o\000c\000k\000s) >>
+endobj
+% 'Outline.34.10': class OutlineEntryObject 
+163 0 obj
+<< /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 551.8236
+ 0 ]
+ /Next 164 0 R
+ /Parent 151 0 R
+ /Prev 162 0 R
+ /Title (\376\377\0002\000.\0001\0001\000\240\000\240\000\240\000T\000a\000b\000l\000e\000s) >>
+endobj
+% 'Outline.34.11': class OutlineEntryObject 
+164 0 obj
+<< /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 233.8236
+ 0 ]
+ /Next 165 0 R
+ /Parent 151 0 R
+ /Prev 163 0 R
+ /Title (\376\377\0002\000.\0001\0002\000\240\000\240\000\240\000F\000o\000o\000t\000n\000o\000t\000e\000s) >>
+endobj
+% 'Outline.34.12': class OutlineEntryObject 
+165 0 obj
+<< /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 203.8236
+ 0 ]
+ /Next 166 0 R
+ /Parent 151 0 R
+ /Prev 164 0 R
+ /Title (\376\377\0002\000.\0001\0003\000\240\000\240\000\240\000C\000i\000t\000a\000t\000i\000o\000n\000s) >>
+endobj
+% 'Outline.34.13': class OutlineEntryObject 
+166 0 obj
+<< /Count 2
+ /Dest [ 99 0 R
+ /XYZ
+ 62.69291
+ 155.8236
+ 0 ]
+ /First 167 0 R
+ /Last 168 0 R
+ /Next 169 0 R
+ /Parent 151 0 R
+ /Prev 165 0 R
+ /Title (\376\377\0002\000.\0001\0004\000\240\000\240\000\240\000T\000a\000r\000g\000e\000t\000s) >>
+endobj
+% 'Outline.36.0': class OutlineEntryObject 
+167 0 obj
+<< /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 705.0236
+ 0 ]
+ /Next 168 0 R
+ /Parent 166 0 R
+ /Title (\376\377\0002\000.\0001\0004\000.\0001\000\240\000\240\000\240\000D\000u\000p\000l\000i\000c\000a\000t\000e\000 \000T\000a\000r\000g\000e\000t\000 \000N\000a\000m\000e\000s) >>
+endobj
+% 'Outline.36.1': class OutlineEntryObject 
+168 0 obj
+<< /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 648.0236
+ 0 ]
+ /Parent 166 0 R
+ /Prev 167 0 R
+ /Title (\376\377\0002\000.\0001\0004\000.\0002\000\240\000\240\000\240\000D\000u\000p\000l\000i\000c\000a\000t\000e\000 \000T\000a\000r\000g\000e\000t\000 \000N\000a\000m\000e\000s) >>
+endobj
+% 'Outline.34.14': class OutlineEntryObject 
+169 0 obj
+<< /Count 7
+ /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 591.0236
+ 0 ]
+ /First 170 0 R
+ /Last 176 0 R
+ /Next 177 0 R
+ /Parent 151 0 R
+ /Prev 166 0 R
+ /Title (\376\377\0002\000.\0001\0005\000\240\000\240\000\240\000D\000i\000r\000e\000c\000t\000i\000v\000e\000s) >>
+endobj
+% 'Outline.37.0': class OutlineEntryObject 
+170 0 obj
+<< /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 399.0236
+ 0 ]
+ /Next 171 0 R
+ /Parent 169 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0001\000\240\000\240\000\240\000D\000o\000c\000u\000m\000e\000n\000t\000 \000P\000a\000r\000t\000s) >>
+endobj
+% 'Outline.37.1': class OutlineEntryObject 
+171 0 obj
+<< /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 342.0236
+ 0 ]
+ /Next 172 0 R
+ /Parent 169 0 R
+ /Prev 170 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0002\000\240\000\240\000\240\000I\000m\000a\000g\000e\000s) >>
+endobj
+% 'Outline.37.2': class OutlineEntryObject 
+172 0 obj
+<< /Dest [ 122 0 R
+ /XYZ
+ 62.69291
+ 159.3036
+ 0 ]
+ /Next 173 0 R
+ /Parent 169 0 R
+ /Prev 171 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0003\000\240\000\240\000\240\000A\000d\000m\000o\000n\000i\000t\000i\000o\000n\000s) >>
+endobj
+% 'Outline.37.3': class OutlineEntryObject 
+173 0 obj
+<< /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 498.0236
+ 0 ]
+ /Next 174 0 R
+ /Parent 169 0 R
+ /Prev 172 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0004\000\240\000\240\000\240\000T\000o\000p\000i\000c\000s\000,\000 \000S\000i\000d\000e\000b\000a\000r\000s\000,\000 \000a\000n\000d\000 \000R\000u\000b\000r\000i\000c\000s) >>
+endobj
+% 'Outline.37.4': class OutlineEntryObject 
+174 0 obj
+<< /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 274.6236
+ 0 ]
+ /Next 175 0 R
+ /Parent 169 0 R
+ /Prev 173 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0005\000\240\000\240\000\240\000T\000a\000r\000g\000e\000t\000 \000F\000o\000o\000t\000n\000o\000t\000e\000s) >>
+endobj
+% 'Outline.37.5': class OutlineEntryObject 
+175 0 obj
+<< /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 247.6236
+ 0 ]
+ /Next 176 0 R
+ /Parent 169 0 R
+ /Prev 174 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0006\000\240\000\240\000\240\000R\000e\000p\000l\000a\000c\000e\000m\000e\000n\000t\000 \000T\000e\000x\000t) >>
+endobj
+% 'Outline.37.6': class OutlineEntryObject 
+176 0 obj
+<< /Dest [ 126 0 R
+ /XYZ
+ 62.69291
+ 202.6236
+ 0 ]
+ /Parent 169 0 R
+ /Prev 175 0 R
+ /Title (\376\377\0002\000.\0001\0005\000.\0007\000\240\000\240\000\240\000C\000o\000m\000p\000o\000u\000n\000d\000 \000P\000a\000r\000a\000g\000r\000a\000p\000h) >>
+endobj
+% 'Outline.34.15': class OutlineEntryObject 
+177 0 obj
+<< /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 741.0236
+ 0 ]
+ /Next 178 0 R
+ /Parent 151 0 R
+ /Prev 169 0 R
+ /Title (\376\377\0002\000.\0001\0006\000\240\000\240\000\240\000S\000u\000b\000s\000t\000i\000t\000u\000t\000i\000o\000n\000 \000D\000e\000f\000i\000n\000i\000t\000i\000o\000n\000s) >>
+endobj
+% 'Outline.34.16': class OutlineEntryObject 
+178 0 obj
+<< /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 675.0236
+ 0 ]
+ /Parent 151 0 R
+ /Prev 177 0 R
+ /Title (\376\377\0002\000.\0001\0007\000\240\000\240\000\240\000C\000o\000m\000m\000e\000n\000t\000s) >>
+endobj
+% 'Outline.2': class OutlineEntryObject 
+179 0 obj
+<< /Dest [ 144 0 R
+ /XYZ
+ 62.69291
+ 609.0236
+ 0 ]
+ /Parent 147 0 R
+ /Prev 151 0 R
+ /Title (\376\377\0003\000\240\000\240\000\240\000E\000r\000r\000o\000r\000 \000H\000a\000n\000d\000l\000i\000n\000g) >>
+endobj
+% 'R180': class PDFPages 
+180 0 obj
+% page tree
+<< /Count 10
+ /Kids [ 7 0 R
+ 72 0 R
+ 89 0 R
+ 90 0 R
+ 91 0 R
+ 99 0 R
+ 122 0 R
+ 123 0 R
+ 126 0 R
+ 144 0 R ]
+ /Type /Pages >>
+endobj
+% 'R181': class PDFStream 
+181 0 obj
+% page stream
+<< /Length 5515 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 741.0236 cm
+q
+BT 1 0 0 1 0 9.64 Tm 81.03488 0 Td 24 TL /F2 20 Tf 0 0 0 rg (reStructuredText Demonstration) Tj T* -81.03488 0 Td ET
+Q
+Q
+q
+1 0 0 1 62.69291 711.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 122.4149 0 Td 18 TL /F2 15 Tf 0 0 0 rg (Examples of Syntax Constructs) Tj T* -122.4149 0 Td ET
+Q
+Q
+q
+1 0 0 1 62.69291 686.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 36.93937 0 Td (Author:) Tj T* -36.93937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (David Goodger) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 671.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 29.69937 0 Td (Address:) Tj T* -29.69937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (123 Example Street Example, EX Canada A1B 2C3) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 656.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 32.48937 0 Td (Contact:) Tj T* -32.48937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (goodger@python.org) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 605.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 31.37937 0 Td (Authors:) Tj T* -31.37937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Me) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Myself) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (I) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 590.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 8.58937 0 Td (Organization:) Tj T* -8.58937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (humankind) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 575.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 48.03937 0 Td (Date:) Tj T* -48.03937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (2006-05-21) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 560.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 39.14937 0 Td (Status:) Tj T* -39.14937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a "work in progress") Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 545.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 28.02937 0 Td (Revision:) Tj T* -28.02937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (4564) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 530.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 33.02937 0 Td (Version:) Tj T* -33.02937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (1) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 479.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 22.48937 0 Td (Copyright:) Tj T* -22.48937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 40.82 Tm /F1 10 Tf 12 TL 1.326693 Tw (This document has been placed in the public domain. You may do with it as you) Tj T* 0 Tw .700036 Tw (wish. You may copy, modify, redistribute, reattribute, sell, buy, rent, lease, destroy,) Tj T* 0 Tw .291569 Tw (or improve it, quote it at length, excerpt, incorporate, collate, fold, staple, or mutilate) Tj T* 0 Tw (it, or do anything else to it that your or anyone else's heart desires.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 464.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 20.24937 0 Td (field name:) Tj T* -20.24937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a generic bibliographic field.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 431.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 11.90937 0 Td (field name 2:) Tj T* -11.90937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Generic bibliographic fields may contain multiple body elements.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Like this.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 404.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Dedication) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 386.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (For Docutils users & co-developers.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 359.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Abstract) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 329.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL (This document is a demonstration of the reStructuredText markup language, containing examples of all) Tj T* (basic reStructuredText constructs and many advanced constructs.) Tj T* ET
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R182': class PDFStream 
+182 0 obj
+% page stream
+<< /Length 8924 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 744.0236 cm
+q
+BT 1 0 0 1 0 8.435 Tm 21 TL /F2 17.5 Tf 0 0 0 rg (Table of Contents) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 162.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 561 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (1   Structural Elements) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 561 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (2) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 543 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (1.1   Section Title) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 543 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (2) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 525 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (1.2   Transitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 525 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (3) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 507 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2   Body Elements) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 507 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (3) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 489 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.1   Paragraphs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 489 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (3) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 471 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.1.1   Inline Markup) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 471 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (3) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 453 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.2   Bullet Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 453 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (3) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 435 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.3   Enumerated Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 435 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (4) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 417 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.4   Definition Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 417 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (4) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 399 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.5   Field Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 399 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (4) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 381 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.6   Option Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 381 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (4) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 363 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.7   Literal Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 363 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (5) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 345 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.8   Line Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 345 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (5) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 327 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.9   Block Quotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 327 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 309 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.10   Doctest Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 309 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 291 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.11   Tables) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 291 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 273 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.12   Footnotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 273 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 255 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.13   Citations) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 255 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 237 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.14   Targets) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 237 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (6) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 219 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.14.1   Duplicate Target Names) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 219 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 201 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.14.2   Duplicate Target Names) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 201 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 183 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15   Directives) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 183 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 165 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.1   Document Parts) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 165 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 147 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.2   Images) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 147 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 129 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.3   Admonitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 129 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 111 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.4   Topics, Sidebars, and Rubrics) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 111 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 93 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.5   Target Footnotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 93 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 75 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.6   Replacement Text) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 75 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 57 cm
+q
+BT 1 0 0 1 40 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.15.7   Compound Paragraph) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 57 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 39 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.16   Substitution Definitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 39 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 60.88 0 Td (10) Tj T* -60.88 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 21 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (2.17   Comments) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 21 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 60.88 0 Td (10) Tj T* -60.88 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 3 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (3   Error Handling) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 60.88 0 Td (10) Tj T* -60.88 0 Td ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 129.0236 cm
+q
+BT 1 0 0 1 0 8.435 Tm 21 TL /F2 17.5 Tf 0 0 0 rg (1   Structural Elements) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 99.02362 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (1.1   Section Title) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 81.02362 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (That's it, the text just above this line.) Tj T* ET
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R183': class PDFStream 
+183 0 obj
+% page stream
+<< /Length 7726 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 747.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (1.2   Transitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 729.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Here's a transition:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 700.6772 cm
+n 0 14.17323 m 469.8898 14.17323 l S
+Q
+q
+1 0 0 1 62.69291 682.6772 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (It divides the section.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 649.6772 cm
+q
+BT 1 0 0 1 0 8.435 Tm 21 TL /F2 17.5 Tf 0 0 0 rg (2   Body Elements) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 619.6772 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.1   Paragraphs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 601.6772 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (A paragraph.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 574.6772 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.1.1   Inline Markup) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 472.6772 cm
+q
+q
+12 0 0 12 259.2349 38.82 cm
+/FormXob.c8d097da4771654d12a9611e9af76669 Do
+Q
+BT 1 0 0 1 0 88.82 Tm 4.289069 Tw 12 TL /F1 10 Tf 0 0 0 rg (Paragraphs contain text and may contain inline markup: ) Tj /F5 10 Tf (emphasis) Tj /F1 10 Tf (, ) Tj /F2 10 Tf (strong emphasis) Tj /F1 10 Tf (, ) Tj /F6 10 Tf (inline) Tj T* 0 Tw 4.80022 Tw (literals) Tj /F1 10 Tf (, standalone hyperlinks \() Tj 0 0 .501961 rg (http://www.python.org) Tj 0 0 0 rg (\), external hyperlinks \() Tj 0 0 .501961 rg (Python) Tj 0 0 0 rg ( ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (5) Tj /F1 10 Tf 0 0 0 rg 0 Ts (\), internal) Tj T* 0 Tw 4.195976 Tw (cross-references \() Tj 0 0 .501961 rg (example) Tj 0 0 0 rg (\), external hyperlinks with embedded URIs \() Tj 0 0 .501961 rg (Python web site) Tj 0 0 0 rg (\), footnote) Tj T* 0 Tw .22448 Tw (references \(manually numbered ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (1) Tj /F1 10 Tf 0 0 0 rg 0 Ts (, anonymous auto-numbered ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (3) Tj /F1 10 Tf 0 0 0 rg 0 Ts (, labeled auto-numbered ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (2) Tj /F1 10 Tf 0 0 0 rg 0 Ts (, or symbolic ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (*) Tj /F1 10 Tf 0 0 0 rg 0 Ts (\),) Tj T* 0 Tw 1.52248 Tw (citation references \() Tj ([) Tj 0 0 .501961 rg (CIT2002) Tj 0 0 0 rg (]\), substitution references \( ) Tj 271.2349 0 Td (\), and ) Tj (inline hyperlink targets \(see ) Tj 0 0 .501961 rg (Targets) Tj T* -271.2349 0 Td 0 Tw .614269 Tw 0 0 0 rg (below for a reference back to here\). Character-level inline markup is also possible \(although exceedingly) Tj T* 0 Tw 2.584524 Tw (ugly!\) in ) Tj /F5 10 Tf (re) Tj /F6 10 Tf (Structured) Tj /F5 10 Tf (Text) Tj /F1 10 Tf (. Problems are indicated by ) Tj 1 0 0 rg (|problematic| ) Tj 0 0 0 rg (text \(generated by processing) Tj T* 0 Tw (errors; this one is intentional\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 430.6772 cm
+q
+BT 1 0 0 1 0 28.82 Tm .178221 Tw 12 TL /F1 10 Tf 0 0 0 rg (The default role for interpreted text is ) Tj /F5 10 Tf (Title Reference) Tj /F1 10 Tf (. Here are some explicit interpreted text roles: a PEP) Tj T* 0 Tw .22511 Tw (reference \() Tj 0 0 .501961 rg (PEP 287) Tj 0 0 0 rg (\); an RFC reference \() Tj 0 0 .501961 rg (RFC 2822) Tj 0 0 0 rg (\); a ) Tj /F1 8 Tf -5 Ts (subscript) Tj /F1 10 Tf 0 Ts (; a ) Tj /F1 8 Tf 5 Ts (superscript) Tj /F1 10 Tf 0 Ts (; and explicit roles for ) Tj /F5 10 Tf (standard) Tj /F1 10 Tf  T* 0 Tw /F2 10 Tf (inline) Tj /F1 10 Tf ( ) Tj /F6 10 Tf (markup) Tj /F1 10 Tf (.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 364.6772 cm
+q
+BT 1 0 0 1 0 52.82 Tm 4.339982 Tw 12 TL /F1 10 Tf 0 0 0 rg (Let's test wrapping and whitespace significance in inline literals: ) Tj /F6 10 Tf (This is an example of) Tj T* 0 Tw 9.472441 Tw (--inline-literal --text, --including some-- strangely--hyphenated-words.) Tj T* 0 Tw 3.23622 Tw (Adjust-the-width-of-your-browser-window to see how the text is wrapped. --) Tj T* 0 Tw 1.15748 Tw (---- -------- Now note the spacing between the words of this sentence \(words) Tj T* 0 Tw (should be grouped in pairs\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 346.6772 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (If the ) Tj /F6 10 Tf (--pep-references ) Tj /F1 10 Tf (option was supplied, there should be a live link to PEP 258 here.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 316.6772 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.2   Bullet Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 304.6772 cm
+Q
+q
+1 0 0 1 62.69291 304.6772 cm
+Q
+q
+1 0 0 1 62.69291 244.6772 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (A bullet list) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 21 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Nested bullet list.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Nested item 2.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 244.6772 cm
+Q
+q
+1 0 0 1 62.69291 244.6772 cm
+Q
+q
+1 0 0 1 62.69291 106.6772 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 123 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Item 2.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Paragraph 2 of item 2.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 99 cm
+Q
+q
+1 0 0 1 23 99 cm
+Q
+q
+1 0 0 1 23 81 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Nested bullet list.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 21 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 45 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Nested item 2.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 21 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Third level.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Item 2.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Nested item 3.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 106.6772 cm
+Q
+q
+1 0 0 1 62.69291 106.6772 cm
+Q
+ 
+endstream
+
+endobj
+% 'R184': class PDFStream 
+184 0 obj
+% page stream
+<< /Length 8667 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 747.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.3   Enumerated Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 735.0236 cm
+Q
+q
+1 0 0 1 62.69291 735.0236 cm
+Q
+q
+1 0 0 1 62.69291 621.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 99 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (1.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 99 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Arabic numerals.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 93 cm
+Q
+q
+1 0 0 1 23 93 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (a.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 75 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (lower alpha\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 69 cm
+Q
+q
+1 0 0 1 23 69 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 9 0 Td (i.) Tj T* -9 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (\(lower roman\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 45 cm
+Q
+q
+1 0 0 1 23 45 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 27 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 4.55 0 Td (A.) Tj T* -4.55 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 27 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (upper alpha.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 8.44 0 Td (I.) Tj T* -8.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (upper roman\)) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 621.0236 cm
+Q
+q
+1 0 0 1 62.69291 621.0236 cm
+Q
+q
+1 0 0 1 62.69291 477.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 129 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (2.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 129 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Lists that don't start at 1:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 123 cm
+Q
+q
+1 0 0 1 23 123 cm
+Q
+q
+1 0 0 1 23 105 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (3.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Three) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 105 cm
+Q
+q
+1 0 0 1 23 105 cm
+Q
+q
+1 0 0 1 23 87 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (4.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Four) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 87 cm
+Q
+q
+1 0 0 1 23 87 cm
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 63 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 4 0 Td (C.) Tj T* -4 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (C) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 63 cm
+Q
+q
+1 0 0 1 23 63 cm
+Q
+q
+1 0 0 1 23 45 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 4 0 Td (D.) Tj T* -4 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (D) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 45 cm
+Q
+q
+1 0 0 1 23 45 cm
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 39 cm
+Q
+q
+1 0 0 1 23 21 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 4.56 0 Td (iii.) Tj T* -4.56 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (iii) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 21 cm
+Q
+q
+1 0 0 1 23 3 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 4 0 Td (iv.) Tj T* -4 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (iv) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 477.0236 cm
+Q
+q
+1 0 0 1 62.69291 477.0236 cm
+Q
+q
+1 0 0 1 62.69291 459.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 5.66 0 Td (3.) Tj T* -5.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (List items may also be auto-enumerated.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 459.0236 cm
+Q
+q
+1 0 0 1 62.69291 459.0236 cm
+Q
+q
+1 0 0 1 62.69291 429.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.4   Definition Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 411.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL (Term) Tj T* ET
+Q
+Q
+q
+1 0 0 1 72.69291 399.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Definition) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 383.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 0 rg (Term : ) Tj /F4 10 Tf (classifier) Tj T* ET
+Q
+Q
+q
+1 0 0 1 72.69291 371.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Definition paragraph 1.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 72.69291 359.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Definition paragraph 2.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 343.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL (Term) Tj T* ET
+Q
+Q
+q
+1 0 0 1 72.69291 331.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Definition) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 301.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.5   Field Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 289.0236 cm
+Q
+q
+1 0 0 1 62.69291 262.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 46.92937 0 Td (what:) Tj T* -46.92937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL 1.532338 Tw (Field lists map field names to field bodies, like database records. They are often) Tj T* 0 Tw (part of an extension syntax. They are an unambiguous variant of RFC 2822 fields.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 217.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 1.90937 0 Td (how arg1 arg2:) Tj T* -1.90937 0 Td ET
+Q
+Q
+q
+1 0 0 1 91.03937 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (The field marker is a colon, the field name, and a colon.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL .071457 Tw (The field body may contain one or more body elements, indented relative to the field) Tj T* 0 Tw (marker.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 187.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.6   Option Lists) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 169.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (For listing command-line options:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 153.8236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (-a) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (command-line option "a") Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 138.6236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (-b file) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (options can have arguments and long descriptions) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 123.4236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (--long) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (options can be long also) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 108.2236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (--input=file) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (long options can also have arguments) Tj T* ET
+Q
+Q
+q
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R185': class PDFStream 
+185 0 obj
+% page stream
+<< /Length 7032 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 720.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 32.8 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (--very-long-option) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (The description can also start on the next line.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 240.9449 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL 7.240976 Tw (The description may contain multiple body) Tj T* 0 Tw (elements, regardless of where it starts.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 704.8236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (-x, -y, -z) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Multiple options are an "option group".) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 689.6236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (-v, --verbose) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Commonly-seen: short & long options.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 674.4236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (-1 file, --one=file, --two file) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Multiple options with arguments.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 659.2236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 5.71 Tm /F6 10 Tf 12 TL (/V) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 240.9449 3.2 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (DOS/VMS-style options too) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 641.2236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (There must be at least two spaces between the option and the description.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 611.2236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.7   Literal Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 581.2236 cm
+q
+BT 1 0 0 1 0 16.82 Tm 1.202485 Tw 12 TL /F1 10 Tf 0 0 0 rg (Literal blocks are indicated with a double-colon \("::"\) at the end of the preceding paragraph \(over there) Tj T* 0 Tw /F6 10 Tf (--) Tj (>) Tj /F1 10 Tf (\). They can be indented:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 512.0236 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 6.6 6.6 cm
+q
+.662745 .662745 .662745 RG
+.5 w
+.960784 .960784 .862745 rg
+n -6 -6 468.6898 60 re B*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 41.71 Tm /F6 10 Tf 12 TL (if literal_block:) Tj T* (    text = 'is left as-is') Tj T* (    spaces_and_linebreaks = 'are preserved') Tj T* (    markup_processing = None) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 492.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Or they can be quoted without indentation:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 434.8236 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 6.6 6.6 cm
+q
+.662745 .662745 .662745 RG
+.5 w
+.960784 .960784 .862745 rg
+n -6 -6 468.6898 48 re B*
+Q
+q
+BT 1 0 0 1 0 29.71 Tm 12 TL /F6 10 Tf 0 0 0 rg (>) Tj (>) Tj ( Great idea!) Tj T* (>) Tj  T* (>) Tj ( Why didn't I think of that?) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 404.8236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.8   Line Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 392.8236 cm
+Q
+q
+1 0 0 1 62.69291 380.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a line block. It ends with a blank line.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 374.8236 cm
+Q
+q
+1 0 0 1 62.69291 362.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 20 4.82 Tm /F1 10 Tf 12 TL (Each new line begins with a vertical bar \("|"\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 350.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 20 4.82 Tm /F1 10 Tf 12 TL (Line breaks and initial indents are preserved.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 350.8236 cm
+Q
+q
+1 0 0 1 62.69291 338.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Continuation lines are wrapped portions of long lines; they begin with a space in place of the vertical bar.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 332.8236 cm
+Q
+q
+1 0 0 1 62.69291 320.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 20 4.82 Tm /F1 10 Tf 12 TL (The left edge of a continuation line need not be aligned with the left edge of the text above it.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 320.8236 cm
+Q
+q
+1 0 0 1 62.69291 320.8236 cm
+Q
+q
+1 0 0 1 62.69291 314.8236 cm
+Q
+q
+1 0 0 1 62.69291 302.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a second line block.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 302.8236 cm
+Q
+q
+1 0 0 1 62.69291 290.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Blank lines are permitted internally, but they must begin with a "|".) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 290.8236 cm
+Q
+q
+1 0 0 1 62.69291 272.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Take it away, Eric the Orchestra Leader!) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 266.8236 cm
+Q
+q
+1 0 0 1 62.69291 104.8236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 0 5 Tm  T* ET
+q
+1 0 0 1 23 153 cm
+Q
+q
+1 0 0 1 23 141 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (A one, two, a one two three four) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 141 cm
+Q
+q
+1 0 0 1 23 129 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Half a bee, philosophically,) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 123 cm
+Q
+q
+1 0 0 1 23 111 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (must, ) Tj /F5 10 Tf (ipso facto) Tj /F1 10 Tf (, half not be.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 111 cm
+Q
+q
+1 0 0 1 23 99 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (But half the bee has got to be,) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 93 cm
+Q
+q
+1 0 0 1 23 81 cm
+q
+BT 1 0 0 1 20 4.82 Tm 12 TL /F5 10 Tf 0 0 0 rg (vis a vis ) Tj /F1 10 Tf (its entity. D'you see?) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 81 cm
+Q
+q
+1 0 0 1 23 69 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (But can a bee be said to be) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 63 cm
+Q
+q
+1 0 0 1 23 51 cm
+q
+0 0 0 rg
+BT 1 0 0 1 20 4.82 Tm /F1 10 Tf 12 TL (or not to be an entire bee,) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 45 cm
+Q
+q
+1 0 0 1 23 33 cm
+q
+0 0 0 rg
+BT 1 0 0 1 40 4.82 Tm /F1 10 Tf 12 TL (when half the bee is not a bee,) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 27 cm
+Q
+q
+1 0 0 1 23 15 cm
+q
+0 0 0 rg
+BT 1 0 0 1 60 4.82 Tm /F1 10 Tf 12 TL (due to some ancient injury?) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 15 cm
+Q
+q
+1 0 0 1 23 15 cm
+Q
+q
+1 0 0 1 23 15 cm
+Q
+q
+1 0 0 1 23 15 cm
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Singing...) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 104.8236 cm
+Q
+ 
+endstream
+
+endobj
+% 'R186': class PDFStream 
+186 0 obj
+% page stream
+<< /Length 11495 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 747.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.9   Block Quotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 729.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Block quotes consist of indented body elements:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 723.0236 cm
+Q
+q
+1 0 0 1 62.69291 663.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 0 5 Tm  T* ET
+q
+1 0 0 1 23 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 28.82 Tm /F1 10 Tf 12 TL 1.934985 Tw (My theory by A. Elk. Brackets Miss, brackets. This theory goes as follows and begins now. All) Tj T* 0 Tw .542765 Tw (brontosauruses are thin at one end, much much thicker in the middle and then thin again at the far) Tj T* 0 Tw (end. That is my theory, it is mine, and belongs to me and I own it, and what it is too.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 373.8798 0 Td (Anne Elk \(Miss\)) Tj T* -373.8798 0 Td ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 663.0236 cm
+Q
+q
+1 0 0 1 62.69291 633.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.10   Doctest Blocks) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 563.8236 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 6.6 6.6 cm
+q
+.662745 .662745 .662745 RG
+.5 w
+.960784 .960784 .862745 rg
+n -6 -6 468.6898 60 re B*
+Q
+q
+BT 1 0 0 1 0 41.71 Tm 12 TL /F6 10 Tf 0 0 0 rg (>) Tj (>) Tj (>) Tj ( print 'Python-specific usage examples; begun with ") Tj (>) Tj (>) Tj (>) Tj ("') Tj T* (Python-specific usage examples; begun with ") Tj (>) Tj (>) Tj (>) Tj (") Tj T* (>) Tj (>) Tj (>) Tj ( print '\(cut and pasted from interactive Python sessions\)') Tj T* (\(cut and pasted from interactive Python sessions\)) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 533.8236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.11   Tables) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 515.8236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Here's a grid table followed by a simple table:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 509.8236 cm
+Q
+q
+1 0 0 1 62.69291 359.8236 cm
+1 1 1 rg
+n 0 150 469.8898 -30 re f*
+.878431 .878431 .878431 rg
+n 0 120 469.8898 -18 re f*
+1 1 1 rg
+n 0 102 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 84 469.8898 -33 re f*
+1 1 1 rg
+n 0 51 469.8898 -33 re f*
+.878431 .878431 .878431 rg
+n 0 18 469.8898 -18 re f*
+1 1 1 rg
+n 0 150 469.8898 -30 re f*
+.878431 .878431 .878431 rg
+n 0 120 469.8898 -18 re f*
+1 1 1 rg
+n 0 102 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 84 469.8898 -33 re f*
+1 1 1 rg
+n 0 51 469.8898 -33 re f*
+.878431 .878431 .878431 rg
+n 0 18 469.8898 -18 re f*
+.960784 .960784 .862745 rg
+n 0 150 469.8898 -30 re f*
+0 0 0 rg
+BT /F1 10 Tf 12 TL ET
+q
+1 0 0 1 6 123 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 189.3813 24 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL 15.22066 0 Td (Header row, column 1 \(header rows) Tj T* 60.295 0 Td (optional\)) Tj T* -75.51566 0 Td ET
+Q
+Q
+q
+1 0 0 1 207.3813 123 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 88.69066 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 23.78033 0 Td (Header 2) Tj T* -23.78033 0 Td ET
+Q
+Q
+q
+1 0 0 1 308.072 123 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 71.90889 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 15.38944 0 Td (Header 3) Tj T* -15.38944 0 Td ET
+Q
+Q
+q
+1 0 0 1 391.9809 123 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 71.90889 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 15.38944 0 Td (Header 4) Tj T* -15.38944 0 Td ET
+Q
+Q
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body row 1, column 1) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.3813 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (column 2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.072 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (column 3) Tj T* ET
+Q
+Q
+q
+1 0 0 1 391.9809 105 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (column 4) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 87 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body row 2) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.3813 87 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Cells may span columns.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 69 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body row 3) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.3813 57 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL (Cells may span) Tj T* (rows.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 308.072 75 cm
+Q
+q
+1 0 0 1 308.072 75 cm
+Q
+q
+1 0 0 1 308.072 57 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Table cells) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 308.072 57 cm
+Q
+q
+1 0 0 1 308.072 57 cm
+Q
+q
+1 0 0 1 308.072 39 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (contain) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 308.072 39 cm
+Q
+q
+1 0 0 1 308.072 39 cm
+Q
+q
+1 0 0 1 308.072 21 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body elements.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 308.072 21 cm
+Q
+q
+1 0 0 1 308.072 21 cm
+Q
+q
+1 0 0 1 6 36 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body row 4) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (body row 5) Tj T* ET
+Q
+Q
+q
+1 0 0 1 207.3813 3 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Cells may also be empty: ) Tj /F6 10 Tf (--) Tj (>) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 120 m 469.8898 120 l S
+n 0 102 m 469.8898 102 l S
+n 0 84 m 469.8898 84 l S
+n 0 51 m 201.3813 51 l S
+n 0 18 m 469.8898 18 l S
+n 201.3813 0 m 201.3813 150 l S
+n 302.072 18 m 302.072 84 l S
+n 302.072 102 m 302.072 150 l S
+n 385.9809 0 m 385.9809 18 l S
+n 385.9809 102 m 385.9809 150 l S
+n 0 150 m 469.8898 150 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 150 l S
+n 469.8898 0 m 469.8898 150 l S
+n 0 120 m 469.8898 120 l S
+n 0 102 m 469.8898 102 l S
+n 0 84 m 469.8898 84 l S
+n 0 51 m 201.3813 51 l S
+n 0 18 m 469.8898 18 l S
+n 201.3813 0 m 201.3813 150 l S
+n 302.072 18 m 302.072 84 l S
+n 302.072 102 m 302.072 150 l S
+n 385.9809 0 m 385.9809 18 l S
+n 385.9809 102 m 385.9809 150 l S
+n 0 150 m 469.8898 150 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 150 l S
+n 469.8898 0 m 469.8898 150 l S
+Q
+Q
+q
+1 0 0 1 62.69291 359.8236 cm
+Q
+q
+1 0 0 1 62.69291 353.8236 cm
+Q
+q
+1 0 0 1 62.69291 245.8236 cm
+1 1 1 rg
+n 0 108 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 90 469.8898 -18 re f*
+1 1 1 rg
+n 0 72 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 54 469.8898 -18 re f*
+1 1 1 rg
+n 0 36 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 18 469.8898 -18 re f*
+1 1 1 rg
+n 0 108 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 90 469.8898 -18 re f*
+1 1 1 rg
+n 0 72 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 54 469.8898 -18 re f*
+1 1 1 rg
+n 0 36 469.8898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 18 469.8898 -18 re f*
+.960784 .960784 .862745 rg
+n 0 108 469.8898 -36 re f*
+0 0 0 rg
+BT /F1 10 Tf 12 TL ET
+q
+1 0 0 1 6 93 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 281.6811 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 127.2206 0 Td (Inputs) Tj T* -127.2206 0 Td ET
+Q
+Q
+q
+1 0 0 1 299.6811 93 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 164.2087 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 67.09433 0 Td (Output) Tj T* -67.09433 0 Td ET
+Q
+Q
+q
+1 0 0 1 6 75 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 134.8406 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 64.08528 0 Td (A) Tj T* -64.08528 0 Td ET
+Q
+Q
+q
+1 0 0 1 152.8406 75 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 134.8406 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 64.08528 0 Td (B) Tj T* -64.08528 0 Td ET
+Q
+Q
+q
+1 0 0 1 299.6811 75 cm
+q
+.960784 .960784 .862745 rg
+n 0 0 164.2087 12 re f*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 68.20933 0 Td (A or B) Tj T* -68.20933 0 Td ET
+Q
+Q
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 57 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (False) Tj T* ET
+Q
+Q
+q
+1 0 0 1 152.8406 57 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (False) Tj T* ET
+Q
+Q
+q
+1 0 0 1 299.6811 57 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (False) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 152.8406 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (False) Tj T* ET
+Q
+Q
+q
+1 0 0 1 299.6811 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (False) Tj T* ET
+Q
+Q
+q
+1 0 0 1 152.8406 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 299.6811 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 152.8406 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 0 0 1 299.6811 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (True) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 90 m 469.8898 90 l S
+n 0 72 m 469.8898 72 l S
+n 0 54 m 469.8898 54 l S
+n 0 36 m 469.8898 36 l S
+n 0 18 m 469.8898 18 l S
+n 146.8406 0 m 146.8406 90 l S
+n 293.6811 0 m 293.6811 108 l S
+n 0 108 m 469.8898 108 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 108 l S
+n 469.8898 0 m 469.8898 108 l S
+n 0 90 m 469.8898 90 l S
+n 0 72 m 469.8898 72 l S
+n 0 54 m 469.8898 54 l S
+n 0 36 m 469.8898 36 l S
+n 0 18 m 469.8898 18 l S
+n 146.8406 0 m 146.8406 90 l S
+n 293.6811 0 m 293.6811 108 l S
+n 0 108 m 469.8898 108 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 108 l S
+n 469.8898 0 m 469.8898 108 l S
+Q
+Q
+q
+1 0 0 1 62.69291 245.8236 cm
+Q
+q
+1 0 0 1 62.69291 215.8236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.12   Footnotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 185.8236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.13   Citations) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 167.8236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Here's a reference to the above, ) Tj ([) Tj 0 0 .501961 rg (CIT2002) Tj 0 0 0 rg (], and a ) Tj 1 0 0 rg ([nonexistent]_ ) Tj 0 0 0 rg (citation.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 137.8236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.14   Targets) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 107.8236 cm
+q
+BT 1 0 0 1 0 16.82 Tm 2.104985 Tw 12 TL /F1 10 Tf 0 0 0 rg (This paragraph is pointed to by the explicit "example" target. A reference can be found under ) Tj 0 0 .501961 rg (Inline) Tj T* 0 Tw (Markup) Tj 0 0 0 rg (, above. ) Tj 0 0 .501961 rg (Inline hyperlink targets ) Tj 0 0 0 rg (are also possible.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 77.82362 cm
+q
+BT 1 0 0 1 0 16.82 Tm 1.508735 Tw 12 TL /F1 10 Tf 0 0 0 rg (Section headers are implicit targets, referred to by name. See ) Tj 0 0 .501961 rg (Targets) Tj 0 0 0 rg (, which is a subsection of ) Tj 0 0 .501961 rg (Body) Tj T* 0 Tw (Elements) Tj 0 0 0 rg (.) Tj T* ET
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R187': class PDFStream 
+187 0 obj
+% page stream
+<< /Length 6935 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 753.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Explicit external targets are interpolated into references such as ") Tj 0 0 .501961 rg (Python) Tj 0 0 0 rg ( ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (5) Tj /F1 10 Tf 0 0 0 rg 0 Ts (".) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 735.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Targets may be indirect and anonymous. Thus ) Tj 0 0 .501961 rg (this phrase ) Tj 0 0 0 rg (may also refer to the ) Tj 0 0 .501961 rg (Targets ) Tj 0 0 0 rg (section.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 717.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Here's a ) Tj 1 0 0 rg (`hyperlink reference without a target`_) Tj 0 0 0 rg (, which generates an error.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 690.0236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.14.1   Duplicate Target Names) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 660.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 16.82 Tm /F1 10 Tf 12 TL 3.793828 Tw (Duplicate names in section headers or other implicit targets will generate "info" \(level-1\) system) Tj T* 0 Tw (messages. Duplicate names in explicit targets will generate "warning" \(level-2\) system messages.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 633.0236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.14.2   Duplicate Target Names) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 603.0236 cm
+q
+BT 1 0 0 1 0 16.82 Tm .196235 Tw 12 TL /F1 10 Tf 0 0 0 rg (Since there are two "Duplicate Target Names" section headers, we cannot uniquely refer to either of them) Tj T* 0 Tw (by name. If we try to \(like this: ) Tj 1 0 0 rg (`Duplicate Target Names`_) Tj 0 0 0 rg (\), an error is generated.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 573.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.15   Directives) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 441.0236 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 111 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.1   Document Parts) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 111 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 93 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.2   Images) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 93 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 75 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.3   Admonitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 75 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (7) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 57 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.4   Topics, Sidebars, and Rubrics) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 57 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 39 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.5   Target Footnotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 39 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 21 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.6   Replacement Text) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 21 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+1 0 0 1 0 3 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F2 10 Tf 0 0 .501961 rg (2.15.7   Compound Paragraph) Tj T* ET
+Q
+Q
+q
+1 0 0 1 397.8898 3 cm
+q
+0 0 .501961 rg
+0 0 .501961 RG
+BT 1 0 0 1 0 4.82 Tm /F2 10 Tf 12 TL 66.44 0 Td (9) Tj T* -66.44 0 Td ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 411.0236 cm
+q
+BT 1 0 0 1 0 16.82 Tm 6.090751 Tw 12 TL /F1 10 Tf 0 0 0 rg (These are just a sample of the many reStructuredText Directives. For others, please see) Tj T* 0 Tw 0 0 .501961 rg (http://docutils.sourceforge.net/docs/ref/rst/directives.html) Tj 0 0 0 rg (.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 384.0236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.1   Document Parts) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 354.0236 cm
+q
+BT 1 0 0 1 0 16.82 Tm .542339 Tw 12 TL /F1 10 Tf 0 0 0 rg (An example of the "contents" directive can be seen above this section \(a local, untitled table of ) Tj 0 0 .501961 rg (contents) Tj 0 0 0 rg (\)) Tj T* 0 Tw (and at the beginning of the document \(a document-wide ) Tj 0 0 .501961 rg (table of contents) Tj 0 0 0 rg (\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 327.0236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.2   Images) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 309.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (An image directive \(also clickable -- a hyperlink reference\):) Tj T* ET
+Q
+Q
+q
+1 0 0 1 235.7178 297.2636 cm
+q
+123.84 0 0 11.76 0 0 cm
+/FormXob.3214b96a331e44bc5d44c2adc18563e6 Do
+Q
+Q
+q
+1 0 0 1 62.69291 279.2636 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (A figure directive:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 171.3036 cm
+q
+n 0 0 469.6898 101.76 re n
+Q
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 173.0249 90.1 cm
+q
+123.84 0 0 11.76 0 0 cm
+/FormXob.3214b96a331e44bc5d44c2adc18563e6 Do
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 72.1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F5 10 Tf 12 TL 121.1749 0 Td (A figure is an image with a caption and/or a legend:) Tj T* -121.1749 0 Td ET
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 18.1 cm
+1 1 1 rg
+n 0 54 469.6898 -18 re f*
+.878431 .878431 .878431 rg
+n 0 36 469.6898 -18 re f*
+1 1 1 rg
+n 0 18 469.6898 -18 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (re) Tj T* ET
+Q
+Q
+q
+1 0 0 1 101.5301 39 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Revised, revisited, based on 're' module.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Structured) Tj T* ET
+Q
+Q
+q
+1 0 0 1 101.5301 21 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Structure-enhanced text, structuredtext.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Text) Tj T* ET
+Q
+Q
+q
+1 0 0 1 101.5301 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Well it is, isn't it?) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+0 0 0 RG
+.25 w
+n 0 36 m 469.6898 36 l S
+n 0 18 m 469.6898 18 l S
+n 95.53012 0 m 95.53012 54 l S
+n 0 54 m 469.6898 54 l S
+n 0 0 m 469.6898 0 l S
+n 0 0 m 0 54 l S
+n 469.6898 0 m 469.6898 54 l S
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 .1 .1 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 143.9649 0 Td (This paragraph is also part of the legend.) Tj T* -143.9649 0 Td ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 144.3036 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.3   Admonitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 126.3036 cm
+Q
+ 
+endstream
+
+endobj
+% 'R188': class PDFStream 
+188 0 obj
+% page stream
+<< /Length 5406 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 694.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Attention) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Directives at large.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 688.0236 cm
+Q
+q
+1 0 0 1 62.69291 676.0236 cm
+Q
+q
+1 0 0 1 62.69291 605.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Caution) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Don't take any wooden nickels.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 599.0236 cm
+Q
+q
+1 0 0 1 62.69291 587.0236 cm
+Q
+q
+1 0 0 1 62.69291 516.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Danger) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Mad scientist at work!) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 510.0236 cm
+Q
+q
+1 0 0 1 62.69291 498.0236 cm
+Q
+q
+1 0 0 1 62.69291 427.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Error) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Does not compute.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 421.0236 cm
+Q
+q
+1 0 0 1 62.69291 409.0236 cm
+Q
+q
+1 0 0 1 62.69291 338.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Hint) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (It's bigger than a bread box.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 332.0236 cm
+Q
+q
+1 0 0 1 62.69291 320.0236 cm
+Q
+q
+1 0 0 1 62.69291 189.0236 cm
+.960784 .960784 .862745 rg
+n 0 131 469.8898 -131 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm  T* ET
+q
+1 0 0 1 16 100 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Important) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 88 cm
+Q
+q
+1 0 0 1 16 88 cm
+Q
+q
+1 0 0 1 16 70 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Wash behind your ears.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 16 70 cm
+Q
+q
+1 0 0 1 16 70 cm
+Q
+q
+1 0 0 1 16 52 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Clean up your room.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 16 52 cm
+Q
+q
+1 0 0 1 16 52 cm
+Q
+q
+1 0 0 1 16 34 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Call your mother.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 16 34 cm
+Q
+q
+1 0 0 1 16 34 cm
+Q
+q
+1 0 0 1 16 16 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 10.5 0 Td (\177) Tj T* -10.5 0 Td ET
+Q
+Q
+q
+1 0 0 1 23 3 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Back up your data.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 16 16 cm
+Q
+q
+1 0 0 1 16 16 cm
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 131 m 469.8898 131 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 131 l S
+n 469.8898 0 m 469.8898 131 l S
+Q
+Q
+q
+1 0 0 1 62.69291 183.0236 cm
+Q
+q
+1 0 0 1 62.69291 171.0236 cm
+Q
+q
+1 0 0 1 62.69291 100.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Note) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a note.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 94.02362 cm
+Q
+q
+1 0 0 1 62.69291 82.02362 cm
+Q
+ 
+endstream
+
+endobj
+% 'R189': class PDFStream 
+189 0 obj
+% page stream
+<< /Length 4837 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 694.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Tip) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (15% if the service is good.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 688.0236 cm
+Q
+q
+1 0 0 1 62.69291 676.0236 cm
+Q
+q
+1 0 0 1 62.69291 605.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Warning) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Strong prose may provoke extreme mental exertion. Reader discretion is strongly advised.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 599.0236 cm
+Q
+q
+1 0 0 1 62.69291 587.0236 cm
+Q
+q
+1 0 0 1 62.69291 516.0236 cm
+.960784 .960784 .862745 rg
+n 0 71 469.8898 -71 re f*
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT 1 0 0 1 6 45 Tm  T* ET
+q
+1 0 0 1 16 40 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (And, by the way...) Tj T* ET
+Q
+Q
+q
+1 0 0 1 16 16 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (You can make up your own admonition too.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.662745 .662745 .662745 RG
+.5 w
+n 0 71 m 469.8898 71 l S
+n 0 0 m 469.8898 0 l S
+n 0 0 m 0 71 l S
+n 469.8898 0 m 469.8898 71 l S
+Q
+Q
+q
+1 0 0 1 62.69291 510.0236 cm
+Q
+q
+1 0 0 1 62.69291 483.0236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.4   Topics, Sidebars, and Rubrics) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 349.6236 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 8.6 cm
+q
+.5 w
+.662745 .662745 .662745 RG
+.960784 .960784 .862745 rg
+n 0 0 400.8898 110 re B*
+Q
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 86.6 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Sidebar Title) Tj T* ET
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 62.6 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F4 10 Tf 12 TL (Optional Subtitle) Tj T* ET
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 44.6 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a sidebar. It is for text outside the flow of the main text.) Tj T* ET
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 26.6 cm
+q
+.545098 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 123.0349 0 Td (This is a rubric inside a sidebar) Tj T* -123.0349 0 Td ET
+Q
+Q
+Q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 8.6 8.6 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Sidebars often appears beside the main text with a border and background color.) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 322.6236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 6.025 Tm /F4 12.5 Tf 15 TL (Topic Title) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 304.6236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is a topic.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 286.6236 cm
+q
+.545098 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL 202.4399 0 Td (This is a rubric) Tj T* -202.4399 0 Td ET
+Q
+Q
+q
+1 0 0 1 62.69291 259.6236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.5   Target Footnotes) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 232.6236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.6   Replacement Text) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 214.6236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (I recommend you try ) Tj 0 0 .501961 rg (Python, ) Tj /F5 10 Tf (the ) Tj /F1 10 Tf (best language around) Tj 0 0 0 rg ( ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (5) Tj /F1 10 Tf 0 0 0 rg 0 Ts (.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 187.6236 cm
+q
+BT 1 0 0 1 0 6.025 Tm 15 TL /F4 12.5 Tf 0 0 0 rg (2.15.7   Compound Paragraph) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 169.6236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This paragraph contains a literal block:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 112.4236 cm
+q
+q
+1 0 0 1 0 0 cm
+q
+1 0 0 1 6.6 6.6 cm
+q
+.662745 .662745 .662745 RG
+.5 w
+.960784 .960784 .862745 rg
+n -6 -6 468.6898 48 re B*
+Q
+q
+0 0 0 rg
+BT 1 0 0 1 0 29.71 Tm /F6 10 Tf 12 TL (Connecting... OK) Tj T* (Transmitting data... OK) Tj T* (Disconnecting... OK) Tj T* ET
+Q
+Q
+Q
+Q
+Q
+q
+1 0 0 1 62.69291 80.42362 cm
+q
+BT 1 0 0 1 0 16.82 Tm .70936 Tw 12 TL /F1 10 Tf 0 0 0 rg (and thus consists of a simple paragraph, a literal block, and another simple paragraph. Nonetheless it is) Tj T* 0 Tw (semantically ) Tj /F5 10 Tf (one ) Tj /F1 10 Tf (paragraph.) Tj T* ET
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R190': class PDFStream 
+190 0 obj
+% page stream
+<< /Length 5651 >>
+stream
+1 0 0 1 0 0 cm BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 753.0236 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (This construct is called a ) Tj /F5 10 Tf (compound paragraph ) Tj /F1 10 Tf (and can be produced with the "compound" directive.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 723.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.16   Substitution Definitions) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 705.0236 cm
+q
+q
+12 0 0 12 77.25 2.82 cm
+/FormXob.c8d097da4771654d12a9611e9af76669 Do
+Q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (An inline image \( ) Tj 89.25 0 Td (\) example:) Tj T* -89.25 0 Td ET
+Q
+Q
+q
+1 0 0 1 62.69291 687.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (\(Substitution definitions are not visible in the HTML source.\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 657.0236 cm
+q
+BT 1 0 0 1 0 7.23 Tm 18 TL /F2 15 Tf 0 0 0 rg (2.17   Comments) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 639.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Here's one:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 621.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (\(View the HTML source to see the comment.\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 588.0236 cm
+q
+BT 1 0 0 1 0 8.435 Tm 21 TL /F2 17.5 Tf 0 0 0 rg (3   Error Handling) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 570.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (Any errors caught during processing will generate system messages.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 552.0236 cm
+q
+1 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (|*** Expect 6 errors \(including this one\). ***|) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 534.0236 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (There should be six messages in the following, auto-generated section, "Docutils System Messages":) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 477.3307 cm
+Q
+q
+1 0 0 1 62.69291 448.9843 cm
+n 0 14.17323 m 469.8898 14.17323 l S
+Q
+q
+1 0 0 1 62.69291 418.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 18 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (1\() Tj 0 0 .501961 rg (1) Tj 0 0 0 rg (, ) Tj 0 0 .501961 rg (2) Tj 0 0 0 rg (\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 18 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (A footnote contains body elements, consistently indented by at least 3 spaces.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4.82 Tm /F1 10 Tf 12 TL (This is the footnote's second paragraph.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 382.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 24 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (2\() Tj 0 0 .501961 rg (1) Tj 0 0 0 rg (, ) Tj 0 0 .501961 rg (2) Tj 0 0 0 rg (\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 28.82 Tm 2.670199 Tw 12 TL /F1 10 Tf 0 0 0 rg (Footnotes may be numbered, either manually \(as in ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (1) Tj /F1 10 Tf 0 0 0 rg 0 Ts (\) or automatically using a) Tj T* 0 Tw 1.860028 Tw ("#"-prefixed label. This footnote has a label so it can be referred to from multiple) Tj T* 0 Tw (places, both as a footnote reference \() Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (2) Tj /F1 10 Tf 0 0 0 rg 0 Ts (\) and as a hyperlink reference \() Tj 0 0 .501961 rg (label) Tj 0 0 0 rg (\).) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 370.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (3) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (This footnote is numbered automatically and anonymously using a label of "#" only.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 346.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 12 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (*) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 16.82 Tm .4536 Tw 12 TL /F1 10 Tf 0 0 0 rg (Footnotes may also use symbols, specified with a "*" label. Here's a reference to the) Tj T* 0 Tw (next footnote: ) Tj /F1 8 Tf 0 0 .501961 rg 5 Ts (\206) Tj /F1 10 Tf 0 0 0 rg 0 Ts (.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 334.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (\206) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (This footnote shows the next symbol in the sequence.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 322.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (4) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (Here's an unreferenced footnote, with a reference to a nonexistent footnote: ) Tj 1 0 0 rg ([5]_) Tj 0 0 0 rg (.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 298.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 12 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (CIT2002\() Tj 0 0 .501961 rg (1) Tj 0 0 0 rg (, ) Tj 0 0 .501961 rg (2) Tj 0 0 0 rg (\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 16.82 Tm .367039 Tw 12 TL /F1 10 Tf 0 0 0 rg (Citations are text-labeled footnotes. They may be rendered separately and differently) Tj T* 0 Tw (from footnotes.) Tj T* ET
+Q
+Q
+q
+Q
+Q
+q
+1 0 0 1 62.69291 286.9843 cm
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 6 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 0 rg (5\() Tj 0 0 .501961 rg (1) Tj 0 0 0 rg (, ) Tj 0 0 .501961 rg (2) Tj 0 0 0 rg (, ) Tj 0 0 .501961 rg (3) Tj 0 0 0 rg (\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 91.03937 0 cm
+q
+BT 1 0 0 1 0 4.82 Tm 12 TL /F1 10 Tf 0 0 .501961 rg (http://www.python.org/) Tj T* ET
+Q
+Q
+q
+Q
+Q
+ 
+endstream
+
+endobj
+% 'R191': class PDFPageLabels 
+191 0 obj
+% Document Root
+<< /Nums [ 0
+ 192 0 R
+ 1
+ 193 0 R
+ 2
+ 194 0 R
+ 3
+ 195 0 R
+ 4
+ 196 0 R
+ 5
+ 197 0 R
+ 6
+ 198 0 R
+ 7
+ 199 0 R
+ 8
+ 200 0 R
+ 9
+ 201 0 R ] >>
+endobj
+% 'R192': class PDFPageLabel 
+192 0 obj
+% None
+<< /S /D
+ /St 1 >>
+endobj
+% 'R193': class PDFPageLabel 
+193 0 obj
+% None
+<< /S /D
+ /St 2 >>
+endobj
+% 'R194': class PDFPageLabel 
+194 0 obj
+% None
+<< /S /D
+ /St 3 >>
+endobj
+% 'R195': class PDFPageLabel 
+195 0 obj
+% None
+<< /S /D
+ /St 4 >>
+endobj
+% 'R196': class PDFPageLabel 
+196 0 obj
+% None
+<< /S /D
+ /St 5 >>
+endobj
+% 'R197': class PDFPageLabel 
+197 0 obj
+% None
+<< /S /D
+ /St 6 >>
+endobj
+% 'R198': class PDFPageLabel 
+198 0 obj
+% None
+<< /S /D
+ /St 7 >>
+endobj
+% 'R199': class PDFPageLabel 
+199 0 obj
+% None
+<< /S /D
+ /St 8 >>
+endobj
+% 'R200': class PDFPageLabel 
+200 0 obj
+% None
+<< /S /D
+ /St 9 >>
+endobj
+% 'R201': class PDFPageLabel 
+201 0 obj
+% None
+<< /S /D
+ /St 10 >>
+endobj
+xref
+0 202
+0000000000 65535 f
+0000000113 00000 n
+0000000271 00000 n
+0000000436 00000 n
+0000000611 00000 n
+0000000792 00000 n
+0000001023 00000 n
+0000001210 00000 n
+0000001526 00000 n
+0000001767 00000 n
+0000002008 00000 n
+0000002250 00000 n
+0000002492 00000 n
+0000002734 00000 n
+0000002976 00000 n
+0000003218 00000 n
+0000003461 00000 n
+0000003704 00000 n
+0000003947 00000 n
+0000004190 00000 n
+0000004433 00000 n
+0000004676 00000 n
+0000004919 00000 n
+0000005162 00000 n
+0000005405 00000 n
+0000005648 00000 n
+0000005891 00000 n
+0000006134 00000 n
+0000006377 00000 n
+0000006620 00000 n
+0000006863 00000 n
+0000007106 00000 n
+0000007349 00000 n
+0000007592 00000 n
+0000007835 00000 n
+0000008078 00000 n
+0000008321 00000 n
+0000008564 00000 n
+0000008807 00000 n
+0000009050 00000 n
+0000009293 00000 n
+0000009536 00000 n
+0000009779 00000 n
+0000010022 00000 n
+0000010265 00000 n
+0000010508 00000 n
+0000010751 00000 n
+0000010995 00000 n
+0000011239 00000 n
+0000011483 00000 n
+0000011727 00000 n
+0000011971 00000 n
+0000012215 00000 n
+0000012459 00000 n
+0000012703 00000 n
+0000012947 00000 n
+0000013191 00000 n
+0000013435 00000 n
+0000013679 00000 n
+0000013923 00000 n
+0000014167 00000 n
+0000014411 00000 n
+0000014655 00000 n
+0000014899 00000 n
+0000015143 00000 n
+0000015387 00000 n
+0000015631 00000 n
+0000015875 00000 n
+0000016119 00000 n
+0000016363 00000 n
+0000016607 00000 n
+0000016851 00000 n
+0000017079 00000 n
+0000017949 00000 n
+0000018131 00000 n
+0000018306 00000 n
+0000018547 00000 n
+0000018790 00000 n
+0000019034 00000 n
+0000019276 00000 n
+0000019518 00000 n
+0000019762 00000 n
+0000020006 00000 n
+0000020250 00000 n
+0000020521 00000 n
+0000020917 00000 n
+0000021161 00000 n
+0000021403 00000 n
+0000021661 00000 n
+0000021903 00000 n
+0000022380 00000 n
+0000022662 00000 n
+0000022960 00000 n
+0000023204 00000 n
+0000023447 00000 n
+0000023690 00000 n
+0000023933 00000 n
+0000024176 00000 n
+0000024419 00000 n
+0000024646 00000 n
+0000025018 00000 n
+0000025262 00000 n
+0000025507 00000 n
+0000025751 00000 n
+0000025995 00000 n
+0000026240 00000 n
+0000026485 00000 n
+0000026730 00000 n
+0000026975 00000 n
+0000027220 00000 n
+0000027465 00000 n
+0000027710 00000 n
+0000027955 00000 n
+0000028200 00000 n
+0000028446 00000 n
+0000028692 00000 n
+0000028938 00000 n
+0000029184 00000 n
+0000029429 00000 n
+0000029712 00000 n
+0000029958 00000 n
+0000030229 00000 n
+0000032946 00000 n
+0000033518 00000 n
+0000033817 00000 n
+0000034062 00000 n
+0000034291 00000 n
+0000034623 00000 n
+0000034868 00000 n
+0000035114 00000 n
+0000035359 00000 n
+0000035605 00000 n
+0000035851 00000 n
+0000036097 00000 n
+0000036343 00000 n
+0000036588 00000 n
+0000036833 00000 n
+0000037079 00000 n
+0000037325 00000 n
+0000037570 00000 n
+0000037815 00000 n
+0000038060 00000 n
+0000038306 00000 n
+0000038551 00000 n
+0000038780 00000 n
+0000039313 00000 n
+0000039477 00000 n
+0000039749 00000 n
+0000039878 00000 n
+0000040221 00000 n
+0000040500 00000 n
+0000040766 00000 n
+0000041096 00000 n
+0000041404 00000 n
+0000041677 00000 n
+0000041967 00000 n
+0000042277 00000 n
+0000042587 00000 n
+0000042872 00000 n
+0000043162 00000 n
+0000043462 00000 n
+0000043747 00000 n
+0000044037 00000 n
+0000044343 00000 n
+0000044609 00000 n
+0000044890 00000 n
+0000045171 00000 n
+0000045485 00000 n
+0000045825 00000 n
+0000046166 00000 n
+0000046496 00000 n
+0000046796 00000 n
+0000047072 00000 n
+0000047373 00000 n
+0000047764 00000 n
+0000048090 00000 n
+0000048416 00000 n
+0000048737 00000 n
+0000049094 00000 n
+0000049351 00000 n
+0000049608 00000 n
+0000049803 00000 n
+0000055421 00000 n
+0000064448 00000 n
+0000072277 00000 n
+0000081047 00000 n
+0000088182 00000 n
+0000099781 00000 n
+0000106819 00000 n
+0000112328 00000 n
+0000117268 00000 n
+0000123026 00000 n
+0000123248 00000 n
+0000123327 00000 n
+0000123406 00000 n
+0000123485 00000 n
+0000123564 00000 n
+0000123643 00000 n
+0000123722 00000 n
+0000123801 00000 n
+0000123880 00000 n
+0000123959 00000 n
+trailer
+<< /ID 
+ % ReportLab generated PDF document -- digest (http://www.reportlab.com) 
+ [(\011#\013\235\016\300\220u\277\017\217\025\241\3261\304) (\011#\013\235\016\300\220u\277\017\217\025\241\3261\304)] 
+
+ /Info 146 0 R
+ /Root 145 0 R
+ /Size 202 >>
+startxref
+124008
+%%EOF

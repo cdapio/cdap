@@ -71,7 +71,7 @@ function(Components, Embeddables, HTTP, Util) {
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('version', {cache: true}, this.checkVersion);
+				this.HTTP.get('version', this.checkVersion);
 			},
 
 			checkVersion: function(version) {
@@ -113,10 +113,11 @@ function(Components, Embeddables, HTTP, Util) {
 					}
 
 					if (display && C.get('isLocal')) {
-						$('#warning').html('<div>New version available: ' + newest.major +
+						$('#warning .warning-text').html('New version available: ' + newest.major +
 							'.' + newest.minor + '.' + newest.revision +
 							'<br /><a target="_blank" href="https://www.continuuity.com/download">' +
-							'Click here to download</a>.</div>').show();
+							'Click here to download</a>.');
+						$('#warning').show();
 
 					}
 				}
@@ -137,11 +138,50 @@ function(Components, Embeddables, HTTP, Util) {
 
 		initialize: function (http) {
 			var self = this;
-			http.get('environment', {cache: true}, function (response) {
+			http.get('environment', function (response) {
 				 self.setupEnvironment(response);
 			});
 
 		},
+
+		/**
+		 * Sets up authentication on the global Ember application.
+		 */
+		setupAuth: function (routeHandler) {
+			/**
+			 * Recieves response of type {token: <token>}
+			 */
+			HTTP.create().get('getsession', function (resp) {
+				if ('token' in resp) {
+					C.Env.set('auth_token', resp.token);
+				} else {
+					C.Env.set('auth_token', '');
+				}
+				if (routeHandler !== undefined && !C.Env.get('auth_token') && 'routeName' in routeHandler) {
+					routeHandler.transitionTo('Login');
+				}
+			});
+		},
+
+    /**
+     * Determines readiness of Reactor by polling all services and checking status.
+     * @param routeHandler Object Ember route handler.
+     * @param callback Function to execute.
+     */
+    checkReactorReadiness: function (routeHandler, callback) {
+      HTTP.create().rest('system/services/status', function (statuses) {
+        if (routeHandler !== undefined && 'routeName' in routeHandler) {
+          if (C.Util.isLoadingComplete(statuses)) {
+            routeHandler.transitionTo(routeHandler.routeName);
+          } else {
+            routeHandler.transitionTo('Loading');
+          }
+        }
+        if (callback && typeof callback === 'function') {
+          callback();
+        }
+      });
+    },
 
 		setupEnvironment: function (env) {
 
@@ -150,6 +190,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('productName', env.product_name);
 			C.Env.set('ip', env.ip);
 			C.Env.set('nux', !!env.nux);
+      C.Env.set('security_enabled', env.security_enabled);
 
 			$('title').text(env.product_name + ' » Continuuity');
 
@@ -224,7 +265,7 @@ function(Components, Embeddables, HTTP, Util) {
 			var themeLink = document.createElement('link');
 			themeLink.setAttribute("rel", "stylesheet");
 			themeLink.setAttribute("type", "text/css");
-			themeLink.setAttribute("href", "/assets/css/" + C.Env.get('productId') + ".css");
+			themeLink.setAttribute("href", "/assets/css/new/" + C.Env.get('productId') + ".css");
 			return themeLink;
 		},
 
@@ -343,7 +384,11 @@ function(Components, Embeddables, HTTP, Util) {
 			 * See "advanceReadiness" in the "setupEnvironment" call above.
 			 */
 			C.deferReadiness();
-			C.initialize(HTTP.create());
+			var http = HTTP.create();
+			C.initialize(http);
+			if (C.Env.security_enabled) {
+			  C.setupAuth();
+			}
 
 		}
 	});
@@ -377,6 +422,12 @@ function(Components, Embeddables, HTTP, Util) {
 			C.focus();
 		}
 	};
+
+	Em.run.next(function() {			
+		$('#warning-close').click(function() {
+			$('#warning').hide();
+		});
+	});
 
 	Em.debug('Application setup complete');
 

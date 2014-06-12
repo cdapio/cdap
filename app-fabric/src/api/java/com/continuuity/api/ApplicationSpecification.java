@@ -22,6 +22,7 @@ import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -126,6 +127,11 @@ public interface ApplicationSpecification {
      * Map from Workflow name to {@link WorkflowSpecification} for all Workflows defined in this Application.
      */
     private final Map<String, WorkflowSpecification> workflows = new HashMap<String, WorkflowSpecification>();
+
+    /**
+     * Map from Service name to {@link TwillSpecification} for the services defined in this Application.
+     */
+    private final Map<String, TwillSpecification> services = new HashMap<String, TwillSpecification>();
 
     /**
      * @return A new instance of {@link Builder}.
@@ -460,7 +466,7 @@ public interface ApplicationSpecification {
       @Override
       public MoreProcedure add(Procedure procedure, int instance) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        Preconditions.checkArgument(instance > 1, "Number of instances can't be less than 1");
+        Preconditions.checkArgument(instance >= 1, "Number of instances can't be less than 1");
         ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, instance);
         procedures.put(spec.getName(), spec);
         return this;

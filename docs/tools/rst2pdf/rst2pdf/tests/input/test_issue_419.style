@@ -1,0 +1,19 @@
+styles:
+    admonition:
+        # this works
+        borderPadding: [6,6,6,6]
+        # but the following do not work
+        textColor: red
+        borderRadius: 12
+
+    myclass:
+        # here, everything seems to work
+        parent: normal
+        spaceBefore: 16
+        spaceAfter: 16
+        textColor: red
+        borderPadding: [6,6,6,6]
+        borderRadius: 12
+        backColor: beige
+        borderColor: darkgray
+        borderWidth: 0.5

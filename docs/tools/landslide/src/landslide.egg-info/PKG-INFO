@@ -1,0 +1,25 @@
+Metadata-Version: 1.1
+Name: landslide
+Version: 1.1.1.1
+Summary: Lightweight markup language-based html5 slideshow generator
+Home-page: http://github.com/adamzap/landslide
+Author: Adam Zapletal
+Author-email: adamzap@gmail.com
+License: Apache 2.0
+Description: Landslide takes your Markdown, ReST, or Textile file(s) and generates fancy
+        HTML5 slideshow like `this <http://adamzap.com/random/landslide.html>`_.
+        
+        Read the `README <http://github.com/adamzap/landslide/blob/master/README.md>`_
+        for formatting instructions and more information.
+        
+Keywords: markdown,slideshow,presentation,rst,restructuredtext,textile
+Platform: any
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.5
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Topic :: Multimedia :: Graphics :: Presentation
+Classifier: Topic :: Text Processing :: Markup

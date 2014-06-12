@@ -1,0 +1,10 @@
+===
+Foo
+===
+
+Bar.
+
+.. image:: images/biohazard.png
+   :align: right
+
+This is a test.

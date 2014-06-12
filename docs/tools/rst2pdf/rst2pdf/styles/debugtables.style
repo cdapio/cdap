@@ -1,0 +1,27 @@
+styles:
+    bullet-list: commands: []
+                [VALIGN, [0, 0], [-1, -1], TOP]
+                [INNERGRID, [0, 0], [-1, -1], 0.25, black]
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+
+    endnote:
+        colWidths: [3cm, null]
+        commands: []
+                [INNERGRID, [0, 0], [-1, -1], 0.25, black]
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+
+    field-list: commands: []
+                [INNERGRID, [0, 0], [-1, -1], 0.25, black]
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+
+    item-list: commands: []
+                [VALIGN, [0, 0], [-1, -1], TOP]
+                [TOPPADDING, [0, 0], [-1, -1], 0]
+                [BOTTOMPADDING, [0, 0], [-1, -1], 0]
+                [RIGHTPADDING, [0, 0], [1, -1], 0]
+                [INNERGRID, [0, 0], [-1, -1], 0.25, black]
+                [BOX, [0, 0], [-1, -1], 0.25, black]
+
+    option-list: commands: []
+                [INNERGRID, [0, 0], [-1, -1], 0.25, black]
+                [BOX, [0, 0], [-1, -1], 0.25, black]

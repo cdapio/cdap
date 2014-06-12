@@ -6,6 +6,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.ApplicationSpecification;
@@ -14,6 +15,7 @@ import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.verification.ApplicationVerification;
 import com.continuuity.internal.app.verification.DataSetVerification;
+import com.continuuity.internal.app.verification.DatasetInstanceCreationSpecVerifier;
 import com.continuuity.internal.app.verification.FlowVerification;
 import com.continuuity.internal.app.verification.ProgramVerification;
 import com.continuuity.internal.app.verification.StreamVerification;
@@ -64,6 +66,15 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       }
     }
 
+    // NOTE: no special restrictions on dataset module names, etc
+
+    for (DatasetInstanceCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
+      result = getVerifier(DatasetInstanceCreationSpec.class).verify(appId, dataSetCreateSpec);
+      if (!result.isSuccess()) {
+        throw new RuntimeException(result.getMessage());
+      }
+    }
+
     for (StreamSpecification spec : specification.getStreams().values()) {
       result = getVerifier(StreamSpecification.class).verify(appId, spec);
       if (!result.isSuccess()) {
@@ -103,6 +114,8 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       verifiers.put(clz, new FlowVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, createProgramVerifier((Class<ProgramSpecification>) clz));
+    } else if (DatasetInstanceCreationSpec.class.isAssignableFrom(clz)) {
+      verifiers.put(clz, new DatasetInstanceCreationSpecVerifier());
     }
 
     return (Verifier<T>) verifiers.get(clz);
