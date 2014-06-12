@@ -3,15 +3,14 @@ package com.continuuity.common.twill;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.ning.http.client.Response;
-import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,21 +80,14 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
   }
 
   protected HttpResponseStatus checkGetStatus(String url) throws Exception {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) SERVICE_PING_RESPONSE_TIMEOUT)
-      .build();
-
     try {
-      Future<Response> future = client.get();
-      Response response = future.get(SERVICE_PING_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      return HttpResponseStatus.valueOf(response.getStatusCode());
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    } finally {
-      client.close();
+      URL endpoint = new URL(url);
+      HttpURLConnection httpConn = (HttpURLConnection) endpoint.openConnection();
+      httpConn.setConnectTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
+      return (HttpResponseStatus.valueOf(httpConn.getResponseCode()));
+    } catch (SocketTimeoutException s) {
+      return HttpResponseStatus.NOT_FOUND;
     }
-    return HttpResponseStatus.NOT_FOUND;
   }
 
 }
