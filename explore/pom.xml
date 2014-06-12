@@ -47,6 +47,10 @@
       <groupId>com.continuuity</groupId>
       <artifactId>hive-exec</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro-mapred</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.continuuity</groupId>

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # chkconfig: 2345 96 15 
-# description: Starts and stops the ${project.artifactId}
+# description: Starts and stops the ${project.artifactId} service
 # processname: java
 #
 ### BEGIN INIT INFO

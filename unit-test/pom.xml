@@ -17,6 +17,11 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- Need to make it first to override hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>app-fabric</artifactId>
@@ -30,6 +35,16 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>watchdog</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore-client</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

@@ -64,6 +64,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
     </dependency>

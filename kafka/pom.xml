@@ -17,6 +17,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.10</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>

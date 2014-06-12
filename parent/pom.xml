@@ -34,9 +34,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
-    <asm.version>5.0.2</asm.version>
+    <asm.version>4.0</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
+    <commons.codec.version>1.6</commons.codec.version>
     <continuuity.http.version>0.2.0</continuuity.http.version>
     <fastutil.version>6.5.6</fastutil.version>
     <flume.version>1.2.0</flume.version>
@@ -45,8 +46,9 @@
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
-    <hive.version>0.12.0</hive.version>
-    <http.component.version>4.1.3</http.component.version>
+    <hive.version>0.13.0</hive.version>
+    <continuuity.hive.version>0.13.0-continuuity-2.3.0-SNAPSHOT</continuuity.hive.version>
+    <http.component.version>4.2.5</http.component.version>
     <hsql.version>2.2.4</hsql.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
@@ -149,6 +151,17 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-mapred</artifactId>
+        <version>${avro.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
         <version>${flume.version}</version>
@@ -160,6 +173,29 @@
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-core</artifactId>
+        <version>${flume.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -194,11 +230,6 @@
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
         <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -250,6 +281,16 @@
         <version>${http.component.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${http.component.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>${commons.codec.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-common</artifactId>
         <version>${twill.version}</version>
@@ -273,6 +314,12 @@
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-yarn</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -667,6 +714,18 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-tree</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -682,6 +741,18 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-tree</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -690,19 +761,35 @@
         <version>${hive.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-tree</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
         <groupId>com.continuuity</groupId>
         <artifactId>hive-exec</artifactId>
-        <version>${hive.version}</version>
+        <version>${continuuity.hive.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-mapred</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -718,6 +805,16 @@
         <artifactId>hadoop-minicluster</artifactId>
         <version>${hadoop.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
@@ -1032,8 +1129,10 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm</excludeGroupIds>
+                    <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <silent>true</silent>
+                    <includeScope>compile</includeScope>
                   </configuration>
                 </execution>
               </executions>
