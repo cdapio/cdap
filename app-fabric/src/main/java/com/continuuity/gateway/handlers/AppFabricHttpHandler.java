@@ -39,10 +39,13 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -65,6 +68,7 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
@@ -2944,6 +2948,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
+        // also add datasets2 instances
+        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        for (DatasetSpecification instance : instances) {
+          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+        }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
@@ -2978,7 +2987,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(dsName);
+            ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
+                                                                            DataSetAccessor.Namespace.USER);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespace.namespace(dsName));
             if (meta != null) {
               typeName = meta.getType().getName();
             }
