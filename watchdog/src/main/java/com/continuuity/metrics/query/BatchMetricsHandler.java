@@ -9,7 +9,6 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
@@ -46,9 +45,8 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
   private final MetricsRequestExecutor requestExecutor;
 
   @Inject
-  public BatchMetricsHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory,
-                             MetaDataTable metaDataTable) {
-    super(authenticator, metaDataTable);
+  public BatchMetricsHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
     this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
   }
 

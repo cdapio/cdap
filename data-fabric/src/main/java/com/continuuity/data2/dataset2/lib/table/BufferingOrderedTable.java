@@ -171,7 +171,11 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
   @Override
   public void startTx(Transaction tx) {
     // starting with fresh buffer when tx starts
-    buff.clear();
+    if (buff == null) {
+      buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    } else {
+      buff.clear();
+    }
     toUndo = null;
   }
 

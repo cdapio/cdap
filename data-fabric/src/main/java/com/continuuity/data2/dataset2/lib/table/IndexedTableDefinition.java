@@ -30,25 +30,25 @@ public class IndexedTableDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties),
-                tableDef.configure("index", properties))
+      .datasets(tableDef.configure("d", properties),
+                tableDef.configure("i", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("table")),
-      tableDef.getAdmin(spec.getSpecification("index"))
+      tableDef.getAdmin(spec.getSpecification("d")),
+      tableDef.getAdmin(spec.getSpecification("i"))
     ));
   }
 
   @Override
   public IndexedTable getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification tableInstance = spec.getSpecification("table");
+    DatasetSpecification tableInstance = spec.getSpecification("d");
     Table table = tableDef.getDataset(tableInstance);
 
-    DatasetSpecification indexTableInstance = spec.getSpecification("index");
+    DatasetSpecification indexTableInstance = spec.getSpecification("i");
     Table index = tableDef.getDataset(indexTableInstance);
 
     String columnToIndex = spec.getProperty("columnToIndex");
