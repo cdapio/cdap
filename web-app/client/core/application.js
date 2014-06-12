@@ -47,7 +47,7 @@ function(Components, Embeddables, HTTP, Util) {
 		/*
 		 * Enable or disable local cache.
 		 */
-		ENABLE_CACHE: typeof Storage !== "undefined",
+		ENABLE_CACHE: false,
 
 		/*
 		 * Allows us to set the ID of the main view element.

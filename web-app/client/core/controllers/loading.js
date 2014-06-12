@@ -6,9 +6,6 @@ define([], function () {
 
     var Controller = Em.Controller.extend({
 
-      loadingSrc: 'assets/img/services-loading-darkBg.gif',
-      completeSrc: 'assets/img/ok-icon.png',
-
       load: function () {
         var self = this;
 
@@ -32,11 +29,11 @@ define([], function () {
             var serviceStatuses = [];
             for (item in statuses) {
               if (statuses.hasOwnProperty(item)) {
-                var imgSrc = statuses[item] === 'OK' ? self.completeSrc : self.loadingSrc;
+                var imgSrc = statuses[item] === 'OK' ? 'complete' : 'loading';
                 serviceStatuses.push({
                   name: item,
                   status: statuses[item],
-                  imgSrc: imgSrc
+                  imgClass: imgSrc
                 });
               }
             }

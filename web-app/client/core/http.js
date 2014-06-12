@@ -41,6 +41,7 @@ define([], function () {
 		},
 
 		getJSON: function (path, callback, cacheData) {
+      var self = this;
 
 			$.getJSON(path, function (result) {
 
@@ -55,13 +56,11 @@ define([], function () {
 
 				if (error) {
 
-					$('#warning .warning-text').html(error);
-					$('#warning').show();
+          C.Util.showWarning(error);
 
 				} else {
 
-					$('#warning .warning-text').html('Encountered a connection problem.');
-					$('#warning').show();
+          C.Util.showWarning('Encountered a connection problem.');
 
 				}
 
@@ -69,6 +68,7 @@ define([], function () {
 		},
 
 		rest: function () {
+      var self = this;
 
 			var args = [].slice.call(arguments);
 			args.unshift('rest');
@@ -77,6 +77,7 @@ define([], function () {
 		},
 
 		post: function () {
+      var self = this;
 
 			var path = this.findPath(arguments);
 			var object = this.findObject(arguments);
@@ -93,8 +94,7 @@ define([], function () {
 			}
 			$.ajax(options).done(function (response, statusText, xhr) {
 				if (response.error && response.error.fatal) {
-					$('#warning .warning-text').html(response.error.fatal);
-					$('#warning').show();
+          C.Util.showWarning(response.error.fatal);
 				} else {
 					callback(response, xhr.status, statusText);
 				}
@@ -106,6 +106,7 @@ define([], function () {
 		},
 
 		rpc: function () {
+      var self = this;
 
 			var args = [].slice.call(arguments);
 			if (args[0].indexOf('/') === 0) {
@@ -118,6 +119,7 @@ define([], function () {
 		},
 
 		put: function () {
+      var self = this;
 
 			var path = this.findPath(arguments);
 			var object = this.findObject(arguments);
@@ -136,8 +138,7 @@ define([], function () {
 			$.ajax(options).done(function (response, status) {
 
 				if (response.error && response.error.fatal) {
-					$('#warning .warning-text').html(response.error.fatal);
-					$('#warning').show();
+          C.Util.showWarning(response.error.fatal);
 				} else {
 					callback(response, status);
 				}
@@ -149,6 +150,7 @@ define([], function () {
 		},
 
 		del: function () {
+      var self = this;
 
 			var path = this.findPath(arguments);
 			var callback = this.findCallback(arguments);
@@ -165,8 +167,7 @@ define([], function () {
 				}
 
 				if (response.error) {
-					$('#warning .warning-text').html(response.error.fatal);
-					$('#warning').show();
+          C.Util.showWarning(response.error.fatal);
 				} else {
 					callback(response, status);
 				}

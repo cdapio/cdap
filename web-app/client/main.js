@@ -212,6 +212,8 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
     LoadingRoute: basicRouter.extend(),
 
+    ServicesRoute: basicRouter.extend(),
+
     LoginRoute: basicRouter.extend(),
 
 		OverviewRoute: basicRouter.extend(),
@@ -441,4 +443,28 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	});
 
 	return C;
+});
+
+Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
+
+  switch (operator) {
+    case '==':
+      return (v1 == v2) ? options.fn(this) : options.inverse(this);
+    case '===':
+      return (v1 === v2) ? options.fn(this) : options.inverse(this);
+    case '<':
+      return (v1 < v2) ? options.fn(this) : options.inverse(this);
+    case '<=':
+      return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+    case '>':
+      return (v1 > v2) ? options.fn(this) : options.inverse(this);
+    case '>=':
+      return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+    case '&&':
+      return (v1 && v2) ? options.fn(this) : options.inverse(this);
+    case '||':
+      return (v1 || v2) ? options.fn(this) : options.inverse(this);
+    default:
+      return options.inverse(this);
+  }
 });
