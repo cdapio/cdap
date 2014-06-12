@@ -3,20 +3,20 @@ package com.continuuity.internal.data.dataset;
 import java.io.IOException;
 
 /**
- * The instance of the class that implements this interface defines concrete named dataset type implementation.
+ * Defines named dataset type implementation.
  *
  * The dataset implementation defines:
  * <ul>
  *   <li>
- *     a way to configure new dataset instance by using {@link #configure(String, DatasetInstanceProperties)} method
+ *     a way to configure new dataset instance by using {@link #configure(String, DatasetProperties)} method
  *   </li>
  *   <li>
  *     a way to perform administrative operations on the dataset instance (e.g. create, drop etc.) by providing
- *     implementation of {@link DatasetAdmin} via {@link #getAdmin(DatasetInstanceSpec)} method
+ *     implementation of {@link DatasetAdmin} via {@link #getAdmin(DatasetSpecification)} method
  *   </li>
  *   <li>
  *     a way to perform operations to manipulate data of the dataset instance (e.g. read, write etc.) by providing
- *     implementation of {@link Dataset} via {@link #getDataset(DatasetInstanceSpec)} method
+ *     implementation of {@link Dataset} via {@link #getDataset(DatasetSpecification)} method
  *   </li>
  * </ul>
  *
@@ -34,28 +34,28 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * Configures new instance of the dataset.
    * @param instanceName name of the instance
    * @param properties instance configuration properties
-   * @return instance of {@link DatasetInstanceSpec} that fully describes dataset instance.
-   *         The {@link DatasetInstanceSpec} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
-   *         administrative and data operations respectively, see {@link #getAdmin(DatasetInstanceSpec)} and
-   *         {@link #getDataset(DatasetInstanceSpec)}.
+   * @return instance of {@link DatasetSpecification} that fully describes dataset instance.
+   *         The {@link DatasetSpecification} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
+   *         administrative and data operations respectively, see {@link #getAdmin(DatasetSpecification)} and
+   *         {@link #getDataset(DatasetSpecification)}.
    */
-  DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties);
+  DatasetSpecification configure(String instanceName, DatasetProperties properties);
 
   /**
    * Provides dataset admin to be used to perform administrative operations on the dataset instance defined by passed
-   * {@link DatasetInstanceSpec}.
+   * {@link DatasetSpecification}.
    * @param spec specification of the dataset instance.
    * @return dataset admin to perform administrative operations
    * @throws IOException
    */
-  A getAdmin(DatasetInstanceSpec spec) throws IOException;
+  A getAdmin(DatasetSpecification spec) throws IOException;
 
   /**
    * Provides dataset to be used to perform data operations on the dataset instance data defined by passed
-   * {@link DatasetInstanceSpec}.
+   * {@link DatasetSpecification}.
    * @param spec specification of the dataset instance.
    * @return dataset to perform object operations
    * @throws IOException
    */
-  D getDataset(DatasetInstanceSpec spec) throws IOException;
+  D getDataset(DatasetSpecification spec) throws IOException;
 }

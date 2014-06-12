@@ -1,13 +1,13 @@
 package com.continuuity.hive.datasets;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
@@ -62,7 +62,6 @@ public class DatasetSerDe extends AbstractSerDe {
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
-    return ObjectInspectorFactory.getReflectionObjectInspector(rowType,
-                                                               ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
+    return ObjectInspectorFactory.getReflectionObjectInspector(rowType);
   }
 }

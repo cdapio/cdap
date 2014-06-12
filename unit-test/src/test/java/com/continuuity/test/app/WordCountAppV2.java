@@ -29,7 +29,7 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
@@ -55,9 +55,9 @@ public class WordCountAppV2 extends AbstractApplication {
   public void configure() {
     setName("WordCountApp");
     addStream(new Stream("text"));
-    addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
-    createDataSet("mydataset", "keyValueTable", DatasetInstanceProperties.EMPTY);
-    createDataSet("totals", "keyValueTable", DatasetInstanceProperties.EMPTY);
+    addDataSetModule("my-kv", MyKeyValueTableDefinition.Module.class);
+    createDataSet("mydataset", "keyValueTable", DatasetProperties.EMPTY);
+    createDataSet("totals", "keyValueTable", DatasetProperties.EMPTY);
     addFlow(new WordCountFlow());
     addProcedure(new WordFrequency());
     addMapReduce(new CountTotal());

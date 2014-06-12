@@ -35,6 +35,7 @@ final class MetricsRequestParser {
   private static final String LINEAR_INTERPOLATOR = "linear";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+  private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
 
   public enum PathType {
     APPS,
@@ -48,7 +49,8 @@ final class MetricsRequestParser {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p"),
-    HANDLERS("h");
+    HANDLERS("h"),
+    SERVICES("s");
 
     private final String code;
 
@@ -93,8 +95,8 @@ final class MetricsRequestParser {
    * @return request path stripped of version and metrics.
    */
   static String stripVersionAndMetricsFromPath(String path) {
-    // +9 for "/metrics/"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
+    // +8 for "/metrics"
+    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -119,10 +121,13 @@ final class MetricsRequestParser {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
+    } else if (strippedPath.startsWith("/reactor/transactions")) {
+      builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
+      builder.setScope(MetricsScope.REACTOR);
+      metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
-
     parseQueryString(requestURI, builder);
     return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
   }
@@ -216,7 +221,7 @@ final class MetricsRequestParser {
       return;
     }
 
-    // request-type: flows, procedures, or mapreduce or handlers
+    // request-type: flows, procedures, or mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
     RequestType requestType;
     try {
@@ -254,11 +259,24 @@ final class MetricsRequestParser {
       case HANDLERS:
         buildHandlerContext(pathParts, builder);
         break;
+      case SERVICES:
+        buildUserServiceContext(pathParts, builder);
     }
 
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
     }
+  }
+
+  private static void buildUserServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("runnables")) {
+      throw new MetricsPathException("expecting 'runnables' after the service name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("runnables must be followed by a runnable name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
   }
 
 
@@ -274,9 +292,6 @@ final class MetricsRequestParser {
       throw new MetricsPathException("methods must be followed by a method name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
-    if (pathParts.hasNext()) {
-      throw new MetricsPathException("too many path after method name");
-    }
   }
 
   /**

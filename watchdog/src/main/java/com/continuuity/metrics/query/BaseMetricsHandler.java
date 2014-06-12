@@ -101,6 +101,9 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
                                      typeId, requestId, componentId);
           throw new MetricsPathException(msg);
         }
+      } else if (requestType == MetricsRequestParser.RequestType.SERVICES) {
+        // todo: mock end-point currently, will add the checks once user services are implemented
+        return;
       } else if (!programExists(requestType, accountId, typeId, requestId, apiKey)) {
         String programMsg = (requestId == null || requestType == null) ? "" :
           " with " + requestType.name().toLowerCase() + " " + requestId;

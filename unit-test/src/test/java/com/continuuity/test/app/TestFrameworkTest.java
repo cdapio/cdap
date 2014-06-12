@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -354,15 +354,26 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetInstanceProperties.EMPTY).create();
+    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
+  }
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetType() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
+  }
+
+
+  @Test(timeout = 60000L)
+  public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyProcedure");
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
@@ -384,57 +395,56 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  // TODO reintegreate code as soon as hive-exec finds a proper fix
-//  @Test
-//  public void testSQLQuery() throws Exception {
-//
-//    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-//    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
-//    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-//      appManager.getDataSet("myTable");
-//    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
-//    kvTable.put("a", "1");
-//    kvTable.put("b", "2");
-//    kvTable.put("c", "1");
-//    myTableManager.flush();
-//
-//    Connection connection = getQueryClient();
-//    try {
-//      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
-//      connection.prepareStatement(generateCreateStatement("myTable", kvTable)).execute();
-//
-//      // list the tables and make sure the table is there
-//      ResultSet results = connection.prepareStatement("show tables").executeQuery();
-//      Assert.assertTrue(results.next());
-//      Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
-//
-//      // run a query over the dataset
-//      results = connection.prepareStatement("select key from mytable where value = '1'").executeQuery();
-//      Assert.assertTrue(results.next());
-//      Assert.assertEquals("a", results.getString(1));
-//      Assert.assertTrue(results.next());
-//      Assert.assertEquals("c", results.getString(1));
-//      Assert.assertFalse(results.next());
-//
-//    } finally {
-//      connection.close();
-//    }
-//  }
-//
-//  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
-//    String hiveSchema;
-//    try {
-//      hiveSchema = Scannables.hiveSchemaFor(scannable);
-//    } catch (UnsupportedTypeException e) {
-//      LOG.error(String.format(
-//        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
-//      return null;
-//    }
-//    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
-//                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-//                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-//                                         Constants.Explore.DATASET_NAME, name);
-//    LOG.info("Command for Hive: {}", hiveStatement);
-//    return hiveStatement;
-//  }
+  @Test(timeout = 60000L)
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+      appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+    kvTable.put("a", "1");
+    kvTable.put("b", "2");
+    kvTable.put("c", "1");
+    myTableManager.flush();
+
+    Connection connection = getQueryClient();
+    try {
+      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
+      connection.prepareStatement(generateCreateStatement("myTable", kvTable)).execute();
+
+      // list the tables and make sure the table is there
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
+
+      // run a query over the dataset
+      results = connection.prepareStatement("select first from mytable where second = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      connection.close();
+    }
+  }
+
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+    String hiveSchema;
+    try {
+      hiveSchema = Scannables.hiveSchemaFor(scannable);
+    } catch (UnsupportedTypeException e) {
+      LOG.error(String.format(
+        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+      return null;
+    }
+    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
+    LOG.info("Command for Hive: {}", hiveStatement);
+    return hiveStatement;
+  }
 }

@@ -51,7 +51,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
       .to(LocalFileTransactionStateStorage.class).in(Singleton.class);
     bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
-
     bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);

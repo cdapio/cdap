@@ -80,7 +80,7 @@ define([], function () {
 
         }
 
-        self.HTTP.rest('apps', {cache: true}, function (objects) {
+        self.HTTP.rest('apps', function (objects) {
 
           var structure = self.get('structure');
           var elements = self.get('elements');

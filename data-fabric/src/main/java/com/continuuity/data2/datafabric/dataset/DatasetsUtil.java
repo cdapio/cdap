@@ -4,7 +4,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public final class DatasetsUtil {
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
                                                    String instanceName, String typeName,
-                                                   DatasetInstanceProperties props, ClassLoader cl)
+                                                   DatasetProperties props, ClassLoader cl)
     throws DatasetManagementException, IOException {
 
     if (!datasetFramework.hasInstance(instanceName)) {

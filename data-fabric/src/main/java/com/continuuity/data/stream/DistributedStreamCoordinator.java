@@ -7,6 +7,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.PropertyStore;
 import com.continuuity.common.io.Codec;
 import com.continuuity.common.zookeeper.store.ZKPropertyStore;
+import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -19,6 +20,11 @@ import org.apache.twill.zookeeper.ZKClient;
 public final class DistributedStreamCoordinator extends AbstractStreamCoordinator {
 
   private ZKClient zkClient;
+
+  @Inject
+  protected DistributedStreamCoordinator(StreamAdmin streamAdmin) {
+    super(streamAdmin);
+  }
 
   @Inject(optional = true)
   void setZkClient(ZKClient zkClient) {

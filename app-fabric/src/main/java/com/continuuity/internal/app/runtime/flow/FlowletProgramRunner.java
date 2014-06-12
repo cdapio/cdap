@@ -663,6 +663,18 @@ public final class FlowletProgramRunner implements ProgramRunner {
       this.executor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("flowlet-stream-update-%d"));
       this.propertyListener = new StreamPropertyListener() {
         @Override
+        public void ttlChanged(String streamName, long ttl) {
+          LOG.debug("TTL for stream '{}' changed to {} for flowlet '{}'", streamName, ttl, flowletName);
+          suspendAndResume();
+        }
+
+        @Override
+        public void ttlDeleted(String streamName) {
+          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamName, flowletName);
+          suspendAndResume();
+        }
+
+        @Override
         public void generationChanged(String streamName, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamName, generation, flowletName);
           suspendAndResume();

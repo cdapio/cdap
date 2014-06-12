@@ -1,6 +1,7 @@
 package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.hive.context.ContextManager;
@@ -29,30 +30,29 @@ public class RuntimeHiveServer extends HiveServer {
   private HiveServer2 hiveServer2;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final HiveConf hiveConf;
-  private final int hiveServerPort;
   private Cancellable discoveryCancel;
 
   @Inject
   public RuntimeHiveServer(DiscoveryService discoveryService, TransactionSystemClient txClient,
-                           DatasetFramework datasetFramework, HiveConf hiveConf,
-                           @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname,
-                           @Named(Constants.Hive.SERVER_PORT) int hiveServerPort) {
+                           DatasetFramework datasetFramework,
+                           @Named(Constants.Hive.SERVER_ADDRESS) InetAddress hostname) {
     ContextManager.initialize(txClient, datasetFramework);
     this.discoveryService = discoveryService;
     this.hostname = hostname;
-    this.hiveConf = hiveConf;
-    this.hiveServerPort = hiveServerPort;
   }
 
   @Override
   protected void startUp() throws Exception {
     // Start Hive Server2
+    int hiveServerPort = PortDetector.findFreePort();
+    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_PORT.toString(), String.valueOf(hiveServerPort));
+    System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST.toString(), hostname.getCanonicalHostName());
+
     LOG.info("Starting hive server on port {}...", hiveServerPort);
     hiveServer2 = new HiveServer2();
-    hiveServer2.init(hiveConf);
+    hiveServer2.init(new HiveConf());
     hiveServer2.start();
-    waitForPort(hostname.getHostName(), hiveServerPort);
+    waitForPort(hostname.getCanonicalHostName(), hiveServerPort);
 
     // Register HiveServer2 with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, hiveServerPort);
@@ -60,7 +60,6 @@ public class RuntimeHiveServer extends HiveServer {
     if (address.isAnyLocalAddress()) {
       address = InetAddress.getLocalHost();
     }
-    // todo figure a way to not have "localhost" in distributed, but the actual host of reactor-master
     final InetSocketAddress finalSocketAddress = new InetSocketAddress(address, hiveServerPort);
 
     discoveryCancel = discoveryService.register(new Discoverable() {

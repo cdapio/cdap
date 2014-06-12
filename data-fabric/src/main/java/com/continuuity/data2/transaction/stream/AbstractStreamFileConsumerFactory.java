@@ -14,22 +14,23 @@ import com.continuuity.data.stream.StreamFileOffset;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.sun.istack.Nullable;
+import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.tools.nsc.typechecker.Analyzer;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Abstract base class for implementing {@link StreamConsumerFactory} using
@@ -75,6 +76,13 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     @Nullable ReadFilter extraFilter) throws IOException;
 
   /**
+   * Deletes process states table.
+   *
+   * @param tableName name of the process states table.
+   */
+  protected abstract void dropTable(String tableName) throws IOException;
+
+  /**
    * Gathers stream file offsets.
    *
    * @param partitionLocation Location of the partition directory
@@ -115,6 +123,36 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);
     }
+  }
+
+  @Override
+  public void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+    // Delete the entry table
+    dropTable(getTableName(streamName, namespace));
+
+    // Cleanup state store
+    Map<Long, Integer> groupInfo = Maps.newHashMap();
+    for (Long groupId : groupIds) {
+      groupInfo.put(groupId, 0);
+    }
+    try {
+      streamAdmin.configureGroups(streamName, groupInfo);
+
+      if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamName.toURI().toString())) {
+        // A bit hacky to assume namespace is formed by appId.flowId. See AbstractDataFabricFacade
+        // String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
+
+        int idx = namespace.indexOf('.');
+        String appId = namespace.substring(0, idx);
+        String flowId = namespace.substring(idx + 1);
+
+        ((QueueAdmin) oldStreamAdmin).dropAllForFlow(appId, flowId);
+      }
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    }
+
   }
 
   private String getTableName(QueueName streamName, String namespace) {
