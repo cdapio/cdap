@@ -1,19 +1,10 @@
 package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.hive.context.CConfCodec;
-import com.continuuity.hive.context.ConfigurationUtil;
-import com.continuuity.hive.context.ContextManager;
-import com.continuuity.hive.context.HConfCodec;
-import com.continuuity.hive.context.TxnCodec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -21,6 +12,7 @@ import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
+import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnDesc;
@@ -32,61 +24,58 @@ import org.apache.hive.service.cli.thrift.TTableSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.hive.service.cli.thrift.TCLIServiceConstants.TYPE_NAMES;
 
 /**
- * Hive implementation of {@link ExploreService}.
+ * Hive 12 implementation of {@link ExploreService}. There are 2 changes compared to Hive 13 implementation -
+ * <ol>
+ *   <li>{@link CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)} return type has
+ *   changed</li>
+ *   <li>{@link CLIService#fetchResults(org.apache.hive.service.cli.OperationHandle)} return type has changed</li>
+ * </ol>
  */
-public class HiveExploreService extends AbstractIdleService implements ExploreService {
-  private static final Logger LOG = LoggerFactory.getLogger(HiveExploreService.class);
+@SuppressWarnings("UnusedDeclaration")
+public class Hive12ExploreService extends BaseHiveExploreService {
+  private static final Logger LOG = LoggerFactory.getLogger(Hive12ExploreService.class);
 
   private final CLIService cliService;
-  private final CConfiguration cConf;
-  private final Configuration hConf;
-
-  // TODO: timeout operations
-  private final ConcurrentMap<Handle, OperationInfo> handleMap = Maps.newConcurrentMap();
 
   @Inject
-  public HiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                            CConfiguration cConf, Configuration hConf) {
-    ContextManager.initialize(txClient, datasetFramework);
+  public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                              CConfiguration cConf, Configuration hConf) {
+    super(txClient, datasetFramework, cConf, hConf);
     this.cliService = new CLIService();
-    this.cConf = cConf;
-    this.hConf = hConf;
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting {}...", HiveExploreService.class.getSimpleName());
+    LOG.info("Starting {}...", Hive12ExploreService.class.getSimpleName());
     HiveConf hiveConf = new HiveConf();
     cliService.init(hiveConf);
     cliService.start();
+    TimeUnit.SECONDS.sleep(5);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping {}...", HiveExploreService.class.getSimpleName());
+    LOG.info("Stopping {}...", Hive12ExploreService.class.getSimpleName());
     cliService.stop();
   }
 
   @Override
   public Handle execute(String statement) throws ExploreException {
     try {
-      Handle handle = Handle.generate();
-      LOG.debug("Executing statement: {} with handle {}", statement, handle);
-
-      Map<String, String> sessionConf = getSessionConf(handle);
+      Map<String, String> sessionConf = getSessionConf();
       SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());
-      handleMap.put(handle, new OperationInfo(sessionHandle, operationHandle, sessionConf));
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.debug("Executing statement: {} with handle {}", statement, handle);
       return handle;
     } catch (Exception e) {
       throw new ExploreException(e);
@@ -97,7 +86,12 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
   public Status getStatus(Handle handle) throws ExploreException {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
-      Status status = HiveCompat.getStatus(cliService, operationHandle);
+      // In Hive 12, CLIService.getOperationStatus returns OperationState.
+      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
+      // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
+      Object retStatus = cliService.getOperationStatus(operationHandle);
+      OperationState operationState = (OperationState) retStatus;
+      Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.debug("Status of handle {} is {}", handle, status);
       return status;
     } catch (HiveSQLException e) {
@@ -151,19 +145,12 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
   }
 
   @Override
-  public Status cancel(Handle handle) throws ExploreException {
+  public void cancel(Handle handle) throws ExploreException {
     try {
       LOG.debug("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
-      Status status = getStatus(handle);
-      if (status.getState() == Status.State.CANCELED) {
-        cliService.closeOperation(getOperationHandle(handle));
-      }
-      return status;
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
-    } finally {
-      cleanUp(handle);
     }
   }
 
@@ -175,81 +162,22 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
     } finally {
-      cleanUp(handle);
-    }
-  }
-
-  private void cleanUp(Handle handle) {
-    try {
-      closeSession(handle);
-    } finally {
       try {
-        closeTransaction(handle);
+        closeSession(handle);
       } finally {
-        handleMap.remove(handle);
+        cleanUp(handle);
       }
     }
   }
 
   private void closeSession(Handle handle) {
     try {
-      OperationInfo opInfo = handleMap.get(handle);
-      if (opInfo == null) {
-        throw new ExploreException("Invalid handle provided");
-      }
-      SessionHandle sessionHandle = opInfo.getSessionHandle();
-      cliService.closeSession(sessionHandle);
+      cliService.closeSession(getSessionHandle(handle));
     } catch (Throwable e) {
       LOG.error("Got error closing session", e);
     }
   }
 
-  private void closeTransaction(Handle handle) {
-    try {
-      OperationInfo opInfo = handleMap.get(handle);
-      Transaction tx = ConfigurationUtil.get(opInfo.getSessionConf(),
-                                             Constants.Explore.TX_QUERY_CODEC_KEY,
-                                             TxnCodec.INSTANCE);
-      LOG.debug("Closing transaction {} for handle {}", tx, handle);
-
-      TransactionSystemClient txClient = ContextManager.getTxClient(new HiveConf());
-      // Transaction doesn't involve any changes
-      if (txClient.canCommit(tx, ImmutableList.<byte[]>of())) {
-        if (!txClient.commit(tx)) {
-          txClient.abort(tx);
-          LOG.info("Aborting transaction: {}", tx);
-        }
-      } else {
-        // Very unlikely with empty changes
-        txClient.invalidate(tx.getWritePointer());
-        LOG.info("Invalidating transaction: {}", tx);
-      }
-    } catch (Throwable e) {
-      LOG.error("Got exception while closing transaction.", e);
-    }
-  }
-
-  private Map<String, String> getSessionConf(Handle handle) throws IOException {
-    HiveConf hiveConf = new HiveConf();
-    Map<String, String> sessionConf = Maps.newHashMap();
-    TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
-    Transaction tx = txClient.startLong();
-
-    LOG.debug("Transaction {} started for handle {}", tx, handle);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE, tx);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE, cConf);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE, hConf);
-    return sessionConf;
-  }
-
-  private OperationHandle getOperationHandle(Handle handle) throws ExploreException {
-    OperationInfo opInfo = handleMap.get(handle);
-    if (opInfo == null) {
-      throw new ExploreException("Invalid handle provided");
-    }
-    return opInfo.getOperationHandle();
-  }
-  
   private Object columnToObject(TColumnValue tColumnValue) throws ExploreException {
     Object obj;
     if (tColumnValue.isSetBoolVal()) {
@@ -276,30 +204,5 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
     TPrimitiveTypeEntry primitiveTypeEntry =
       tColumnDesc.getTypeDesc().getTypes().get(0).getPrimitiveEntry();
     return TYPE_NAMES.get(primitiveTypeEntry.getType());
-  }
-
-  private static class OperationInfo {
-    private final SessionHandle sessionHandle;
-    private final OperationHandle operationHandle;
-    private final Map<String, String> sessionConf;
-
-    private OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
-                          Map<String, String> sessionConf) {
-      this.sessionHandle = sessionHandle;
-      this.operationHandle = operationHandle;
-      this.sessionConf = sessionConf;
-    }
-
-    public SessionHandle getSessionHandle() {
-      return sessionHandle;
-    }
-
-    public OperationHandle getOperationHandle() {
-      return operationHandle;
-    }
-
-    public Map<String, String> getSessionConf() {
-      return sessionConf;
-    }
   }
 }
