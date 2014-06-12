@@ -3,10 +3,7 @@
  */
 package com.continuuity.data.runtime;
 
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
