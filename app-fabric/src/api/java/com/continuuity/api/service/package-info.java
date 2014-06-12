@@ -3,6 +3,6 @@
  */
 
 /**
- *  Defines ServiceSpecification.
+ * Defines ServiceSpecification.
  */
 package com.continuuity.api.service;

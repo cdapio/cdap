@@ -14,7 +14,7 @@ import org.apache.twill.api.TwillSpecification;
 import java.io.IOException;
 
 /**
- *
+ * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
 

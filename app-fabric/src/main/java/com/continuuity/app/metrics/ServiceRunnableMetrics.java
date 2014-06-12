@@ -4,7 +4,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
 
 /**
- *
+ * Metrics Collector for Service.
  */
 public class ServiceRunnableMetrics extends AbstractProgramMetrics {
 

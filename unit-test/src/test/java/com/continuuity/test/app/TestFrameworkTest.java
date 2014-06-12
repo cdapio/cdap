@@ -181,6 +181,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
+    //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()

@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Program runner for Services. Metrics and Logging contexts will be set before running the services.
  */
 public class ServiceRunnableProgramRunner implements ProgramRunner {
 

@@ -13,7 +13,7 @@ import org.apache.twill.internal.json.TwillSpecificationAdapter;
 import java.lang.reflect.Type;
 
 /**
- *
+ * Codec to serialize and serialize {@link ServiceSpecification}
  */
 public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
 
