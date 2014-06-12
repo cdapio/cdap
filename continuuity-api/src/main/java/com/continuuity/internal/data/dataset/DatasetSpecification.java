@@ -219,7 +219,16 @@ public final class DatasetSpecification {
      */
     private DatasetSpecification namespace(String namespace, DatasetSpecification spec) {
       // Name of the DataSetSpecification is prefixed with namespace if namespace is present.
-      String name = (namespace == null) ? spec.getName() : namespace + '.' + spec.getName();
+      String name;
+      if (namespace == null) {
+        name = spec.getName();
+      } else {
+        name = namespace;
+        if (!spec.getName().isEmpty()) {
+          name += '.' + spec.getName();
+        }
+      }
+
       // If no namespace is given, starts with using the DataSet name.
       namespace = (namespace == null) ? spec.getName() : namespace;
 

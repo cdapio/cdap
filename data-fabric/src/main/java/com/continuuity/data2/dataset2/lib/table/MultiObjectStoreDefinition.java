@@ -37,18 +37,18 @@ public class MultiObjectStoreDefinition<T>
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
+      .datasets(tableDef.configure("multiobjects", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+    return tableDef.getAdmin(spec.getSpecification("multiobjects"));
   }
 
   @Override
   public MultiObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification tableSpec = spec.getSpecification("table");
+    DatasetSpecification tableSpec = spec.getSpecification("multiobjects");
     Table table = tableDef.getDataset(tableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
