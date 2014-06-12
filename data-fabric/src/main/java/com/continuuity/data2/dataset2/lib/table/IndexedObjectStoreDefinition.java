@@ -37,23 +37,23 @@ public class IndexedObjectStoreDefinition<T>
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties),
-                objectStoreDef.configure("objectStore", properties))
+      .datasets(tableDef.configure("index", properties),
+                objectStoreDef.configure("data", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("table")),
-      objectStoreDef.getAdmin(spec.getSpecification("objectStore"))
+      tableDef.getAdmin(spec.getSpecification("index")),
+      objectStoreDef.getAdmin(spec.getSpecification("data"))
     ));
   }
 
   @Override
   public IndexedObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification tableSpec = spec.getSpecification("table");
-    DatasetSpecification objectStoreSpec = spec.getSpecification("objectStore");
+    DatasetSpecification tableSpec = spec.getSpecification("index");
+    DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
     Table index = tableDef.getDataset(tableSpec);
     ObjectStore<T> objectStore = objectStoreDef.getDataset(objectStoreSpec);
