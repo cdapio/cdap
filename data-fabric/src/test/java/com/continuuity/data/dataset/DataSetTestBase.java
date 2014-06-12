@@ -16,6 +16,7 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -56,11 +57,11 @@ public class DataSetTestBase {
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                            new DiscoveryRuntimeModule().getInMemoryModules(),
+                           new TransactionMetricsModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
-                               bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
                              }
                            });
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();

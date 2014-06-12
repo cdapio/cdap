@@ -12,6 +12,7 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
@@ -158,6 +159,7 @@ public class MetricsTableMigrator20to21Test {
       new ZKClientModule(),
       new DataFabricDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new TransactionMetricsModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

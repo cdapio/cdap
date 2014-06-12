@@ -11,6 +11,7 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -435,6 +436,7 @@ public class AggregatesTableTest {
                                              new ZKClientModule(),
                                              new DataFabricDistributedModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
+                                             new TransactionMetricsModule(),
                                              new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

@@ -10,6 +10,7 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.inject.AbstractModule;
@@ -42,12 +43,7 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DataFabricLevelDBModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-        }
-      });
+      new TransactionMetricsModule());
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 

@@ -27,6 +27,7 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -117,6 +118,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                    new ConfigModule(cConf, hConf),
                                                    new ZKClientModule(),
                                                    new DiscoveryRuntimeModule().getDistributedModules(),
+                                                   new TransactionMetricsModule(),
                                                    new AbstractModule() {
 
       @Override

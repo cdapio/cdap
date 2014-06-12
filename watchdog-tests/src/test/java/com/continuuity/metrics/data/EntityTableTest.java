@@ -15,6 +15,7 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -89,7 +90,8 @@ public class EntityTableTest {
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new ZKClientModule(),
                                              new DataFabricDistributedModule(),
-                                             new LocationRuntimeModule().getDistributedModules());
+                                             new LocationRuntimeModule().getDistributedModules(),
+                                             new TransactionMetricsModule());
 
     accessor = injector.getInstance(DataSetAccessor.class);
   }

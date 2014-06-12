@@ -19,6 +19,7 @@ import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -85,6 +86,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new ZKClientModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new TransactionMetricsModule(),
       new DataFabricModules().getDistributedModules());
 
     zkClient = injector.getInstance(ZKClientService.class);

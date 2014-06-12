@@ -12,6 +12,7 @@ import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTableTest;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -34,6 +35,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              new ConfigModule(conf, testHBase.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new TransactionMetricsModule(),
                                              new LocationRuntimeModule().getDistributedModules());
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }

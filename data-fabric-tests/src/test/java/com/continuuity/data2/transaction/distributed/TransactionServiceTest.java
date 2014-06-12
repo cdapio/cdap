@@ -10,8 +10,6 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
@@ -25,6 +23,7 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -77,12 +76,7 @@ public class TransactionServiceTest {
         new ZKClientModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getDistributedModules(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          }
-        },
+        new TransactionMetricsModule(),
         new DataFabricModules().getDistributedModules());
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -191,12 +185,12 @@ public class TransactionServiceTest {
                            new ConfigModule(cConf, hConf),
                            new ZKClientModule(),
                            new DiscoveryRuntimeModule().getDistributedModules(),
+                           new TransactionMetricsModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
                                bind(LocationFactory.class)
                                  .toInstance(new LocalLocationFactory(outPath));
-                               bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
                              }
                            });
     injector.getInstance(ZKClientService.class).startAndWait();

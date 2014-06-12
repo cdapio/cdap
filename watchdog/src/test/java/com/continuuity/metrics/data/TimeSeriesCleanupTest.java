@@ -9,6 +9,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -120,6 +121,7 @@ public class TimeSeriesCleanupTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
       new ConfigModule(cConf),
+      new TransactionMetricsModule(),
       new PrivateModule() {
 
         @Override
