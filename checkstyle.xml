@@ -359,7 +359,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
   </module>
 
   <module name="SuppressionFilter">
-    <property name="file" value="gradle/config/suppressions.xml"/>
+    <property name="file" value="suppressions.xml"/>
   </module>
 
   <module name="SuppressionCommentFilter">
