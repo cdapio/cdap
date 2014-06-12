@@ -33,6 +33,7 @@ define([], function () {
 
     unload: function () {
       this.set('token', '');
+      this.set('token_expires', '');
     }
 
   });
