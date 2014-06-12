@@ -794,6 +794,37 @@ WebAppServer.prototype.bindRoutes = function() {
       })
    });
 
+  this.app.post('/accesstoken', function (req, res) {
+     req.session.regenerate(function () {
+       var auth_uri = self.getAuthServerAddress();
+       if (auth_uri === null) {
+         res.send(500, "No Authentication service to connect to was found.");
+       } else {
+         var post = req.body;
+         var options = {
+           url: auth_uri,
+           auth: {
+             user: post.username,
+             password: post.password
+           },
+           rejectUnauthorized: false,
+           requestCert: true,
+           agent: false
+         }
+
+         request(options, function (nerr, nres, nbody) {
+           if (nerr || nres.statusCode !== 200) {
+             res.locals.errorMessage = "Please specify a valid username and password";
+             res.redirect('/#/accesstoken');
+           } else {
+             var nbody = JSON.parse(nbody);
+             res.send(nbody);
+           }
+         });
+       }
+     });
+  });
+
   /**
    * Check for new version.
    * http://www.continuuity.com/version

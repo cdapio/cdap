@@ -278,19 +278,24 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="access-token-view">
+    <form method="POST" action="/accesstoken" id="access-token-form">
     <table>
       <tr>
         <td>Username</td>
+        <td>{{input type="text" value=username class="username" name="username" }}</td>
       </tr>
       <tr>
         <td>Password</td>
+        <td>{{input type="password" value=password class="password" name="password" }}</td>
       </tr>
       <tr>
         <td></td>
         <td>
+        <button type="button" class="btn btn-blank btn-default" id="access-token-submit-btn">Login</button>
         </td>
       </tr>
     </table>
+    </form>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Overview">
