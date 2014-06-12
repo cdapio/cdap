@@ -272,9 +272,22 @@
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{#if token}}
-            <div>Your Access Token is: {{token}}</div>
-            <div>It expires in: {{token_expires}}</div>
-            <a href="data:text;charset=utf-8,{{token}}">Download</a>
+            <table>
+              <tr>
+                <td>Your Access Token is: </td>
+                <td>{{token}}</td>
+              </tr>
+              <tr>
+                <td>Expires in: </td>
+                <td>{{token_expires}}</td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="data:text;charset=utf-8,{{token}}">Download</a>
+                </td>
+                <td></td>
+              </tr>
+            </table>
           {{else}}
             <form id="login-form">
             <table>
