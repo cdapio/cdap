@@ -131,7 +131,7 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
   }
 
   @Test
-  public void testInvalidPathSucceeds() throws Exception {
+  public void testNonExistingPathSucceeds() throws Exception {
     for (String resource : nonExistingResources) {
       // strip metric name from end of resource since delete handler doesn't have that in the path
       resource = resource.substring(0, resource.lastIndexOf("/"));

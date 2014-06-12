@@ -8,10 +8,8 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Set;
@@ -20,13 +18,18 @@ import java.util.Set;
  * Base metrics handler that can validate metrics path for existence of elements like streams, datasets, and programs.
  */
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
-  private Set<String> existingServices;
+  private final Set<String> existingServices;
 
   protected BaseMetricsHandler(Authenticator authenticator) {
     super(authenticator);
-    getExistingServices();
+
+    this.existingServices = ImmutableSet.of(Constants.Service.METRICS,
+                                            Constants.Service.APP_FABRIC_HTTP,
+                                            Constants.Service.DATASET_EXECUTOR,
+                                            Constants.Service.DATASET_MANAGER,
+                                            Constants.Service.STREAM_HANDLER,
+                                            Constants.Service.GATEWAY);
   }
 
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
@@ -47,9 +50,9 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
     throws ServerException, MetricsPathException {
 
-    // todo: we want to check for existence of elements in the path, but be aware of overhead; for now we do only for
+    // TODO: we want to check for existence of elements in the path, but be aware of overhead; for now we do only for
     //       services. REACTOR-12
-    //       ee git history for how it was implemented before: on every metrics request it went to mds and respective
+    //       See git history for how it was implemented before: on every metrics request it went to mds and respective
     //       services to check for the existence. Which is not good.
 
     if (metricsRequestContext.getPathType() != null) {
@@ -65,16 +68,5 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private boolean serviceExists(String serviceName) {
     return existingServices.contains(serviceName);
   }
-
-  private void getExistingServices() {
-    existingServices = Sets.newHashSet();
-    existingServices.add(Constants.Service.METRICS);
-    existingServices.add(Constants.Service.APP_FABRIC_HTTP);
-    existingServices.add(Constants.Service.DATASET_EXECUTOR);
-    existingServices.add(Constants.Service.DATASET_MANAGER);
-    existingServices.add(Constants.Service.STREAM_HANDLER);
-    existingServices.add(Constants.Service.GATEWAY);
-  }
-
 
 }
