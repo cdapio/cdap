@@ -48,11 +48,11 @@
     <module>watchdog</module>
     <module>watchdog-tests</module>
     <module>app-fabric</module>
-    <module>unit-test</module>
     <module>security</module>
     <module>gateway</module>
     <module>explore-client</module>
     <module>explore</module>
+    <module>continuuity-test</module>
     <module>reactor-master</module>
     <module>singlenode</module>
     <module>web-app</module>

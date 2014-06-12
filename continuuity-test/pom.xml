@@ -12,7 +12,7 @@
     <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
-  <artifactId>unit-test</artifactId>
+  <artifactId>continuuity-test</artifactId>
   <name>Continuuity Unit Test Framework</name>
   <packaging>jar</packaging>
 
