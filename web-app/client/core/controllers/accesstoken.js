@@ -8,6 +8,7 @@ define([], function () {
 
     load: function () {
       this.set('warning', '');
+      this.set('username', '');
     },
 
     isValid: function () {
@@ -16,6 +17,14 @@ define([], function () {
         return false;
       }
       return true;
+    },
+
+    submit: function() {
+      var self = this;
+      console.log('here');
+      this.HTTP.post('accesstoken', {}, function(responseData, status) {
+        self.set('warning', responseData);
+      });
     },
 
     unload: function () {
