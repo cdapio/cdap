@@ -6,20 +6,10 @@ package com.continuuity.metrics.query;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.metadata.MetaDataEntry;
-import com.continuuity.metadata.MetaDataTable;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,14 +22,10 @@ import java.util.Set;
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
-  private final MetaDataTable metaDataTable;
   private Set<String> existingServices;
 
-
-  //TODO: Note: MetadataTable is introduced in the dependency as a temproary solution. REACTOR-12 jira has details
-  protected BaseMetricsHandler(Authenticator authenticator, MetaDataTable metaDataTable) {
+  protected BaseMetricsHandler(Authenticator authenticator) {
     super(authenticator);
-    this.metaDataTable = metaDataTable;
     getExistingServices();
   }
 
@@ -60,9 +46,11 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
    */
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
     throws ServerException, MetricsPathException {
-    String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
-    String accountId = getAuthenticatedAccountId(request);
-    // check for existance of elements in the path
+
+    // todo: we want to check for existence of elements in the path, but be aware of overhead; for now we do only for
+    //       services. REACTOR-12
+    //       ee git history for how it was implemented before: on every metrics request it went to mds and respective
+    //       services to check for the existence. Which is not good.
 
     if (metricsRequestContext.getPathType() != null) {
       if (metricsRequestContext.getPathType().equals(MetricsRequestParser.PathType.SERVICES)) {
@@ -72,184 +60,10 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
         return;
       }
     }
-
-    String tagName = metricsRequestContext.getTag();
-    if (tagName != null) {
-      switch (metricsRequestContext.getTagType()) {
-        case STREAM:
-          if (!streamExists(accountId, tagName)) {
-            throw new MetricsPathException("stream " + tagName + " not found");
-          }
-          break;
-        case DATASET:
-          if (!datasetExists(accountId, tagName)) {
-            throw new MetricsPathException("dataset " + tagName + " not found");
-          }
-          break;
-      }
-    }
-    String typeId = metricsRequestContext.getTypeId();
-    if (typeId != null) {
-      MetricsRequestParser.RequestType requestType = metricsRequestContext.getRequestType();
-      String requestId = metricsRequestContext.getRequestId();
-      String componentId = metricsRequestContext.getComponentId();
-
-      // if there was a flowlet in the context
-      if (componentId != null && requestType == MetricsRequestParser.RequestType.FLOWS) {
-        if (!flowletExists(accountId, typeId, requestId, componentId, apiKey)) {
-          String msg = String.format("application %s with flow %s and flowlet %s not found.",
-                                     typeId, requestId, componentId);
-          throw new MetricsPathException(msg);
-        }
-      } else if (requestType == MetricsRequestParser.RequestType.SERVICES) {
-        // todo: mock end-point currently, will add the checks once user services are implemented
-        return;
-      } else if (!programExists(requestType, accountId, typeId, requestId, apiKey)) {
-        String programMsg = (requestId == null || requestType == null) ? "" :
-          " with " + requestType.name().toLowerCase() + " " + requestId;
-        String msg = "application " + typeId + programMsg + " not found.";
-        throw new MetricsPathException(msg);
-      }
-    }
   }
 
   private boolean serviceExists(String serviceName) {
     return existingServices.contains(serviceName);
-  }
-
-  /**
-   * Check if the given stream exists.
-   *
-   * @param accountId accountId of the user.
-   * @param streamName name of the stream to check for.
-   * @return true if the stream exists, false if it does not.
-   * @throws ServerException if there was some problem looking up the stream.
-   */
-  private boolean streamExists(String accountId, String streamName) throws ServerException {
-    OperationContext context = new OperationContext(accountId);
-    try {
-      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "str", streamName);
-      return entry !=  null ? true : false;
-    } catch (OperationException e) {
-      throw new ServerException(e.getMessage(), e.getCause());
-    }
-  }
-
-  /**
-   * Check if the given dataset exists.
-   *
-   * @param accountId accountId of the user.
-   * @param datasetName name of the dataset to check for.
-   * @return true if the dataset exists, false if it does not.
-   * @throws ServerException if there was some problem looking up the dataset.
-   */
-  private boolean datasetExists(String accountId, String datasetName) throws ServerException {
-    OperationContext context = new OperationContext(accountId);
-    try {
-      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "ds", datasetName);
-      return entry !=  null ? true : false;
-    } catch (OperationException e) {
-      throw new ServerException(e.getMessage(), e.getCause());
-    }
-  }
-
-  /**
-   * Check if the app, flow, and flowlet exists.
-   *
-   * @param accountId accountId of the user.
-   * @param appId name of the application.
-   * @param flowId name of the flow.
-   * @param flowletId name of the flowlet.
-   * @param apiKey api key required for authentication.
-   * @return true if the app, flow, and flowlet exist, false if not.
-   * @throws ServerException if there was some problem looking up the flowlet.
-   */
-  private boolean flowletExists(String accountId, String appId, String flowId, String flowletId, String apiKey)
-    throws ServerException {
-    boolean exists = false;
-    OperationContext context = new OperationContext(accountId);
-    try {
-      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "app",
-                                              appId);
-      String appSpecfication = entry.getTextField("spec");
-      //TODO: The code below is not pretty. but will go away when REACTOR-12 is fixed.
-      JsonObject appSpec = new Gson().fromJson(appSpecfication, JsonObject.class);
-      JsonObject allFlows = appSpec.getAsJsonObject("flows");
-      if (allFlows != null) {
-        JsonObject flow = allFlows.getAsJsonObject(flowId);
-        if (flow != null) {
-          JsonObject flowlets = flow.getAsJsonObject("flowlets");
-          if (flowlets != null && flowlets.get(flowletId) != null) {
-            exists = true;
-          }
-        }
-      }
-      return exists;
-    } catch (OperationException e) {
-      throw new ServerException(e.getMessage(), e.getCause());
-    }
-  }
-
-  /**
-   * Check if the given type of program exists.
-   *
-   * @param type type of program, expected to be a flow, mapreduce or procedure.  If null, existence of just the
-   *             application will be checked.
-   * @param accountId accountId of the user.
-   * @param appId name of the application.
-   * @param programId name of the program.  If null, existence of just the application will be checked.
-   * @param apiKey api key required for authentication.
-   * @return true if the program exists, false if not.
-   * @throws ServerException
-   */
-  private boolean programExists(MetricsRequestParser.RequestType type, String accountId,
-                                String appId, String programId, String apiKey)
-    throws ServerException {
-    Preconditions.checkNotNull(appId, "must specify an app name to check existence for");
-    OperationContext context = new OperationContext(accountId);
-    boolean exists = false;
-    try {
-      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "app", appId);
-      if (entry != null) {
-        if (type == null || programId == null) {
-          // type and programId is null. So the look up is for app and it exists because the metadata entry is not null.
-          exists = true;
-        } else {
-          String spec = entry.getTextField("spec");
-          JsonObject appSpecfication = new Gson().fromJson(spec, JsonObject.class);
-          JsonObject programSpec = null;
-          switch (type) {
-            case MAPREDUCE:
-              programSpec = appSpecfication.getAsJsonObject("mapReduces");
-              break;
-            case PROCEDURES:
-              programSpec = appSpecfication.getAsJsonObject("procedures");
-              break;
-            case FLOWS:
-              programSpec = appSpecfication.getAsJsonObject("flows");
-              break;
-          }
-          if (programSpec != null) {
-            JsonObject program = programSpec.getAsJsonObject(programId);
-            if (program != null) {
-              exists = true;
-            }
-          }
-        }
-      }
-    } catch (OperationException e) {
-      throw new ServerException(e.getMessage(), e.getCause());
-    }
-    return exists;
-  }
-
-  private HttpRequest createRequest(HttpMethod method, String apiKey, String path) {
-    String uri = Constants.Gateway.GATEWAY_VERSION + path;
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, method, uri);
-    if (apiKey != null) {
-      request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
-    }
-    return request;
   }
 
   private void getExistingServices() {

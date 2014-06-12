@@ -24,22 +24,33 @@ import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -57,7 +68,8 @@ public class BaseMetricsQueryTest {
   protected static Store store;
   protected static LocationFactory locationFactory;
   protected static List<String> validResources;
-  protected static List<String> invalidResources;
+  protected static List<String> malformedResources;
+  protected static List<String> nonExistingResources;
 
   @ClassRule
   public static TemporaryFolder tempFolder = new TemporaryFolder();
@@ -148,8 +160,7 @@ public class BaseMetricsQueryTest {
       "/reactor/cluster/resources.total.storage?aggregate=true"
     );
 
-    invalidResources = ImmutableList.of(
-      // malformed context format.  for example, bad scope or bad spelling of 'flow' instead of 'flows'
+    malformedResources = ImmutableList.of(
       "/reacto/reads?aggregate=true",
       "/reactor/app/WordCount/reads?aggregate=true",
       "/reactor/apps/WordCount/flow/WordCounter/reads?aggregate=true",
@@ -158,8 +169,10 @@ public class BaseMetricsQueryTest {
       "/reactor/dataset/wordStats/reads?aggregate=true",
       "/reactor/datasets/wordStats/app/WordCount/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      // context format is fine but path elements (datsets, streams, programs) are non-existant
+      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
+    );
+
+    nonExistingResources = ImmutableList.of(
       "/reactor/apps/WordCont/reads?aggregate=true",
       "/reactor/apps/WordCount/flows/WordCouner/reads?aggregate=true",
       "/reactor/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
