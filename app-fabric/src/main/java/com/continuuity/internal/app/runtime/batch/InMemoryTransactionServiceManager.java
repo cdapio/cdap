@@ -11,6 +11,11 @@ import com.google.inject.Inject;
 public class InMemoryTransactionServiceManager extends InMemoryReactorServiceManager {
   private TransactionSystemClient txClient;
 
+  @Override
+  public boolean isLogAvailable() {
+    return false;
+  }
+
   @Inject
   public InMemoryTransactionServiceManager(TransactionSystemClient txClient) {
     this.txClient = txClient;

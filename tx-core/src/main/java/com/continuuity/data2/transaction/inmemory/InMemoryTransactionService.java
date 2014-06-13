@@ -5,8 +5,6 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.data2.transaction.TxConstants;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
@@ -95,9 +93,6 @@ public class InMemoryTransactionService extends AbstractService {
     try {
       txManager = txManagerProvider.get();
       txManager.startAndWait();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
-                                                                         Constants.Logging.COMPONENT_NAME,
-                                                                         Constants.Service.TRANSACTION));
       doRegister();
       LOG.info("Transaction Thrift service started successfully on " + getAddress());
       notifyStarted();
