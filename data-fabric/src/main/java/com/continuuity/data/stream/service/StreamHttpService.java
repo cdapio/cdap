@@ -38,7 +38,7 @@ public final class StreamHttpService extends AbstractIdleService {
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            StreamCoordinator streamCoordinator,
-                           @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers,
+                           @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
@@ -47,7 +47,7 @@ public final class StreamHttpService extends AbstractIdleService {
     this.httpService = NettyHttpService.builder()
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.STREAM_HANDLER)))
+                                                                Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)
@@ -59,13 +59,13 @@ public final class StreamHttpService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.STREAM_HANDLER));
+                                                                       Constants.Service.STREAMS));
     httpService.startAndWait();
 
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.STREAM_HANDLER;
+        return Constants.Service.STREAMS;
       }
 
       @Override
