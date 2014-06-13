@@ -186,7 +186,7 @@ public class HiveExploreServiceTest {
 
     Handle handle = hiveExploreService.execute("select key, value from kv_table");
     hiveExploreService.cancel(handle);
-    Assert.assertEquals(Status.State.CANCELED, getStatus(handle).getState());
+    Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
     hiveExploreService.close(handle);
 
     runCommand("drop table if exists kv_table",
@@ -200,7 +200,7 @@ public class HiveExploreServiceTest {
                                  List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
     Handle handle = hiveExploreService.execute(command);
 
-    Status status = getStatus(handle);
+    Status status = waitForCompletionStatus(handle);
     Assert.assertEquals(Status.State.FINISHED, status.getState());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
@@ -226,7 +226,7 @@ public class HiveExploreServiceTest {
     return newRows;
   }
 
-  private static Status getStatus(Handle handle) throws Exception {
+  private static Status waitForCompletionStatus(Handle handle) throws Exception {
     Status status;
     do {
       TimeUnit.MILLISECONDS.sleep(200);
