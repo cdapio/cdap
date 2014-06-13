@@ -59,7 +59,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   public Handle execute(String statement) throws ExploreException {
     try {
-      Map<String, String> sessionConf = getSessionConf();
+      Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());

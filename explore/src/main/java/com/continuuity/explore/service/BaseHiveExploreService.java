@@ -51,11 +51,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   /**
+   * Starts a long running transaction, and also sets up session configuration.
    * @return configuration for a hive session that contains a transaction, and serialized reactor configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
    * @throws IOException
    */
-  protected Map<String, String> getSessionConf() throws IOException {
+  protected Map<String, String> startSession() throws IOException {
     Map<String, String> sessionConf = Maps.newHashMap();
 
     Transaction tx = startTransaction();
