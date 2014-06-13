@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.pageViewAnalytics;
+package com.continuuity.examples.analytics;
 
 /**
  *  A PageView tracks users viewing from the referrer pages to the requested pages.
