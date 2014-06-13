@@ -6,8 +6,9 @@
 
   <parent>
     <groupId>com.continuuity</groupId>
-    <artifactId>reactor</artifactId>
+    <artifactId>parent</artifactId>
     <version>2.3.0-SNAPSHOT</version>
+    <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>continuuity-api</artifactId>
