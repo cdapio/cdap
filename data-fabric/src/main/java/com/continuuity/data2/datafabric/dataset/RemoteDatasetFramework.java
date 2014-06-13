@@ -16,6 +16,7 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.DatasetNamespace;
@@ -24,7 +25,6 @@ import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * {@link com.continuuity.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
@@ -44,8 +43,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
   private final DatasetServiceClient client;
-  private final Map<String, DatasetModule> modulesCache;
-  private final DatasetDefinitionRegistry registry;
+  private final DatasetDefinitionRegistryFactory registryFactory;
   private final LocationFactory locationFactory;
   private final DatasetNamespace namespace;
 
@@ -53,12 +51,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public RemoteDatasetFramework(DatasetServiceClient client,
                                 CConfiguration conf,
                                 LocationFactory locationFactory,
-                                DatasetDefinitionRegistry registry) {
+                                DatasetDefinitionRegistryFactory registryFactory) {
 
     this.client = client;
-    this.modulesCache = Maps.newHashMap();
     this.locationFactory = locationFactory;
-    this.registry = registry;
+    this.registryFactory = registryFactory;
     this.namespace = new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.USER);
   }
 
@@ -163,33 +160,31 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                               ClassLoader classLoader)
     throws DatasetManagementException {
 
+    DatasetDefinitionRegistry registry = registryFactory.create();
     List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
-      if (!modulesCache.containsKey(moduleMeta.getName())) {
-        if (moduleMeta.getJarLocation() != null) {
-          // adding dataset module jar to classloader
-          try {
-            classLoader = classLoader == null ?
+      if (moduleMeta.getJarLocation() != null) {
+        // adding dataset module jar to classloader
+        try {
+          classLoader = classLoader == null ?
             new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
             new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
-          } catch (IOException e) {
-            LOG.error("Was not able to init classloader for module {} while trying to load type {}",
-                      moduleMeta, implementationInfo, e);
-            throw Throwables.propagate(e);
-          }
-        }
-        DatasetModule module;
-        try {
-          Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-          module = DatasetModules.getDatasetModule(moduleClass);
-        } catch (Exception e) {
-          LOG.error("Was not able to load dataset module class {} while trying to load type {}",
-                    moduleMeta.getClassName(), implementationInfo, e);
+        } catch (IOException e) {
+          LOG.error("Was not able to init classloader for module {} while trying to load type {}",
+                    moduleMeta, implementationInfo, e);
           throw Throwables.propagate(e);
         }
-        modulesCache.put(moduleMeta.getName(), module);
-        module.register(registry);
       }
+      DatasetModule module;
+      try {
+        Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
+        module = DatasetModules.getDatasetModule(moduleClass);
+      } catch (Exception e) {
+        LOG.error("Was not able to load dataset module class {} while trying to load type {}",
+                  moduleMeta.getClassName(), implementationInfo, e);
+        throw Throwables.propagate(e);
+      }
+      module.register(registry);
     }
 
     return registry.get(implementationInfo.getName());
