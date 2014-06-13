@@ -48,13 +48,18 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
-      Object retStatus = getCliService().getOperationStatus(operationHandle);
-      OperationState operationState = (OperationState) retStatus;
+
+      Class cliServiceClass = getCliService().getClass();
+      Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
+      OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
       Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
-    } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+    } catch (Throwable e) {
+      if (e instanceof HiveSQLException) {
+        throw new ExploreException(e);
+      }
+      throw new RuntimeException(e);
     }
   }
 
