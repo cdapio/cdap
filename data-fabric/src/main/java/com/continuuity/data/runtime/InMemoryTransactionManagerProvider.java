@@ -15,7 +15,6 @@ import com.google.inject.Provider;
 public class InMemoryTransactionManagerProvider implements Provider<InMemoryTransactionManager> {
   private final CConfiguration conf;
   private final Provider<TransactionStateStorage> storageProvider;
-  private final MetricsCollectionService metricsCollectionService;
   private final TxMetricsCollector txMetricsCollector;
 
   @Inject
@@ -24,7 +23,6 @@ public class InMemoryTransactionManagerProvider implements Provider<InMemoryTran
                                             TxMetricsCollector txMetricsCollector) {
     this.conf = config;
     this.storageProvider = storageProvider;
-    this.metricsCollectionService = metricsCollectionService;
     this.txMetricsCollector = txMetricsCollector;
   }
 

@@ -185,7 +185,6 @@ public class InMemoryTransactionManager extends AbstractService {
 
   @Override
   public synchronized void doStart() {
-
     LOG.info("Starting transaction manager.");
     // start up the persistor
     persistor.startAndWait();
@@ -199,7 +198,6 @@ public class InMemoryTransactionManager extends AbstractService {
     startMetricsThread();
     // initialize the WAL if we did not force a snapshot in recoverState()
     initLog();
-
     notifyStarted();
   }
 
@@ -596,7 +594,6 @@ public class InMemoryTransactionManager extends AbstractService {
   public Transaction startShort(int timeoutInSeconds) {
     Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
     txMetricsCollector.gauge("start.short", 1);
-
     Stopwatch timer = startTimer();
     long currentTime = System.currentTimeMillis();
     long expiration = currentTime + 1000L * timeoutInSeconds;
@@ -616,7 +613,6 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-
     txMetricsCollector.gauge("start.short.latency", timeTaken(timer));
     return tx;
   }
