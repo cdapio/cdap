@@ -1,7 +1,6 @@
 package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.StringUtils;
-
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hive.common.util.HiveVersionInfo;
 
@@ -19,8 +18,8 @@ public abstract class HiveServer extends AbstractIdleService {
   public static void checkHiveVersion() {
     try {
       String version = HiveVersionInfo.getVersion();
-      for (int i = 0; i < SUPPORTED_VERSIONS.length; i++) {
-        if (version.startsWith(SUPPORTED_VERSIONS[i])) {
+      for (String supportedVersion : SUPPORTED_VERSIONS) {
+        if (version.startsWith(supportedVersion)) {
           return;
         }
       }

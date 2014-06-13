@@ -1,5 +1,7 @@
 package com.continuuity.data.runtime;
 
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -8,6 +10,7 @@ import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecut
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
@@ -17,13 +20,12 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableMo
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -45,7 +47,9 @@ public class DataSetServiceModules {
             "table", new TableModule())
         );
 
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
@@ -69,7 +73,9 @@ public class DataSetServiceModules {
             "orderedTable-memory", new LevelDBOrderedTableModule(),
             "table", new TableModule())
         );
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
@@ -81,7 +87,6 @@ public class DataSetServiceModules {
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
 
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
 
@@ -102,7 +107,9 @@ public class DataSetServiceModules {
             "orderedTable-hbase", new HBaseOrderedTableModule(),
             "table", new TableModule())
         );
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
@@ -114,7 +121,6 @@ public class DataSetServiceModules {
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
 
-        bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
 

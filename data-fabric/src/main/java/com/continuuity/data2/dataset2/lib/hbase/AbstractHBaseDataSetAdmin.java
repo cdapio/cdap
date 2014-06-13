@@ -4,9 +4,9 @@
 package com.continuuity.data2.dataset2.lib.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

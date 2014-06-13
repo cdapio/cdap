@@ -3,13 +3,13 @@ package com.continuuity.api.app;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import org.apache.twill.api.TwillApplication;
 
 /**
@@ -61,7 +61,7 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds a dataset instance to be created automatically (if not exists) by application components.
-   * See {@link com.continuuity.internal.data.dataset.DatasetDefinition} for more details.
+   * See {@link com.continuuity.api.dataset.DatasetDefinition} for more details.
    * @param datasetInstanceName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties

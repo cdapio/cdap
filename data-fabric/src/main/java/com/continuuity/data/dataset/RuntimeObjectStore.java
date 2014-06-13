@@ -12,7 +12,6 @@ import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.UnsupportedTypeException;
-
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 

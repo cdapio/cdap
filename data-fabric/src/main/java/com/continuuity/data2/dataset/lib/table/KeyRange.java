@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-
 import com.google.common.base.Objects;
 
 import java.util.Arrays;

@@ -36,10 +36,10 @@ public class TransactionPreHook implements ExecuteWithHookContext {
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       Transaction tx = txClient.startLong();
 
-      ConfigurationUtil.set(hiveConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE, tx);
-      ConfigurationUtil.set(hiveConf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE,
+      ConfigurationUtil.set(hiveConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
+      ConfigurationUtil.set(hiveConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE,
                             CConfiguration.create());
-      ConfigurationUtil.set(hiveConf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE,
+      ConfigurationUtil.set(hiveConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE,
                             HBaseConfiguration.create());
     }
   }

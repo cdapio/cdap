@@ -3,10 +3,7 @@ package com.continuuity.batch.stream;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ReactorTestBase;
-import com.continuuity.test.RuntimeMetrics;
-import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;

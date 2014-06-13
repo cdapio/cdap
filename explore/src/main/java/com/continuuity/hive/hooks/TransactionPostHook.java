@@ -27,7 +27,7 @@ public class TransactionPostHook implements ExecuteWithHookContext {
     if (TransactionPreHook.SELECT_QUERY.matcher(hookContext.getQueryPlan().getQueryString()).matches()) {
       LOG.debug("Entering post hive hook for hive query");
       HiveConf hiveConf = hookContext.getConf();
-      Transaction tx = ConfigurationUtil.get(hiveConf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE);
+      Transaction tx = ConfigurationUtil.get(hiveConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
       LOG.debug("Transaction retrieved in post hook: {}", tx);
 
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
