@@ -61,6 +61,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	C.Router.map(function() {
 
 		this.resource('Loading', { path: '/loading' } );
+    this.resource('ConnectionError', { path: '/connectionerror' } );
 		this.resource('Services', { path: '/services' } );
     this.resource('Service', { path: '/services/:service_id' }, function() {
       this.route('Log', { path: '/log' });
@@ -441,7 +442,9 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 
 		PageNotFoundRoute: Ember.Route.extend(),
 
-    LoadingRoute: basicRouter.extend()
+    LoadingRoute: basicRouter.extend(),
+
+    ConnectionErrorRoute: basicRouter.extend()
 
 	});
 
@@ -466,24 +469,23 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
  * Helper to make equality work in Handlebars templates.
  */
 Handlebars.registerHelper('ifCond', function (v1, operator, v2, options) {
-
   switch (operator) {
     case '==':
-      return (v1 == v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) == v2) ? options.fn(this) : options.inverse(this);
     case '===':
-      return (v1 === v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) === v2) ? options.fn(this) : options.inverse(this);
     case '<':
-      return (v1 < v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) < v2) ? options.fn(this) : options.inverse(this);
     case '<=':
-      return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) <= v2) ? options.fn(this) : options.inverse(this);
     case '>':
-      return (v1 > v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) > v2) ? options.fn(this) : options.inverse(this);
     case '>=':
-      return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) >= v2) ? options.fn(this) : options.inverse(this);
     case '&&':
-      return (v1 && v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) && v2) ? options.fn(this) : options.inverse(this);
     case '||':
-      return (v1 || v2) ? options.fn(this) : options.inverse(this);
+      return (this.get(v1) || v2) ? options.fn(this) : options.inverse(this);
     default:
       return options.inverse(this);
   }

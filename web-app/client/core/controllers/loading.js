@@ -45,6 +45,7 @@ define([], function () {
             if (C.Util.isLoadingComplete(statuses)) {
               setTimeout(function() {
                 clearInterval(self.interval);
+                $("#warning").hide();
                 self.transitionToRoute('Overview');
               }, 500);
             }

@@ -165,46 +165,42 @@
             </th>
             <th style="min-width: 100px;" class="logs-col">Logs</th>
             <th style="min-width: 200px;" class="instance-col">Instance</th>
-            <th style="min-width: 282px;" class="event-rate-col">Metrics</th>
           </thead>
           <tbody>
-          {{#each service in services}}
+          {{#each services}}
             <tr>
-              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{service.name}}</a>
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{this.name}}</a>
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if service.statusOk}}
+                {{#if this.statusOk}}
                   <img src="assets/img/running-icon.png" />
                 {{ else }}
-                  {{#if service.statusNotOk}}
+                  {{#if this.statusNotOk}}
                     <img src="assets/img/services-loading-blue.gif" />
                   {{ else }}
-                    {{service.status}}
+                    {{this.status}}
                   {{/if}}
                 {{/if}}
               </td>
               <td style="max-width: 100px;" class="status-col center-align">
-                {{#if service.logsStatusOk}}
-                {{#linkTo 'Service.Log' service}}<img src="assets/img/log-icon.png" />{{/linkTo}}
+                {{#if this.logsStatusOk}}
+                {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
                 {{ else }}
-                  {{service.logs}}
+                  {{this.logs}}
                 {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{service.cur}}</span></div>
+                  <div class="instance-num"><span>{{this.cur}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action decreaseInstance service.name service.cur }}>
+                    <a class="cursor-pointer" {{action decreaseInstance this.name this.cur }}>
                       <img src="assets/img/minus.png" />
                     </a>
-                    <a class="cursor-pointer" {{action increaseInstance service.name service.cur }}>
+                    <a class="cursor-pointer" {{action increaseInstance this.name this.cur }}>
                       <img src="assets/img/plus.png" />
                     </a>
                   </div>
                 </div>
-              </td>
-              <td style="max-width: 282px;" class="event-rate-col">
-
               </td>
             </tr>
           {{/each}}
@@ -1618,6 +1614,17 @@
       </div>
     </div>
   </script>
+
+  <script type="text/x-handlebars" data-template-name="ConnectionError">
+    <div id="services-loading">
+      <div class="services-box">
+        <div class="animated">
+          There seems to be a connection problem... <br />
+          Please wait.
+        </div>
+      </div>
+    </div>
+  </script>  
 
 </body>
 </html>

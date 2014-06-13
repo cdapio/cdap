@@ -50,9 +50,9 @@ define([], function () {
 				}
 				callback(result);
 
-			}).fail(function (req) {
+			}).fail(function (xhr, status, error) {
 
-				var error = req.responseText || '';
+				var error = xhr.responseText || '';
 
 				if (error) {
 
@@ -63,6 +63,7 @@ define([], function () {
           C.Util.showWarning('Encountered a connection problem.');
 
 				}
+				callback(error, status);
 
 			});
 		},

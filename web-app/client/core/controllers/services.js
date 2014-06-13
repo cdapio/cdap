@@ -31,7 +31,9 @@ define([], function () {
             statusOk: !!(service.status === 'OK'),
             statusNotOk: !!(service.status === 'NOT OK'),
             logsStatusOk: !!(service.logs === 'OK'),
-            logsStatusNotOk: !!(service.logs === 'NOT OK')
+            logsStatusNotOk: !!(service.logs === 'NOT OK'),
+            metricEndpoint: C.Util.getMetricEndpoint(service.name),
+            metricName: C.Util.getMetricName(service.name)
           }));
         });
         self.set('services', servicesArr);

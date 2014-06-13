@@ -1,5 +1,5 @@
 /*
- * Mapreduce Log Controller
+ * Service Log Controller
  */
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {

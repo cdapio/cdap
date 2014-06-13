@@ -1,24 +1,26 @@
 /*
- * Flow Model
+ * Service Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-  var Model = Em.Object.extend({
+  var Model = Element.extend({
+    type: 'Service',
+    plural: 'Services',
 
     init: function() {
-
       this._super();
       this.set('id', this.get('modelId'));
       this.set('description', this.get('meta') || 'Service');
     },
-
-    /*
-     * Runnable context path, used by user-defined metrics.
-     */
+    
     context: function () {
       return 'system/services/' + this.get('id');
-    }.property('id')
+    }.property('id'),
+
+    interpolate: function (path) {
+      return path.replace(/\{id\}/, this.get('id'));
+    }
 
   });
 
@@ -29,7 +31,9 @@ define([], function () {
       var self = this;
 
       var model = C.Service.create({
-        modelId: model_id
+        modelId: model_id,
+        metricEndpoint: C.Util.getMetricEndpoint(model_id),
+        metricName: C.Util.getMetricName(model_id)
       });
 
       return model;

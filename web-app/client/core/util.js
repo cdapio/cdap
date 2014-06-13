@@ -35,6 +35,43 @@ define([], function () {
     warningContainer: $('#warning'),
     warningSpan: $('#warning .warning-text'),
 
+    METRICS_ENDPOINTS: {
+      metrics: {
+        location: '/reactor/services/metrics/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      streams: {
+        location: '/reactor/services/stream.handler/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      transaction: {
+        location: '/reactor/transactions/inprogress?aggregate=true',
+        name: 'Inprogress'
+      },
+      appfabric: {
+        location: '/reactor/services/appfabric/request.received?aggregate=true',
+        name: 'Requests received'
+      },
+      datasets: {
+        location: '/reactor/services/dataset.manager/request.recieved?aggregate=true',
+        name: 'Requests received'
+      }
+    },
+
+    getMetricEndpoint: function (name) {
+      if (!(name in this.METRICS_ENDPOINTS)) {
+        return '';
+      }
+      return this.METRICS_ENDPOINTS[name].location || '';
+    },
+
+    getMetricName: function (name) {
+      if (!(name in this.METRICS_ENDPOINTS)) {
+        return '';
+      }
+      return this.METRICS_ENDPOINTS[name].name || '';
+    },
+
 		/**
      * Looks up unique id for a record or generates it and adds it to index.
      * @param  {string} recordName.
@@ -69,10 +106,9 @@ define([], function () {
      */
     showWarning: function(errorHTML) {
       var self = this;
-      self.warningContainer.fadeOut(100, function() {
-        self.warningSpan.html(errorHTML);
-        self.warningContainer.show();
-      });
+      self.warningContainer.hide()
+      self.warningSpan.html(errorHTML);
+      self.warningContainer.show();
     },
 
 		enc: function (string) {

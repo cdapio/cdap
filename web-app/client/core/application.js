@@ -169,7 +169,11 @@ function(Components, Embeddables, HTTP, Util) {
      * @param callback Function to execute.
      */
     checkReactorReadiness: function (routeHandler, callback) {
-      HTTP.create().rest('system/services/status', function (statuses) {
+      HTTP.create().rest('system/services/status', function (statuses, callStatus) {
+      	if (callStatus === 'error') {
+      		routeHandler.transitionTo('ConnectionError');
+      		return;
+      	}
         if (routeHandler !== undefined && 'routeName' in routeHandler) {
           if (C.Util.isLoadingComplete(statuses)) {
             routeHandler.transitionTo(routeHandler.routeName);
