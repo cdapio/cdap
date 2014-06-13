@@ -1,12 +1,13 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
@@ -34,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
