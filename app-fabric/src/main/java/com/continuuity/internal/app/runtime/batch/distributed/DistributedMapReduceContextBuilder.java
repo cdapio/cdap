@@ -10,6 +10,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -23,6 +24,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -63,7 +65,9 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           // txds2
           bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
 
-          bind(DatasetDefinitionRegistry.class).to(DefaultDatasetDefinitionRegistry.class);
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
           bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
 
           // For log publishing
