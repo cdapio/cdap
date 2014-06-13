@@ -67,7 +67,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return OperationHandle.
    * @throws ExploreException
    */
-  protected OperationHandle getOperationHandle(Handle handle) throws ExploreException {
+  protected OperationHandle getOperationHandle(Handle handle) throws ExploreException, HandleNotFoundException {
     OperationInfo opInfo = handleMap.get(handle);
     if (opInfo == null) {
       throw new HandleNotFoundException("Invalid handle provided");
@@ -81,7 +81,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @return SessionHandle.
    * @throws ExploreException
    */
-  protected SessionHandle getSessionHandle(Handle handle) throws ExploreException {
+  protected SessionHandle getSessionHandle(Handle handle) throws ExploreException, HandleNotFoundException {
     OperationInfo opInfo = handleMap.get(handle);
     if (opInfo == null) {
       throw new HandleNotFoundException("Invalid handle provided");

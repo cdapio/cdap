@@ -73,7 +73,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public Status getStatus(Handle handle) throws ExploreException {
+  public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
       OperationStatus operationStatus = cliService.getOperationStatus(operationHandle);
@@ -87,7 +87,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException {
+  public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting schema for handle {}", handle);
       ImmutableList.Builder<ColumnDesc> listBuilder = ImmutableList.builder();
@@ -106,7 +106,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException {
+  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
@@ -126,7 +126,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public void cancel(Handle handle) throws ExploreException {
+  public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Cancelling operation {}", handle);
       cliService.cancelOperation(getOperationHandle(handle));
@@ -136,7 +136,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public void close(Handle handle) throws ExploreException {
+  public void close(Handle handle) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Closing operation {}", handle);
       cliService.closeOperation(getOperationHandle(handle));
