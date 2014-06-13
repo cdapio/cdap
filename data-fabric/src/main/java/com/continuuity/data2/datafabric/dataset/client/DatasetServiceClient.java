@@ -1,5 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.client;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -11,8 +13,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

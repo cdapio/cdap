@@ -72,7 +72,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-
 import javax.annotation.Nullable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;

@@ -1,6 +1,5 @@
 package com.continuuity.data2.transaction.coprocessor;
 
-import com.google.common.base.Supplier;
 import org.apache.hadoop.conf.Configuration;
 
 /**

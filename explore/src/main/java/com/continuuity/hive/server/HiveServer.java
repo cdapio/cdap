@@ -1,7 +1,6 @@
 package com.continuuity.hive.server;
 
 import com.continuuity.common.conf.StringUtils;
-
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hive.common.util.HiveVersionInfo;
 

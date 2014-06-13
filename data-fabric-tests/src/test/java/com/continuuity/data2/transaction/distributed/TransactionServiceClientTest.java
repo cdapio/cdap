@@ -18,7 +18,6 @@ import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

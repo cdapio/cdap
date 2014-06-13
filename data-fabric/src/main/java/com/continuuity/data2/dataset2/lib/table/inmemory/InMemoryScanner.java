@@ -1,10 +1,10 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset2.lib.table.Result;
-import com.continuuity.internal.data.dataset.lib.table.Row;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.google.common.collect.Sets;
 
 import java.util.Collections;

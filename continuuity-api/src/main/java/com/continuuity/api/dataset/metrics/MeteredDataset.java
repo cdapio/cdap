@@ -1,7 +1,7 @@
-package com.continuuity.internal.data.dataset.metrics;
+package com.continuuity.api.dataset.metrics;
 
 /**
- * Defines interface to be implemented by {@link com.continuuity.internal.data.dataset.Dataset} implementations to
+ * Defines interface to be implemented by {@link com.continuuity.api.dataset.Dataset} implementations to
  * expose data ops metrics.
  */
 public interface MeteredDataset {

@@ -1,4 +1,4 @@
-package com.continuuity.internal.data.dataset;
+package com.continuuity.api.dataset;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
