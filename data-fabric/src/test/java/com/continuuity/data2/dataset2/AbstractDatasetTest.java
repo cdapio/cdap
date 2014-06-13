@@ -3,7 +3,7 @@ package com.continuuity.data2.dataset2;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -33,12 +33,12 @@ public class AbstractDatasetTest {
   public void setUp() throws Exception {
     framework = new InMemoryDatasetFramework();
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("table", new TableModule());
+    framework.addModule("core", new CoreDatasetsModule());
   }
 
   @After
   public void tearDown() throws Exception {
-    framework.deleteModule("table");
+    framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 
