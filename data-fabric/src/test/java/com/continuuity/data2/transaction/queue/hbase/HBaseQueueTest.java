@@ -9,6 +9,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
@@ -18,6 +20,7 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -26,6 +29,7 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
@@ -90,12 +94,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Customize test configuration
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+    cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
     cConf.unset(Constants.CFG_HDFS_USER);
-    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
     final DataFabricDistributedModule dfModule =
@@ -106,6 +110,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         @Override
         protected void configure() {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       });
 
@@ -116,6 +121,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                    new ConfigModule(cConf, hConf),
                                                    new ZKClientModule(),
                                                    new DiscoveryRuntimeModule().getDistributedModules(),
+                                                   new TransactionMetricsModule(),
                                                    new AbstractModule() {
 
       @Override

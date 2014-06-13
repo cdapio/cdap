@@ -131,14 +131,14 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
   }
 
   @Test
-  public void testInvalidPathReturns404() throws Exception {
-    for (String resource : invalidResources) {
+  public void testNonExistingPathSucceeds() throws Exception {
+    for (String resource : nonExistingResources) {
       // strip metric name from end of resource since delete handler doesn't have that in the path
       resource = resource.substring(0, resource.lastIndexOf("/"));
       // test GET request fails with 404
       HttpResponse response = MetricsServiceTestsSuite.doDelete("/v2/metrics" + resource);
-      Assert.assertEquals("DELETE " + resource + " did not return 404 as expected.",
-                          HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+      Assert.assertEquals("DELETE " + resource + " did not return 200 as expected.",
+                          HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     }
   }
 
