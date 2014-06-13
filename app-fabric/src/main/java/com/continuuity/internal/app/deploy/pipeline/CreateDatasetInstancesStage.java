@@ -46,6 +46,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
         // TODO: verify that the created instance is from this app
+        LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
       }
     }
 
