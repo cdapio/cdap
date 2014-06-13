@@ -167,8 +167,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
         // adding dataset module jar to classloader
         try {
           classLoader = classLoader == null ?
-          new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
-          new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
+            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation())) :
+            new JarClassLoader(locationFactory.create(moduleMeta.getJarLocation()), classLoader);
         } catch (IOException e) {
           LOG.error("Was not able to init classloader for module {} while trying to load type {}",
                     moduleMeta, implementationInfo, e);

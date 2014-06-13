@@ -33,7 +33,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // Bind TxDs2 stuff
 
-    install(new DataSetsModule());
+    install(new DataSetsModules().getInMemoryModule());
 
     bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
