@@ -79,16 +79,19 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
     return true;
   }
 
-  protected HttpResponseStatus checkGetStatus(String url) throws Exception {
+  protected final HttpResponseStatus checkGetStatus(String url) throws Exception {
+    HttpURLConnection httpConn = null;
     try {
-      URL endpoint = new URL(url);
-      HttpURLConnection httpConn = (HttpURLConnection) endpoint.openConnection();
+      httpConn = (HttpURLConnection) new URL(url).openConnection();
       httpConn.setConnectTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
       httpConn.setReadTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
       return (HttpResponseStatus.valueOf(httpConn.getResponseCode()));
-    } catch (SocketTimeoutException s) {
+    } catch (SocketTimeoutException e) {
       return HttpResponseStatus.NOT_FOUND;
+    } finally {
+      if (httpConn != null) {
+        httpConn.disconnect();
+      }
     }
   }
-
 }
