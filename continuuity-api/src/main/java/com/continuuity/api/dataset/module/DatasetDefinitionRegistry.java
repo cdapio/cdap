@@ -1,6 +1,6 @@
-package com.continuuity.internal.data.dataset.module;
+package com.continuuity.api.dataset.module;
 
-import com.continuuity.internal.data.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetDefinition;
 
 /**
  * Registry of dataset definitions and other components in a Datasets System.
@@ -9,7 +9,7 @@ import com.continuuity.internal.data.dataset.DatasetDefinition;
  */
 public interface DatasetDefinitionRegistry {
   /**
-   * Adds {@link DatasetDefinition} to the registry.
+   * Adds {@link com.continuuity.api.dataset.DatasetDefinition} to the registry.
    *
    * After it was added it is available thru {@link #get(String)} method.
    *
@@ -20,7 +20,7 @@ public interface DatasetDefinitionRegistry {
   /**
    * Gets {@link DatasetDefinition} previously added to the registry.
    * @param datasetTypeName dataset type name, should be same as
-   *                        {@link com.continuuity.internal.data.dataset.DatasetDefinition#getName()}
+   *                        {@link com.continuuity.api.dataset.DatasetDefinition#getName()}
    * @param <T> type of the returned {@link DatasetDefinition}
    * @return instance of {@link DatasetDefinition}
    */

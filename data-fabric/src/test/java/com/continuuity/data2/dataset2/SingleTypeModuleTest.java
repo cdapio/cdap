@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -92,7 +92,7 @@ public class SingleTypeModuleTest {
   }
 
   public static final class Bad8 extends AbstractDataset {
-    public Bad8(DatasetSpecification spec, 
+    public Bad8(DatasetSpecification spec,
                 @EmbeddedDataSet("foo") Dataset ds, 
                 int i,
                 @EmbeddedDataSet("bar") Dataset bar) {

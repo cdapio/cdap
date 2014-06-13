@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.util.Map;

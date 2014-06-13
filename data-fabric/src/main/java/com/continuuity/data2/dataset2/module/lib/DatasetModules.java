@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2.module.lib;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.data2.dataset2.SingleTypeModule;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 /**
  * Utility class for dealing with {@link DatasetModule}s

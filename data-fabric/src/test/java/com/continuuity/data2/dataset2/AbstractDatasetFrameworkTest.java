@@ -1,15 +1,15 @@
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.dataset2.module.lib.TableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import org.junit.Assert;
 import org.junit.Test;
 

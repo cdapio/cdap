@@ -1,10 +1,10 @@
-package com.continuuity.internal.data.dataset.lib.table;
+package com.continuuity.api.dataset.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.api.dataset.Dataset;
 
 import java.util.List;
 import javax.annotation.Nullable;

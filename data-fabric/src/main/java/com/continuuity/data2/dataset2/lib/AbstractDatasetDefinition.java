@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2.lib;
 
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
 
 /**
  * Basic abstract implementation of {@link DatasetDefinition}.

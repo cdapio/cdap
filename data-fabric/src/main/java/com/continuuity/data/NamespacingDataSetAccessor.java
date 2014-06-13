@@ -3,7 +3,6 @@ package com.continuuity.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
-
 import com.google.common.collect.Maps;
 
 import java.util.Collections;

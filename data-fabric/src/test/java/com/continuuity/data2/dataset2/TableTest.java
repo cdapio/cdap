@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.internal.data.dataset.lib.table.Row;
+import com.continuuity.api.dataset.table.Row;
 import org.junit.Assert;
 
 import java.util.Map;

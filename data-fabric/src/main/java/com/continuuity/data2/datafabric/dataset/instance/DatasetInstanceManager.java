@@ -1,14 +1,14 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
@@ -58,7 +58,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   /**
    * Adds dataset instance metadata
-   * @param spec {@link com.continuuity.internal.data.dataset.DatasetSpecification} of the dataset instance to be added
+   * @param spec {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset instance to be added
    */
   public void add(final DatasetSpecification spec) {
     getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
@@ -71,7 +71,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   /**
    * @param instanceName name of the dataset instance
-   * @return dataset instance's {@link com.continuuity.internal.data.dataset.DatasetSpecification}
+   * @return dataset instance's {@link com.continuuity.api.dataset.DatasetSpecification}
    */
   public DatasetSpecification get(final String instanceName) {
     return getTxExecutor().executeUnchecked(new Callable<DatasetSpecification>() {
@@ -83,7 +83,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
   }
 
   /**
-   * @return collection of {@link com.continuuity.internal.data.dataset.DatasetSpecification} of all dataset instances
+   * @return collection of {@link com.continuuity.api.dataset.DatasetSpecification} of all dataset instances
    */
   public Collection<DatasetSpecification> getAll() {
     return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
