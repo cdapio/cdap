@@ -70,6 +70,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
       Handle handle = Handle.fromId(id);
       exploreService.close(handle);
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -83,6 +85,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
       Handle handle = Handle.fromId(id);
       exploreService.cancel(handle);
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -98,6 +102,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("status", GSON.toJson(status));
       responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -114,6 +120,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("schema", GSON.toJson(schema));
       responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -132,6 +140,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("results", GSON.toJson(rows));
       responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (HandleNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
