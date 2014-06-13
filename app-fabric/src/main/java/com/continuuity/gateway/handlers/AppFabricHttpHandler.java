@@ -35,17 +35,22 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
@@ -60,8 +65,10 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
@@ -72,11 +79,13 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -128,7 +137,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -229,6 +237,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final StreamAdmin streamAdmin;
 
+  private final StreamConsumerFactory streamConsumerFactory;
+
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -239,7 +249,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final String archiveDir;
 
-  private final ManagerFactory managerFactory;
+  private final ManagerFactory<Location, ApplicationWithPrograms> managerFactory;
   private final Scheduler scheduler;
 
   private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -284,8 +294,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               DataSetAccessor dataSetAccessor, LocationFactory locationFactory,
-                              ManagerFactory managerFactory, StoreFactory storeFactory,
+                              ManagerFactory<Location, ApplicationWithPrograms> managerFactory,
+                              StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
+                              StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                               DataSetInstantiatorFromMetaData datasetInstantiator,
@@ -295,6 +307,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     this.streamAdmin = streamAdmin;
+    this.streamConsumerFactory = streamConsumerFactory;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
@@ -1786,8 +1799,25 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
     deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
 
-    // also delete all queue state of each flow
+    // Delete all streams and queues state of each flow
+    // TODO: This should be unified with the DeletedProgramHandlerStage
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
+
+      // Collects stream name to all group ids consuming that stream
+      Multimap<String, Long> streamGroups = HashMultimap.create();
+      for (FlowletConnection connection : flowSpecification.getConnections()) {
+        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
+          streamGroups.put(connection.getSourceName(), groupId);
+        }
+      }
+      // Remove all process states and group states for each stream
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+        streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
+      }
+
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
@@ -2918,6 +2948,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
+        // also add datasets2 instances
+        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        for (DatasetSpecification instance : instances) {
+          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+        }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
@@ -2952,7 +2987,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(dsName);
+            ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
+                                                                            DataSetAccessor.Namespace.USER);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespace.namespace(dsName));
             if (meta != null) {
               typeName = meta.getType().getName();
             }

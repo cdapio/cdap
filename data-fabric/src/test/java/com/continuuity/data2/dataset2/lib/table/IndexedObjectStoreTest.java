@@ -20,7 +20,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("core", CoreDatasetsModule.class);
+    addModule("core", new CoreDatasetsModule());
   }
 
   @After

@@ -4,23 +4,18 @@ import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 
 /**
  * DatasetDefinition for {@link MultiObjectStore}.
- *
- * @param <T> Type of object that the {@link MultiObjectStore} will store.
  */
-public class IndexedTableDefinition<T>
+public class IndexedTableDefinition
   extends AbstractDatasetDefinition<IndexedTable, DatasetAdmin> {
   
   private final DatasetDefinition<? extends Table, ?> tableDef;
@@ -32,28 +27,28 @@ public class IndexedTableDefinition<T>
   }
 
   @Override
-  public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties.getProperties("table")),
-                tableDef.configure("index", properties.getProperties("index")))
+      .datasets(tableDef.configure("d", properties),
+                tableDef.configure("i", properties))
       .build();
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("table")),
-      tableDef.getAdmin(spec.getSpecification("index"))
+      tableDef.getAdmin(spec.getSpecification("d")),
+      tableDef.getAdmin(spec.getSpecification("i"))
     ));
   }
 
   @Override
-  public IndexedTable getDataset(DatasetInstanceSpec spec) throws IOException {
-    DatasetInstanceSpec tableInstance = spec.getSpecification("table");
+  public IndexedTable getDataset(DatasetSpecification spec) throws IOException {
+    DatasetSpecification tableInstance = spec.getSpecification("d");
     Table table = tableDef.getDataset(tableInstance);
 
-    DatasetInstanceSpec indexTableInstance = spec.getSpecification("index");
+    DatasetSpecification indexTableInstance = spec.getSpecification("i");
     Table index = tableDef.getDataset(indexTableInstance);
 
     String columnToIndex = spec.getProperty("columnToIndex");

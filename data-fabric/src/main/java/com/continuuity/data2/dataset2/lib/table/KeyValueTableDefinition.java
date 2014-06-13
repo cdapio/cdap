@@ -3,9 +3,8 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetAdmin;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.google.common.base.Preconditions;
 
@@ -26,21 +25,21 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties.getProperties("table")))
+      .datasets(tableDef.configure("kv", properties))
       .build();
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("kv"));
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetInstanceSpec spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("table"));
+  public KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("kv"));
     return new KeyValueTable(spec.getName(), table);
   }
 }

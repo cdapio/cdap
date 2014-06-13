@@ -8,6 +8,8 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     testCompile files(this.project(':data-fabric').sourceSets.test.output)
     testCompile files(this.project(':data-fabric').sourceSets.test.runtimeClasspath)
+    testCompile files(this.project(':tx-core').sourceSets.test.output)
+    testCompile files(this.project(':tx-core').sourceSets.test.runtimeClasspath)
 
     compile elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
     testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.output)
@@ -46,7 +48,7 @@ dependencies {
 }
 
 test {
-    jvmArgs '-Xmx3048m'
+    jvmArgs '-Xmx4096m'
 }
 
 checkstyleMain {

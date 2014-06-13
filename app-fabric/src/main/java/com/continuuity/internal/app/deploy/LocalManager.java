@@ -11,6 +11,7 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import com.continuuity.internal.app.deploy.pipeline.DeployDatasetModulesStage;
@@ -20,6 +21,8 @@ import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -36,23 +39,31 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final LocationFactory locationFactory;
   private final CConfiguration configuration;
   private final Store store;
-  private final ProgramTerminator programTerminator;
+  private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
+
+  private final ProgramTerminator programTerminator;
+
   private final DatasetFramework datasetFramework;
 
+
+  @Inject
   public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
-                      ProgramTerminator programTerminator, QueueAdmin queueAdmin,
-                      DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework datasetFramework) {
+                      StreamConsumerFactory streamConsumerFactory,
+                      QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
+                      DatasetFramework datasetFramework,
+                      @Assisted ProgramTerminator programTerminator) {
+
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = storeFactory.create();
-    this.programTerminator = programTerminator;
+    this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
+    this.programTerminator = programTerminator;
     this.datasetFramework = datasetFramework;
   }
 
@@ -62,7 +73,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
-    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
+                                                    queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(input);

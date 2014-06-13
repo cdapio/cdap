@@ -23,4 +23,12 @@ public interface StreamConsumerFactory {
    */
   StreamConsumer create(QueueName streamName, String namespace, ConsumerConfig consumerConfig) throws IOException;
 
+  /**
+   * Deletes all consumer states for the given namespace and group ids.
+   *
+   * @param streamName name of the stream
+   * @param namespace application namespace for the state table.
+   * @param groupIds set of group id that needs to have states cleared.
+   */
+  void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException;
 }

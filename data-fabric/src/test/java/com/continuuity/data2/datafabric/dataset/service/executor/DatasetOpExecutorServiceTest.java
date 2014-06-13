@@ -28,10 +28,11 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.lib.table.Get;
 import com.continuuity.internal.data.dataset.lib.table.Put;
 import com.continuuity.internal.data.dataset.lib.table.Table;
@@ -116,12 +117,8 @@ public class DatasetOpExecutorServiceTest {
           bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         }
       }),
-      new AuthModule(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-      }
-    });
+      new AuthModule(),
+      new TransactionMetricsModule());
 
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();
@@ -165,7 +162,7 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp(bob, "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetInstanceProperties.EMPTY);
+    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
     testAdminOp(bob, "exists", 200, true);
 
     testAdminOp(dsNameSpace.namespace("joe"), "exists", 404, null);

@@ -6,7 +6,7 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
@@ -34,8 +34,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    registerModule("core", CoreDatasetsModule.class);
-    createInstance("keyValueTable", "test", DatasetInstanceProperties.EMPTY);
+    addModule("core", new CoreDatasetsModule());
+    createInstance("keyValueTable", "test", DatasetProperties.EMPTY);
     kvTable = getInstance("test");
   }
 
@@ -165,8 +165,8 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
   @Test
   public void testTransactionAcrossTables() throws Exception {
-    createInstance("keyValueTable", "t1", DatasetInstanceProperties.EMPTY);
-    createInstance("keyValueTable", "t2", DatasetInstanceProperties.EMPTY);
+    createInstance("keyValueTable", "t1", DatasetProperties.EMPTY);
+    createInstance("keyValueTable", "t2", DatasetProperties.EMPTY);
 
     final KeyValueTable table1 = getInstance("t1");
     final KeyValueTable table2 = getInstance("t2");
@@ -229,7 +229,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
   @Test
   public void testBatchReads() throws Exception {
-    createInstance("keyValueTable", "tBatch", DatasetInstanceProperties.EMPTY);
+    createInstance("keyValueTable", "tBatch", DatasetProperties.EMPTY);
 
     final KeyValueTable t = getInstance("tBatch");
     TransactionExecutor txnl = newTransactionExecutor(t);

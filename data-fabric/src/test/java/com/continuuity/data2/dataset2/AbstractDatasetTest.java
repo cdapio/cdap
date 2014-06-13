@@ -1,13 +1,13 @@
 package com.continuuity.data2.dataset2;
 
 import com.continuuity.data2.dataset2.module.lib.TableModule;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetProperties;
 import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -32,8 +32,8 @@ public class AbstractDatasetTest {
   @Before
   public void setUp() throws Exception {
     framework = new InMemoryDatasetFramework();
-    framework.register("inMemory", InMemoryTableModule.class);
-    framework.register("table", TableModule.class);
+    framework.addModule("inMemory", new InMemoryOrderedTableModule());
+    framework.addModule("table", new TableModule());
   }
 
   @After
@@ -42,15 +42,15 @@ public class AbstractDatasetTest {
     framework.deleteModule("inMemory");
   }
 
-  protected void registerModule(String name, Class<? extends DatasetModule> cls) throws DatasetManagementException {
-    framework.register(name, cls);
+  protected void addModule(String name, DatasetModule module) throws DatasetManagementException {
+    framework.addModule(name, module);
   }
 
   protected void deleteModule(String name) throws DatasetManagementException {
     framework.deleteModule(name);
   }
 
-  protected void createInstance(String type, String instanceName, DatasetInstanceProperties properties)
+  protected void createInstance(String type, String instanceName, DatasetProperties properties)
     throws IOException, DatasetManagementException {
 
     framework.addInstance(type, instanceName, properties);
@@ -72,26 +72,25 @@ public class AbstractDatasetTest {
   protected void createMultiObjectStoreInstance(String instanceName, Type type) throws Exception {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    createInstance("multiObjectStore", instanceName, new DatasetInstanceProperties.Builder()
-      .property("type", GSON.toJson(typeRep))
-      .property("schema", GSON.toJson(schema)).build());
+    createInstance("multiObjectStore", instanceName, DatasetProperties.builder()
+      .add("type", GSON.toJson(typeRep))
+      .add("schema", GSON.toJson(schema)).build());
   }
 
   protected void createObjectStoreInstance(String instanceName, Type type) throws Exception {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    createInstance("objectStore", instanceName, new DatasetInstanceProperties.Builder()
-      .property("type", GSON.toJson(typeRep))
-      .property("schema", GSON.toJson(schema)).build());
+    createInstance("objectStore", instanceName, DatasetProperties.builder()
+      .add("type", GSON.toJson(typeRep))
+      .add("schema", GSON.toJson(schema)).build());
   }
 
   protected void createIndexedObjectStoreInstance(String instanceName, Type type) throws Exception {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    createInstance("indexedObjectStore", instanceName, new DatasetInstanceProperties.Builder()
-      .property("objectStore", new DatasetInstanceProperties.Builder()
-        .property("type", GSON.toJson(typeRep))
-        .property("schema", GSON.toJson(schema)).build())
-      .build());
+    createInstance("indexedObjectStore", instanceName,
+                   DatasetProperties.builder()
+                     .add("type", GSON.toJson(typeRep))
+                     .add("schema", GSON.toJson(schema)).build());
   }
 }
