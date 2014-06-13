@@ -9,6 +9,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -40,7 +41,7 @@ public class TxServiceProvider extends TxProvider {
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
-      config.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT, port);
+      config.setInt(TxConstants.Service.CFG_DATA_TX_BIND_PORT, port);
 
       Injector baseInjector = Guice.createInjector (
         new ConfigModule(config),

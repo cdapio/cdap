@@ -1,5 +1,7 @@
 package com.continuuity.data2.dataset2.lib.table.leveldb;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -8,8 +10,7 @@ import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.dataset2.lib.table.BufferingOrederedTableTest;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -38,7 +39,8 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
     injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule());
+      new DataFabricLevelDBModule(),
+      new TransactionMetricsModule());
     service = injector.getInstance(LevelDBOcTableService.class);
   }
 
@@ -49,8 +51,8 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
 
   @Override
   protected LevelDBOrderedTableAdmin getTableAdmin(String name) throws IOException {
-    DatasetInstanceSpec spec =
-      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetInstanceProperties.EMPTY);
+    DatasetSpecification spec =
+      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
     return new LevelDBOrderedTableAdmin(spec, service);
   }
 

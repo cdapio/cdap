@@ -1,21 +1,21 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.lang.ClassLoaders;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +47,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final DatasetFramework mdsDatasetFramework;
   private final LocationFactory locationFactory;
 
-  private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
+  private final SortedMap<String, DatasetModule> defaultModules;
 
   /** dataset types metadata store */
   private DatasetTypeMDS mds;
@@ -61,7 +61,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   public DatasetTypeManager(DatasetFramework mdsDatasetFramework,
                             TransactionSystemClient txSystemClient,
                             LocationFactory locationFactory,
-                            SortedMap<String, Class<? extends DatasetModule>> defaultModules) {
+                            SortedMap<String, DatasetModule> defaultModules) {
     this.mdsDatasetFramework = mdsDatasetFramework;
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
@@ -72,7 +72,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
     OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.type", "orderedTable",
-                                                         DatasetInstanceProperties.EMPTY, null);
+                                                         DatasetProperties.EMPTY, null);
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);
 
@@ -116,8 +116,8 @@ public class DatasetTypeManager extends AbstractIdleService {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
             cl = jarLocation == null ? this.getClass().getClassLoader() : new JarClassLoader(jarLocation);
             @SuppressWarnings("unchecked")
-            Class<DatasetModule> moduleClass = (Class<DatasetModule>) ClassLoaders.loadClass(className, cl, this);
-            module = moduleClass.newInstance();
+            Class clazz = ClassLoaders.loadClass(className, cl, this);
+            module = DatasetModules.getDatasetModule(clazz);
           } catch (Exception e) {
             LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
                       className, name, jarLocation);
@@ -144,6 +144,7 @@ public class DatasetTypeManager extends AbstractIdleService {
                                                                reg.getTypes(), moduleDependencies);
           mds.write(moduleMeta);
         }
+
       });
     } catch (TransactionFailureException e) {
       if (e.getCause() != null && e.getCause() instanceof DatasetModuleConflictException) {
@@ -277,10 +278,10 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   private void deployDefaultModules() {
     // adding default modules to be available in dataset manager service
-    for (Map.Entry<String, Class<? extends DatasetModule>> module : defaultModules.entrySet()) {
+    for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        addModule(module.getKey(), module.getValue().getName(), null);
+        addModule(module.getKey(), module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.info("Not adding " + module.getKey() + " module: it already exists");

@@ -84,7 +84,6 @@ dependencies {
     compile libraries.netty
     compile libraries.apache_http_core
     compile libraries.apache_http_client
-    compile libraries.http_client
 
     testCompile libraries.hadoop_minicluster
 

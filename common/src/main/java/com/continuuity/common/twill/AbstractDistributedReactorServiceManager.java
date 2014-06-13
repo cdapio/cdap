@@ -3,22 +3,21 @@ package com.continuuity.common.twill;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.ning.http.client.Response;
-import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract class that can be extended by individual Reactor Services to implement their management methods.
  */
 public abstract class AbstractDistributedReactorServiceManager implements ReactorServiceManager {
-  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+  private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
   protected final long discoveryTimeout;
 
   protected CConfiguration cConf;
@@ -80,22 +79,19 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
     return true;
   }
 
-  protected HttpResponseStatus checkGetStatus(String url) throws Exception {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) SERVICE_PING_RESPONSE_TIMEOUT)
-      .build();
-
+  protected final HttpResponseStatus checkGetStatus(String url) throws Exception {
+    HttpURLConnection httpConn = null;
     try {
-      Future<Response> future = client.get();
-      Response response = future.get(SERVICE_PING_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      return HttpResponseStatus.valueOf(response.getStatusCode());
-    } catch (Exception e) {
-      Throwables.propagate(e);
+      httpConn = (HttpURLConnection) new URL(url).openConnection();
+      httpConn.setConnectTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
+      httpConn.setReadTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
+      return (HttpResponseStatus.valueOf(httpConn.getResponseCode()));
+    } catch (SocketTimeoutException e) {
+      return HttpResponseStatus.NOT_FOUND;
     } finally {
-      client.close();
+      if (httpConn != null) {
+        httpConn.disconnect();
+      }
     }
-    return HttpResponseStatus.NOT_FOUND;
   }
-
 }

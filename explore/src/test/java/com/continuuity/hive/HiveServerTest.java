@@ -2,7 +2,6 @@ package com.continuuity.hive;
 
 import com.continuuity.hive.client.HiveClient;
 import com.continuuity.hive.server.HiveServer;
-
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;

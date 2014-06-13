@@ -825,8 +825,13 @@
     </property>
     <property>
         <name>reactor.explore.enabled</name>
-        <value>true</value>
+        <value>false</value>
     </property>
+    <property>
+        <name>hive.local.data.dir</name>
+        <value>${local.data.dir}/hive</value>
+    </property>
+
 
     <!--
         External Authentication Settings

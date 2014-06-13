@@ -1,12 +1,12 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
@@ -30,7 +30,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
+  public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
     DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
@@ -39,7 +39,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetInstanceSpec spec = def.configure(instanceName, props);
+    DatasetSpecification spec = def.configure(instanceName, props);
     DatasetAdmin admin = def.getAdmin(spec);
     admin.create();
 
@@ -47,7 +47,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception {
+  public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
     DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
 
     if (def == null) {

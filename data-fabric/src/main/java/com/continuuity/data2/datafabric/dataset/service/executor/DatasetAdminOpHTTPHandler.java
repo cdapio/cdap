@@ -1,5 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -8,10 +12,6 @@ import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -71,7 +71,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
     LOG.info("Creating dataset instance {}, type meta: {}, props: {}", name, typeMetaHeader, propsHeader);
 
-    DatasetInstanceProperties props = GSON.fromJson(propsHeader, DatasetInstanceProperties.class);
+    DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
     DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
@@ -83,7 +83,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    DatasetInstanceSpec spec = def.configure(name, props);
+    DatasetSpecification spec = def.configure(name, props);
     DatasetAdmin admin = def.getAdmin(spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
@@ -101,7 +101,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
     LOG.info("Dropping dataset with spec: {}, type meta: {}", specHeader, typeMetaHeader);
 
-    DatasetInstanceSpec spec = GSON.fromJson(specHeader, DatasetInstanceSpec.class);
+    DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
     DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);

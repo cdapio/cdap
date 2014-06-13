@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsServiceManager extends AbstractDistributedReactorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsServiceManager.class);
-  private DiscoveryServiceClient discoveryServiceClient;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public MetricsServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,

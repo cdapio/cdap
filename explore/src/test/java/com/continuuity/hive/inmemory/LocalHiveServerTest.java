@@ -16,10 +16,11 @@ import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+
+import java.io.File;
 
 /**
  *
@@ -35,18 +36,20 @@ public class LocalHiveServerTest extends HiveServerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     conf.set(Constants.Hive.SERVER_ADDRESS, "localhost");
+    conf.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+             new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
     Configuration hConf = new Configuration();
 
     Injector injector = Guice.createInjector(
         new DataFabricInMemoryModule(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ConfigModule(conf, hConf),
-        new HiveRuntimeModule(conf).getInMemoryModules(),
+        new HiveRuntimeModule().getInMemoryModules(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getInMemoryModule(),
         new AuthModule(),
-        new HiveClientModule(conf));
+        new HiveClientModule());
     hiveServer = injector.getInstance(HiveServer.class);
     hiveMetastore = injector.getInstance(HiveMetastore.class);
     hiveClient = injector.getInstance(HiveClient.class);

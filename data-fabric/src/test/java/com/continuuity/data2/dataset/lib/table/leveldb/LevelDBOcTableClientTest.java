@@ -11,6 +11,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -39,7 +40,8 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
     injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
-      new DataFabricLevelDBModule()
+      new DataFabricLevelDBModule(),
+      new TransactionMetricsModule()
     );
     service = injector.getInstance(LevelDBOcTableService.class);
   }

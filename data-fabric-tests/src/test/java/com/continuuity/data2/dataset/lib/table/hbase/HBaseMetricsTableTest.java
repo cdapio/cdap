@@ -11,6 +11,8 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTableTest;
+import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -28,11 +30,12 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     testHBase.startHBase();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    conf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
                                              new ConfigModule(conf, testHBase.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new TransactionMetricsModule(),
                                              new LocationRuntimeModule().getDistributedModules());
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }

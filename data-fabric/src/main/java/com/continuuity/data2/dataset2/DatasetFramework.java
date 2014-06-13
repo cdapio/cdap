@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetModule;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -15,8 +15,8 @@ import javax.annotation.Nullable;
  * Typical usage example:
  * <tt>
  *   DatasetFramework datasetFramework = ...;
- *   datasetFramework.register("myDatasets", MyDatasetModule.class);
- *   datasetFramework.addInstance("myTable", "table", DatasetInstanceProperties.EMPTY);
+ *   datasetFramework.addModule("myDatasets", MyDatasetModule.class);
+ *   datasetFramework.addInstance("myTable", "table", DatasetProperties.EMPTY);
  *   TableAdmin admin = datasetFramework.getAdmin("myTable");
  *   admin.create();
  *   Table table = datasetFramework.getDataset("myTable");
@@ -30,13 +30,13 @@ import javax.annotation.Nullable;
 public interface DatasetFramework {
 
   /**
-   * Registers dataset types by adding dataset module to the system.
+   * Adds dataset types by adding dataset module to the system.
    * @param moduleName dataset module name
-   * @param moduleClass dataset module class
+   * @param module dataset module
    * @throws ModuleConflictException when module with same name is already registered
    * @throws DatasetManagementException in case of problems
    */
-  void register(String moduleName, Class<? extends DatasetModule> moduleClass)
+  void addModule(String moduleName, DatasetModule module)
     throws DatasetManagementException;
 
   /**
@@ -52,8 +52,8 @@ public interface DatasetFramework {
    * Adds information about dataset instance to the system.
    *
    * This uses
-   * {@link com.continuuity.internal.data.dataset.DatasetDefinition#configure(String, DatasetInstanceProperties)}
-   * method to build {@link com.continuuity.internal.data.dataset.DatasetInstanceSpec} which describes dataset instance
+   * {@link com.continuuity.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link com.continuuity.api.dataset.DatasetSpecification} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
    * NOTE: It does NOT create physical dataset automatically, use {@link #getAdmin(String, ClassLoader)} to obtain
@@ -65,7 +65,7 @@ public interface DatasetFramework {
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void addInstance(String datasetTypeName, String datasetInstanceName, DatasetInstanceProperties props)
+  void addInstance(String datasetTypeName, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -112,7 +112,7 @@ public interface DatasetFramework {
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
-   * @throws IOException when there's trouble to instantiate {@link Dataset}
+   * @throws IOException when there's trouble to instantiate {@link com.continuuity.api.dataset.Dataset}
    */
   @Nullable
   <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable ClassLoader classLoader)

@@ -11,7 +11,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -19,6 +18,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerTestBase;
@@ -65,6 +65,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new TransactionMetricsModule(),
       Modules.override(new DataFabricDistributedModule()).with(new AbstractModule() {
 
         @Override

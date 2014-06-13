@@ -1,12 +1,12 @@
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -24,13 +24,13 @@ import java.io.IOException;
 public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
-  private final DatasetInstanceSpec spec;
+  private final DatasetSpecification spec;
   // todo: datasets should not depend on continuuity configuration!
   private final CConfiguration conf;
 
   private final LocationFactory locationFactory;
 
-  public HBaseOrderedTableAdmin(DatasetInstanceSpec spec,
+  public HBaseOrderedTableAdmin(DatasetSpecification spec,
                                 Configuration hConf,
                                 HBaseTableUtil tableUtil,
                                 CConfiguration conf,
@@ -114,8 +114,8 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
-    if (!conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+    if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                         TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
     }
 

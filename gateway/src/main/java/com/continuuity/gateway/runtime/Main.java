@@ -1,6 +1,5 @@
 package com.continuuity.gateway.runtime;
 
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -14,11 +13,9 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
-import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.util.concurrent.Futures;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -77,15 +74,7 @@ public class Main extends DaemonMain {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new GatewayModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-          // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
-        }
-      }
+      new LoggingModules().getDistributedModules()
     );
 
     zkClientService = injector.getInstance(ZKClientService.class);

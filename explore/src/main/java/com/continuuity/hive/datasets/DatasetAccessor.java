@@ -1,6 +1,7 @@
 package com.continuuity.hive.datasets;
 
 import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.dataset.Dataset;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -9,7 +10,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
 import com.continuuity.hive.context.TxnCodec;
-import com.continuuity.internal.data.dataset.Dataset;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 
@@ -30,7 +30,7 @@ public class DatasetAccessor {
 
     if (rowScannable instanceof TransactionAware) {
       // TODO: do we have to commit transaction?
-      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE);
+      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
         ((TransactionAware) rowScannable).startTx(tx);
     }
 

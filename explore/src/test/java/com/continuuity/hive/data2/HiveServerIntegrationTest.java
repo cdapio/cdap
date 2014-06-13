@@ -1,5 +1,7 @@
 package com.continuuity.hive.data2;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -10,7 +12,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
@@ -20,8 +22,6 @@ import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -49,6 +50,8 @@ public class HiveServerIntegrationTest {
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+              new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
     cConf.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
     Injector injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -65,11 +68,11 @@ public class HiveServerIntegrationTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
-    datasetFramework.register(moduleName, InMemoryTableModule.class);
-    datasetFramework.register("keyValue", KeyValueTableDefinition.KeyValueTableModule.class);
+    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
+    datasetFramework.addModule("keyValue", new KeyValueTableDefinition.KeyValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetInstanceProperties.EMPTY);
+    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
@@ -133,7 +136,7 @@ public class HiveServerIntegrationTest {
   @Test
   public void testHiveDatasetsJoin() throws Exception {
     // Performing admin operations to create another dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table_2", DatasetInstanceProperties.EMPTY);
+    datasetFramework.addInstance("keyValueTable", "my_table_2", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table_2", null);
     admin.create();
 
@@ -191,8 +194,8 @@ public class HiveServerIntegrationTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule(configuration).getInMemoryModules(),
-      new HiveClientModule(configuration)
+      new HiveRuntimeModule().getInMemoryModules(),
+      new HiveClientModule()
     );
   }
 

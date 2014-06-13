@@ -1,14 +1,14 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
@@ -45,7 +45,7 @@ public class DatasetInstanceManager extends AbstractIdleService {
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
     OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.instance", "orderedTable",
-                                                         DatasetInstanceProperties.EMPTY, null);
+                                                         DatasetProperties.EMPTY, null);
 
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetInstanceMDS(table);
@@ -58,9 +58,9 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   /**
    * Adds dataset instance metadata
-   * @param spec {@link DatasetInstanceSpec} of the dataset instance to be added
+   * @param spec {@link com.continuuity.api.dataset.DatasetSpecification} of the dataset instance to be added
    */
-  public void add(final DatasetInstanceSpec spec) {
+  public void add(final DatasetSpecification spec) {
     getTxExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -71,24 +71,24 @@ public class DatasetInstanceManager extends AbstractIdleService {
 
   /**
    * @param instanceName name of the dataset instance
-   * @return dataset instance's {@link DatasetInstanceSpec}
+   * @return dataset instance's {@link com.continuuity.api.dataset.DatasetSpecification}
    */
-  public DatasetInstanceSpec get(final String instanceName) {
-    return getTxExecutor().executeUnchecked(new Callable<DatasetInstanceSpec>() {
+  public DatasetSpecification get(final String instanceName) {
+    return getTxExecutor().executeUnchecked(new Callable<DatasetSpecification>() {
       @Override
-      public DatasetInstanceSpec call() throws Exception {
+      public DatasetSpecification call() throws Exception {
         return mds.get(instanceName);
       }
     });
   }
 
   /**
-   * @return collection of {@link DatasetInstanceSpec} of all dataset instances
+   * @return collection of {@link com.continuuity.api.dataset.DatasetSpecification} of all dataset instances
    */
-  public Collection<DatasetInstanceSpec> getAll() {
-    return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetInstanceSpec>>() {
+  public Collection<DatasetSpecification> getAll() {
+    return getTxExecutor().executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
       @Override
-      public Collection<DatasetInstanceSpec> call() throws Exception {
+      public Collection<DatasetSpecification> call() throws Exception {
         return mds.getAll();
       }
     });
