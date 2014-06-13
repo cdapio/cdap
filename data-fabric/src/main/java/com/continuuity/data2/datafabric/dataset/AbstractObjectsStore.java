@@ -1,10 +1,9 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.lib.table.Row;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
-
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;

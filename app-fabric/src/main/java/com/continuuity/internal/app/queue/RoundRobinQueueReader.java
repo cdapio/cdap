@@ -2,7 +2,6 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
-import com.continuuity.data2.OperationException;
 import com.google.common.collect.Iterables;
 
 import java.io.IOException;

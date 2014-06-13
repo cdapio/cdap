@@ -1,7 +1,6 @@
 package com.continuuity.hive.datasets;
 
 import com.continuuity.common.conf.Constants;
-
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.SerDe;

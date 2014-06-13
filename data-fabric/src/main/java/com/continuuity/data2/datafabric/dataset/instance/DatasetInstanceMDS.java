@@ -1,9 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.datafabric.dataset.AbstractObjectsStore;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 
 import java.util.Collection;
 import java.util.Map;

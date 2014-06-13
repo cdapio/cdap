@@ -17,3 +17,8 @@ include 'watchdog-tests'
 
 // Test framework
 include 'test-framework:performance'
+
+// transactions
+include 'tx-core'
+include 'tx-hbase-compat-0.94'
+include 'tx-hbase-compat-0.96'

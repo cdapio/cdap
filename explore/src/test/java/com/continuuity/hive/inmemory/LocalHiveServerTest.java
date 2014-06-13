@@ -16,7 +16,6 @@ import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;

@@ -21,6 +21,25 @@
       <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>data-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>hbase-compat-0.94</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>hbase-compat-0.94</artifactId>
+      <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -29,7 +48,13 @@
       <artifactId>watchdog</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency><dependency>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
     </dependency>
@@ -38,6 +63,11 @@
       <artifactId>hbase</artifactId>
       <classifier>tests</classifier>
     </dependency>
+
+    <!--<dependency>-->
+      <!--<groupId>org.apache.hbase</groupId>-->
+      <!--<artifactId>hbase-testing-util</artifactId>-->
+    <!--</dependency>-->
   </dependencies>
 
 </project>

@@ -23,6 +23,11 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
+      <artifactId>tx-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
       <artifactId>http</artifactId>
     </dependency>
     <dependency>

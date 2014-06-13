@@ -6,6 +6,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -36,15 +37,15 @@ public class RemoteTxProvider extends TxProvider {
       cConf.set(Constants.Zookeeper.QUORUM, zkQuorum);
     }
     if (host != null) {
-      cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS, host);
+      cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_ADDRESS, host);
       // don't use zookeeper-based service discovery if tx service host is given
       cConf.unset(Constants.Zookeeper.QUORUM);
     }
     if (port != -1) {
-      cConf.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS, port);
+      cConf.setInt(TxConstants.Service.CFG_DATA_TX_BIND_ADDRESS, port);
     }
     if (timeout != -1) {
-      cConf.setInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_TIMEOUT, timeout);
+      cConf.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_TIMEOUT, timeout);
     }
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf),

@@ -1,7 +1,6 @@
 package com.continuuity.data;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
-
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

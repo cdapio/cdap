@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 
 /**

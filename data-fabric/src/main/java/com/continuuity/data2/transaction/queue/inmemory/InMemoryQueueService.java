@@ -1,7 +1,6 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.queue.QueueName;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
