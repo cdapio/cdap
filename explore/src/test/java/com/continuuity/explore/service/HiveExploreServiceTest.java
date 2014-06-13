@@ -59,6 +59,7 @@ public class HiveExploreServiceTest {
     System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
     hiveExploreService = injector.getInstance(HiveExploreService.class);
     hiveExploreService.start();
+    TimeUnit.SECONDS.sleep(10);
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";

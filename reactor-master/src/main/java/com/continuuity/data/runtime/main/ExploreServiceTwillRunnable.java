@@ -10,6 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.explore.service.ExploreHttpService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
@@ -48,7 +49,7 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     LOG.info("Initializing runnable {}", name);
 
     // Set the host name to the one provided by Twill
-    // TODO move the constant
+    // TODO move the constant or use another one
     cConf.set(Constants.Hive.SERVER_ADDRESS, context.getHost().getHostName());
 
     // NOTE: twill client will try to load all the classes present here - including hive classes
@@ -73,5 +74,6 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(ExploreService.class));
+    services.add(injector.getInstance(ExploreHttpService.class));
   }
 }

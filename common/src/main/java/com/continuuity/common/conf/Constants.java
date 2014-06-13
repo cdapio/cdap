@@ -20,6 +20,7 @@ public final class Constants {
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String HIVE = "hive.server";
+    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.http.user.service";
   }
 
   /**

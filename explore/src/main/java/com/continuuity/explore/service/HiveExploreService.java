@@ -33,10 +33,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.hive.service.cli.thrift.TCLIServiceConstants.TYPE_NAMES;
 
@@ -69,7 +71,7 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
     cliService.init(hiveConf);
     cliService.start();
 
-
+    TimeUnit.SECONDS.sleep(5);
   }
 
   @Override
@@ -132,8 +134,12 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
       LOG.debug("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        RowSet rowSet = cliService.fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        TRowSet tRowSet = rowSet.toTRowSet();
+        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
+        // so that the compiler does not make assumption on the return type of fetchResults
+        Object rowSet = cliService.fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
         ImmutableList.Builder<Row> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
@@ -149,6 +155,8 @@ public class HiveExploreService extends AbstractIdleService implements ExploreSe
       }
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
+    } catch (Throwable e) {
+      throw new RuntimeException(e);
     }
   }
 

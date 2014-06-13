@@ -1,5 +1,6 @@
 package com.continuuity.explore.service;
 
+import com.google.common.base.Throwables;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
@@ -32,15 +33,22 @@ public class HiveCompat {
   }
 
   public static Status getStatus(CLIService cliService, OperationHandle operationHandle) throws HiveSQLException {
-    Object status = cliService.getOperationStatus(operationHandle);
 
-    // Hive 12 returns OperationState, and Hive 13 returns OperationStatus
-    if (!hasOperationStatusClass) {
-      OperationState operationState = (OperationState) status;
-      return new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
-    } else {
-      OperationStatus operationStatus = (OperationStatus) status;
-      return new Status(Status.State.valueOf(operationStatus.getState().toString()), operationHandle.hasResultSet());
+    try {
+      Class cliServiceClass = cliService.getClass();
+      Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
+
+      // Hive 12 returns OperationState, and Hive 13 returns OperationStatus
+      if (!hasOperationStatusClass) {
+        OperationState operationState = (OperationState) m.invoke(cliService, operationHandle);
+        return new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      } else {
+        OperationStatus operationStatus = (OperationStatus) m.invoke(cliService, operationHandle);
+        return new Status(Status.State.valueOf(operationStatus.getState().toString()), operationHandle.hasResultSet());
+      }
+    } catch (Throwable e) {
+      LOG.warn("Got exception", e);
+      throw new RuntimeException(e);
     }
   }
 }

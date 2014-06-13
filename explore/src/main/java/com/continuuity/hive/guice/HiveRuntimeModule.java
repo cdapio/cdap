@@ -5,9 +5,13 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.explore.service.ExploreHttpHandler;
+import com.continuuity.explore.service.ExploreHttpService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.HiveExploreService;
+import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.hooks.TransactionPostHook;
 import com.continuuity.hive.hooks.TransactionPreHook;
@@ -17,6 +21,7 @@ import com.continuuity.hive.metastore.MockHiveMetastore;
 import com.continuuity.hive.server.HiveServer;
 import com.continuuity.hive.server.MockHiveServer;
 import com.continuuity.hive.server.RuntimeHiveServer;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.lang.ClassLoaders;
 
 import com.google.common.base.Function;
@@ -35,6 +40,7 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -107,6 +113,15 @@ public class HiveRuntimeModule extends RuntimeModule {
           @Override
           protected void configure() {
             bind(ExploreService.class).to(HiveExploreService.class).in(Scopes.SINGLETON);
+
+            Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+            Multibinder<HttpHandler> handlerBinder =
+                Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+            handlerBinder.addBinding().to(ExploreHttpHandler.class);
+            handlerBinder.addBinding().to(PingHandler.class);
+
+            bind(ExploreHttpService.class).in(Scopes.SINGLETON);
+
             bind(HiveServerProvider.class).to(HiveDistributedServerProvider.class).in(Scopes.SINGLETON);
           }
         });
@@ -143,10 +158,15 @@ public class HiveRuntimeModule extends RuntimeModule {
     protected void setProperties() {
       try {
         String auxJarsPath = generateAuxJarsClasspath();
-        // TODO replace HiveConf constant with the string?
         System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
                   System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+
+        // Set local tmp dir to an absolute location in the twill runnable
+        System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
+                           new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
+        LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
+                 System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
