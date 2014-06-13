@@ -110,7 +110,6 @@
           <configuration>
             <argLine>-Xmx2048m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
-            <forkCount>4.0C</forkCount>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
             <systemPropertyVariables>
