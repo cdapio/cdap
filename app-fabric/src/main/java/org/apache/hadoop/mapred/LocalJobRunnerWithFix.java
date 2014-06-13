@@ -72,8 +72,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @InterfaceStability.Unstable
 @SuppressWarnings("deprecation")
 public class LocalJobRunnerWithFix implements ClientProtocol {
-  public static final Log LOG =
-    LogFactory.getLog(LocalJobRunner.class);
+  public static final Log LOG = LogFactory.getLog(LocalJobRunnerWithFix.class);
 
   /** The maximum number of map tasks to run in parallel in LocalJobRunner */
   public static final String LOCAL_MAX_MAPS =

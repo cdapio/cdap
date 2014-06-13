@@ -1,12 +1,12 @@
 package com.continuuity.data2.dataset2.lib.table;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.lib.table.Table;
 
 import java.io.IOException;
 
@@ -26,18 +26,18 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties))
+      .datasets(tableDef.configure("", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+    return tableDef.getAdmin(spec.getSpecification(""));
   }
 
   @Override
   public Table getDataset(DatasetSpecification spec) throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification("table"));
+    OrderedTable table = tableDef.getDataset(spec.getSpecification(""));
     return new TableDataset(spec.getName(), table);
   }
 }

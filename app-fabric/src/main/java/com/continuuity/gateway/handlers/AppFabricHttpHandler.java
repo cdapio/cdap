@@ -9,6 +9,7 @@ import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -39,6 +40,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
@@ -2918,6 +2920,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         for (DataSetSpecification spec : specs) {
           result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
+        // also add datasets2 instances
+        Collection<DatasetSpecification> instances = dsClient.getAllInstances();
+        for (DatasetSpecification instance : instances) {
+          result.add(makeDataSetRecord(instance.getName(), instance.getType(), null));
+        }
         return GSON.toJson(result);
       } else if (type == Data.STREAM) {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(programId.getAccountId()));
@@ -2952,7 +2959,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             typeName = spec.getType();
           } else {
             // trying to see if that is Dataset V2
-            DatasetInstanceMeta meta = getDatasetInstanceMeta(dsName);
+            ReactorDatasetNamespace namespace = new ReactorDatasetNamespace(configuration,
+                                                                            DataSetAccessor.Namespace.USER);
+            DatasetInstanceMeta meta = getDatasetInstanceMeta(namespace.namespace(dsName));
             if (meta != null) {
               typeName = meta.getType().getName();
             }

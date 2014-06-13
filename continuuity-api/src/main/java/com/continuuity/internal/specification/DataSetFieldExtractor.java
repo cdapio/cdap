@@ -5,7 +5,7 @@ package com.continuuity.internal.specification;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.api.dataset.Dataset;
 import com.continuuity.internal.lang.FieldVisitor;
 import com.google.common.reflect.TypeToken;
 

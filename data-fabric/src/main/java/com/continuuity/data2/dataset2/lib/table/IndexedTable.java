@@ -1,14 +1,14 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.table.Delete;
+import com.continuuity.api.dataset.table.EmptyRow;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Increment;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.internal.data.dataset.lib.table.Delete;
-import com.continuuity.internal.data.dataset.lib.table.EmptyRow;
-import com.continuuity.internal.data.dataset.lib.table.Get;
-import com.continuuity.internal.data.dataset.lib.table.Increment;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Row;
-import com.continuuity.internal.data.dataset.lib.table.Table;
 
 import java.util.Arrays;
 

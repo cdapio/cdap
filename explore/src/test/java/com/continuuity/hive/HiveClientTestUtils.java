@@ -1,7 +1,6 @@
 package com.continuuity.hive;
 
 import com.continuuity.hive.client.HiveClient;
-
 import junit.framework.Assert;
 
 import java.io.ByteArrayOutputStream;

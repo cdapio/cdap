@@ -10,7 +10,6 @@ import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.filesystem.LocationFactory;

@@ -1,11 +1,10 @@
 package com.continuuity.data2.dataset2.lib;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.metrics.MeteredDataset;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionAwares;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 

@@ -1,0 +1,77 @@
+apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+
+dependencies {
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'tx-core', version: "${version}", changing: true], "tx-core")
+    testCompile files(this.project(':tx-core').sourceSets.test.output)
+
+    compile libraries.slf4j_api
+    compile libraries.google_guice
+    compile libraries.google_guice_assistedinject
+
+    testCompile libraries.junit
+
+    compile libraries.hadoop_mapreduce_client_core
+
+    compile(libraries.hbase96_common) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    compile(libraries.hbase96_client) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    compile(libraries.hbase96_server) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    testCompile(libraries.hbase96_test) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    testCompile libraries.hbase96_protocol
+    testCompile libraries.hadoop_minicluster
+}
+
+test {
+    jvmArgs '-Xmx3048m'
+}
+
+checkstyleMain {
+    source = sourceSets.main.allJava.matching {
+        exclude '**/stubs/**/*'
+        exclude '**/thrift/**'
+    }
+}
+
+// filter duplicated dependency for IDEA export
+def isClassesDependency(module) {
+     (module instanceof org.gradle.plugins.ide.idea.model.ModuleLibrary) && module.classes.iterator()[0].url.toString().contains(rootProject.name)
+}
+
+idea {
+      module {
+          iml.whenMerged { module ->
+              module.dependencies.removeAll(module.dependencies.grep{isClassesDependency(it)})
+              module.dependencies*.exported = true
+          }
+      }
+}
+
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+}
