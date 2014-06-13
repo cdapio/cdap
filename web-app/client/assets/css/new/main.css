@@ -1374,6 +1374,10 @@ span.service-icon.complete {
 	margin-left: auto;
 }
 
+.animated.large {
+	width: 75%;
+}
+
 .animated {
 	font-size: 16px;
 	margin-top: 120px;
