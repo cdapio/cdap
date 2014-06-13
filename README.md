@@ -25,6 +25,9 @@ Build Reactor with Maven
 
 See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html) for more details
 
+### Build all examples
+    mvn package -DskipTests -pl examples -am -amd -P examples
+
 ### Show dependency tree
     mvn package dependency:tree -DskipTests
 

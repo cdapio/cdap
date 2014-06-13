@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.pageViewAnalytics;
+package com.continuuity.examples.analytics;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -140,10 +140,10 @@ public class PageViewAnalyticsApp implements Application {
           String request = matcher.group(5);
           int startIndex = request.indexOf(" ");
           int endIndex = request.indexOf(" ", startIndex + 1);
-          String URI = request.substring(startIndex + 1, endIndex);
+          String uri = request.substring(startIndex + 1, endIndex);
 
           // In order to use hash partition, specify the partitioning key in the emitter
-          output.emit(new PageView(referrer, URI), "referrerHash", referrer.hashCode());
+          output.emit(new PageView(referrer, uri), "referrerHash", referrer.hashCode());
          }
       }
     }
