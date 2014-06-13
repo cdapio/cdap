@@ -28,7 +28,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
                                             Constants.Service.APP_FABRIC_HTTP,
                                             Constants.Service.DATASET_EXECUTOR,
                                             Constants.Service.DATASET_MANAGER,
-                                            Constants.Service.STREAM_HANDLER,
+                                            Constants.Service.STREAMS,
                                             Constants.Service.GATEWAY);
   }
 

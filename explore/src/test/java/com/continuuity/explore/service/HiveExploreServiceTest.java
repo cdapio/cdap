@@ -18,6 +18,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
+import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.collect.ImmutableList;
@@ -32,19 +33,20 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyValue;
 
 /**
- *
+ * Tests Hive13ExploreService.
  */
 public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
-  private static HiveExploreService hiveExploreService;
+  private static Hive13ExploreService hiveExploreService;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -55,11 +57,11 @@ public class HiveExploreServiceTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    // TODO: remove this once guice module is consolidated.
+    // TODO: remove this and next line once guice module is consolidated.
+    injector.getInstance(HiveMetastore.class);
     System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
-    hiveExploreService = injector.getInstance(HiveExploreService.class);
-    hiveExploreService.start();
-    TimeUnit.SECONDS.sleep(10);
+    hiveExploreService = injector.getInstance(Hive13ExploreService.class);
+    hiveExploreService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
@@ -150,15 +152,15 @@ public class HiveExploreServiceTest {
     runCommand("select key, value from kv_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "STRING", 2, null)),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
 
     runCommand("select * from kv_table",
                true,
-               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "STRING", 2, null)),
+               Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
+                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
@@ -171,21 +173,35 @@ public class HiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
+    runCommand("drop table if exists kv_table",
+               false,
+               ImmutableList.<ColumnDesc>of(),
+               ImmutableList.<Row>of());
+
+    runCommand("create external table kv_table (key STRING, value struct<name:string,ints:array<int>>) " +
+                 "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
+                 "with serdeproperties (\"reactor.dataset.name\"=\"my_table\")",
+               false,
+               ImmutableList.<ColumnDesc>of(),
+               ImmutableList.<Row>of());
+
     Handle handle = hiveExploreService.execute("select key, value from kv_table");
-    Status status = hiveExploreService.cancel(handle);
-    Assert.assertEquals(Status.State.CANCELED, status.getState());
+    hiveExploreService.cancel(handle);
+    Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
+    hiveExploreService.close(handle);
+
+    runCommand("drop table if exists kv_table",
+               false,
+               ImmutableList.<ColumnDesc>of(),
+               ImmutableList.<Row>of());
+
   }
 
   private static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
     Handle handle = hiveExploreService.execute(command);
 
-    Status status;
-    do {
-      TimeUnit.MILLISECONDS.sleep(200);
-      status = hiveExploreService.getStatus(handle);
-    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
-
+    Status status = waitForCompletionStatus(handle);
     Assert.assertEquals(Status.State.FINISHED, status.getState());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
@@ -211,8 +227,20 @@ public class HiveExploreServiceTest {
     return newRows;
   }
 
+  private static Status waitForCompletionStatus(Handle handle) throws Exception {
+    Status status;
+    do {
+      TimeUnit.MILLISECONDS.sleep(200);
+      status = hiveExploreService.getStatus(handle);
+    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
+    return status;
+  }
+
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
+    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
+    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+             new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),

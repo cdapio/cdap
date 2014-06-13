@@ -24,7 +24,9 @@ public class ConfigurationUtil {
   public static <T> T get(Configuration conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
     LOG.debug("De-serializing {} {}", key, value);
-    return codec.decode(value == null ? null : value.getBytes(Charsets.UTF_8));
+    // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
+    // skipped.
+    return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
   }
 
   public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
@@ -36,7 +38,9 @@ public class ConfigurationUtil {
   public static <T> T get(Map<String, String> conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
     LOG.debug("De-serializing {} {}", key, value);
-    return codec.decode(value == null ? null : value.getBytes(Charsets.UTF_8));
+    // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
+    // skipped.
+    return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
   }
 
 }

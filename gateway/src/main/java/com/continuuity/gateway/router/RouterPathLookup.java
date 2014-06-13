@@ -53,11 +53,11 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
           return Constants.Service.APP_FABRIC_HTTP;
         } else if (uriParts.length == 3) {
           return (requestMethod.equals(AllowedMethod.GET)) ?
-            Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAM_HANDLER;
+            Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAMS;
         } else if ((uriParts.length == 4) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
           return Constants.Service.APP_FABRIC_HTTP;
         } else {
-          return Constants.Service.STREAM_HANDLER;
+          return Constants.Service.STREAMS;
         }
       } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
         //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs

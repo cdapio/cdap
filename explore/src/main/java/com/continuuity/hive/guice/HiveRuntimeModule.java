@@ -9,7 +9,8 @@ import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.service.ExploreHttpHandler;
 import com.continuuity.explore.service.ExploreHttpService;
 import com.continuuity.explore.service.ExploreService;
-import com.continuuity.explore.service.HiveExploreService;
+import com.continuuity.explore.service.Hive12ExploreService;
+import com.continuuity.explore.service.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.hive.metastore.HiveMetastore;
@@ -66,6 +67,7 @@ public class HiveRuntimeModule extends RuntimeModule {
         new AbstractModule() {
           @Override
           protected void configure() {
+            bind(ExploreService.class).to(Hive13ExploreService.class).in(Scopes.SINGLETON);
             bind(HiveMetastore.class).toProvider(HiveMetastoreProvider.class).in(Scopes.SINGLETON);
             bind(HiveServerProvider.class).to(HiveLocalServerProvider.class).in(Scopes.SINGLETON);
             bind(boolean.class).annotatedWith(Names.named("inmemory")).toInstance(inMemory);
@@ -104,7 +106,7 @@ public class HiveRuntimeModule extends RuntimeModule {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(ExploreService.class).to(HiveExploreService.class).in(Scopes.SINGLETON);
+            bind(ExploreService.class).to(Hive12ExploreService.class).in(Scopes.SINGLETON);
 
             Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
             Multibinder<HttpHandler> handlerBinder =
@@ -126,7 +128,6 @@ public class HiveRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(ExploreService.class).to(HiveExploreService.class).in(Scopes.SINGLETON);
       bind(HiveServer.class).toProvider(HiveServerProvider.class).in(Scopes.SINGLETON);
     }
 

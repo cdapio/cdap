@@ -81,10 +81,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
   public void cancelOperation(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
-      Status status = exploreService.cancel(handle);
-      JsonObject json = new JsonObject();
-      json.addProperty("status", GSON.toJson(status));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      exploreService.cancel(handle);
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
