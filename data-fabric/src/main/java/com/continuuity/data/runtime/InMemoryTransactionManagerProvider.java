@@ -3,6 +3,7 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -15,17 +16,20 @@ public class InMemoryTransactionManagerProvider implements Provider<InMemoryTran
   private final CConfiguration conf;
   private final Provider<TransactionStateStorage> storageProvider;
   private final MetricsCollectionService metricsCollectionService;
+  private final TxMetricsCollector txMetricsCollector;
 
   @Inject
   public InMemoryTransactionManagerProvider(CConfiguration config, Provider<TransactionStateStorage> storageProvider,
-                                            MetricsCollectionService metricsCollectionService) {
+                                            MetricsCollectionService metricsCollectionService,
+                                            TxMetricsCollector txMetricsCollector) {
     this.conf = config;
     this.storageProvider = storageProvider;
     this.metricsCollectionService = metricsCollectionService;
+    this.txMetricsCollector = txMetricsCollector;
   }
 
   @Override
   public InMemoryTransactionManager get() {
-    return new InMemoryTransactionManager(conf, storageProvider.get(), metricsCollectionService);
+    return new InMemoryTransactionManager(conf, storageProvider.get(), txMetricsCollector);
   }
 }

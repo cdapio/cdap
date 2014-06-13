@@ -2,12 +2,11 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.MetricsCollector;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionEdit;
 import com.continuuity.data2.transaction.persist.TransactionLog;
@@ -95,6 +94,9 @@ public class InMemoryTransactionManager extends AbstractService {
   // poll every 1 second to check whether a snapshot is needed
   private static final long SNAPSHOT_POLL_INTERVAL = 1000L;
 
+  //poll every 10 second to emit metrics
+  private static final long METRICS_POLL_INTERVAL = 10000L;
+
   private static final long[] NO_INVALID_TX = { };
 
   // Transactions that are in progress, with their info.
@@ -116,7 +118,7 @@ public class InMemoryTransactionManager extends AbstractService {
   private long readPointer;
   private long nextWritePointer;
   private MetricsCollectionService metricsCollectionService;
-  private MetricsCollector metricsCollector;
+  private TxMetricsCollector txMetricsCollector;
 
   private final TransactionStateStorage persistor;
 
@@ -133,6 +135,8 @@ public class InMemoryTransactionManager extends AbstractService {
   // number of most recent snapshots to retain
   private final int snapshotRetainCount;
   private DaemonThreadExecutor snapshotThread;
+  private DaemonThreadExecutor metricsThread;
+
   // lock guarding change of the current transaction log
   private final ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
   private final Lock logReadLock = logLock.readLock();
@@ -145,12 +149,12 @@ public class InMemoryTransactionManager extends AbstractService {
    */
   public InMemoryTransactionManager() {
     this(CConfiguration.create(), new NoOpTransactionStateStorage(),
-         new NoOpMetricsCollectionService());
+         new TxMetricsCollector());
   }
 
   @Inject
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor,
-                                    MetricsCollectionService metricsCollectionService) {
+                                    TxMetricsCollector txMetricsCollector) {
     this.persistor = persistor;
     cleanupInterval = conf.getInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL,
                                   TxConstants.Manager.DEFAULT_TX_CLEANUP_INTERVAL);
@@ -160,9 +164,8 @@ public class InMemoryTransactionManager extends AbstractService {
                                               TxConstants.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
     // must always keep at least 1 snapshot
     snapshotRetainCount = Math.max(conf.getInt(TxConstants.Manager.CFG_TX_SNAPSHOT_RETAIN,
-                                                 TxConstants.Manager.DEFAULT_TX_SNAPSHOT_RETAIN), 1);
-    this.metricsCollectionService = metricsCollectionService;
-    metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+                                               TxConstants.Manager.DEFAULT_TX_SNAPSHOT_RETAIN), 1);
+    this.txMetricsCollector = txMetricsCollector;
     clear();
   }
 
@@ -183,6 +186,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   @Override
   public synchronized void doStart() {
+
     LOG.info("Starting transaction manager.");
     // start up the persistor
     persistor.startAndWait();
@@ -193,6 +197,7 @@ public class InMemoryTransactionManager extends AbstractService {
     // start the periodic cleanup thread
     startCleanupThread();
     startSnapshotThread();
+    startMetricsThread();
     // initialize the WAL if we did not force a snapshot in recoverState()
     initLog();
 
@@ -266,6 +271,36 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
+  // Emits DataStructures size as metrics
+  private void startMetricsThread() {
+    if (snapshotFrequencyInSeconds > 0) {
+      LOG.info("Starting periodic Metrics Emitter thread, frequency = " + METRICS_POLL_INTERVAL);
+      this.metricsThread = new DaemonThreadExecutor("tx-snapshot") {
+        @Override
+        public void doRun() {
+          LOG.info("Emitting Transaction Data Structure Metrics");
+          txMetricsCollector.gauge("committing.size", committingChangeSets.size());
+          txMetricsCollector.gauge("committed.size", committedChangeSets.size());
+          txMetricsCollector.gauge("invalid.size", invalidArray.length);
+        }
+
+        @Override
+        protected void onShutdown() {
+          // perform a final snapshot
+          txMetricsCollector.gauge("committing.size", committingChangeSets.size());
+          txMetricsCollector.gauge("committed.size", committedChangeSets.size());
+          txMetricsCollector.gauge("invalid.size", invalidArray.length);
+        }
+
+        @Override
+        public long getSleepMillis() {
+          return METRICS_POLL_INTERVAL;
+        }
+      };
+      metricsThread.start();
+    }
+  }
+
   private void cleanupTimedOutTransactions() {
     List<TransactionEdit> invalidEdits = null;
     this.logReadLock.lock();
@@ -323,11 +358,6 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     // copy in memory state
     snapshot = getCurrentState();
-
-    metricsCollector.gauge("invalid", invalid.size());
-    metricsCollector.gauge("inprogress", inProgress.size());
-    metricsCollector.gauge("committing", committingChangeSets.size());
-    metricsCollector.gauge("committed", committedChangeSets.size());
 
     LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
     LOG.info("Returning snapshot of state: " + snapshot);
@@ -497,7 +527,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public void doStop() {
     Stopwatch timer = new Stopwatch().start();
     LOG.info("Shutting down gracefully...");
-    // signal the cleanup thread to stop
+    // signal the cleanup thread to astop
     if (cleanupThread != null) {
       cleanupThread.shutdown();
       try {
@@ -510,6 +540,9 @@ public class InMemoryTransactionManager extends AbstractService {
     if (snapshotThread != null) {
       // this will trigger a final snapshot on stop
       snapshotThread.shutdown();
+      if (metricsThread != null) {
+        metricsThread.shutdown();
+      }
       try {
         snapshotThread.join(30000L);
       } catch (InterruptedException ie) {
@@ -553,6 +586,10 @@ public class InMemoryTransactionManager extends AbstractService {
    */
   public Transaction startShort(int timeoutInSeconds) {
     Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
+    txMetricsCollector.gauge("start.short", 1);
+
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     long currentTime = System.currentTimeMillis();
     long expiration = currentTime + 1000L * timeoutInSeconds;
     Transaction tx = null;
@@ -571,6 +608,9 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
+    timer.stop();
+    Long elapsed = timer.elapsedMillis();
+    txMetricsCollector.gauge("start.short.latency", elapsed.intValue());
     return tx;
   }
 
@@ -585,6 +625,9 @@ public class InMemoryTransactionManager extends AbstractService {
    * transaction moves it to the invalid list because we assume that its writes cannot be rolled back.
    */
   public Transaction startLong() {
+    txMetricsCollector.gauge("start.long", 1);
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     long currentTime = System.currentTimeMillis();
     Transaction tx = null;
     // guard against changes to the transaction log while processing
@@ -601,6 +644,9 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
+    timer.stop();
+    Long elapsed = timer.elapsedMillis();
+    txMetricsCollector.gauge("start.long.latency", elapsed.intValue());
     return tx;
   }
 
@@ -614,6 +660,9 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+    txMetricsCollector.gauge("canCommit", 1);
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
       if (invalid.contains(tx.getWritePointer())) {
@@ -645,6 +694,9 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
+    timer.stop();
+    Long elapsed = timer.elapsedMillis();
+    txMetricsCollector.gauge("canCommit.latency", elapsed.intValue());
     return true;
   }
 
@@ -653,7 +705,9 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
-
+    txMetricsCollector.gauge("commit", 1);
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     Set<ChangeId> changeSet = null;
     boolean addToCommitted = true;
     // guard against changes to the transaction log while processing
@@ -693,7 +747,9 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-
+    timer.stop();
+    Long elapsed = timer.elapsedMillis();
+    txMetricsCollector.gauge("commit.latency", elapsed.intValue());
     return true;
   }
 
@@ -745,6 +801,9 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public void abort(Transaction tx) {
     // guard against changes to the transaction log while processing
+    txMetricsCollector.gauge("abort", 1);
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     this.logReadLock.lock();
     try {
       synchronized (this) {
@@ -752,6 +811,9 @@ public class InMemoryTransactionManager extends AbstractService {
         doAbort(tx.getWritePointer());
       }
       appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
+      timer.stop();
+      Long elapsed = timer.elapsedMillis();
+      txMetricsCollector.gauge("abort.latency", elapsed.intValue());
     } finally {
       this.logReadLock.unlock();
     }
@@ -786,6 +848,9 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public boolean invalidate(long tx) {
     // guard against changes to the transaction log while processing
+    txMetricsCollector.gauge("invalidate", 1);
+    Stopwatch timer = new Stopwatch();
+    timer.start();
     this.logReadLock.lock();
     try {
       boolean success;
@@ -794,13 +859,16 @@ public class InMemoryTransactionManager extends AbstractService {
         success = doInvalidate(tx);
       }
       appendToLog(TransactionEdit.createInvalid(tx));
+      timer.stop();
+      Long elapsed = timer.elapsedMillis();
+      txMetricsCollector.gauge("invalidate.latency", elapsed.intValue());
       return success;
     } finally {
       this.logReadLock.unlock();
     }
   }
 
-  public boolean doInvalidate(long writePointer) {
+  private boolean doInvalidate(long writePointer) {
     Set<ChangeId> previousChangeSet = committingChangeSets.remove(writePointer);
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
@@ -899,7 +967,12 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private void appendToLog(TransactionEdit edit) {
     try {
+      Stopwatch timer = new Stopwatch();
+      timer.start();
       currentLog.append(edit);
+      timer.stop();
+      Long elapsed = timer.elapsedMillis();
+      txMetricsCollector.gauge("append.edit", elapsed.intValue());
     } catch (IOException ioe) {
       abortService("Error appending to transaction log", ioe);
     }
@@ -907,7 +980,12 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private void appendToLog(List<TransactionEdit> edits) {
     try {
+      Stopwatch timer = new Stopwatch();
+      timer.start();
       currentLog.append(edits);
+      timer.stop();
+      Long elapsed = timer.elapsedMillis();
+      txMetricsCollector.gauge("append.edit", elapsed.intValue());
     } catch (IOException ioe) {
       abortService("Error appending to transaction log", ioe);
     }
