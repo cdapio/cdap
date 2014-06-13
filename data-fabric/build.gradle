@@ -10,8 +10,10 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'tx-core', version: "${version}", changing: true], "tx-core")
 
     apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    apiCompile elastic([group: 'com.continuuity', name: 'tx-core', version: "${version}", changing: true], "tx-core")
 
     compile libraries.slf4j_api
     compile libraries.fastutil

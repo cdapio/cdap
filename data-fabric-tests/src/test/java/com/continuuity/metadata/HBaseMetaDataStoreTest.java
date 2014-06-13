@@ -10,7 +10,9 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -35,7 +37,7 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
     conf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     // tests should interact with HDFS as the current user
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    conf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
     Module module = Modules.override(dfModule).with(
       new AbstractModule() {
@@ -49,6 +51,7 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
                                     new ConfigModule(conf, testHBase.getConfiguration()),
                                     new ZKClientModule(),
                                     new DiscoveryRuntimeModule().getDistributedModules(),
+                                    new TransactionMetricsModule(),
                                     new LocationRuntimeModule().getDistributedModules());
   }
 
