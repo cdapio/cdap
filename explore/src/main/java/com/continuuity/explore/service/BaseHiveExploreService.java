@@ -46,6 +46,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ContextManager.initialize(txClient, datasetFramework);
   }
 
+  protected HiveConf getHiveConf() {
+    return hiveConf;
+  }
+
   /**
    * @return configuration for a hive session that contains a transaction, and serialized reactor configuration and
    * HBase configuration. This will be used by the map-reduce tasks started by Hive.
@@ -133,8 +137,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
       // SplitReader may have.
-      if (txClient.canCommit(tx, ImmutableList.<byte[]>of()) || !txClient.commit(tx)) {
-
+      if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }

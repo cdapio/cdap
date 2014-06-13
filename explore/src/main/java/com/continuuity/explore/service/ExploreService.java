@@ -8,8 +8,8 @@ import java.util.List;
 public interface ExploreService {
 
   /**
-   * Execute a Hive SQL statement asynchronously. Use the returned {@link Handle} to get the status/result of the
-   * operation.
+   * Execute a Hive SQL statement asynchronously. The returned {@link Handle} can be used to get the status/result of
+   * the operation.
    * @param statement SQL statement.
    * @return {@link Handle} representing the operation.
    * @throws ExploreException on any error executing statement.

@@ -40,22 +40,21 @@ import java.util.concurrent.TimeUnit;
 public class Hive12ExploreService extends BaseHiveExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(Hive12ExploreService.class);
 
-  private final HiveConf hiveConf;
   private final CLIService cliService;
 
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf, HiveConf hiveConf) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf);
-    this.hiveConf = hiveConf;
     this.cliService = new CLIService();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", Hive12ExploreService.class.getSimpleName());
-    cliService.init(hiveConf);
+    cliService.init(getHiveConf());
     cliService.start();
+    // TODO: Figure out a way to determine when cliService has started successfully - REACTOR-254
     TimeUnit.SECONDS.sleep(5);
   }
 
