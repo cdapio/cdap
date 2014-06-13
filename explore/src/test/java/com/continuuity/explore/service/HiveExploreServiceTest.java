@@ -13,6 +13,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
@@ -124,11 +125,12 @@ public class HiveExploreServiceTest {
                ImmutableList.<Row>of());
 
     runCommand("create external table kv_table (key STRING, value struct<name:string,ints:array<int>>) " +
-                 "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
-                 "with serdeproperties (\"reactor.dataset.name\"=\"my_table\")",
-               false,
-               ImmutableList.<ColumnDesc>of(),
-               ImmutableList.<Row>of());
+            "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
+            "with serdeproperties (\"reactor.dataset.name\"=\"my_table\")",
+        false,
+        ImmutableList.<ColumnDesc>of(),
+        ImmutableList.<Row>of()
+    );
 
     runCommand("show tables",
                true,
@@ -136,25 +138,27 @@ public class HiveExploreServiceTest {
                Lists.newArrayList(new Row(Lists.<Object>newArrayList("kv_table"))));
 
     runCommand("describe kv_table",
-               true,
-               Lists.newArrayList(
-                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
-               ),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                    "from deserializer"))
-               ));
+        true,
+        Lists.newArrayList(
+            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+        ),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                "from deserializer"))
+        )
+    );
 
     runCommand("select key, value from kv_table",
-               true,
-               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
+        true,
+        Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+            new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
 
     runCommand("select * from kv_table",
                true,
@@ -165,9 +169,9 @@ public class HiveExploreServiceTest {
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
 
     runCommand("drop table if exists kv_table",
-               false,
-               ImmutableList.<ColumnDesc>of(),
-               ImmutableList.<Row>of());
+        false,
+        ImmutableList.<ColumnDesc>of(),
+        ImmutableList.<Row>of());
   }
 
   @Test

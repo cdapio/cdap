@@ -1,10 +1,15 @@
-package com.continuuity.explore.service;
+package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.ExploreService;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
