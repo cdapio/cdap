@@ -230,4 +230,4 @@ Either:
 
 Downloading the Example
 =======================
-Download the example: :download:`continuuity-PageViewAnalytics-2.2.0.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.2.0.zip>`
+Download the example: :download:`continuuity-PageViewAnalytics-2.2.1.zip </examples/PageViewAnalytics/continuuity-PageViewAnalytics-2.2.1.zip>`

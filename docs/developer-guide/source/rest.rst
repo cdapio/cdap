@@ -1,5 +1,5 @@
 .. :author: Continuuity, Inc.
-   :version: 2.2.0
+   :version: 2.2.1
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
@@ -1262,10 +1262,9 @@ Other metrics are user-defined and differ from Application to Application.
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
 Continuuity Reactor Operations Guide.
 
-
 .. rst2pdf: CutStart
 
-(:doc:`Operations Guide </operations>`)
+(`Operations Guide </operations.html>`__)
 
 .. rst2pdf: CutStop
 

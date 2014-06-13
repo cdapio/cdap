@@ -230,4 +230,4 @@ Either:
 
 Downloading the Example
 =======================
-`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.0.zip>`_
+`Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.2.1.zip>`_

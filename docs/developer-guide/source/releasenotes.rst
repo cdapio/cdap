@@ -11,6 +11,18 @@ Release Notes
 =============
 .. _release-notes:
 
+
+Release 2.2.1
+=============
+
+Bug Fixes
+^^^^^^^^^^^^^^^
+• Fixed a problem with MapReduce jobs being unable to write to Table DataSets
+
+
+Release 2.2.0
+=============
+
 New Features
 ^^^^^^^^^^^^^
 - **Stream data ingestion improvements:**
