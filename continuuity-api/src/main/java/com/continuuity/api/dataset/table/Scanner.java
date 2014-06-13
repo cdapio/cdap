@@ -1,4 +1,4 @@
-package com.continuuity.internal.data.dataset.lib.table;
+package com.continuuity.api.dataset.table;
 
 /**
  * Interface for table scan operation.

@@ -7,13 +7,11 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.junit.BeforeClass;
 
 /**

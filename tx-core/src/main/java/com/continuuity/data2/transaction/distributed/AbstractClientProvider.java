@@ -2,9 +2,6 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data2.transaction.TxConstants;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
@@ -16,6 +13,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -115,4 +114,86 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
                address + ":" + port);
     return newClient;
   }
+
+  /**
+   * This class helps picking up an endpoint from a list of Discoverable.
+   */
+  public interface EndpointStrategy {
+
+    /**
+     * Picks a {@link Discoverable} using its strategy.
+     * @return A {@link Discoverable} based on the stragegy or {@code null} if no endpoint can be found.
+     */
+    Discoverable pick();
+  }
+
+  /**
+   * An {@link EndpointStrategy} that make sure it picks an endpoint within the given
+   * timeout limit.
+   */
+  public final class TimeLimitEndpointStrategy implements EndpointStrategy {
+
+    private final EndpointStrategy delegate;
+    private final long timeout;
+    private final TimeUnit timeoutUnit;
+
+    public TimeLimitEndpointStrategy(EndpointStrategy delegate, long timeout, TimeUnit timeoutUnit) {
+      this.delegate = delegate;
+      this.timeout = timeout;
+      this.timeoutUnit = timeoutUnit;
+    }
+
+    @Override
+    public Discoverable pick() {
+      Discoverable pick = delegate.pick();
+      try {
+        long count = 0;
+        while (pick == null && count++ < timeout) {
+          timeoutUnit.sleep(1);
+          pick = delegate.pick();
+        }
+      } catch (InterruptedException e) {
+        // Simply propagate the interrupt.
+        Thread.currentThread().interrupt();
+      }
+      return pick;
+    }
+  }
+
+  /**
+   * Randomly picks endpoint from the list of available endpoints.
+   */
+  public final class RandomEndpointStrategy implements EndpointStrategy {
+
+    private final Iterable<Discoverable> endpoints;
+
+    /**
+     * Constructs a random endpoint strategy.
+     * @param endpoints Endpoints for the strategy to use. Note that this strategy will
+     *                  invoke {@link Iterable#iterator()} and traverse through it on
+     *                  every call to the {@link #pick()} method. One could leverage this
+     *                  behavior with the live {@link Iterable} as provided by
+     *                  {@link org.apache.twill.discovery.DiscoveryServiceClient#discover(String)} method.
+     */
+    public RandomEndpointStrategy(Iterable<Discoverable> endpoints) {
+      this.endpoints = endpoints;
+    }
+
+    @Override
+    public Discoverable pick() {
+      // Reservoir sampling
+      Discoverable result = null;
+      Iterator<Discoverable> itor = endpoints.iterator();
+      Random random = new Random();
+      int count = 0;
+      while (itor.hasNext()) {
+        Discoverable next = itor.next();
+        if (random.nextInt(++count) == 0) {
+          result = next;
+        }
+      }
+      return result;
+    }
+  }
 }
+

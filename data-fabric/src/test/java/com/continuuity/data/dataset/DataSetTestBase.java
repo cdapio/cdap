@@ -4,8 +4,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
@@ -15,7 +13,6 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;

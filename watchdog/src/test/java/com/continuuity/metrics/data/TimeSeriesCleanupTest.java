@@ -123,12 +123,6 @@ public class TimeSeriesCleanupTest {
     Injector injector = Guice.createInjector(
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricLevelDBModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-        }
-      },
       new ConfigModule(cConf),
       new TransactionMetricsModule(),
       new PrivateModule() {

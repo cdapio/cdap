@@ -7,7 +7,6 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;

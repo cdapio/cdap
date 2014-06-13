@@ -2,7 +2,6 @@ package com.continuuity.hive.datasets;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.hive.objectinspector.ObjectInspectorFactory;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;

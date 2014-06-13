@@ -2,7 +2,6 @@ package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
-
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;

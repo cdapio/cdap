@@ -9,8 +9,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
@@ -110,7 +108,6 @@ public abstract class HBaseQueueTest extends QueueTest {
         @Override
         protected void configure() {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       });
 

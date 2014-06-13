@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2;
 
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**

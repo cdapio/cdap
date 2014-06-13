@@ -12,7 +12,6 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.mapreduce.AbstractMapReduce;
-import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.google.common.base.Charsets;

@@ -1,4 +1,4 @@
-package com.continuuity.internal.data.dataset.lib.table;
+package com.continuuity.api.dataset.table;
 
 import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Maps;
@@ -70,7 +70,7 @@ public class Increment {
    * Adds a column and sets the column's value.
    * @param column Column to add.
    * @param value Column value.
-   * @return Instance of this {@link com.continuuity.internal.data.dataset.lib.table.Increment}.
+   * @return Instance of this {@link com.continuuity.api.dataset.table.Increment}.
    */
   public Increment add(byte[] column, long value) {
     values.put(column, value);
@@ -102,7 +102,7 @@ public class Increment {
    * Adds a column and sets the column's value.
    * @param column Column to add.
    * @param value Column value.
-   * @return Instance of this {@link com.continuuity.internal.data.dataset.lib.table.Increment}.
+   * @return Instance of this {@link com.continuuity.api.dataset.table.Increment}.
    */
   public Increment add(String column, long value) {
     return add(Bytes.toBytes(column), value);

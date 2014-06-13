@@ -49,15 +49,15 @@ public interface ApplicationSpecification {
   Map<String, DataSetSpecification> getDataSets();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.module.DatasetModule} name
-   *         to {@link com.continuuity.internal.data.dataset.module.DatasetModule} class name for
+   * @return An immutable {@link Map} from {@link com.continuuity.api.dataset.module.DatasetModule} name
+   *         to {@link com.continuuity.api.dataset.module.DatasetModule} class name for
    *         dataset modules configured for the Application.
    */
   Map<String, String> getDatasetModules();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.Dataset} name to
-   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.internal.data.dataset.Dataset}s
+   * @return An immutable {@link Map} from {@link com.continuuity.api.dataset.Dataset} name to
+   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.api.dataset.Dataset}s
    *         configured for the Application.
    */
   Map<String, DatasetInstanceCreationSpec> getDatasets();

@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
-import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetAdmin;
 
 import java.io.IOException;
 

@@ -1,6 +1,6 @@
 package com.continuuity.api.data;
 
-import com.continuuity.internal.data.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetProperties;
 
 /**
  * Information for creating dataset instance.

@@ -181,12 +181,6 @@ public class LevelDBFilterableOVCTableTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new DataFabricLevelDBModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-        }
-      },
       new LocationRuntimeModule().getSingleNodeModules(),
       new TransactionMetricsModule(),
       new PrivateModule() {

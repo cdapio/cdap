@@ -3,13 +3,13 @@ package com.continuuity.api.app;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.workflow.Workflow;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import org.apache.twill.api.TwillApplication;
 
 /**
@@ -82,14 +82,14 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, String, com.continuuity.internal.data.dataset.DatasetProperties)
+   * @see ApplicationConfigurer#createDataSet(String, String, com.continuuity.api.dataset.DatasetProperties)
    */
   protected void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
     configurer.createDataSet(datasetInstanceName, typeName, properties);
   }
 
   /**
-   * @see ApplicationConfigurer#createDataSet(String, Class, com.continuuity.internal.data.dataset.DatasetProperties)
+   * @see ApplicationConfigurer#createDataSet(String, Class, com.continuuity.api.dataset.DatasetProperties)
    */
   protected void createDataSet(String datasetInstanceName,
                                Class<? extends Dataset> datasetClass,

@@ -1,4 +1,4 @@
-package com.continuuity.internal.data.dataset;
+package com.continuuity.api.dataset;
 
 import java.io.Closeable;
 
