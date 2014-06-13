@@ -29,4 +29,4 @@ public class DataFabricLocalModule extends AbstractModule {
     }));
   }
 
-} // end of DataFabricLocalModule
+}
