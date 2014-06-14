@@ -39,13 +39,12 @@ public class ExploreHttpService extends AbstractIdleService {
 
     this.discoveryService = discoveryService;
 
-    // TODO modify constants
-    int workerThreads = cConf.getInt(Constants.Dataset.Executor.WORKER_THREADS, 10);
-    int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 10);
+    int workerThreads = cConf.getInt(Constants.Explore.WORKER_THREADS, 10);
+    int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
 
     this.httpService = NettyHttpService.builder()
         .addHttpHandlers(handlers)
-        .setHost(cConf.get(Constants.Hive.SERVER_ADDRESS))
+        .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
         // TODO do we need these handler hooks?
         .setHandlerHooks(ImmutableList.of(
             new MetricsReporterHook(metricsCollectionService, Constants.Service.EXPLORE_HTTP_USER_SERVICE)))

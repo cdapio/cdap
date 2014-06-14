@@ -182,11 +182,10 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addExploreService(TwillSpecification.Builder.MoreRunnable builder) {
 
-    // TODO change the constants
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES, 1))
-      .setMemory(cConf.getInt(Constants.Dataset.Executor.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(cConf.getInt(Constants.Dataset.Executor.CONTAINER_INSTANCES, 1))
+      .setVirtualCores(cConf.getInt(Constants.Explore.CONTAINER_VIRTUAL_CORES, 1))
+      .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
     // TODO change name of twill runnable?

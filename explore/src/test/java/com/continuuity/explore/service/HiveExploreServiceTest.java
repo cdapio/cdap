@@ -243,8 +243,8 @@ public class HiveExploreServiceTest {
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
-    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
              new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     return ImmutableList.of(

@@ -10,17 +10,17 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.ExploreHttpService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -49,8 +49,7 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     LOG.info("Initializing runnable {}", name);
 
     // Set the host name to the one provided by Twill
-    // TODO move the constant or use another one
-    cConf.set(Constants.Hive.SERVER_ADDRESS, context.getHost().getHostName());
+    cConf.set(Constants.Explore.SERVER_ADDRESS, context.getHost().getHostName());
 
     // NOTE: twill client will try to load all the classes present here - including hive classes
     // but it will fail and ignore those classes silently
@@ -62,11 +61,8 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new LocationRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
-        new HiveRuntimeModule().getDistributedModules(),
+        new ExploreRuntimeModule().getDistributedModules(),
         new AuthModule());
-
-    // TODO remove that - just a way to call hive server provider and put some settings
-    injector.getInstance(HiveServer.class);
   }
 
   @Override
