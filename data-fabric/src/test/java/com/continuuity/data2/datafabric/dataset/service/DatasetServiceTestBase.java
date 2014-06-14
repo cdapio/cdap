@@ -18,6 +18,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -81,9 +82,8 @@ public abstract class DatasetServiceTestBase {
                                  new LocalLocationFactory(),
                                  discoveryService,
                                  new InMemoryDatasetFramework(),
-                                 ImmutableList.<ImmutablePair<String, DatasetModule>>of(
-                                   new ImmutablePair<String, DatasetModule>("memoryTable",
-                                                                            new InMemoryOrderedTableModule())),
+                                 ImmutableMap.<String, DatasetModule>of("memoryTable",
+                                                                        new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework));

@@ -3,7 +3,6 @@ package com.continuuity.data.runtime;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -21,8 +20,7 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableMo
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Maps;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -32,8 +30,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
-import java.util.List;
-import java.util.SortedMap;
+import java.util.Map;
 
 /**
  * Bindings for DataSet Service.
@@ -43,13 +40,13 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<List<ImmutablePair<String, DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          // NOTE: order is important due to dependencies between modules
-          ImmutableList.<ImmutablePair<String, DatasetModule>>of(
-            new ImmutablePair<String, DatasetModule>("orderedTable-memory", new InMemoryOrderedTableModule()),
-            new ImmutablePair<String, DatasetModule>("core", new CoreDatasetsModule()))
-        );
+        // NOTE: order is important due to dependencies between modules
+        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
+        defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
+        defaultModules.put("core", new CoreDatasetsModule());
+
+        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
@@ -71,13 +68,13 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<List<ImmutablePair<String, DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          // NOTE: order is important due to dependencies between modules
-          ImmutableList.<ImmutablePair<String, DatasetModule>>of(
-            new ImmutablePair<String, DatasetModule>("orderedTable-memory", new LevelDBOrderedTableModule()),
-            new ImmutablePair<String, DatasetModule>("core", new CoreDatasetsModule()))
-        );
+        // NOTE: order is important due to dependencies between modules
+        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
+        defaultModules.put("orderedTable-memory", new LevelDBOrderedTableModule());
+        defaultModules.put("core", new CoreDatasetsModule());
+
+        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
@@ -107,13 +104,11 @@ public class DataSetServiceModules {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(new TypeLiteral<List<ImmutablePair<String, DatasetModule>>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
-          // NOTE: order is important due to dependencies between modules
-          ImmutableList.<ImmutablePair<String, DatasetModule>>of(
-            new ImmutablePair<String, DatasetModule>("orderedTable-memory", new HBaseOrderedTableModule()),
-            new ImmutablePair<String, DatasetModule>("core", new CoreDatasetsModule()))
-        );
+        // NOTE: order is important due to dependencies between modules
+        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
+        defaultModules.put("orderedTable-memory", new HBaseOrderedTableModule());
+        defaultModules.put("core", new CoreDatasetsModule());
+
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));

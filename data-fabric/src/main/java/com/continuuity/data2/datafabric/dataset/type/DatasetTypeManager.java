@@ -6,7 +6,6 @@ import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -48,7 +46,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final DatasetFramework mdsDatasetFramework;
   private final LocationFactory locationFactory;
 
-  private final LinkedHashMap<String, DatasetModule> defaultModules;
+  private final Map<String, DatasetModule> defaultModules;
 
   /** dataset types metadata store */
   private DatasetTypeMDS mds;
@@ -62,15 +60,11 @@ public class DatasetTypeManager extends AbstractIdleService {
   public DatasetTypeManager(DatasetFramework mdsDatasetFramework,
                             TransactionSystemClient txSystemClient,
                             LocationFactory locationFactory,
-                            List<ImmutablePair<String, DatasetModule>> defaultModules) {
+                            Map<String, DatasetModule> defaultModules) {
     this.mdsDatasetFramework = mdsDatasetFramework;
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
-
-    this.defaultModules = Maps.newLinkedHashMap();
-    for (ImmutablePair<String, DatasetModule> module : defaultModules) {
-      this.defaultModules.put(module.getFirst(), module.getSecond());
-    }
+    this.defaultModules = Maps.newLinkedHashMap(defaultModules);
   }
 
   @Override

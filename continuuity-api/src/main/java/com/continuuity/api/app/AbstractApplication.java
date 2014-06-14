@@ -82,7 +82,7 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * Calls {@link #createDataSet(String, String, DatasetProperties) and passes mepty properties.
+   * Calls {@link #createDataSet(String, String, DatasetProperties) and passes epty properties.
    */
   protected void createDataSet(String datasetInstanceName, String typeName) {
     configurer.createDataSet(datasetInstanceName, typeName, DatasetProperties.EMPTY);
