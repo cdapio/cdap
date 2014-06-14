@@ -15,10 +15,10 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
-import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -119,9 +119,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     long currentTime = System.currentTimeMillis();
 
     InputStream in = client.getSnapshotInputStream();
-    SnapshotCodecV2 codec = new SnapshotCodecV2();
-    TransactionSnapshot snapshot = codec.decode(in);
-
+    TransactionSnapshot snapshot;
+    try {
+      snapshot = stateStorage.readSnapshot(in);
+    } finally {
+      in.close();
+    }
     Assert.assertTrue(snapshot.getTimestamp() >= currentTime);
     Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
 
