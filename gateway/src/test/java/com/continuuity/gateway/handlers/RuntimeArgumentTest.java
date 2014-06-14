@@ -41,16 +41,7 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the procedure status. Make sure it is running before querying it
-    int trials = 0;
-    while (trials++ < 5) {
-      response = GatewayFastTestsSuite.doGet("/v2/apps/HighPassFilterApp/procedures/Count/status");
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if ("RUNNING".equals(status.get("status").getAsString())) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < 5);
+    waitProcedureState("RUNNING");
 
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
@@ -104,6 +95,9 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
+    // Wait for procedure state. Make sure it is stopped before deletion
+    waitProcedureState("STOPPED");
+
     response = GatewayFastTestsSuite.doDelete("/v2/apps/HighPassFilterApp");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
   }
@@ -117,6 +111,19 @@ public class RuntimeArgumentTest extends GatewayTestBase {
 
       String count = EntityUtils.toString(response.getEntity());
       if (expected.equals(count)) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 5);
+  }
+
+  private void waitProcedureState(String state) throws Exception {
+    int trials = 0;
+    while (trials++ < 5) {
+      HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/HighPassFilterApp/procedures/Count/status");
+      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+      if (state.equals(status.get("status").getAsString())) {
         break;
       }
       TimeUnit.SECONDS.sleep(1);
