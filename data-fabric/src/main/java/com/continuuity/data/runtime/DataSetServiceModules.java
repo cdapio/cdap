@@ -70,7 +70,7 @@ public class DataSetServiceModules {
       protected void configure() {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-memory", new LevelDBOrderedTableModule());
+        defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         bind(new TypeLiteral<Map<String, DatasetModule>>() { })
@@ -106,7 +106,7 @@ public class DataSetServiceModules {
       protected void configure() {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-memory", new HBaseOrderedTableModule());
+        defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
         install(new FactoryModuleBuilder()
