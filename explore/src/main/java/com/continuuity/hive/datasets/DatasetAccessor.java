@@ -30,7 +30,7 @@ public class DatasetAccessor {
 
     if (rowScannable instanceof TransactionAware) {
       // TODO: do we have to commit transaction?
-      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_CODEC_KEY, TxnCodec.INSTANCE);
+      Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
         ((TransactionAware) rowScannable).startTx(tx);
     }
 
