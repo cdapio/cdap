@@ -1,5 +1,11 @@
-package com.continuuity.explore.service;
+package com.continuuity.explore.executor;
 
+import com.continuuity.explore.service.ColumnDesc;
+import com.continuuity.explore.service.ExploreService;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 
@@ -30,10 +36,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * Provides REST endpoints for {@link com.continuuity.explore.service.ExploreService} operations.
  */
-public class ExploreHttpHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpHandler.class);
+public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
 
   private static final Gson GSON = new Gson();
 
@@ -42,7 +48,7 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
   private final ExploreService exploreService;
 
   @Inject
-  public ExploreHttpHandler(ExploreService exploreService) {
+  public ExploreExecutorHttpHandler(ExploreService exploreService) {
     this.exploreService = exploreService;
   }
 

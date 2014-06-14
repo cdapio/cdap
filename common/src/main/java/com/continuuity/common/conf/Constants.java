@@ -431,7 +431,7 @@ public final class Constants {
     public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
-    public static final String EXPLORE_ENABLED = "reactor.explore.enabled";
+    public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

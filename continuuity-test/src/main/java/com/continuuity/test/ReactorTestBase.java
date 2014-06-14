@@ -169,7 +169,7 @@ public class ReactorTestBase {
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
-    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {

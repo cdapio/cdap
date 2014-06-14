@@ -19,6 +19,10 @@ import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
+import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.service.ExploreService;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
@@ -76,6 +80,9 @@ public class SingleNodeMain {
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
 
+  private ExploreService exploreService;
+  private ExploreExecutorService exploreExecutorService;
+
   private InMemoryZKServer zookeeper;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
@@ -99,6 +106,13 @@ public class SingleNodeMain {
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
+
+    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
+    if (exploreEnabled) {
+      exploreService = injector.getInstance(ExploreService.class);
+      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -151,6 +165,11 @@ public class SingleNodeMain {
       externalAuthenticationServer.startAndWait();
     }
 
+    if (exploreService != null && exploreExecutorService != null) {
+      exploreService.startAndWait();
+      exploreExecutorService.startAndWait();
+    }
+
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
@@ -173,6 +192,10 @@ public class SingleNodeMain {
     datasetService.stopAndWait();
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
+    }
+    if (exploreService != null && exploreExecutorService != null) {
+      exploreService.stopAndWait();
+      exploreExecutorService.stopAndWait();
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
@@ -298,7 +321,8 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
-      new StreamServiceModule()
+      new StreamServiceModule(),
+      new ExploreRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -344,7 +368,8 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamServiceModule()
+      new StreamServiceModule(),
+      new ExploreRuntimeModule().getSingleNodeModules()
     );
   }
 }

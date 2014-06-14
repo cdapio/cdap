@@ -16,6 +16,7 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableMo
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -44,7 +45,7 @@ public class HiveExploreServiceTest {
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static ExploreService hiveExploreService;
-  private static ExploreHttpService exploreHttpService;
+  private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
 
   @BeforeClass
@@ -59,8 +60,8 @@ public class HiveExploreServiceTest {
     hiveExploreService = injector.getInstance(ExploreService.class);
     hiveExploreService.startAndWait();
 
-    exploreHttpService = injector.getInstance(ExploreHttpService.class);
-    exploreHttpService.startAndWait();
+    exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
+    exploreExecutorService.startAndWait();
 
     exploreClient = injector.getInstance(ExploreClient.class);
 
@@ -103,7 +104,7 @@ public class HiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    exploreHttpService.stopAndWait();
+    exploreExecutorService.stopAndWait();
     hiveExploreService.stopAndWait();
     transactionManager.stopAndWait();
     datasetService.startAndWait();
@@ -260,7 +261,7 @@ public class HiveExploreServiceTest {
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
              new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
