@@ -21,6 +21,6 @@
  * hour of the last twenty-four hours, processing in real-time Apache access log
  * data.
  */
-package com.continuuity.examples.trafficAnalytics;
+package com.continuuity.examples.traffic;
 
 

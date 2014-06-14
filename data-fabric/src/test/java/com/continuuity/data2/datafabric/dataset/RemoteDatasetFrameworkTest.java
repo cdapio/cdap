@@ -11,7 +11,6 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.AbstractDatasetFrameworkTest;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -57,7 +56,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetServiceClient dsManagerClient = new DatasetServiceClient(discoveryService);
     framework = new RemoteDatasetFramework(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
-                                           new InMemoryDatasetDefinitionRegistry());
+                                           new InMemoryDefinitionRegistryFactory());
     InMemoryDatasetOpExecutor opExecutorClient = new InMemoryDatasetOpExecutor(framework);
 
     service = new DatasetService(cConf,
