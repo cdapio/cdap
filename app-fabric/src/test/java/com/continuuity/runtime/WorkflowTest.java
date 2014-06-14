@@ -57,7 +57,7 @@ public class WorkflowTest {
   };
 
 
-  @Test
+  @Test(timeout = 120 * 1000L)
   public void testWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
@@ -95,7 +95,7 @@ public class WorkflowTest {
     completion.get();
   }
 
-  @Test
+  @Test(timeout = 120 * 1000L)
   public void testOneActionWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
