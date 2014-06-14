@@ -15,12 +15,11 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.metastore.HiveMetastore;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -46,7 +45,7 @@ public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
-  private static Hive13ExploreService hiveExploreService;
+  private static ExploreService hiveExploreService;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -57,10 +56,9 @@ public class HiveExploreServiceTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    // TODO: remove this and next line once guice module is consolidated.
-    injector.getInstance(HiveMetastore.class);
-    System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
-    hiveExploreService = injector.getInstance(Hive13ExploreService.class);
+    hiveExploreService = injector.getInstance(ExploreService.class);
+    HiveConf hiveConf = new HiveConf();
+    System.out.println("Metastore URI = " + hiveConf.get(HiveConf.ConfVars.METASTOREWAREHOUSE.toString()));
     hiveExploreService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -254,7 +252,7 @@ public class HiveExploreServiceTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule().getInMemoryModules(),
+      new ExploreRuntimeModule().getInMemoryModules(),
       new HiveClientModule()
     );
   }

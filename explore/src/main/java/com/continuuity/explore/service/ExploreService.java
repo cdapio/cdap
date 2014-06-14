@@ -1,11 +1,13 @@
 package com.continuuity.explore.service;
 
+import com.google.common.util.concurrent.Service;
+
 import java.util.List;
 
 /**
  * Interface for exploring datasets.
  */
-public interface ExploreService {
+public interface ExploreService extends Service {
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link Handle} can be used to get the status/result of

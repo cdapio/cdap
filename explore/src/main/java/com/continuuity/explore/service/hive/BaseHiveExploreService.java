@@ -62,7 +62,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    return hiveConf;
+    // TODO figure out why this hive conf does not contain our env properties
+    // return hiveConf;
+    return new HiveConf();
   }
 
   protected CLIService getCliService() {
