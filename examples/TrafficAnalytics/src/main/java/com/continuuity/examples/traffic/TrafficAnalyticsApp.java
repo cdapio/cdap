@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.trafficAnalytics;
+package com.continuuity.examples.traffic;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;

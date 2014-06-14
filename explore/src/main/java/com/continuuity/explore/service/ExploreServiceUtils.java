@@ -1,4 +1,4 @@
-package com.continuuity.hive.server;
+package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.StringUtils;
 
@@ -6,7 +6,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -15,10 +14,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * Hive Server 2 service.
+ * Utility class for the explore service.
  */
-public abstract class HiveServer extends AbstractIdleService {
-
+public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
@@ -62,8 +60,8 @@ public abstract class HiveServer extends AbstractIdleService {
         }
       }
       throw new RuntimeException("Hive version " + version + " is not supported. " +
-                                 "Versions supported begin with one of the following: " +
-                                 StringUtils.arrayToString(SUPPORTED_VERSIONS));
+          "Versions supported begin with one of the following: " +
+          StringUtils.arrayToString(SUPPORTED_VERSIONS));
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {

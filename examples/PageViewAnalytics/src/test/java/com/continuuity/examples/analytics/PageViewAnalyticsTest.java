@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.pageViewAnalytics;
+package com.continuuity.examples.analytics;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -95,7 +95,8 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
     throws IOException {
 
     // Start a Procedure
-    ProcedureManager procedureManager = appManager.startProcedure(PageViewAnalyticsApp.PageViewProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(
+      PageViewAnalyticsApp.PageViewProcedure.class.getSimpleName());
 
     try {
       // Call the Procedure
@@ -103,7 +104,7 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
 
       // Verify get-dist by passing the page URI in a runtime argument {"page": "http://www.continuuity.com"}
       String response = client.query("getDistribution", ImmutableMap.of("page", "http://www.continuuity.com"));
-      Map<String, Double> results = GSON.fromJson(response, new TypeToken<Map<String, Double>>(){}.getType());
+      Map<String, Double> results = GSON.fromJson(response, new TypeToken<Map<String, Double>>() { }.getType());
       Assert.assertEquals(0.4, results.get("/product.html"), OFF);
       Assert.assertEquals(0.6, results.get("/career.html"), OFF);
     } finally {
