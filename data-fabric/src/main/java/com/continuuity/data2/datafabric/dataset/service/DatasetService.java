@@ -16,6 +16,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -27,8 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +47,7 @@ public class DatasetService extends AbstractIdleService {
   private final DatasetTypeManager typeManager;
 
   private final DatasetFramework mdsDatasetFramework;
-  private final SortedMap<String, DatasetModule> defaultModules;
+  private final Map<String, DatasetModule> defaultModules;
 
   @Inject
   public DatasetService(CConfiguration cConf,
@@ -54,7 +55,7 @@ public class DatasetService extends AbstractIdleService {
                         DiscoveryService discoveryService,
                         @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
                         @Named("defaultDatasetModules")
-                        SortedMap<String, DatasetModule> defaultModules,
+                        Map<String, DatasetModule> defaultModules,
                         TransactionSystemClient txSystemClient,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient) throws Exception {
@@ -65,8 +66,8 @@ public class DatasetService extends AbstractIdleService {
     this.mdsDatasetFramework =
       new NamespacedDatasetFramework(mdsDatasetFramework,
                                      new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
-    this.defaultModules = defaultModules;
-
+    // NOTE: order matters
+    this.defaultModules = Maps.newLinkedHashMap(defaultModules);
     this.typeManager = new DatasetTypeManager(mdsDatasetFramework, txSystemClient, locationFactory, defaultModules);
     this.instanceManager = new DatasetInstanceManager(mdsDatasetFramework, txSystemClient);
 
