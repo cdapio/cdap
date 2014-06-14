@@ -1,5 +1,7 @@
 package com.continuuity.data2.transaction;
 
+import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
+
 /**
  * Transaction system constants
  */
@@ -173,4 +175,16 @@ public class TxConstants {
     public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
     public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
   }
+
+  /**
+   * Configuration for the transaction snapshot persistence.
+   */
+  public static final class Persist {
+    /**
+     * The class names of all known transaction snapshot codecs.
+     */
+    public static final String CFG_TX_SNAPHOT_CODEC_CLASSES = "data.tx.snapshot.codecs";
+    public static final Class[] DEFAULT_TX_SNAPHOT_CODEC_CLASSES = { DefaultSnapshotCodec.class };
+  }
+
 }

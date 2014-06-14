@@ -1,21 +1,40 @@
 package com.continuuity.data2.transaction.persist;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
+import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Minimal {@link TransactionStateStorage} implementation that does nothing, i.e. does not maintain any actual state.
  */
-public class NoOpTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
+public class NoOpTransactionStateStorage extends AbstractTransactionStateStorage {
+
+  @Inject
+  public NoOpTransactionStateStorage(CConfiguration config) {
+    super(new SnapshotCodecProvider(config));
+  }
+
   @Override
   protected void startUp() throws Exception {
   }
 
   @Override
   protected void shutDown() throws Exception {
+  }
+
+  @Override
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
+  }
+
+  @Override
+  public TransactionSnapshot readSnapshot(InputStream in) throws IOException {
+    return null;
   }
 
   @Override

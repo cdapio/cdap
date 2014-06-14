@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -144,7 +145,7 @@ public class InMemoryTransactionManager extends AbstractService {
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoOpTransactionStateStorage(),
+    this(CConfiguration.create(), new NoOpTransactionStateStorage(CConfiguration.create()),
          new NoOpMetricsCollectionService());
   }
 
@@ -332,6 +333,20 @@ public class InMemoryTransactionManager extends AbstractService {
     LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
     LOG.info("Returning snapshot of state: " + snapshot);
     return snapshot;
+  }
+
+  /**
+   * Take a snapshot of the transaction state and serialize it into the given output stream.
+   * @return whether a snapshot was taken.
+   */
+  public boolean takeSnapshot(OutputStream out) throws IOException {
+    TransactionSnapshot snapshot = getSnapshot();
+    if (snapshot != null) {
+      persistor.writeSnapshot(out, snapshot);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private void doSnapshot(boolean closing) throws IOException {

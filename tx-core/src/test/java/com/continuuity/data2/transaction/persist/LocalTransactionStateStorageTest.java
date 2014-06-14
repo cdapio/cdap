@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -27,6 +28,6 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
 
   @Override
   protected AbstractTransactionStateStorage getStorage(CConfiguration conf) {
-    return new LocalFileTransactionStateStorage(conf);
+    return new LocalFileTransactionStateStorage(conf, new SnapshotCodecProvider(conf));
   }
 }

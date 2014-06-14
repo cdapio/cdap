@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
@@ -44,6 +45,6 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
 
   @Override
   protected AbstractTransactionStateStorage getStorage(CConfiguration conf) {
-    return new HDFSTransactionStateStorage(conf, hConf);
+    return new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
   }
 }

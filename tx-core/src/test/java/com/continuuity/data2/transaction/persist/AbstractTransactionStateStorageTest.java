@@ -7,6 +7,8 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -19,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -341,7 +345,6 @@ public abstract class AbstractTransactionStateStorageTest {
 
   @Test
   public void testV1SerdeCompat() throws Exception {
-    SnapshotCodecV1 v1Codec = new SnapshotCodecV1();
 
     long now = System.currentTimeMillis();
 
@@ -360,11 +363,25 @@ public abstract class AbstractTransactionStateStorageTest {
                               ImmutableMap.<Long, Set<ChangeId>>of(16L, Sets.newHashSet(
                                 new ChangeId(Bytes.toBytes("ch2")), new ChangeId(Bytes.toBytes("ch3")))));
 
+    CConfiguration configV1 = CConfiguration.create();
+    configV1.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
+                        SnapshotCodecV1.class.getName());
+    AbstractTransactionStateStorage storageV1 = getStorage(configV1);
+
     // encoding with codec of v1
-    byte[] encoded = v1Codec.encodeState(snapshot);
+    PipedInputStream inV1 = new PipedInputStream();
+    PipedOutputStream out = new PipedOutputStream(inV1);
+    storageV1.writeSnapshot(out, snapshot);
+    out.close();
 
     // decoding
-    TransactionSnapshot decoded = getStorage(CConfiguration.create()).decode(encoded);
+    CConfiguration configV1V2 = CConfiguration.create();
+    configV1V2.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
+                      SnapshotCodecV1.class.getName(),
+                      SnapshotCodecV2.class.getName());
+    AbstractTransactionStateStorage storageV1V2 = getStorage(configV1V2);
+    TransactionSnapshot decoded = storageV1V2.readSnapshot(inV1);
+
     assertEquals(snapshot, decoded);
   }
 

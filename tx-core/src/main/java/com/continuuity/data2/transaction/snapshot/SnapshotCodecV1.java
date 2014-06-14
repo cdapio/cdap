@@ -1,7 +1,5 @@
-package com.continuuity.data2.transaction.persist;
+package com.continuuity.data2.transaction.snapshot;
 
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Maps;
 
@@ -10,31 +8,31 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * Handles serialization/deserialization of a {@link TransactionSnapshot} and
+ * Handles serialization/deserialization of a {@link com.continuuity.data2.transaction.persist.TransactionSnapshot} and
  * its elements to {@code byte[]}.
  */
 public class SnapshotCodecV1 extends AbstractSnapshotCodec {
   public static final int VERSION = 1;
 
   @Override
-  protected int getVersion() {
+  public int getVersion() {
     return VERSION;
   }
 
   @Override
-  protected void readAbsoleteAttributes(Decoder decoder) throws IOException {
+  protected void decodeObsoleteAttributes(BinaryDecoder decoder) throws IOException {
     // watermark attribute was removed
     decoder.readLong();
   }
 
   @Override
-  protected void writeAbsoleteAttributes(Encoder encoder) throws IOException {
+  protected void encodeObsoleteAttributes(BinaryEncoder encoder) throws IOException {
     // writing watermark attribute (that was removed in newer codecs), 55L - any random value, will not be used anywhere
     encoder.writeLong(55L);
   }
 
   @Override
-  protected void encodeInProgress(Encoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+  protected void encodeInProgress(BinaryEncoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
     throws IOException {
 
     if (!inProgress.isEmpty()) {
@@ -48,7 +46,7 @@ public class SnapshotCodecV1 extends AbstractSnapshotCodec {
   }
 
   @Override
-  protected NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(Decoder decoder)
+  protected NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(BinaryDecoder decoder)
     throws IOException {
 
     int size = decoder.readInt();
