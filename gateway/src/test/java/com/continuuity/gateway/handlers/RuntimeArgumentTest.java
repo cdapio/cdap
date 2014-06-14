@@ -3,6 +3,7 @@ package com.continuuity.gateway.handlers;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.GatewayTestBase;
 import com.continuuity.gateway.apps.HighPassFilterApp;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -10,10 +11,15 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Tests the runtime args - setting it through runtimearg API and Program start API
  */
 public class RuntimeArgumentTest extends GatewayTestBase {
+
+  private static final Gson GSON = new Gson();
+
   @Test
   public void testFlowRuntimeArgs() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.deploy(HighPassFilterApp.class, "HighPassFilterApp");
@@ -33,6 +39,18 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "35");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
+
+    // Check the procedure status. Make sure it is running before querying it
+    int trials = 0;
+    while (trials++ < 5) {
+      response = GatewayFastTestsSuite.doGet("/v2/apps/HighPassFilterApp/procedures/Count/status");
+      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+      if ("RUNNING".equals(status.get("status").getAsString())) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 5);
 
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
@@ -77,11 +95,19 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "105");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
+    // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
+    trials = 0;
+    while (trials++ < 5) {
+      response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
+      Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    count = EntityUtils.toString(response.getEntity());
-    Assert.assertEquals(count, "3");
+      count = EntityUtils.toString(response.getEntity());
+      if ("3".equals(count)) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 5);
 
     //Stop all flows and procedures and reset the state of the reactor
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
