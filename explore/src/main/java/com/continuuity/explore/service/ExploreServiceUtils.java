@@ -1,14 +1,13 @@
-package com.continuuity.hive.server;
+package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.StringUtils;
-import com.google.common.util.concurrent.AbstractIdleService;
+
 import org.apache.hive.common.util.HiveVersionInfo;
 
 /**
- * Hive Server 2 service.
+ * Utility class for the explore service.
  */
-public abstract class HiveServer extends AbstractIdleService {
-
+public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
@@ -24,8 +23,8 @@ public abstract class HiveServer extends AbstractIdleService {
         }
       }
       throw new RuntimeException("Hive version " + version + " is not supported. " +
-                                 "Versions supported begin with one of the following: " +
-                                 StringUtils.arrayToString(SUPPORTED_VERSIONS));
+          "Versions supported begin with one of the following: " +
+          StringUtils.arrayToString(SUPPORTED_VERSIONS));
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable e) {

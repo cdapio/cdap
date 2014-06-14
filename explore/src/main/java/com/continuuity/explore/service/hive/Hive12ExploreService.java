@@ -1,8 +1,14 @@
-package com.continuuity.explore.service;
+package com.continuuity.explore.service.hive;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Status;
+
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -23,7 +29,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Hive 12 implementation of {@link ExploreService}. There are 2 changes compared to Hive 13 implementation -
+ * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}.
+ * There are 2 changes compared to Hive 13 implementation -
  * <ol>
  *   <li>{@link CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)} return type has
  *   changed</li>

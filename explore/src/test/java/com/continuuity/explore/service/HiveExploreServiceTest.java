@@ -15,18 +15,17 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -45,7 +44,7 @@ public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
-  private static Hive13ExploreService hiveExploreService;
+  private static ExploreService hiveExploreService;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -56,10 +55,7 @@ public class HiveExploreServiceTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    // TODO: remove this and next line once guice module is consolidated.
-    injector.getInstance(HiveMetastore.class);
-    System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
-    hiveExploreService = injector.getInstance(Hive13ExploreService.class);
+    hiveExploreService = injector.getInstance(ExploreService.class);
     hiveExploreService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -124,11 +120,12 @@ public class HiveExploreServiceTest {
                ImmutableList.<Row>of());
 
     runCommand("create external table kv_table (key STRING, value struct<name:string,ints:array<int>>) " +
-                 "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
-                 "with serdeproperties (\"reactor.dataset.name\"=\"my_table\")",
-               false,
-               ImmutableList.<ColumnDesc>of(),
-               ImmutableList.<Row>of());
+            "stored by 'com.continuuity.hive.datasets.DatasetStorageHandler' " +
+            "with serdeproperties (\"reactor.dataset.name\"=\"my_table\")",
+        false,
+        ImmutableList.<ColumnDesc>of(),
+        ImmutableList.<Row>of()
+    );
 
     runCommand("show tables",
                true,
@@ -136,25 +133,27 @@ public class HiveExploreServiceTest {
                Lists.newArrayList(new Row(Lists.<Object>newArrayList("kv_table"))));
 
     runCommand("describe kv_table",
-               true,
-               Lists.newArrayList(
-                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
-               ),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                    "from deserializer"))
-               ));
+        true,
+        Lists.newArrayList(
+            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+        ),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                "from deserializer"))
+        )
+    );
 
     runCommand("select key, value from kv_table",
-               true,
-               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
+        true,
+        Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+            new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
 
     runCommand("select * from kv_table",
                true,
@@ -165,9 +164,9 @@ public class HiveExploreServiceTest {
                  new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
 
     runCommand("drop table if exists kv_table",
-               false,
-               ImmutableList.<ColumnDesc>of(),
-               ImmutableList.<Row>of());
+        false,
+        ImmutableList.<ColumnDesc>of(),
+        ImmutableList.<Row>of());
   }
 
   @Test
@@ -250,7 +249,7 @@ public class HiveExploreServiceTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new HiveRuntimeModule().getInMemoryModules(),
+      new ExploreRuntimeModule().getInMemoryModules(),
       new HiveClientModule()
     );
   }
