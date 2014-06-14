@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Common methods for Metadata store test.
  */
 public abstract class MetaDataTableTest {
+  private static final Logger LOG = LoggerFactory.getLogger(MetaDataTableTest.class);
 
   static MetaDataTable mds;
   static OperationContext context = new OperationContext(Constants.DEVELOPER_ACCOUNT_ID);
@@ -316,12 +319,15 @@ public abstract class MetaDataTableTest {
               // System.err.println("Conflict for text " + i + ": " + value);
               textConflicts.incrementAndGet();
             } else {
+              LOG.info("Text thread OperationException", e);
               Assert.fail("failure for text " + i + ": " + e.getMessage());
             }
           } catch (Exception e) {
+            LOG.error("Text thread failed", e);
             Assert.fail(e.getMessage());
           }
         }
+        LOG.info("Finished text thread with value " + value);
       }
     };
     Thread binaryThread = new Thread() {
@@ -337,12 +343,15 @@ public abstract class MetaDataTableTest {
               // System.err.println("Conflict for binary " + i + ": " + value);
               binaryConflicts.incrementAndGet();
             } else {
+              LOG.info("Binary thread OperationException", e);
               Assert.fail("failure for binary " + i + ": " + e.getMessage());
             }
           } catch (Exception e) {
+            LOG.error("Binary thread failed", e);
             Assert.fail(e.getMessage());
           }
         }
+        LOG.info("Finished binary thread with value " + value);
       }
     };
     textThread.start();
@@ -357,8 +366,8 @@ public abstract class MetaDataTableTest {
     Assert.assertNotNull(entry);
     String text = entry.getTextField("text");
     byte[] binary = entry.getBinaryField("bin");
-    System.out.println("text: " + text + ", " + textConflicts.get() + " conflicts");
-    System.out.println("binary: " + Arrays.toString(binary) + ", " + binaryConflicts.get() + " conflicts");
+    LOG.info("text: {}, {} conflicts", text, textConflicts.get());
+    LOG.info("binary: {}, {} conflicts", Arrays.toString(binary), binaryConflicts.get());
 
     Assert.assertEquals(numRounds, Integer.parseInt(text) + textConflicts.get());
     Assert.assertEquals(numRounds, Bytes.toInt(binary) + binaryConflicts.get());
@@ -420,7 +429,7 @@ public abstract class MetaDataTableTest {
   @Category(SlowTests.class)
   @Test
   public void testConcurrentSwapField() throws Exception {
-    System.out.println("testSwapField:");
+    LOG.info("testSwapField:");
     // create a meta data entry with two fields, one text one bin
     MetaDataEntry entry =
         new MetaDataEntry(context.getAccount(), null, "test", "xyz");
@@ -456,9 +465,9 @@ public abstract class MetaDataTableTest {
     Assert.assertNotNull(entry);
     String text = entry.getTextField("num");
     byte[] binary = entry.getBinaryField("num");
-    System.out.println("text: " + text + ", " + textConflicts.get() +
+    LOG.info("text: " + text + ", " + textConflicts.get() +
         " conflicts");
-    System.out.println("binary: " + Arrays.toString(binary) + ", " +
+    LOG.info("binary: " + Arrays.toString(binary) + ", " +
         "" + binaryConflicts.get() + " conflicts");
 
     Assert.assertEquals(2000, Integer.parseInt(text) + textConflicts.get());
@@ -496,7 +505,7 @@ public abstract class MetaDataTableTest {
   @Category(SlowTests.class)
   @Test
   public void testConcurrentUpdate() throws Exception {
-    System.out.println("testConcurrentUpdate:");
+    LOG.info("testConcurrentUpdate:");
     // create a meta data entry with two fields, one text one bin
     final MetaDataEntry entry =
         new MetaDataEntry(context.getAccount(), null, "test", "punk");
@@ -523,7 +532,7 @@ public abstract class MetaDataTableTest {
 
     // all threads write the same entry with conflict resolution
     // thus there should be no conflicts!
-    System.out.println("resolve = true:  " + conflicts.get() + " conflicts");
+    LOG.info("resolve = true:  " + conflicts.get() + " conflicts");
     Assert.assertEquals(0, conflicts.get());
 
     updateThread1 = new UpdateThread(conflicts, entry, false);
@@ -538,7 +547,7 @@ public abstract class MetaDataTableTest {
 
     // all threads write the same entry without conflict resolution
     // thus there must be conflicts!
-    System.out.println("resolve = false: " + conflicts.get() + " conflicts");
+    LOG.info("resolve = false: " + conflicts.get() + " conflicts");
     Assert.assertTrue(conflicts.get() > 0);
   }
 

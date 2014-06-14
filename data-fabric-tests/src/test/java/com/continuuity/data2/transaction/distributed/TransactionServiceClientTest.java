@@ -131,11 +131,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     // Ensures that getSnapshot didn't persist a snapshot
     TransactionSnapshot snapshotAfter = getStateStorage().getLatestSnapshot();
     if (snapshotAfter != null) {
-      Assert.assertEquals(1L, snapshotAfter.getWritePointer());
-      Assert.assertEquals(0L, snapshotAfter.getReadPointer());
-      Assert.assertEquals(0, snapshotAfter.getInvalid().size());
-      Assert.assertEquals(0, snapshotAfter.getCommittedChangeSets().size());
-      Assert.assertEquals(0, snapshotAfter.getCommittingChangeSets().size());
+      Assert.assertTrue(snapshot.getTimestamp() > snapshotAfter.getTimestamp());
     }
   }
 }
