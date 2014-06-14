@@ -57,7 +57,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
 
-      bind(boolean.class).annotatedWith(Names.named("inmemory")).toInstance(isInMemory);
+      bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
     }
 
     @Singleton
@@ -70,7 +70,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       @Inject
       private ExploreServiceProvider(CConfiguration cConf,
                                      @Named("explore.service.impl") ExploreService exploreService,
-                                     @Named("inmemory") boolean isInMemory) {
+                                     @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
         this.isInMemory = isInMemory;
@@ -90,12 +90,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
           databaseDir = new File(databaseDir, Long.toString(seed));
         }
 
-        LOG.error("Setting {} to {}",
+        LOG.debug("Setting {} to {}",
                   HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
         System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
 
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
-        LOG.error("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
+        LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
         System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
 
         // Some more local mode settings
