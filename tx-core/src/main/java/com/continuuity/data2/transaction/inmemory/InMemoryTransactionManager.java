@@ -1,7 +1,6 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TxConstants;
@@ -116,7 +115,6 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private long readPointer;
   private long nextWritePointer;
-  private MetricsCollectionService metricsCollectionService;
   private TxMetricsCollector txMetricsCollector;
 
   private final TransactionStateStorage persistor;
@@ -270,31 +268,29 @@ public class InMemoryTransactionManager extends AbstractService {
 
   // Emits Transaction Data structures size as metrics
   private void startMetricsThread() {
-    if (snapshotFrequencyInSeconds > 0) {
-      LOG.info("Starting periodic Metrics Emitter thread, frequency = " + METRICS_POLL_INTERVAL);
-      this.metricsThread = new DaemonThreadExecutor("tx-snapshot") {
-        @Override
-        public void doRun() {
-          txMetricsCollector.gauge("committing.size", committingChangeSets.size());
-          txMetricsCollector.gauge("committed.size", committedChangeSets.size());
-          txMetricsCollector.gauge("invalid.size", invalidArray.length);
-        }
+    LOG.info("Starting periodic Metrics Emitter thread, frequency = " + METRICS_POLL_INTERVAL);
+    this.metricsThread = new DaemonThreadExecutor("tx-metrics") {
+      @Override
+      public void doRun() {
+        txMetricsCollector.gauge("committing.size", committingChangeSets.size());
+        txMetricsCollector.gauge("committed.size", committedChangeSets.size());
+        txMetricsCollector.gauge("invalid.size", invalidArray.length);
+      }
 
-        @Override
-        protected void onShutdown() {
-          // perform a final metrics emit
-          txMetricsCollector.gauge("committing.size", committingChangeSets.size());
-          txMetricsCollector.gauge("committed.size", committedChangeSets.size());
-          txMetricsCollector.gauge("invalid.size", invalidArray.length);
-        }
+      @Override
+      protected void onShutdown() {
+        // perform a final metrics emit
+        txMetricsCollector.gauge("committing.size", committingChangeSets.size());
+        txMetricsCollector.gauge("committed.size", committedChangeSets.size());
+        txMetricsCollector.gauge("invalid.size", invalidArray.length);
+      }
 
-        @Override
-        public long getSleepMillis() {
-          return METRICS_POLL_INTERVAL;
-        }
-      };
-      metricsThread.start();
-    }
+      @Override
+      public long getSleepMillis() {
+        return METRICS_POLL_INTERVAL;
+      }
+    };
+    metricsThread.start();
   }
 
   private void cleanupTimedOutTransactions() {
@@ -533,12 +529,18 @@ public class InMemoryTransactionManager extends AbstractService {
         Thread.currentThread().interrupt();
       }
     }
+    if (metricsThread != null) {
+      metricsThread.shutdown();
+      try {
+        metricsThread.join(30000L);
+      } catch (InterruptedException ie) {
+        LOG.warn("Interrupted waiting for cleanup thread to stop");
+        Thread.currentThread().interrupt();
+      }
+    }
     if (snapshotThread != null) {
       // this will trigger a final snapshot on stop
       snapshotThread.shutdown();
-      if (metricsThread != null) {
-        metricsThread.shutdown();
-      }
       try {
         snapshotThread.join(30000L);
       } catch (InterruptedException ie) {
@@ -569,17 +571,6 @@ public class InMemoryTransactionManager extends AbstractService {
     Preconditions.checkState(isRunning(), "Transaction Manager is not running.");
   }
 
-  private Stopwatch startTimer() {
-    return new Stopwatch().start();
-  }
-
-  //stops the timer and returns the elapsed time in int
-  private int timeTaken(Stopwatch timer) {
-    timer.stop();
-    Long elapsed = timer.elapsedMillis();
-    return elapsed.intValue();
-  }
-
   /**
    * Start a short transaction with the default timeout.
    */
@@ -594,7 +585,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public Transaction startShort(int timeoutInSeconds) {
     Preconditions.checkArgument(timeoutInSeconds > 0, "timeout must be positive but is %s", timeoutInSeconds);
     txMetricsCollector.gauge("start.short", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     long currentTime = System.currentTimeMillis();
     long expiration = currentTime + 1000L * timeoutInSeconds;
     Transaction tx = null;
@@ -613,7 +604,7 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-    txMetricsCollector.gauge("start.short.latency", timeTaken(timer));
+    txMetricsCollector.gauge("start.short.latency", (int) timer.elapsedMillis());
     return tx;
   }
 
@@ -629,7 +620,7 @@ public class InMemoryTransactionManager extends AbstractService {
    */
   public Transaction startLong() {
     txMetricsCollector.gauge("start.long", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     long currentTime = System.currentTimeMillis();
     Transaction tx = null;
     // guard against changes to the transaction log while processing
@@ -646,7 +637,7 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-    txMetricsCollector.gauge("start.long.latency", timeTaken(timer));
+    txMetricsCollector.gauge("start.long.latency", (int) timer.elapsedMillis());
     return tx;
   }
 
@@ -661,7 +652,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     txMetricsCollector.gauge("canCommit", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
       if (invalid.contains(tx.getWritePointer())) {
@@ -693,7 +684,7 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-    txMetricsCollector.gauge("canCommit.latency", timeTaken(timer));
+    txMetricsCollector.gauge("canCommit.latency", (int) timer.elapsedMillis());
     return true;
   }
 
@@ -703,7 +694,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
     txMetricsCollector.gauge("commit", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     Set<ChangeId> changeSet = null;
     boolean addToCommitted = true;
     // guard against changes to the transaction log while processing
@@ -743,7 +734,7 @@ public class InMemoryTransactionManager extends AbstractService {
     } finally {
       this.logReadLock.unlock();
     }
-    txMetricsCollector.gauge("commit.latency", timeTaken(timer));
+    txMetricsCollector.gauge("commit.latency", (int) timer.elapsedMillis());
     return true;
   }
 
@@ -796,7 +787,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public void abort(Transaction tx) {
     // guard against changes to the transaction log while processing
     txMetricsCollector.gauge("abort", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     this.logReadLock.lock();
     try {
       synchronized (this) {
@@ -804,7 +795,7 @@ public class InMemoryTransactionManager extends AbstractService {
         doAbort(tx.getWritePointer());
       }
       appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
-      txMetricsCollector.gauge("abort.latency", timeTaken(timer));
+      txMetricsCollector.gauge("abort.latency", (int) timer.elapsedMillis());
     } finally {
       this.logReadLock.unlock();
     }
@@ -840,7 +831,7 @@ public class InMemoryTransactionManager extends AbstractService {
   public boolean invalidate(long tx) {
     // guard against changes to the transaction log while processing
     txMetricsCollector.gauge("invalidate", 1);
-    Stopwatch timer = startTimer();
+    Stopwatch timer = new Stopwatch().start();
     this.logReadLock.lock();
     try {
       boolean success;
@@ -849,7 +840,7 @@ public class InMemoryTransactionManager extends AbstractService {
         success = doInvalidate(tx);
       }
       appendToLog(TransactionEdit.createInvalid(tx));
-      txMetricsCollector.gauge("invalidate.latency", timeTaken(timer));
+      txMetricsCollector.gauge("invalidate.latency", (int) timer.elapsedMillis());
       return success;
     } finally {
       this.logReadLock.unlock();
@@ -955,9 +946,9 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private void appendToLog(TransactionEdit edit) {
     try {
-      Stopwatch timer = startTimer();
+      Stopwatch timer = new Stopwatch().start();
       currentLog.append(edit);
-      txMetricsCollector.gauge("append.edit", timeTaken(timer));
+      txMetricsCollector.gauge("append.edit", (int) timer.elapsedMillis());
     } catch (IOException ioe) {
       abortService("Error appending to transaction log", ioe);
     }
@@ -965,9 +956,9 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private void appendToLog(List<TransactionEdit> edits) {
     try {
-      Stopwatch timer = startTimer();
+      Stopwatch timer = new Stopwatch().start();
       currentLog.append(edits);
-      txMetricsCollector.gauge("append.edit", timeTaken(timer));
+      txMetricsCollector.gauge("append.edit", (int) timer.elapsedMillis());
     } catch (IOException ioe) {
       abortService("Error appending to transaction log", ioe);
     }

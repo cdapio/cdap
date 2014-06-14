@@ -1,7 +1,6 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -19,7 +18,6 @@ public class InMemoryTransactionManagerProvider implements Provider<InMemoryTran
 
   @Inject
   public InMemoryTransactionManagerProvider(CConfiguration config, Provider<TransactionStateStorage> storageProvider,
-                                            MetricsCollectionService metricsCollectionService,
                                             TxMetricsCollector txMetricsCollector) {
     this.conf = config;
     this.storageProvider = storageProvider;
