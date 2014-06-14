@@ -15,12 +15,12 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.hive.guice.HiveRuntimeModule;
 import com.continuuity.hive.metastore.HiveMetastore;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -47,6 +47,8 @@ public class HiveExploreServiceTest {
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static Hive13ExploreService hiveExploreService;
+  private static ExploreHttpService exploreHttpService;
+  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -62,6 +64,11 @@ public class HiveExploreServiceTest {
     System.clearProperty(HiveConf.ConfVars.METASTOREURIS.toString());
     hiveExploreService = injector.getInstance(Hive13ExploreService.class);
     hiveExploreService.startAndWait();
+
+    exploreHttpService = injector.getInstance(ExploreHttpService.class);
+    exploreHttpService.startAndWait();
+
+    exploreClient = injector.getInstance(ExploreClient.class);
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
@@ -185,10 +192,10 @@ public class HiveExploreServiceTest {
                ImmutableList.<ColumnDesc>of(),
                ImmutableList.<Row>of());
 
-    Handle handle = hiveExploreService.execute("select key, value from kv_table");
-    hiveExploreService.cancel(handle);
+    Handle handle = exploreClient.execute("select key, value from kv_table");
+    exploreClient.cancel(handle);
     Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
-    hiveExploreService.close(handle);
+    exploreClient.close(handle);
 
     runCommand("drop table if exists kv_table",
                false,
@@ -199,16 +206,16 @@ public class HiveExploreServiceTest {
 
   private static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
-    Handle handle = hiveExploreService.execute(command);
+    Handle handle = exploreClient.execute(command);
 
     Status status = waitForCompletionStatus(handle);
     Assert.assertEquals(Status.State.FINISHED, status.getState());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
-    Assert.assertEquals(expectedColumnDescs, hiveExploreService.getResultSchema(handle));
-    Assert.assertEquals(expectedRows, trimColumnValues(hiveExploreService.nextResults(handle, 100)));
+    Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
+    Assert.assertEquals(expectedRows, trimColumnValues(exploreClient.nextResults(handle, 100)));
 
-    hiveExploreService.close(handle);
+    exploreClient.close(handle);
   }
 
   private static List<Row> trimColumnValues(List<Row> rows) {
@@ -231,7 +238,7 @@ public class HiveExploreServiceTest {
     Status status;
     do {
       TimeUnit.MILLISECONDS.sleep(200);
-      status = hiveExploreService.getStatus(handle);
+      status = exploreClient.getStatus(handle);
     } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
     return status;
   }

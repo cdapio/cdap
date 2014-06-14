@@ -65,7 +65,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("v2/datasets/queries/{id}")
-  public void closeOperation(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void closeOperation(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                             @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.close(handle);
@@ -79,8 +80,9 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries/{id}")
-  public void cancelOperation(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  @Path("v2/datasets/queries/{id}/cancel")
+  public void cancelOperation(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                              @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.cancel(handle);
@@ -95,7 +97,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("v2/datasets/queries/{id}/status")
-  public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                             @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       Status status = exploreService.getStatus(handle);
@@ -112,8 +115,8 @@ public class ExploreHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("v2/datasets/queries/{id}/schema")
-  public void getOperationResultsSchema(HttpRequest request, HttpResponder responder,
-                                        @PathParam("id") final String id) {
+  public void getOperationResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
+                                        HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       List<ColumnDesc> schema = exploreService.getResultSchema(handle);

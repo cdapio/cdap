@@ -91,12 +91,12 @@ public class HiveRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return getLocalModule(true);
+    return Modules.combine(getLocalModule(true), bindHttpService());
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return getLocalModule(false);
+    return Modules.combine(getLocalModule(false), bindHttpService());
   }
 
   @Override
@@ -107,18 +107,25 @@ public class HiveRuntimeModule extends RuntimeModule {
           @Override
           protected void configure() {
             bind(ExploreService.class).to(Hive12ExploreService.class).in(Scopes.SINGLETON);
-
-            Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-            Multibinder<HttpHandler> handlerBinder =
-                Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
-            handlerBinder.addBinding().to(ExploreHttpHandler.class);
-            handlerBinder.addBinding().to(PingHandler.class);
-
-            bind(ExploreHttpService.class).in(Scopes.SINGLETON);
-
             bind(HiveServerProvider.class).to(HiveDistributedServerProvider.class).in(Scopes.SINGLETON);
           }
-        });
+        },
+        bindHttpService());
+  }
+
+  private Module bindHttpService() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+        Multibinder<HttpHandler> handlerBinder =
+          Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+        handlerBinder.addBinding().to(ExploreHttpHandler.class);
+        handlerBinder.addBinding().to(PingHandler.class);
+
+        bind(ExploreHttpService.class).in(Scopes.SINGLETON);
+      }
+    };
   }
 
   /**
