@@ -9,10 +9,10 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.Collection;
 
 /**
@@ -67,8 +67,7 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
     try {
-      PipedInputStream in = new PipedInputStream();
-      PipedOutputStream out = new PipedOutputStream(in);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
       try {
         boolean snapshotTaken = txManager.takeSnapshot(out);
         if (!snapshotTaken) {
@@ -77,7 +76,7 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
       } finally {
         out.close();
       }
-      return in;
+      return new ByteArrayInputStream(out.toByteArray());
     } catch (IOException e) {
       LOG.error("Snapshot could not be taken", e);
       throw new TransactionCouldNotTakeSnapshotException(e.getMessage());

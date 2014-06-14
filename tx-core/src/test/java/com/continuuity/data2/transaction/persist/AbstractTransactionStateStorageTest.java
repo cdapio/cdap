@@ -20,9 +20,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -369,10 +369,12 @@ public abstract class AbstractTransactionStateStorageTest {
     AbstractTransactionStateStorage storageV1 = getStorage(configV1);
 
     // encoding with codec of v1
-    PipedInputStream inV1 = new PipedInputStream();
-    PipedOutputStream out = new PipedOutputStream(inV1);
-    storageV1.writeSnapshot(out, snapshot);
-    out.close();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    try {
+      storageV1.writeSnapshot(out, snapshot);
+    } finally {
+      out.close();
+    }
 
     // decoding
     CConfiguration configV1V2 = CConfiguration.create();
@@ -380,7 +382,7 @@ public abstract class AbstractTransactionStateStorageTest {
                       SnapshotCodecV1.class.getName(),
                       SnapshotCodecV2.class.getName());
     AbstractTransactionStateStorage storageV1V2 = getStorage(configV1V2);
-    TransactionSnapshot decoded = storageV1V2.readSnapshot(inV1);
+    TransactionSnapshot decoded = storageV1V2.readSnapshot(new ByteArrayInputStream(out.toByteArray()));
 
     assertEquals(snapshot, decoded);
   }
