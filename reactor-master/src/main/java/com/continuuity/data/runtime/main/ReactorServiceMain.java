@@ -107,7 +107,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isHiveEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    isHiveEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     twillApplication = createTwillApplication();
     if (twillApplication == null) {
       throw new IllegalArgumentException("TwillApplication cannot be null");
@@ -326,7 +326,12 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("Env variable HIVE_CLASSPATH is not set.");
     }
 
-    ExploreServiceUtils.checkHiveVersion(ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr));
+    // Here we need to get a different class loader that contains all the hive jars, to have access to them.
+    // We use a separate class loader because Hive ships a lot of dependencies that conflicts with ours.
+    ClassLoader hiveCL = ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr);
+
+    // This checking will throw an exception if Hive is not present or if its version is unsupported
+    ExploreServiceUtils.checkHiveVersion(hiveCL);
 
     return preparer.withClassPaths(hiveClassPathStr);
   }

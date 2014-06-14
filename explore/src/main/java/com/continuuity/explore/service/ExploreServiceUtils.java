@@ -20,11 +20,10 @@ public class ExploreServiceUtils {
   // todo populate this with whatever hive version CDH4.3 runs with
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
-  static Iterable<URL> getClassPath(String hiveClassPath) {
+  private static Iterable<URL> getClassPath(String hiveClassPath) {
     if (hiveClassPath == null) {
       return null;
     }
-
     return Iterables.transform(Splitter.on(':').split(hiveClassPath), STRING_URL_FUNCTION);
   }
 
@@ -40,6 +39,9 @@ public class ExploreServiceUtils {
         }
       };
 
+  /**
+   * Builds a class loader with the class path provided.
+   */
   public static ClassLoader buildHiveClassLoader(String hiveClassPathStr) {
     Iterable<URL> hiveClassPath = getClassPath(hiveClassPathStr);
     return new URLClassLoader(Iterables.toArray(Iterables.concat(hiveClassPath), URL.class),

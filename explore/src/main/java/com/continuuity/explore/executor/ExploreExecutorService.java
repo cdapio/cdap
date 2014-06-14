@@ -1,4 +1,4 @@
-package com.continuuity.explore.service;
+package com.continuuity.explore.executor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -22,20 +22,21 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- *
+ * Provides various REST endpoints to execute SQL commands via
+ * {@link ExploreExecutorHttpHandler}.
  */
-public class ExploreHttpService extends AbstractIdleService {
+public class ExploreExecutorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorService.class);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
-  public ExploreHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                            MetricsCollectionService metricsCollectionService,
-                            @Named(Constants.Service.EXPLORE_HTTP_USER_SERVICE) Set<HttpHandler> handlers) {
+  public ExploreExecutorService(CConfiguration cConf, DiscoveryService discoveryService,
+                                MetricsCollectionService metricsCollectionService,
+                                @Named(Constants.Service.EXPLORE_HTTP_USER_SERVICE) Set<HttpHandler> handlers) {
 
     this.discoveryService = discoveryService;
 
@@ -56,7 +57,7 @@ public class ExploreHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting {}...", ExploreHttpService.class.getSimpleName());
+    LOG.info("Starting {}...", ExploreExecutorService.class.getSimpleName());
 
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {
@@ -71,12 +72,13 @@ public class ExploreHttpService extends AbstractIdleService {
       }
     });
 
-    LOG.info("{} started successfully on {}", ExploreHttpService.class.getSimpleName(), httpService.getBindAddress());
+    LOG.info("{} started successfully on {}", ExploreExecutorService.class.getSimpleName(),
+             httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping {}...", ExploreHttpService.class.getSimpleName());
+    LOG.info("Stopping {}...", ExploreExecutorService.class.getSimpleName());
 
     try {
       if (cancellable != null) {
