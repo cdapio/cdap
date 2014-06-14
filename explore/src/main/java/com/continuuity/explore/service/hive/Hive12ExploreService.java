@@ -30,7 +30,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}. There are 2 changes compared to Hive 13 implementation -
+ * Hive 12 implementation of {@link com.continuuity.explore.service.ExploreService}.
+ * There are 2 changes compared to Hive 13 implementation -
  * <ol>
  *   <li>{@link CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)} return type has
  *   changed</li>

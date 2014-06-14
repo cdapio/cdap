@@ -336,35 +336,5 @@ public class ReactorTestBase {
     return datasetFramework.getAdmin(datasetInstanceName, null);
   }
 
-  // TODO reintegreate once we have a ExploreClient
-//  /**
-//   * Returns a JDBC connection that allows to run SQL queries over data sets.
-//   */
-//  @Beta
-//  protected final Connection getQueryClient() throws Exception {
-//
-//    // this makes sure the hive JDBC driver is loaded
-//    Class.forName("org.apache.hive.jdbc.HiveDriver");
-//
-//    InetSocketAddress address = null;
-//    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.HIVE);
-//    for (Discoverable discoverable : discovered) {
-//       address = discoverable.getSocketAddress();
-//    }
-//
-//    if (null == address) {
-//      throw new IOException("Hive server could not be discovered.");
-//    }
-//
-//    String host = "localhost";
-//    int port = address.getPort();
-//    String jdbcUser = "hive";
-//    String jdbcPassword = "";
-//
-//    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
-//
-//    return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
-//  }
-
 }
 

@@ -15,9 +15,9 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
-import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
 import com.google.common.collect.ImmutableList;
@@ -26,7 +26,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,8 +56,6 @@ public class HiveExploreServiceTest {
     datasetService.startAndWait();
 
     hiveExploreService = injector.getInstance(ExploreService.class);
-    HiveConf hiveConf = new HiveConf();
-    System.out.println("Metastore URI = " + hiveConf.get(HiveConf.ConfVars.METASTOREWAREHOUSE.toString()));
     hiveExploreService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
