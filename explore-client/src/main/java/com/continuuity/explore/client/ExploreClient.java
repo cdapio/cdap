@@ -89,7 +89,7 @@ public class ExploreClient implements Explore {
     HttpResponse response = doPost(String.format("/%s/%s", handle.getId(), "nextResults"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "nextResults"), new TypeToken<List<Row>>() { }.getType());
+      return GSON.fromJson(parseResponse(response, "results"), new TypeToken<List<Row>>() { }.getType());
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }

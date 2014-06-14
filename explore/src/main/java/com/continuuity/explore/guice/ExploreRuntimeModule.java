@@ -3,15 +3,20 @@ package com.continuuity.explore.guice;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
+import com.continuuity.explore.service.ExploreHttpHandler;
+import com.continuuity.explore.service.ExploreHttpService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
 
+import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -58,6 +63,16 @@ public class ExploreRuntimeModule extends RuntimeModule {
       expose(ExploreService.class);
 
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
+
+      // TODO: consolidate HTTP server bindings with distributed mode.
+      Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+      Multibinder<HttpHandler> handlerBinder =
+        Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+      handlerBinder.addBinding().to(ExploreHttpHandler.class);
+      handlerBinder.addBinding().to(PingHandler.class);
+
+      bind(ExploreHttpService.class).in(Scopes.SINGLETON);
+      expose(ExploreHttpService.class);
     }
 
     @Singleton

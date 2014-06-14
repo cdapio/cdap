@@ -104,7 +104,8 @@ public class HiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    hiveExploreService.stop();
+    exploreHttpService.stopAndWait();
+    hiveExploreService.stopAndWait();
     transactionManager.stopAndWait();
     datasetService.startAndWait();
   }
@@ -162,13 +163,30 @@ public class HiveExploreServiceTest {
             new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
+    runCommand("select key, value from kv_table where key = '1'",
+               true,
+               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+               Lists.newArrayList(
+                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+    );
+
     runCommand("select * from kv_table",
                true,
                Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
                                   new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
+                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
+
+    runCommand("select * from kv_table where key = '2'",
+               true,
+               Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
+                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
+               Lists.newArrayList(
+                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
 
     runCommand("drop table if exists kv_table",
         false,
