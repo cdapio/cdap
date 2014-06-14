@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.trafficAnalytics;
+package com.continuuity.examples.traffic;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -107,7 +107,8 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
     throws IOException {
       
     // Start a Procedure.
-    ProcedureManager procedureManager = appManager.startProcedure(TrafficAnalyticsApp.LogCountProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(
+      TrafficAnalyticsApp.LogCountProcedure.class.getSimpleName());
 
     try {
       // Call the Procedure
@@ -117,11 +118,11 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
       String response = client.query("getCounts", Collections.<String, String>emptyMap());
       
       // Deserialize the Json string.
-      Map<Long, Integer> result = GSON.fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
+      Map<Long, Integer> result = GSON.fromJson(response, new TypeToken<Map<Long, Integer>>() { }.getType());
       Long nowByHour = NOW - NOW % AGGREGATION_INTERVAL;
       Assert.assertEquals(2, result.size());
-      Assert.assertEquals(1, (int)result.get(nowByHour - TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)));
-      Assert.assertEquals(2, (int)result.get(nowByHour));
+      Assert.assertEquals(1, (int) result.get(nowByHour - TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)));
+      Assert.assertEquals(2, (int) result.get(nowByHour));
     } finally {
       procedureManager.stop();
     }

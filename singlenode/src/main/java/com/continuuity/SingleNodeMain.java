@@ -25,9 +25,6 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.metastore.HiveMetastore;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -76,9 +73,6 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
 
-  private HiveMetastore hiveMetastore;
-  private HiveServer hiveServer;
-
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
 
@@ -101,9 +95,6 @@ public class SingleNodeMain {
     datasetService = injector.getInstance(DatasetService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
-
-    hiveMetastore = injector.getInstance(HiveMetastore.class);
-    hiveServer = injector.getInstance(HiveServer.class);
 
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
@@ -156,12 +147,6 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
-    if (hiveMetastore != null && hiveServer != null) {
-      // it is important to respect that order: metastore, then HiveServer
-      hiveMetastore.startAndWait();
-      hiveServer.startAndWait();
-    }
-
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
     }
@@ -191,12 +176,6 @@ public class SingleNodeMain {
     }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    if (hiveServer != null) {
-      hiveServer.stopAndWait();
-    }
-    if (hiveMetastore != null) {
-      hiveMetastore.stopAndWait();
-    }
   }
 
   /**
@@ -319,8 +298,7 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
-      new StreamServiceModule(),
-      new HiveRuntimeModule().getInMemoryModules()
+      new StreamServiceModule()
     );
   }
 
@@ -366,8 +344,7 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamServiceModule(),
-      new HiveRuntimeModule().getSingleNodeModules()
+      new StreamServiceModule()
     );
   }
 }

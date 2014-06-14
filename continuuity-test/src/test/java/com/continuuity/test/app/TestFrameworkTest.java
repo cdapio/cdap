@@ -395,42 +395,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Test(timeout = 60000L)
-  public void testSQLQuery() throws Exception {
-
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-      appManager.getDataSet("myTable");
-    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
-    kvTable.put("a", "1");
-    kvTable.put("b", "2");
-    kvTable.put("c", "1");
-    myTableManager.flush();
-
-    Connection connection = getQueryClient();
-    try {
-      // TODO remove the CREATE from here as soon as the DS manager auto-creates the Hive table.
-      connection.prepareStatement(generateCreateStatement("myTable", kvTable)).execute();
-
-      // list the tables and make sure the table is there
-      ResultSet results = connection.prepareStatement("show tables").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertTrue("myTable".equalsIgnoreCase(results.getString(1))); // Hive is apparently not case-sensitive
-
-      // run a query over the dataset
-      results = connection.prepareStatement("select first from mytable where second = '1'").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("a", results.getString(1));
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("c", results.getString(1));
-      Assert.assertFalse(results.next());
-
-    } finally {
-      connection.close();
-    }
-  }
-
   public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
     String hiveSchema;
     try {

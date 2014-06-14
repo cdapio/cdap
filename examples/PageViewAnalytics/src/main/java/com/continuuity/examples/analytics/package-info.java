@@ -15,10 +15,8 @@
  */
 /**
  * Package for PageViewAnalytics Application.
- * 
+ *
  * An Application that analyzes Apache access log events to find
  * the distribution of page views of a particular page.
  */
-package com.continuuity.examples.pageViewAnalytics;
-
-
+package com.continuuity.examples.analytics;
