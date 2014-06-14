@@ -81,7 +81,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // cleanup
     framework.deleteInstance("my_table");
     framework.deleteModule("keyValue");
-    framework.deleteModule("table");
+    framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 
@@ -104,7 +104,7 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.deleteInstance("my_table");
     framework.deleteModule("doubleKeyValue");
     framework.deleteModule("keyValue");
-    framework.deleteModule("table");
+    framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 
