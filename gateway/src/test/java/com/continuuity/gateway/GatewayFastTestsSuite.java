@@ -8,7 +8,6 @@ import com.continuuity.gateway.handlers.ProcedureHandlerTest;
 import com.continuuity.gateway.handlers.RuntimeArgumentTest;
 import com.continuuity.gateway.handlers.StreamHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
-import com.continuuity.gateway.router.RouterPathTest;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
 import com.google.common.base.Charsets;
@@ -34,12 +33,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-
 import javax.annotation.Nullable;
 
 /**
@@ -53,7 +50,6 @@ import javax.annotation.Nullable;
   StreamClientTest.class,
   NettyFlumeCollectorTest.class,
   MetricsReporterHookTest.class,
-  RouterPathTest.class,
   StreamHandlerTest.class,
   RuntimeArgumentTest.class
 })
