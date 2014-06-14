@@ -14,7 +14,7 @@ import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
@@ -44,7 +44,7 @@ public class DataSetServiceModules {
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
           ImmutableSortedMap.<String, DatasetModule>of(
             "orderedTable-memory", new InMemoryOrderedTableModule(),
-            "table", new TableModule())
+            "core", new CoreDatasetsModule())
         );
 
         install(new FactoryModuleBuilder()
@@ -71,7 +71,7 @@ public class DataSetServiceModules {
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
           ImmutableSortedMap.<String, DatasetModule>of(
             "orderedTable-memory", new LevelDBOrderedTableModule(),
-            "table", new TableModule())
+            "core", new CoreDatasetsModule())
         );
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
@@ -105,7 +105,7 @@ public class DataSetServiceModules {
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(
           ImmutableSortedMap.<String, DatasetModule>of(
             "orderedTable-hbase", new HBaseOrderedTableModule(),
-            "table", new TableModule())
+            "core", new CoreDatasetsModule())
         );
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
