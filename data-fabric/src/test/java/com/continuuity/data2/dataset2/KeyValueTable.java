@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.api.dataset.Dataset;
 
 /**
  *

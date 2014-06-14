@@ -1,17 +1,16 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.lib.table.Row;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

@@ -63,17 +63,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A helper class for managing the distributed cache for {@link LocalJobRunner}.
- * 
+ *
  * Continuuity fix is applied on the ClassLoader so that it doesn't keep opened file when the ClassLoader
  * is pending for GC.
  */
@@ -109,6 +109,9 @@ class LocalDistributedCacheManagerWithFix {
     Map<String, LocalResource> localResources =
       new LinkedHashMap<String, LocalResource>();
     MRApps.setupDistributedCache(conf, localResources);
+    // Generating unique numbers for FSDownload.
+    AtomicLong uniqueNumberGenerator =
+      new AtomicLong(System.currentTimeMillis());
 
     // Find which resources are to be put on the local classpath
     Map<String, Path> classpaths = new HashMap<String, Path>();
@@ -145,10 +148,11 @@ class LocalDistributedCacheManagerWithFix {
       exec = Executors.newCachedThreadPool(tf);
       Path destPath = localDirAllocator.getLocalPathForWrite(".", conf);
       Map<LocalResource, Future<Path>> resourcesToPaths = Maps.newHashMap();
-      Random rand = new Random();
       for (LocalResource resource : localResources.values()) {
-        Callable<Path> download = new FSDownload(localFSFileContext, ugi, conf,
-                                                 new Path(destPath, Long.toString(rand.nextLong())), resource);
+        Callable<Path> download =
+          new FSDownload(localFSFileContext, ugi, conf,
+                         new Path(destPath, Long.toString(uniqueNumberGenerator.incrementAndGet())),
+                         resource);
         Future<Path> future = exec.submit(download);
         resourcesToPaths.put(resource, future);
       }

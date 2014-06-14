@@ -22,12 +22,6 @@
       <artifactId>data-fabric</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
@@ -35,22 +29,16 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>hbase-compat-0.96</artifactId>
+      <artifactId>hbase-compat-0.94</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>hbase-compat-0.96</artifactId>
+      <artifactId>hbase-compat-0.94</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -72,8 +60,14 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-testing-util</artifactId>
+      <artifactId>hbase</artifactId>
+      <classifier>tests</classifier>
     </dependency>
+
+    <!--<dependency>-->
+      <!--<groupId>org.apache.hbase</groupId>-->
+      <!--<artifactId>hbase-testing-util</artifactId>-->
+    <!--</dependency>-->
   </dependencies>
 
 </project>

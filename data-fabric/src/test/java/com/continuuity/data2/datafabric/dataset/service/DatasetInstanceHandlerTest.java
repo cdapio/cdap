@@ -1,27 +1,27 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.Get;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Table;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -113,7 +113,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     String table2Name = dsNameSpace.namespace("myTable2");
 
     deployModule("default-orderedTable", InMemoryOrderedTableModule.class);
-    deployModule("default-table", TableModule.class);
+    deployModule("default-core", CoreDatasetsModule.class);
 
     // cannot create instance with same name again
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));

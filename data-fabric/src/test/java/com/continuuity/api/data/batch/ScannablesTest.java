@@ -1,7 +1,6 @@
 package com.continuuity.api.data.batch;
 
 import com.continuuity.common.utils.ImmutablePair;
-
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;

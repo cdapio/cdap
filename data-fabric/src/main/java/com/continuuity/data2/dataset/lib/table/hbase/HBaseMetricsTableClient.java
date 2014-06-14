@@ -9,7 +9,6 @@ import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;

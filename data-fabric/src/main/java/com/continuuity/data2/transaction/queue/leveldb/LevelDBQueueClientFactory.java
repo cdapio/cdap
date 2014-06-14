@@ -12,7 +12,6 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;

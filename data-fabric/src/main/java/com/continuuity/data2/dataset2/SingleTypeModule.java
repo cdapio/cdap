@@ -1,13 +1,13 @@
 package com.continuuity.data2.dataset2;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.DataSetType;
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetDefinition;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.module.DataSetType;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
-import com.continuuity.internal.data.dataset.module.EmbeddedDataSet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -23,10 +23,10 @@ import java.util.Map;
  * Wraps implementation of {@link Dataset} into a {@link DatasetModule}.
  *
  * This allows for easier implementation of simple datasets without requiring to implement {@link DatasetDefinition},
- * {@link com.continuuity.internal.data.dataset.DatasetAdmin}, etc. when the implementation uses existing dataset types.
+ * {@link com.continuuity.api.dataset.DatasetAdmin}, etc. when the implementation uses existing dataset types.
  *
  * NOTE: all admin ops of the dataset will be delegated to embedded datasets;
- *       {@link com.continuuity.internal.data.dataset.DatasetProperties} will be propagated to embedded datasets as well
+ *       {@link com.continuuity.api.dataset.DatasetProperties} will be propagated to embedded datasets as well
  *
  * NOTE: must have exactly one constructor with parameter types of
  *       (DatasetSpecification, [0..n] @EmbeddedDataset Dataset)

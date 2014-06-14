@@ -52,7 +52,7 @@ public class ResponseCodeAnalyticsTest extends ReactorTestBase {
       sendData(appManager, now);
 
       // Wait for the last Flowlet processing 3 log events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("ResponseCodeAnalytics","LogAnalyticsFlow", "counter");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("ResponseCodeAnalytics", "LogAnalyticsFlow", "counter");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
@@ -96,10 +96,10 @@ public class ResponseCodeAnalyticsTest extends ReactorTestBase {
       String response = client.query("getCounts", Collections.<String, String>emptyMap());
 
       Map<Integer, Long> result = new Gson().fromJson(response,
-                         new TypeToken<Map<Integer, Long>>(){}.getType());
+                         new TypeToken<Map<Integer, Long>>() { }.getType());
 
-      Assert.assertEquals(1, (long)result.get(200));
-      Assert.assertEquals(2, (long)result.get(404));
+      Assert.assertEquals(1, (long) result.get(200));
+      Assert.assertEquals(2, (long) result.get(404));
     } finally {
       procedureManager.stop();
     }

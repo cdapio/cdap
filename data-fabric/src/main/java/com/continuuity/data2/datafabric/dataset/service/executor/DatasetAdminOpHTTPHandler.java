@@ -1,5 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -8,10 +12,6 @@ import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

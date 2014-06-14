@@ -19,7 +19,7 @@ public class StreamServiceModule extends PrivateModule {
   @Override
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named(Constants.Service.STREAM_HANDLER));
+                                                                      Names.named(Constants.Stream.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(PingHandler.class);
 

@@ -1,12 +1,11 @@
 package com.continuuity.data2.dataset2.lib.table.hbase;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;

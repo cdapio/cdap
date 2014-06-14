@@ -17,17 +17,18 @@
  */
 package com.continuuity.hive.objectinspector;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.hive.serde2.objectinspector.CrossMapEqualComparer;
 import org.apache.hadoop.hive.serde2.objectinspector.FullMapEqualComparer;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.SimpleMapEqualComparer;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-public class FullMapEqualComparerTest extends TestCase {
+public class FullMapEqualComparerTest {
 
   public static class IntegerIntegerMapHolder {
     Map<Integer, Integer> mMap;
@@ -37,6 +38,7 @@ public class FullMapEqualComparerTest extends TestCase {
     }
   }
 
+  @Test
   public void testAntiSymmetry() {
     IntegerIntegerMapHolder o1 = new IntegerIntegerMapHolder();
     IntegerIntegerMapHolder o2 = new IntegerIntegerMapHolder();
@@ -49,25 +51,26 @@ public class FullMapEqualComparerTest extends TestCase {
 
     { // not anti-symmetric
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new SimpleMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc21 = ObjectInspectorUtils.compare(o2, oi, o1, oi, new SimpleMapEqualComparer());
-      assertTrue(rc21 > 0);
+      Assert.assertTrue(rc21 > 0);
     }
     { // not anti-symmetric
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new CrossMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc21 = ObjectInspectorUtils.compare(o2, oi, o1, oi, new CrossMapEqualComparer());
-      assertTrue(rc21 > 0);
+      Assert.assertTrue(rc21 > 0);
     }
     { // anti-symmetric
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new FullMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc21 = ObjectInspectorUtils.compare(o2, oi, o1, oi, new FullMapEqualComparer());
-      assertTrue(rc21 < 0);
+      Assert.assertTrue(rc21 < 0);
     }
 
   }
 
+  @Test
   public void testTransitivity() {
     IntegerIntegerMapHolder o1 = new IntegerIntegerMapHolder();
     IntegerIntegerMapHolder o2 = new IntegerIntegerMapHolder();
@@ -86,27 +89,27 @@ public class FullMapEqualComparerTest extends TestCase {
 
     { // non-transitive
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new SimpleMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc23 = ObjectInspectorUtils.compare(o2, oi, o3, oi, new SimpleMapEqualComparer());
-      assertTrue(rc23 > 0);
+      Assert.assertTrue(rc23 > 0);
       int rc13 = ObjectInspectorUtils.compare(o1, oi, o3, oi, new SimpleMapEqualComparer());
-      assertTrue(rc13 < 0);
+      Assert.assertTrue(rc13 < 0);
     }
     { // non-transitive
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new CrossMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc23 = ObjectInspectorUtils.compare(o2, oi, o3, oi, new CrossMapEqualComparer());
-      assertTrue(rc23 > 0);
+      Assert.assertTrue(rc23 > 0);
       int rc13 = ObjectInspectorUtils.compare(o1, oi, o3, oi, new CrossMapEqualComparer());
-      assertTrue(rc13 < 0);
+      Assert.assertTrue(rc13 < 0);
     }
     { // transitive
       int rc12 = ObjectInspectorUtils.compare(o1, oi, o2, oi, new FullMapEqualComparer());
-      assertTrue(rc12 > 0);
+      Assert.assertTrue(rc12 > 0);
       int rc23 = ObjectInspectorUtils.compare(o2, oi, o3, oi, new FullMapEqualComparer());
-      assertTrue(rc23 > 0);
+      Assert.assertTrue(rc23 > 0);
       int rc13 = ObjectInspectorUtils.compare(o1, oi, o3, oi, new FullMapEqualComparer());
-      assertTrue(rc13 > 0);
+      Assert.assertTrue(rc13 > 0);
     }
   }
 

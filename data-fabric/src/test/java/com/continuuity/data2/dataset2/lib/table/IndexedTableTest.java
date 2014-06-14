@@ -1,14 +1,14 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.table.Delete;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Row;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.TableTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.lib.table.Delete;
-import com.continuuity.internal.data.dataset.lib.table.Get;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Row;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

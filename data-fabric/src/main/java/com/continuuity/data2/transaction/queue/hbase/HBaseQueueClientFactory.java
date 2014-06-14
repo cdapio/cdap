@@ -11,7 +11,6 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 

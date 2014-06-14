@@ -17,6 +17,8 @@ import com.continuuity.data.runtime.HDFSTransactionStateStorageProvider;
 import com.continuuity.data.runtime.InMemoryTransactionManagerProvider;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.metrics.ReactorTxMetricsCollector;
+import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -28,6 +30,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
@@ -105,6 +108,12 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(TxMetricsCollector.class).to(ReactorTxMetricsCollector.class).in(Scopes.SINGLETON);
+        }
+      },
       new LoggingModules().getDistributedModules()
     );
   }
