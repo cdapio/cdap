@@ -38,7 +38,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return null;
+    return new ExploreDistributedModule();
   }
 
   private static final class ExploreInMemoryModule extends PrivateModule {
@@ -79,8 +79,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private static final long seed = System.currentTimeMillis();
       @Override
       public ExploreService get() {
-        File warehouseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "warehouse");
-        File databaseDir = new File(cConf.get(Constants.Hive.CFG_LOCAL_DATA_DIR), "database");
+        File warehouseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "warehouse");
+        File databaseDir = new File(cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR), "database");
 
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
@@ -111,6 +111,13 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
         return exploreService;
       }
+    }
+  }
+
+  private static final class ExploreDistributedModule extends PrivateModule {
+    @Override
+    protected void configure() {
+
     }
   }
 }

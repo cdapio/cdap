@@ -21,13 +21,12 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.explore.service.ExploreService;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -108,7 +107,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isHiveEnabled = cConf.getBoolean(Constants.Hive.EXPLORE_ENABLED);
+    isHiveEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     twillApplication = createTwillApplication();
     if (twillApplication == null) {
       throw new IllegalArgumentException("TwillApplication cannot be null");
@@ -327,7 +326,7 @@ public class ReactorServiceMain extends DaemonMain {
       throw new RuntimeException("Env variable HIVE_CLASSPATH is not set.");
     }
 
-    HiveServer.checkHiveVersion(HiveServer.buildHiveClassLoader(hiveClassPathStr));
+    ExploreServiceUtils.checkHiveVersion(ExploreServiceUtils.buildHiveClassLoader(hiveClassPathStr));
 
     return preparer.withClassPaths(hiveClassPathStr);
   }
