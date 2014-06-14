@@ -5,6 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -16,6 +17,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -27,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +50,7 @@ public class DatasetService extends AbstractIdleService {
   private final DatasetTypeManager typeManager;
 
   private final DatasetFramework mdsDatasetFramework;
-  private final SortedMap<String, DatasetModule> defaultModules;
+  private final LinkedHashMap<String, DatasetModule> defaultModules;
 
   @Inject
   public DatasetService(CConfiguration cConf,
@@ -54,7 +58,7 @@ public class DatasetService extends AbstractIdleService {
                         DiscoveryService discoveryService,
                         @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
                         @Named("defaultDatasetModules")
-                        SortedMap<String, DatasetModule> defaultModules,
+                        List<ImmutablePair<String, DatasetModule>> defaultModules,
                         TransactionSystemClient txSystemClient,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient) throws Exception {
@@ -65,7 +69,10 @@ public class DatasetService extends AbstractIdleService {
     this.mdsDatasetFramework =
       new NamespacedDatasetFramework(mdsDatasetFramework,
                                      new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
-    this.defaultModules = defaultModules;
+    this.defaultModules = Maps.newLinkedHashMap();
+    for (ImmutablePair<String, DatasetModule> module : defaultModules) {
+      this.defaultModules.put(module.getFirst(), module.getSecond());
+    }
 
     this.typeManager = new DatasetTypeManager(mdsDatasetFramework, txSystemClient, locationFactory, defaultModules);
     this.instanceManager = new DatasetInstanceManager(mdsDatasetFramework, txSystemClient);
