@@ -18,7 +18,6 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -143,14 +142,14 @@ public class HiveExploreServiceTest {
     runCommand("describe kv_table",
         true,
         Lists.newArrayList(
-            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+          new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                "from deserializer"))
+          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                                             "from deserializer"))
         )
     );
 
@@ -274,8 +273,7 @@ public class HiveExploreServiceTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new ExploreRuntimeModule().getInMemoryModules(),
-      new HiveClientModule()
+      new ExploreRuntimeModule().getInMemoryModules()
     );
   }
 }
