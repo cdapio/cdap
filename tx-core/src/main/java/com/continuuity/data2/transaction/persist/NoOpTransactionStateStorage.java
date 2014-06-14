@@ -5,8 +5,6 @@ import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.inject.Inject;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,15 +24,6 @@ public class NoOpTransactionStateStorage extends AbstractTransactionStateStorage
 
   @Override
   protected void shutDown() throws Exception {
-  }
-
-  @Override
-  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
-  }
-
-  @Override
-  public TransactionSnapshot readSnapshot(InputStream in) throws IOException {
-    return null;
   }
 
   @Override

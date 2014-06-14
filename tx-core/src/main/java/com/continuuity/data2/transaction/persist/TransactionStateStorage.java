@@ -13,14 +13,14 @@ import java.util.List;
 public interface TransactionStateStorage extends Service {
 
   /**
-   *  Writes a snapshot to an existing output stream.
-   */
-  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException;
-
-  /**
    * Reads a snapshot from an input stream.
    */
   public TransactionSnapshot readSnapshot(InputStream in) throws IOException;
+
+  /**
+   *  Writes a snapshot to an existing output stream.
+   */
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException;
 
   /**
    * Persists a snapshot of transaction state.
