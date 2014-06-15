@@ -1,32 +1,26 @@
 package com.continuuity.data2.transaction.snapshot;
 
-import com.google.common.base.Charsets;
-
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 /**
- *  An {@link com.continuuity.common.io.BinaryEncoder} for binary-format data.
+ *  An encoder to help encode snapshots in binary format.
  */
 public final class BinaryEncoder {
 
   private final OutputStream output;
 
+  /**
+   * @param output stream to write to
+   */
   public BinaryEncoder(OutputStream output) {
     this.output = output;
   }
 
-  public BinaryEncoder writeNull() throws IOException {
-    // No-op
-    return this;
-  }
-
-  public BinaryEncoder writeBool(boolean b) throws IOException {
-    output.write(b ? 1 : 0);
-    return this;
-  }
-
+  /**
+   * write a single int value.
+   * @throws java.io.IOException If there is IO error.
+   */
   public BinaryEncoder writeInt(int i) throws IOException {
     // Compute the zig-zag value. First double the value and flip the bit if the input is negative.
     int val = (i << 1) ^ (i >> 31);
@@ -44,6 +38,10 @@ public final class BinaryEncoder {
     return this;
   }
 
+  /**
+   * write a single long int value.
+   * @throws java.io.IOException If there is IO error.
+   */
   public BinaryEncoder writeLong(long l) throws IOException {
     // Compute the zig-zag value. First double the value and flip the bit if the input is negative.
     long val = (l << 1) ^ (l >> 63);
@@ -61,59 +59,13 @@ public final class BinaryEncoder {
     return this;
   }
 
-  public BinaryEncoder writeFloat(float f) throws IOException {
-    int bits = Float.floatToIntBits(f);
-    output.write(bits & 0xff);
-    output.write((bits >> 8) & 0xff);
-    output.write((bits >> 16) & 0xff);
-    output.write((bits >> 24) & 0xff);
-    return this;
-  }
-
-  public BinaryEncoder writeDouble(double d) throws IOException {
-    long bits = Double.doubleToLongBits(d);
-    int low = (int) bits;
-    int high = (int) (bits >> 32);
-
-    output.write(low & 0xff);
-    output.write((low >> 8) & 0xff);
-    output.write((low >> 16) & 0xff);
-    output.write((low >> 24) & 0xff);
-
-    output.write(high & 0xff);
-    output.write((high >> 8) & 0xff);
-    output.write((high >> 16) & 0xff);
-    output.write((high >> 24) & 0xff);
-
-    return this;
-  }
-
-  public BinaryEncoder writeString(String s) throws IOException {
-    return writeBytes(Charsets.UTF_8.encode(s));
-  }
-
+  /**
+   * write a sequence of bytes. First writes the number of bytes as an int, then the bytes themselves.
+   * @throws java.io.IOException If there is IO error.
+   */
   public BinaryEncoder writeBytes(byte[] bytes) throws IOException {
-    return writeBytes(bytes, 0, bytes.length);
-  }
-
-  public BinaryEncoder writeBytes(byte[] bytes, int off, int len) throws IOException {
-    writeLong(len);
-    output.write(bytes, off, len);
-    return this;
-  }
-
-  public BinaryEncoder writeBytes(ByteBuffer buffer) throws IOException {
-    writeInt(buffer.remaining());
-    if (buffer.hasArray()) {
-      output.write(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
-    } else {
-      byte[] bytes = new byte[buffer.remaining()];
-      int pos = buffer.position();
-      buffer.get(bytes);
-      output.write(bytes);
-      buffer.position(pos);
-    }
-
+    writeLong(bytes.length);
+    output.write(bytes, 0, bytes.length);
     return this;
   }
 }
