@@ -20,8 +20,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 /**
  *
  */
-public class MultiBytesPrefixHashDistributorTest extends RowKeyDistributorTestBase {
-  public MultiBytesPrefixHashDistributorTest() {
+public class MultiBytesPrefixHashDistributorTestRun extends RowKeyDistributorTestBase {
+  public MultiBytesPrefixHashDistributorTestRun() {
     super(new RowKeyDistributorByHashPrefix(new MultiBytesPrefixHash()));
   }
 

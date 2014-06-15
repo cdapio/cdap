@@ -1,7 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.gateway.GatewayTestBase;
+import com.continuuity.gateway.auth.NoAuthenticator;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -13,7 +13,7 @@ import org.junit.Test;
 /**
  *  To test the RouterPathLookup regular expression tests.
  */
-public class RouterPathTest extends GatewayTestBase {
+public class RouterPathTest {
 
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
@@ -22,7 +22,7 @@ public class RouterPathTest extends GatewayTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    pathLookup = GatewayTestBase.getInjector().getInstance(RouterPathLookup.class);
+    pathLookup = new RouterPathLookup(new NoAuthenticator());
   }
 
   @Test
@@ -161,7 +161,7 @@ public class RouterPathTest extends GatewayTestBase {
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.STREAMS, result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
     flowPath = "v2//streams/InvalidStreamName/flows/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);

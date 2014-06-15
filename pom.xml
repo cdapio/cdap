@@ -121,6 +121,9 @@
               <include>**/*Test.java</include>
               <include>**/*TestCase.java</include>
             </includes>
+            <excludes>
+              <exclude>**/*TestRun.java</exclude>
+            </excludes>
           </configuration>
         </plugin>
         <plugin>

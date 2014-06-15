@@ -80,6 +80,8 @@ public class TestExternalAuthenticationServer {
   private static CConfiguration getConfiguration() {
     String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
     CConfiguration cConf = CConfiguration.create();
+    // Use random port for testing
+    cConf.setInt(Constants.Security.AUTH_SERVER_PORT, Networks.getRandomPort());
     cConf.set(Constants.Security.AUTH_HANDLER_CLASS,
               "com.continuuity.security.server.LDAPAuthenticationHandler");
     cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "org.eclipse.jetty.plus.jaas.spi.LdapLoginModule");
