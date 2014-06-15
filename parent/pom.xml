@@ -1236,9 +1236,17 @@
       </build>
     </profile>
     <profile>
-      <id>test-fast</id>
+      <id>test-small</id>
+      <!-- Runs only small tests -->
       <properties>
         <testcase.groups>!com.continuuity.test.MediumTests</testcase.groups>
+      </properties>
+    </profile>
+    <profile>
+      <!-- Runs small and medium tests -->
+      <id>test-medium</id>
+      <properties>
+        <testcase.groups>!com.continuuity.test.LargeTests</testcase.groups>
       </properties>
     </profile>
   </profiles>
