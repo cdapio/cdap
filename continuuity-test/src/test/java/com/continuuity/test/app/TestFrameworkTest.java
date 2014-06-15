@@ -9,6 +9,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.test.SlowTest;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
@@ -30,13 +31,12 @@ import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +82,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(SlowTest.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
@@ -134,6 +135,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
+  @Category(SlowTest.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
@@ -170,11 +172,13 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(SlowTest.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountApp2.class, false, "text2");
   }
 
+  @Category(SlowTest.class)
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
