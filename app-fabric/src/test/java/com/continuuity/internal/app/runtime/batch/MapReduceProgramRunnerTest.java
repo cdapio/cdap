@@ -26,6 +26,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.test.LargeTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -38,6 +39,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedReader;
@@ -54,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Category(LargeTests.class)
 public class MapReduceProgramRunnerTest {
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;

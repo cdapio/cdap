@@ -33,6 +33,8 @@ import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.http.AppFabricTestBase;
+import com.continuuity.test.LargeTests;
+import com.continuuity.test.MediumTests;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -54,6 +56,7 @@ import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -234,6 +237,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   /**
    * Tests history of a flow.
    */
+  @Category(MediumTests.class)
   @Test
   public void testFlowHistory() throws Exception {
     testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
@@ -250,6 +254,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   /**
    * Tests history of a mapreduce.
    */
+  @Category(LargeTests.class)
   @Test
   public void testMapreduceHistory() throws Exception {
     testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
@@ -258,6 +263,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   /**
    * Tests history of a workflow.
    */
+  @Category(LargeTests.class)
   @Test
   public void testWorkflowHistory() throws Exception {
     testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
@@ -312,6 +318,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   }
 
 
+  @Category(LargeTests.class)
   @Test
   public void testStartStop() throws Exception {
     //deploy, check the status and start a flow. Also check the status
@@ -655,6 +662,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
 
+  @Category(LargeTests.class)
   @Test
   public void testStatus() throws Exception {
 
@@ -925,6 +933,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   /**
    * Test for schedule handlers.
    */
+  @Category(LargeTests.class)
   @Test
   public void testScheduleEndPoints() throws Exception {
     // Steps for the test:

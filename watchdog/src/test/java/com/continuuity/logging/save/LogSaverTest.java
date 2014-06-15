@@ -22,6 +22,7 @@ import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.test.MediumTests;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
@@ -46,6 +47,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +67,7 @@ import static com.continuuity.logging.appender.LoggingTester.LogCallback;
 /**
  * Test LogSaver and Distributed Log Reader.
  */
+@Category(MediumTests.class)
 public class LogSaverTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 

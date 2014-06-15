@@ -2,6 +2,7 @@ package net.fake.test.app;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
+import com.continuuity.test.MediumTests;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
@@ -12,6 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.util.concurrent.TimeoutException;
  * Tests bundle jar feature, in which the application jar contains
  * its dependency jars inside the "/lib" folder within the application jar.
  */
+@Category(MediumTests.class)
 public class TestBundleJarApp extends ReactorTestBase {
 
   @Test

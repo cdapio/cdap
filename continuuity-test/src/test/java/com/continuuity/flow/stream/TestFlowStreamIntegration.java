@@ -1,18 +1,21 @@
 package com.continuuity.flow.stream;
 
 import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.MediumTests;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
+@Category(MediumTests.class)
 public class TestFlowStreamIntegration extends ReactorTestBase {
   @Test
   public void testStreamBatch() throws Exception {

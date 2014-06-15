@@ -3,10 +3,12 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.test.MediumTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 
@@ -15,6 +17,7 @@ import java.io.IOException;
  * Tests persistence of transaction snapshots and write-ahead logs to HDFS storage, using the
  * {@link HDFSTransactionStateStorage} and {@link HDFSTransactionLog} implementations.
  */
+@Category(MediumTests.class)
 public class HDFSTransactionStateStorageTest extends AbstractTransactionStateStorageTest {
   private static final String TEST_DIR = "/tmp/wal_test";
 

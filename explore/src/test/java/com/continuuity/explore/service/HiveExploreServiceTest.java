@@ -20,6 +20,7 @@ import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
+import com.continuuity.test.MediumTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -30,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.util.List;
@@ -40,6 +42,7 @@ import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyV
 /**
  * Tests Hive13ExploreService.
  */
+@Category(MediumTests.class)
 public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
