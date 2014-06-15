@@ -1237,7 +1237,7 @@
       </build>
     </profile>
     <profile>
-      <id>tests-fast</id>
+      <id>test-fast</id>
       <properties>
         <testcase.groups>!com.continuuity.common.test.SlowTest</testcase.groups>
       </properties>
