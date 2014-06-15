@@ -960,9 +960,8 @@
     <!-- To support different test groups -->
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>common</artifactId>
+      <artifactId>common-build</artifactId>
       <version>${project.version}</version>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -1239,7 +1238,7 @@
     <profile>
       <id>test-fast</id>
       <properties>
-        <testcase.groups>!com.continuuity.common.test.SlowTest</testcase.groups>
+        <testcase.groups>!com.continuuity.test.MediumTests</testcase.groups>
       </properties>
     </profile>
   </profiles>
