@@ -102,9 +102,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private final boolean isInMemory;
 
       @Inject
-      private ExploreServiceProvider(CConfiguration cConf,
-                                     @Named("explore.service.impl") ExploreService exploreService,
-                                     @Named("explore.inmemory") boolean isInMemory) {
+      public ExploreServiceProvider(CConfiguration cConf,
+                                    @Named("explore.service.impl") ExploreService exploreService,
+                                    @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
         this.isInMemory = isInMemory;
@@ -188,7 +188,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         try {
           builder.add(file.getCanonicalPath());
         } catch (IOException e) {
-
+          LOG.warn("Could not add canonical path to aux class path for file {}", file.toString(), e);
         }
       }
 
