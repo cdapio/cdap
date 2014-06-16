@@ -56,6 +56,10 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
       cConf.setInt(Constants.Stream.WORKER_THREADS, Runtime.getRuntime().availableProcessors() * 2);
       // Set the instance id
       cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
+      //set logging context
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         Constants.Service.STREAMS));
 
       injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
