@@ -163,7 +163,6 @@ public class ReactorTestBase {
     configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
