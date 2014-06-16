@@ -13,11 +13,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.TimeUnit;
 
 /**
- * Dataset Reactor Service management in distributed mode
+ * Dataset Reactor Service management in distributed mode.
  */
 public class DatasetServiceManager extends AbstractDistributedReactorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceManager.class);

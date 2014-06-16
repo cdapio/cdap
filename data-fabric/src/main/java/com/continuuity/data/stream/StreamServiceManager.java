@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Stream Reactor Service management in distributed mode
+ * Stream Reactor Service management in distributed mode.
  */
 public class StreamServiceManager extends AbstractDistributedReactorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(StreamServiceManager.class);
