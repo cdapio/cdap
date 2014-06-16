@@ -2,11 +2,11 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -112,7 +112,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager
-        (conf, storage, new NoOpMetricsCollectionService());
+        (conf, storage, new TxMetricsCollector());
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -135,7 +135,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // starts a new tx manager
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, new NoOpMetricsCollectionService());
+      txManager = new InMemoryTransactionManager(conf, storage2, new TxMetricsCollector());
       txManager.startAndWait();
 
       // check that the reloaded state matches the old
@@ -179,7 +179,7 @@ public abstract class AbstractTransactionStateStorageTest {
       Thread.sleep(100);
       // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage3, new NoOpMetricsCollectionService());
+      txManager = new InMemoryTransactionManager(conf, storage3, new TxMetricsCollector());
       txManager.startAndWait();
 
       // verify state again matches (this time should include WAL replay)
@@ -216,7 +216,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage1 = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager
-        (conf, storage1, new NoOpMetricsCollectionService());
+        (conf, storage1, new TxMetricsCollector());
       txManager.startAndWait();
 
       // TODO: replace with new persistence tests
@@ -236,7 +236,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
       // simulate a failure by starting a new tx manager without stopping first
       storage2 = getStorage(conf);
-      txManager = new InMemoryTransactionManager(conf, storage2, new NoOpMetricsCollectionService());
+      txManager = new InMemoryTransactionManager(conf, storage2, new TxMetricsCollector());
       txManager.startAndWait();
 
       // check that the reloaded state matches the old

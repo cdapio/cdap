@@ -16,7 +16,7 @@ import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -113,7 +113,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     String table2Name = dsNameSpace.namespace("myTable2");
 
     deployModule("default-orderedTable", InMemoryOrderedTableModule.class);
-    deployModule("default-table", TableModule.class);
+    deployModule("default-core", CoreDatasetsModule.class);
 
     // cannot create instance with same name again
     Assert.assertEquals(HttpStatus.SC_OK, createInstance(table1Name, "table", DatasetProperties.EMPTY));

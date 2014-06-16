@@ -32,6 +32,10 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Inject
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
+    this.registry = registryFactory.create();
+  }
+
   public InMemoryDatasetFramework(DatasetDefinitionRegistry registry) {
     this.registry = registry;
   }
