@@ -416,7 +416,7 @@ public final class Constants {
 
     public static final String DATASET_NAME = "reactor.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
-    public static final String HIVE_CLASSPATH = "HIVE_CLASSPATH";
+    public static final String HIVE_CLASSPATH = "hive.classpath";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
