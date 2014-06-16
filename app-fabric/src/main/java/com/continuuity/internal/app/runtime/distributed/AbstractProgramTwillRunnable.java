@@ -112,7 +112,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   protected abstract Class<T> getProgramClass();
 
-  /**xz
+  /**
    * Provides sets of configurations to put into the specification. Children classes can override
    * this method to provides custom configurations.
    */
