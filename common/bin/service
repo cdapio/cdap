@@ -145,7 +145,7 @@ stop() {
         echo
       else
         retval=$?
-        echo nothing to stop because kill -0N of pid $pidToKill failed with status $retval
+        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
       fi
       rm -f $pid
     else
