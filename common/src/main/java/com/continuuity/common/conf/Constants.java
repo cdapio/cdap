@@ -422,13 +422,12 @@ public final class Constants {
 
     public static final String BACKLOG_CONNECTIONS = "explore.service.connection.backlog";
     public static final String EXEC_THREADS = "explore.service.exec.threads";
-    public static final String BOSS_THREADS = "explore.service.boss.threads";
     public static final String WORKER_THREADS = "explore.service.worker.threads";
 
     /** Twill Runnable configuration **/
-    public static final String CONTAINER_VIRTUAL_CORES = "dataset.executor.container.num.cores";
-    public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
-    public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
+    public static final String CONTAINER_VIRTUAL_CORES = "explore.executor.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "explore.executor.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "explore.executor.container.instances";
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";

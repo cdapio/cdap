@@ -163,7 +163,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
             System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
-        // Set local tmp dir to an absolute location in the twill runnable
+        // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
         System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
             new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
@@ -177,7 +177,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       // Here we find the transitive dependencies and remove all paths that come from the boot class path -
       // those paths are not needed because the new JVM will have them in its boot class path.
       // It could even be wrong to keep them because in the target container, the boot class path may be different
-      // (for example, if Hadoop uses a different Java version that Reactor).
+      // (for example, if Hadoop uses a different Java version than Reactor).
 
       final Set<URL> uris = Sets.newHashSet();
 

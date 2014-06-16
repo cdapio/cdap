@@ -80,7 +80,6 @@ public class SingleNodeMain {
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
 
-  private ExploreService exploreService;
   private ExploreExecutorService exploreExecutorService;
 
   private InMemoryZKServer zookeeper;
@@ -111,7 +110,6 @@ public class SingleNodeMain {
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
     if (exploreEnabled) {
-      exploreService = injector.getInstance(ExploreService.class);
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -165,8 +163,7 @@ public class SingleNodeMain {
       externalAuthenticationServer.startAndWait();
     }
 
-    if (exploreService != null && exploreExecutorService != null) {
-      exploreService.startAndWait();
+    if (exploreExecutorService != null) {
       exploreExecutorService.startAndWait();
     }
 
@@ -193,8 +190,7 @@ public class SingleNodeMain {
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
-    if (exploreService != null && exploreExecutorService != null) {
-      exploreService.stopAndWait();
+    if (exploreExecutorService != null) {
       exploreExecutorService.stopAndWait();
     }
     zookeeper.stopAndWait();

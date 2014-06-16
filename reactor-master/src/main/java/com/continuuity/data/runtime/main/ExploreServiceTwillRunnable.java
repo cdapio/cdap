@@ -51,8 +51,8 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Explore.SERVER_ADDRESS, context.getHost().getHostName());
 
-    // NOTE: twill client will try to load all the classes present here - including hive classes
-    // but it will fail and ignore those classes silently
+    // NOTE: twill client will try to load all the classes present here - including hive classes but it
+    // will fail since Hive classes are not in Reactor Master classpath, and ignore those classes silently
     injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new IOModule(), new ZKClientModule(),
@@ -69,7 +69,6 @@ public class ExploreServiceTwillRunnable extends AbstractReactorTwillRunnable {
   protected void getServices(List<? super Service> services) {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
-    services.add(injector.getInstance(ExploreService.class));
     services.add(injector.getInstance(ExploreExecutorService.class));
   }
 }
