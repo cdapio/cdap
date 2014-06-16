@@ -11,7 +11,6 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -53,9 +52,8 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
-                              final MetricsTableFactory metricsTableFactory, CConfiguration cConf,
-                              MetaDataTable metaDataTable) {
-    super(authenticator, metaDataTable);
+                              final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+    super(authenticator);
     this.metricsTableCaches = Maps.newHashMap();
     this.aggregatesTables = Maps.newHashMap();
     for (final MetricsScope scope : MetricsScope.values()) {

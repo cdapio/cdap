@@ -9,7 +9,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;

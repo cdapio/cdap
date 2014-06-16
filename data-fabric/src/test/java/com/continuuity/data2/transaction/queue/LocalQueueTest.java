@@ -13,9 +13,11 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,12 +42,13 @@ public class LocalQueueTest extends QueueTest {
   @BeforeClass
   public static void init() throws Exception {
     conf = CConfiguration.create();
-    conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    conf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new TransactionMetricsModule(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
@@ -64,6 +67,7 @@ public class LocalQueueTest extends QueueTest {
       new ConfigModule(conf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new TransactionMetricsModule(),
       new DataFabricModules().getSingleNodeModules());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("bigriver"));

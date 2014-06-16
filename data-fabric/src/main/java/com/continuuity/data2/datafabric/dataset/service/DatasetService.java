@@ -1,5 +1,6 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
@@ -13,7 +14,6 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -46,7 +46,7 @@ public class DatasetService extends AbstractIdleService {
   private final DatasetTypeManager typeManager;
 
   private final DatasetFramework mdsDatasetFramework;
-  private final SortedMap<String, Class<? extends DatasetModule>> defaultModules;
+  private final SortedMap<String, DatasetModule> defaultModules;
 
   @Inject
   public DatasetService(CConfiguration cConf,
@@ -54,7 +54,7 @@ public class DatasetService extends AbstractIdleService {
                         DiscoveryService discoveryService,
                         @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
                         @Named("defaultDatasetModules")
-                        SortedMap<String, Class<? extends DatasetModule>> defaultModules,
+                        SortedMap<String, DatasetModule> defaultModules,
                         TransactionSystemClient txSystemClient,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient) throws Exception {
@@ -99,8 +99,8 @@ public class DatasetService extends AbstractIdleService {
     LOG.info("Starting DatasetService...");
 
     // adding default modules to init dataset manager used by mds (directly)
-    for (Map.Entry<String, Class<? extends DatasetModule>> module : defaultModules.entrySet()) {
-      mdsDatasetFramework.register(module.getKey(), module.getValue());
+    for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
+      mdsDatasetFramework.addModule(module.getKey(), module.getValue());
     }
 
     typeManager.startAndWait();

@@ -4,6 +4,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -21,7 +22,8 @@ public class InMemoryDataSetAccessorTest extends NamespacingDataSetAccessorTest 
       new ConfigModule(conf),
       new DataFabricModules().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules()
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionMetricsModule()
     );
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }

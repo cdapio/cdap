@@ -1,5 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -8,8 +10,6 @@ import com.continuuity.common.exception.HandlerException;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -53,7 +53,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   @Override
-  public DatasetInstanceSpec create(String instanceName, DatasetTypeMeta typeMeta, DatasetInstanceProperties props)
+  public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
     HttpResponse httpResponse =
@@ -62,11 +62,11 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
                                         "type-meta", GSON.toJson(typeMeta)));
     verifyResponse(httpResponse);
 
-    return GSON.fromJson(new String(httpResponse.getResponseBody(), Charsets.UTF_8), DatasetInstanceSpec.class);
+    return GSON.fromJson(new String(httpResponse.getResponseBody(), Charsets.UTF_8), DatasetSpecification.class);
   }
 
   @Override
-  public void drop(DatasetInstanceSpec spec, DatasetTypeMeta typeMeta) throws Exception {
+  public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
     HttpResponse httpResponse =
       HttpRequests.post(resolve(spec.getName(), "drop"), "",
                         ImmutableMap.of("instance-spec", GSON.toJson(spec),

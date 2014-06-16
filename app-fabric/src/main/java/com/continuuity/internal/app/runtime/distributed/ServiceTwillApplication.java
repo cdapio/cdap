@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.Map;
 
 /**
- *
+ * TwillApplication for service. Used to localize program jar location before running the TwillApplication.
  */
 public class ServiceTwillApplication implements TwillApplication {
 

@@ -1,5 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.client;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -11,8 +13,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.data2.dataset2.ModuleConflictException;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -71,7 +71,7 @@ public class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetInstanceMeta.class);
   }
 
-  public Collection<DatasetInstanceSpec> getAllInstances() throws DatasetManagementException {
+  public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
     HttpResponse response = doGet("instances");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -79,7 +79,7 @@ public class DatasetServiceClient {
     }
 
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                         new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
+                         new TypeToken<List<DatasetSpecification>>() { }.getType());
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
@@ -94,7 +94,7 @@ public class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
   }
 
-  public void addInstance(String datasetInstanceName, String datasetType, DatasetInstanceProperties props)
+  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
     HttpResponse response = doPost("instances/" + datasetInstanceName,

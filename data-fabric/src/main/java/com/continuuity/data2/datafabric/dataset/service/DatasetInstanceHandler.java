@@ -1,5 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -9,8 +11,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -57,7 +57,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/instances/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
-    for (DatasetInstanceSpec spec : instanceManager.getAll()) {
+    for (DatasetSpecification spec : instanceManager.getAll()) {
       // skip if not exists: someone may be deleting it at same time
       if (!instanceManager.delete(spec.getName())) {
         continue;
@@ -81,7 +81,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/instances/{instance-name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("instance-name") String name) {
-    DatasetInstanceSpec spec = instanceManager.get(name);
+    DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -95,12 +95,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("instance-name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-    DatasetInstanceProperties props = GSON.fromJson(reader, DatasetInstanceProperties.class);
+    DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
     String typeName = request.getHeader("type-name");
 
     LOG.info("Creating dataset instance {}, type name: {}, props: {}", name, typeName, props);
 
-    DatasetInstanceSpec existing = instanceManager.get(name);
+    DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
       String message = String.format("Cannot create dataset instance %s: instance with same name already exists %s",
                                      name, existing);
@@ -119,7 +119,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
-    DatasetInstanceSpec spec;
+    DatasetSpecification spec;
     try {
       spec = opExecutorClient.create(name, typeMeta, props);
     } catch (Exception e) {
@@ -138,7 +138,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                        @PathParam("instance-name") String name) {
     LOG.info("Deleting dataset instance {}", name);
 
-    DatasetInstanceSpec spec = instanceManager.get(name);
+    DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;

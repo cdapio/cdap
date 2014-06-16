@@ -57,7 +57,8 @@ public class BaseMetricsQueryTest {
   protected static Store store;
   protected static LocationFactory locationFactory;
   protected static List<String> validResources;
-  protected static List<String> invalidResources;
+  protected static List<String> malformedResources;
+  protected static List<String> nonExistingResources;
 
   @ClassRule
   public static TemporaryFolder tempFolder = new TemporaryFolder();
@@ -148,8 +149,7 @@ public class BaseMetricsQueryTest {
       "/reactor/cluster/resources.total.storage?aggregate=true"
     );
 
-    invalidResources = ImmutableList.of(
-      // malformed context format.  for example, bad scope or bad spelling of 'flow' instead of 'flows'
+    malformedResources = ImmutableList.of(
       "/reacto/reads?aggregate=true",
       "/reactor/app/WordCount/reads?aggregate=true",
       "/reactor/apps/WordCount/flow/WordCounter/reads?aggregate=true",
@@ -158,8 +158,10 @@ public class BaseMetricsQueryTest {
       "/reactor/dataset/wordStats/reads?aggregate=true",
       "/reactor/datasets/wordStats/app/WordCount/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      // context format is fine but path elements (datsets, streams, programs) are non-existant
+      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
+    );
+
+    nonExistingResources = ImmutableList.of(
       "/reactor/apps/WordCont/reads?aggregate=true",
       "/reactor/apps/WordCount/flows/WordCouner/reads?aggregate=true",
       "/reactor/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",

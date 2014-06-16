@@ -19,7 +19,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
-import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
@@ -113,7 +112,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountID = getAuthenticatedAccountId(request);
 
     if (streamMetaStore.streamExists(accountID, stream)) {
-      responder.sendStatus(HttpResponseStatus.OK);
+      responder.sendJson(HttpResponseStatus.OK, streamAdmin.getConfig(stream));
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Program controller to manage services.
  */
 public class ServiceRunnableProgramController extends AbstractProgramController {
 

@@ -3,7 +3,7 @@ package com.continuuity.logging.context;
 import com.continuuity.common.logging.ApplicationLoggingContext;
 
 /**
- *
+ * Logging Context for Services defined by users.
  */
 public class UserServiceLoggingContext extends ApplicationLoggingContext {
 

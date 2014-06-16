@@ -26,12 +26,12 @@ import com.continuuity.data2.transaction.stream.StreamConsumerStateStore;
 import com.continuuity.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.sun.istack.Nullable;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nullable;
 
 /**
  * A {@link com.continuuity.data2.transaction.stream.StreamConsumerFactory} that reads from stream file
@@ -68,6 +68,11 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
     return new LevelDBStreamFileConsumer(streamConfig, consumerConfig, reader,
                                          stateStore, beginConsumerState, extraFilter,
                                          tableCore, dbLock);
+  }
+
+  @Override
+  protected void dropTable(String tableName) throws IOException {
+    tableService.dropTable(tableName);
   }
 
   @Override

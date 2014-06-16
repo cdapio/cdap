@@ -1,5 +1,12 @@
 package com.continuuity.data2.datafabric.dataset;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarFinder;
@@ -12,13 +19,8 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.DatasetNamespace;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
+import com.continuuity.data2.dataset2.SingleTypeModule;
+import com.continuuity.data2.dataset2.module.lib.DatasetModules;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -61,18 +63,25 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void register(String moduleName, Class<? extends DatasetModule> module)
+  public void addModule(String moduleName, DatasetModule module)
     throws DatasetManagementException {
 
-    Location tempJarPath;
-    if (module.getClassLoader() instanceof JarClassLoader) {
-      // for auto-registering module with application jar deploy
-      tempJarPath = ((JarClassLoader) module.getClassLoader()).getLocation();
+    // We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
+    // by only implementing Dataset. Without requiring implementing datasets module, definition and other classes.
+    // In this case we wrap that Dataset implementation with SingleTypeModule. But since we don't have a way to serde
+    // dataset modules, if we pass only SingleTypeModule.class the Dataset implementation info will be lost. Hence, as
+    // a workaround we put Dataset implementation class in MDS (on DatasetService) and wrapping it with SingleTypeModule
+    // when we need to instantiate module.
+    //
+    // todo: do proper serde for modules instead of just passing class name to server
+    Class<?> typeClass;
+    if (module instanceof SingleTypeModule) {
+      typeClass = ((SingleTypeModule) module).getDataSetClass();
     } else {
-      tempJarPath = new LocalLocationFactory().create(JarFinder.getJar(module));
+      typeClass = module.getClass();
     }
 
-    client.addModule(moduleName, module.getName(), tempJarPath);
+    addModule(moduleName, typeClass);
   }
 
   @Override
@@ -81,7 +90,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetInstanceProperties props)
+  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
 
     client.addInstance(namespace(datasetInstanceName), datasetType, props);
@@ -89,9 +98,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public Collection<String> getInstances() throws DatasetManagementException {
-    Collection<DatasetInstanceSpec> allInstances = client.getAllInstances();
+    Collection<DatasetSpecification> allInstances = client.getAllInstances();
     ImmutableList.Builder<String> builder = ImmutableList.builder();
-    for (DatasetInstanceSpec spec : allInstances) {
+    for (DatasetSpecification spec : allInstances) {
       builder.add(spec.getName());
     }
     return builder.build();
@@ -133,6 +142,18 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) impl.getDataset(instanceInfo.getSpec());
   }
 
+  private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
+    Location tempJarPath;
+    if (typeClass.getClassLoader() instanceof JarClassLoader) {
+      // for auto-registering module with application jar deploy
+      tempJarPath = ((JarClassLoader) typeClass.getClassLoader()).getLocation();
+    } else {
+      tempJarPath = new LocalLocationFactory().create(JarFinder.getJar(typeClass));
+    }
+
+    client.addModule(moduleName, typeClass.getName(), tempJarPath);
+  }
+
   private String namespace(String datasetInstanceName) {
     return namespace.namespace(datasetInstanceName);
   }
@@ -160,7 +181,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
         DatasetModule module;
         try {
           Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-          module = (DatasetModule) moduleClass.newInstance();
+          module = DatasetModules.getDatasetModule(moduleClass);
         } catch (Exception e) {
           LOG.error("Was not able to load dataset module class {} while trying to load type {}",
                     moduleMeta.getClassName(), implementationInfo, e);

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- *
+ * Distributed ProgramRunner for Service.
  */
 public class DistributedServiceProgramRunner extends AbstractDistributedProgramRunner {
 
@@ -43,7 +43,7 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.SERVICE, "Only SERVICE process type is supported.");
 
-    ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
+    final ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
     // Launch service runnables program runners

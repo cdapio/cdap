@@ -4,7 +4,6 @@
 package com.continuuity.data.stream;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -26,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.StringTokenizer;
-import javax.annotation.Nullable;
 
 /**
  *

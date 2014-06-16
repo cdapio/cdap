@@ -10,7 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- *
+ *  A ProgramController for Services that are launched through Twill.
  */
 final class ServiceTwillProgramController extends AbstractTwillProgramController {
 
