@@ -30,7 +30,7 @@ public class DatasetExploreFacade {
   private final boolean exploreEnabled;
 
   @Inject
-  public DatasetExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
+  public DatasetExploreFacade(AsyncExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED,
                                            Constants.Explore.DEFAULT_CFG_EXPLORE_ENABLED);
@@ -41,38 +41,25 @@ public class DatasetExploreFacade {
 
   /**
    * Enables ad-hoc exploration of the given {@link RowScannable}.
-   * @param name name of the external table to create.
-   * @param scannable RowScannable to explore.
-   * @param <ROW> Row type parameter.
+   * @param datasetInstance dataset instance name.
    */
-  public <ROW> void enableExplore(String name, RowScannable<ROW> scannable) throws ExploreException {
+  public void enableExplore(String datasetInstance) throws ExploreException {
     if (!exploreEnabled) {
       return;
     }
 
-    String createStatement = generateCreateStatement(name, scannable);
-    if (createStatement == null) {
-      LOG.error("Empty create statement for dataset {}", name);
-      return;
-    }
-
-    LOG.debug("Running create statement for dataset {} with row scannable {} - {}",
-              name,
-              scannable.getClass().getName(),
-              createStatement);
-
-    Handle handle = exploreClient.execute(createStatement);
+    Handle handle = exploreClient.enableExplore(datasetInstance);
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
       if (status.getState() != Status.State.FINISHED) {
-        LOG.error("Create statement did not finish successfully for row scannable {}. Got final state - {}",
-                  scannable.getClass().getName(), status.getState());
-        throw new ExploreException("Cannot enable explore for row scannable " + scannable.getClass().getName());
+        LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
+                  datasetInstance, status.getState());
+        throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
       // Cannot happen unless explore server restarted.
-      LOG.error("Error running create statement", e);
+      LOG.error("Error running enable explore", e);
       throw Throwables.propagate(e);
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
@@ -81,27 +68,77 @@ public class DatasetExploreFacade {
       try {
         exploreClient.close(handle);
       } catch (HandleNotFoundException e) {
-        LOG.error("Ignoring cannot find handle during close of create statement for row scannable " +
-                    scannable.getClass().getName());
+        LOG.error("Ignoring cannot find handle during close of enable explore for dataset instance {}",
+                  datasetInstance);
       }
     }
   }
 
-  static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+  /**
+   * Disable ad-hoc exploration of the given {@link RowScannable}.
+   * @param datasetInstance dataset instance name.
+   */
+  public void disableExplore(String datasetInstance) throws ExploreException {
+    if (!exploreEnabled) {
+      return;
+    }
+
+    Handle handle = exploreClient.disableExplore(datasetInstance);
+    try {
+      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
+
+      if (status.getState() != Status.State.FINISHED) {
+        LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
+                  datasetInstance, status.getState());
+        throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);
+      }
+    } catch (HandleNotFoundException e) {
+      // Cannot happen unless explore server restarted.
+      LOG.error("Error running disable explore", e);
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+    } finally {
+      try {
+        exploreClient.close(handle);
+      } catch (HandleNotFoundException e) {
+        LOG.error("Ignoring cannot find handle during close of disable explore for dataset instance {}",
+                  datasetInstance);
+      }
+    }
+  }
+
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
     String hiveSchema;
     try {
       hiveSchema = hiveSchemaFor(scannable);
     } catch (UnsupportedTypeException e) {
       LOG.error(String.format(
-        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+        "Can't create Hive table for dataset '%s' because its row type '%s' is not supported",
+        name, scannable.getRowType()), e);
       return null;
     }
+
+    // TODO: fix namespacing
+    // Instnace name is like continuuity.user.my_table.
+    // For now replace . with _ since Hive tables cannot have . in them.
+    String tableName = name.replaceAll("\\.", "_");
+
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
                                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                                          Constants.Explore.DATASET_NAME, name);
   }
 
+  public static String generateDeleteStatement(String name) {
+    // TODO: fix namespacing
+    // Instnace name is like continuuity.user.my_table.
+    // For now replace . with _ since Hive tables cannot have . in them.
+    String tableName = name.replaceAll("\\.", "_");
+
+    return String.format("DROP TABLE IF EXISTS %s", tableName);
+  }
 
   /**
    * Given a row-scannable dataset, determine its row type and generate a schema string compatible with Hive.
@@ -117,16 +154,18 @@ public class DatasetExploreFacade {
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
 
     Schema schema = new ReflectionSchemaGenerator().generate(type);
+    // TODO: support other types too, not just record
     if (!Schema.Type.RECORD.equals(schema.getType())) {
       throw new UnsupportedTypeException("type must be a RECORD but is " + schema.getType().name());
     }
     StringWriter writer = new StringWriter();
     writer.append('(');
-    generateRecordSchema(schema, writer);
+    generateRecordSchema(schema, writer, " ");
     writer.append(')');
     return writer.toString();
   }
 
+  // TODO: Add more test cases for different schema types.
   private static void generateHiveSchema(Schema schema, StringWriter writer) throws UnsupportedTypeException {
 
     switch (schema.getType()) {
@@ -170,8 +209,8 @@ public class DatasetExploreFacade {
         writer.append('>');
         break;
       case RECORD:
-        writer.append("RECORD<");
-        generateRecordSchema(schema.getMapSchema().getValue(), writer);
+        writer.append("STRUCT<");
+        generateRecordSchema(schema, writer, ":");
         writer.append('>');
         break;
       case UNION:
@@ -184,7 +223,7 @@ public class DatasetExploreFacade {
         boolean first = true;
         for (Schema subSchema : schema.getUnionSchemas()) {
           if (!first) {
-            writer.append(",");
+            writer.append(", ");
           } else {
             first = false;
           }
@@ -196,16 +235,17 @@ public class DatasetExploreFacade {
 
   }
 
-  private static void generateRecordSchema(Schema schema, StringWriter writer) throws UnsupportedTypeException {
+  private static void generateRecordSchema(Schema schema, StringWriter writer, String separator)
+    throws UnsupportedTypeException {
     boolean first = true;
     for (Schema.Field field : schema.getFields()) {
       if (!first) {
-        writer.append(',');
+        writer.append(", ");
       } else {
         first = false;
       }
       writer.append(field.getName());
-      writer.append(' ');
+      writer.append(separator);
       generateHiveSchema(field.getSchema(), writer);
     }
   }

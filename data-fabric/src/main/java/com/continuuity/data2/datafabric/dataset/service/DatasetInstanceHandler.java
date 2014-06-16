@@ -9,6 +9,8 @@ import com.continuuity.data2.datafabric.dataset.service.executor.DatasetAdminOpR
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
+import com.continuuity.explore.client.DatasetExploreFacade;
+import com.continuuity.explore.service.ExploreException;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.gson.Gson;
@@ -39,13 +41,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
+  private final DatasetExploreFacade datasetExploreFacade;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient) {
+                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
+    this.datasetExploreFacade = datasetExploreFacade;
   }
 
   @GET
@@ -129,6 +133,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       throw new RuntimeException(msg, e);
     }
     instanceManager.add(spec);
+
+    // Enable ad-hoc exploration of dataset
+    try {
+      datasetExploreFacade.enableExplore(name);
+    } catch (ExploreException e) {
+      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
+                                 name, typeName, e.getMessage());
+      LOG.error(msg, e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+    }
+
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -137,6 +152,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void drop(HttpRequest request, final HttpResponder responder,
                        @PathParam("instance-name") String name) {
     LOG.info("Deleting dataset instance {}", name);
+
+
+    // First disable ad-hoc exploration of dataset
+    try {
+      datasetExploreFacade.disableExplore(name);
+    } catch (ExploreException e) {
+      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
+                                 name, e.getMessage());
+      LOG.error(msg, e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+    }
 
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
