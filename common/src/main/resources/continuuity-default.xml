@@ -541,12 +541,6 @@
     </property>
 
     <property>
-        <name>dataset.service.bind.port</name>
-        <value>45055</value>
-        <description>DataSet service port</description>
-    </property>
-
-    <property>
         <name>dataset.max.instances</name>
         <value>${reactor.service.max.instances}</value>
         <description>Maximum Number of Dataset Service Instances</description>

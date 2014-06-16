@@ -64,7 +64,6 @@ public abstract class DatasetServiceTestBase {
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     port = Networks.getRandomPort();
-    cConf.setInt(Constants.Dataset.Manager.PORT, port);
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
