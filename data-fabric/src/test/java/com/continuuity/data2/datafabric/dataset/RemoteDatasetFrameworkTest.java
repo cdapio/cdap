@@ -17,7 +17,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.explore.client.AsyncExploreClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -65,8 +65,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new LocalLocationFactory(),
                                  discoveryService,
                                  new InMemoryDatasetFramework(),
-                                 ImmutableSortedMap.<String, DatasetModule>of(
-                                   "memoryTable", new InMemoryOrderedTableModule()),
+                                 ImmutableMap.<String, DatasetModule>of("memoryTable",
+                                                                        new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
                                  opExecutorClient,

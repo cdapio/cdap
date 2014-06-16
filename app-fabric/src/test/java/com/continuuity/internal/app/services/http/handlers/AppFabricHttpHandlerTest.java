@@ -145,6 +145,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
                 .getStatusLine().getStatusCode()
         );
       }
+      // Sleep to let stop states settle down (for MapReduce).
+      TimeUnit.SECONDS.sleep(5);
       Assert.assertEquals(200,
           doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
               .getStatusLine().getStatusCode()

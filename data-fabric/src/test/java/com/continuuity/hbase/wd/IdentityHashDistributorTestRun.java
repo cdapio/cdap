@@ -18,8 +18,8 @@ package com.continuuity.hbase.wd;
 /**
  *
  */
-public class IdentityHashDistributorTest extends RowKeyDistributorTestBase {
-  public IdentityHashDistributorTest() {
+public class IdentityHashDistributorTestRun extends RowKeyDistributorTestBase {
+  public IdentityHashDistributorTestRun() {
     super(new RowKeyDistributorByHashPrefix(new IdentityHash()));
   }
 

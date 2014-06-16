@@ -17,12 +17,13 @@
  */
 package com.continuuity.hive.objectinspector;
 
-import junit.framework.TestCase;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +33,9 @@ import java.util.List;
  * TestUnionStructObjectInspector.
  *
  */
-public class UnionStructObjectInspectorTest extends TestCase {
+public class UnionStructObjectInspectorTest {
 
+  @Test
   public void testUnionStructObjectInspector() throws Throwable {
     try {
       ArrayList<String> fieldNames1 = new ArrayList<String>();
@@ -66,31 +68,31 @@ public class UnionStructObjectInspectorTest extends TestCase {
       UnionStructObjectInspector usoi2 = ObjectInspectorFactory.getUnionStructObjectInspector(
           Arrays.asList(new StructObjectInspector[] {soi1, soi2}));
 
-      assertEquals(usoi1, usoi2);
+      Assert.assertEquals(usoi1, usoi2);
 
       // metadata
-      assertEquals(Category.STRUCT, usoi1.getCategory());
+      Assert.assertEquals(Category.STRUCT, usoi1.getCategory());
       List<? extends StructField> fields = usoi1.getAllStructFieldRefs();
-      assertEquals(5, fields.size());
+      Assert.assertEquals(5, fields.size());
       for (int i = 0; i < 5; i++) {
         if (i <= 2) {
-          assertEquals(fieldNames1.get(i).toLowerCase(), fields.get(i)
-              .getFieldName());
-          assertEquals(fieldObjectInspectors1.get(i), fields.get(i)
-              .getFieldObjectInspector());
+          Assert.assertEquals(fieldNames1.get(i).toLowerCase(), fields.get(i)
+            .getFieldName());
+          Assert.assertEquals(fieldObjectInspectors1.get(i), fields.get(i)
+            .getFieldObjectInspector());
         } else {
-          assertEquals(fieldNames2.get(i - 3).toLowerCase(), fields.get(i)
-              .getFieldName());
-          assertEquals(fieldObjectInspectors2.get(i - 3), fields.get(i)
-              .getFieldObjectInspector());
+          Assert.assertEquals(fieldNames2.get(i - 3).toLowerCase(), fields.get(i)
+            .getFieldName());
+          Assert.assertEquals(fieldObjectInspectors2.get(i - 3), fields.get(i)
+            .getFieldObjectInspector());
         }
       }
-      assertEquals(fields.get(1), usoi1.getStructFieldRef("secondString"));
-      assertEquals(fields.get(4), usoi1.getStructFieldRef("fifthLong"));
+      Assert.assertEquals(fields.get(1), usoi1.getStructFieldRef("secondString"));
+      Assert.assertEquals(fields.get(4), usoi1.getStructFieldRef("fifthLong"));
 
       // null
       for (int i = 0; i < 5; i++) {
-        assertNull(usoi1.getStructFieldData(null, fields.get(i)));
+        Assert.assertNull(usoi1.getStructFieldData(null, fields.get(i)));
       }
 
       // real struct
@@ -100,7 +102,7 @@ public class UnionStructObjectInspectorTest extends TestCase {
       struct1.add(true);
       ArrayList<Object> struct2 = new ArrayList<Object>(2);
       struct2.add(1.0);
-      struct2.add(new Long(111));
+      struct2.add(111);
       ArrayList<Object> struct = new ArrayList<Object>(2);
       struct.add(struct1);
       struct.add(struct2);
@@ -109,8 +111,8 @@ public class UnionStructObjectInspectorTest extends TestCase {
       all.addAll(struct2);
 
       for (int i = 0; i < 5; i++) {
-        assertEquals(all.get(i), usoi1
-            .getStructFieldData(struct, fields.get(i)));
+        Assert.assertEquals(all.get(i), usoi1
+          .getStructFieldData(struct, fields.get(i)));
       }
     } catch (Throwable e) {
       e.printStackTrace();

@@ -13,6 +13,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
+import com.continuuity.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import com.continuuity.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
@@ -73,6 +74,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
