@@ -1,0 +1,212 @@
+package com.continuuity.explore.client;
+
+import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.Handle;
+import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.Status;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.UnsupportedTypeException;
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.StringWriter;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Explore client facade to be used by datasets.
+ */
+public class DatasetExploreFacade {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetExploreFacade.class);
+
+  private final ExploreClient exploreClient;
+  private final boolean exploreEnabled;
+
+  @Inject
+  public DatasetExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
+    this.exploreClient = exploreClient;
+    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED,
+                                           Constants.Explore.DEFAULT_CFG_EXPLORE_ENABLED);
+    if (!exploreEnabled) {
+      LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
+    }
+  }
+
+  /**
+   * Enables ad-hoc exploration of the given {@link RowScannable}.
+   * @param name name of the external table to create.
+   * @param scannable RowScannable to explore.
+   * @param <ROW> Row type parameter.
+   */
+  public <ROW> void enableExplore(String name, RowScannable<ROW> scannable) throws ExploreException {
+    if (!exploreEnabled) {
+      return;
+    }
+
+    String createStatement = generateCreateStatement(name, scannable);
+    if (createStatement == null) {
+      LOG.error("Empty create statement for dataset {}", name);
+      return;
+    }
+
+    LOG.debug("Running create statement for dataset {} with row scannable {} - {}",
+              name,
+              scannable.getClass().getName(),
+              createStatement);
+
+    Handle handle = exploreClient.execute(createStatement);
+    try {
+      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
+
+      if (status.getState() != Status.State.FINISHED) {
+        LOG.error("Create statement did not finish successfully for row scannable {}. Got final state - {}",
+                  scannable.getClass().getName(), status.getState());
+        throw new ExploreException("Cannot enable explore for row scannable " + scannable.getClass().getName());
+      }
+    } catch (HandleNotFoundException e) {
+      // Cannot happen unless explore server restarted.
+      LOG.error("Error running create statement", e);
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+    } finally {
+      try {
+        exploreClient.close(handle);
+      } catch (HandleNotFoundException e) {
+        LOG.error("Ignoring cannot find handle during close of create statement for row scannable " +
+                    scannable.getClass().getName());
+      }
+    }
+  }
+
+  static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
+    String hiveSchema;
+    try {
+      hiveSchema = hiveSchemaFor(scannable);
+    } catch (UnsupportedTypeException e) {
+      LOG.error(String.format(
+        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
+      return null;
+    }
+    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
+                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                         Constants.Explore.DATASET_NAME, name);
+  }
+
+
+  /**
+   * Given a row-scannable dataset, determine its row type and generate a schema string compatible with Hive.
+   * @param dataset The data set
+   * @param <ROW> The row type
+   * @return the hive schema
+   * @throws UnsupportedTypeException if the row type is not a record or contains null types.
+   */
+  static <ROW> String hiveSchemaFor(RowScannable<ROW> dataset) throws UnsupportedTypeException {
+    return hiveSchemaFor(dataset.getRowType());
+  }
+
+  static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
+
+    Schema schema = new ReflectionSchemaGenerator().generate(type);
+    if (!Schema.Type.RECORD.equals(schema.getType())) {
+      throw new UnsupportedTypeException("type must be a RECORD but is " + schema.getType().name());
+    }
+    StringWriter writer = new StringWriter();
+    writer.append('(');
+    generateRecordSchema(schema, writer);
+    writer.append(')');
+    return writer.toString();
+  }
+
+  private static void generateHiveSchema(Schema schema, StringWriter writer) throws UnsupportedTypeException {
+
+    switch (schema.getType()) {
+
+      case NULL:
+        throw new UnsupportedTypeException("Null schema not supported.");
+      case BOOLEAN:
+        writer.append("BOOLEAN");
+        break;
+      case INT:
+        writer.append("INT");
+        break;
+      case LONG:
+        writer.append("BIGINT");
+        break;
+      case FLOAT:
+        writer.append("FLOAT");
+        break;
+      case DOUBLE:
+        writer.append("DOUBLE");
+        break;
+      case BYTES:
+        writer.append("BINARY");
+        break;
+      case STRING:
+        writer.append("STRING");
+        break;
+      case ENUM:
+        writer.append("STRING");
+        break;
+      case ARRAY:
+        writer.append("ARRAY<");
+        generateHiveSchema(schema.getComponentSchema(), writer);
+        writer.append('>');
+        break;
+      case MAP:
+        writer.append("MAP<");
+        generateHiveSchema(schema.getMapSchema().getKey(), writer);
+        writer.append(',');
+        generateHiveSchema(schema.getMapSchema().getValue(), writer);
+        writer.append('>');
+        break;
+      case RECORD:
+        writer.append("RECORD<");
+        generateRecordSchema(schema.getMapSchema().getValue(), writer);
+        writer.append('>');
+        break;
+      case UNION:
+        List<Schema> subSchemas = schema.getUnionSchemas();
+        if (subSchemas.size() == 2 && Schema.Type.NULL.equals(subSchemas.get(1).getType())) {
+          generateHiveSchema(subSchemas.get(0), writer);
+          break;
+        }
+        writer.append("UNIONTYPE<");
+        boolean first = true;
+        for (Schema subSchema : schema.getUnionSchemas()) {
+          if (!first) {
+            writer.append(",");
+          } else {
+            first = false;
+          }
+          generateHiveSchema(subSchema, writer);
+        }
+        writer.append(">");
+        break;
+    }
+
+  }
+
+  private static void generateRecordSchema(Schema schema, StringWriter writer) throws UnsupportedTypeException {
+    boolean first = true;
+    for (Schema.Field field : schema.getFields()) {
+      if (!first) {
+        writer.append(',');
+      } else {
+        first = false;
+      }
+      writer.append(field.getName());
+      writer.append(' ');
+      generateHiveSchema(field.getSchema(), writer);
+    }
+  }
+}

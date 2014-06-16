@@ -16,6 +16,7 @@ import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableMo
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
@@ -210,7 +211,10 @@ public class HiveExploreServiceTest {
 
     Handle handle = exploreClient.execute("select key, value from kv_table");
     exploreClient.cancel(handle);
-    Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
+    Assert.assertEquals(
+      Status.State.CANCELED,
+      ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 100).getState()
+    );
     exploreClient.close(handle);
 
     runCommand("drop table if exists kv_table",
@@ -224,7 +228,7 @@ public class HiveExploreServiceTest {
                                  List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
     Handle handle = exploreClient.execute(command);
 
-    Status status = waitForCompletionStatus(handle);
+    Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
     Assert.assertEquals(Status.State.FINISHED, status.getState());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
@@ -248,15 +252,6 @@ public class HiveExploreServiceTest {
       newRows.add(new Row(newCols));
     }
     return newRows;
-  }
-
-  private static Status waitForCompletionStatus(Handle handle) throws Exception {
-    Status status;
-    do {
-      TimeUnit.MILLISECONDS.sleep(200);
-      status = exploreClient.getStatus(handle);
-    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
-    return status;
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

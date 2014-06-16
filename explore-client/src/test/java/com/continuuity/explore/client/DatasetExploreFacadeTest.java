@@ -1,4 +1,4 @@
-package com.continuuity.api.data.batch;
+package com.continuuity.explore.client;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.reflect.TypeToken;
@@ -9,10 +9,9 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- *
+ * Test DatasetExploreFacade.
  */
-public class ScannablesTest {
-
+public class DatasetExploreFacadeTest {
   enum Enum { FOO, BAR }
 
   @SuppressWarnings("unused")
@@ -42,13 +41,15 @@ public class ScannablesTest {
   @Test
   public void testHiveSchemaFor() throws Exception {
 
-    Assert.assertEquals("(value INT)", Scannables.hiveSchemaFor(Int.class));
-    Assert.assertEquals("(value BIGINT)", Scannables.hiveSchemaFor(Longg.class));
+    Assert.assertEquals("(value INT)", DatasetExploreFacade.hiveSchemaFor(Int.class));
+    Assert.assertEquals("(value BIGINT)", DatasetExploreFacade.hiveSchemaFor(Longg.class));
     Assert.assertEquals("(first INT,second STRING)",
-                        Scannables.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() { }.getType()));
+                        DatasetExploreFacade.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() {
+                        }.getType()));
     Assert.assertEquals("(a INT,b BIGINT,c BOOLEAN,d FLOAT,e DOUBLE,f STRING,g BINARY," +
                           "h ARRAY<STRING>,i ARRAY<BOOLEAN>,j MAP<INT,STRING>)",
-                        Scannables.hiveSchemaFor(Record.class));
+                        DatasetExploreFacade.hiveSchemaFor(Record.class));
 
   }
+
 }

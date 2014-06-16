@@ -431,6 +431,8 @@ public final class Constants {
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+
+    public static final boolean DEFAULT_CFG_EXPLORE_ENABLED = false;
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
