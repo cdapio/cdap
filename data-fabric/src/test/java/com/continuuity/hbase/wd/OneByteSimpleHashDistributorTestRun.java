@@ -18,8 +18,8 @@ package com.continuuity.hbase.wd;
 /**
  *
  */
-public class OneByteSimpleHashDistributorTest extends RowKeyDistributorTestBase {
-  public OneByteSimpleHashDistributorTest() {
+public class OneByteSimpleHashDistributorTestRun extends RowKeyDistributorTestBase {
+  public OneByteSimpleHashDistributorTestRun() {
     super(new RowKeyDistributorByHashPrefix(new RowKeyDistributorByHashPrefix.OneByteSimpleHash(15)));
   }
 }

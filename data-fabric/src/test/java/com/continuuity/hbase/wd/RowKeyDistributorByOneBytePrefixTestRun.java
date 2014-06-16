@@ -18,8 +18,8 @@ package com.continuuity.hbase.wd;
 /**
  *
  */
-public class RowKeyDistributorByOneBytePrefixTest extends RowKeyDistributorTestBase {
-  public RowKeyDistributorByOneBytePrefixTest() {
+public class RowKeyDistributorByOneBytePrefixTestRun extends RowKeyDistributorTestBase {
+  public RowKeyDistributorByOneBytePrefixTestRun() {
     super(new RowKeyDistributorByOneBytePrefix((byte) 12));
   }
 }
