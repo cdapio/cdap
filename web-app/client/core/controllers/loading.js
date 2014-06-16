@@ -24,14 +24,16 @@ define([], function () {
             }
 
             var serviceStatuses = [];
-            for (item in statuses) {
-              if (statuses.hasOwnProperty(item)) {
-                var imgSrc = statuses[item] === 'OK' ? 'complete' : 'loading';
-                serviceStatuses.push({
-                  name: item,
-                  status: statuses[item],
-                  imgClass: imgSrc
-                });
+            if (Object.prototype.toString.call(statuses) === '[object Array]') {
+              for (item in statuses) {
+                if (statuses.hasOwnProperty(item)) {
+                  var imgSrc = statuses[item] === 'OK' ? 'complete' : 'loading';
+                  serviceStatuses.push({
+                    name: item,
+                    status: statuses[item],
+                    imgClass: imgSrc
+                  });
+                }
               }
             }
 
