@@ -150,7 +150,7 @@ public class InMemoryTransactionManager extends AbstractService {
     this(CConfiguration.create());
   }
 
-  private InMemoryTransactionManager(CConfiguration config) {
+  public InMemoryTransactionManager(CConfiguration config) {
     this(config, new NoOpTransactionStateStorage(new SnapshotCodecProvider(config)), new TxMetricsCollector());
   }
 

@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -22,6 +23,7 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
     File testDir = tmpDir.newFolder(testName);
     CConfiguration conf = CConfiguration.create();
     conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, testDir.getAbsolutePath());
+    conf.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
 
     return conf;
   }

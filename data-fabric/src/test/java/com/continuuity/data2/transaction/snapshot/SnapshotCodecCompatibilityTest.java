@@ -1,10 +1,11 @@
-package com.continuuity.data2.transaction.persist;
+package com.continuuity.data2.transaction.snapshot;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
@@ -25,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests snapshot codecs.
  */
-public class SnapshotCodecProviderTest {
+public class SnapshotCodecCompatibilityTest {
 
   @Test
   public void testV1CodecV2Compat() throws Exception {

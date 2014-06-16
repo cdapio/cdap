@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -40,6 +41,8 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
     conf.set(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    conf.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
+
     return conf;
   }
 
