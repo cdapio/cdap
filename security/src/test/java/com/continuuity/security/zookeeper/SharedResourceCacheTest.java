@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -116,14 +117,28 @@ public class SharedResourceCacheTest {
     assertEquals(value2new, cache2.get(key2));
 
     cache2.removeListener(value2listener);
+
     // remove items from the second and wait for them to disappear from the first
+    // Use a latch to make sure both cache see the changes
+    final CountDownLatch key3RemoveLatch = new CountDownLatch(2);
+    cache1.addListener(new BaseResourceListener<String>() {
+      @Override
+      public void onResourceDelete(String name) {
+        LOG.info("Resource deleted on cache 1 {}", name);
+        if (name.equals(key3)) {
+          key3RemoveLatch.countDown();
+        }
+      }
+    });
+
     final SettableFuture<String> key3RemoveFuture = SettableFuture.create();
     ResourceListener<String> key3Listener = new BaseResourceListener<String>() {
       @Override
       public void onResourceDelete(String name) {
-        LOG.info("Resource deleted {}", name);
+        LOG.info("Resource deleted on cache 2 {}", name);
         if (name.equals(key3)) {
           key3RemoveFuture.set(name);
+          key3RemoveLatch.countDown();
         }
       }
     };
@@ -133,6 +148,8 @@ public class SharedResourceCacheTest {
     String removedKey = key3RemoveFuture.get();
     assertEquals(key3, removedKey);
     assertNull(cache2.get(key3));
+
+    key3RemoveLatch.await(5, TimeUnit.SECONDS);
 
     // verify that cache contents are equal
     assertEquals(cache1, cache2);

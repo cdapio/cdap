@@ -15,7 +15,7 @@
  */
 package com.continuuity.examples.ticker.tick;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.BufferedReader;
