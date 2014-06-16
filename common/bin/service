@@ -118,7 +118,8 @@ start() {
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
-      nohup nice -n $NICENESS "$JAVA" -Dcontinuuity.service=$APP "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
+      nohup nice -n $NICENESS "$JAVA" -Dcontinuuity.service=$APP -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" \
+        -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
 
     else

@@ -44,7 +44,7 @@ public class ExploreServiceUtils {
    */
   public static ClassLoader buildHiveClassLoader(String hiveClassPathStr) {
     Iterable<URL> hiveClassPath = getClassPath(hiveClassPathStr);
-    return new URLClassLoader(Iterables.toArray(Iterables.concat(hiveClassPath), URL.class),
+    return new URLClassLoader(Iterables.toArray(hiveClassPath, URL.class),
                               ClassLoader.getSystemClassLoader());
   }
 

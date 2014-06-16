@@ -66,6 +66,16 @@ public final class DatasetProperties {
     }
 
     /**
+     * Adds multiple properties.
+     * @param properties the map of properties to add
+     * @return this builder object to allow chaining
+     */
+    public Builder addAll(Map<String, String> properties) {
+      this.properties.putAll(properties);
+      return this;
+    }
+
+    /**
      * Create a DataSetSpecification from this builder, using the private DataSetSpecification
      * constructor.
      * @return a complete DataSetSpecification

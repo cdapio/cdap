@@ -12,7 +12,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
@@ -38,7 +37,6 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -80,7 +78,6 @@ public class SingleNodeMain {
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
 
-  private ExploreService exploreService;
   private ExploreExecutorService exploreExecutorService;
 
   private InMemoryZKServer zookeeper;
@@ -111,7 +108,6 @@ public class SingleNodeMain {
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
     if (exploreEnabled) {
-      exploreService = injector.getInstance(ExploreService.class);
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -165,8 +161,7 @@ public class SingleNodeMain {
       externalAuthenticationServer.startAndWait();
     }
 
-    if (exploreService != null && exploreExecutorService != null) {
-      exploreService.startAndWait();
+    if (exploreExecutorService != null) {
       exploreExecutorService.startAndWait();
     }
 
@@ -193,8 +188,7 @@ public class SingleNodeMain {
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
-    if (exploreService != null && exploreExecutorService != null) {
-      exploreService.stopAndWait();
+    if (exploreExecutorService != null) {
       exploreExecutorService.stopAndWait();
     }
     zookeeper.stopAndWait();
@@ -282,8 +276,6 @@ public class SingleNodeMain {
     configuration.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
-
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 

@@ -3,11 +3,11 @@ package com.continuuity.hive.objectinspector;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import junit.framework.Assert;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
