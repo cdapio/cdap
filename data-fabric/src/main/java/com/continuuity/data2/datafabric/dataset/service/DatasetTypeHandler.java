@@ -30,7 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -87,12 +87,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @POST
+  @PUT
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws IOException {
 
-    String className = request.getHeader("class-name");
+    String className = request.getHeader("X-Continuuity-Class-Name");
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}", name, className);
 

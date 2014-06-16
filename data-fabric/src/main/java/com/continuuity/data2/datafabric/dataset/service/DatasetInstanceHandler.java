@@ -24,6 +24,7 @@ import java.io.Reader;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -90,13 +91,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
   }
 
-  @POST
+  @PUT
   @Path("/data/instances/{instance-name}")
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("instance-name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
-    String typeName = request.getHeader("type-name");
+    String typeName = request.getHeader("X-Continuuity-Type-Name");
 
     LOG.info("Creating dataset instance {}, type name: {}, props: {}", name, typeName, props);
 

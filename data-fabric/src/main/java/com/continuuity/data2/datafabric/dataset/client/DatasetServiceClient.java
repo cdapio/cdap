@@ -97,9 +97,9 @@ public class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPost("instances/" + datasetInstanceName,
+    HttpResponse response = doPut("instances/" + datasetInstanceName,
                                    GSON.toJson(props),
-                                   ImmutableMap.of("type-name", datasetType));
+                                   ImmutableMap.of("X-Continuuity-Type-Name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -135,8 +135,8 @@ public class DatasetServiceClient {
     HttpResponse response;
     try {
       response = doRequest("modules/" + moduleName,
-                       "POST",
-                       ImmutableMap.of("class-name", className),
+                       "PUT",
+                       ImmutableMap.of("X-Continuuity-Class-Name", className),
                        null, is);
     } finally {
       Closeables.closeQuietly(is);
@@ -188,10 +188,10 @@ public class DatasetServiceClient {
     return doRequest(resource, "GET", null, null, null);
   }
 
-  private HttpResponse doPost(String resource, String body, Map<String, String> headers)
+  private HttpResponse doPut(String resource, String body, Map<String, String> headers)
     throws DatasetManagementException {
 
-    return doRequest(resource, "POST", headers, body, null);
+    return doRequest(resource, "PUT", headers, body, null);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
@@ -199,9 +199,9 @@ public class DatasetServiceClient {
   }
 
   private HttpResponse doRequest(String resource, String requestMethod,
-                                                             @Nullable Map<String, String> headers,
-                                                             @Nullable String body,
-                                                             @Nullable InputStream bodySrc)
+                                 @Nullable Map<String, String> headers,
+                                 @Nullable String body,
+                                 @Nullable InputStream bodySrc)
     throws DatasetManagementException {
 
     Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
