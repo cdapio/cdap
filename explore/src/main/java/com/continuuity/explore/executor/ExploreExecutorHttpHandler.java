@@ -1,5 +1,6 @@
 package com.continuuity.explore.executor;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
@@ -38,6 +39,7 @@ import javax.ws.rs.PathParam;
 /**
  * Provides REST endpoints for {@link com.continuuity.explore.service.ExploreService} operations.
  */
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
 
@@ -53,7 +55,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries")
+  @Path("/datasets/queries")
   public void query(HttpRequest request, HttpResponder responder) {
     try {
       Map<String, String> args = decodeArguments(request);
@@ -70,7 +72,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("v2/datasets/queries/{id}")
+  @Path("/datasets/queries/{id}")
   public void closeQuery(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
@@ -85,7 +87,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries/{id}")
+  @Path("/datasets/queries/{id}")
   public void cancelQuery(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
@@ -100,7 +102,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("v2/datasets/queries/{id}/status")
+  @Path("/datasets/queries/{id}/status")
   public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
@@ -117,7 +119,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("v2/datasets/queries/{id}/schema")
+  @Path("/datasets/queries/{id}/schema")
   public void getQueryResultsSchema(HttpRequest request, HttpResponder responder,
                                         @PathParam("id") final String id) {
     try {
@@ -135,7 +137,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries/{id}/nextResults")
+  @Path("/datasets/queries/{id}/nextResults")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
