@@ -138,7 +138,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
     logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                                LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+                                            LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
@@ -188,7 +188,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
       @Override
       public InetSocketAddress getSocketAddress() {
-            return new InetSocketAddress(1);
+        return new InetSocketAddress(1);
       }
     });
   }
