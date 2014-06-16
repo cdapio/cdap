@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.List;
@@ -36,12 +37,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+import static com.continuuity.common.conf.Constants.Service;
+
 /**
  * Client that talks to a server implementing  {@link Explore} over HTTP.
  */
 public class ExploreClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreClient.class);
   private static final Gson GSON = new Gson();
+  private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
@@ -52,7 +56,7 @@ public class ExploreClient implements Explore {
       public EndpointStrategy get() {
         return new TimeLimitEndpointStrategy(
           new RandomEndpointStrategy(
-            discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)), 3L, TimeUnit.SECONDS);
+            discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE)), 3L, TimeUnit.SECONDS);
       }
     });
   }
@@ -114,11 +118,11 @@ public class ExploreClient implements Explore {
 
   private String parseResponse(HttpResponse response, String key) throws ExploreException {
     String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
-    Map<String, String> responseMap = GSON.fromJson(responseString,
-                                                    new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> responseMap = GSON.fromJson(responseString, MAP_TYPE_TOKEN);
     if (responseMap.containsKey(key)) {
       return responseMap.get(key);
     }
+
     String message = String.format("Cannot parse %s from server response: %s", key, responseString);
     LOG.error(message);
     throw new ExploreException(message);
@@ -164,7 +168,14 @@ public class ExploreClient implements Explore {
   }
 
   private String resolve(String resource) {
-    InetSocketAddress addr = this.endpointStrategySupplier.get().pick().getSocketAddress();
+    EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
+    if (endpointStrategy == null) {
+      String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
+      LOG.error(message);
+      throw new RuntimeException(message);
+    }
+
+    InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
     return String.format("http://%s:%s%s/datasets/queries%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }
