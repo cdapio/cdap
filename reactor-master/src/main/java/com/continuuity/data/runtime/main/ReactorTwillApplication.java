@@ -188,8 +188,7 @@ public class ReactorTwillApplication implements TwillApplication {
       .setInstances(cConf.getInt(Constants.Explore.CONTAINER_INSTANCES, 1))
       .build();
 
-    // TODO change name of twill runnable?
-    return builder.add(new ExploreServiceTwillRunnable("hive.service", "cConf.xml", "hConf.xml"), resourceSpec)
+    return builder.add(new ExploreServiceTwillRunnable("explore.executor", "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

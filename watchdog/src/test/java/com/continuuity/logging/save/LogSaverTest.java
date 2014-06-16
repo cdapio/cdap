@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -109,7 +110,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogSaver logSaver =
       new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   cConf, new LocalLocationFactory());
+                   cConf, new LocalLocationFactory(), new InMemoryDiscoveryService());
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);

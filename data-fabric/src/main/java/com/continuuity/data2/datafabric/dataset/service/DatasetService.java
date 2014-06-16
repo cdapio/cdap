@@ -81,7 +81,6 @@ public class DatasetService extends AbstractIdleService {
                                                                      Constants.Service.DATASET_MANAGER)));
 
     builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
-    builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
 
     builder.setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS,
                                               Constants.Dataset.Manager.DEFAULT_BACKLOG));

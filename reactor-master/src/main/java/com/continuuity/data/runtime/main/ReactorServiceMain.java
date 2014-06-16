@@ -320,10 +320,10 @@ public class ReactorServiceMain extends DaemonMain {
     // may not be at the same location on every machine of the cluster.
 
     // HIVE_CLASSPATH will be defined in startup scripts if Hive is installed.
-    String hiveClassPathStr = System.getenv(Constants.Explore.HIVE_CLASSPATH);
+    String hiveClassPathStr = System.getProperty(Constants.Explore.HIVE_CLASSPATH);
     LOG.debug("Hive classpath = {}", hiveClassPathStr);
     if (hiveClassPathStr == null) {
-      throw new RuntimeException("Env variable HIVE_CLASSPATH is not set.");
+      throw new RuntimeException("System property " + Constants.Explore.HIVE_CLASSPATH + " is not set.");
     }
 
     // Here we need to get a different class loader that contains all the hive jars, to have access to them.

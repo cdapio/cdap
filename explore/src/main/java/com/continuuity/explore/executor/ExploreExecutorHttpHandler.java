@@ -4,6 +4,7 @@ import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
@@ -42,6 +43,7 @@ import javax.ws.rs.PathParam;
 /**
  * Provides REST endpoints for {@link com.continuuity.explore.service.ExploreService} operations.
  */
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
 
@@ -59,7 +61,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/instances/{instance}/explore/enable")
+  @Path("/datasets/instances/{instance}/explore/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
@@ -99,7 +101,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/instances/{instance}/explore/disable")
+  @Path("/datasets/instances/{instance}/explore/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
@@ -120,12 +122,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries")
-  public void sendQuery(HttpRequest request, HttpResponder responder) {
+  @Path("/datasets/queries")
+  public void query(HttpRequest request, HttpResponder responder) {
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
-      LOG.info("Received query: {}", query);
+      LOG.debug("Received query: {}", query);
       Handle handle = exploreService.execute(query);
       JsonObject json = new JsonObject();
       json.addProperty("id", handle.getId());
@@ -137,9 +139,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("v2/datasets/queries/{id}")
-  public void closeOperation(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                             @PathParam("id") final String id) {
+  @Path("/datasets/queries/{id}")
+  public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                         @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.close(handle);
@@ -153,9 +155,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries/{id}/cancel")
-  public void cancelOperation(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                              @PathParam("id") final String id) {
+  @Path("/datasets/queries/{id}/cancel")
+  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request,
+                          HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.cancel(handle);
@@ -169,7 +171,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("v2/datasets/queries/{id}/status")
+  @Path("/datasets/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("id") final String id) {
     try {
@@ -185,9 +187,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("v2/datasets/queries/{id}/schema")
-  public void getOperationResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
-                                        HttpResponder responder, @PathParam("id") final String id) {
+  @Path("/datasets/queries/{id}/schema")
+  public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                                        @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       List<ColumnDesc> schema = exploreService.getResultSchema(handle);
@@ -201,7 +203,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("v2/datasets/queries/{id}/nextResults")
+  @Path("/datasets/queries/{id}/nextResults")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
