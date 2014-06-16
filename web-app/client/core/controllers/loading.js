@@ -18,10 +18,7 @@ define([], function () {
         this.interval = setInterval(function() {
           self.HTTP.rest('system/services/status', function (statuses) {
             self.set('statuses', statuses);
-            if (!('APPFABRIC' in statuses
-              && 'STREAMS' in statuses
-              && 'TRANSACTION' in statuses
-              && 'METRICS' in statuses)) {
+            if (!statuses) {
               $(".warning-text").text('Could not get core Reactor services. Please restart Reactor.');
               return;
             }

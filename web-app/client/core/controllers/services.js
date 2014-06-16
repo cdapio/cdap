@@ -41,40 +41,45 @@ define([], function () {
     },
 
     increaseInstance: function (serviceName, instanceCount) {
-      var self = this;
-      var payload = {data: {instances: ++instanceCount}};
-      var services = self.get('services');
-      for (var i = 0; i < services.length; i++) {
-        var service = services[i];
-        if (service.name === serviceName) {
-          if (instanceCount > service.max || instanceCount < service.min) {
-            C.Util.showWarning(ERROR_TXT);
-            return;
+      if (confirm("Increase instances for " + serviceName + "?")) {
+        var self = this;
+        var payload = {data: {instances: ++instanceCount}};
+        var services = self.get('services');
+        for (var i = 0; i < services.length; i++) {
+          var service = services[i];
+          if (service.name === serviceName) {
+            if (instanceCount > service.max || instanceCount < service.min) {
+              C.Util.showWarning(ERROR_TXT);
+              return;
+            }
           }
         }
-      }
-      self.executeInstanceCall(serviceName, payload);
+        self.executeInstanceCall(serviceName, payload);        
+      }      
     },
 
     decreaseInstance: function (serviceName, instanceCount) {
-      var self = this;
-      var payload = {data: {instances: --instanceCount}};
-      var services = self.get('services');
-      for (var i = 0; i < services.length; i++) {
-        var service = services[i];
-        if (service.name === serviceName) {
-          if (instanceCount > service.max || instanceCount < service.min) {
-            C.Util.showWarning(ERROR_TXT);
-            return;
+      if (confirm("Decrease instances for " + serviceName + "?")) {
+        var self = this;
+        var payload = {data: {instances: --instanceCount}};
+        var services = self.get('services');
+        for (var i = 0; i < services.length; i++) {
+          var service = services[i];
+          if (service.name === serviceName) {
+            if (instanceCount > service.max || instanceCount < service.min) {
+              C.Util.showWarning(ERROR_TXT);
+              return;
+            }
           }
         }
-      }
-      self.executeInstanceCall(serviceName, payload);
+        self.executeInstanceCall(serviceName, payload);
+      }      
     },
 
     executeInstanceCall: function(serviceName, payload) {
       var self = this;
-      this.HTTP.put('rest/system/services/' + serviceName + '/instances', payload, function(resp, status) {
+      this.HTTP.put('rest/system/services/' + serviceName + '/instances', payload,
+        function(resp, status) {
         if (status === 'error') {
           C.Util.showWarning(resp);
         } else {

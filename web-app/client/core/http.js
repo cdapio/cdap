@@ -43,12 +43,12 @@ define([], function () {
 		getJSON: function (path, callback, cacheData) {
       var self = this;
 
-			$.getJSON(path, function (result) {
+			$.getJSON(path, function (result, textStatus, jqXhr) {
 
 				if (cacheData) {
 					C.SSAdapter.save(path, result);
 				}
-				callback(result);
+				callback(result, jqXhr.status);
 
 			}).fail(function (xhr, status, error) {
 
@@ -63,7 +63,7 @@ define([], function () {
           C.Util.showWarning('Encountered a connection problem.');
 
 				}
-				callback(error, status);
+				callback(error, xhr.status);
 
 			});
 		},
