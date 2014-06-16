@@ -109,6 +109,9 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
+        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
+
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
