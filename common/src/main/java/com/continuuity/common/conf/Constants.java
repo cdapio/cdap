@@ -146,6 +146,7 @@ public final class Constants {
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
+
     }
 
     /**
@@ -177,6 +178,9 @@ public final class Constants {
       public static final String CONTAINER_VIRTUAL_CORES = "dataset.executor.container.num.cores";
       public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
       public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
+
+      //max-instances
+      public static final String MAX_INSTANCES = "dataset.max.instances";
     }
   }
 
@@ -225,6 +229,9 @@ public final class Constants {
 
     // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
     public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
+
+    //max instances of stream handler
+    public static final int MAX_INSTANCES = 1;
 
     /* End constants used by stream */
   }
