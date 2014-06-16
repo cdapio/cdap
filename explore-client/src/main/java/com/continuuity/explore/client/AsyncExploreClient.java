@@ -92,7 +92,7 @@ public class AsyncExploreClient implements ExploreClient {
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("queries/%s/%s", handle.getId(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "status"), Status.class);
+      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Status.class);
     }
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
@@ -101,7 +101,8 @@ public class AsyncExploreClient implements ExploreClient {
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("queries/%s/%s", handle.getId(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "schema"), new TypeToken<List<ColumnDesc>>() { }.getType());
+      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                           new TypeToken<List<ColumnDesc>>() { }.getType());
     }
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
@@ -111,7 +112,8 @@ public class AsyncExploreClient implements ExploreClient {
     HttpResponse response = doPost(String.format("queries/%s/%s", handle.getId(), "nextResults"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "results"), new TypeToken<List<Row>>() { }.getType());
+      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                           new TypeToken<List<Row>>() { }.getType());
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }

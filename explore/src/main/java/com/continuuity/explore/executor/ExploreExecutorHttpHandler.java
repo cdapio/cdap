@@ -175,9 +175,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Handle handle = Handle.fromId(id);
       Status status = exploreService.getStatus(handle);
-      JsonObject json = new JsonObject();
-      json.addProperty("status", GSON.toJson(status));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, status);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -193,9 +191,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Handle handle = Handle.fromId(id);
       List<ColumnDesc> schema = exploreService.getResultSchema(handle);
-      JsonObject json = new JsonObject();
-      json.addProperty("schema", GSON.toJson(schema));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, schema);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -210,12 +206,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       Map<String, String> args = decodeArguments(request);
-      int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 1;
+      int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
       Handle handle = Handle.fromId(id);
       List<Row> rows = exploreService.nextResults(handle, size);
-      JsonObject json = new JsonObject();
-      json.addProperty("results", GSON.toJson(rows));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, rows);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
