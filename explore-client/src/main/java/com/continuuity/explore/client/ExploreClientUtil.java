@@ -8,7 +8,7 @@ import com.continuuity.explore.service.Status;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Helper methods for explore client.
  */
 public class ExploreClientUtil {
 
