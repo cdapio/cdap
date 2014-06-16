@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction.persist;
 import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -13,12 +12,7 @@ import java.util.List;
 public interface TransactionStateStorage extends Service {
 
   /**
-   * Reads a snapshot from an input stream.
-   */
-  public TransactionSnapshot readSnapshot(InputStream in) throws IOException;
-
-  /**
-   *  Writes a snapshot to an existing output stream.
+   * Persists a snapshot of transaction state to an output stream.
    */
   public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException;
 

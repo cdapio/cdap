@@ -7,6 +7,7 @@ import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV1;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecV2;
 import com.google.common.collect.ImmutableMap;
@@ -366,12 +367,12 @@ public abstract class AbstractTransactionStateStorageTest {
     CConfiguration configV1 = CConfiguration.create();
     configV1.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                         SnapshotCodecV1.class.getName());
-    AbstractTransactionStateStorage storageV1 = getStorage(configV1);
+    SnapshotCodecProvider codecV1 = new SnapshotCodecProvider(configV1);
 
     // encoding with codec of v1
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try {
-      storageV1.writeSnapshot(out, snapshot);
+      codecV1.writeSnapshot(out, snapshot);
     } finally {
       out.close();
     }
@@ -381,8 +382,8 @@ public abstract class AbstractTransactionStateStorageTest {
     configV1V2.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
                       SnapshotCodecV1.class.getName(),
                       SnapshotCodecV2.class.getName());
-    AbstractTransactionStateStorage storageV1V2 = getStorage(configV1V2);
-    TransactionSnapshot decoded = storageV1V2.readSnapshot(new ByteArrayInputStream(out.toByteArray()));
+    SnapshotCodecProvider codecV1V2 = new SnapshotCodecProvider(configV1V2);
+    TransactionSnapshot decoded = codecV1V2.readSnapshot(new ByteArrayInputStream(out.toByteArray()));
 
     assertEquals(snapshot, decoded);
   }

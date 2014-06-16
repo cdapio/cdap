@@ -2,11 +2,15 @@ package com.continuuity.data2.transaction.snapshot;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.SortedMap;
 import javax.annotation.Nonnull;
 
@@ -70,4 +74,25 @@ public class SnapshotCodecProvider {
     }
     return codecs.get(codecs.lastKey());
   }
+
+  /**
+   * Reads a snapshot from an input stream.
+   */
+  public TransactionSnapshot readSnapshot(InputStream in) throws IOException {
+    // Picking at version to create appropriate codec
+    BinaryDecoder decoder = new BinaryDecoder(in);
+    int persistedVersion = decoder.readInt();
+    SnapshotCodec codec = getCodecForVersion(persistedVersion);
+    return codec.decode(in);
+  }
+
+  /**
+   *  Writes a snapshot to an existing output stream.
+   */
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
+    SnapshotCodec codec = getCurrentCodec();
+    new BinaryEncoder(out).writeInt(codec.getVersion());
+    codec.encode(out, snapshot);
+  }
+
 }

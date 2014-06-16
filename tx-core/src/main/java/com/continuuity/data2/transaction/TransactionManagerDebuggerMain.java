@@ -4,9 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -79,10 +78,10 @@ public class TransactionManagerDebuggerMain {
 
   private Options options;
 
-  private final TransactionStateStorage storage;
+  private final SnapshotCodecProvider codecProvider;
 
   private TransactionManagerDebuggerMain (CConfiguration configuration) {
-    storage = new NoOpTransactionStateStorage(configuration);
+    codecProvider = new SnapshotCodecProvider(configuration);
     buildOptions();
   }
 
@@ -316,7 +315,7 @@ public class TransactionManagerDebuggerMain {
       File snapshotFile = new File(existingFilename);
       FileInputStream fis = new FileInputStream(snapshotFile);
       try {
-        TransactionSnapshot snapshot = storage.readSnapshot(fis);
+        TransactionSnapshot snapshot = codecProvider.readSnapshot(fis);
         System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
         return snapshot;
       } finally {
@@ -348,7 +347,7 @@ public class TransactionManagerDebuggerMain {
         InputStream input = connection.getInputStream();
         TransactionSnapshot snapshot;
         try {
-          snapshot = storage.readSnapshot(input);
+          snapshot = codecProvider.readSnapshot(input);
         } finally {
           input.close();
         }
@@ -361,7 +360,7 @@ public class TransactionManagerDebuggerMain {
           OutputStream out = new FileOutputStream(outputFile);
           try {
             // todo use pipes here to avoid having everyhting in memory twice
-            storage.writeSnapshot(out, snapshot);
+            codecProvider.writeSnapshot(out, snapshot);
           } finally {
             out.close();
           }

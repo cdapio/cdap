@@ -146,8 +146,7 @@ public class InMemoryTransactionManager extends AbstractService {
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoOpTransactionStateStorage(CConfiguration.create()),
-         new TxMetricsCollector());
+    this(CConfiguration.create(), new NoOpTransactionStateStorage(), new TxMetricsCollector());
   }
 
   @Inject

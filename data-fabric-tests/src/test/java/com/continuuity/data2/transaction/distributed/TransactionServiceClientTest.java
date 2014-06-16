@@ -15,10 +15,10 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -113,7 +113,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    TransactionStateStorage stateStorage = getSateStorage();
+    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(cConf);
 
     Transaction tx1 = client.startShort();
     long currentTime = System.currentTimeMillis();
@@ -121,7 +121,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     InputStream in = client.getSnapshotInputStream();
     TransactionSnapshot snapshot;
     try {
-      snapshot = stateStorage.readSnapshot(in);
+      snapshot = codecProvider.readSnapshot(in);
     } finally {
       in.close();
     }
@@ -129,7 +129,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
 
     // Ensures that getSnapshot didn't persist a snapshot
-    TransactionSnapshot snapshotAfter = stateStorage.getLatestSnapshot();
+    TransactionSnapshot snapshotAfter = getSateStorage().getLatestSnapshot();
     if (snapshotAfter != null) {
       Assert.assertEquals(1L, snapshotAfter.getWritePointer());
       Assert.assertEquals(0L, snapshotAfter.getReadPointer());

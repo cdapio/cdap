@@ -88,7 +88,7 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
     OutputStream out = Files.newOutputStreamSupplier(snapshotTmpFile).getOutput();
     boolean threw = true;
     try {
-      writeSnapshot(out, snapshot);
+      codecProvider.writeSnapshot(out, snapshot);
       threw = false;
     } finally {
       Closeables.close(out, threw);
@@ -136,7 +136,7 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   }
 
   private TransactionSnapshot readSnapshotFile(InputStream is) throws IOException {
-    return readSnapshot(is);
+    return codecProvider.readSnapshot(is);
   }
 
   @Override
