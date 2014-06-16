@@ -6,7 +6,6 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
-import com.continuuity.data.stream.StreamServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
@@ -18,10 +17,10 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Dataset Reactor Service management in distributed mode
  */
 public class DatasetServiceManager extends AbstractDistributedReactorServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamServiceManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceManager.class);
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject

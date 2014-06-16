@@ -179,7 +179,7 @@ public final class Constants {
       public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
       public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
 
-      //max-instances
+      //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.max.instances";
     }
   }
@@ -230,7 +230,7 @@ public final class Constants {
     // The consumer state table namespace for consumers created from stream handler for REST API dequeue.
     public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
 
-    //max instances of stream handler
+    //max instances of stream handler service
     public static final int MAX_INSTANCES = 1;
 
     /* End constants used by stream */
