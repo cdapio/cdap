@@ -26,6 +26,9 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Program runner for Services. Metrics and Logging contexts will be set before running the services.
  */
@@ -54,6 +57,8 @@ public class ServiceRunnableProgramRunner implements ProgramRunner {
     try {
       // Extract and verify parameters
       String runnableName = options.getName();
+
+      ExecutorService executorService = Executors.newSingleThreadExecutor();
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
@@ -95,11 +100,11 @@ public class ServiceRunnableProgramRunner implements ProgramRunner {
                                                                                          runnableName, runnableContext,
                                                                                          twillRunnable);
 
-      LOG.info("Starting runnable: {}");
+      LOG.info("Starting runnable: {} Class Name : {}", runnableName, className);
       LoggingContextAccessor.setLoggingContext(runnableContext.getLoggingContext());
       twillRunnable.initialize(twillContext);
-      twillRunnable.run();
-      LOG.info("Runnable started: {}");
+      executorService.submit(twillRunnable);
+      LOG.info("Runnable started: {} Service Name : {}", runnableName, program.getName());
 
       return controller;
     } catch (Exception e) {
