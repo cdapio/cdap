@@ -130,9 +130,6 @@ public final class Constants {
      * DatasetManager service configuration.
      */
     public static final class Manager {
-      /** for the port of the dataset server. */
-      public static final String PORT = "dataset.service.bind.port";
-
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
