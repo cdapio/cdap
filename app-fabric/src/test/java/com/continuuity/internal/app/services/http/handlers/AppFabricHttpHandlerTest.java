@@ -30,6 +30,7 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodec;
 import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.http.AppFabricTestBase;
@@ -807,7 +808,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     InputStream in = response.getEntity().getContent();
-    SnapshotCodecProvider snapshotCodec = getInjector().getInstance(SnapshotCodecProvider.class);
+    SnapshotCodec snapshotCodec = getInjector().getInstance(SnapshotCodecProvider.class);
     try {
       TransactionSnapshot snapshot = snapshotCodec.decode(in);
       Assert.assertTrue(snapshot.getTimestamp() >= currentTs);

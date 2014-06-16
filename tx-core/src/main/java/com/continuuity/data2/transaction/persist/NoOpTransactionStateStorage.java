@@ -1,6 +1,9 @@
 package com.continuuity.data2.transaction.persist;
 
+import com.continuuity.data2.transaction.snapshot.SnapshotCodec;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +15,13 @@ import java.util.List;
  */
 public class NoOpTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
 
+  private final SnapshotCodec codec;
+
+  @Inject
+  public NoOpTransactionStateStorage(SnapshotCodecProvider codecProvider) {
+    codec = codecProvider;
+  }
+
   @Override
   protected void startUp() throws Exception {
   }
@@ -22,6 +32,7 @@ public class NoOpTransactionStateStorage extends AbstractIdleService implements 
 
   @Override
   public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
+    codec.encode(out, snapshot);
   }
 
   @Override

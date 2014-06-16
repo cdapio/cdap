@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -146,7 +147,11 @@ public class InMemoryTransactionManager extends AbstractService {
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoOpTransactionStateStorage(), new TxMetricsCollector());
+    this(CConfiguration.create());
+  }
+
+  private InMemoryTransactionManager(CConfiguration config) {
+    this(config, new NoOpTransactionStateStorage(new SnapshotCodecProvider(config)), new TxMetricsCollector());
   }
 
   @Inject
