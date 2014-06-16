@@ -6,7 +6,6 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
@@ -26,7 +25,7 @@ public class StreamServiceManager extends AbstractDistributedReactorServiceManag
 
   @Inject
   public StreamServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                               DiscoveryServiceClient discoveryServiceClient) {
+                              DiscoveryServiceClient discoveryServiceClient) {
     super(cConf, Constants.Service.STREAMS, twillRunnerService);
     this.discoveryServiceClient = discoveryServiceClient;
   }
