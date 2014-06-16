@@ -82,6 +82,13 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
+   * Calls {@link #createDataSet(String, String, DatasetProperties) and passes epty properties.
+   */
+  protected void createDataSet(String datasetInstanceName, String typeName) {
+    configurer.createDataSet(datasetInstanceName, typeName, DatasetProperties.EMPTY);
+  }
+
+  /**
    * @see ApplicationConfigurer#createDataSet(String, String, com.continuuity.api.dataset.DatasetProperties)
    */
   protected void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {

@@ -22,8 +22,6 @@ import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -90,8 +88,6 @@ public class ReactorServiceMain extends DaemonMain {
   private volatile TwillRunnerService twillRunnerService;
   private volatile TwillController twillController;
   private AppFabricServer appFabricServer;
-  // TODO reintegrate once hive issues in distributed mode are fixed
-  // private HiveServer hiveServer;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
@@ -132,8 +128,6 @@ public class ReactorServiceMain extends DaemonMain {
       new DataSetServiceModules().getDistributedModule(),
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
-      // TODO reintegrate once hive issues in distributed mode are fixed
-      // new HiveRuntimeModule(cConf).getDistributedModules()
     );
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
@@ -151,10 +145,6 @@ public class ReactorServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
-
-        // TODO reintegrate once hive issues in distributed mode are fixed
-        // hiveServer = injector.getInstance(HiveServer.class);
-        // hiveServer.startAndWait();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
@@ -179,10 +169,6 @@ public class ReactorServiceMain extends DaemonMain {
         if (appFabricServer != null) {
           appFabricServer.stopAndWait();
         }
-        // TODO reintegrate once hive issues in distributed mode are fixed
-        // if (hiveServer != null) {
-          // hiveServer.stopAndWait();
-        // }
         isLeader.set(false);
       }
     });

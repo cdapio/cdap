@@ -36,7 +36,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_DATA_LEVELDB_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),

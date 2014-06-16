@@ -35,6 +35,6 @@ public final class DistributedStreamCoordinator extends AbstractStreamCoordinato
   @Override
   protected <T> PropertyStore<T> createPropertyStore(Codec<T> codec) {
     Preconditions.checkState(zkClient != null, "Missing ZKClient. Check Guice binding.");
-    return ZKPropertyStore.create(zkClient, "/" + Constants.Service.STREAM_HANDLER + "/properties", codec);
+    return ZKPropertyStore.create(zkClient, "/" + Constants.Service.STREAMS + "/properties", codec);
   }
 }

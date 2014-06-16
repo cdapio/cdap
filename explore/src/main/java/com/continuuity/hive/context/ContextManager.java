@@ -48,8 +48,8 @@ public class ContextManager {
     // Self init needs to happen only when running in as a MapReduce job.
     // In other cases, ContextManager will be initialized using initialize method.
 
-    CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_CODEC_KEY, CConfCodec.INSTANCE);
-    Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_CODEC_KEY, HConfCodec.INSTANCE);
+    CConfiguration cConf = ConfigurationUtil.get(conf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE);
+    Configuration hConf = ConfigurationUtil.get(conf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
