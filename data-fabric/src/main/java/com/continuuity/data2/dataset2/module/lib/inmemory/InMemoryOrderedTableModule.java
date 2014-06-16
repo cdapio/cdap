@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2.module.lib.inmemory;
 
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 /**
  * Registers in-memory implementations of the basic datasets

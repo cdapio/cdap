@@ -1,22 +1,23 @@
 package com.continuuity.data2.datafabric.dataset;
 
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.dataset2.AbstractDatasetFrameworkTest;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -57,15 +58,15 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetServiceClient dsManagerClient = new DatasetServiceClient(discoveryService);
     framework = new RemoteDatasetFramework(dsManagerClient, cConf,
                                            new LocalLocationFactory(),
-                                           new InMemoryDatasetDefinitionRegistry());
+                                           new InMemoryDefinitionRegistryFactory());
     InMemoryDatasetOpExecutor opExecutorClient = new InMemoryDatasetOpExecutor(framework);
 
     service = new DatasetService(cConf,
                                  new LocalLocationFactory(),
                                  discoveryService,
                                  new InMemoryDatasetFramework(),
-                                 ImmutableSortedMap.<String, DatasetModule>of(
-                                   "memoryTable", new InMemoryOrderedTableModule()),
+                                 ImmutableMap.<String, DatasetModule>of("memoryTable",
+                                                                        new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
                                  opExecutorClient);

@@ -1560,6 +1560,8 @@ with the arguments as a JSON string in the body::
 	[ "/reactor/collect.events?aggregate=true",
 	"/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
+If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
+
 .. rst2pdf: PageBreak
 
 Time Range

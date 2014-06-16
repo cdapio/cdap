@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset2;
 
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.google.common.collect.Maps;
 
 import java.util.Map;

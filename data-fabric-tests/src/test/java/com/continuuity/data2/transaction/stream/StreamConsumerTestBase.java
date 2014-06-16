@@ -22,16 +22,17 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -42,6 +43,17 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public abstract class StreamConsumerTestBase {
+
+  private static final Comparator<StreamEvent> STREAM_EVENT_COMPARATOR = new Comparator<StreamEvent>() {
+    @Override
+    public int compare(StreamEvent o1, StreamEvent o2) {
+      int cmp = Longs.compare(o1.getTimestamp(), o2.getTimestamp());
+      if (cmp != 0) {
+        return cmp;
+      }
+      return o1.getBody().compareTo(o2.getBody());
+    }
+  };
 
   protected abstract QueueClientFactory getQueueClientFactory();
 
@@ -110,32 +122,32 @@ public abstract class StreamConsumerTestBase {
     consumer1.close();
   }
 
-  private List<StreamEventRep> writeEvents(StreamConfig streamConfig, String msgPrefix,
-                                           int count, Clock clock) throws IOException {
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
+                                        int count, Clock clock) throws IOException {
 
     FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
     try {
-      return writeEvents(writer, streamConfig, msgPrefix, count, clock);
+      return writeEvents(writer, msgPrefix, count, clock);
     } finally {
       writer.close();
     }
   }
 
-  private List<StreamEventRep> writeEvents(FileWriter<StreamEvent> streamWriter, StreamConfig streamConfig,
-                                           String msgPrefix, int count, Clock clock) throws IOException {
+  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
+                                        String msgPrefix, int count, Clock clock) throws IOException {
     Map<String, String> headers = ImmutableMap.of();
-    List<StreamEventRep> result = Lists.newLinkedList();
+    List<StreamEvent> result = Lists.newLinkedList();
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
       StreamEvent event = new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
-      result.add(new StreamEventRep(event.getTimestamp(), msg));
+      result.add(event);
       streamWriter.append(event);
     }
     return result;
   }
 
-  private List<StreamEventRep> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
-    return this.writeEvents(streamConfig, msgPrefix, count, new Clock());
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+    return writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   @Test
@@ -331,7 +343,7 @@ public abstract class StreamConsumerTestBase {
     Assert.assertEquals(ttl, streamConfig.getTTL());
     Assert.assertEquals(ttl, streamConfig.getPartitionDuration());
 
-    List<StreamEventRep> expectedEvents = Lists.newLinkedList();
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
     FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
 
     try {
@@ -340,43 +352,28 @@ public abstract class StreamConsumerTestBase {
       // Write 5 non-expired messages
       expectedEvents.addAll(writeEvents(streamConfig, "New event ", 12,
                                         new IncrementingClock(approxEarliestNonExpiredTime, increment)));
-      writer.flush();
     } finally {
       writer.close();
     }
 
-    AbstractStreamFileConsumer consumer = (AbstractStreamFileConsumer) consumerFactory
-      .create(streamName, "testTTL_0", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
-
-    TransactionContext txContext = createTxContext(consumer);
-    txContext.start();
-
-    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTTL());
-
-    List<StreamEventRep> actualEvents = Lists.newLinkedList();
+    // Dequeue from stream. Should only get the 5 unexpired events.
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     try {
-      DequeueResult<StreamEvent> result = consumer.poll(600, 1, TimeUnit.SECONDS);
-      Iterator<StreamEvent> iterator = result.iterator();
-      while (iterator.hasNext()) {
-        StreamEvent event = iterator.next();
-        actualEvents.add(new StreamEventRep(event));
+      verifyEvents(consumer, expectedEvents);
+
+      TransactionContext txContext = createTxContext(consumer);
+      txContext.start();
+      try {
+        // Should be no more pending events
+        DequeueResult<StreamEvent> result = consumer.poll(1, 2, TimeUnit.SECONDS);
+        Assert.assertTrue(result.isEmpty());
+      } finally {
+        txContext.finish();
       }
     } finally {
-      txContext.finish();
+      consumer.close();
     }
-
-    Assert.assertEquals(Arrays.toString(expectedEvents.toArray()), Arrays.toString(actualEvents.toArray()));
-
-    txContext.start();
-    try {
-      // Should be no more pending events
-      DequeueResult<StreamEvent> result = consumer.poll(1, 0, TimeUnit.SECONDS);
-      Assert.assertTrue(result.isEmpty());
-    } finally {
-      txContext.finish();
-    }
-
-    consumer.close();
   }
 
   @Test
@@ -407,47 +404,28 @@ public abstract class StreamConsumerTestBase {
     writeEvents(streamConfig, "Old event ", 10, new ConstantClock(0));
 
     // Write 500 non-expired messages to stream with timestamp approxEarliestNonExpiredTime..currentTime
-    List<StreamEventRep> expectedEvents = Lists.newLinkedList();
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
     FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
 
     try {
-      expectedEvents.addAll(writeEvents(writer, streamConfig, "New event pre-flush ", 20,
+      expectedEvents.addAll(writeEvents(writer, "New event pre-flush ", 20,
                                         new IncrementingClock(approxEarliestNonExpiredTime, increment, 5)));
       writer.flush();
-      expectedEvents.addAll(writeEvents(writer, streamConfig, "New event post-flush ", 20,
+      expectedEvents.addAll(writeEvents(writer, "New event post-flush ", 20,
                                         new IncrementingClock(approxEarliestNonExpiredTime + 1, increment, 5)));
-      writer.flush();
     } finally {
       writer.close();
     }
 
-    AbstractStreamFileConsumer consumer = (AbstractStreamFileConsumer) consumerFactory
-      .create(streamName, "testTTLMultipleEventsWithSameTimestamp_0"
-        , new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    verifyEvents(consumer, expectedEvents);
 
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();
-
-    Assert.assertEquals(ttl, streamAdmin.getConfig(stream).getTTL());
-
-    List<StreamEventRep> actualEvents = Lists.newLinkedList();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(600, 1, TimeUnit.SECONDS);
-      Iterator<StreamEvent> iterator = result.iterator();
-      while (iterator.hasNext()) {
-        StreamEvent event = iterator.next();
-        actualEvents.add(new StreamEventRep(event));
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    Assert.assertEquals(Arrays.toString(expectedEvents.toArray()), Arrays.toString(actualEvents.toArray()));
-
-    txContext.start();
     try {
       // Should be no more pending events
-      DequeueResult<StreamEvent> result = consumer.poll(1, 0, TimeUnit.SECONDS);
+      DequeueResult<StreamEvent> result = consumer.poll(1, 1, TimeUnit.SECONDS);
       Assert.assertTrue(result.isEmpty());
     } finally {
       txContext.finish();
@@ -462,8 +440,8 @@ public abstract class StreamConsumerTestBase {
     QueueName streamName = QueueName.fromStream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
-    // Create stream with ttl of 2 seconds
-    final long ttl = TimeUnit.SECONDS.toMillis(2);
+    // Create stream with ttl of 3 seconds and partition duration of 3 seconds
+    final long ttl = TimeUnit.SECONDS.toMillis(3);
 
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
@@ -471,54 +449,66 @@ public abstract class StreamConsumerTestBase {
     streamAdmin.create(stream, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    streamAdmin.configureInstances(streamName, 0L, 1);
+    streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
     StreamConsumerFactory consumerFactory = getConsumerFactory();
 
-    AbstractStreamFileConsumer consumer = (AbstractStreamFileConsumer) consumerFactory
-      .create(streamName, "testTTLStartingFile_0", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
-    AbstractStreamFileConsumer newConsumer;
-    List<StreamEventRep> expectedEvents;
+    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    StreamConsumer newConsumer;
+    Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
 
     try {
+      // Create a new consumer for second consumer verification.
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
       // write 20 events in a partition that will be expired due to sleeping the TTL
-      expectedEvents = Lists.newLinkedList();
       writeEvents(streamConfig, "Phase 0 expired event ", 20);
       Thread.sleep(ttl);
       verifyEvents(consumer, expectedEvents);
 
       // also verify for a new consumer
-      newConsumer = (AbstractStreamFileConsumer) consumerFactory
-        .create(streamName, "testTTLStartingFile_1", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
       try {
         verifyEvents(newConsumer, expectedEvents);
       } finally {
         newConsumer.close();
       }
 
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
-      // write 20 events in a partition that will NOT be expired
-      expectedEvents = Lists.newLinkedList(writeEvents(streamConfig, "Phase 1 non-expired event ", 20));
+      // write 20 events in a partition and read it back immediately. They shouldn't expired.
+      expectedEvents.addAll(writeEvents(streamConfig, "Phase 1 non-expired event ", 20));
       verifyEvents(consumer, expectedEvents);
 
       // also verify for a new consumer
-      newConsumer = (AbstractStreamFileConsumer) consumerFactory
-        .create(streamName, "testTTLStartingFile_2", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
       try {
         verifyEvents(newConsumer, expectedEvents);
       } finally {
         newConsumer.close();
       }
 
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
       // write 20 events in a partition that will be expired due to sleeping the TTL
-      expectedEvents = Lists.newLinkedList();
+      // This will write to a new partition different then the first batch write.
+      // Also, because it sleep TTL time, the previous batch write would also get expired.
+      expectedEvents.clear();
       writeEvents(streamConfig, "Phase 2 expired event ", 20);
       Thread.sleep(ttl);
       verifyEvents(consumer, expectedEvents);
 
       // also verify for a new consumer
-      newConsumer = (AbstractStreamFileConsumer) consumerFactory
-        .create(streamName, "testTTLStartingFile_3", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
       try {
         verifyEvents(newConsumer, expectedEvents);
       } finally {
@@ -526,13 +516,18 @@ public abstract class StreamConsumerTestBase {
       }
 
 
-      // write 20 events in a partition that will NOT be expired
-      expectedEvents = Lists.newLinkedList(writeEvents(streamConfig, "Phase 3 non-expired event ", 20));
+      // Create a new consumer for second consumer verification (with clean state)
+      // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamName, stream,
+                                           new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
+
+      // write 20 events in a partition and read it back immediately. They shouldn't expire.
+      expectedEvents.addAll(writeEvents(streamConfig, "Phase 3 non-expired event ", 20));
       verifyEvents(consumer, expectedEvents);
 
       // also verify for a new consumer
-      newConsumer = (AbstractStreamFileConsumer) consumerFactory
-        .create(streamName, "testTTLStartingFile_4", new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
       try {
         verifyEvents(newConsumer, expectedEvents);
       } finally {
@@ -540,26 +535,23 @@ public abstract class StreamConsumerTestBase {
       }
 
       // Should be no more pending events
-      expectedEvents = Lists.newLinkedList();
+      expectedEvents.clear();
       verifyEvents(consumer, expectedEvents);
     } finally {
       consumer.close();
     }
   }
 
-  private void verifyEvents(StreamConsumer consumer, Collection<StreamEventRep> expectedEvents) throws Exception {
+  private void verifyEvents(StreamConsumer consumer, Collection<StreamEvent> expectedEvents) throws Exception {
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();
 
     try {
-      List<StreamEventRep> actualEvents = Lists.newLinkedList();
-      DequeueResult<StreamEvent> result = consumer.poll(expectedEvents.size(), 1, TimeUnit.SECONDS);
-      Iterator<StreamEvent> iterator = result.iterator();
-      while (iterator.hasNext()) {
-        StreamEvent event = iterator.next();
-        actualEvents.add(new StreamEventRep(event));
-      }
-      Assert.assertEquals(Arrays.toString(expectedEvents.toArray()), Arrays.toString(actualEvents.toArray()));
+      Set<StreamEvent> actualEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
+      int size = expectedEvents.size();
+      DequeueResult<StreamEvent> result = consumer.poll(size == 0 ? 1 : size, 1, TimeUnit.SECONDS);
+      Iterables.addAll(actualEvents, result);
+      Assert.assertEquals(expectedEvents, actualEvents);
     } finally {
       txContext.finish();
     }
@@ -567,38 +559,6 @@ public abstract class StreamConsumerTestBase {
 
   private TransactionContext createTxContext(TransactionAware... txAwares) {
     return new TransactionContext(getTransactionClient(), txAwares);
-  }
-
-  private class StreamEventRep {
-    private long timestamp;
-    private String body;
-
-    private StreamEventRep(StreamEvent source) {
-      this.timestamp = source.getTimestamp();
-      this.body = Charsets.UTF_8.decode(source.getBody()).toString();
-    }
-
-    public StreamEventRep(long timestamp, String body) {
-      this.timestamp = timestamp;
-      this.body = body;
-    }
-
-    public long getTimestamp() {
-      return timestamp;
-    }
-
-    public String getBody() {
-      return body;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuffer sb = new StringBuffer("{");
-      sb.append("timestamp=").append(timestamp);
-      sb.append(", body='").append(body).append('\'');
-      sb.append('}');
-      return sb.toString();
-    }
   }
 
   private class Clock {

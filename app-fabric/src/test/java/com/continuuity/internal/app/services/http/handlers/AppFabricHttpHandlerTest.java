@@ -72,7 +72,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-
 import javax.annotation.Nullable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
@@ -146,6 +145,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
                 .getStatusLine().getStatusCode()
         );
       }
+      // Sleep to let stop states settle down (for MapReduce).
+      TimeUnit.SECONDS.sleep(5);
       Assert.assertEquals(200,
           doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
               .getStatusLine().getStatusCode()

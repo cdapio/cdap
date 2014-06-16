@@ -1,0 +1,47 @@
+package com.continuuity.explore.service;
+
+import com.google.common.base.Objects;
+
+import java.util.UUID;
+
+/**
+ * Represents an operation that is submitted for execution to {@link ExploreService}.
+ */
+public class Handle {
+  private final String id;
+
+  public static Handle generate() {
+    // TODO: make sure handles are unique across multiple instances.
+    return new Handle(UUID.randomUUID().toString());
+  }
+
+  private Handle(String id) {
+    this.id = id;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("id", id)
+      .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Handle that = (Handle) o;
+
+    return Objects.equal(this.id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
+  }
+}

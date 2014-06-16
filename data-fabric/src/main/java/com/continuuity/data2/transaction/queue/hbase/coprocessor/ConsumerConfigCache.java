@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
-
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

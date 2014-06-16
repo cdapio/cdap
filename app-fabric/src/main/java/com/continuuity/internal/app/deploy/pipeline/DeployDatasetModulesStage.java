@@ -4,13 +4,13 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.ModuleConflictException;
 import com.continuuity.data2.dataset2.SingleTypeModule;
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;

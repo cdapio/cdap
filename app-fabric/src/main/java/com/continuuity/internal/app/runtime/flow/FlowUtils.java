@@ -34,10 +34,17 @@ public final class FlowUtils {
    * Generates a queue consumer groupId for the given flowlet in the given program.
    */
   public static long generateConsumerGroupId(Program program, String flowletId) {
+    return generateConsumerGroupId(program.getId(), flowletId);
+  }
+
+  /**
+   * Generates a queue consumer groupId for the given flowlet in the given program id.
+   */
+  public static long generateConsumerGroupId(Id.Program program, String flowletId) {
     return Hashing.md5().newHasher()
                   .putString(program.getAccountId())
                   .putString(program.getApplicationId())
-                  .putString(program.getName())
+                  .putString(program.getId())
                   .putString(flowletId).hash().asLong();
   }
 

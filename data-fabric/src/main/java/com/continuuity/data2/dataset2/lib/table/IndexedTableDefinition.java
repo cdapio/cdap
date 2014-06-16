@@ -1,12 +1,12 @@
 package com.continuuity.data2.dataset2.lib.table;
 
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
 import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
-import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -30,25 +30,25 @@ public class IndexedTableDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("table", properties),
-                tableDef.configure("index", properties))
+      .datasets(tableDef.configure("d", properties),
+                tableDef.configure("i", properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("table")),
-      tableDef.getAdmin(spec.getSpecification("index"))
+      tableDef.getAdmin(spec.getSpecification("d")),
+      tableDef.getAdmin(spec.getSpecification("i"))
     ));
   }
 
   @Override
   public IndexedTable getDataset(DatasetSpecification spec) throws IOException {
-    DatasetSpecification tableInstance = spec.getSpecification("table");
+    DatasetSpecification tableInstance = spec.getSpecification("d");
     Table table = tableDef.getDataset(tableInstance);
 
-    DatasetSpecification indexTableInstance = spec.getSpecification("index");
+    DatasetSpecification indexTableInstance = spec.getSpecification("i");
     Table index = tableDef.getDataset(indexTableInstance);
 
     String columnToIndex = spec.getProperty("columnToIndex");

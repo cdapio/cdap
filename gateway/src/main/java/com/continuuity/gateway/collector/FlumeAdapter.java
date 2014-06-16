@@ -65,7 +65,7 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
   protected void startUp() throws Exception {
     endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(
-        Constants.Service.STREAM_HANDLER)), 1L, TimeUnit.SECONDS);
+        Constants.Service.STREAMS)), 1L, TimeUnit.SECONDS);
   }
 
   @Override

@@ -1,5 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service.executor;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -12,29 +16,24 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.lib.table.Get;
-import com.continuuity.internal.data.dataset.lib.table.Put;
-import com.continuuity.internal.data.dataset.lib.table.Table;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -116,12 +115,8 @@ public class DatasetOpExecutorServiceTest {
           bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         }
       }),
-      new AuthModule(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-      }
-    });
+      new AuthModule(),
+      new TransactionMetricsModule());
 
     txManager = injector.getInstance(InMemoryTransactionManager.class);
     txManager.startAndWait();
@@ -136,7 +131,7 @@ public class DatasetOpExecutorServiceTest {
     dsFramework = new RemoteDatasetFramework(
       serviceClient, cConf,
       injector.getInstance(LocationFactory.class),
-      new InMemoryDatasetDefinitionRegistry());
+      new InMemoryDefinitionRegistryFactory());
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

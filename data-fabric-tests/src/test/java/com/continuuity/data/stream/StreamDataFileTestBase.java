@@ -109,6 +109,8 @@ public abstract class StreamDataFileTestBase {
 
     final CountDownLatch writerStarted = new CountDownLatch(1);
     // Create a thread for writing 10 events, 1 event per 200 milliseconds.
+    // It pauses after writing 5 events.
+    final CountDownLatch waitLatch = new CountDownLatch(1);
     Thread writerThread = new Thread() {
       @Override
       public void run() {
@@ -122,6 +124,9 @@ public abstract class StreamDataFileTestBase {
             writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
             writer.flush();
             TimeUnit.MILLISECONDS.sleep(200);
+            if (i == 4) {
+              waitLatch.await();
+            }
           }
           writer.close();
         } catch (Exception e) {
@@ -137,8 +142,9 @@ public abstract class StreamDataFileTestBase {
     writerStarted.await();
 
     // Expect 10 events, followed by EOF.
-    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
+    Assert.assertEquals(5, reader.read(events, 5, 2000, TimeUnit.MILLISECONDS));
+    waitLatch.countDown();
+    Assert.assertEquals(5, reader.read(events, 5, 2000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(-1, reader.read(events, 1, 500, TimeUnit.MILLISECONDS));
 
     Assert.assertEquals(10, events.size());

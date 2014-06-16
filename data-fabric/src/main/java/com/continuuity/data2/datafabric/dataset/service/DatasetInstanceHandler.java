@@ -1,5 +1,7 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -9,8 +11,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.internal.data.dataset.DatasetProperties;
-import com.continuuity.internal.data.dataset.DatasetSpecification;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;

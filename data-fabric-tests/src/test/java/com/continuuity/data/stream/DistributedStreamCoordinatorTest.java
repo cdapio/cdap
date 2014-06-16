@@ -10,15 +10,13 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.google.inject.AbstractModule;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 
@@ -44,6 +42,7 @@ public class DistributedStreamCoordinatorTest extends StreamCoordinatorTestBase 
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new TransactionMetricsModule(),
       new LocationRuntimeModule().getDistributedModules()
     );
 

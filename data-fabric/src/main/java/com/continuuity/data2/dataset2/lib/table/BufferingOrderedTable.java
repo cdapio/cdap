@@ -2,12 +2,11 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.api.dataset.table.Scanner;
+import com.continuuity.api.dataset.table.TableSplit;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.internal.data.dataset.lib.table.Scanner;
-import com.continuuity.internal.data.dataset.lib.table.TableSplit;
-import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -24,7 +23,7 @@ import javax.annotation.Nullable;
 
 /**
  * An abstract {@link com.continuuity.data2.transaction.TransactionAware} implementation of
- * {@link com.continuuity.internal.data.dataset.lib.table.OrderedTable}
+ * {@link com.continuuity.api.dataset.table.OrderedTable}
  * which keeps data in memory buffer until transaction commits.
  * <p>
  * Subclasses should implement methods which deal with persistent store. This implementation merges data from persistent
@@ -171,7 +170,11 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
   @Override
   public void startTx(Transaction tx) {
     // starting with fresh buffer when tx starts
-    buff.clear();
+    if (buff == null) {
+      buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    } else {
+      buff.clear();
+    }
     toUndo = null;
   }
 
@@ -305,7 +308,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
-   * Also see {@link com.continuuity.internal.data.dataset.lib.table.OrderedTable#put(byte[], byte[][], byte[][])}.
+   * Also see {@link com.continuuity.api.dataset.table.OrderedTable#put(byte[], byte[][], byte[][])}.
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) throws Exception {
