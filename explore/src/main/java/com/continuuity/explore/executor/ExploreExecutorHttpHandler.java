@@ -87,7 +87,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/queries/{id}")
+  @Path("/datasets/queries/{id}/cancel")
   public void cancelQuery(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
