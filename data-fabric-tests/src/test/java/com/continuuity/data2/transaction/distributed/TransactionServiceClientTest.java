@@ -54,7 +54,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   }
 
   @Override
-  protected TransactionStateStorage getSateStorage() throws Exception {
+  protected TransactionStateStorage getStateStorage() throws Exception {
     return txStateStorage;
   }
 
@@ -129,7 +129,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
 
     // Ensures that getSnapshot didn't persist a snapshot
-    TransactionSnapshot snapshotAfter = getSateStorage().getLatestSnapshot();
+    TransactionSnapshot snapshotAfter = getStateStorage().getLatestSnapshot();
     if (snapshotAfter != null) {
       Assert.assertEquals(1L, snapshotAfter.getWritePointer());
       Assert.assertEquals(0L, snapshotAfter.getReadPointer());
