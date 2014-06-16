@@ -50,13 +50,13 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
   /**
    * Systems call mocks.
    */
-//  nock(clientAddr, options)
-//    .defaultReplyHeaders({
-//      'Content-Type': 'application/json'
-//    })
-//    .get('/v2/system/services/status')
-//    .times(0)
-//    .reply(200, system.services.statusIncomplete);
+  nock(clientAddr, options)
+    .defaultReplyHeaders({
+     'Content-Type': 'application/json'
+    })
+    .get('/v2/system/services/status')
+    .times(2)
+    .reply(200, system.services.statusIncomplete);
 
   nock(clientAddr, options)
     .persist()
