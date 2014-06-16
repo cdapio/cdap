@@ -24,7 +24,7 @@ define([], function () {
             }
 
             var serviceStatuses = [];
-            if (Object.prototype.toString.call(statuses) === '[object Array]') {
+            if (Object.prototype.toString.call(statuses) === '[object Object]') {
               for (item in statuses) {
                 if (statuses.hasOwnProperty(item)) {
                   var imgSrc = statuses[item] === 'OK' ? 'complete' : 'loading';
