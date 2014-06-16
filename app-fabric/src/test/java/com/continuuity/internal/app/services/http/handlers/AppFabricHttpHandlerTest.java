@@ -809,7 +809,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     InputStream in = response.getEntity().getContent();
     SnapshotCodecProvider snapshotCodec = getInjector().getInstance(SnapshotCodecProvider.class);
     try {
-      TransactionSnapshot snapshot = snapshotCodec.readSnapshot(in);
+      TransactionSnapshot snapshot = snapshotCodec.decode(in);
       Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
     } finally {
       in.close();

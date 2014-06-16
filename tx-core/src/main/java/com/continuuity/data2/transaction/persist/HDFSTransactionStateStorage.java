@@ -107,7 +107,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
     FSDataOutputStream out = fs.create(snapshotTmpFile, false, BUFFER_SIZE);
     // encode the snapshot and stream the serialized version to the file
     try {
-      codecProvider.writeSnapshot(out, snapshot);
+      codecProvider.encode(out, snapshot);
     } finally {
       out.close();
     }
@@ -144,7 +144,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   }
 
   private TransactionSnapshot readSnapshotInputStream(InputStream in) throws IOException {
-    return codecProvider.readSnapshot(in);
+    return codecProvider.decode(in);
   }
 
   private TransactionSnapshot readSnapshotFile(Path filePath) throws IOException {

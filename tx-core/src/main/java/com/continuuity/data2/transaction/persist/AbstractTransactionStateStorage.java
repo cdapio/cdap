@@ -20,6 +20,6 @@ public abstract class AbstractTransactionStateStorage extends AbstractIdleServic
 
   @Override
   public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
-    codecProvider.writeSnapshot(out, snapshot);
+    codecProvider.encode(out, snapshot);
   }
 }

@@ -121,7 +121,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     InputStream in = client.getSnapshotInputStream();
     TransactionSnapshot snapshot;
     try {
-      snapshot = codecProvider.readSnapshot(in);
+      snapshot = codecProvider.decode(in);
     } finally {
       in.close();
     }

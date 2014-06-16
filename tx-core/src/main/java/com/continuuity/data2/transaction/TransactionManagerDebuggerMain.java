@@ -315,7 +315,7 @@ public class TransactionManagerDebuggerMain {
       File snapshotFile = new File(existingFilename);
       FileInputStream fis = new FileInputStream(snapshotFile);
       try {
-        TransactionSnapshot snapshot = codecProvider.readSnapshot(fis);
+        TransactionSnapshot snapshot = codecProvider.decode(fis);
         System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
         return snapshot;
       } finally {
@@ -347,7 +347,7 @@ public class TransactionManagerDebuggerMain {
         InputStream input = connection.getInputStream();
         TransactionSnapshot snapshot;
         try {
-          snapshot = codecProvider.readSnapshot(input);
+          snapshot = codecProvider.decode(input);
         } finally {
           input.close();
         }
@@ -360,7 +360,7 @@ public class TransactionManagerDebuggerMain {
           OutputStream out = new FileOutputStream(outputFile);
           try {
             // todo use pipes here to avoid having everyhting in memory twice
-            codecProvider.writeSnapshot(out, snapshot);
+            codecProvider.encode(out, snapshot);
           } finally {
             out.close();
           }
