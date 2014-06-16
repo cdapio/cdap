@@ -146,7 +146,6 @@ public final class Constants {
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
-
     }
 
     /**
