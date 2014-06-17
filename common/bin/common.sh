@@ -74,10 +74,10 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.94/lib/hbase-compat-0.94*.jar`
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.94/lib/*"
         ;;
       0.96*)
-        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.96/lib/hbase-compat-0.96*.jar`
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
