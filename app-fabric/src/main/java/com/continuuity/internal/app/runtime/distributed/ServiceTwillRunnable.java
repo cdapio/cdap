@@ -67,6 +67,7 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -80,6 +81,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -105,6 +108,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private CountDownLatch runlatch;
   private TwillRunnable delegate;
   private ServiceRunnableContext runnableContext;
+  private ExecutorService executorService;
 
   protected ServiceTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -188,9 +192,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(runnableContext.getMetrics()));
-      //TODO: Create a new TwillContext and pass it on?
       delegate.initialize(context);
-
+      executorService = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory(runnableName + "-executor"));
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -210,6 +214,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
     try {
       LOG.info("Stopping runnable: {}", name);
       delegate.stop();
+      executorService.shutdown();
       logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Fail to stop: {}", e, e);
@@ -224,7 +229,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
-    delegate.run();
+    executorService.submit(delegate);
     runlatch.countDown();
   }
 
