@@ -29,8 +29,9 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodec;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.http.AppFabricTestBase;
 import com.continuuity.test.internal.DefaultId;
@@ -807,9 +808,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     InputStream in = response.getEntity().getContent();
+    SnapshotCodec snapshotCodec = getInjector().getInstance(SnapshotCodecProvider.class);
     try {
-      SnapshotCodecV2 codec = new SnapshotCodecV2();
-      TransactionSnapshot snapshot = codec.decodeState(in);
+      TransactionSnapshot snapshot = snapshotCodec.decode(in);
       Assert.assertTrue(snapshot.getTimestamp() >= currentTs);
     } finally {
       in.close();

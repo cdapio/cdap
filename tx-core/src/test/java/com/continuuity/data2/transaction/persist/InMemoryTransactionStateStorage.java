@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,11 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
   protected void shutDown() throws Exception {
     lastSnapshot = null;
     logs = new TreeMap<Long, TransactionLog>();
+  }
+
+  @Override
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
+    // no codecs in in-memory mode
   }
 
   @Override
