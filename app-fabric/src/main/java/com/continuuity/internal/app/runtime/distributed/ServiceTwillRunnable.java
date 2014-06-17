@@ -16,6 +16,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -187,7 +188,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getMainClass().getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-      delegate = (TwillRunnable) clz.newInstance();
+      delegate = new InstantiatorFactory(false).get(TypeToken.of(TwillRunnable.class)).create();
       runnableContext = new ServiceRunnableContext(program, runnableName, instanceId,
                                                                           runId, instanceCount, runtimeSpec,
                                                                           metricsCollectionService);
