@@ -1,0 +1,202 @@
+[
+  {
+    "log": "2014-06-06 20:24:42,809 - INFO  [InMemoryKeyManager STARTING:c.c.s.a.AbstractKeyManager@111] - Changed current key to KeyIdentifier{keyId=1595947002, expiration=9223372036854775807}\n",
+    "offset": 1402111482809
+  },
+  {
+    "log": "2014-06-06 20:24:42,834 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@217] - Starting Netty Router for service webapp/$HOST on address localhost/127.0.0.1:20000...\n",
+    "offset": 1402111482834
+  },
+  {
+    "log": "2014-06-06 20:24:42,835 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@226] - Started Netty Router for service webapp/$HOST on address /127.0.0.1:20000.\n",
+    "offset": 1402111482835
+  },
+  {
+    "log": "2014-06-06 20:24:42,836 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@217] - Starting Netty Router for service gateway on address localhost/127.0.0.1:10000...\n",
+    "offset": 1402111482836
+  },
+  {
+    "log": "2014-06-06 20:24:42,837 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@226] - Started Netty Router for service gateway on address /127.0.0.1:10000.\n",
+    "offset": 1402111482837
+  },
+  {
+    "log": "2014-06-06 20:24:42,838 - INFO  [NettyFlumeCollector STARTING:c.c.g.c.NettyFlumeCollector@55] - Starting NettyFlumeCollector...\n",
+    "offset": 1402111482838
+  },
+  {
+    "log": "2014-06-06 20:24:42,883 - INFO  [NettyFlumeCollector STARTING:c.c.g.c.NettyFlumeCollector@72] - NettyFlumeCollector started on port 10004 with 100 threads\n",
+    "offset": 1402111482883
+  },
+  {
+    "log": "2014-06-06 20:24:42,890 - INFO  [WebCloudAppService:c.c.WebCloudAppService@44] - Starting Web Cloud App ... (web-app/server/local/main.js)\n",
+    "offset": 1402111482890
+  },
+  {
+    "log": "2014-06-06 20:24:42,932 - INFO  [WebCloudAppService:c.c.WebCloudAppService@56] - Web Cloud App running ...\n",
+    "offset": 1402111482932
+  },
+  {
+    "log": "2014-06-06 20:24:45,337 - DEBUG [New I/O worker #70:c.c.g.r.RouterServiceLookup@160] - Looking up service name appfabric\n",
+    "offset": 1402111485337
+  },
+  {
+    "log": "2014-06-09 15:01:26,691 - INFO  [main:c.c.d.t.i.InMemoryTransactionService@101] - Transaction Thrift service started successfully on 0.0.0.0/0.0.0.0:1\n",
+    "offset": 1402351286691
+  },
+  {
+    "log": "2014-06-09 15:01:26,865 - INFO  [DatasetService STARTING:c.c.d.d.d.s.DatasetService@99] - Starting DatasetService...\n",
+    "offset": 1402351286865
+  },
+  {
+    "log": "2014-06-09 15:01:27,111 - INFO  [metrics-cleanup:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: reactor.metrics.table.ts.1\n",
+    "offset": 1402351287111
+  },
+  {
+    "log": "2014-06-09 15:01:27,389 - INFO  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager@96] - adding module, name: orderedTable-memory, className: com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBTableModule, jarLocation: [local]\n",
+    "offset": 1402351287389
+  },
+  {
+    "log": "2014-06-09 15:01:27,433 - WARN  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager$1@107] - cannot add module orderedTable-memory, module with the same name already exists: DatasetModuleMeta{name=orderedTable-memory, className=com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBTableModule, jarLocation=null, usesModules=, usedByModules=table}\n",
+    "offset": 1402351287433
+  },
+  {
+    "log": "2014-06-09 15:01:27,538 - INFO  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager@286] - Not adding orderedTable-memory module: it already exists\n",
+    "offset": 1402351287538
+  },
+  {
+    "log": "2014-06-09 15:01:27,538 - INFO  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager@96] - adding module, name: table, className: com.continuuity.data2.dataset2.module.lib.TableModule, jarLocation: [local]\n",
+    "offset": 1402351287538
+  },
+  {
+    "log": "2014-06-09 15:01:27,540 - WARN  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager$1@107] - cannot add module table, module with the same name already exists: DatasetModuleMeta{name=table, className=com.continuuity.data2.dataset2.module.lib.TableModule, jarLocation=null, usesModules=orderedTable-memory, usedByModules=}\n",
+    "offset": 1402351287540
+  },
+  {
+    "log": "2014-06-09 15:01:27,581 - INFO  [DatasetTypeManager STARTING:c.c.d.d.d.t.DatasetTypeManager@286] - Not adding table module: it already exists\n",
+    "offset": 1402351287581
+  },
+  {
+    "log": "2014-06-09 15:01:27,656 - INFO  [metrics-cleanup:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: user.metrics.table.ts.1\n",
+    "offset": 1402351287656
+  },
+  {
+    "log": "2014-06-09 15:01:27,790 - INFO  [DatasetOpExecutorService STARTING:c.c.d.d.d.s.e.DatasetOpExecutorService@57] - Starting DatasetOpExecutorService...\n",
+    "offset": 1402351287790
+  },
+  {
+    "log": "2014-06-09 15:01:27,792 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0...\n",
+    "offset": 1402351287792
+  },
+  {
+    "log": "2014-06-09 15:01:27,821 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:53781\n",
+    "offset": 1402351287821
+  },
+  {
+    "log": "2014-06-09 15:01:27,828 - INFO  [DatasetOpExecutorService STARTING:c.c.d.d.d.s.e.DatasetOpExecutorService@72] - DatasetOpExecutorService started successfully on /127.0.0.1:53781\n",
+    "offset": 1402351287828
+  },
+  {
+    "log": "2014-06-09 15:01:27,830 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address /127.0.0.1:53776...\n",
+    "offset": 1402351287830
+  },
+  {
+    "log": "2014-06-09 15:01:27,832 - INFO  [NettyHttpService STARTING:c.c.d.d.d.s.DatasetTypeHandler@62] - Starting DatasetTypeHandler\n",
+    "offset": 1402351287832
+  },
+  {
+    "log": "2014-06-09 15:01:27,833 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:53776\n",
+    "offset": 1402351287833
+  },
+  {
+    "log": "2014-06-09 15:01:27,840 - INFO  [DatasetService STARTING:c.c.d.d.d.s.DatasetService@125] - DatasetService started successfully on /127.0.0.1:53776\n",
+    "offset": 1402351287840
+  },
+  {
+    "log": "2014-06-09 15:01:27,892 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: reactor.metrics.table.ts.1\n",
+    "offset": 1402351287892
+  },
+  {
+    "log": "2014-06-09 15:01:27,899 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@96] - AggregatesTable created: reactor.metrics.table.agg\n",
+    "offset": 1402351287899
+  },
+  {
+    "log": "2014-06-09 15:01:27,901 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: user.metrics.table.ts.1\n",
+    "offset": 1402351287901
+  },
+  {
+    "log": "2014-06-09 15:01:27,902 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@96] - AggregatesTable created: user.metrics.table.agg\n",
+    "offset": 1402351287902
+  },
+  {
+    "log": "2014-06-09 15:01:27,910 - INFO  [Gateway STARTING:c.c.g.Gateway@64] - Starting Gateway...\n",
+    "offset": 1402351287910
+  },
+  {
+    "log": "2014-06-09 15:01:27,912 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0...\n",
+    "offset": 1402351287912
+  },
+  {
+    "log": "2014-06-09 15:01:27,918 - INFO  [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:53783\n",
+    "offset": 1402351287918
+  },
+  {
+    "log": "2014-06-09 15:01:27,923 - INFO  [Gateway STARTING:c.c.g.Gateway@80] - Gateway started successfully on /127.0.0.1:53783\n",
+    "offset": 1402351287923
+  },
+  {
+    "log": "2014-06-09 15:01:28,102 - INFO  [InMemoryKeyManager STARTING:c.c.s.a.AbstractKeyManager@111] - Changed current key to KeyIdentifier{keyId=1360890295, expiration=9223372036854775807}\n",
+    "offset": 1402351288102
+  },
+  {
+    "log": "2014-06-09 15:01:28,136 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@217] - Starting Netty Router for service webapp/$HOST on address localhost/127.0.0.1:20000...\n",
+    "offset": 1402351288136
+  },
+  {
+    "log": "2014-06-09 15:01:28,137 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@226] - Started Netty Router for service webapp/$HOST on address /127.0.0.1:20000.\n",
+    "offset": 1402351288137
+  },
+  {
+    "log": "2014-06-09 15:01:28,138 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@217] - Starting Netty Router for service gateway on address localhost/127.0.0.1:10000...\n",
+    "offset": 1402351288138
+  },
+  {
+    "log": "2014-06-09 15:01:28,139 - INFO  [NettyRouter STARTING:c.c.g.r.NettyRouter@226] - Started Netty Router for service gateway on address /127.0.0.1:10000.\n",
+    "offset": 1402351288139
+  },
+  {
+    "log": "2014-06-09 15:01:28,140 - INFO  [NettyFlumeCollector STARTING:c.c.g.c.NettyFlumeCollector@55] - Starting NettyFlumeCollector...\n",
+    "offset": 1402351288140
+  },
+  {
+    "log": "2014-06-09 15:01:28,166 - INFO  [NettyFlumeCollector STARTING:c.c.g.c.NettyFlumeCollector@72] - NettyFlumeCollector started on port 10004 with 100 threads\n",
+    "offset": 1402351288166
+  },
+  {
+    "log": "2014-06-09 15:01:28,168 - INFO  [WebCloudAppService:c.c.WebCloudAppService@44] - Starting Web Cloud App ... (web-app/server/local/main.js)\n",
+    "offset": 1402351288168
+  },
+  {
+    "log": "2014-06-09 15:01:28,212 - INFO  [WebCloudAppService:c.c.WebCloudAppService@56] - Web Cloud App running ...\n",
+    "offset": 1402351288212
+  },
+  {
+    "log": "2014-06-09 15:01:30,315 - DEBUG [New I/O worker #70:c.c.g.r.RouterServiceLookup@160] - Looking up service name appfabric\n",
+    "offset": 1402351290315
+  },
+  {
+    "log": "2014-06-09 15:01:57,744 - DEBUG [New I/O worker #75:c.c.g.r.RouterServiceLookup@160] - Looking up service name metrics\n",
+    "offset": 1402351317744
+  },
+  {
+    "log": "2014-06-09 15:02:47,152 - INFO  [WebCloudAppService:c.c.WebCloudAppService@97] - Shutting down Web Cloud App ...\n",
+    "offset": 1402351367152
+  },
+  {
+    "log": "2014-06-09 15:04:42,675 - DEBUG [New I/O worker #75:c.c.g.r.RouterServiceLookup@160] - Looking up service name appfabric\n",
+    "offset": 1402351482675
+  },
+  {
+    "log": "2014-06-09 15:04:43,230 - DEBUG [New I/O worker #76:c.c.g.r.RouterServiceLookup@160] - Looking up service name appfabric\n",
+    "offset": 1402351483230
+  }
+]
