@@ -6,9 +6,6 @@ define([], function () {
 
     var Controller = Em.Controller.extend({
 
-      loadingSrc: 'assets/img/services-loading-darkBg.gif',
-      completeSrc: 'assets/img/ok-icon.png',
-
       load: function () {
         var self = this;
 
@@ -21,23 +18,22 @@ define([], function () {
         this.interval = setInterval(function() {
           self.HTTP.rest('system/services/status', function (statuses) {
             self.set('statuses', statuses);
-            if (!('APPFABRIC' in statuses
-              && 'STREAMS' in statuses
-              && 'TRANSACTION' in statuses
-              && 'METRICS' in statuses)) {
+            if (!statuses) {
               $(".warning-text").text('Could not get core Reactor services. Please restart Reactor.');
               return;
             }
 
             var serviceStatuses = [];
-            for (item in statuses) {
-              if (statuses.hasOwnProperty(item)) {
-                var imgSrc = statuses[item] === 'OK' ? self.completeSrc : self.loadingSrc;
-                serviceStatuses.push({
-                  name: item,
-                  status: statuses[item],
-                  imgSrc: imgSrc
-                });
+            if (Object.prototype.toString.call(statuses) === '[object Object]') {
+              for (item in statuses) {
+                if (statuses.hasOwnProperty(item)) {
+                  var imgSrc = statuses[item] === 'OK' ? 'complete' : 'loading';
+                  serviceStatuses.push({
+                    name: item,
+                    status: statuses[item],
+                    imgClass: imgSrc
+                  });
+                }
               }
             }
 
@@ -47,7 +43,8 @@ define([], function () {
 
             if (C.Util.isLoadingComplete(statuses)) {
               setTimeout(function() {
-                clearInterval(this.interval);
+                clearInterval(self.interval);
+                $("#warning").hide();
                 self.transitionToRoute('Overview');
               }, 500);
             }
