@@ -70,7 +70,6 @@ import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.RunIds;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -174,15 +173,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
 
-      String runIdOption = programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID);
-      Preconditions.checkNotNull(runIdOption, "Missing runId");
-      RunId runId = RunIds.fromString(runIdOption);
-
-      int instanceId = Integer.parseInt(programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
-      Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
-
-      int instanceCount = Integer.parseInt(programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
-      Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
+      RunId runId = context.getRunId();
+      int instanceId = context.getInstanceId();
+      int instanceCount = context.getInstanceCount();
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
@@ -195,6 +188,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(runnableContext.getMetrics()));
+      //TODO: Create a new TwillContext and pass it on?
       delegate.initialize(context);
 
       LOG.info("Runnable initialized: " + name);
