@@ -8,6 +8,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.runtime.webapp.WebappSpecification;
 
@@ -19,7 +20,8 @@ public enum Type {
   PROCEDURE(2, "Procedure", ProcedureSpecification.class),
   MAPREDUCE(3, "Mapreduce", MapReduceSpecification.class),
   WORKFLOW(4, "Workflow", WorkflowSpecification.class),
-  WEBAPP(5, "WebApp", WebappSpecification.class);
+  WEBAPP(5, "WebApp", WebappSpecification.class),
+  SERVICE(6, "Service", ServiceSpecification.class);
 
   private final int programType;
   private final String prettyName;
