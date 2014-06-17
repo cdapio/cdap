@@ -2,9 +2,9 @@ package com.continuuity.explore.executor;
 
 import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.explore.client.DatasetExploreFacade;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
@@ -13,7 +13,6 @@ import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
