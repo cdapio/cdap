@@ -74,10 +74,10 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.94/lib/hbase-compat-0.94*.jar`
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.94/lib/*"
         ;;
       0.96*)
-        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.96/lib/hbase-compat-0.96*.jar`
+        hbasecompat="$CONTINUUITY_HOME/hbase-compat-0.96/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
@@ -94,7 +94,7 @@ set_hbase()
   export CLASSPATH
 }
 
-# set the classpath to include hadoop, hbase and hive dependencies
+# set the classpath to include hadoop and hbase dependencies
 set_classpath()
 {
   COMP_HOME=$1
@@ -113,7 +113,20 @@ set_classpath()
     CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   fi
 
-  # Determine Hive classpath
+  # Setup classpaths.
+  if [ -n "$CLASSPATH" ]; then
+    CLASSPATH=$CLASSPATH:$CP
+  else
+    CLASSPATH=$CP
+  fi
+
+  export CLASSPATH
+}
+
+# Determine Hive classpath, and set HIVE_CLASSPATH.
+# Hive classpath is not added as part of system classpath as hive jars bundle unrelated jars like guava,
+# and hence need to be isolated.
+set_hive_classpath() {
   if [ "x$HIVE_HOME" = "x" ] || [ "x$HIVE_CONF_DIR" = "x" ]; then
     if [ `which hive` ]; then
       HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
@@ -133,19 +146,10 @@ set_classpath()
     # Hive exec has a HiveConf class that needs to be loaded before the HiveConf class from
     # hive-common for joins operations to work
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
-    CP=$CP:$HIVE_CONF_DIR:$HIVE_EXEC:$HIVE_HOME/lib/*
-  else
-    echo "WARN: Could not find Hive libraries"
+    OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
+    HIVE_CLASSPATH=$HIVE_CONF_DIR:$HIVE_EXEC:$OTHER_HIVE_JARS
+    export HIVE_CLASSPATH
   fi
-
-  # Setup classpaths.
-  if [ -n "$CLASSPATH" ]; then
-    CLASSPATH=$CLASSPATH:$CP
-  else
-    CLASSPATH=$CP
-  fi
-
-  export CLASSPATH
 }
 
 # check and set classpath if in development enviroment

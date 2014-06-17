@@ -72,6 +72,7 @@
             <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
           {{/if}}
       {{/if}}
+      <a href="#/services" class="topmenu-top-padding">Services</a>
       <a href="#/analyze" class="metrics-link" id="header-metrics"></a>
       </div>
     </div>
@@ -152,78 +153,77 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Loading">
-    <div id="services-loading">
-      <div class="services-box">
-        <div class="animated">
-          <img src="assets/img/services-loading.gif" />Loading Services...
-        </div>
-        <ul class="services-list">
-          {{#each serviceStatuses}}
-          <li class="service">
-            <span class="lowercasify">{{this.name}}</span>
-            <img {{ bindAttr src=this.imgSrc }}/>
-          </li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-  </script>
-
   <script type="text/x-handlebars" data-template-name="Services">
   <div id="reactor-services">
     <div id="panels">
 
-    {{!#each runs}}
-
       <div class="panel">
         <table class="table">
           <thead>
-            <th style="padding-left: 14px; min-width: 350px" class="service-col">AppFabric</th>
+            <th style="padding-left: 14px; min-width: 350px" class="service-col">Name</th>
             <th style="min-width: 100px;" class="status-col">Status
-              <!--<a {{!bindAttr href="href"}}>{{name}}</a>-->
             </th>
             <th style="min-width: 100px;" class="logs-col">Logs</th>
             <th style="min-width: 200px;" class="instance-col">Instance</th>
-            <th style="min-width: 282px;" class="event-rate-col">Event Rate</th>
           </thead>
           <tbody>
+          {{#each services}}
             <tr>
-              <td style="max-width: 350px;" class="service-col">
+              <td style="max-width: 350px;" class="app-list-name service-col"><a class="none-text-decoration">{{this.name}}</a>
               </td>
-              <td style="max-width: 100px;" class="status-col">
-                <img src="assets/img/services-loading-blue.gif" />
+              <td style="max-width: 100px;" class="status-col center-align">
+                {{#if this.statusOk}}
+                  <img src="assets/img/running-icon.png" />
+                {{ else }}
+                  {{#if this.statusNotOk}}
+                    <img src="assets/img/services-loading-blue.gif" />
+                  {{ else }}
+                    {{this.status}}
+                  {{/if}}
+                {{/if}}
               </td>
-              <td style="max-width: 100px;" class="logs-col">
-                <a href="#" {{!}}>
-                  <img src="assets/img/log-icon.png" />
-                </a>
+              <td style="max-width: 100px;" class="status-col center-align">
+                {{#if this.logsStatusOk}}
+                {{#linkTo 'Service.Log' this}}<img src="assets/img/log-icon.png" />{{/linkTo}}
+                {{ else }}
+                  NA
+                {{/if}}
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>1</span></div>
+                  <div class="instance-num"><span>{{this.cur}}</span></div>
                   <div>
-                    <a href="#" {{!}}>
+                    <a class="cursor-pointer" {{action decreaseInstance this.name this.cur }}>
                       <img src="assets/img/minus.png" />
                     </a>
-                    <a href="#" {{!}}>
+                    <a class="cursor-pointer" {{action increaseInstance this.name this.cur }}>
                       <img src="assets/img/plus.png" />
                     </a>
                   </div>
                 </div>
               </td>
-              <td style="max-width: 282px;" class="event-rate-col">
-              {{!view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}
-              </td>
             </tr>
+          {{/each}}
           </tbody>
         </table>
       </div>
 
-    {{!/each}}
 
     </div>
   </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Service">
+
+    <div id="title">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo Service.Log model}}Log{{/linkTo}}</li>
+      </ul>
+      <h1><span>Service</span> {{model.name}}</h1>
+    </div>
+
+    {{outlet}}
+
   </script>
 
   <script type="text/x-handlebars" data-template-name="Login">
@@ -1596,6 +1596,35 @@
       {{/if}}
     </div>
   </script>
+
+  <script type="text/x-handlebars" data-template-name="Loading">
+    <div id="services-loading">
+      <div class="services-box">
+        <div class="animated">
+          <img src="assets/img/services-loading.gif" />Loading Services...
+        </div>
+        <ul class="services-list">
+          {{#each serviceStatuses}}
+          <li class="service">
+            <span class="lowercasify">{{this.name}}</span>
+            <span {{ bindAttr class=":service-icon this.imgClass" }} ></span>
+          </li>
+          {{/each}}
+        </ul>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="ConnectionError">
+    <div id="services-loading">
+      <div class="services-box">
+        <div class="animated large">
+          There seems to be a connection problem... <br />
+          Please wait.
+        </div>
+      </div>
+    </div>
+  </script>  
 
 </body>
 </html>

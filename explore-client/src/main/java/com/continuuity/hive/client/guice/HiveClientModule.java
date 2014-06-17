@@ -37,7 +37,7 @@ public class HiveClientModule extends AbstractModule {
 
     @Override
     public HiveClient get() {
-      boolean exploreEnabled = configuration.getBoolean(Constants.Hive.EXPLORE_ENABLED);
+      boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
       if (!exploreEnabled) {
         return injector.getInstance(NoOpHiveClient.class);
       } else {
