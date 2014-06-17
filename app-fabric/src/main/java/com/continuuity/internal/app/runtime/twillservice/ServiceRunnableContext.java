@@ -13,7 +13,7 @@ import org.apache.twill.api.TwillRunnableSpecification;
 /**
  *
  */
-final class ServiceRunnableContext {
+public final class ServiceRunnableContext {
 
   private final Program program;
   private final RunId runId;
@@ -25,7 +25,7 @@ final class ServiceRunnableContext {
   private volatile int instanceCount;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
 
-  ServiceRunnableContext(Program program, String runnableId, int instanceId, RunId runId, int instanceCount,
+  public ServiceRunnableContext(Program program, String runnableId, int instanceId, RunId runId, int instanceCount,
                          RuntimeSpecification runnableSpec, MetricsCollectionService metricsCollectionService) {
     this.program = program;
     this.runId = runId;
