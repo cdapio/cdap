@@ -57,7 +57,6 @@ public class ServiceProgramRunner implements ProgramRunner {
     return new ServiceProgramController(serviceRunnables, runId, program, serviceSpec);
   }
 
-
   private Table<String, Integer, ProgramController> createRunnables(Program program, RunId runId,
                                                                     ServiceSpecification serviceSpec) {
     Table<String, Integer, ProgramController> runnables = HashBasedTable.create();
@@ -80,8 +79,7 @@ public class ServiceProgramRunner implements ProgramRunner {
   }
 
   private ProgramController startRunnable(Program program, ProgramOptions runnableOptions) {
-    return programRunnerFactory.create(ProgramRunnerFactory.Type.SERVICE)
-      .run(program, runnableOptions);
+    return programRunnerFactory.create(ProgramRunnerFactory.Type.RUNNABLE).run(program, runnableOptions);
   }
 
 
