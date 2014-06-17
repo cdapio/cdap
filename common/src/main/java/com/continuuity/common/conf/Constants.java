@@ -22,6 +22,7 @@ public final class Constants {
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String HIVE = "hive.server";
+    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.http.user.service";
   }
 
   /**
@@ -129,9 +130,6 @@ public final class Constants {
      * DatasetManager service configuration.
      */
     public static final class Manager {
-      /** for the port of the dataset server. */
-      public static final String PORT = "dataset.service.bind.port";
-
       /** for the address (hostname) of the dataset server. */
       public static final String ADDRESS = "dataset.service.bind.address";
 
@@ -406,16 +404,6 @@ public final class Constants {
   }
 
   /**
-   * Hive configuration.
-   */
-  public static final class Hive {
-    public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
-    public static final String SERVER_ADDRESS = "hive.server.bind.address";
-    public static final String METASTORE_PORT = "hive.local.metastore.port";
-    public static final String EXPLORE_ENABLED = "reactor.explore.enabled";
-  }
-
-  /**
    * Explore module configuration.
    */
   public static final class Explore {
@@ -425,6 +413,21 @@ public final class Constants {
 
     public static final String DATASET_NAME = "reactor.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "com.continuuity.hive.datasets.DatasetStorageHandler";
+    public static final String HIVE_CLASSPATH = "hive.classpath";
+
+    public static final String SERVER_ADDRESS = "explore.service.bind.address";
+
+    public static final String BACKLOG_CONNECTIONS = "explore.service.connection.backlog";
+    public static final String EXEC_THREADS = "explore.service.exec.threads";
+    public static final String WORKER_THREADS = "explore.service.worker.threads";
+
+    /** Twill Runnable configuration **/
+    public static final String CONTAINER_VIRTUAL_CORES = "explore.executor.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "explore.executor.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "explore.executor.container.instances";
+
+    public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
+    public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

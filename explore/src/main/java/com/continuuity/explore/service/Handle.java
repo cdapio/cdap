@@ -15,8 +15,16 @@ public class Handle {
     return new Handle(UUID.randomUUID().toString());
   }
 
+  public static Handle fromId(String id) {
+    return new Handle(id);
+  }
+
   private Handle(String id) {
     this.id = id;
+  }
+
+  public String getId() {
+    return id;
   }
 
   @Override
