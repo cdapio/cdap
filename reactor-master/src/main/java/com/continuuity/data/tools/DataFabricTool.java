@@ -5,7 +5,9 @@ package com.continuuity.data.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -76,7 +78,9 @@ public class DataFabricTool {
           protected void configure() {
             bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
           }
-        }
+        },
+        new ZKClientModule(),
+        new DiscoveryRuntimeModule().getDistributedModules()
       );
 
       switch (action) {

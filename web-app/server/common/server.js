@@ -366,13 +366,12 @@ WebAppServer.prototype.bindRoutes = function() {
       }
       opts.body = opts.body || '';
     }
-
     request(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not POST to', path, error || response.statusCode);
+        self.logger.error('Could not PUT to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
