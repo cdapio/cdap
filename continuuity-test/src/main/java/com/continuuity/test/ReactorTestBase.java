@@ -163,13 +163,12 @@ public class ReactorTestBase {
     configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
-    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
+    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {

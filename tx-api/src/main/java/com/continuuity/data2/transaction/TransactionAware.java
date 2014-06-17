@@ -4,7 +4,6 @@ import java.util.Collection;
 
 /**
  * Interface to be implemented by a component that interacts with transaction logic.
- * See also {@link TransactionSystemClient}.
  * <p/>
  * The client code that uses transaction logic looks like this:
  * <pre>

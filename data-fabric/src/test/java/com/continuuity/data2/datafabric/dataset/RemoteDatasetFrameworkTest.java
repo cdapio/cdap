@@ -44,7 +44,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     datasetDir.mkdirs();
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
