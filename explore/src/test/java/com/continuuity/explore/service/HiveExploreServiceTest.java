@@ -46,7 +46,6 @@ public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
-  private static ExploreService hiveExploreService;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
 
@@ -58,9 +57,6 @@ public class HiveExploreServiceTest {
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-
-    hiveExploreService = injector.getInstance(ExploreService.class);
-    hiveExploreService.startAndWait();
 
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
@@ -109,7 +105,6 @@ public class HiveExploreServiceTest {
     datasetFramework.deleteInstance("my_table");
 
     exploreExecutorService.stopAndWait();
-    hiveExploreService.stopAndWait();
     transactionManager.stopAndWait();
     datasetService.startAndWait();
   }
