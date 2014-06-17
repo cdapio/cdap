@@ -65,7 +65,6 @@ public abstract class DatasetServiceTestBase {
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    port = Networks.getRandomPort();
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -90,7 +89,7 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  new DatasetExploreFacade(new AsyncExploreClient(discoveryService), cConf));
     service.startAndWait();
-
+    port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
   }
 
   @After

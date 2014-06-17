@@ -1,0 +1,202 @@
+[
+  {
+    "log": "2014-06-05 17:33:05,545 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402014785545
+  },
+  {
+    "log": "2014-06-05 17:47:37,000 - ERROR [New I/O worker #28:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /v2/system/services. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402015657000
+  },
+  {
+    "log": "2014-06-05 17:48:34,789 - ERROR [New I/O worker #29:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /v2/system/services. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402015714789
+  },
+  {
+    "log": "2014-06-05 17:50:04,218 - ERROR [New I/O worker #27:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /favicon.ico. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402015804218
+  },
+  {
+    "log": "2014-06-06 10:54:10,442 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402077250442
+  },
+  {
+    "log": "2014-06-06 10:54:10,467 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402077250467
+  },
+  {
+    "log": "2014-06-06 10:54:10,610 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:64203 ",
+    "offset": 1402077250610
+  },
+  {
+    "log": "2014-06-06 10:54:10,611 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:64203 ",
+    "offset": 1402077250611
+  },
+  {
+    "log": "2014-06-06 10:54:11,057 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402077251057
+  },
+  {
+    "log": "2014-06-06 10:54:11,058 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402077251058
+  },
+  {
+    "log": "2014-06-06 10:54:11,071 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402077251071
+  },
+  {
+    "log": "2014-06-06 14:34:03,861 - ERROR [New I/O worker #33:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /favicon.ico. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402090443861
+  },
+  {
+    "log": "2014-06-06 16:45:10,484 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402098310484
+  },
+  {
+    "log": "2014-06-06 16:45:10,510 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402098310510
+  },
+  {
+    "log": "2014-06-06 16:45:10,603 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:64328 ",
+    "offset": 1402098310603
+  },
+  {
+    "log": "2014-06-06 16:45:10,604 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:64328 ",
+    "offset": 1402098310604
+  },
+  {
+    "log": "2014-06-06 16:45:10,650 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402098310650
+  },
+  {
+    "log": "2014-06-06 16:45:10,651 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402098310651
+  },
+  {
+    "log": "2014-06-06 16:45:10,665 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402098310665
+  },
+  {
+    "log": "2014-06-06 20:24:42,566 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402111482566
+  },
+  {
+    "log": "2014-06-06 20:24:42,572 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402111482572
+  },
+  {
+    "log": "2014-06-06 20:24:42,582 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:52008 ",
+    "offset": 1402111482582
+  },
+  {
+    "log": "2014-06-06 20:24:42,584 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:52008 ",
+    "offset": 1402111482584
+  },
+  {
+    "log": "2014-06-06 20:24:42,847 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402111482847
+  },
+  {
+    "log": "2014-06-06 20:24:42,848 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402111482848
+  },
+  {
+    "log": "2014-06-06 20:24:42,865 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402111482865
+  },
+  {
+    "log": "2014-06-06 20:43:23,295 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402112603295
+  },
+  {
+    "log": "2014-06-06 20:43:23,339 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402112603339
+  },
+  {
+    "log": "2014-06-06 20:43:23,415 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:49400 ",
+    "offset": 1402112603415
+  },
+  {
+    "log": "2014-06-06 20:43:23,416 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:49400 ",
+    "offset": 1402112603416
+  },
+  {
+    "log": "2014-06-06 20:43:23,433 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402112603433
+  },
+  {
+    "log": "2014-06-06 20:43:23,434 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402112603434
+  },
+  {
+    "log": "2014-06-06 20:43:23,459 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402112603459
+  },
+  {
+    "log": "2014-06-09 13:01:23,808 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402344083808
+  },
+  {
+    "log": "2014-06-09 13:01:23,837 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402344083837
+  },
+  {
+    "log": "2014-06-09 13:01:23,974 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:54864 ",
+    "offset": 1402344083974
+  },
+  {
+    "log": "2014-06-09 13:01:23,977 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:54864 ",
+    "offset": 1402344083977
+  },
+  {
+    "log": "2014-06-09 13:01:24,122 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402344084122
+  },
+  {
+    "log": "2014-06-09 13:01:24,123 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402344084123
+  },
+  {
+    "log": "2014-06-09 13:01:24,135 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402344084135
+  },
+  {
+    "log": "2014-06-09 15:01:27,891 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@209] - Starting service on address localhost/127.0.0.1:0... ",
+    "offset": 1402351287891
+  },
+  {
+    "log": "2014-06-09 15:01:27,908 - INFO [NettyHttpService STARTING:c.c.h.NettyHttpService@214] - Started service on address /127.0.0.1:53782 ",
+    "offset": 1402351287908
+  },
+  {
+    "log": "2014-06-09 15:01:27,909 - INFO [NettyHttpService STARTING:c.c.i.a.s.AppFabricServer$1@110] - AppFabric HTTP Service started at /127.0.0.1:53782 ",
+    "offset": 1402351287909
+  },
+  {
+    "log": "2014-06-09 15:01:27,910 - INFO [LocalSchedulerService STARTING:o.q.s.RAMJobStore@155] - RAMJobStore initialized. ",
+    "offset": 1402351287910
+  },
+  {
+    "log": "2014-06-09 15:01:28,102 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@279] - Schedule: No Jobs found in Job store ",
+    "offset": 1402351288102
+  },
+  {
+    "log": "2014-06-09 15:01:28,103 - DEBUG [LocalSchedulerService STARTING:c.c.i.a.r.s.DataSetBasedScheduleStore$5@295] - Schedule: No triggers found in job store ",
+    "offset": 1402351288103
+  },
+  {
+    "log": "2014-06-09 15:01:28,118 - INFO [LocalSchedulerService STARTING:c.c.i.a.r.s.AbstractSchedulerService@52] - Started scheduler ",
+    "offset": 1402351288118
+  },
+  {
+    "log": "2014-06-09 15:04:42,684 - ERROR [New I/O worker #27:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: //v2/system/services. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402351482684
+  },
+  {
+    "log": "2014-06-09 15:04:43,234 - ERROR [New I/O worker #28:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /favicon.ico. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402351483234
+  },
+  {
+    "log": "2014-06-09 15:07:34,795 - ERROR [New I/O worker #29:c.c.h.RequestRouter@112] - Exception caught in channel processing. com.continuuity.http.HandlerException: Problem accessing: /v2/system/services/saver/statu. Reason: Not Found at com.continuuity.http.HttpResourceHandler.getDestinationMethod(HttpResourceHandler.java:257) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.handleRequest(RequestRouter.java:90) ~[http-0.2.0.jar:na] at com.continuuity.http.RequestRouter.messageReceived(RequestRouter.java:79) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:296) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.frame.FrameDecoder.unfoldAndFireMessageReceived(FrameDecoder.java:459) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.callDecode(ReplayingDecoder.java:536) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.replay.ReplayingDecoder.messageReceived(ReplayingDecoder.java:435) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.handler.codec.http.HttpContentEncoder.messageReceived(HttpContentEncoder.java:69) ~[netty-3.6.6.Final.jar:na] at com.continuuity.http.NettyHttpService$2.handleUpstream(NettyHttpService.java:179) ~[http-0.2.0.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:268) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.Channels.fireMessageReceived(Channels.java:255) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:88) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:109) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:312) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:90) ~[netty-3.6.6.Final.jar:na] at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.6.6.Final.jar:na] at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:895) [na:1.6.0_65] at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:918) [na:1.6.0_65] at java.lang.Thread.run(Thread.java:695) [na:1.6.0_65] ",
+    "offset": 1402351654795
+  }
+]
