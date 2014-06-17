@@ -23,6 +23,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -37,6 +38,8 @@ import javax.ws.rs.PathParam;
 /**
  *
  */
+// TODO: enable this once explore router integration is done.
+@Ignore
 public class RoutingToExploreTest {
   private static NettyRouter nettyRouter;
   private static MockHttpService mockService;
