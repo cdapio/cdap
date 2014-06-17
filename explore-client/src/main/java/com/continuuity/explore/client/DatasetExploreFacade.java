@@ -120,7 +120,7 @@ public class DatasetExploreFacade {
       return null;
     }
 
-    // TODO: fix namespacing
+    // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
     String tableName = name.replaceAll("\\.", "_");
@@ -132,7 +132,7 @@ public class DatasetExploreFacade {
   }
 
   public static String generateDeleteStatement(String name) {
-    // TODO: fix namespacing
+    // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
     String tableName = name.replaceAll("\\.", "_");
@@ -154,7 +154,7 @@ public class DatasetExploreFacade {
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
 
     Schema schema = new ReflectionSchemaGenerator().generate(type);
-    // TODO: support other types too, not just record
+    // TODO: support other types too, not just record - REACTOR-265
     if (!Schema.Type.RECORD.equals(schema.getType())) {
       throw new UnsupportedTypeException("type must be a RECORD but is " + schema.getType().name());
     }
@@ -165,7 +165,7 @@ public class DatasetExploreFacade {
     return writer.toString();
   }
 
-  // TODO: Add more test cases for different schema types.
+  // TODO: Add more test cases for different schema types. - REACTOR-266
   private static void generateHiveSchema(Schema schema, StringWriter writer) throws UnsupportedTypeException {
 
     switch (schema.getType()) {

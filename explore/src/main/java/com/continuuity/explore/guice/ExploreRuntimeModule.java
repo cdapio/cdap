@@ -118,7 +118,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
           // start a hive metastore / hive server.
-          // TODO try to remove once maven is there
+          // TODO try to remove once maven is there - REACTOR-267
           warehouseDir = new File(warehouseDir, Long.toString(seed));
           databaseDir = new File(databaseDir, Long.toString(seed));
         }
@@ -137,7 +137,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
 
         // Disable security
-        // TODO: verify if auth=NOSASL is really needed
+        // TODO: verify if auth=NOSASL is really needed - REACTOR-267
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
