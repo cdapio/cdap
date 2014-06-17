@@ -18,9 +18,11 @@ import java.lang.reflect.Type;
 public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
 
   private final TwillSpecificationAdapter adapter;
+
   public ServiceSpecificationCodec() {
     adapter = TwillSpecificationAdapter.create();
   }
+
   @Override
   public ServiceSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
@@ -29,7 +31,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     TwillSpecification spec = adapter.fromJson(jsonObj.get("spec").getAsString());
     return new DefaultServiceSpecification(className, spec);
   }
-
 
   @Override
   public JsonElement serialize(ServiceSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
