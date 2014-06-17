@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
  * to allow a single cache to be shared by all regions on a regionserver.
  */
 public class TransactionStateCache extends AbstractIdleService implements Configurable {
-  public static final String TABLENAME_KEY = "tx.coprocessor.config.tablename";
   private static final Log LOG = LogFactory.getLog(TransactionStateCache.class);
 
   // how frequently we should wake to check for changes (in seconds)
@@ -35,7 +34,6 @@ public class TransactionStateCache extends AbstractIdleService implements Config
   private long lastRefresh;
   // snapshot refresh frequency in milliseconds
   private long snapshotRefreshFrequency;
-  private CConfiguration conf;
   private boolean initialized;
 
   public TransactionStateCache() {
@@ -69,7 +67,7 @@ public class TransactionStateCache extends AbstractIdleService implements Config
    */
   private void tryInit() {
     try {
-      this.conf = getSnapshotConfiguration();
+      CConfiguration conf = getSnapshotConfiguration();
       if (conf != null) {
         this.storage = new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
         this.storage.startAndWait();
@@ -85,7 +83,9 @@ public class TransactionStateCache extends AbstractIdleService implements Config
   }
 
   protected CConfiguration getSnapshotConfiguration() throws IOException {
-    return CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
+    conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
+    return conf;
   }
 
   private void reset() {

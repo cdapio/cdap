@@ -75,6 +75,7 @@ public class TransactionDataJanitorTest {
     testUtil.getDFSCluster().waitClusterUp();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
+    conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
 
     // write an initial transaction snapshot
     TransactionSnapshot snapshot =
