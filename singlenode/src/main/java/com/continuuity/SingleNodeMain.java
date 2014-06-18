@@ -17,6 +17,7 @@ import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.service.ExploreServiceUtils;
@@ -71,7 +72,7 @@ public class SingleNodeMain {
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
-  private final TransactionWrapperService txService;
+  private final InMemoryTransactionService txService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
@@ -85,7 +86,7 @@ public class SingleNodeMain {
     this.webCloudAppService = new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
-    txService = injector.getInstance(TransactionWrapperService.class);
+    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
