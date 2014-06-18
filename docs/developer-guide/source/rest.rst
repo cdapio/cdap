@@ -71,7 +71,7 @@ Status Codes
 
 
 .. list-table::
-   :widths: 5 24 71
+   :widths: 10 30 60
    :header-rows: 1
 
    * - Code
@@ -352,6 +352,8 @@ analogous to how you send headers when posting an event to the Stream::
 
 	<stream-id>.<property>:<value>
 
+.. rst2pdf: PageBreak
+
 Reading Multiple Events
 -----------------------
 Reading multiple events is not supported directly by the Stream HTTP API,
@@ -366,8 +368,271 @@ Run at the command line::
 
 for usage and documentation of options.
 
-Data HTTP API
-=============
+.. rst2pdf: PageBreak
+
+DataSet HTTP API
+================
+
+The DataSet API allows you to interact with `Continuuity Reactor DataSets <advanced.html#dataset-system>`_ through HTTP.
+You can list, create, delete, truncate, and upgrade DataSets.
+
+Listing all DataSets
+--------------------
+
+You can list all DataSets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
+
+	GET <base-url>/data/instances
+
+The response body will contain a JSON-formatted list of the existing DataSets.
+
+Creating a DataSet
+------------------
+
+You can create a DataSet by issuing an HTTP POST request to the URL::
+
+	PUT <base-url>/data/instances/<dataset-name>
+  
+with the name of the type as a header::
+
+	X-Continuuity-Type-Name: <type-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<dataset-name>``
+     - Name of the new DataSet
+   * - ``<type-name>``
+     - Type of the new DataSet
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request instance was successfully created
+   * - ``404 Not Found``
+     - Requested DataSet type was not found
+   * - ``409 Conflict``
+     - DataSet instance with same name already exists
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``POST <base-url>/data/instances/mydataset``
+   * - Header
+     - ``X-Continuuity-Type-Name: myDataSetType``
+   * - Description
+     - Creates a DataSet named "mydataset" of the type "myDataSetType"
+
+.. rst2pdf: PageBreak
+
+Deleting a DataSet
+------------------
+
+You can delete a DataSet by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/instance/<dataset-name>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Instance was successfully deleted
+   * - ``404 Not Found``
+     - Instance with the <dataset-name> could not be found
+
+Deleting all DataSets
+---------------------
+
+You can delete all DataSets by issuing an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/instances
+
+
+Truncating a DataSet
+--------------------
+
+You can truncate a DataSet by issuing an HTTP POST request to the URL::
+
+  POST <base-url>/data/instances/<dataset-name>/admin/truncate
+
+This will clear the existing data for the DataSet.
+
+.. rst2pdf: PageBreak
+
+DataSet Module HTTP API
+=======================
+
+The DataSet Module API allows you to interact with 
+`Continuuity Reactor DataSet Modules <advanced.html#dataset-system>`_ through HTTP.
+You can list, add, and delete DataSet modules.
+
+Listing all DataSet Modules
+---------------------------
+
+To list all modules, issue an HTTP GET request to the URL::
+
+	GET <base-url>/data/modules
+
+The response will be a JSON String representing a list of ``DatasetModuleMeta`` objects.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/data/modules``
+   * - Description
+     - List all DataSet modules
+
+
+.. rst2pdf: PageBreak
+
+Adding a DataSet Module
+-----------------------
+
+To add a module, issue an HTTP POST request to the URL::
+
+  PUT <base-url>/data/modules/<module-name>
+
+with DataSet Module class name as a header::
+
+  X-Continuuity-Class-Name: <class-name>
+
+and a jar containing the class implementing ``DataSetModule`` and all its dependencies in a body of the request.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<module-name>``
+     - Name of the new module
+   * - ``<class-name>``
+     - Class name of the class implementing ``DataSetModule``
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event was successfully received and the Table was either created or already exists
+   * - ``400 Bad Request``
+     - The DataSet module jar was not provided in the body of the request
+   * - ``409 Conflict``
+     - A DataSet module with the same name already exists
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/data/modules/my-module``
+   * - Headers
+     - X-Continuuity-Class-Name: com.example.dataset.MyModule
+   * - Body
+     - contents of a jar containing MyModule among other class files
+   * - Description
+     - Adds a DataSet module named my-module, with the class name ``com.example.dataset.MyModule``
+
+.. rst2pdf: PageBreak
+
+Deleting a DataSet Module
+-------------------------
+
+To delete a module, issue an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/modules/<module-name>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Module was successfully deleted
+   * - ``409 Conflict``
+     - Module with provided <module-name> cannot be deleted because there's another module that depends on it
+   * - ``404 Not Found``
+     - Module with provided <module-name> could not be found
+
+Deleting all DataSet Modules
+----------------------------
+
+To delete all modules, issue an HTTP DELETE request to the URL::
+
+  DELETE <base-url>/data/modules
+
+
+.. rst2pdf: PageBreak
+
+DataSet Type HTTP API
+=====================
+
+The DataSet Type API allows you to interact with 
+`Continuuity Reactor DataSet Types <advanced.html#dataset-system>`_ through HTTP.
+You can list all DataSet types and get information about each type. DataSet types are exposed through the  DataSet modules [DOCNOTE: FIXME! add? loaded into Continuuity Reactor].
+To delete a DataSet type, you delete the DataSet module that contains the type as described under
+`Deleting a DataSet Module <#deleting-a-dataset-module>`_.
+
+
+Listing all DataSet Types
+-------------------------
+
+To list all types provided by the existing modules, issue an HTTP GET request to the URL::
+
+  GET <base-url>/data/types
+
+Getting a DataSet Type
+----------------------
+
+To get more information about a single type, issue an HTTP GET request to the URL::
+
+  GET <base-url>/data/types/<type-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<type-name>``
+     - Name of the DataSet type
+
+.. rst2pdf: PageBreak
+
+
+
+Data HTTP API (Deprecated)
+==========================
 
 The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
 You can create Tables, truncate Tables, and read, write, modify, or delete data.
@@ -1451,7 +1716,7 @@ Continuuity Reactor Operations Guide.
 
 .. rst2pdf: CutStart
 
-(:doc:`Operations Guide </operations>`)
+(`Operations Guide </operations.html>`)
 
 .. rst2pdf: CutStop
 
