@@ -1,5 +1,5 @@
 .. :author: Continuuity, Inc.
-   :version: 2.2.0
+   :version: 2.3.0
    :description: HTTP Interface to the Continuuity Reactor
 
 =================================
@@ -12,6 +12,7 @@ Continuuity Reactor HTTP REST API
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
+.. rst2pdf: build ../build-pdf/
 
 Introduction
 ============
@@ -356,7 +357,8 @@ analogous to how you send headers when posting an event to the Stream::
 
 Truncating a Stream
 -------------------
-Truncation means deletion of all events that were written to the Stream.
+Truncation means the deletion of all events that were written to the Stream. 
+This is permanent and cannot be undone.
 A Stream can be truncated with an HTTP POST method to the URL::
 
 	POST <base-url>/streams/<stream-id>/truncate
@@ -398,8 +400,9 @@ Example
 
 Setting Time-To-Live Property for a Stream
 ------------------------------------------
-The Time-To-Live (TTL) property governs how long an event is valid for consumption since it written to the Stream.
-The default TTL for all Streams is infinite, meaning event will never expire.
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
+it was written to the Stream.
+The default TTL for all Streams is infinite, meaning that events will never expire.
 The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
 	PUT <base-url>/streams/<stream-id>/config
@@ -413,7 +416,7 @@ The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
    * - ``<stream-id>``
      - Name of an existing Stream
 
-The new TTL value needs to be passed as the request body in the following form::
+The new TTL value is passed in the request body as::
 
 	{ "ttl" : <ttl-in-seconds> }
 
@@ -435,7 +438,7 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The stream TTL changed successfully
+     - The stream TTL was changed successfully
    * - ``400 Bad Request``
      - The TTL value is not a non-negative integer
    * - ``404 Not Found``
@@ -558,9 +561,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Instance was successfully deleted
+     - DataSet was successfully deleted
    * - ``404 Not Found``
-     - Instance with the <dataset-name> could not be found
+     - Instance with <dataset-name> could not be found
 
 Deleting all DataSets
 ---------------------
@@ -618,11 +621,12 @@ To add a module, issue an HTTP POST request to the URL::
 
   PUT <base-url>/data/modules/<module-name>
 
-with DataSet Module class name as a header::
+with the class name of the DataSet Module as a header::
 
   X-Continuuity-Class-Name: <class-name>
 
-and a jar containing the class implementing ``DataSetModule`` and all its dependencies in a body of the request.
+with a jar containing the class implementing ``DataSetModule`` and all its dependencies 
+in the body of the request.
 
 .. list-table::
    :widths: 20 80
@@ -661,9 +665,10 @@ Example
    * - Headers
      - X-Continuuity-Class-Name: com.example.dataset.MyModule
    * - Body
-     - contents of a jar containing MyModule among other class files
+     - Contents a jar file containing ``MyModule`` along with other supporting class files
    * - Description
-     - Adds a DataSet module named my-module, with the class name ``com.example.dataset.MyModule``
+     - Adds a DataSet module named *my-module*, with the class name 
+       ``com.example.dataset.MyModule``
 
 .. rst2pdf: PageBreak
 
