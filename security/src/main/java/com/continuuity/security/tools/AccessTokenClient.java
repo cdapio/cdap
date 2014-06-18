@@ -1,6 +1,10 @@
 package com.continuuity.security.tools;
 
 import com.continuuity.common.utils.UsageException;
+import com.continuuity.security.server.ExternalAuthenticationServer;
+import com.google.common.io.ByteStreams;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -10,8 +14,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Console;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.Arrays;
 
@@ -31,7 +38,6 @@ public class AccessTokenClient {
   public static boolean debug = false;
 
   boolean help = false;
-  boolean verbose = false;
 
   String host;
   int port = -1;
@@ -61,7 +67,6 @@ public class AccessTokenClient {
     out.println("  --port <number>         To specify the port to use");
     out.println("  --username <user>       To specify the user to login as");
     out.println("  --password <password>   To specify the user password");
-    out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
       throw new UsageException();
@@ -119,8 +124,6 @@ public class AccessTokenClient {
           usage(true);
         }
         password = args[pos];
-      } else if ("--verbose".equals(arg)) {
-        verbose = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -136,6 +139,7 @@ public class AccessTokenClient {
     if (help) {
       return;
     }
+    // Default values for host and port.
     if (host == null) {
       host = "http://localhost";
     }
@@ -146,11 +150,15 @@ public class AccessTokenClient {
     if (username == null) {
       username = System.getProperty("user.name");
       if (username == null) {
-        usage("Specify --username to login as.");
+        usage("Specify --username to login as a user.");
       }
     }
 
-    //TODO: Password verification
+    if (password == null) {
+      System.out.println("Password: ");
+      Console console = System.console();
+      password = String.valueOf(console.readPassword());
+    }
   }
 
   public String execute0(String[] args) {
@@ -160,6 +168,7 @@ public class AccessTokenClient {
     }
 
     String baseUrl = String.format("%s:%d", host, port);
+    System.out.println(String.format("Authentication server address is: %s", baseUrl));
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response;
@@ -176,6 +185,7 @@ public class AccessTokenClient {
     String auth = Base64.encodeBase64String(String.format("%s:%s", username, password).getBytes());
     get.addHeader("Authorization", String.format("Basic %s", auth));
 
+    System.out.println(String.format("Authenticating as: %s", username));
     try {
       response = client.execute(get);
       client.getConnectionManager().shutdown();
@@ -183,33 +193,29 @@ public class AccessTokenClient {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
     }
-    if (!checkHttpStatus(response)) {
-      return null;
-    }
-    return "OK.";
-  }
-
-  /**
-   * Check whether the Http return code is positive. If not, print the error
-   * message and return false. Otherwise, if verbose is on, print the response
-   * status line.
-   *
-   * @param response the HTTP response
-   * @return whether the response indicates success
-   */
-  boolean checkHttpStatus(HttpResponse response) {
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      if (verbose) {
-        System.out.println(response.getStatusLine());
-      } else {
-        System.err.println(response.getStatusLine().getReasonPhrase());
+      System.out.println("Authentication failed. Please ensure that the username and password provided are correct.");
+      return null;
+    } else {
+      try {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ByteStreams.copy(response.getEntity().getContent(), bos);
+        String responseBody = bos.toString("UTF-8");
+        bos.close();
+        JsonParser parser = new JsonParser();
+        JsonObject responseJson = (JsonObject) parser.parse(responseBody);
+        String token = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
+
+        PrintWriter writer = new PrintWriter("access_token", "UTF-8");
+        writer.write(token);
+        writer.close();
+      } catch (Exception e) {
+        System.err.println("Could not parse response contents.");
+        e.printStackTrace(System.err);
+        return null;
       }
-      return false;
+      return "OK.";
     }
-    if (verbose) {
-      System.out.println(response.getStatusLine());
-    }
-    return true;
   }
 
   public String execute(String[] args) {
@@ -225,7 +231,6 @@ public class AccessTokenClient {
   }
 
   public static void main(String[] args) {
-    args = new String[] {"--username", "admin", "--password", "realtime"};
     AccessTokenClient accessTokenClient = new AccessTokenClient();
     String value = accessTokenClient.execute(args);
     if (value == null) {

@@ -45,11 +45,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   /**
    * Constants for a valid JSON response.
    */
-  protected static final class ResponseFields {
-    protected static final String TOKEN_TYPE = "token_type";
-    protected static final String TOKEN_TYPE_BODY = "Bearer";
-    protected static final String ACCESS_TOKEN = "access_token";
-    protected static final String EXPIRES_IN = "expires_in";
+  public static final class ResponseFields {
+    public static final String TOKEN_TYPE = "token_type";
+    public static final String TOKEN_TYPE_BODY = "Bearer";
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String EXPIRES_IN = "expires_in";
   }
 
   /**
