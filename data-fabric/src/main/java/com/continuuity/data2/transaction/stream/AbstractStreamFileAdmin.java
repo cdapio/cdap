@@ -37,8 +37,9 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractStreamFileAdmin implements StreamAdmin {
 
+  public static final String CONFIG_FILE_NAME = "config.json";
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamFileAdmin.class);
-  private static final String CONFIG_FILE_NAME = "config.json";
   private static final Gson GSON = new Gson();
 
   private final Location streamBaseLocation;
@@ -202,30 +203,13 @@ public abstract class AbstractStreamFileAdmin implements StreamAdmin {
     Location streamLocation = config.getLocation();
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '{}' not exists.", config.getName());
 
+    // Check only TTL is changed, as only TTL change is supported.
     StreamConfig originalConfig = loadConfig(streamLocation);
     Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
                                 "Configuration update for stream '{}' was not valid (can only update ttl)",
                                 config.getName());
 
-    Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
-    Location tempLocation = configLocation.getTempFile("tmp");
-    try {
-      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
-        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
-
-      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
-                               "Rename {} to {} failed", tempLocation, configLocation);
-    } finally {
-      if (tempLocation.exists()) {
-        tempLocation.delete();
-      }
-    }
-  }
-
-  @Override
-  public void updateTTL(String streamName, long ttl) throws IOException {
-    StreamConfig streamConfig = getConfig(streamName);
-    streamCoordinator.changeTTL(streamConfig, ttl);
+    streamCoordinator.changeTTL(originalConfig, config.getTTL());
   }
 
   @Override
