@@ -1,7 +1,7 @@
 package com.continuuity.hive.context;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.io.Codec;
+import com.continuuity.internal.io.codec.Codec;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -4,7 +4,7 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.internal.io.codec.BinaryDecoder;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;

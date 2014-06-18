@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.common.io.Encoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;

@@ -1,11 +1,11 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.codec.BinaryEncoder;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

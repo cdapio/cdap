@@ -3,10 +3,10 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.DatumWriter;
+import com.continuuity.internal.io.codec.BinaryEncoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;

@@ -3,10 +3,10 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
+import com.continuuity.internal.io.codec.Decoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

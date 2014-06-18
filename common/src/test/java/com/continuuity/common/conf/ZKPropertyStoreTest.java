@@ -3,8 +3,8 @@
  */
 package com.continuuity.common.conf;
 
-import com.continuuity.common.io.Codec;
 import com.continuuity.common.zookeeper.store.ZKPropertyStore;
+import com.continuuity.internal.io.codec.Codec;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;

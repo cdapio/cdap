@@ -1,9 +1,9 @@
 package com.continuuity.data2.queue;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Encoder;
+import com.continuuity.internal.io.codec.BinaryDecoder;
+import com.continuuity.internal.io.codec.BinaryEncoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

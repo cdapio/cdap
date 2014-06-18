@@ -19,7 +19,6 @@ import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;

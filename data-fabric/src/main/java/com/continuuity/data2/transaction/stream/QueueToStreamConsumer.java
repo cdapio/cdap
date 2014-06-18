@@ -4,8 +4,6 @@
 package com.continuuity.data2.transaction.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.Decoder;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
@@ -17,6 +15,8 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.SchemaHash;
+import com.continuuity.internal.io.codec.BinaryDecoder;
+import com.continuuity.internal.io.codec.Decoder;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

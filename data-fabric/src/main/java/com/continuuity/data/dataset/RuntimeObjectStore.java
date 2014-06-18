@@ -6,12 +6,12 @@ import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.io.codec.BinaryDecoder;
+import com.continuuity.internal.io.codec.BinaryEncoder;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 

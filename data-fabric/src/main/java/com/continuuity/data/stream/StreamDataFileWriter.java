@@ -2,11 +2,11 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.BufferedEncoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.data.file.FileWriter;
+import com.continuuity.internal.io.codec.BinaryEncoder;
+import com.continuuity.internal.io.codec.BufferedEncoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;

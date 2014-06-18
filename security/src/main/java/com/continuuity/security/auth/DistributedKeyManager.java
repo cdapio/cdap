@@ -2,9 +2,9 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.io.Codec;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
+import com.continuuity.internal.io.codec.Codec;
 import com.continuuity.security.zookeeper.ResourceListener;
 import com.continuuity.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;

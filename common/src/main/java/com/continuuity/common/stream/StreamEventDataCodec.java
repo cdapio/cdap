@@ -4,11 +4,11 @@
 package com.continuuity.common.stream;
 
 import com.continuuity.api.stream.StreamEventData;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.io.codec.Decoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
