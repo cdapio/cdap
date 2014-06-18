@@ -46,9 +46,6 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     // Check the procedure status. Make sure it is running before querying it
     waitState(Type.PROCEDURE, Id.Program.from(Constants.DEVELOPER_ACCOUNT_ID, "HighPassFilterApp", "Count"), "RUNNING");
 
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("1");
 
@@ -70,9 +67,6 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "45");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "55");
-    Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
@@ -116,11 +110,11 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     while (trials++ < 5) {
       HttpResponse response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/methods/result",
                                                            null);
-      Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-
-      String count = EntityUtils.toString(response.getEntity());
-      if (expected.equals(count)) {
-        break;
+      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
+        String count = EntityUtils.toString(response.getEntity());
+        if (expected.equals(count)) {
+          break;
+        }
       }
       TimeUnit.SECONDS.sleep(1);
     }
