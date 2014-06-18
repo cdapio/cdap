@@ -228,7 +228,7 @@ public final class Constants {
     public static final String HANDLER_CONSUMER_NS = "http.stream.consumer";
 
     //max instances of stream handler service
-    public static final int MAX_INSTANCES = 1;
+    public static final String MAX_INSTANCES = "stream.container.instances";
 
     /* End constants used by stream */
   }

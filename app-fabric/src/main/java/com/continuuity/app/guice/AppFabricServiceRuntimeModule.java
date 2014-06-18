@@ -14,7 +14,7 @@ import com.continuuity.common.twill.InMemoryReactorServiceManager;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.StreamServiceManager;
-import com.continuuity.data2.datafabric.dataset.DatasetServiceManager;
+import com.continuuity.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
@@ -152,7 +152,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
                                  InMemoryReactorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(DatasetServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
+                                 DatasetExecutorServiceManager.class);
                              }
                            });
   }

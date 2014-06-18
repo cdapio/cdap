@@ -2,9 +2,6 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
@@ -13,8 +10,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Stream Reactor Service management in distributed mode.
@@ -32,24 +27,22 @@ public class StreamServiceManager extends AbstractDistributedReactorServiceManag
 
   @Override
   public int getMaxInstances() {
-    return Constants.Stream.MAX_INSTANCES;
+    return cConf.getInt(Constants.Stream.MAX_INSTANCES);
   }
 
   @Override
   public boolean isServiceAvailable() {
     try {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
-      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
-      Discoverable discoverable = endpointStrategy.pick();
-      if (discoverable == null) {
-        return false;
+      for (Discoverable discoverable : discoverables) {
+        //Ping the discovered service to check its status.
+        String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort());
+        if (checkGetStatus(url).equals(HttpResponseStatus.OK)) {
+          return true;
+        }
       }
-
-      //Ping the discovered service to check its status.
-      String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort());
-      return checkGetStatus(url).equals(HttpResponseStatus.OK);
+      return false;
     } catch (IllegalArgumentException e) {
       return false;
     } catch (Exception e) {

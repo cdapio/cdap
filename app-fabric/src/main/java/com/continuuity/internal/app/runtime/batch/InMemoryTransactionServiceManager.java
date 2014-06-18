@@ -13,7 +13,7 @@ public class InMemoryTransactionServiceManager extends InMemoryReactorServiceMan
 
   @Override
   public boolean isLogAvailable() {
-    return false;
+    return true;
   }
 
   @Inject
