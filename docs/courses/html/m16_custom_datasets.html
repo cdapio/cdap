@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1740,9 +1744,18 @@ function main() {
             <header><h1>Custom DataSets</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+            <section><table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1815,10 +1828,11 @@ counts how many unique words it has seen</p>
 <li>a first Table (<tt class="docutils literal">entryCountTable</tt>) to count all the words and</li>
 <li>a second Table (<tt class="docutils literal">uniqueCountTable</tt>) for the unique count</li>
 </ul>
-<pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">DataSet</span> <span class="o">{</span>
+<pre class="literal-block">
+public class UniqueCountTable extends DataSet {
 
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">Table</span> <span class="n">uniqueCountTable</span><span class="o">;</span>
+  private Table entryCountTable;
+  private Table uniqueCountTable;
 </pre></section>
             
           </div>
@@ -1891,11 +1905,12 @@ configuration parameters)</li>
             
             <section><p>Now we can begin with the implementation of the <tt class="docutils literal">UniqueCountTable</tt> logic</p>
 <p>Start with a few constants:</p>
-<pre><span class="c1">// Column name used for storing count of each entry.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">ENTRY_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">);</span>
+<pre class="literal-block">
+// Column name used for storing count of each entry.
+private static final byte[] ENTRY_COUNT = Bytes.toBytes(&quot;count&quot;);
 
-<span class="c1">// Row and column name used for storing the unique count.</span>
-<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">UNIQUE_COUNT</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;unique&quot;</span><span class="o">);</span>
+// Row and column name used for storing the unique count.
+private static final byte [] UNIQUE_COUNT = Bytes.toBytes(&quot;unique&quot;);
 </pre></section>
             
           </div>
@@ -1935,12 +1950,13 @@ configuration parameters)</li>
 </ul>
 </li>
 </ul>
-<pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
-  <span class="kt">long</span> <span class="n">newCount</span> <span class="o">=</span> <span class="n">entryCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">entry</span><span class="o">),</span> <span class="n">ENTRY_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="k">if</span> <span class="o">(</span><span class="n">newCount</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+<pre class="literal-block">
+public void updateUniqueCount(String entry) {
+  long newCount = entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
+  if (newCount == 1L) {
+    uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
+  }
+}
 </pre></section>
             
           </div>
@@ -1972,10 +1988,11 @@ configuration parameters)</li>
             
             
             <section><p>Finally, write a method to retrieve the number of unique words seen:</p>
-<pre><span class="kd">public</span> <span class="n">Long</span> <span class="nf">readUniqueCount</span><span class="o">()</span> <span class="o">{</span>
-  <span class="k">return</span> <span class="n">uniqueCountTable</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="n">UNIQUE_COUNT</span><span class="o">))</span>
-                         <span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">UNIQUE_COUNT</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
-<span class="o">}</span>
+<pre class="literal-block">
+public Long readUniqueCount() {
+  return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT))
+                         .getLong(UNIQUE_COUNT, 0);
+}
 </pre></section>
             
           </div>

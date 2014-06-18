@@ -13,7 +13,7 @@ import org.junit.runners.Suite;
   IdentityHashDistributorTestRun.class,
   MultiBytesPrefixHashDistributorTestRun.class,
   OneByteSimpleHashDistributorTestRun.class,
-  RowKeyDistributorByOneBytePrefixTestRun.class,
+  RowKeyDistributorByOneBytePrefixTestRun.class
 })
 public class DistributorTestsSuite {
 

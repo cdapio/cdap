@@ -1,15 +1,16 @@
 package com.continuuity.runtime;
 
 import com.continuuity.ArgumentCheckApp;
-import com.continuuity.CountAndFilterWord;
 import com.continuuity.InvalidFlowOutputApp;
-import com.continuuity.TestCountRandomApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
@@ -18,28 +19,23 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -161,96 +157,48 @@ public class FlowTest {
     ((TransactionAware) producer).commitTx();
     txSystemClient.commit(tx);
 
-    TimeUnit.SECONDS.sleep(10);
-
-    // Procedure
+    // Query the procedure for at most 10 seconds for the expected result
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s",
-                    DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency")).iterator().next();
+    ServiceDiscovered procedureDiscovered = discoveryServiceClient.discover(
+      String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency"));
+    EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(procedureDiscovered),
+                                                                      2L, TimeUnit.SECONDS);
+    int trials = 0;
+    while (trials++ < 10) {
+      Discoverable discoverable = endpointStrategy.pick();
+      URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
+                                      discoverable.getSocketAddress().getHostName(),
+                                      discoverable.getSocketAddress().getPort(),
+                                      "WordCountApp",
+                                      "WordFrequency",
+                                      "wordfreq"));
+      try {
+        HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+        urlConn.setDoOutput(true);
+        urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
+        Map<String, Long> responseContent = gson.fromJson(
+          new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8),
+          new TypeToken<Map<String, Long>>() { }.getType());
 
-    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    "WordCountApp",
-                                    "WordFrequency",
-                                    "wordfreq"));
-    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setDoOutput(true);
-    urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
-    Map<String, Long> responseContent = gson.fromJson(new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8),
-                                                      new TypeToken<Map<String, Long>>() { }.getType());
+        LOG.info("Procedure response: " + responseContent);
+        if (ImmutableMap.of("text:Testing", 10L).equals(responseContent)) {
+          break;
+        }
 
-    LOG.info("Procedure response: " + responseContent);
-    Assert.assertEquals(ImmutableMap.of("text:Testing", 10L), responseContent);
+      } catch (Throwable t) {
+        LOG.info("Exception when trying to query procedure.", t);
+      }
+
+      TimeUnit.SECONDS.sleep(1);
+    }
+
+    Assert.assertTrue(trials < 10);
 
     for (ProgramController controller : controllers) {
       controller.stop().get();
     }
-  }
-
-  @Test
-  public void testCountRandomApp() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(TestCountRandomApp.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    System.out.println(ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator())
-                                                      .toJson(app.getAppSpecLoc().getSpecification()));
-
-    ProgramController controller = null;
-    for (final Program program : app.getPrograms()) {
-      if (program.getType() == Type.FLOW) {
-        ProgramRunner runner = AppFabricTestHelper.getInjector().getInstance(FlowProgramRunner.class);
-        controller = runner.run(program, new SimpleProgramOptions(program));
-      }
-    }
-
-    TimeUnit.SECONDS.sleep(10);
-    controller.stop().get();
-  }
-
-  @Test
-  public void testCountAndFilterWord() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(CountAndFilterWord.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    ProgramController controller = null;
-    for (final Program program : app.getPrograms()) {
-      if (program.getType() == Type.FLOW) {
-        ProgramRunner runner = AppFabricTestHelper.getInjector().getInstance(FlowProgramRunner.class);
-        controller = runner.run(program, new SimpleProgramOptions(program));
-      }
-    }
-
-    TimeUnit.SECONDS.sleep(1);
-
-    QueueName queueName = QueueName.fromStream("text");
-    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
-
-    TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
-    TransactionExecutor txExecutor =
-      txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer));
-
-    StreamEventCodec codec = new StreamEventCodec();
-    for (int i = 0; i < 1; i++) {
-      String msg = "Testing message " + i;
-      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of("title", "test"),
-                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
-      final QueueEntry entry = new QueueEntry(codec.encodePayload(event));
-
-      txExecutor.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          producer.enqueue(entry);
-        }
-      });
-    }
-
-    TimeUnit.SECONDS.sleep(5);
-
-    controller.stop().get();
   }
 
   @Test (expected = IllegalArgumentException.class)

@@ -1090,7 +1090,7 @@
               <executions>
                 <execution>
                   <id>copy-dependencies</id>
-                  <phase>package</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                     <goal>copy-dependencies</goal>
                   </goals>
@@ -1114,7 +1114,7 @@
               <executions>
                 <execution>
                   <id>copy-opt</id>
-                  <phase>package</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
@@ -1156,15 +1156,90 @@
             </plugin>
           </plugins>
         </pluginManagement>
+
+
+        <!-- Generate the package version. If it has -SNAPSHOT, replace it with build time. -->
+        <plugins>
+          <!-- Generate a timestamp property -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.3</version>
+            <executions>
+              <execution>
+                <id>create-timestamp</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>create-timestamp</goal>
+                </goals>
+                <configuration>
+                  <timestampPropertyName>package.build.timestamp</timestampPropertyName>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- Generate the package.version property -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.9</version>
+            <executions>
+              <execution>
+                <id>regex-property</id>
+                <goals>
+                  <goal>regex-property</goal>
+                </goals>
+                <configuration>
+                  <name>package.version</name>
+                  <value>${project.version}</value>
+                  <regex>-SNAPSHOT</regex>
+                  <replacement>.${package.build.timestamp}</replacement>
+                  <failIfNoMatch>false</failIfNoMatch>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
       </build>
     </profile>
 
     <profile>
       <id>rpm-prepare</id>
+      <activation>
+        <property>
+          <name>pkg.type</name>
+          <value>rpm</value>
+        </property>
+      </activation>
       <properties>
-        <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
+        <pkg.type>rpm</pkg.type>
         <stage.init.dir>${stage.dir}/etc/rc.d/init.d</stage.init.dir>
+        <scripts.base.dir>${project.parent.parent.basedir}/distributions/src/rpm</scripts.base.dir>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>deb-prepare</id>
+      <activation>
+        <property>
+          <name>pkg.type</name>
+          <value>deb</value>
+        </property>
+      </activation>
+      <properties>
+        <pkg.type>deb</pkg.type>
+        <stage.init.dir>${stage.dir}/etc/init.d</stage.init.dir>
+        <scripts.base.dir>${project.parent.parent.basedir}/distributions/src/debian</scripts.base.dir>
+      </properties>
+    </profile>
+
+    <!-- Profile for preparing fpm package. The "dist" profile must be activated as well. -->
+    <!-- Needs the -Dpkg.type property set -->
+    <profile>
+      <id>fpm-prepare</id>
+      <properties>
         <service.name>${project.artifactId}</service.name>
+        <package.name>${project.artifactId}</package.name>
       </properties>
       <build>
         <pluginManagement>
@@ -1175,16 +1250,16 @@
               <version>2.6</version>
               <executions>
                 <execution>
-                  <id>copy-etc</id>
+                  <id>copy-scripts</id>
                   <phase>prepare-package</phase>
                   <goals>
                     <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <outputDirectory>${project.build.directory}/dist</outputDirectory>
                     <resources>
                       <resource>
-                        <directory>${project.parent.parent.basedir}/distributions/src/rpm/init.d</directory>
+                        <directory>${scripts.base.dir}/init.d</directory>
                         <includes>
                           <include>continuuity-service</include>
                         </includes>
@@ -1202,14 +1277,106 @@
               <executions>
                 <execution>
                   <id>rename-service</id>
-                  <phase>package</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                     <goal>run</goal>
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/continuuity-service" tofile="${stage.init.dir}/continuuity-${service.name}" />
+                      <copy file="${project.build.directory}/dist/continuuity-service" tofile="${stage.init.dir}/continuuity-${service.name}" />
                     </target>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
+    <!-- Profile for using FPM to build package. The "dist" and "fpm-prepare" profiles must be activated as well. -->
+    <!-- Also need to set the -Dpkg.type property. -->
+    <profile>
+      <id>fpm</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>1.3.1</version>
+              <executions>
+                <execution>
+                  <id>fpm</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <executable>fpm</executable>
+                    <arguments>
+                      <argument>--name</argument>
+                      <argument>continuuity-${project.artifactId}</argument>
+
+                      <argument>--vendor</argument>
+                      <argument>Continuuity Inc.</argument>
+
+                      <argument>--maintainer</argument>
+                      <argument>support@continuuity.com</argument>
+
+                      <argument>--license</argument>
+                      <argument>Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.</argument>
+
+                      <argument>--description</argument>
+                      <argument>Component of Continuuity Enterprise Reactor</argument>
+
+                      <argument>--category</argument>
+                      <argument>misc</argument>
+
+                      <argument>-s</argument>
+                      <argument>dir</argument>
+
+                      <argument>-t</argument>
+                      <argument>${pkg.type}</argument>
+
+                      <argument>-C</argument>
+                      <argument>${stage.dir}</argument>
+
+                      <argument>--directories</argument>
+                      <argument>/opt/continuuity/${project.artifactId}</argument>
+
+                      <argument>--version</argument>
+                      <argument>${package.version}</argument>
+
+                      <argument>--architecture</argument>
+                      <argument>all</argument>
+
+                      <argument>--url</argument>
+                      <argument>http://www.continuuity.com/products</argument>
+
+                      <argument>--template-value</argument>
+                      <argument>project=${project.artifactId}</argument>
+
+                      <argument>--depends</argument>
+                      <argument>continuuity</argument>
+
+                      <argument>--after-install</argument>
+                      <argument>${scripts.base.dir}/scripts/postinst</argument>
+
+                      <argument>--before-remove</argument>
+                      <argument>${scripts.base.dir}/scripts/prerm</argument>
+
+                      <argument>--after-remove</argument>
+                      <argument>${scripts.base.dir}/scripts/postrm</argument>
+
+                      <!-- Hardcode to 1 -->
+                      <argument>--iteration</argument>
+                      <argument>1</argument>
+
+                      <argument>opt</argument>
+                      <argument>etc</argument>
+                    </arguments>
                   </configuration>
                 </execution>
               </executions>

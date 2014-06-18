@@ -22,6 +22,18 @@
     </repository>
   </repositories>
 
+  <distributionManagement>
+    <repository>
+      <id>nexus</id>
+      <name>continuuity-internal</name>
+      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>continuuity</id>
+      <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>

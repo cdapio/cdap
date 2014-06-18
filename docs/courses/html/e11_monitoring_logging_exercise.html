@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1741,7 +1745,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1757,7 +1772,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/10
             </aside>
           </footer>
         </div>
@@ -1773,9 +1788,10 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Add metrics and logging to the example project</li>
+<li>Build, deploy and run the application</li>
+<li>View the resulting metrics and logs in the Reactor Dashboard
+Metrics and Log Explorers</li>
 </ul></section>
             
           </div>
@@ -1792,7 +1808,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/10
             </aside>
           </footer>
         </div>
@@ -1807,16 +1823,11 @@ function main() {
             
             
             <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
-</ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+<li>Add imports</li>
+<li>Add metrics and logging to Flowlets and Procedures</li>
+<li>Build, deploy and run sentences through the Flow system</li>
+<li>View the results in the Metrics and Log Explorers</li>
+</ul></section>
             
           </div>
           <div class="presenter_notes">
@@ -1832,7 +1843,216 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><tt class="docutils literal">Normalization</tt> Flowlet</h1></header>
+            
+            
+            <section><p>Add to the <tt class="docutils literal">Normalization</tt> Flowlet a handler to emit metrics:</p>
+<pre class="literal-block">
+/**
+ * Handlers to emit logs and metrics.
+ */
+Metrics metrics;
+private static final Logger LOG = LoggerFactory.getLogger(Normalization.class);
+</pre>
+<p>Then, modify the <tt class="docutils literal">process</tt> method to emit the metrics:</p>
+<pre class="literal-block">
+if (text != null) {
+  metrics.count(&quot;data.processed.size&quot;, text.length());
+  out.emit(text);
+} else {
+  metrics.count(&quot;data.ignored.text&quot;, 1);
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><tt class="docutils literal">Analyze</tt> Flowlet</h1></header>
+            
+            
+            <section><p>To the <tt class="docutils literal">Analyze</tt> Flowlet, add a <tt class="docutils literal">LOG</tt> variable:</p>
+<pre class="literal-block">
+private static final Logger LOG = LoggerFactory.getLogger(Analyze.class);
+</pre>
+<p>and add to its <tt class="docutils literal">process</tt> method a Log statement:</p>
+<pre class="literal-block">
+LOG.info(&quot;Sentence = {}&quot;, sentence);
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1><tt class="docutils literal">Update</tt> Flowlet</h1></header>
+            
+            
+            <section><p>To the <tt class="docutils literal">Update</tt> Flowlet, add a similar set of variables:</p>
+<pre class="literal-block">
+/**
+ * Handlers to emit logs and metrics.
+ */
+Metrics metrics;
+private static final Logger LOG = LoggerFactory.getLogger(Update.class);
+</pre>
+<p>and to its <tt class="docutils literal">process</tt> method, add where <tt class="docutils literal">if Iterables.size(parts) == 2</tt>,:</p>
+<pre class="literal-block">
+metrics.count(&quot;sentiment.&quot; + sentiment, 1);
+LOG.info(&quot;Sentence = {}, Sentiment = {}&quot;, sentence, sentiment);
+</pre>
+<p>Add an <tt class="docutils literal">else</tt> clause if not:</p>
+<pre class="literal-block">
+metrics.count(&quot;data.ignored.sentiments&quot;, 1);
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Procedure Logging</h1></header>
+            
+            
+            <section><p>To the Procedure, add a <tt class="docutils literal">LOG</tt> variable:</p>
+<pre class="literal-block">
+private static final Logger LOG =
+  LoggerFactory.getLogger(SentimentAnalysisProcedure.class);
+</pre>
+<p>and after the <tt class="docutils literal">List&lt;SimpleTimeseriesTable.Entry&gt;</tt> entries, add a Log statement:</p>
+<pre class="literal-block">
+LOG.info(&quot;sentiment:{}, entries:{}&quot;, sentiment, entries.size());
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Build, Deploy and Run</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>After stopping the Flow and Procedure, rebuild and redeploy the App</li>
+<li>Re-run some sentences, and view the metrics and logs using the Metrics and Logs
+Explorers in the Continuuity Reactor Dashboard</li>
+</ul>
+<pre><span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
+<span class="go">  &quot;Continuuity Reactor is awesome&quot;</span>
+<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+</pre>
+<ul class="simple">
+<li>Run the query <tt class="docutils literal">sentiments</tt> with the parameters such as <tt class="docutils literal"><span class="pre">{&quot;sentiment&quot;:&quot;neutral&quot;}</span></tt>
+and read the results in the Log Explorer</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e11_monitoring_logging_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/10
             </aside>
           </footer>
         </div>
@@ -1870,7 +2090,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              4/5
+              9/10
             </aside>
           </footer>
         </div>
@@ -1900,7 +2120,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              5/5
+              10/10
             </aside>
           </footer>
         </div>
@@ -1933,14 +2153,44 @@ function main() {
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4"><tt class="docutils literal">Normalization</tt> Flowlet</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5"><tt class="docutils literal">Analyze</tt> Flowlet</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6"><tt class="docutils literal">Update</tt> Flowlet</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Procedure Logging</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Build, Deploy and Run</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Exercise Summary</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Exercise Completed</a></th>
+        <td><a href="#slide10">10</a></td>
       </tr>
       
       
