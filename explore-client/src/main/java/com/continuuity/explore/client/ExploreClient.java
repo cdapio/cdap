@@ -176,7 +176,7 @@ public class ExploreClient implements Explore {
     }
 
     InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
-    return String.format("http://%s:%s%s/datasets/queries%s", addr.getHostName(), addr.getPort(),
+    return String.format("http://%s:%s%s/data/queries%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }
 }
