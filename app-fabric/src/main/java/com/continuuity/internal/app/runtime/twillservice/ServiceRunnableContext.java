@@ -11,7 +11,7 @@ import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
- *
+ * Context for User Service Runnable.
  */
 public final class ServiceRunnableContext {
 

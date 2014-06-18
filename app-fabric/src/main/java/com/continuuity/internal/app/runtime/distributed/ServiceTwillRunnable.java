@@ -85,7 +85,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- *
+ * Wrapper TwillRunnable around User Twill Runnable.
  */
 public class ServiceTwillRunnable implements TwillRunnable {
 
