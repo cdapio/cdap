@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Transaction Wrapper Service to enable logging support for Transaction Service in Single Node.
  */
 public class TransactionWrapperService extends AbstractService {
 
