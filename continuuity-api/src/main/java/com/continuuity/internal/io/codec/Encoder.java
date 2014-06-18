@@ -1,4 +1,4 @@
-package com.continuuity.common.io;
+package com.continuuity.internal.io.codec;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
