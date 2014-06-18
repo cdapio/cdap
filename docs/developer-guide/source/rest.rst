@@ -400,9 +400,9 @@ Setting Time-To-Live Property for a Stream
 ------------------------------------------
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since it written to the Stream.
 The default TTL for all Streams is infinite, meaning event will never expire.
-The TTL property of a Stream can be changed with an HTTP POST method to the URL::
+The TTL property of a Stream can be changed with an HTTP PUT method to the URL::
 
-	POST <base-url>/streams/<stream-id>/ttl
+	PUT <base-url>/streams/<stream-id>/config
 
 .. list-table::
    :widths: 20 80
@@ -415,7 +415,7 @@ The TTL property of a Stream can be changed with an HTTP POST method to the URL:
 
 The new TTL value needs to be passed as the request body in the following form::
 
-	{ "ttl" : <ttl-in-milliseconds> }
+	{ "ttl" : <ttl-in-seconds> }
 
 .. list-table::
    :widths: 20 80
@@ -423,8 +423,8 @@ The new TTL value needs to be passed as the request body in the following form::
 
    * - Parameter
      - Description
-   * - ``<ttl-in-milliseconds>``
-     - Number of milliseconds that an event will be valid for since ingested
+   * - ``<ttl-in-seconds>``
+     - Number of seconds that an event will be valid for since ingested
 
 HTTP Responses
 ..............
@@ -436,6 +436,8 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - The stream TTL changed successfully
+   * - ``400 Bad Request``
+     - The TTL value is not a non-negative integer
    * - ``404 Not Found``
      - The Stream does not exist
 
@@ -450,7 +452,7 @@ Example
 
        with the new TTL value as a JSON string in the body::
 
-	  { "ttl" : 86400000 }
+	  { "ttl" : 86400 }
      
    * - Description
      - Change the TTL property of the Stream named *mystream* to 1 day
