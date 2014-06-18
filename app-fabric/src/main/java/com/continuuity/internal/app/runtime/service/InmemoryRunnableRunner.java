@@ -32,14 +32,14 @@ import java.net.UnknownHostException;
 /**
  * Runs runnable-service in single-node
  */
-public class InmemoryRunnableRunner implements ProgramRunner {
+public class InMemoryRunnableRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public InmemoryRunnableRunner(MetricsCollectionService metricsCollectionService) {
+  public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService) {
     this.metricsCollectionService = metricsCollectionService;
   }
 
@@ -50,6 +50,7 @@ public class InmemoryRunnableRunner implements ProgramRunner {
     try {
       // Extract and verify parameters
       String runnableName = options.getName();
+      Preconditions.checkNotNull(runnableName, "Missing runnable name.");
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");

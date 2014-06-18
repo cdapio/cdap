@@ -234,6 +234,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case WEBAPP:
         programController = new WebappTwillProgramController(programId, controller);
         break;
+      case SERVICE:
+        DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
+          program, controller);
+        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater);
+        break;
     }
     return programController == null ? null : programController.startListen();
   }

@@ -29,13 +29,13 @@ import java.util.Map;
 /**
  * Runs Service in single-node
  */
-public class InmemoryServiceRunner implements ProgramRunner {
+public class InMemoryServiceRunner implements ProgramRunner {
 
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final ProgramRunnerFactory programRunnerFactory;
 
   @Inject
-  InmemoryServiceRunner(ProgramRunnerFactory programRunnerFactory) {
+  InMemoryServiceRunner(ProgramRunnerFactory programRunnerFactory) {
     this.programRunnerFactory = programRunnerFactory;
   }
 

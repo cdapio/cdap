@@ -18,7 +18,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -88,8 +87,7 @@ public interface ApplicationSpecification {
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.api.service.ServiceSpecification} name to
-   *         {@link ServiceSpecification}
+   * @return An immutable {@link Map} from service name to {@link ServiceSpecification}
    *         for services configured for the Application.
    */
   Map<String, ServiceSpecification> getServices();

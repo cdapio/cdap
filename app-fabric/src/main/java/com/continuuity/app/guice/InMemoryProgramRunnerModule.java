@@ -17,8 +17,8 @@ import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import com.continuuity.internal.app.runtime.service.InmemoryRunnableRunner;
-import com.continuuity.internal.app.runtime.service.InmemoryServiceRunner;
+import com.continuuity.internal.app.runtime.service.InMemoryRunnableRunner;
+import com.continuuity.internal.app.runtime.service.InMemoryServiceRunner;
 import com.continuuity.internal.app.runtime.webapp.IntactJarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.JarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
@@ -73,8 +73,9 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InmemoryServiceRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.RUNNABLE).to(InmemoryRunnableRunner.class);
+    //twill support in singlenode
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InMemoryServiceRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.RUNNABLE).to(InMemoryRunnableRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.

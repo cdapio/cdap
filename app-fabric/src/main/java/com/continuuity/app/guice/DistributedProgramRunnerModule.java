@@ -10,6 +10,7 @@ import com.continuuity.internal.app.runtime.distributed.DistributedFlowProgramRu
 import com.continuuity.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
+import com.continuuity.internal.app.runtime.distributed.DistributedServiceProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import com.google.common.base.Preconditions;
@@ -37,6 +38,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(DistributedServiceProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
