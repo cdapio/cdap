@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -204,7 +205,8 @@ public class AccessTokenClient {
         JsonObject responseJson = (JsonObject) parser.parse(responseBody);
         String token = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
 
-        PrintWriter writer = new PrintWriter("bin/access_token", "UTF-8");
+        String filePath = String.format("bin%saccess_token", File.separator);
+        PrintWriter writer = new PrintWriter(filePath, "UTF-8");
         writer.write(token);
         writer.close();
         System.out.println("Access Token saved to file access_token");
