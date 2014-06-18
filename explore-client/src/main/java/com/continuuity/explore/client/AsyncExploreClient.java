@@ -63,7 +63,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public Handle enableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("instances/%s/explore/enable", datasetInstance), null, null);
+    HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponse(response, "id"));
     }
@@ -72,7 +72,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public Handle disableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("instances/%s/explore/disable", datasetInstance), null, null);
+    HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponse(response, "id"));
     }
@@ -81,7 +81,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public Handle execute(String statement) throws ExploreException {
-    HttpResponse response = doPost("queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
+    HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponse(response, "id"));
     }
@@ -90,7 +90,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("queries/%s/%s", handle.getId(), "status"));
+    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getId(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Status.class);
     }
@@ -99,7 +99,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("queries/%s/%s", handle.getId(), "schema"));
+    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getId(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
                            new TypeToken<List<ColumnDesc>>() { }.getType());
@@ -109,7 +109,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("queries/%s/%s", handle.getId(), "nextResults"),
+    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getId(), "nextResults"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
@@ -120,7 +120,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("queries/%s/%s", handle.getId(), "cancel"), null, null);
+    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getId(), "cancel"), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -129,7 +129,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doDelete(String.format("queries/%s", handle.getId()));
+    HttpResponse response = doDelete(String.format("data/queries/%s", handle.getId()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -196,7 +196,9 @@ public class AsyncExploreClient implements ExploreClient {
     }
 
     InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
-    return String.format("http://%s:%s%s/datasets/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.GATEWAY_VERSION, resource);
+    String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
+                               Constants.Gateway.GATEWAY_VERSION, resource);
+    LOG.trace("Explore URL = {}", url);
+    return url;
   }
 }

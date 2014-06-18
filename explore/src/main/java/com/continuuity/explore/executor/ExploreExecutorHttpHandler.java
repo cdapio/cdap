@@ -59,8 +59,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     this.datasetFramework = datasetFramework;
   }
 
+  /**
+   * This is an internal API to enable ad-hoc exploration of a dataset instance.
+   */
   @POST
-  @Path("/datasets/instances/{instance}/explore/enable")
+  @Path("/explore/instances/{instance}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
@@ -99,8 +102,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * This is an internal API to disable ad-hoc exploration of a dataset instance.
+   */
   @POST
-  @Path("/datasets/instances/{instance}/explore/disable")
+  @Path("/explore/instances/{instance}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
