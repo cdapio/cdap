@@ -7,7 +7,6 @@ package com.continuuity.common.lang;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.internal.lang.Reflections;
-
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

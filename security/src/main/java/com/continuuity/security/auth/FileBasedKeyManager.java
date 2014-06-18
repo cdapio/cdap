@@ -2,7 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.io.Codec;
+import com.continuuity.internal.io.codec.Codec;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 

@@ -5,7 +5,6 @@
 package com.continuuity.common.lang.jar;
 
 import com.continuuity.common.lang.MultiClassLoader;
-
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

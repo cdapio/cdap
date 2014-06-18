@@ -1,7 +1,6 @@
 package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.internal.io.ByteBufferInputStream;
@@ -10,6 +9,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaHash;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.io.codec.BinaryDecoder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;

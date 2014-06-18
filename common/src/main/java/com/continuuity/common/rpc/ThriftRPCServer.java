@@ -4,7 +4,6 @@
 package com.continuuity.common.rpc;
 
 import com.continuuity.common.utils.Networks;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

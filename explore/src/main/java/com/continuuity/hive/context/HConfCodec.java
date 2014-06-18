@@ -1,6 +1,6 @@
 package com.continuuity.hive.context;
 
-import com.continuuity.common.io.Codec;
+import com.continuuity.internal.io.codec.Codec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 

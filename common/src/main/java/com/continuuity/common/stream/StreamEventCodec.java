@@ -2,15 +2,15 @@ package com.continuuity.common.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaHash;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.io.codec.BinaryDecoder;
+import com.continuuity.internal.io.codec.BinaryEncoder;
+import com.continuuity.internal.io.codec.Decoder;
+import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 

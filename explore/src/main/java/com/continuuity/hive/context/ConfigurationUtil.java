@@ -1,6 +1,6 @@
 package com.continuuity.hive.context;
 
-import com.continuuity.common.io.Codec;
+import com.continuuity.internal.io.codec.Codec;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;

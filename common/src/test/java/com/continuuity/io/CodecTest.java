@@ -4,10 +4,10 @@
 
 package com.continuuity.io;
 
-import com.continuuity.common.io.BinaryDecoder;
-import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
+import com.continuuity.internal.io.codec.BinaryDecoder;
+import com.continuuity.internal.io.codec.BinaryEncoder;
+import com.continuuity.internal.io.codec.Decoder;
+import com.continuuity.internal.io.codec.Encoder;
 import org.junit.Assert;
 import org.junit.Test;
 

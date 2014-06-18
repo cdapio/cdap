@@ -3,7 +3,6 @@
  */
 package com.continuuity.common.zookeeper.coordination;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.twill.discovery.Discoverable;
 
 import java.util.Collection;
