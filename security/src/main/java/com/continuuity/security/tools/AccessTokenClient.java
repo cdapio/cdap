@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -45,6 +44,7 @@ public class AccessTokenClient {
 
   String username;
   String password;
+  String filePath;
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -68,6 +68,7 @@ public class AccessTokenClient {
     out.println("  --port <number>         To specify the port to use");
     out.println("  --username <user>       To specify the user to login as");
     out.println("  --password <password>   To specify the user password");
+    out.println("  --file <path>           To specify the access token file");
     out.println("  --help                  To print this message");
     if (error) {
       throw new UsageException();
@@ -125,6 +126,11 @@ public class AccessTokenClient {
           usage(true);
         }
         password = args[pos];
+      } else if ("--file".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
+        filePath = args[pos];
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -204,14 +210,6 @@ public class AccessTokenClient {
         JsonParser parser = new JsonParser();
         JsonObject responseJson = (JsonObject) parser.parse(responseBody);
         String token = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
-
-        // Create file in the write location based on OS.
-        String filePath;
-        if (File.separator.equals("/")) {
-          filePath = String.format("bin/access_token");
-        } else {
-          filePath = "access_token";
-        }
 
         PrintWriter writer = new PrintWriter(filePath, "UTF-8");
         writer.write(token);

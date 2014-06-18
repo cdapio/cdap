@@ -42,4 +42,17 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
+auth_file="$bin/access_token"
+containsTokenFileArg=0
+for var in "$@"
+do
+  if [ "$var" == "--file" ]; then
+    containsTokenFileArg=1
+  fi
+done
+
+if [ $containsTokenFileArg -eq 0 ]; then
+  set -- "$@" "--file" "$auth_file"
+fi
+
 java -cp ${CLASSPATH} -Dscript=$script com.continuuity.security.tools.AccessTokenClient "$@"
