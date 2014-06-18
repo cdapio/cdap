@@ -1,34 +1,20 @@
 package com.continuuity.internal.app.runtime.service;
 
-import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.metrics.ServiceRunnableMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.lang.InstantiatorFactory;
-import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.dataset.DataSetInstantiationBase;
-import com.continuuity.data.stream.StreamCoordinator;
-import com.continuuity.internal.app.queue.QueueReaderFactory;
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.internal.app.runtime.DataSetFieldSetter;
-import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.internal.app.runtime.flow.BasicFlowletContext;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
-import com.continuuity.internal.app.runtime.flow.OutputEmitterFieldSetter;
-import com.continuuity.internal.io.DatumWriterFactory;
-import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.lang.Reflections;
+import com.continuuity.logging.context.ServiceRunnableLoggingContext;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -44,16 +30,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- *
+ * Runs runnable-service in single-node
  */
-public class ServiceRunnableProgramRunner implements ProgramRunner {
+public class InmemoryRunnableRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public ServiceRunnableProgramRunner(MetricsCollectionService metricsCollectionService) {
+  public InmemoryRunnableRunner(MetricsCollectionService metricsCollectionService) {
     this.metricsCollectionService = metricsCollectionService;
   }
 
@@ -97,6 +83,7 @@ public class ServiceRunnableProgramRunner implements ProgramRunner {
 
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
 
+      // todo we might have to generate runId for runnable before
       RunId twillRunId = RunIds.generate();
       // have to fill in the null values
       twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), null, null,
@@ -106,6 +93,24 @@ public class ServiceRunnableProgramRunner implements ProgramRunner {
 
       TwillRunnable runnable = new InstantiatorFactory(false).get(TypeToken.of(runnableClass)).create();
       TypeToken<? extends TwillRunnable> runnableType = TypeToken.of(runnableClass);
+      InMemoryRunnableDriver driver = new InMemoryRunnableDriver(
+        runnable, twillContext, new ServiceRunnableLoggingContext(
+        program.getAccountId(), program.getApplicationId(), runId.getId(), twillRunId.getId()));
+
+      Reflections.visit(runnable, TypeToken.of(runnable.getClass()),
+                        new MetricsFieldSetter(new ServiceRunnableMetrics
+                                                 (metricsCollectionService, program.getApplicationId(),
+                                                  serviceSpec.getName(), runnableName)));
+
+      InMemoryRunnableProgramController controller = new InMemoryRunnableProgramController
+        (program.getName(), runnableName, twillContext, driver);
+      runnable.configure();
+      runnable.initialize(twillContext);
+      LOG.info("Starting flowlet: {}", twillContext);
+      driver.start();
+      LOG.info("Flowlet started: {}", twillContext);
+
+      return controller;
 
     } catch (ClassNotFoundException e) {
       e.printStackTrace();

@@ -27,15 +27,15 @@ import org.apache.twill.internal.RunIds;
 import java.util.Map;
 
 /**
- *
+ * Runs Service in single-node
  */
-public class ServiceProgramRunner implements ProgramRunner {
+public class InmemoryServiceRunner implements ProgramRunner {
 
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final ProgramRunnerFactory programRunnerFactory;
 
   @Inject
-  ServiceProgramRunner(ProgramRunnerFactory programRunnerFactory) {
+  InmemoryServiceRunner(ProgramRunnerFactory programRunnerFactory) {
     this.programRunnerFactory = programRunnerFactory;
   }
 
