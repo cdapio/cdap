@@ -1,15 +1,15 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Codec;
+import com.continuuity.common.io.Decoder;
+import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.codec.BinaryDecoder;
-import com.continuuity.internal.io.codec.BinaryEncoder;
-import com.continuuity.internal.io.codec.Codec;
-import com.continuuity.internal.io.codec.Decoder;
-import com.continuuity.internal.io.codec.Encoder;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 

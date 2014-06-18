@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.conf;
 
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 
 /**
  *

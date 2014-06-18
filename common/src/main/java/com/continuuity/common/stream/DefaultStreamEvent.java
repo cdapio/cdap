@@ -2,6 +2,7 @@ package com.continuuity.common.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;

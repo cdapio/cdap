@@ -1,10 +1,11 @@
 package com.continuuity.internal.io;
 
+import com.continuuity.common.io.Encoder;
 import com.continuuity.common.lang.Fields;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.continuuity.internal.asm.Signatures;
-import com.continuuity.internal.io.codec.Encoder;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
@@ -212,7 +213,7 @@ final class DatumWriterGenerator {
   }
 
   /**
-   * Generates the {@link DatumWriter#encode(Object, com.continuuity.internal.io.codec.Encoder)} method.
+   * Generates the {@link DatumWriter#encode(Object, com.continuuity.common.io.Encoder)} method.
    * @param outputType Type information of the data type for output
    * @param schema Schema to use for output.
    */

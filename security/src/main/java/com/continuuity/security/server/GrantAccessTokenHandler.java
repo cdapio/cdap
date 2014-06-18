@@ -2,7 +2,7 @@ package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.TokenManager;

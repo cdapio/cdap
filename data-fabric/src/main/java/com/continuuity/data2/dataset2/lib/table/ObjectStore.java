@@ -9,14 +9,14 @@ import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.DataSetException;
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
-import com.continuuity.internal.io.codec.BinaryDecoder;
-import com.continuuity.internal.io.codec.BinaryEncoder;
 import com.google.common.reflect.TypeToken;
 
 import java.io.ByteArrayInputStream;

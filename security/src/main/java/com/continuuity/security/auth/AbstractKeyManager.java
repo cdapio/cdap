@@ -4,7 +4,7 @@ package com.continuuity.security.auth;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;

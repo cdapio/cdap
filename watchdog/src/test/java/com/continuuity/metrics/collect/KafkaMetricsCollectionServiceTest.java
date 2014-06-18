@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
@@ -13,7 +14,6 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.io.codec.BinaryDecoder;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

@@ -8,6 +8,8 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
+
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -17,6 +19,7 @@ import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
+import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
