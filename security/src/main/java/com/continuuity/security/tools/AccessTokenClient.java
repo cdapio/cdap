@@ -1,8 +1,6 @@
 package com.continuuity.security.tools;
 
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.util.Util;
-import com.google.common.base.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -16,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Client to get an AccessToken using username:password authentication.
@@ -36,7 +33,7 @@ public class AccessTokenClient {
   boolean help = false;
   boolean verbose = false;
 
-  String hostname;
+  String host;
   int port = -1;
 
   String username;
@@ -57,10 +54,10 @@ public class AccessTokenClient {
       name = System.getProperty("script").replaceAll("[./]", "");
     }
     out.println("Usage: ");
-    out.println("  " + name + " [ --host <hostname> ] [ --username <username> ]");
+    out.println("  " + name + " [ --host <host> ] [ --username <username> ]");
     out.println();
     out.println("Additional options:");
-    out.println("  --host <name>           To specify the hostname to send to");
+    out.println("  --host <name>           To specify the host to send to");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --username <user>       To specify the user to login as");
     out.println("  --password <password>   To specify the user password");
@@ -96,14 +93,13 @@ public class AccessTokenClient {
       return;
     }
 
-    // go through all the arguments
     for (int pos = 0; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--host".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
         }
-        hostname = args[pos];
+        host = args[pos];
       } else if ("--port".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -135,16 +131,13 @@ public class AccessTokenClient {
     }
   }
 
-  static List<String> supportedCommands =
-    Arrays.asList("list", "read");
-
   void validateArguments(String[] args) {
     parseArguments(args);
     if (help) {
       return;
     }
-    if (hostname == null) {
-      hostname = "localhost";
+    if (host == null) {
+      host = "http://localhost";
     }
     if (port == -1) {
       port = 10009;
@@ -161,13 +154,12 @@ public class AccessTokenClient {
   }
 
   public String execute0(String[] args) {
-    // parse and validate arguments
     validateArguments(args);
     if (help) {
       return "";
     }
 
-    String baseUrl = String.format("http://%s:%d", hostname, port);
+    String baseUrl = String.format("%s:%d", host, port);
 
     HttpClient client = new DefaultHttpClient();
     HttpResponse response;
@@ -185,7 +177,6 @@ public class AccessTokenClient {
     get.addHeader("Authorization", String.format("Basic %s", auth));
 
     try {
-      System.out.println(baseUrl);
       response = client.execute(get);
       client.getConnectionManager().shutdown();
     } catch (IOException e) {
@@ -195,20 +186,6 @@ public class AccessTokenClient {
     if (!checkHttpStatus(response)) {
       return null;
     }
-    if (printResponse(response) == null) {
-      return null;
-    }
-    return "OK.";
-  }
-
-  public String printResponse(HttpResponse response) {
-    // read the binary value from the HTTP response
-    byte[] binaryResponse = Util.readHttpResponse(response);
-    if (binaryResponse == null) {
-      return null;
-    }
-    // now make returned value available to user
-    System.out.println(new String(binaryResponse, Charsets.UTF_8));
     return "OK.";
   }
 
