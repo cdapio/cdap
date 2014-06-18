@@ -248,4 +248,4 @@ security components are working as expected:
 - This should return a 200 OK response.
 
 - Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
-  Entering the credentials should let you work with the Reactor as normally.
+  Entering the credentials should let you work with the Reactor Dashboard as normally.
