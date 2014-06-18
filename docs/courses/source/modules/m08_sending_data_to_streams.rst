@@ -5,19 +5,21 @@ Sending Data to Streams
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_m08| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
 
-.. |br2_m08| raw:: html
-
-   <br /><br />
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -75,7 +77,7 @@ Sending Events to a Stream: Passing Headers
 
 - The body of the request must contain the event in binary form
 - Pass headers for the event as HTTP headers,
-  prefixing them with the *stream-id*: |br_m08|
+  prefixing them with the *stream-id*: |br|
   ``<stream-id>.<property>:<string value>``
 - After receiving the request, the HTTP handler transforms it into a Stream event:
 
