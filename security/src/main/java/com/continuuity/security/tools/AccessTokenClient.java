@@ -205,7 +205,14 @@ public class AccessTokenClient {
         JsonObject responseJson = (JsonObject) parser.parse(responseBody);
         String token = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
 
-        String filePath = String.format("bin%saccess_token", File.separator);
+        // Create file in the write location based on OS.
+        String filePath;
+        if (File.separator.equals("/")) {
+          filePath = String.format("bin/access_token");
+        } else {
+          filePath = "access_token";
+        }
+
         PrintWriter writer = new PrintWriter(filePath, "UTF-8");
         writer.write(token);
         writer.close();
