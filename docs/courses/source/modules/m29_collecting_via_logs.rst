@@ -5,15 +5,21 @@ Collecting Critical Application Information via Logs
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -37,7 +43,7 @@ Logging
 
 In a Flowlet you can write:
 
-.. sourcecode:: java
+::
 
 	private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
 
@@ -150,7 +156,7 @@ Launching The Dashboard's *Log Explorer*
 To launch, visit the element (*Flow*, *Procedure*, *MapReduce*) of interest:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_07_app_crawler_flow_rss.png
-   :width: 600px
+   :width: 80%
 
 Use the *Log* button in the upper right to launch the *Log Explorer*
 
@@ -163,7 +169,7 @@ Using The Dashboard's *Log Explorer*
 The *Log Explorer* pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warn*, *Error*, *Debug*, and *Other:*
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
-   :width: 600px
+   :width: 80%
 
 
 

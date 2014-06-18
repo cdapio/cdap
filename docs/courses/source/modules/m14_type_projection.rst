@@ -2,14 +2,24 @@
 Type Projection
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
+.. |br| raw:: html
+
+   <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -40,7 +50,7 @@ Example of a Process Method
 
 For example, if you have a process method:
 
-.. sourcecode:: java
+::
 
 	@ProcessInput
 	count(String word) {
@@ -57,7 +67,7 @@ A Solution: Write A Lot of Methods
 
 You could write another process method for ``Long`` numbers:
 
-.. sourcecode:: java
+::
 
 	@ProcessInput count(Long number) {
 	count(number.toString());
@@ -117,11 +127,12 @@ Other Java objects can be compatible if their fields are compatible.
 Compatible Conversions 3 of 3
 =============================
 
-Class ``Point`` is compatible with ``Coordinate``, because all common fields between the two classes are compatible. Projecting from ``Point`` to ``Coordinate``, the color field is dropped;
+Class ``Point`` is compatible with ``Coordinate``, because all common fields between the 
+two classes are compatible. Projecting from ``Point`` to ``Coordinate``, the color field is dropped;
 projecting from ``Coordinate`` to ``Point`` will leave the ``color`` field
 as ``null``
 
-.. sourcecode:: java
+::
 
 	class Point {
 	  private int x;

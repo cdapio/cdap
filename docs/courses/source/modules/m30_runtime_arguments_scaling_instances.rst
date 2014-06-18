@@ -5,15 +5,21 @@ Runtime Arguments and Scaling Instances
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -56,7 +62,7 @@ Runtime Argument Example (1 of 2)
 Runtime Argument Example (2 of 2)
 =================================
 
-.. sourcecode:: java
+::
 
 	public static class Greeting extends AbstractProcedure {
 

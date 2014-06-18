@@ -33,7 +33,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   }
 
   @Override
-  protected TransactionStateStorage getSateStorage() {
+  protected TransactionStateStorage getStateStorage() {
     return txStateStorage;
   }
 

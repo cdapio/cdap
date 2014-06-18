@@ -8,6 +8,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -23,6 +24,7 @@ public class TransactionLocalModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(SnapshotCodecProvider.class).in(Singleton.class);
     bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
       .to(LocalFileTransactionStateStorage.class).in(Singleton.class);
     bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);

@@ -1,0 +1,141 @@
+package com.example;
+
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Property;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.flow.Flow;
+import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.Callback;
+import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
+import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.metrics.Metrics;
+import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.api.procedure.ProcedureResponder;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.util.Map;
+
+import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import java.util.Iterator;
+
+/**
+ * Application that analyzes sentiment of sentences as positive, negative or neutral.
+ */
+public class SentimentAnalysisApp implements Application {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SentimentAnalysisApp.class);
+
+  /**
+   * Configures the {@link com.continuuity.api.Application} by returning an
+   * {@link com.continuuity.api.ApplicationSpecification}.
+   *
+   * @return An instance of {@code ApplicationSpecification}.
+   */
+  @Override
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
+    .setName("SentimentAnalysisApp")
+    .setDescription("Application for Sentiment Analysis")
+    .withStreams()
+    .add(new Stream("sentence"))
+    .noDataSet()
+    .withFlows()
+    .add(new SentimentAnalysisFlow())
+    .noProcedure()
+    .noMapReduce()
+    .noWorkflow()
+    .build();
+  }
+  
+  
+  public static class SentimentAnalysisFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+      .setName("analysis")
+      .setDescription("Analysis of text to generate sentiments")
+      .withFlowlets()
+        .add(new Normalization())
+        .add(new Analyze())
+        .add(new Update())
+      .connect()
+        .fromStream("sentence").to(new Normalization())
+        .from(new Normalization()).to(new Analyze())
+        .from(new Analyze()).to(new Update())
+      .build();
+    }
+  }
+  
+  /**
+   * Normalizes the sentences.
+   */
+  public static class Normalization extends AbstractFlowlet {
+    private OutputEmitter<String> out;
+    
+    @ProcessInput
+    public void process(StreamEvent event) {
+      String text = Bytes.toString(Bytes.toBytes(event.getBody()));
+      if (text != null) {
+        out.emit(text);
+      }
+    }
+  }
+  
+  /**
+   * Analyzes the sentences.
+   */
+  public static class Analyze extends AbstractFlowlet {
+    
+    @Output("sentiments")
+    private OutputEmitter<String> sentiment;
+    
+    @ProcessInput
+    public void process(String sentence) {
+      sentiment.emit(sentence);
+    }
+  }
+  
+  public static class Update extends AbstractFlowlet {
+    
+    @Override
+    public FlowletSpecification configure() {
+      return FlowletSpecification.Builder.with()
+      .setName("update")
+      .setDescription("Updates the sentiment counts")
+      .build();
+    }
+    
+    @Batch(1)
+    @ProcessInput("sentiments")
+    public void process(Iterator<String> sentimentItr) {
+      while (sentimentItr.hasNext()) {
+        String text = sentimentItr.next();
+      }
+    }
+  }
+  
+}
+
