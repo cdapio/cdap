@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1741,7 +1745,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1757,7 +1772,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/10
             </aside>
           </footer>
         </div>
@@ -1773,9 +1788,9 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Start with an application created by the maven archetype</li>
-<li>Add a Stream to the application</li>
-<li>Add a Flow to the application</li>
+<li>Start with the application created by the <tt class="docutils literal">maven</tt> archetype</li>
+<li>Specify a Stream in the application</li>
+<li>Specify a Flow in the application</li>
 <li>Build and deploy the application</li>
 <li>Run the application and use it to ingest data into Reactor</li>
 </ul></section>
@@ -1794,7 +1809,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/10
             </aside>
           </footer>
         </div>
@@ -1809,9 +1824,19 @@ function main() {
             
             
             <section><ul class="simple">
-<li>??</li>
-<li>??</li>
-</ul></section>
+<li>A Stream and Flow were defined as part of the <tt class="docutils literal">ApplicationSpecification</tt></li>
+<li>The Stream was defined and named as <tt class="docutils literal">sentence</tt></li>
+<li>Add required imports</li>
+<li>Implement the Flowlet classes</li>
+<li>Build and deploy</li>
+</ul>
+<p>Add these imports:</p>
+<pre class="literal-block">
+import com.continuuity.api.annotation.Batch;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import java.util.Iterator;
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1827,7 +1852,236 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>SentimentAnalysisFlow</h1></header>
+            
+            
+            <section><p>Add the <tt class="docutils literal">SentimentAnalysisFlow</tt> with its three Flowlets:</p>
+<pre class="literal-block">
+public static class SentimentAnalysisFlow implements Flow {
+  &#64;Override
+  public FlowSpecification configure() {
+    return FlowSpecification.Builder.with()
+      .setName(&quot;analysis&quot;)
+      .setDescription(&quot;Analysis of text to generate sentiments&quot;)
+      .withFlowlets()
+        .add(new Normalization())
+        .add(new Analyze())
+        .add(new Update())
+      .connect()
+        .fromStream(&quot;sentence&quot;).to(new Normalization())
+        .from(new Normalization()).to(new Analyze())
+        .from(new Analyze()).to(new Update())
+      .build();
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Normalization</h1></header>
+            
+            
+            <section><p>Add the Flowlet <tt class="docutils literal">Normalization</tt>:</p>
+<pre class="literal-block">
+/**
+ * Normalizes the sentences.
+ */
+public static class Normalization extends AbstractFlowlet {
+  private OutputEmitter&lt;String&gt; out;
+
+  &#64;ProcessInput
+  public void process(StreamEvent event) {
+    String text = Bytes.toString(Bytes.toBytes(event.getBody()));
+    if (text != null) {
+      out.emit(text);
+    }
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Flowlet <tt class="docutils literal">Analyze</tt></h1></header>
+            
+            
+            <section><p>Add the Flowlet <tt class="docutils literal">Analyze</tt>; it currently just passes through its input:</p>
+<pre class="literal-block">
+/**
+ * Analyzes the sentences.
+ */
+public static class Analyze extends AbstractFlowlet {
+
+  &#64;Output(&quot;sentiments&quot;)
+  private OutputEmitter&lt;String&gt; sentiment;
+
+  &#64;ProcessInput
+  public void process(String sentence) {
+    sentiment.emit(sentence);
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Flowlet <tt class="docutils literal">Update</tt></h1></header>
+            
+            
+            <section><p>Add the Flowlet <tt class="docutils literal">Update</tt>; it currently does nothing:</p>
+<pre class="literal-block">
+public static class Update extends AbstractFlowlet {
+
+  &#64;Override
+  public FlowletSpecification configure() {
+    return FlowletSpecification.Builder.with()
+    .setName(&quot;update&quot;)
+    .setDescription(&quot;Updates the sentiment counts&quot;)
+    .build();
+  }
+
+  &#64;Batch(1)
+  &#64;ProcessInput(&quot;sentiments&quot;)
+  public void process(Iterator&lt;String&gt; sentimentItr) {
+    while (sentimentItr.hasNext()) {
+      String text = sentimentItr.next();
+    }
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/10
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Build and Run</h1></header>
+            
+            
+            <section><p>Start Reactor</p>
+<p>Build App using <tt class="docutils literal">mvn clean package</tt> and deploy by dragging and dropping</p>
+<p>Start the <tt class="docutils literal">analysis</tt> Flow</p>
+<p>Send sentences using a <tt class="docutils literal">curl</tt> command (on one line) and watch them run through the
+Flow system:</p>
+<pre class="literal-block">
+curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d &quot;Continuuity Reactor is awesome&quot;
+    http://localhost:10000/v2/streams/sentence
+</pre>
+<p>Note: You can either modify the sentence inside the <tt class="docutils literal">curl</tt>, or send the same one repeatedly</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e05_streams_flows_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/10
             </aside>
           </footer>
         </div>
@@ -1844,8 +2098,9 @@ function main() {
             <section><p>You should now be able to:</p>
 <ul class="simple">
 <li>Start with an application created by the maven archetype</li>
-<li>Add a Stream to an application</li>
-<li>Add a Flow to an application</li>
+<li>Specify a Stream to an application</li>
+<li>Specify a Flow to an application</li>
+<li>Implement Flowlets</li>
 <li>Build and deploy the resulting application</li>
 <li>Run the application and use it to ingest data into Reactor</li>
 </ul></section>
@@ -1864,7 +2119,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              4/5
+              9/10
             </aside>
           </footer>
         </div>
@@ -1878,7 +2133,7 @@ function main() {
             <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e06">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#e05">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1894,7 +2149,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              5/5
+              10/10
             </aside>
           </footer>
         </div>
@@ -1927,14 +2182,44 @@ function main() {
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">SentimentAnalysisFlow</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Normalization</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Flowlet <tt class="docutils literal">Analyze</tt></a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Flowlet <tt class="docutils literal">Update</tt></a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Build and Run</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Exercise Summary</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Exercise Completed</a></th>
+        <td><a href="#slide10">10</a></td>
       </tr>
       
       

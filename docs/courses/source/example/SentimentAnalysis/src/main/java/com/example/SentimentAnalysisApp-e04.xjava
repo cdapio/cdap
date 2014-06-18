@@ -1,0 +1,68 @@
+package com.example;
+
+import com.continuuity.api.Application;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.Output;
+import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Property;
+import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.flow.Flow;
+import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.Callback;
+import com.continuuity.api.flow.flowlet.FailurePolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
+import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.metrics.Metrics;
+import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.procedure.ProcedureRequest;
+import com.continuuity.api.procedure.ProcedureResponder;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Longs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.util.Map;
+
+/**
+ * Application that analyzes sentiment of sentences as positive, negative or neutral.
+ */
+public class SentimentAnalysisApp implements Application {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SentimentAnalysisApp.class);
+
+  /**
+   * Configures the {@link com.continuuity.api.Application} by returning an
+   * {@link com.continuuity.api.ApplicationSpecification}.
+   *
+   * @return An instance of {@code ApplicationSpecification}.
+   */
+  @Override
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
+    .setName("SentimentAnalysisApp")
+    .setDescription("Application for Sentiment Analysis")
+    .withStreams()
+    .add(new Stream("sentence"))
+    .noDataSet()
+    .withFlows()
+    .add(new SentimentAnalysisFlow())
+    .noProcedure()
+    .noMapReduce()
+    .noWorkflow()
+    .build();
+  }
+}
+

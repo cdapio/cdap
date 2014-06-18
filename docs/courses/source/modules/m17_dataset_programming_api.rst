@@ -2,18 +2,24 @@
 DataSet Programming API
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_m00| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -52,7 +58,7 @@ you can use the latter methods to save a conversion
 **Table** Read, Write and Delete
 ================================
 
-.. sourcecode:: java
+::
 
 	// Read
 	public Row get(Get get)
@@ -78,7 +84,7 @@ you can use the latter methods to save a conversion
 **Table** Scan, Increment, Compare and Swap
 ===========================================
 
-.. sourcecode:: java
+::
 
 	// Scan
 	public Scanner scan(byte[] startRow, byte[] stopRow)
@@ -99,7 +105,7 @@ you can use the latter methods to save a conversion
 
 A ``get`` operation reads all columns or selection of columns of a single row:
 
-.. sourcecode:: java
+::
 
 	Table t;
 	byte[] rowKey1;
@@ -132,7 +138,7 @@ A ``get`` operation reads all columns or selection of columns of a single row:
   
 - Row object provides an extensive API for accessing returned column values:
 
-.. sourcecode:: java
+::
 
 	// Get column value as a byte array
 	byte[] value = row.get("column1");
@@ -151,7 +157,7 @@ A ``get`` operation reads all columns or selection of columns of a single row:
 - To return primitive types, the corresponding methods accepts default value to be 
   returned when the column is absent:
 
-.. sourcecode:: java
+::
 
 	// Get column value as a primitive type or 0 if column is absent
 	long valueAsLong = row.getLong("column1", 0);
@@ -163,7 +169,7 @@ A ``get`` operation reads all columns or selection of columns of a single row:
 
 A ``put`` operation writes data into a row:
 
-.. sourcecode:: java
+::
 
 	// Write a set of columns with their values
 	t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
@@ -176,7 +182,7 @@ A ``put`` operation writes data into a row:
 
 A ``delete`` operation removes an entire row or a subset of its columns:
 
-.. sourcecode:: java
+::
 
 	// Delete the entire row
 	t.delete(new Delete("rowKey1"));
@@ -196,7 +202,7 @@ passing all of them will make the deletion faster
 
 A ``scan`` operation fetches a subset of rows or all of the rows of a Table:
 
-.. sourcecode:: java
+::
 
 	byte[] startRow;
 	byte[] stopRow;
@@ -220,7 +226,7 @@ A ``scan`` operation fetches a subset of rows or all of the rows of a Table:
 To scan a set of rows not bounded by ``startRow`` and/or ``stopRow``
 you can pass ``null`` as their value:
 
-.. sourcecode:: java
+::
 
 	byte[] startRow;
 
@@ -243,7 +249,7 @@ or an integer amount *n*
 
 If a column doesn’t exist, it is created with an assumed value before the increment of zero:
 
-.. sourcecode:: java
+::
 
 	// Write long value to a column of a row
 	t.put(new Put("rowKey1").add("column1", 55L));
@@ -264,7 +270,7 @@ and if it matches, replaces it with a new value
 
 The operation returns ``true`` if it succeeds and ``false`` otherwise:
 
-.. sourcecode:: java
+::
 
 	byte[] expectedCurrentValue;
 	byte[] newValue;

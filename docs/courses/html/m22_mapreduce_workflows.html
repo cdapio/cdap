@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2010 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Original slides: Marcin Wichary (mwichary@google.com)
+  Modifications: Ernest Delgado (ernestd@google.com)
+                 Alex Russell (slightlyoff@chromium.org)
+
+  landslide modifications: Adam Zapletal (adamzap@gmail.com)
+                           Nicolas Perriault (nperriault@gmail.com)
+-->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Introduction to MapReduce and Workflows</title>
+    <!-- Fonts -->
+     <link href='http://fonts.googleapis.com/css?family=Maven+Pro:400,500,700,900' rel='stylesheet' type='text/css'>
+    <!-- Styles -->
+    
+    <style type="text/css" media="print">
+      /* Start: mavenPro.css @import url(mavenPro.css); */
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Maven Pro Regular'), local('MavenProRegular'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/MG9KbUZFchDs94Tbv9U-pSZ2oysoEQEeKwjgmXLRnTc.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Maven Pro Medium'), local('MavenProMedium'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/SQVfzoJBbj9t3aVcmbspRpS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Maven Pro Bold'), local('MavenProBold'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/uDssvmXgp7Nj3i336k_dSpS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 900;
+  src: local('Maven Pro Black'), local('MavenProBlack'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/-91TwiFzqeL1F7Kh91APwZS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+/* End: mavenPro.css */
+
+/* Start: tables.css @import url(tables.css); */
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+/* -- tables ---------------------------------------------------------------- */
+
+table.docutils {
+  border: 0;
+  border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+  padding: 1px 8px 1px 5px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #aaa;
+}
+
+table.borderless td, table.docutils th {
+  padding: 1px 8px 1px 5px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+table.field-list td, table.field-list th {
+  border: 0 !important;
+}
+
+table.footnote td, table.footnote th {
+  border: 0 !important;
+}
+
+th {
+  text-align: left;
+  padding-right: 5px;
+}
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px;
+}
+
+table.citation td {
+  border-bottom: none;
+}
+
+/* End: tables.css */
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+@page {
+  size: landscape;
+}
+
+body {
+  font: 100% MavenProRegular, "Lucida Grande", "Trebuchet MS", Verdana, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+div.slide {
+  min-width: 800px;
+  min-height: 600px;
+  padding: 1em;
+  overflow: hidden;
+  page-break-after: always;
+  border: 1px solid black;
+  border-radius: 20px;
+}
+
+div.slide div.inner {
+  width: 800px;
+  height: 600px;
+  margin: auto;
+  display: table-cell;
+}
+
+h1 {
+  font-size: 2.4em;
+}
+
+h2 {
+  font-size: 1.4em;
+}
+
+h3 {
+  margin: 1em 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+p, li, pre {
+  margin: 1em 0;
+}
+
+li {
+    margin-left: 2em;
+}
+
+a {
+    color: #000000;
+}
+
+pre, code {
+    max-width: 800px;
+    background: #eee;
+    font-family: Monaco, monospace;
+    font-size: 90%;
+}
+
+pre {
+    padding: .2em .5em;
+    overflow: hidden;
+    border-radius: .8em;
+}
+
+code {
+    padding: 0 .2em;
+}
+
+.slide header:only-child h1 h2 {
+  line-height: 180%;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+  height: 600px;
+  width: 800px;
+  font-size: 48px;
+  margin-top:100px;
+  margin-bottom:100px;
+}
+.slide.center_title_slide header:only-child h2 {
+  line-height: 180%;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+  height: 600px;
+  width: 800px;
+  font-size: 48px;
+  margin-top:100px;
+  margin-bottom:100px;
+}
+
+#toc, #help, .slide aside, .slide footer, .slide .notes,
+.presenter_notes, #current_presenter_notes, #presenter_note {
+  display: none;
+}
+
+    </style>
+    <style type="text/css" media="screen, projection">
+      /* Version 2.1 */
+
+/* Start: mavenPro.css @import url(mavenPro.css); */
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Maven Pro Regular'), local('MavenProRegular'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/MG9KbUZFchDs94Tbv9U-pSZ2oysoEQEeKwjgmXLRnTc.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Maven Pro Medium'), local('MavenProMedium'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/SQVfzoJBbj9t3aVcmbspRpS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Maven Pro Bold'), local('MavenProBold'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/uDssvmXgp7Nj3i336k_dSpS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Maven Pro';
+  font-style: normal;
+  font-weight: 900;
+  src: local('Maven Pro Black'), local('MavenProBlack'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/-91TwiFzqeL1F7Kh91APwZS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
+}
+/* End: mavenPro.css */
+
+/* Start: tables.css @import url(tables.css); */
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+/* -- tables ---------------------------------------------------------------- */
+
+table.docutils {
+  border: 0;
+  border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+  padding: 1px 8px 1px 5px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #aaa;
+}
+
+table.borderless td, table.docutils th {
+  padding: 1px 8px 1px 5px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+table.field-list td, table.field-list th {
+  border: 0 !important;
+}
+
+table.footnote td, table.footnote th {
+  border: 0 !important;
+}
+
+th {
+  text-align: left;
+  padding-right: 5px;
+}
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px;
+}
+
+table.citation td {
+  border-bottom: none;
+}
+
+/* End: tables.css */
+
+tbody{
+  width:900px;
+}
+
+body {
+  font: 14px 'Maven Pro', Verdana, sans-serif;
+  background: white;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
+}
+
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
+div.presentation {
+  position: absolute;
+  width: 100%;
+  display: table-cell;
+  vertical-align: middle;
+  height: 100%;
+  background: inherit;
+}
+
+div.presentation > h1 {
+  display: none;
+}
+
+div.slides, body.expose div.slides.nocontext {
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  position: absolute;
+  display: block;
+}
+
+div.slides.nocontext {
+  width: 900px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  left: auto;
+  top: auto;
+}
+
+div.slide {
+  display: inline;
+  position: absolute;
+  overflow: hidden;
+  width: 900px;
+  height: 700px;
+  margin-top: -350px;
+  margin-left: -400px;
+  left: 50%;
+  top: 50%;
+  background: -moz-linear-gradient(bottom, #bcd, #fff);
+  -webkit-transition: margin 0.25s ease-in-out;
+  -moz-transition: margin 0.25s ease-in-out;
+  -o-transition: margin 0.25s ease-in-out;
+}
+
+/* Progress meter across bottom of chapter slides */
+p.progress {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    text-indent: 10px;
+}
+
+/* Expose */
+
+body.expose div.slides {
+  float: left;
+  position: relative;
+  overflow: auto;
+  margin-bottom: 10px;
+}
+
+body.expose div.slide {
+  display: block;
+  float: left;
+  position: relative;
+  left: auto !important;
+  top: auto !important;
+  margin: 10px !important;
+  -webkit-transition: none;
+  -moz-transition: none;
+  -o-transition: none;
+  -moz-transform: scale(.33, .33);
+  -moz-transform-origin: 0 0;
+  -webkit-transform: scale(.33, .33);
+  -webkit-transform-origin: 0 0;
+  -o-transform: scale(.33, .33);
+  -o-transform-origin: 0 0;
+  -webkit-transition: none;
+  -moz-transition: none;
+  -o-transition: none;
+  cursor: pointer;
+}
+
+body.expose div.slide:hover {
+  background: -webkit-gradient(linear, left bottom, left top, from(#bdd), to(#fff));
+  background-color: #eee;
+  background: -moz-linear-gradient(bottom, #bdd, #fff);
+}
+
+body.expose .slide-wrapper {
+  float: left;
+  position: relative;
+  margin: .5%;
+  width: 300px;
+  height: 233px;
+}
+
+body.expose .slide footer {
+}
+
+body.expose .slide .inner {
+}
+
+body.expose .slide.far-past,
+body.expose .slide.past,
+body.expose .slide.future,
+body.expose .slide.far-future {
+  margin-left: 0;
+}
+
+body.expose .slide.current {
+  background: -webkit-gradient(linear, left bottom, left top, from(#ddb), to(#fff));
+  background-color: #eee;
+  background: -moz-linear-gradient(bottom, #ddb, #fff);
+  border: 16px solid #fff;
+  -moz-transform: scale(.315, .315);
+  -moz-transform-origin: 0 0;
+  -webkit-transform: scale(.315, .315);
+  -webkit-transform-origin: 0 0;
+  -o-transform: scale(.315, .315);
+  -o-transform-origin: 0 0;
+}
+
+/* Presenter Mode */
+
+/* was margin-top: -300px */
+body.presenter_view div.slide {
+  display: inline;
+  position: absolute;
+  overflow: hidden;
+  -moz-transform: scale(.5, .5);
+  -moz-transform-origin: 0 0;
+  -webkit-transform: scale(.5, .5);
+  -webkit-transform-origin: 0 0;
+  -o-transform: scale(.5, .5);
+  -o-transform-origin: 0 0;
+}
+
+body.presenter_view .slide.far-past {
+  display: block;
+  margin-left: -1500px;
+}
+
+body.presenter_view .slide.past {
+  display: block;
+  margin-left: -975px;
+}
+
+body.presenter_view .slide.current {
+  display: block;
+  margin-left: -475px;
+  border: 8px solid maroon;
+  z-index: 2;
+}
+
+body.presenter_view .slide.future {
+  display: block;
+  margin-left: 25px;
+  z-index: 1;
+}
+
+body.presenter_view .slide.far-future {
+  display: block;
+  margin-left: 525px;
+}
+
+/* was margin-top: 100px; */
+/* was height: 35%; */
+body.presenter_view div#current_presenter_notes {
+  visibility: visible;
+  display: block;
+  position: absolute;
+  overflow: auto;
+  vertical-align: middle;
+  left: 50%;
+  top: 50%;
+  margin-left: -475px;
+  margin-top: 2%;
+  z-index: 2;
+  width: 950px;
+  border-style: solid;
+  height: 45%;
+  background-color: silver;
+}
+
+/* was height: 120px; */
+body.presenter_view div#current_presenter_notes section {
+  font-family: 'Maven Pro', Verdana, sans-serif;
+  color: black;
+  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+  display: block;
+  overflow: visible;
+  position: relative;
+  background-color: #fffeff;
+  height: 100%; 
+  margin-right: 30px;
+  margin-top: 60px;
+  margin-left: 30px;
+  padding-right: 10px;
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+body.presenter_view div#current_presenter_notes section p {
+    margin: 0;
+}
+
+body.presenter_view div#current_presenter_notes h1 {
+/* Sean    font-size: 10%; */
+    font-size: 50%;
+    display: block;
+}
+
+div#current_presenter_notes {
+  display: none;
+}
+
+div.slide div.presenter_notes, div.slides div.presenter_notes {
+  display: none;
+}
+
+/* Slide styles */
+
+div.slide p:not(.copyright)  {
+/* Sean
+  font-size: 1em;
+  line-height:1.2em; */
+/* JJ  font-size: 20px; */
+  font-size: 1.5em;
+  line-height:1.8em;
+}
+
+.slide.far-past {
+  display: block;
+  margin-left: -2400px;
+}
+
+.slide.past {
+  display: block;
+  margin-left: -1400px;
+}
+
+.slide.current {
+  display: block;
+  margin-left: -450px;
+}
+
+.slide.future {
+  display: block;
+  margin-left: 500px;
+}
+
+.slide.far-future {
+  display: block;
+  margin-left: 1500px;
+}
+
+body.three-d div.slides {
+  -webkit-transform: translateX(50px) scale(0.8) rotateY(10deg);
+  -moz-transform: translateX(50px) scale(0.8) rotateY(10deg);
+  -o-transform: translateX(50px) scale(0.8) rotateY(10deg);
+}
+
+
+/* Content */
+
+header:not(:only-child) {
+  font-family: 'Maven Pro', Verdana, sans-serif;
+  font-weight: 100;
+/*  font-size: 50px; */
+  font-size: 2.6em;
+/*  letter-spacing: -.05em; /* Sean */
+/*  color: black;
+  color: #fff; */
+  color: white;
+  text-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
+  position: absolute;
+  left: 30px;
+  top: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+header h1, header h2, header h3, header h4, header h5, header h6 {
+  display: inline;
+  font-size: 100%;
+  font-weight: normal;
+  padding: 0;
+  margin: 0;
+}
+
+header h2:first-child {
+  margin-top: 0;
+}
+
+section, .slide header:only-child h1 {
+  font-family: 'Maven Pro', Verdana, sans-serif;
+  font-size:1.1em;
+  letter-spacing: 0.06em;
+  color: #efefef;
+  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 3px;
+  margin-left: 30px;
+  margin-right: 30px;
+  margin-top: 100px;
+  display: block;
+  /* overflow: hidden; */
+}
+
+/* img { display: block; margin: auto; } */
+
+img { 
+  display: block; margin: auto;
+  -webkit-box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  -moz-box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  border:8px #fff solid;
+}
+
+.logo {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAABUCAYAAAB0vcXQAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo3NDdFMDk3OUI5RDAxMUUzQjcyMEQwMkNEMDNCMDZDMyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo3NDdFMDk3QUI5RDAxMUUzQjcyMEQwMkNEMDNCMDZDMyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjc0N0UwOTc3QjlEMDExRTNCNzIwRDAyQ0QwM0IwNkMzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjc0N0UwOTc4QjlEMDExRTNCNzIwRDAyQ0QwM0IwNkMzIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+geuh4wAAEFNJREFUeNrsnXm0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');
+  background-size: 12em;
+  background-repeat: no-repeat;
+/*  width: 900px; */
+  width: 450px;
+  height: 100px;
+  position: absolute;
+  bottom: 0px;
+  color: #fff;
+}
+
+p.copyright {
+  float: right;
+  width: 450px;
+  height: 100px;
+  left: 450px;
+  position: absolute;
+  bottom: 0px;
+  font-size: 0.8em;
+}
+
+/* Progress bar */
+
+img.progress {
+  display: block; margin: auto;
+  box-shadow: 0px 0px 0px 0px;
+  border:0px;
+}
+
+table.progress {
+  position: absolute;
+  bottom: 70px;
+  width: 94%;
+}
+
+section img.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+section img.align-right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+section img.align-left {
+  display: block;
+  margin-right: auto;
+  margin-left: 0;
+}
+
+a {
+  color: inherit;
+  display: inline-block;
+  text-decoration: none;
+  line-height: 110%;
+  border-bottom: 2px solid #3f3f3f;
+}
+
+pre, .gist .gist-file .gist-data {
+/*  font-size: 0.8em; */
+  color:#28B2E7; /* Sean bright blue */
+  font-weight:100;
+/*  line-height:1.6em; */
+  font-size: 1.5em;
+  line-height:1.8em;
+/* 
+  font-size: 18px;
+  max-height: 485px;
+*/
+  padding-top: 0.25em !important;
+  padding-right: 0.5em !important;
+  padding-left: 0.5em !important;
+  overflow: auto;
+}
+
+pre, code, tt {
+  font-family: Monaco, Consolas, 'Bitstream Vera Sans Mono', 'Lucida Console', FreeMono, Courier, monospace;
+  font-size: 1.0em;
+}
+
+
+.sidebar strong {
+  color: black;
+}
+
+strong {
+  color:#6CC0F0;/* Sean light blue */
+}
+
+ul li ul li {
+  color:#99BFD8;/* Sean light grey-blue */
+  font-size:0.8em;
+}
+
+/* render a nice scrollbar in overflowed pre areas */
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: -webkit-gradient(linear, left bottom, left top, from(#777), to(#bbd));
+  -webkit-border-radius: 1ex;
+}
+::-webkit-scrollbar-corner {
+  background: #dedede;
+}
+
+blockquote {
+  border-left: solid 8px #778;
+  padding: .1ex 1ex;
+  font-style: italic;
+}
+
+li {
+  padding: 8px 0;
+/*  font-size: 20px;
+  font-size: 1.0em; Sean */
+  font-size: 1.5em;
+}
+
+li pre { margin-left: 0em; }
+
+.slide header:only-child h1 {
+  line-height: 180%;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+  height: 700px;
+  width: 900px;
+  font-size: 50px;
+  margin-top:100px;
+  margin-bottom:100px;
+}
+
+.slide.center_title_slide header:only-child h2 {
+  font-family: 'Maven Pro', Verdana, sans-serif;
+  color:#fff;
+  text-shadow: rgba(0, 0, 0, 0.5) 0 2px 3px;
+  line-height: 180%;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+  height: 700px;
+  width: 900px;
+/*  font-size: 50px; */
+  font-size: 3em;
+  margin-top:100px;
+  margin-bottom:100px;
+}
+
+.sidebar {
+  clear: both;
+  background: -webkit-gradient(linear, top right, bottom right, from(#dde), to(#fff));
+  -webkit-transition: margin 0.25s ease-in-out;
+  background-color: #eee;
+  background: -moz-linear-gradient(right, #dde, #fff);
+  border-right: 5px solid #ccd;
+  z-index: 9999999;
+  height: 100%;
+  overflow: hidden;
+  top: 0;
+  position: absolute;
+  display: block;
+  margin: 0;
+  margin-left: -400px;
+  padding: 10px 16px;
+  overflow: auto;
+  -webkit-transition: margin 0.2s ease-in-out;
+  -moz-transition: margin 0.2s ease-in-out;
+  -o-transition: margin 0.2s ease-in-out;
+}
+
+.sidebar h2 {
+  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.sidebar table {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-collapse: collapse;
+}
+
+.sidebar table caption {
+  display: none;
+}
+
+.sidebar tr {
+  margin: 2px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.sidebar th {
+  text-align: left;
+  font-weight: bold;
+  max-width: 300px;
+  overflow: hidden;
+}
+
+.sidebar tr.sub th {
+/*  text-indent: 20px; */
+  padding-left: 20px;
+  font-weight: normal;
+}
+
+.sidebar td {
+  text-align: right;
+  min-width: 20px;
+}
+
+.sidebar a {
+  display: block;
+  text-decoration: none;
+  border-bottom: none;
+  padding: 4px 0;
+}
+
+.sidebar tr.active {
+  background: #ff0;
+}
+
+aside {
+  display: none;
+}
+  aside.source {
+    position: absolute;
+    bottom: 6px;
+    left: 10px;
+    text-indent: 10px;
+  }
+  aside.page_number {
+    position: absolute;
+    bottom: 6px;
+    right: 10px;
+    text-indent: 10px;
+    color: white;
+  }
+
+.notes {
+  display: none;
+  padding: 10px;
+  background: #ccc;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+}
+div.slide p.notes {
+  font-size: 90%;
+}
+
+/* Pygments default theme */
+.hll { background-color: #ffffcc }
+.c   { color: #408080; font-style: italic } /* Comment */
+.err { border: 1px solid #FF0000 } /* Error */
+.k  { color: #008000; font-weight: bold } /* Keyword */
+.o  { color: #666666 } /* Operator */
+.cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.cp { color: #BC7A00 } /* Comment.Preproc */
+.c1 { color: #408080; font-style: italic } /* Comment.Single */
+.cs { color: #408080; font-style: italic } /* Comment.Special */
+.gd { color: #A00000 } /* Generic.Deleted */
+.ge { font-style: italic } /* Generic.Emph */
+.gr { color: #FF0000 } /* Generic.Error */
+.gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.gi { color: #00A000 } /* Generic.Inserted */
+.go { color: #808080 } /* Generic.Output */
+.gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.gs { font-weight: bold } /* Generic.Strong */
+.gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.gt { color: #0040D0 } /* Generic.Traceback */
+.kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.kp { color: #008000 } /* Keyword.Pseudo */
+.kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.kt { color: #B00040 } /* Keyword.Type */
+.m  { color: #666666 } /* Literal.Number */
+.s  { color: #BA2121 } /* Literal.String */
+.na { color: #7D9029 } /* Name.Attribute */
+.nb { color: #008000 } /* Name.Builtin */
+/*.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.nc { color: #FFFFFF; font-weight: bold } /* Name.Class */
+.no { color: #880000 } /* Name.Constant */
+.nd { color: #AA22FF } /* Name.Decorator */
+.ni { color: #999999; font-weight: bold } /* Name.Entity */
+.ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+/*.nf { color: #0000FF } /* Name.Function */
+.nf { color: #FFFFFF } /* Name.Function */
+.nl { color: #A0A000 } /* Name.Label */
+/*.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.nn { color: #FFFFFF; font-weight: bold } /* Name.Namespace */
+.nt { color: #008000; font-weight: bold } /* Name.Tag */
+.nv { color: #19177C } /* Name.Variable */
+.ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.w  { color: #bbbbbb } /* Text.Whitespace */
+.mf { color: #666666 } /* Literal.Number.Float */
+.mh { color: #666666 } /* Literal.Number.Hex */
+.mi { color: #666666 } /* Literal.Number.Integer */
+.mo { color: #666666 } /* Literal.Number.Oct */
+.sb { color: #BA2121 } /* Literal.String.Backtick */
+.sc { color: #BA2121 } /* Literal.String.Char */
+.sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.s2 { color: #BA2121 } /* Literal.String.Double */
+.se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.sh { color: #BA2121 } /* Literal.String.Heredoc */
+.si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.sx { color: #008000 } /* Literal.String.Other */
+.sr { color: #BB6688 } /* Literal.String.Regex */
+.s1 { color: #BA2121 } /* Literal.String.Single */
+.ss { color: #19177C } /* Literal.String.Symbol */
+.bp { color: #008000 } /* Name.Builtin.Pseudo */
+.vc { color: #19177C } /* Name.Variable.Class */
+.vg { color: #19177C } /* Name.Variable.Global */
+.vi { color: #19177C } /* Name.Variable.Instance */
+.il { color: #666666 } /* Literal.Number.Integer.Long */
+.lineno { padding-right: 10px } /* A few space after linenos */
+
+#blank {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: black;
+  width: 100%;
+  height: 100%;
+  z-index: 64;
+  display: none;
+}
+
+    </style>
+    
+    
+    <!-- /Styles -->
+    <!-- Javascripts -->
+    
+    <script>
+      var setBlank = function(state) {
+        blank_elem = document.getElementById('blank');
+        blank_elem.style.display = state ? 'block' : 'none';
+        blanked = state;
+};
+
+function main() {
+    // Since we don't have the fallback of attachEvent and
+    // other IE only stuff we won't try to run JS for IE.
+    // It will run though when using Google Chrome Frame
+    if (document.all) { return; }
+
+        setBlank(true);
+    var currentSlideNo;
+    var notesOn = false;
+    var expanded = false;
+    var hiddenContext = true;
+    var blanked = true;
+    var slides = document.getElementsByClassName('slide');
+    var touchStartX = 0;
+    var spaces = /\s+/, a1 = [''];
+    var tocOpened = false;
+    var helpOpened = false;
+    var overviewActive = false;
+    var modifierKeyDown = false;
+    var scale = 1;
+    var showingPresenterView = false;
+    var presenterViewWin = null;
+    var isPresenterView = false;
+
+    var str2array = function(s) {
+        if (typeof s == 'string' || s instanceof String) {
+            if (s.indexOf(' ') < 0) {
+                a1[0] = s;
+                return a1;
+            } else {
+                return s.split(spaces);
+            }
+        }
+        return s;
+    };
+
+    var trim = function(str) {
+        return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+    };
+
+    var addClass = function(node, classStr) {
+        classStr = str2array(classStr);
+        var cls = ' ' + node.className + ' ';
+        for (var i = 0, len = classStr.length, c; i < len; ++i) {
+            c = classStr[i];
+            if (c && cls.indexOf(' ' + c + ' ') < 0) {
+                cls += c + ' ';
+            }
+        }
+        node.className = trim(cls);
+    };
+
+    var removeClass = function(node, classStr) {
+        var cls;
+        if (!node) {
+            throw 'no node provided';
+        }
+        if (classStr !== undefined) {
+            classStr = str2array(classStr);
+            cls = ' ' + node.className + ' ';
+            for (var i = 0, len = classStr.length; i < len; ++i) {
+                cls = cls.replace(' ' + classStr[i] + ' ', ' ');
+            }
+            cls = trim(cls);
+        } else {
+            cls = '';
+        }
+        if (node.className != cls) {
+            node.className = cls;
+        }
+    };
+
+    var getSlideEl = function(slideNo) {
+        if (slideNo > 0) {
+            return slides[slideNo - 1];
+        } else {
+            return null;
+        }
+    };
+
+    var getSlideTitle = function(slideNo) {
+        var el = getSlideEl(slideNo);
+        if (el) {
+            var headers = el.getElementsByTagName('header');
+            if (headers.length > 0) {
+                return el.getElementsByTagName('header')[0].innerText;
+            }
+        }
+        return null;
+    };
+
+    var getSlidePresenterNote = function(slideNo) {
+        var el = getSlideEl(slideNo);
+        if (el) {
+            var n = el.getElementsByClassName('presenter_notes');
+            if (n.length > 0) {
+                return n[0];
+            }
+        }
+        return null;
+    };
+
+    var changeSlideElClass = function(slideNo, className) {
+        var el = getSlideEl(slideNo);
+        if (el) {
+            removeClass(el, 'far-past past current future far-future');
+            addClass(el, className);
+        }
+    };
+
+    var updateSlideClasses = function(updateOther) {
+        window.location.hash = (isPresenterView ? "presenter" : "slide") + currentSlideNo;
+
+        for (var i=1; i<currentSlideNo-1; i++) {
+            changeSlideElClass(i, 'far-past');
+        }
+
+        changeSlideElClass(currentSlideNo - 1, 'past');
+        changeSlideElClass(currentSlideNo, 'current');
+        changeSlideElClass(currentSlideNo + 1, 'future');
+
+        for (i=currentSlideNo+2; i<slides.length+1; i++) {
+            changeSlideElClass(i, 'far-future');
+        }
+
+        highlightCurrentTocLink();
+
+        processContext();
+
+        document.getElementsByTagName('title')[0].innerText = getSlideTitle(currentSlideNo);
+
+        updatePresenterNotes();
+
+        if (updateOther) { updateOtherPage(); }
+    };
+
+    var updatePresenterNotes = function() {
+        if (!isPresenterView) { return; }
+
+        var existingNote = document.getElementById('current_presenter_notes');
+        var currentNote = getSlidePresenterNote(currentSlideNo).cloneNode(true);
+        currentNote.setAttribute('id', 'presenter_note');
+
+        existingNote.replaceChild(currentNote, document.getElementById('presenter_note'));
+    };
+
+    var highlightCurrentTocLink = function() {
+        var toc = document.getElementById('toc');
+
+        if (toc) {
+            var tocRows = toc.getElementsByTagName('tr');
+            for (var i=0; i<tocRows.length; i++) {
+                removeClass(tocRows.item(i), 'active');
+            }
+
+            var currentTocRow = document.getElementById('toc-row-' + currentSlideNo);
+            if (currentTocRow) {
+                addClass(currentTocRow, 'active');
+            }
+        }
+    };
+
+    var updateOtherPage = function() {
+        if (!showingPresenterView) { return; }
+
+        var w = isPresenterView ? window.opener : presenterViewWin;
+        w.postMessage('slide#' + currentSlideNo, '*');
+    };
+
+    var nextSlide = function() {
+        if (currentSlideNo < slides.length) {
+            currentSlideNo++;
+        }
+        updateSlideClasses(true);
+    };
+
+    var prevSlide = function() {
+        if (currentSlideNo > 1) {
+            currentSlideNo--;
+        }
+        updateSlideClasses(true);
+    };
+
+    var firstSlide = function() {
+        currentSlideNo = 1;
+        updateSlideClasses(true);
+    };
+
+    var lastSlide = function() {
+        currentSlideNo = slides.length;
+        updateSlideClasses(true);
+    };
+
+    var showNotes = function() {
+        var notes = getSlideEl(currentSlideNo).getElementsByClassName('notes');
+        for (var i = 0, len = notes.length; i < len; i++) {
+            notes.item(i).style.display = (notesOn) ? 'none':'block';
+        }
+        notesOn = !notesOn;
+    };
+
+    var showSlideNumbers = function() {
+        var asides = document.getElementsByClassName('page_number');
+        var hidden = asides[0].style.display != 'block';
+        for (var i = 0; i < asides.length; i++) {
+            asides.item(i).style.display = hidden ? 'block' : 'none';
+        }
+    };
+
+    var showSlideSources = function() {
+        var asides = document.getElementsByClassName('source');
+        var hidden = asides[0].style.display != 'block';
+        for (var i = 0; i < asides.length; i++) {
+            asides.item(i).style.display = hidden ? 'block' : 'none';
+        }
+    };
+
+    var showToc = function() {
+        if (helpOpened) {
+                showHelp();
+        }
+        var toc = document.getElementById('toc');
+        if (toc) {
+            toc.style.marginLeft = tocOpened ? '-' + (toc.clientWidth + 20) + 'px' : '0px';
+            tocOpened = !tocOpened;
+        }
+        updateOverview();
+    };
+
+    var showHelp = function() {
+        if (tocOpened) {
+                showToc();
+        }
+
+        var help = document.getElementById('help');
+
+        if (help) {
+            help.style.marginLeft = helpOpened ? '-' + (help.clientWidth + 20) + 'px' : '0px';
+            helpOpened = !helpOpened;
+        }
+    };
+
+    var showPresenterView = function() {
+        if (isPresenterView) { return; }
+
+        if (showingPresenterView) {
+            presenterViewWin.close();
+            presenterViewWin = null;
+            showingPresenterView = false;
+        } else {
+            presenterViewWin = open(window.location.pathname + "#presenter" + currentSlideNo, 'presenter_notes',
+                                                                    'directories=no,location=no,toolbar=no,menubar=no,copyhistory=no');
+            showingPresenterView = true;
+        }
+    };
+
+    var switch3D = function() {
+        if (document.body.className.indexOf('three-d') == -1) {
+            document.getElementsByClassName('presentation')[0].style.webkitPerspective = '1000px';
+            document.body.className += ' three-d';
+        } else {
+            window.setTimeout('document.getElementsByClassName(\'presentation\')[0].style.webkitPerspective = \'0\';', 2000);
+            document.body.className = document.body.className.replace(/three-d/, '');
+        }
+    };
+
+    var toggleOverview = function() {
+        if (!overviewActive) {
+            addClass(document.body, 'expose');
+            overviewActive = true;
+            setScale(1);
+        } else {
+            removeClass(document.body, 'expose');
+            overviewActive = false;
+            if (expanded) {
+                setScale(scale);    // restore scale
+            }
+        }
+        processContext();
+        updateOverview();
+    };
+
+    var updateOverview = function() {
+        try {
+            var presentation = document.getElementsByClassName('presentation')[0];
+        } catch (e) {
+            return;
+        }
+
+        if (isPresenterView) {
+            var action = overviewActive ? removeClass : addClass;
+            action(document.body, 'presenter_view');
+        }
+
+        var toc = document.getElementById('toc');
+
+        if (!toc) {
+            return;
+        }
+
+        if (!tocOpened || !overviewActive) {
+            presentation.style.marginLeft = '0px';
+            presentation.style.width = '100%';
+        } else {
+            presentation.style.marginLeft = toc.clientWidth + 'px';
+            presentation.style.width = (presentation.clientWidth - toc.clientWidth) + 'px';
+        }
+    };
+
+    var computeScale = function() {
+        var cSlide = document.getElementsByClassName('current')[0];
+        var sx = cSlide.clientWidth / window.innerWidth;
+        var sy = cSlide.clientHeight / window.innerHeight;
+        return 1 / Math.max(sx, sy);
+    };
+
+    var setScale = function(scale) {
+        var presentation = document.getElementsByClassName('slides')[0];
+        var transform = 'scale(' + scale + ')';
+        presentation.style.MozTransform = transform;
+        presentation.style.WebkitTransform = transform;
+        presentation.style.OTransform = transform;
+        presentation.style.msTransform = transform;
+        presentation.style.transform = transform;
+    };
+
+    // Find the right method, call on correct element
+    var launchFullScreen = function(element) {
+      if (!expanded) {
+        expandSlides();
+      }
+      if(element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if(element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if(element.webkitRequestFullscreen) {
+        // Chrome allows this method keyboard input
+        element.webkitRequestFullscreen();
+      } else if(element.webkitRequestFullScreen) {
+        element.webkitRequestFullScreen();
+      } else if(element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+      }
+    };
+
+    var expandSlides = function() {
+        if (overviewActive) {
+            return;
+        }
+        if (expanded) {
+            setScale(1);
+            expanded = false;
+        } else {
+            scale = computeScale();
+            setScale(scale);
+            expanded = true;
+        }
+    };
+
+    var showContext = function() {
+        try {
+            var presentation = document.getElementsByClassName('slides')[0];
+            removeClass(presentation, 'nocontext');
+        } catch (e) {}
+    };
+
+    var hideContext = function() {
+        try {
+            var presentation = document.getElementsByClassName('slides')[0];
+            addClass(presentation, 'nocontext');
+        } catch (e) {}
+    };
+
+    var processContext = function() {
+        if (hiddenContext) {
+            hideContext();
+        } else {
+            showContext();
+        }
+    };
+
+    var toggleContext = function() {
+        hiddenContext = !hiddenContext;
+        processContext();
+    };
+
+    var toggleBlank = function() {
+        blank_elem = document.getElementById('blank');
+
+        blank_elem.style.display = blanked ? 'none' : 'block';
+
+        blanked = !blanked;
+    };
+
+//     var setBlank = function(state) {
+//         blank_elem = document.getElementById('blank');
+//         blank_elem.style.display = state ? 'block' : 'none';
+//         blanked = state;
+//     };
+
+    var isModifierKey = function(keyCode) {
+        switch (keyCode) {
+            case 16: // shift
+            case 17: // ctrl
+            case 18: // alt
+            case 91: // command
+                return true;
+                break;
+            default:
+                return false;
+                break;
+        }
+    };
+
+    var checkModifierKeyUp = function(event) {
+        if (isModifierKey(event.keyCode)) {
+            modifierKeyDown = false;
+        }
+    };
+
+    var checkModifierKeyDown = function(event) {
+        if (isModifierKey(event.keyCode)) {
+            modifierKeyDown = true;
+        }
+    };
+
+    var handleBodyKeyDown = function(event) {
+        switch (event.keyCode) {
+            case 13: // Enter
+                if (overviewActive) {
+                    toggleOverview();
+                }
+                break;
+            case 33: // page up
+//            case 38: // up arrow
+                event.preventDefault();
+                firstSlide();
+                break;
+            case 37: // left arrow
+            case 38: // up arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        firstSlide();
+                } else {
+                        prevSlide();                
+                }
+                break;
+            case 39: // right arrow
+            case 40: // down arrow
+                event.preventDefault();
+                if (modifierKeyDown) {
+                        lastSlide();
+                } else {
+                        nextSlide();
+                }
+                break;
+//            case 40: // down arrow
+            case 34: // page down
+                event.preventDefault();
+                lastSlide();
+                break;
+            case 32: // space
+                event.preventDefault();
+                if (!modifierKeyDown) {
+                        nextSlide();
+                } else {
+                        prevSlide();                
+                }
+                break;
+            case 49: // 1
+                if ( !modifierKeyDown && !overviewActive) {
+                    showSlideNumbers();
+                }
+                break;
+            case 51: // 3
+                if (!modifierKeyDown && !overviewActive) {
+                    switch3D();
+                }
+                break;
+            case 190: // .
+            case 48: // 0
+            case 66: // b
+                if (!modifierKeyDown && !overviewActive) {
+                    toggleBlank();
+                }
+                break;
+            case 67: // c
+                if (!modifierKeyDown && !overviewActive) {
+                    toggleContext();
+                }
+                break;
+            case 69: // e
+                toggleOverview();
+                break;
+            case 70: // f
+                if (!modifierKeyDown && !overviewActive) {
+                    launchFullScreen(document.documentElement);
+                }
+               break;
+            case 72: // h
+                if ( !modifierKeyDown && !overviewActive) {
+                    showHelp();
+                }
+                break;
+            case 78: // n
+                if (!modifierKeyDown) {
+                        showNotes();
+                }
+                break;
+            case 80: // p
+                if (!modifierKeyDown && !overviewActive) {
+                    showPresenterView();
+                }
+                break;
+            case 83: // s
+                if (!modifierKeyDown && !overviewActive) {
+                    showSlideSources();
+                }
+                break;
+            case 84: // t
+                showToc();
+                break;
+            case 87: // w
+                if (!modifierKeyDown && !overviewActive) {
+                    expandSlides();
+                }
+                break;
+        }
+    };
+
+    var handleWheel = function(event) {
+        if (tocOpened || helpOpened || overviewActive) {
+            return;
+        }
+
+        var delta = 0;
+
+        if (!event) {
+            event = window.event;
+        }
+
+        if (event.wheelDelta) {
+            delta = event.wheelDelta/120;
+            if (window.opera) delta = -delta;
+        } else if (event.detail) {
+            delta = -event.detail/3;
+        }
+
+        if (delta && delta <0) {
+            nextSlide();
+        } else if (delta) {
+            prevSlide();
+        }
+    };
+
+    var addSlideClickListeners = function() {
+        for (var i=0; i < slides.length; i++) {
+            var slide = slides.item(i);
+            slide.num = i + 1;
+            slide.addEventListener('click', function(e) {
+                if (overviewActive) {
+                    currentSlideNo = this.num;
+                    toggleOverview();
+                    updateSlideClasses(true);
+                    e.preventDefault();
+                }
+                return false;
+            }, true);
+        }
+    };
+
+    var addRemoteWindowControls = function() {
+        window.addEventListener("message", function(e) {
+            if (e.data.indexOf("slide#") != -1) {
+                    currentSlideNo = Number(e.data.replace('slide#', ''));
+                    updateSlideClasses(false);
+            }
+        }, false);
+    };
+
+    var addTouchListeners = function() {
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].pageX;
+        }, false);
+        document.addEventListener('touchend', function(e) {
+            var pixelsMoved = touchStartX - e.changedTouches[0].pageX;
+            var SWIPE_SIZE = 150;
+            if (pixelsMoved > SWIPE_SIZE) {
+                nextSlide();
+            }
+            else if (pixelsMoved < -SWIPE_SIZE) {
+             prevSlide();
+            }
+        }, false);
+    };
+
+    var addTocLinksListeners = function() {
+        var toc = document.getElementById('toc');
+        if (toc) {
+            var tocLinks = toc.getElementsByTagName('a');
+            for (var i=0; i < tocLinks.length; i++) {
+                tocLinks.item(i).addEventListener('click', function(e) {
+                    currentSlideNo = Number(this.attributes['href'].value.replace('#slide', ''));
+                    updateSlideClasses(true);
+                    e.preventDefault();
+                }, true);
+            }
+        }
+    };
+
+    // initialize
+
+    (function() {
+        if (window.location.hash == "") {
+            currentSlideNo = 1;
+        } else if (window.location.hash.indexOf("#presenter") != -1) {
+            currentSlideNo = Number(window.location.hash.replace('#presenter', ''));
+            isPresenterView = true;
+            showingPresenterView = true;
+            presenterViewWin = window;
+            addClass(document.body, 'presenter_view');
+        } else {
+            currentSlideNo = Number(window.location.hash.replace('#slide', ''));
+        }
+
+        document.addEventListener('keyup', checkModifierKeyUp, false);
+        document.addEventListener('keydown', handleBodyKeyDown, false);
+        document.addEventListener('keydown', checkModifierKeyDown, false);
+        document.addEventListener('DOMMouseScroll', handleWheel, false);
+
+        window.onmousewheel = document.onmousewheel = handleWheel;
+        window.onresize = expandSlides;
+
+        for (var i = 0, el; el = slides[i]; i++) {
+            addClass(el, 'slide far-future');
+        }
+        updateSlideClasses(false);
+
+        // add support for finger events (filter it by property detection?)
+        addTouchListeners();
+
+        addTocLinksListeners();
+
+        addSlideClickListeners();
+
+        addRemoteWindowControls();
+        
+        setBlank(false);
+//         var first = document.getElementsByClassName('slides')[0];
+//         first.style.display = 'block';
+        document.getElementById('display-slides-container').style.display = "block";
+        if (!showingPresenterView) {
+            expandSlides();
+            hideContext();
+        }
+    })();
+}
+
+    </script>
+    
+    
+    <!-- /Javascripts -->
+</head>
+<body>
+  <div id="blank"></div>
+  <div class="presentation">
+    <div id="current_presenter_notes">
+      <div id="presenter_note"></div>
+    </div>
+    <div class="slides" id="display-slides-container" style="display: none">
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Introduction to MapReduce and Workflows</h1></header>
+            
+            
+            <section><table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              1/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Objectives</h1></header>
+            
+            
+            <section><p>In this module, you will learn about:</p>
+<ul class="simple">
+<li>MapReduce and Workflows</li>
+<li>Configuring MapReduce jobs</li>
+<li>Mapping and reducing</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              2/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>MapReduce and Workflows</h1></header>
+            
+            
+            <section><p><strong>MapReduce</strong> is used to process data in batch</p>
+<ul class="simple">
+<li>MapReduce jobs can be written as in a conventional Hadoop system</li>
+<li>Additionally, Reactor <strong>DataSets</strong> can be accessed from MapReduce jobs as both input and output</li>
+</ul>
+<p><strong>Workflows</strong> are used to execute a series of MapReduce jobs</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>MapReduce in an Application</h1></header>
+            
+            
+            <section><p>To process data using MapReduce, specify <tt class="docutils literal">withMapReduce()</tt> in your
+Application specification:</p>
+<pre class="literal-block">
+public ApplicationSpecification configure() {
+return ApplicationSpecification.Builder.with()
+   ...
+   .withMapReduce()
+     .add(new WordCountJob())
+   ...
+</pre>
+<p>You must implement the <tt class="docutils literal">MapReduce</tt> interface, which requires the
+implementation of three methods:</p>
+<ul class="simple">
+<li><tt class="docutils literal">configure()</tt></li>
+<li><tt class="docutils literal">beforeSubmit()</tt></li>
+<li><tt class="docutils literal">onFinish()</tt></li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>configure() method</h1></header>
+            
+            
+            <section><pre class="literal-block">
+public class WordCountJob implements MapReduce {
+  &#64;Override
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+      .setName(&quot;WordCountJob&quot;)
+      .setDescription(&quot;Calculates word frequency&quot;)
+      .useInputDataSet(&quot;messages&quot;)
+      .useOutputDataSet(&quot;wordFrequency&quot;)
+      .build();
+  }
+</pre>
+<ul class="simple">
+<li>Configure method similar to the one found in Flow and Application</li>
+<li>Defines the name and description of the MapReduce job</li>
+<li>Can also specify DataSets to be used as input or output for the job</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>beforeSubmit() method</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Invoked at runtime, before the MapReduce job is executed</li>
+<li>Passed an instance of the <tt class="docutils literal">MapReduceContext</tt></li>
+<li>Provides access to the actual Hadoop job configuration, as though you were
+running the MapReduce job directly on Hadoop</li>
+</ul>
+<p>For example, you can specify the Mapper and Reducer classes as
+well as the intermediate data format:</p>
+<pre class="literal-block">
+&#64;Override
+public void beforeSubmit(MapReduceContext context) throws Exception {
+  Job job = context.getHadoopJob();
+  job.setMapperClass(TokenizerMapper.class);
+  job.setReducerClass(IntSumReducer.class);
+  job.setMapOutputKeyClass(Text.class);
+  job.setMapOutputValueClass(IntWritable.class);
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>onFinish() method</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Invoked after the MapReduce job has finished</li>
+<li>Can perform cleanup or send a notification of job completion, if required:</li>
+</ul>
+<pre class="literal-block">
+private static final Logger LOG = LoggerFactory.getLogger(MyMapReduce.class);
+
+&#64;Override
+public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+  LOG.info(&quot;Action taken on MapReduce job &quot; +
+                       (succeeded ? &quot;&quot; : &quot;un&quot;) + &quot;successful completion&quot;);
+}
+</pre>
+<ul class="simple">
+<li>Because many MapReduce jobs do not need this method, the <tt class="docutils literal">AbstractMapReduce</tt>
+class provides a default implementation that does nothing:</li>
+</ul>
+<pre class="literal-block">
+&#64;Override
+public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+  // do nothing
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mapping and Reducing (1 of 2)</h1></header>
+            
+            
+            <section><p>Continuuity Reactor <tt class="docutils literal">Mapper</tt> and <tt class="docutils literal">Reducer</tt> implement the standard Hadoop APIs:</p>
+<pre class="literal-block">
+public static class TokenizerMapper
+    extends Mapper&lt;byte[], byte[], Text, IntWritable&gt; {
+
+  private final static IntWritable one = new IntWritable(1);
+  private Text word = new Text();
+  public void map(byte[] key, byte[] value, Context context)
+      throws IOException, InterruptedException {
+    StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
+    while (itr.hasMoreTokens()) {
+      word.set(itr.nextToken());
+      context.write(word, one);
+    }
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mapping and Reducing (2 of 2)</h1></header>
+            
+            
+            <section><pre class="literal-block">
+public static class IntSumReducer
+    extends Reducer&lt;Text, IntWritable, byte[], byte[]&gt; {
+
+  public void reduce(Text key, Iterable&lt;IntWritable&gt; values, Context context)
+      throws IOException, InterruptedException {
+    int sum = 0;
+    for (IntWritable val : values) {
+      sum += val.get();
+    }
+    context.write(key.copyBytes(), Bytes.toBytes(sum));
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Summary</h1></header>
+            
+            
+            <section><p>You should be able describe:</p>
+<ul class="simple">
+<li>Describe the difference between MapReduce and Workflows</li>
+<li>Configure a MapReduce job</li>
+<li>Implement mapping and reducing</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Module Completed</h1></header>
+            
+            
+            <section><p><a class="reference external" href="return.html#m22">Chapter Index</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../modules/m22_mapreduce_workflows.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              11/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <div id="toc" class="sidebar hidden">
+    <h2>Table of Contents</h2>
+    <table>
+      <caption>Table of Contents</caption>
+      
+      <tr id="toc-row-1">
+        <th><a href="#slide1">Introduction to MapReduce and Workflows</a></th>
+        <td><a href="#slide1">1</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-2">
+        <th><a href="#slide2">Module Objectives</a></th>
+        <td><a href="#slide2">2</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-3">
+        <th><a href="#slide3">MapReduce and Workflows</a></th>
+        <td><a href="#slide3">3</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-4">
+        <th><a href="#slide4">MapReduce in an Application</a></th>
+        <td><a href="#slide4">4</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-5">
+        <th><a href="#slide5">configure() method</a></th>
+        <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">beforeSubmit() method</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">onFinish() method</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Mapping and Reducing (1 of 2)</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Mapping and Reducing (2 of 2)</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Module Summary</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">Module Completed</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+    </table>
+  </div>
+  
+  <div id="help" class="sidebar hidden">
+    <h2>Help</h2>
+    <table>
+      <caption>Help</caption>
+      <tr>
+        <th>Table of Contents</th>
+        <td>t</td>
+      </tr>
+      <tr>
+        <th>Exposé</th>
+        <td>e</td>
+      </tr>
+      <tr>
+        <th>Full Window Slides</th>
+        <td>w</td>
+      </tr>
+      <tr>
+        <th>Full Screen Slides</th>
+        <td>f</td>
+      </tr>
+      <tr>
+        <th>Presenter View</th>
+        <td>p</td>
+      </tr>
+      <tr>
+        <th>Source Files</th>
+        <td>s</td>
+      </tr>
+      <tr>
+        <th>Slide Numbers</th>
+        <td>1</td>
+      </tr>
+      <tr>
+        <th>Screen Blanking</th>
+        <td>b</td>
+      </tr>
+      <tr>
+        <th>Slide Context</th>
+        <td>c</td>
+      </tr>
+      <tr>
+        <th>Notes</th>
+        <td>n</td>
+      </tr>
+      <tr>
+        <th>First Slide</th>
+        <td>Shift-Up/Left Arrows</td>
+      </tr>
+      <tr>
+        <th>Previous Slide</th>
+        <td>Shift-Spacebar or Up/Left Arrows</td>
+      </tr>
+      <tr>
+        <th>Next Slide</th>
+        <td>Spacebar or Down/Right Arrows</td>
+      </tr>
+      <tr>
+        <th>Last Slide</th>
+        <td>Shift-Down/Right Arrows</td>
+      </tr>
+      <tr>
+        <th>Toggle Help</th>
+        <td>h</td>
+      </tr>
+    </table>
+  </div>
+  <script>main()</script>
+</body>
+</html>

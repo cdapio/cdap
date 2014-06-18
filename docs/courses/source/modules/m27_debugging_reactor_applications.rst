@@ -5,15 +5,21 @@ Debugging Reactor Applications
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -201,7 +207,7 @@ Attaching a Debugger: IntelliJ (1 of 4)
 2. Click ``+`` and choose ``Remote Configuration``:
 
 .. image:: ../../../developer-guide/source/_images/IntelliJ_1.png
-   :height: 400px
+   :width: 60%
 
 ----
 
@@ -220,7 +226,7 @@ Attaching a Debugger: IntelliJ (3 of 4)
 5. Enter the debugging port, for example, ``5005`` in the Port field:
 
 .. image:: ../../../developer-guide/source/_images/IntelliJ_2.png
-   :height: 400px
+   :width: 60%
 
 ----
 
@@ -231,7 +237,7 @@ Attaching a Debugger: IntelliJ (4 of 4)
 7. Set a breakpoint in any code block, for example, a Flowlet method:
 
 .. image:: ../../../developer-guide/source/_images/IntelliJ_3.png
-   :width: 600px
+   :width: 80%
 
 8. Start the Flow in the Dashboard
 9. Send an event to the Stream
@@ -258,7 +264,7 @@ Attaching a Debugger: Eclipse (2 of 3)
 6. Click ``Debug`` to start the debugger:
 
 .. image:: ../../../developer-guide/source/_images/Eclipse_1.png
-   :height: 400px
+   :width: 70%
 
 ----
 
@@ -268,7 +274,7 @@ Attaching a Debugger: Eclipse (3 of 3)
 7. Set a breakpoint in any code block, for example, a Flowlet method:
 
 .. image:: ../../../developer-guide/source/_images/Eclipse_2.png
-   :width: 600px
+   :width: 70%
 
 8. Start the Flow in the Dashboard
 9. Send an event to the Stream
