@@ -73,8 +73,8 @@ other methods described below.
 
 LDAP Authentication
 --------------------
-You may also configure Reactor to authenticate against an LDAP instance.
-To configure LDAP authentication add these properties to ``continuuity-site.xml``:
+You can configure Reactor to authenticate against an LDAP instance by adding these
+properties to ``continuuity-site.xml``:
 
 ================================================  ===========
    Property                                         Value
@@ -162,7 +162,7 @@ authentication using LDAP::
     <value>true</value>
   </property>
 
-  <!-- SSL configuration. -->
+  <!-- SSL configuration -->
   <property>
     <name>security.server.ssl.enabled</name>
     <value>true</value>
@@ -180,7 +180,7 @@ authentication using LDAP::
     <description>Password for the SSL keystore.</description>
   </property>
 
-  <!-- LDAP configuration. -->
+  <!-- LDAP configuration -->
   <property>
     <name>security.authentication.handlerClassName</name>
     <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
@@ -232,32 +232,20 @@ Testing Security
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
-* After configuring Reactor as described above, restart the Reactor and attempt to use a service:
+- After configuring Reactor as described above, restart the Reactor and attempt to use a service::
 
-::
+	curl -v <base-url>/apps
 
-    curl -v <base-url>/apps
+- This should return a 401 Unauthorized response. Submit a username and password to obtain an ``AccessToken``::
 
-..
+	curl -v -u username:password http://<gateway>:10009
 
-* This should return a 401 Unauthorized response. Submit a username and password to obtain an ``AccessToken``:
+- This should return a 200 OK response with the ``AccessToken`` string in the response body.
+  Reattempt the first command, but this time include the ``AccessToken`` as a header in the command::
 
-::
+	curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
 
-  curl -v -u username:password http://<gateway>:10009
+- This should return a 200 OK response.
 
-..
-
-  This should return a 200 OK response with the ``AccessToken`` string in the response body.
-  Reattempt the first command, but this time include the ``AccessToken`` as a header in the command:
-
-::
-
-  curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
-
-..
-
-* This should return a 200 OK response.
-
-* Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
-  Entering the credentials should let you work with Reactor normally.
+- Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
+  Entering the credentials should let you work with the Reactor as normally.
