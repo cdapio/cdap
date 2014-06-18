@@ -66,4 +66,20 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
+
+  @Override
+  public synchronized void dropAll() throws IOException {
+    tableCreated = false;
+    HBaseAdmin admin = new HBaseAdmin(hConf);
+    try {
+      byte[] tableName = Bytes.toBytes(storeTableName);
+
+      if (admin.tableExists(tableName)) {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      }
+    } finally {
+      admin.close();
+    }
+  }
 }

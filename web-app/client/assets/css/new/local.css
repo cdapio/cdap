@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2014 Continuuity, Inc.
+ */
+
+#breadcrumb li a {
+	display: block;
+	color: white;
+	padding-right: 24px;
+	padding-left: 14px;
+	background-image: url(/assets/img/breadcrumb-split.png);
+	background-position-y: 0px;
+	background-repeat: no-repeat;
+	text-decoration: none;
+	line-height: 36px;
+	background-position-x: right;
+	letter-spacing: 0.08em;
+	font-size: 14px;
+	font-weight: 200;
+}
+
+#product-name:after {
+	letter-spacing: 0.2em;
+	content: 'Local Reactor';
+}
+
+#nav {
+	background: #062040;
+}
+#nav ul li {
+	border-bottom: none;
+}
+
+#nav ul li.overview {
+	border-top: 1px solid #324561;
+}

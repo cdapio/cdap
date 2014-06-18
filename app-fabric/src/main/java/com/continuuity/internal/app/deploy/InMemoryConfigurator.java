@@ -4,9 +4,8 @@
 
 package com.continuuity.internal.app.deploy;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationContext;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.Id;
@@ -50,7 +49,7 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * Application which needs to be configured.
    */
-  private final Application application;
+  private final com.continuuity.api.Application application;
 
   /**
    * Constructor that accepts archive file as input to invoke configure.
@@ -65,11 +64,11 @@ public final class InMemoryConfigurator implements Configurator {
   }
 
   /**
-   * Constructor that takes an {@link Application} to invoke configure.
+   * Constructor that takes an {@link com.continuuity.api.Application} to invoke configure.
    *
    * @param application instance for which configure needs to be invoked.
    */
-  public InMemoryConfigurator(Id.Account id, Application application) {
+  public InMemoryConfigurator(Id.Account id, com.continuuity.api.Application application) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(application);
     this.archive = null;
@@ -123,11 +122,11 @@ public final class InMemoryConfigurator implements Configurator {
   static final String getSpecJson(Object app) {
     // Now, we call configure, which returns application specification.
     ApplicationSpecification specification;
-    if (app instanceof Application) {
-      specification = Specifications.from(((Application) app).configure());
-    } else if (app instanceof AbstractApplication) {
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer((AbstractApplication) app);
-      ((AbstractApplication) app).configure(configurer, new ApplicationContext());
+    if (app instanceof com.continuuity.api.Application) {
+      specification = Specifications.from(((com.continuuity.api.Application) app).configure());
+    } else if (app instanceof Application) {
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer((Application) app);
+      ((Application) app).configure(configurer, new ApplicationContext());
       specification = configurer.createApplicationSpec();
     } else {
       throw new IllegalStateException(String.format("Application main class is of invalid type: %s",

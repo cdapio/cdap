@@ -6,7 +6,10 @@ package com.continuuity.data.stream.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.hooks.MetricsReporterHook;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -29,20 +32,22 @@ public final class StreamHttpService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final StreamCoordinator streamCoordinator;
   private Cancellable cancellable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                           @Named(Constants.Service.STREAM_HANDLER) Set<HttpHandler> handlers,
+                           StreamCoordinator streamCoordinator,
+                           @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
-
     this.discoveryService = discoveryService;
+    this.streamCoordinator = streamCoordinator;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = NettyHttpService.builder()
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.STREAM_HANDLER)))
+                                                                Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(0)
@@ -52,11 +57,15 @@ public final class StreamHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.STREAMS));
     httpService.startAndWait();
+
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.STREAM_HANDLER;
+        return Constants.Service.STREAMS;
       }
 
       @Override
@@ -74,6 +83,7 @@ public final class StreamHttpService extends AbstractIdleService {
       }
     } finally {
       httpService.stopAndWait();
+      streamCoordinator.close();
     }
   }
 

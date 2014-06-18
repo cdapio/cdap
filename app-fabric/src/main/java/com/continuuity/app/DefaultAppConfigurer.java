@@ -1,12 +1,15 @@
 package com.continuuity.app;
 
-import com.continuuity.api.AbstractApplication;
-import com.continuuity.api.ApplicationConfigurer;
+import com.continuuity.api.app.Application;
+import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduce;
@@ -17,15 +20,14 @@ import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.module.DatasetModule;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,15 +39,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   // TODO: to be removed after datasets API v1 is abandoned
   private final Map<String, DataSetSpecification> dataSets = Maps.newHashMap();
-  private final Map<String, String> datasetModules = Maps.newHashMap();
-  private final Map<String, DatasetInstanceCreationSpec> datasetInstances = Maps.newHashMap();
+  private final Map<String, String> dataSetModules = Maps.newHashMap();
+  private final Map<String, DatasetInstanceCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
   private final Map<String, ProcedureSpecification> procedures = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-
+  private final Map<String, TwillSpecification> services = Maps.newHashMap();
   // passed app to be used to resolve default name and description
-  public DefaultAppConfigurer(AbstractApplication app) {
+  public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
@@ -75,19 +77,38 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+  public void addDataSetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    datasetModules.put(moduleName, moduleClass.getName());
+    dataSetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
-  public void addDataSet(String datasetInstanceName, String typeName, DatasetInstanceProperties properties) {
+  public void addDataSetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public void createDataSet(String datasetInstanceName, String typeName, DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    datasetInstances.put(datasetInstanceName,
+    dataSetInstances.put(datasetInstanceName,
                          new DatasetInstanceCreationSpec(datasetInstanceName, typeName, properties));
+  }
+
+  @Override
+  public void createDataSet(String datasetInstanceName,
+                            Class<? extends Dataset> datasetClass,
+                            DatasetProperties properties) {
+
+    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
+    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    dataSetInstances.put(datasetInstanceName,
+                         new DatasetInstanceCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -130,9 +151,17 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
+  @Override
+  public void addService(TwillApplication application) {
+    Preconditions.checkNotNull(application, "Service cannot be null.");
+
+    TwillSpecification specification = application.configure();
+    services.put(specification.getName(), specification);
+  }
+
   public ApplicationSpecification createApplicationSpec() {
     return new DefaultApplicationSpecification(name, description, streams, dataSets,
-                                               datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces, workflows);
+                                               dataSetModules, dataSetInstances,
+                                               flows, procedures, mapReduces, workflows, services);
   }
 }

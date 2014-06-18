@@ -3,16 +3,20 @@ package com.continuuity.internal.migrate;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
-import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.HbaseTableTestModule;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.transport.MetricsRecord;
@@ -20,10 +24,8 @@ import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -147,18 +149,17 @@ public class MetricsTableMigrator20to21Test {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.unset(Constants.CFG_HDFS_USER);
-    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, testHBase.getConfiguration()),
-      new DataFabricDistributedModule(cConf, testHBase.getConfiguration()),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new ZKClientModule(),
+      new DataFabricDistributedModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-        }
-      }
+      new TransactionMetricsModule(),
+      new HbaseTableTestModule()
     );
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

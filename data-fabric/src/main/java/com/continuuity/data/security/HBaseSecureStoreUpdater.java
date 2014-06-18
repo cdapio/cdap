@@ -4,7 +4,6 @@
 package com.continuuity.data.security;
 
 import com.continuuity.common.conf.Constants;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.RunId;

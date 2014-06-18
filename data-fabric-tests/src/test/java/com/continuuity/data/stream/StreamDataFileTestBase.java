@@ -109,6 +109,8 @@ public abstract class StreamDataFileTestBase {
 
     final CountDownLatch writerStarted = new CountDownLatch(1);
     // Create a thread for writing 10 events, 1 event per 200 milliseconds.
+    // It pauses after writing 5 events.
+    final CountDownLatch waitLatch = new CountDownLatch(1);
     Thread writerThread = new Thread() {
       @Override
       public void run() {
@@ -122,6 +124,9 @@ public abstract class StreamDataFileTestBase {
             writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
             writer.flush();
             TimeUnit.MILLISECONDS.sleep(200);
+            if (i == 4) {
+              waitLatch.await();
+            }
           }
           writer.close();
         } catch (Exception e) {
@@ -137,8 +142,9 @@ public abstract class StreamDataFileTestBase {
     writerStarted.await();
 
     // Expect 10 events, followed by EOF.
-    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
+    Assert.assertEquals(5, reader.read(events, 5, 2000, TimeUnit.MILLISECONDS));
+    waitLatch.countDown();
+    Assert.assertEquals(5, reader.read(events, 5, 2000, TimeUnit.MILLISECONDS));
     Assert.assertEquals(-1, reader.read(events, 1, 500, TimeUnit.MILLISECONDS));
 
     Assert.assertEquals(10, events.size());
@@ -474,7 +480,7 @@ public abstract class StreamDataFileTestBase {
       public void run() {
         try {
           while (!interrupted()) {
-            FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, filePrefix);
+            FileWriter<StreamEvent> writer = createWriter(config, filePrefix);
             closeables.add(writer);
             for (int i = 0; i < 10; i++) {
               long ts = System.currentTimeMillis();
@@ -502,7 +508,7 @@ public abstract class StreamDataFileTestBase {
 
     // Creates a live stream reader that check for sequence file ever 100 millis.
     FileReader<PositionStreamEvent, StreamFileOffset> reader
-      = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation), 100);
+      = new LiveStreamFileReader(config, new StreamFileOffset(eventLocation, 0L, 0), 100);
 
     List<StreamEvent> events = Lists.newArrayList();
     // Try to read, since the writer thread is not started, it should get nothing
@@ -543,7 +549,7 @@ public abstract class StreamDataFileTestBase {
     }
 
     // Now creates a new writer to write 10 more events across two partitions with a skip one partition.
-    FileWriter<StreamEvent> writer = new TimePartitionedStreamFileWriter(config, filePrefix);
+    FileWriter<StreamEvent> writer = createWriter(config, filePrefix);
     try {
       for (int i = 0; i < 5; i++) {
         long ts = System.currentTimeMillis();
@@ -574,5 +580,11 @@ public abstract class StreamDataFileTestBase {
     for (Closeable c : closeables) {
       c.close();
     }
+  }
+
+
+  private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
+    return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
+                                               prefix, config.getIndexInterval());
   }
 }

@@ -6,6 +6,7 @@ evaluationDependsOn(':data-fabric')
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'tx-hbase-compat-0.94', version: "${version}", changing: true], "tx-hbase-compat-0.94")
     testCompile files(this.project(':data-fabric').sourceSets.test.output)
     testCompile files(this.project(':data-fabric').sourceSets.test.runtimeClasspath)
 
@@ -66,4 +67,8 @@ jar.exclude '*.xml'
 configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
+    all {
+        // Need to enforce our version of guava, otherwise some other components with newer versions may take over
+        resolutionStrategy.force libraries.google_guava
+    }
 }

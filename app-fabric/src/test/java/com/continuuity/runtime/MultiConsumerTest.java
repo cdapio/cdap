@@ -17,9 +17,10 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -164,15 +165,13 @@ public class MultiConsumerTest {
       controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
-    TimeUnit.SECONDS.sleep(4);
-
     LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = AppFabricTestHelper.getInjector().getInstance(DataSetAccessor.class);
-    DatasetManager datasetManager = AppFabricTestHelper.getInjector().getInstance(DatasetManager.class);
+    DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetManager,
+                              datasetFramework,
                               getClass().getClassLoader());
     ApplicationSpecification spec = Specifications.from(new MultiApp().configure());
     dataSetInstantiator.setDataSets(spec.getDataSets().values(), spec.getDatasets().values());
@@ -181,15 +180,27 @@ public class MultiConsumerTest {
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          byte[] value = accumulated.read(KEY);
-          // Sum(1..100) * 3
-          Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
-        }
-    });
+    // Try to get accumulated result and verify it. Expect result appear in max of 60 seconds.
+    int trial = 0;
+    while (trial < 60) {
+      try {
+        txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              byte[] value = accumulated.read(KEY);
+              // Sum(1..100) * 3
+              Assert.assertEquals(((1 + 99) * 99 / 2) * 3, Longs.fromByteArray(value));
+            }
+          });
+        break;
+      } catch (TransactionFailureException e) {
+        // No-op
+        trial++;
+        TimeUnit.SECONDS.sleep(1);
+      }
+    }
+    Assert.assertTrue(trial < 60);
 
     for (ProgramController controller : controllers) {
       controller.stop().get();

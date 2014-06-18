@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset2.lib;
 
-import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Implementation of {@link DatasetAdmin} that propagates administrative operations to the given list of
- * {@link DatasetAdmin}s
+ * {@link com.continuuity.api.dataset.DatasetAdmin}s
  */
 public class CompositeDatasetAdmin implements DatasetAdmin {
   private final List<DatasetAdmin> delegates;

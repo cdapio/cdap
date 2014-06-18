@@ -6,14 +6,17 @@ package com.continuuity.data.runtime;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.io.Locations;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TimePartitionedStreamFileWriter;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 
@@ -35,11 +38,15 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
   }
 
   @Override
-  public FileWriter<StreamEvent> create(String streamName) throws IOException {
+  public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
     try {
-      StreamConfig config = streamAdmin.getConfig(streamName);
-      Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", streamName);
-      return new TimePartitionedStreamFileWriter(config, filePrefix);
+      Preconditions.checkNotNull(config.getLocation(), "Location for stream {} is unknown.", config.getName());
+
+      Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
+      Locations.mkdirsIfNotExists(baseLocation);
+
+      return new TimePartitionedStreamFileWriter(baseLocation, config.getPartitionDuration(),
+                                                 filePrefix, config.getIndexInterval());
 
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);

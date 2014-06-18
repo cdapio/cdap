@@ -1,9 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.instance;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.data2.datafabric.dataset.AbstractObjectsStore;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
-import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,12 +25,11 @@ final class DatasetInstanceMDS extends AbstractObjectsStore {
   }
 
   @Nullable
-  public DatasetInstanceSpec get(String name) {
-    return get(getInstanceKey(name), DatasetInstanceSpec.class);
+  public DatasetSpecification get(String name) {
+    return get(getInstanceKey(name), DatasetSpecification.class);
   }
 
-  @Nullable
-  public void write(DatasetInstanceSpec instanceSpec) {
+  public void write(DatasetSpecification instanceSpec) {
     put(getInstanceKey(instanceSpec.getName()), instanceSpec);
   }
 
@@ -42,9 +41,13 @@ final class DatasetInstanceMDS extends AbstractObjectsStore {
     return true;
   }
 
-  public Collection<DatasetInstanceSpec> getAll() {
-    Map<String, DatasetInstanceSpec> instances = scan(INSTANCE_PREFIX, DatasetInstanceSpec.class);
+  public Collection<DatasetSpecification> getAll() {
+    Map<String, DatasetSpecification> instances = scan(INSTANCE_PREFIX, DatasetSpecification.class);
     return instances.values();
+  }
+
+  public void deleteAll() {
+    deleteAll(INSTANCE_PREFIX);
   }
 
   private byte[] getInstanceKey(String name) {

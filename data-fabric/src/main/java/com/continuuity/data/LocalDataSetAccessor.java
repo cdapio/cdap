@@ -10,7 +10,6 @@ import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableManager;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.util.Map;
 
@@ -22,7 +21,7 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
   private final LevelDBOcTableService service;
 
   @Inject
-  public LocalDataSetAccessor(@Named("DataSetAccessorConfig") CConfiguration conf,
+  public LocalDataSetAccessor(CConfiguration conf,
                               LevelDBOcTableService service) {
     super(conf);
     this.service = service;

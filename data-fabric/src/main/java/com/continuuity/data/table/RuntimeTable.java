@@ -19,7 +19,6 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TxConstants;
-
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -303,6 +302,12 @@ public class RuntimeTable extends Table {
   @Override
   public SplitReader<byte[], Row> createSplitReader(Split split) {
     return new TableScanner();
+  }
+
+  @Override
+  public void write(byte[] key, Put put) {
+    Preconditions.checkArgument(Bytes.equals(key, put.getRow()), "The key should be the same as row in Put");
+    put(put);
   }
 
   /**

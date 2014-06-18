@@ -1,10 +1,10 @@
 package com.continuuity.data2.dataset2.lib;
 
-import com.continuuity.internal.data.dataset.Dataset;
-import com.continuuity.internal.data.dataset.DatasetAdmin;
-import com.continuuity.internal.data.dataset.DatasetDefinition;
-import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
-import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
+import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -41,30 +41,37 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @return dataset to perform data operations
    * @throws IOException
    */
-  protected final <T extends Dataset> T getDataset(String name, Class<T> type, DatasetInstanceSpec spec)
+  protected final <T extends Dataset> T getDataset(String name, Class<T> type, DatasetSpecification spec)
     throws IOException {
 
-    return (T) delegates.get(name).getDataset(spec);
+    return (T) delegates.get(name).getDataset(spec.getSpecification(name));
+  }
+
+  protected final <T extends Dataset> T getDataset(String name, DatasetSpecification spec)
+    throws IOException {
+
+    // NOTE: by default we propagate properties to the embedded datasets
+    return (T) delegates.get(name).getDataset(spec.getSpecification(name));
   }
 
   @Override
-  public final DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties) {
-    List<DatasetInstanceSpec> specs = Lists.newArrayList();
+  public final DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    List<DatasetSpecification> specs = Lists.newArrayList();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
-      specs.add(impl.getValue().configure(impl.getKey(), properties.getProperties(impl.getKey())));
+      specs.add(impl.getValue().configure(impl.getKey(), properties));
     }
 
-    return new DatasetInstanceSpec.Builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(specs)
       .build();
   }
 
   @Override
-  public final DatasetAdmin getAdmin(DatasetInstanceSpec spec) throws IOException {
+  public final DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
     List<DatasetAdmin> admins = Lists.newArrayList();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
-      admins.add(impl.getValue().getAdmin(spec));
+      admins.add(impl.getValue().getAdmin(spec.getSpecification(impl.getKey())));
     }
 
     return new CompositeDatasetAdmin(admins);

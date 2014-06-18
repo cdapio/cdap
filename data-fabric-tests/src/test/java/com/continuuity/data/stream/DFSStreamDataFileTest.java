@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -48,8 +49,9 @@ public class DFSStreamDataFileTest extends StreamDataFileTestBase {
           bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
         }
       },
+      new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new DataFabricDistributedModule(cConf, hConf)
+      new DataFabricDistributedModule()
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);

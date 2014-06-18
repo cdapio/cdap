@@ -12,14 +12,14 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.dataset2.manager.DatasetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -80,8 +80,8 @@ public class MapReduceProgramRunnerTest {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
-    conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 1);
-    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
+    conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
+    conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = AppFabricTestHelper.getInjector(conf);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
@@ -91,10 +91,10 @@ public class MapReduceProgramRunnerTest {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
-    DatasetManager datasetManager = injector.getInstance(DatasetManager.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
-                              datasetManager,
+                              datasetFramework,
                               getClass().getClassLoader());
   }
 

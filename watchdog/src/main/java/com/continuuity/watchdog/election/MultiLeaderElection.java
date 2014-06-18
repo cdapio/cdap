@@ -103,7 +103,7 @@ public class MultiLeaderElection extends AbstractExecutionThreadService {
 
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     for (LeaderElection election : electionCancels) {
-      futures.add(election.asyncCancel());
+      futures.add(election.stop());
     }
 
     try {
@@ -142,6 +142,7 @@ public class MultiLeaderElection extends AbstractExecutionThreadService {
             executor.submit(runHandler);
           }
         });
+      election.start();
       electionCancels.add(election);
     }
   }

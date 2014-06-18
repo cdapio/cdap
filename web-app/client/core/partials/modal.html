@@ -6,7 +6,7 @@
 <div class="modal-body">{{view.body}}</div>
 <div class="modal-footer">
 {{#unless view.nocancel}}
-	<button {{action "hide" target="view" on="click"}} class="btn cancel">Cancel</button>
+	<button {{action "hide" target="view" on="click"}} class="btn btn-blank cancel">Cancel</button>
 {{/unless}}
-<button {{action "confirmed" target="view" on="click"}} class="btn okay">OK</button>
+<button {{action "confirmed" target="view" on="click"}} class="btn btn-blank okay">OK</button>
 </div>

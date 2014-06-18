@@ -7,7 +7,6 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data.file.PartitionedFileWriter;
 import com.continuuity.data.stream.TimePartitionedStreamFileWriter.TimePartition;
-import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
@@ -57,10 +56,6 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
                                          String fileNamePrefix, long indexInterval) {
     super(new StreamWriterFactory(streamLocation, partitionDuration, fileNamePrefix, indexInterval));
     this.partitionDuration = partitionDuration;
-  }
-
-  public TimePartitionedStreamFileWriter(StreamConfig config, String fileNamePrefix) {
-    this(config.getLocation(), config.getPartitionDuration(), fileNamePrefix, config.getIndexInterval());
   }
 
   @Override

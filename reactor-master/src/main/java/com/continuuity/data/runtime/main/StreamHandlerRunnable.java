@@ -11,12 +11,15 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.stream.service.StreamHttpModule;
 import com.continuuity.data.stream.service.StreamHttpService;
+import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Throwables;
@@ -54,17 +57,24 @@ public class StreamHandlerRunnable extends AbstractReactorTwillRunnable {
       // Set the instance id
       cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
 
-      injector = Guice.createInjector(new ConfigModule(cConf, hConf),
-                                      new IOModule(),
-                                      new ZKClientModule(),
-                                      new KafkaClientModule(),
-                                      new DiscoveryRuntimeModule().getDistributedModules(),
-                                      new LocationRuntimeModule().getDistributedModules(),
-                                      new MetricsClientRuntimeModule().getDistributedModules(),
-                                      new DataFabricModules(cConf, hConf).getDistributedModules(),
-                                      new LoggingModules().getDistributedModules(),
-                                      new AuthModule(),
-                                      new StreamHttpModule());
+      injector = Guice.createInjector(
+        new ConfigModule(cConf, hConf),
+        new IOModule(),
+        new ZKClientModule(),
+        new KafkaClientModule(),
+        new DiscoveryRuntimeModule().getDistributedModules(),
+        new LocationRuntimeModule().getDistributedModules(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new DataFabricModules().getDistributedModules(),
+        new LoggingModules().getDistributedModules(),
+        new AuthModule(),
+        new StreamServiceModule()
+      );
+
+      injector.getInstance(LogAppenderInitializer.class).initialize();
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                         Constants.Logging.COMPONENT_NAME,
+                                                                         Constants.Service.STREAMS));
 
     } catch (Exception e) {
       throw Throwables.propagate(e);

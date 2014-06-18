@@ -4,17 +4,13 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.InputSupplier;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 /**

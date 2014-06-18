@@ -9,7 +9,6 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -81,6 +80,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, list);
   }
 
+  @DELETE
+  @Path("/data/modules")
+  public void deleteModules(HttpRequest request, final HttpResponder responder) {
+    manager.deleteModules();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
   @POST
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
@@ -117,7 +123,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     InputStream inputStream = new ChannelBufferInputStream(content);
     try {
-      // todo: store to temp file first and do some verifications? Or even datasetManager should persist file?
+      // todo: store to temp file first and do some verifications? Or even datasetFramework should persist file?
       OutputStream outStream = archive.getOutputStream();
       try {
         ByteStreams.copy(inputStream, outStream);

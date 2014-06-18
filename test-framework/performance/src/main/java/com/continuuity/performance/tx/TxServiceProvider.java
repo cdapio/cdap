@@ -9,6 +9,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -40,7 +41,7 @@ public class TxServiceProvider extends TxProvider {
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
-      config.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT, port);
+      config.setInt(TxConstants.Service.CFG_DATA_TX_BIND_PORT, port);
 
       Injector baseInjector = Guice.createInjector (
         new ConfigModule(config),
@@ -51,7 +52,7 @@ public class TxServiceProvider extends TxProvider {
       zkClientService = baseInjector.getInstance(ZKClientService.class);
       zkClientService.startAndWait();
 
-      Injector managerInjector = baseInjector.createChildInjector(new DataFabricModules(config).getInMemoryModules());
+      Injector managerInjector = baseInjector.createChildInjector(new DataFabricModules().getInMemoryModules());
       InMemoryTransactionManager txManager = managerInjector.getInstance(InMemoryTransactionManager.class);
       txManager.startAndWait();
 
@@ -62,7 +63,7 @@ public class TxServiceProvider extends TxProvider {
       TimeUnit.SECONDS.sleep(3);
 
       // now create a remote tx that connects to the service
-      Injector clientInjector = baseInjector.createChildInjector(new DataFabricModules(config).getDistributedModules());
+      Injector clientInjector = baseInjector.createChildInjector(new DataFabricModules().getDistributedModules());
       return clientInjector.getInstance(TransactionSystemClient.class);
     } catch (Exception e) {
       throw new BenchmarkException("error init'ing txSystemClient", e);

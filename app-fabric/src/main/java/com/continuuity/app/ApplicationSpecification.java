@@ -17,6 +17,7 @@ import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 
@@ -48,15 +49,15 @@ public interface ApplicationSpecification {
   Map<String, DataSetSpecification> getDataSets();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.module.DatasetModule} name
-   *         to {@link com.continuuity.internal.data.dataset.module.DatasetModule} class name for
+   * @return An immutable {@link Map} from {@link com.continuuity.api.dataset.module.DatasetModule} name
+   *         to {@link com.continuuity.api.dataset.module.DatasetModule} class name for
    *         dataset modules configured for the Application.
    */
   Map<String, String> getDatasetModules();
 
   /**
-   * @return An immutable {@link Map} from {@link com.continuuity.internal.data.dataset.Dataset} name to
-   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.internal.data.dataset.Dataset}s
+   * @return An immutable {@link Map} from {@link com.continuuity.api.dataset.Dataset} name to
+   *         {@link DatasetInstanceCreationSpec} for {@link com.continuuity.api.dataset.Dataset}s
    *         configured for the Application.
    */
   Map<String, DatasetInstanceCreationSpec> getDatasets();
@@ -84,4 +85,10 @@ public interface ApplicationSpecification {
    *         for {@link Workflow}s configured for the Application.
    */
   Map<String, WorkflowSpecification> getWorkflows();
+
+  /**
+   * @return An immutable {@link Map} from {@link TwillApplication} name to {@link TwillSpecification}
+   *         for services configured for the Application.
+   */
+  Map<String, TwillSpecification> getServices();
 }

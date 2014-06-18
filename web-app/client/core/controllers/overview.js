@@ -35,7 +35,7 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			this.HTTP.rest('apps', {cache: true}, function (objects) {
+			this.HTTP.rest('apps', function (objects) {
 				var i = objects.length;
 
 				while (i--) {
@@ -43,26 +43,26 @@ define([], function () {
 
 					(function (id, index) {
 
-						self.HTTP.rest('apps', id, 'streams', {cache: true}, function (items) {
+						self.HTTP.rest('apps', id, 'streams', function (items) {
 							objects[index].set('counts.Stream', items.length);
 						});
 
-						self.HTTP.rest('apps', id, 'flows', {cache: true}, function (items) {
+						self.HTTP.rest('apps', id, 'flows', function (items) {
 							var count = items.length;
-							self.HTTP.rest('apps', id, 'mapreduce', {cache: true}, function (items) {
+							self.HTTP.rest('apps', id, 'mapreduce', function (items) {
 								count += items.length;
-								self.HTTP.rest('apps', id, 'workflows', {cache: true}, function (items) {
+								self.HTTP.rest('apps', id, 'workflows', function (items) {
 									count += items.length;
 									objects[index].set('counts.Flow', count);
 								});
 							});
 						});
 
-						self.HTTP.rest('apps', id, 'datasets', {cache: true}, function (items) {
+						self.HTTP.rest('apps', id, 'datasets', function (items) {
 							objects[index].set('counts.Dataset', items.length);
 						});
 
-						self.HTTP.rest('apps', id, 'procedures', {cache: true}, function (items) {
+						self.HTTP.rest('apps', id, 'procedures', function (items) {
 							objects[index].set('counts.Procedure', items.length);
 						});
 
