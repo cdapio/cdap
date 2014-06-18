@@ -1,19 +1,25 @@
 ============================================
-DataSet Transactions
+DataSets and Transactions
 ============================================
 
-.. .. eST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -169,9 +175,7 @@ The Need for Disabling Transactions (2 of 2)
 ============================================
 
 Transaction can be disabled for a Flow by annotating the Flow class with the 
-``@DisableTransaction`` annotation:
-
-.. sourcecode:: java
+``@DisableTransaction`` annotation::
 
 	@DisableTransaction
 	class MyExampleFlow implements Flow {
