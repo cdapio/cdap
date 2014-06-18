@@ -1,21 +1,19 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.data2.dataset2.lib.CompositeDatasetAdmin;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 
 /**
- * DatasetDefinition for {@link com.continuuity.data2.dataset2.lib.table.ObjectStore}.
+ * DatasetDefinition for {@link IndexedObjectStore}.
  *
- * @param <T> Type of object that the {@link com.continuuity.data2.dataset2.lib.table.ObjectStore} will store.
+ * @param <T> Type of object that the {@link IndexedObjectStore} will store.
  */
 public class IndexedObjectStoreDefinition<T>
   extends AbstractDatasetDefinition<IndexedObjectStore<T>, DatasetAdmin> {
@@ -25,7 +23,7 @@ public class IndexedObjectStoreDefinition<T>
 
   public IndexedObjectStoreDefinition(String name,
                                       DatasetDefinition<? extends Table, ?> tableDef,
-                                      DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
+                                      DatasetDefinition<? extends ObjectStore<T>, ?> objectStoreDef) {
     super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     Preconditions.checkArgument(objectStoreDef != null, "ObjectStore definition is required");

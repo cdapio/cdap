@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -9,8 +9,6 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -23,7 +21,7 @@ import javax.annotation.Nullable;
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>,
-  RowScannable<ImmutablePair<byte[], byte[]>> {
+  RowScannable<KeyValue<byte[], byte[]>> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -128,7 +126,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   @Override
   public Type getRowType() {
-    return new TypeToken<ImmutablePair<byte[], byte[]>>() { }.getType();
+    return new TypeToken<KeyValue<byte[], byte[]>>() { }.getType();
   }
 
   @Override
@@ -137,7 +135,7 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public SplitRowScanner<ImmutablePair<byte[], byte[]>> createSplitScanner(Split split) {
+  public SplitRowScanner<KeyValue<byte[], byte[]>> createSplitScanner(Split split) {
     return Scannables.splitRowScanner(createSplitReader(split), new KeyValueRowMaker());
   }
 
@@ -151,12 +149,12 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link ObjectStore}.
+   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link #createSplitReader(Split)}.
    */
-  public class KeyValueRowMaker implements Scannables.RowMaker<byte[], byte[], ImmutablePair<byte[], byte[]>> {
+  public class KeyValueRowMaker implements Scannables.RowMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
     @Override
-    public ImmutablePair<byte[], byte[]> makeRow(byte[] key, byte[] value) {
-      return new ImmutablePair<byte[], byte[]>(key, value);
+    public KeyValue<byte[], byte[]> makeRow(byte[] key, byte[] value) {
+      return new KeyValue<byte[], byte[]>(key, value);
     }
   }
 
