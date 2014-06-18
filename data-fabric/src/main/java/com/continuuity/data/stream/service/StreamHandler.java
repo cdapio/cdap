@@ -19,6 +19,7 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.continuuity.data2.transaction.stream.StreamConsumer;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.gateway.auth.Authenticator;
@@ -39,8 +40,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -49,7 +51,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -69,9 +70,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
-  private static final Type MAP_STRING_STRING_TYPE
-    = new TypeToken<Map<String, String>>() { }.getType();
-
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final ConcurrentStreamWriter streamWriter;
@@ -154,7 +152,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
     }
   }
 
@@ -181,7 +179,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       dequeuer = dequeuerCache.get(new ConsumerCacheKey(accountId, stream, groupId));
     } catch (Exception e) {
       LOG.trace("Failed to get consumer", e);
-      responder.sendError(HttpResponseStatus.NOT_FOUND, "Stream or consumer not exists.");
+      responder.sendError(HttpResponseStatus.NOT_FOUND, "Stream or consumer does not exists.");
       return;
     }
 
@@ -208,7 +206,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return;
     }
 
@@ -233,7 +231,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return;
     }
 
@@ -241,35 +239,53 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       streamAdmin.truncate(stream);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
     }
   }
 
-  @POST
-  @Path("/{stream}/ttl")
-  public void setTTL(HttpRequest request, HttpResponder responder,
-                     @PathParam("stream") String stream) throws Exception {
+  @PUT
+  @Path("/{stream}/config")
+  public void setConfig(HttpRequest request, HttpResponder responder,
+                        @PathParam("stream") String stream) throws Exception {
 
     String accountId = getAuthenticatedAccountId(request);
 
     if (!streamMetaStore.streamExists(accountId, stream)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream not exists");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
       return;
     }
 
-    long ttl = getTTL(request);
-    streamAdmin.updateTTL(stream, ttl);
-    responder.sendStatus(HttpResponseStatus.OK);
+    try {
+      StreamConfig config = streamAdmin.getConfig(stream);
+      try {
+        config = getConfigUpdate(request, config);
+      } catch (Throwable t) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid stream configuration");
+        return;
+      }
+
+      streamAdmin.updateConfig(config);
+      responder.sendStatus(HttpResponseStatus.OK);
+
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
+    }
   }
 
-  private long getTTL(HttpRequest request) throws IOException {
-    Map<String, String> arguments = GSON.fromJson(
-      request.getContent().toString(Charsets.UTF_8), MAP_STRING_STRING_TYPE);
-    if (arguments.containsKey("ttl")) {
-      return Long.parseLong(arguments.get("ttl"));
-    }
 
-    return Long.MAX_VALUE;
+  private StreamConfig getConfigUpdate(HttpRequest request, StreamConfig config) {
+    JsonObject json = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), JsonObject.class);
+
+    // Only pickup changes in TTL
+    if (json.has("ttl")) {
+      JsonElement ttl = json.get("ttl");
+      if (ttl.isJsonPrimitive()) {
+        // TTL in the REST API is in seconds. Convert it to ms for the config.
+        return new StreamConfig(config.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+                                TimeUnit.SECONDS.toMillis(ttl.getAsLong()), config.getLocation());
+      }
+    }
+    return config;
   }
 
   /**
@@ -297,7 +313,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         @Override
         public StreamDequeuer load(ConsumerCacheKey key) throws Exception {
           if (!streamMetaStore.streamExists(key.getAccountId(), key.getStreamName())) {
-            throw new IllegalStateException("Stream not exists");
+            throw new IllegalStateException("Stream does not exists");
           }
 
           // TODO: Deal with dynamic resize of stream handler instances
