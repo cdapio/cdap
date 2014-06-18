@@ -153,11 +153,11 @@ public class AccessTokenClient {
         usage("Specify --username to login as a user.");
       }
     }
+    System.out.println(String.format("Authenticating as: %s", username));
 
     if (password == null) {
-      System.out.println("Password: ");
       Console console = System.console();
-      password = String.valueOf(console.readPassword());
+      password = String.valueOf(console.readPassword("Password: "));
     }
   }
 
@@ -183,12 +183,10 @@ public class AccessTokenClient {
 
     HttpGet get = new HttpGet(baseUrl);
     String auth = Base64.encodeBase64String(String.format("%s:%s", username, password).getBytes());
+    auth = auth.replaceAll("(\r|\n)", "");
     get.addHeader("Authorization", String.format("Basic %s", auth));
-
-    System.out.println(String.format("Authenticating as: %s", username));
     try {
       response = client.execute(get);
-      client.getConnectionManager().shutdown();
     } catch (IOException e) {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
@@ -206,16 +204,18 @@ public class AccessTokenClient {
         JsonObject responseJson = (JsonObject) parser.parse(responseBody);
         String token = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
 
-        PrintWriter writer = new PrintWriter("access_token", "UTF-8");
+        PrintWriter writer = new PrintWriter("bin/access_token", "UTF-8");
         writer.write(token);
         writer.close();
+        System.out.println("Access Token saved to file access_token");
       } catch (Exception e) {
         System.err.println("Could not parse response contents.");
         e.printStackTrace(System.err);
         return null;
       }
-      return "OK.";
     }
+    client.getConnectionManager().shutdown();
+    return "OK.";
   }
 
   public String execute(String[] args) {
