@@ -354,6 +354,109 @@ analogous to how you send headers when posting an event to the Stream::
 
 .. rst2pdf: PageBreak
 
+Truncating a Stream
+-------------------
+Truncation means deletion of all events that were written to the Stream.
+A Stream can be truncated with an HTTP POST method to the URL::
+
+	POST <base-url>/streams/<stream-id>/truncate
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The stream was successfully truncated
+   * - ``404 Not Found``
+     - The Stream does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/truncate``
+   * - Description
+     - Delete all events in the Stream named *mystream*
+
+.. rst2pdf: PageBreak
+
+Setting Time-To-Live Property for a Stream
+------------------------------------------
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since it written to the Stream.
+The default TTL for all Streams is infinite, meaning event will never expire.
+The TTL property of a Stream can be changed with an HTTP POST method to the URL::
+
+	POST <base-url>/streams/<stream-id>/ttl
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+The new TTL value needs to be passed as the request body in the following form::
+
+	{ "ttl" : <ttl-in-milliseconds> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<ttl-in-milliseconds>``
+     - Number of milliseconds that an event will be valid for since ingested
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The stream TTL changed successfully
+   * - ``404 Not Found``
+     - The Stream does not exist
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``POST <base-url>/streams/mystream/ttl``
+
+       with the new TTL value as a JSON string in the body::
+
+	  { "ttl" : 86400000 }
+     
+   * - Description
+     - Change the TTL property of the Stream named *mystream* to 1 day
+
+.. rst2pdf: PageBreak
+
 Reading Multiple Events
 -----------------------
 Reading multiple events is not supported directly by the Stream HTTP API,
