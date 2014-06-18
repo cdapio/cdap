@@ -1,7 +1,5 @@
-package com.continuuity.data2.transaction.persist;
+package com.continuuity.data2.transaction.snapshot;
 
-import com.continuuity.common.io.Decoder;
-import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Maps;
 
@@ -10,18 +8,19 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * Handles serialization/deserialization of a {@link TransactionSnapshot} and its elements to {@code byte[]}.
+ * Handles serialization/deserialization of a {@link com.continuuity.data2.transaction.persist.TransactionSnapshot}
+ * and its elements to {@code byte[]}.
  */
 public class SnapshotCodecV2 extends AbstractSnapshotCodec {
   public static final int VERSION = 2;
 
   @Override
-  protected int getVersion() {
+  public int getVersion() {
     return VERSION;
   }
 
   @Override
-  protected void encodeInProgress(Encoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+  protected void encodeInProgress(BinaryEncoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
     throws IOException {
 
     if (!inProgress.isEmpty()) {
@@ -36,7 +35,7 @@ public class SnapshotCodecV2 extends AbstractSnapshotCodec {
   }
 
   @Override
-  protected NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(Decoder decoder)
+  protected NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(BinaryDecoder decoder)
     throws IOException {
 
     int size = decoder.readInt();

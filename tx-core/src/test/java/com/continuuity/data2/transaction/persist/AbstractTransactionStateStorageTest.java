@@ -1,14 +1,11 @@
 package com.continuuity.data2.transaction.persist;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.metrics.TxMetricsCollector;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -26,7 +23,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -338,36 +334,6 @@ public abstract class AbstractTransactionStateStorageTest {
       }
     }
   }
-
-  @Test
-  public void testV1SerdeCompat() throws Exception {
-    SnapshotCodecV1 v1Codec = new SnapshotCodecV1();
-
-    long now = System.currentTimeMillis();
-
-    // NOTE: set visibilityUpperBound to 0 as this is expected default for decoding older version that doesn't store it
-    TreeMap<Long, InMemoryTransactionManager.InProgressTx> inProgress =
-      Maps.newTreeMap(ImmutableSortedMap.of(16L, new InMemoryTransactionManager.InProgressTx(0L, now + 1000),
-                                            17L, new InMemoryTransactionManager.InProgressTx(0L, now + 1000)));
-
-    TransactionSnapshot snapshot =
-      new TransactionSnapshot(now,
-                              15, 18,
-                              Lists.newArrayList(5L, 7L),
-                              inProgress,
-                              ImmutableMap.<Long, Set<ChangeId>>of(17L, Sets.newHashSet(
-                                new ChangeId(Bytes.toBytes("ch1")), new ChangeId(Bytes.toBytes("ch2")))),
-                              ImmutableMap.<Long, Set<ChangeId>>of(16L, Sets.newHashSet(
-                                new ChangeId(Bytes.toBytes("ch2")), new ChangeId(Bytes.toBytes("ch3")))));
-
-    // encoding with codec of v1
-    byte[] encoded = v1Codec.encodeState(snapshot);
-
-    // decoding
-    TransactionSnapshot decoded = getStorage(CConfiguration.create()).decode(encoded);
-    assertEquals(snapshot, decoded);
-  }
-
 
   /**
    * Generates a new snapshot object with semi-randomly populated values.  This does not necessarily accurately

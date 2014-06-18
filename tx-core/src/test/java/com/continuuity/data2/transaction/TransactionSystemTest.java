@@ -22,7 +22,7 @@ public abstract class TransactionSystemTest {
 
   protected abstract TransactionSystemClient getClient() throws Exception;
 
-  protected abstract TransactionStateStorage getSateStorage() throws Exception;
+  protected abstract TransactionStateStorage getStateStorage() throws Exception;
 
   @Test
   public void testCommitRaceHandling() throws Exception {
@@ -197,7 +197,7 @@ public abstract class TransactionSystemTest {
     // have tx in progress, committing and committed then reset,
     // get the last snapshot and see that it is empty
     TransactionSystemClient client = getClient();
-    TransactionStateStorage stateStorage = getSateStorage();
+    TransactionStateStorage stateStorage = getStateStorage();
 
     Transaction tx1 = client.startShort();
     Transaction tx2 = client.startShort();
