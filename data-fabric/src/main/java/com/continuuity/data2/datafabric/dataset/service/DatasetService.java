@@ -53,7 +53,7 @@ public class DatasetService extends AbstractIdleService {
   public DatasetService(CConfiguration cConf,
                         LocationFactory locationFactory,
                         DiscoveryService discoveryService,
-                        @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
+                        @Named("datasetMDS") DatasetFramework baseDatasetFramework,
                         @Named("defaultDatasetModules")
                         Map<String, DatasetModule> defaultModules,
                         TransactionSystemClient txSystemClient,
@@ -64,7 +64,7 @@ public class DatasetService extends AbstractIdleService {
 
     // todo: refactor once DataSetAccessor is removed.
     this.mdsDatasetFramework =
-      new NamespacedDatasetFramework(mdsDatasetFramework,
+      new NamespacedDatasetFramework(baseDatasetFramework,
                                      new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     // NOTE: order matters
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);

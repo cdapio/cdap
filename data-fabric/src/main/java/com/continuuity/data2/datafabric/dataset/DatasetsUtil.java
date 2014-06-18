@@ -1,6 +1,7 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -43,5 +44,14 @@ public final class DatasetsUtil {
       }
     }
     return (T) datasetFramework.getDataset(instanceName, null);
+  }
+
+  /**
+   * Performs an upgrade of a dataset instance.
+   */
+  public static void upgradeDataset(DatasetFramework datasetFramework, String instanceName, ClassLoader cl)
+    throws Exception {
+    DatasetAdmin admin = datasetFramework.getAdmin(instanceName, cl);
+    admin.upgrade();
   }
 }
