@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests the stream client.
@@ -124,7 +125,7 @@ public class StreamClientTest extends GatewayTestBase {
   }
 
   @Test
-  public void testStreamTTL() {
+  public void testStreamTTL() throws InterruptedException {
     String streamId = "ttl-stream";
 
     Assert.assertEquals("OK.", command(streamId, new String[] {
@@ -134,18 +135,29 @@ public class StreamClientTest extends GatewayTestBase {
 
     Assert.assertEquals("OK.", command(streamId, new String[]{
       "send", "--body", "body1", "--header", "hname", "hvalue"}));
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body2", "--header", "hname", "hvalue"}));
+
+    // Use the same client to dequeue so that it reuses the same consumer id to verify dynamic TTL works.
+    StreamClient streamClient = new StreamClient().disallowSSL();
 
     Assert.assertEquals("1 events.", command(streamId, new String[] {
-      "view", "--first", "1"}));
+      "view", "--first", "1"}, streamClient));
 
     Assert.assertEquals("OK.", command(streamId, new String[] {
       "config", "--ttl", "0"}));
 
+    // Sleep shortly to make sure TTL change propagated
+    TimeUnit.SECONDS.sleep(1);
     Assert.assertEquals("0 events.", command(streamId, new String[] {
-      "view", "--first", "1"}));
+      "view"}, streamClient));
   }
 
   private String command(String streamId, String[] args) {
+    return command(streamId, args, new StreamClient().disallowSSL());
+  }
+
+  private String command(String streamId, String[] args, StreamClient client) {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.Router.ADDRESS, hostname);
     configuration.set(Constants.Router.FORWARD,
@@ -158,7 +170,7 @@ public class StreamClientTest extends GatewayTestBase {
       args[args.length - 2] = "--stream";
       args[args.length - 1] = streamId;
     }
-    return new StreamClient().disallowSSL().execute(args, configuration);
+    return client.execute(args, configuration);
   }
 
 }

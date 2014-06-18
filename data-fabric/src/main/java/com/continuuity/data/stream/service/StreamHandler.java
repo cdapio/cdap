@@ -12,6 +12,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.StreamPropertyListener;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -44,6 +45,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -90,7 +92,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
-    this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory);
+    this.dequeuerCache = createDequeuerCache(cConf, streamConsumerFactory, executorFactory, streamCoordinator);
 
     MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR,
                                                                        Constants.Gateway.METRICS_CONTEXT, "0");
@@ -292,8 +294,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Creates a loading cache for stream consumers. Used by the dequeue REST API.
    */
   private LoadingCache<ConsumerCacheKey, StreamDequeuer> createDequeuerCache(
-    final CConfiguration cConf,
-    final StreamConsumerFactory consumerFactory, final TransactionExecutorFactory executorFactory) {
+    final CConfiguration cConf, final StreamConsumerFactory consumerFactory,
+    final TransactionExecutorFactory executorFactory, final StreamCoordinator streamCoordinator) {
+
     return CacheBuilder
       .newBuilder()
       .expireAfterAccess(Constants.Stream.CONSUMER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -324,11 +327,39 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
-          return new StreamDequeuer(consumer, executorFactory);
+          Cancellable cancellable = streamCoordinator.addListener(key.getStreamName(),
+                                                                  createStreamPropertyListener(key));
+          return new StreamDequeuer(consumer, executorFactory, cancellable);
         }
       });
   }
 
+  /**
+   * Creates a {@link StreamPropertyListener} that would reload cached consumer if any stream properties changed.
+   */
+  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key) {
+    return new StreamPropertyListener() {
+      @Override
+      public void generationChanged(String streamName, int generation) {
+        dequeuerCache.refresh(key);
+      }
+
+      @Override
+      public void generationDeleted(String streamName) {
+        dequeuerCache.refresh(key);
+      }
+
+      @Override
+      public void ttlChanged(String streamName, long ttl) {
+        dequeuerCache.refresh(key);
+      }
+
+      @Override
+      public void ttlDeleted(String streamName) {
+        dequeuerCache.refresh(key);
+      }
+    };
+  }
 
   private boolean isValidName(String streamName) {
     // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
@@ -412,10 +443,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     private final StreamConsumer consumer;
     private final TransactionExecutor txExecutor;
+    private final Cancellable cancellable;
 
-    private StreamDequeuer(StreamConsumer consumer, TransactionExecutorFactory executorFactory) {
+    private StreamDequeuer(StreamConsumer consumer,
+                           TransactionExecutorFactory executorFactory, Cancellable cancellable) {
       this.consumer = consumer;
       this.txExecutor = executorFactory.createExecutor(ImmutableList.<TransactionAware>of(consumer));
+      this.cancellable = cancellable;
     }
 
     /**
@@ -436,7 +470,11 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     @Override
     public void close() throws IOException {
-      consumer.close();
+      try {
+        consumer.close();
+      } finally {
+        cancellable.cancel();
+      }
     }
   }
 }
