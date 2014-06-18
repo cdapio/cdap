@@ -1,6 +1,6 @@
 package com.continuuity.security.auth;
 
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.util.concurrent.Service;
 
 import java.security.InvalidKeyException;

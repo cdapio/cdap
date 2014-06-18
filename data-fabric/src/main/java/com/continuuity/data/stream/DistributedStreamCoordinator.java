@@ -5,9 +5,9 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.PropertyStore;
+import com.continuuity.common.io.Codec;
 import com.continuuity.common.zookeeper.store.ZKPropertyStore;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
-import com.continuuity.internal.io.codec.Codec;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

@@ -4,6 +4,8 @@
 
 package com.continuuity.io;
 
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
@@ -11,8 +13,6 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.io.codec.BinaryDecoder;
-import com.continuuity.internal.io.codec.BinaryEncoder;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

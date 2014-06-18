@@ -4,7 +4,7 @@
 package com.continuuity.common.zookeeper.coordination;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.discovery.Discoverable;

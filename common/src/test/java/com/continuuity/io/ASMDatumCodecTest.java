@@ -1,6 +1,8 @@
 package com.continuuity.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
@@ -10,8 +12,6 @@ import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.io.codec.BinaryDecoder;
-import com.continuuity.internal.io.codec.BinaryEncoder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

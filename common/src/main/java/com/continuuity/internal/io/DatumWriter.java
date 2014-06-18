@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.io.codec.Encoder;
+import com.continuuity.common.io.Encoder;
 
 import java.io.IOException;
 

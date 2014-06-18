@@ -7,6 +7,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;

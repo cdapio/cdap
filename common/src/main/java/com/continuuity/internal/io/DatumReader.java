@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.io;
 
-import com.continuuity.internal.io.codec.Decoder;
+import com.continuuity.common.io.Decoder;
 
 import java.io.IOException;
 

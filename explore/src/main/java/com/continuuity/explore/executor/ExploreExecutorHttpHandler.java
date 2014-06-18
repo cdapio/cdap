@@ -9,6 +9,7 @@ import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;

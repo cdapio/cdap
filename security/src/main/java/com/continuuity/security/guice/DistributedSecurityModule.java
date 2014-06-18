@@ -1,7 +1,7 @@
 package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.continuuity.security.auth.DistributedKeyManager;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyManager;

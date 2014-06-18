@@ -3,11 +3,11 @@
  */
 package com.continuuity.metrics.process;
 
+import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.Schema;
-import com.continuuity.internal.io.codec.BinaryDecoder;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;

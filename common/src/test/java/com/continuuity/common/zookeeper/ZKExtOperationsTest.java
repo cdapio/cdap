@@ -4,7 +4,7 @@
 package com.continuuity.common.zookeeper;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;

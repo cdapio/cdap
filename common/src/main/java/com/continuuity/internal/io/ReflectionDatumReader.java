@@ -1,10 +1,10 @@
 package com.continuuity.internal.io;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.io.Decoder;
 import com.continuuity.common.lang.Instantiator;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.stream.DefaultStreamEvent;
-import com.continuuity.internal.io.codec.Decoder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;

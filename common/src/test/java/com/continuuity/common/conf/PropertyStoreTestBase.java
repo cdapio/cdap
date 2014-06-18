@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.conf;
 
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.base.Charsets;
 import org.junit.Assert;
 import org.junit.Test;

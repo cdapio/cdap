@@ -4,7 +4,7 @@
 package com.continuuity.common.zookeeper;
 
 import com.continuuity.common.async.AsyncFunctions;
-import com.continuuity.internal.io.codec.Codec;
+import com.continuuity.common.io.Codec;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
