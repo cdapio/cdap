@@ -7,7 +7,7 @@ Reactor Security
 
 Enabling Security
 ==================
-To enable security add this property to ``continuuity-site.xml``:
+To enable security in the Continuuity Reactor, add this property to ``continuuity-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
@@ -18,7 +18,7 @@ security.enabled                              true
 
 Configuring SSL
 ================
-To configure SSL add these properties to ``continuuity-site.xml``:
+To configure SSL, add these properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
@@ -30,7 +30,7 @@ security.server.ssl.keystore.password        <password>
 
 Enabling Access Logging
 ========================
-To enable access logging add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
+To enable access logging, add the following to ``logback.xml`` (typically under ``/etc/continuuity/conf/``) ::
 
     <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
       <file>access.log</file>
@@ -154,17 +154,15 @@ additional dependency jars) to the ``security/lib/`` directory within your React
 
 Example Configuration
 =======================
-For example, this is what your ``continuuity-site.xml`` will include when configured to enable security and SSL, and
-to authenticate using LDAP. ::
+This is what your ``continuuity-site.xml`` could include when configured to enable security, SSL, and
+authentication using LDAP::
 
   <property>
     <name>security.enabled</name>
     <value>true</value>
   </property>
 
-  <!--
-   SSL configuration.
-  -->
+  <!-- SSL configuration. -->
   <property>
     <name>security.server.ssl.enabled</name>
     <value>true</value>
@@ -182,9 +180,7 @@ to authenticate using LDAP. ::
     <description>Password for the SSL keystore.</description>
   </property>
 
-  <!--
-   LDAP configuration.
-  -->
+  <!-- LDAP configuration. -->
   <property>
     <name>security.authentication.handlerClassName</name>
     <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
@@ -201,8 +197,8 @@ to authenticate using LDAP. ::
   </property>
 
   <!--
-    Override the following properties to use your LDAP server. Any optional parameters, described above,
-    may also be added.
+    Override the following properties to use your LDAP server.
+    Any optional parameters, as described above, may also be included.
   -->
   <property>
     <name>security.authentication.handler.hostname</name>
@@ -233,17 +229,35 @@ to authenticate using LDAP. ::
 
 Testing Security
 =================
-To ensure that you've configured security correctly, you may run a few simple tests :
+To ensure that you've configured security correctly, run these simple tests to verify that the
+security components are working as expected:
 
-* Visiting the Reactor WebUI should redirect you to a login page that prompts for credentials. Entering the credentials
-  should let you work with Reactor normally.
-* You can also manually verify that the security components are working as expected :
+* After configuring Reactor as described above, restart the Reactor and attempt to use a service:
 
 ::
 
-  curl -v http://<reactor-hostname>:10000/v2/apps
-  # Returns a 401 Unauthorized response.
-  curl -v -u <username>:<password> http://<reactor-hostname>:10009
-  # Returns a 200 OK response with an AccessToken string as the body.
-  curl -v -H "Authorization: Bearer <AccessToken>" http://<reactor-hostname>:10000/v2/apps
-  # Returns a 200 OK response.
+    curl -v <base-url>/apps
+
+..
+
+* This should return a 401 Unauthorized response. Submit a username and password to obtain an ``AccessToken``:
+
+::
+
+  curl -v -u username:password http://<gateway>:10009
+
+..
+
+  This should return a 200 OK response with the ``AccessToken`` string in the response body.
+  Reattempt the first command, but this time include the ``AccessToken`` as a header in the command:
+
+::
+
+  curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
+
+..
+
+* This should return a 200 OK response.
+
+* Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
+  Entering the credentials should let you work with Reactor normally.
