@@ -9,19 +9,23 @@ import com.continuuity.common.conf.PropertyStore;
 import com.continuuity.common.conf.PropertyUpdater;
 import com.continuuity.common.io.Codec;
 import com.continuuity.common.io.Locations;
+import com.continuuity.data2.transaction.stream.AbstractStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +39,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractStreamCoordinator implements StreamCoordinator {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinator.class);
+  private static final Gson GSON = new Gson();
 
   // Executor for performing update action asynchronously
   private final Executor updateExecutor;
@@ -114,7 +119,7 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
               StreamConfig newConfig = new StreamConfig(streamConfig.getName(), streamConfig.getPartitionDuration(),
                                                         streamConfig.getIndexInterval(), newTTL,
                                                         streamConfig.getLocation());
-              streamAdmin.updateConfig(newConfig);
+              saveConfig(newConfig);
               resultFuture.set(new StreamProperty(currentGeneration, newTTL));
             } catch (IOException e) {
               resultFuture.setException(e);
@@ -139,6 +144,27 @@ public abstract class AbstractStreamCoordinator implements StreamCoordinator {
   @Override
   public void close() throws IOException {
     propertyStore.get().close();
+  }
+
+  /**
+   * Overwrites a stream config file.
+   *
+   * @param config The new configuration.
+   */
+  private void saveConfig(StreamConfig config) throws IOException {
+    Location configLocation = config.getLocation().append(AbstractStreamFileAdmin.CONFIG_FILE_NAME);
+    Location tempLocation = configLocation.getTempFile("tmp");
+    try {
+      CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+        Locations.newOutputSupplier(tempLocation), Charsets.UTF_8));
+
+      Preconditions.checkState(tempLocation.renameTo(configLocation) != null,
+                               "Rename {} to {} failed", tempLocation, configLocation);
+    } finally {
+      if (tempLocation.exists()) {
+        tempLocation.delete();
+      }
+    }
   }
 
   /**
