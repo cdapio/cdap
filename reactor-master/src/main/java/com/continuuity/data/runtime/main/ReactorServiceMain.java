@@ -1,5 +1,8 @@
 package com.continuuity.data.runtime.main;
 
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
@@ -19,14 +22,23 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
+import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
+import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -99,6 +111,10 @@ public class ReactorServiceMain extends DaemonMain {
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
   private boolean isHiveEnabled;
+  private OrderedTable systemServiceTable;
+  private TransactionExecutor txExecutor;
+  private DatasetFramework dsFramework;
+  private DatasetModule hBaseOrderedTableModule;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
@@ -133,11 +149,38 @@ public class ReactorServiceMain extends DaemonMain {
       new DataFabricModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
     );
+
     // Initialize ZK client
     zkClientService = baseInjector.getInstance(ZKClientService.class);
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
+
+    hBaseOrderedTableModule = baseInjector.getInstance(HBaseOrderedTableModule.class);
+
+    try {
+      DatasetDefinitionRegistryFactory registryFactory = MonitorHandler.createInjector(cConf, hConf).getInstance(
+        DatasetDefinitionRegistryFactory.class);
+      dsFramework = new InMemoryDatasetFramework(registryFactory);
+      dsFramework.addModule("ordered", hBaseOrderedTableModule);
+      systemServiceTable = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INFO_TABLE_NAME,
+                                                           "orderedTable", DatasetProperties.EMPTY, null);
+      txExecutor = new DefaultTransactionExecutor(new MinimalTxSystemClient(),
+                                                  (TransactionAware) systemServiceTable);
+    } catch (Exception e) {
+      LOG.error("Error retrieving System Service Instance Table : {}", e.getMessage(), e);
+    }
+
+    try {
+      String metricsCount = MonitorHandler.getRequestedServiceInstance(Constants.Service.METRICS,
+                                                                       systemServiceTable,
+                                                                       txExecutor);
+      if (metricsCount != null) {
+        cConf.setInt(Constants.Metrics.NUM_INSTANCES, Integer.valueOf(metricsCount));
+      }
+    } catch (Exception e) {
+      LOG.error("Couldn't retrieve metrics instance count {}", e.getMessage(), e);
+    }
   }
 
   @Override
@@ -158,7 +201,6 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
-
         isLeader.set(true);
       }
 

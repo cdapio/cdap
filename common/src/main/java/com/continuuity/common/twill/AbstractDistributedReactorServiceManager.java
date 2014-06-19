@@ -6,17 +6,20 @@ import com.google.common.base.Preconditions;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract class that can be extended by individual Reactor Services to implement their management methods.
  */
 public abstract class AbstractDistributedReactorServiceManager implements ReactorServiceManager {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedReactorServiceManager.class);
+
   private static final long SERVICE_PING_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
   protected final long discoveryTimeout;
 
@@ -55,11 +58,8 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
         }
       }
       return true;
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      return false;
-    } catch (ExecutionException e) {
-      e.printStackTrace();
+    } catch (Throwable t) {
+      LOG.error("Could not change service instance of {} : {}", serviceName, t.getMessage(), t);
       return false;
     }
   }
