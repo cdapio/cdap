@@ -58,11 +58,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -175,8 +173,13 @@ public class ServiceTwillRunnable implements TwillRunnable {
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
-      delegate.initialize(context);
-      LOG.info("Runnable initialized: " + name);
+      try {
+        delegate.initialize(context);
+        LOG.info("Runnable initialized: " + name);
+      } catch (Exception e) {
+        LOG.error("Runnable {} didn't initialize: {}", name, e.getMessage(), e);
+        throw Throwables.propagate(e);
+      }
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -185,7 +188,12 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void handleCommand(Command command) throws Exception {
-    delegate.handleCommand(command);
+    try {
+      delegate.handleCommand(command);
+    } catch (Throwable t) {
+      LOG.error(t.getMessage(), t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
@@ -195,7 +203,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
       delegate.stop();
       logAppenderInitializer.close();
     } catch (Exception e) {
-      LOG.error("Fail to stop: {}", e, e);
+      LOG.error("Failed to stop: {}", e, e);
       throw Throwables.propagate(e);
     }
   }
@@ -208,15 +216,23 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
-    delegate.run();
+    try {
+      delegate.run();
+    } catch (Throwable t) {
+      LOG.error(t.getMessage(), t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
-    delegate.destroy();
-    Futures.getUnchecked(
-      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+    try {
+      delegate.destroy();
+    } finally {
+      Futures.getUnchecked(
+        Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+    }
     LOG.info("Runnable stopped: {}", name);
   }
 
@@ -269,12 +285,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
         protected void configure() {
           // For program loading
           install(createProgramFactoryModule());
-          bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-            @Override
-            public Cancellable announce(String serviceName, int port) {
-              return context.announce(serviceName, port);
-            }
-          });
         }
       }
     );
