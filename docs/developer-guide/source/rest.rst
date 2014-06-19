@@ -806,6 +806,179 @@ The response now contains the column key as text and the row value as a numeric 
 Note that you can also specify the ``counter=true`` parameter when writing to a Table.
 This allows you to specify values as numeric strings while using a different encoding for row and column keys.
 
+Query HTTP API
+==============
+
+This interface supports submitting SQL queries over datasets. Executing a query is asynchronous: You first submit the
+query. Then you poll for the query's status until it is finished. Now you can retrieve the result schema and the
+results. Finally you close the query to free the resources that it holds.
+
+Submitting a Query
+------------------
+
+To submit a SQL query, you post the query string to the queries URL::
+
+  POST <base-url>/data/queries
+  {
+    "query": "<SQL query string>"
+  }
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query execution was successfully initiated, and the body contains a handle used to identify the query in
+       subsequent requests::
+
+         { "handle":"<query handle>" }
+
+   * - ``400 Bad Request``
+     - The query is not well-formed or contains an error, such as a non-existent table name.
+
+Status of a Query
+-----------------
+
+The status of a query is obtained using a get request to the query's URL::
+
+  GET <base-url>/data/queries/<query handle>
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query exists and the body contains the status of its execution, and whether the query has a results set::
+
+         {
+           "status":"<status code>",
+           "hasResults":<boolean>
+          }
+
+       Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``, ``ERROR``,
+       ``UNKNOWN``, and ``PENDING``.
+
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
+
+Obtaining the Result Schema
+---------------------------
+
+If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
+
+  GET <base-url>/data/queries/<query-handle>/schema
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query's result schema is returned in a JSON body as as a list of columns,
+       each given by its name, type and position (if the query has no result set, this list is empty)::
+
+         [
+           {"name":"<name>", "type":<type>, "position":<int>},
+           ...
+         ]
+
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
+
+Retrieving Query Results:
+-------------------------
+
+Query results can be retrieved in batches after the query is finished, optinally specifying the batch size in the
+body of the request::
+
+  POST <base-url>/data/queries/<query-handle>/next
+  {
+    "size":<int>
+  }
+
+If the batch size is not specified, it defaults to 20.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The results are is returned in a JSON body as as a list of columns,
+       each given as a structure containing a list of column values. The value at each poistion has the type that
+       was returned in the result schema for that position::
+
+         [
+           { "columns": [ <value_1>, <value_2>, ..., ] },
+           ...
+         ]
+
+       If all results of the query have been retrieved, then the returned list is empty.
+
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
+
+Closing a Query
+---------------
+
+The query can be closed by issuing a delete against its URL::
+
+  DELETE <base-url>/data/queries/<query-handle>
+
+This frees all resources that are held by this query.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query was closed,
+   * - ``400 Bad Request``
+     - The query is not in a state that can be closed. You have to wait until it is finished, or cancel it.
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
+
+Canceling a Query
+-----------------
+
+Execution of a query can be canceled before it is finished::
+
+  POST <base-url>/data/queries/<query-handle>/cancel
+
+After this, the query can only be closed.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The query was canceled,
+   * - ``400 Bad Request``
+     - The query is not in a state that can be canceled.
+   * - ``404 Not Found``
+     - The query handle does not match any current query.
 
 Procedure HTTP API
 ==================
