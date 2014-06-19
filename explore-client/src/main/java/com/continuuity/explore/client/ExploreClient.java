@@ -19,6 +19,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -129,6 +130,10 @@ public class ExploreClient implements Explore {
       throw new ExploreException(message);
     } catch (JsonSyntaxException e) {
       String message = String.format("Cannot parse server response: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    } catch (JsonParseException e) {
+      String message = String.format("Cannot parse server response as map: %s", responseString);
       LOG.error(message, e);
       throw new ExploreException(message, e);
     }
