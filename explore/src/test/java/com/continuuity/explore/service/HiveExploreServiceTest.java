@@ -216,6 +216,8 @@ public class HiveExploreServiceTest {
         Lists.newArrayList(
             new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
+
+    datasetFramework.deleteInstance("my_table_1");
   }
 
   @Test
