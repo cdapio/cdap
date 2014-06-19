@@ -133,7 +133,7 @@ public class AccessTokenClient {
           usage(true);
         }
         filePath = args[pos];
-      } else if ("--verbose".equals(arg)) {
+      } else if ("--ssl".equals(arg)) {
         ssl = true;
       } else if ("--help".equals(arg)) {
         help = true;
@@ -155,7 +155,11 @@ public class AccessTokenClient {
       host = "localhost";
     }
     if (port == -1) {
-      port = 10009;
+      if (ssl) {
+        port = 10010;
+      } else {
+        port = 10009;
+      }
     }
 
     if (filePath == null) {
