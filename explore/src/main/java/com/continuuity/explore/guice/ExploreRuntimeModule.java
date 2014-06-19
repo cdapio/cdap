@@ -13,7 +13,6 @@ import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.http.HttpHandler;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;

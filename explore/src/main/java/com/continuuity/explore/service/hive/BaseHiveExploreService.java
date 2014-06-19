@@ -90,6 +90,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public Handle execute(String statement) throws ExploreException {
     try {
       Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
       SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
       OperationHandle operationHandle = cliService.executeStatementAsync(sessionHandle, statement,
                                                                          ImmutableMap.<String, String>of());

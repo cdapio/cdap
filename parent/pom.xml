@@ -1060,6 +1060,7 @@
     <profile>
       <id>dist</id>
       <properties>
+        <maven.descriptor>true</maven.descriptor>
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/continuuity/${project.artifactId}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
@@ -1076,6 +1077,7 @@
                   <id>jar</id>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
+                    <addMavenDescriptor>${maven.descriptor}</addMavenDescriptor>
                   </configuration>
                   <goals>
                     <goal>jar</goal>
@@ -1385,6 +1387,23 @@
         </pluginManagement>
       </build>
     </profile>
+
+    <profile>
+      <id>javadocs</id>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9</version>
+            <configuration>
+              <stylesheetfile>${project.parent.parent.basedir}/distributions/src/javadoc/stylesheet.css</stylesheetfile>
+            </configuration>
+          </plugin>
+        </plugins>
+      </reporting>
+    </profile>
+
   </profiles>
 
 </project>

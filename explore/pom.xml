@@ -51,13 +51,12 @@
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-mapred</artifactId>
     </dependency>
-
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>explore-client</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>watchdog</artifactId>
