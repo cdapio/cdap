@@ -893,6 +893,9 @@ HTTP Responses
            ...
          ]
 
+       The type of each column is a data type as defined in the `HiveLanguageManual
+       <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
+
    * - ``404 Not Found``
      - The query handle does not match any current query.
 
@@ -919,15 +922,17 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - The results are is returned in a JSON body as as a list of columns,
-       each given as a structure containing a list of column values. The value at each poistion has the type that
-       was returned in the result schema for that position::
+       each given as a structure containing a list of column values.::
 
          [
            { "columns": [ <value_1>, <value_2>, ..., ] },
            ...
          ]
 
-       If all results of the query have been retrieved, then the returned list is empty.
+       The value at each position has the type that was returned in the result schema for that position.
+       For example, if the returned type was ``INT``, then the value will be an integer literal,
+       whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
+       If all results of the query have already been retrieved, then the returned list is empty.
 
    * - ``404 Not Found``
      - The query handle does not match any current query.
