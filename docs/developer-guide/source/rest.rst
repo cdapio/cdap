@@ -893,7 +893,7 @@ HTTP Responses
            ...
          ]
 
-       The type of each column is a data type as defined in the `HiveLanguageManual
+       The type of each column is a data type as defined in the `Hive language manual
        <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
 
    * - ``404 Not Found``
