@@ -63,7 +63,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Received query: {}", query);
       Handle handle = exploreService.execute(query);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -110,9 +110,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       Handle handle = Handle.fromId(id);
       Status status = exploreService.getStatus(handle);
-      JsonObject json = new JsonObject();
-      json.addProperty("status", GSON.toJson(status));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, status);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -124,13 +122,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                                        @PathParam("id") final String id) {
+                                    @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       List<ColumnDesc> schema = exploreService.getResultSchema(handle);
-      JsonObject json = new JsonObject();
-      json.addProperty("schema", GSON.toJson(schema));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, schema);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -140,7 +136,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/nextResults")
+  @Path("/data/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
@@ -148,9 +144,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 1;
       Handle handle = Handle.fromId(id);
       List<Row> rows = exploreService.nextResults(handle, size);
-      JsonObject json = new JsonObject();
-      json.addProperty("results", GSON.toJson(rows));
-      responder.sendJson(HttpResponseStatus.OK, json);
+      responder.sendJson(HttpResponseStatus.OK, rows);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -162,7 +156,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      return ImmutableMap.of();
+      return ImmutableMap.of(); 
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {

@@ -142,7 +142,7 @@ public class InMemoryExploreServiceTest {
     Handle handle = exploreService.execute(command);
 
     Status status = waitForCompletionStatus(handle);
-    Assert.assertEquals(Status.State.FINISHED, status.getState());
+    Assert.assertEquals(Status.EStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreService.getResultSchema(handle));
@@ -172,7 +172,7 @@ public class InMemoryExploreServiceTest {
     do {
       TimeUnit.MILLISECONDS.sleep(200);
       status = exploreService.getStatus(handle);
-    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
+    } while (status.getStatus() == Status.EStatus.RUNNING || status.getStatus() == Status.EStatus.PENDING);
     return status;
   }
 }

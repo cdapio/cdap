@@ -73,7 +73,7 @@ public class ExploreClient implements Explore {
 
   @Override
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("/%s/%s", handle.getId(), "status"));
+    HttpResponse response = doGet(String.format("/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(parseResponse(response, "status"), Status.class);
     }
@@ -82,7 +82,7 @@ public class ExploreClient implements Explore {
 
   @Override
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("/%s/%s", handle.getId(), "schema"));
+    HttpResponse response = doGet(String.format("/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(parseResponse(response, "schema"), new TypeToken<List<ColumnDesc>>() { }.getType());
     }
@@ -91,7 +91,7 @@ public class ExploreClient implements Explore {
 
   @Override
   public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("/%s/%s", handle.getId(), "nextResults"),
+    HttpResponse response = doPost(String.format("/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return GSON.fromJson(parseResponse(response, "results"), new TypeToken<List<Row>>() { }.getType());
@@ -101,7 +101,7 @@ public class ExploreClient implements Explore {
 
   @Override
   public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("/%s/%s", handle.getId(), "cancel"), null, null);
+    HttpResponse response = doPost(String.format("/%s/%s", handle.getHandle(), "cancel"), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -110,7 +110,7 @@ public class ExploreClient implements Explore {
 
   @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doDelete(String.format("/%s", handle.getId()));
+    HttpResponse response = doDelete(String.format("/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }

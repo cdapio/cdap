@@ -5,8 +5,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.guice.SecurityModules;
@@ -66,7 +68,7 @@ public class RoutingToExploreTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-        new MockExploreExecutorHandler());
+                                      new MockExploreExecutorHandler(), new ExplorePingHandler());
     mockService.startAndWait();
   }
 
@@ -80,13 +82,18 @@ public class RoutingToExploreTest {
   }
 
   @Test
-  public void testTypeHandlerRequests() throws Exception {
+  public void testExploreHandlerRequests() throws Exception {
     Assert.assertEquals("sendQuery", doRequest("/data/queries", "POST"));
     Assert.assertEquals("stop:fooId", doRequest("/data/queries/fooId", "DELETE"));
     Assert.assertEquals("cancel:fooId", doRequest("/data/queries/fooId/cancel", "POST"));
     Assert.assertEquals("status:fooId", doRequest("/data/queries/fooId/status", "GET"));
     Assert.assertEquals("schema:fooId", doRequest("/data/queries/fooId/schema", "GET"));
     Assert.assertEquals("nextResults:fooId", doRequest("/data/queries/fooId/nextResults", "POST"));
+  }
+
+  @Test
+  public void testPingHandler() throws Exception {
+    Assert.assertEquals("OK.\n", doRequest("/explore/status", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)

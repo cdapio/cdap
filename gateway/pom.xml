@@ -46,6 +46,12 @@
       <groupId>com.continuuity</groupId>
       <artifactId>http</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

@@ -143,14 +143,14 @@ public class HiveExploreServiceTest {
     runCommand("describe kv_table",
         true,
         Lists.newArrayList(
-          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-          new ColumnDesc("comment", "STRING", 3, "from deserializer")
+            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+            new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                             "from deserializer"))
+            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                "from deserializer"))
         )
     );
 
@@ -172,20 +172,20 @@ public class HiveExploreServiceTest {
     );
 
     runCommand("select * from kv_table",
-               true,
-               Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
-                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+        true,
+        Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
+            new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select * from kv_table where key = '2'",
-               true,
-               Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
-                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+        true,
+        Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
+            new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("drop table if exists kv_table",
@@ -210,7 +210,7 @@ public class HiveExploreServiceTest {
 
     Handle handle = exploreClient.execute("select key, value from kv_table");
     exploreClient.cancel(handle);
-    Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
+    Assert.assertEquals(Status.EStatus.CANCELED, waitForCompletionStatus(handle).getStatus());
     exploreClient.close(handle);
 
     runCommand("drop table if exists kv_table",
@@ -225,7 +225,7 @@ public class HiveExploreServiceTest {
     Handle handle = exploreClient.execute(command);
 
     Status status = waitForCompletionStatus(handle);
-    Assert.assertEquals(Status.State.FINISHED, status.getState());
+    Assert.assertEquals(Status.EStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
@@ -255,7 +255,7 @@ public class HiveExploreServiceTest {
     do {
       TimeUnit.MILLISECONDS.sleep(200);
       status = exploreClient.getStatus(handle);
-    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
+    } while (status.getStatus() == Status.EStatus.RUNNING || status.getStatus() == Status.EStatus.PENDING);
     return status;
   }
 
