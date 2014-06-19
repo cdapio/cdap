@@ -3,8 +3,8 @@ package com.continuuity.explore.client;
 import java.net.InetSocketAddress;
 
 /**
- * An Explore Client that talks to a server implementing {@link com.continuuity.explore.service.Explore} over HTTP,
- * using given host and port to talk to the explore service.
+ * An Explore Client that uses the provided host and port to talk to a server
+ * implementing {@link com.continuuity.explore.service.Explore} over HTTP.
  */
 public class ExternalAsyncExploreClient extends AbstractAsyncExploreClient {
 

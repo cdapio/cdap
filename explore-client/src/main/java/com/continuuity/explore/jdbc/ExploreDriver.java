@@ -24,7 +24,7 @@ public class ExploreDriver implements Driver {
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
-    // TODO throw SQLException if explore service is down
+    // TODO throw SQLException if explore service is down. Means extracting host and port here and ping service
     return acceptsURL(url) ? new ExploreConnection(url, info) : null;
   }
 

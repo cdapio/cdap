@@ -1,5 +1,8 @@
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExternalAsyncExploreClient;
+import com.continuuity.explore.service.Explore;
+
 import java.net.URI;
 import java.sql.Array;
 import java.sql.Blob;
@@ -27,6 +30,8 @@ public class ExploreConnection implements Connection {
   private final String host;
   private final int port;
 
+  private final Explore exploreClient;
+
   public ExploreConnection(String uri, Properties info) {
     if (!uri.startsWith(Utils.URL_PREFIX)) {
       throw new IllegalArgumentException("Bad URL format: Missing prefix " + Utils.URL_PREFIX);
@@ -35,18 +40,19 @@ public class ExploreConnection implements Connection {
     host = jdbcURI.getHost();
     port = jdbcURI.getPort();
 
-    // TODO ping our explore service on host and port
-
+    exploreClient = new ExternalAsyncExploreClient(host, port);
   }
 
   @Override
   public Statement createStatement() throws SQLException {
-    return new ExploreStatement();
+    // TODO check if connection is closed and return exception in this case
+    return new ExploreStatement(exploreClient);
   }
 
   @Override
-  public PreparedStatement prepareStatement(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+  public PreparedStatement prepareStatement(String sql) throws SQLException {
+    // TODO check if connection is closed and return exception in this case
+    return new ExplorePreparedStatement(exploreClient, sql);
   }
 
   @Override
