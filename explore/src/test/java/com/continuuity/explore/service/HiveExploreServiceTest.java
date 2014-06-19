@@ -178,6 +178,47 @@ public class HiveExploreServiceTest {
   }
 
   @Test
+  public void testJoin() throws Exception {
+
+    // Performing admin operations to create dataset instance
+    datasetFramework.addInstance("keyValueTable", "my_table_1", DatasetProperties.EMPTY);
+    DatasetAdmin admin = datasetFramework.getAdmin("my_table_1", null);
+    Assert.assertNotNull(admin);
+    admin.create();
+
+    Transaction tx1 = transactionManager.startShort(100);
+
+    // Accessing dataset instance to perform data operations
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null);
+    Assert.assertNotNull(table);
+    table.startTx(tx1);
+
+    KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
+    KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(10, 11, 12, 13, 14));
+    table.put("2", value1);
+    table.put("3", value2);
+    Assert.assertEquals(value1, table.get("2"));
+
+    Assert.assertTrue(table.commitTx());
+
+    transactionManager.canCommit(tx1, table.getTxChanges());
+    transactionManager.commit(tx1);
+
+    table.postTxCommit();
+
+
+    runCommand("select continuuity_user_my_table.key, continuuity_user_my_table.value from continuuity_user_my_table " +
+               "join continuuity_user_my_table_1 on (continuuity_user_my_table.key=continuuity_user_my_table_1.key)",
+        true,
+        Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
+                           new ColumnDesc("continuuity_user_my_table.value",
+                                          "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
+  }
+
+  @Test
   public void testCancel() throws Exception {
     Handle handle = exploreClient.execute("select key, value from continuuity_user_my_table");
     exploreClient.cancel(handle);
