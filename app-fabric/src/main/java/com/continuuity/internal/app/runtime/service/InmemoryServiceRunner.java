@@ -79,6 +79,20 @@ public class InMemoryServiceRunner implements ProgramRunner {
       }
     } catch (Throwable t) {
       // Need to stop all started runnable here.
+      try {
+        Futures.successfulAsList
+          (Iterables.transform(runnables.values(), new Function<ProgramController,
+                                 ListenableFuture<ProgramController>>() {
+                                 @Override
+                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                   return input.stop();
+                                 }
+                               }
+           )
+          ).get();
+      } catch (Exception e) {
+        LOG.error("Failed to stop all the runnables");
+      }
       throw Throwables.propagate(t);
     }
     return runnables;
@@ -119,12 +133,12 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
     @Override
     protected void doSuspend() throws Exception {
-
+      // No-op
     }
 
     @Override
     protected void doResume() throws Exception {
-
+      // No-op
     }
 
     @Override
