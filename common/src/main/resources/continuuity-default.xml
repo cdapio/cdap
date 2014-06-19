@@ -550,6 +550,12 @@
     </property>
 
     <property>
+        <name>dataset.executor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+        <description>Maximum Number of DataSet Executor Instances</description>
+    </property>
+
+    <property>
         <name>app.temp.dir</name>
         <value>/tmp</value>
         <description>Directory temp.</description>

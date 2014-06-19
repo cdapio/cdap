@@ -20,7 +20,6 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
-import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;

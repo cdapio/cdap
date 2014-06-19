@@ -5,7 +5,7 @@ import com.google.common.base.Objects;
 import java.util.List;
 
 /**
- * Defines the rows returned by {@link ExploreService}.
+ * Defines the rows returned by {@link Explore}.
  */
 public class Row {
   private final List<Object> columns;

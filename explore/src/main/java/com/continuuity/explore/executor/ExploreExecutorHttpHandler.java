@@ -73,7 +73,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/queries/{id}")
-  public void closeQuery(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                         @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.close(handle);
@@ -88,7 +89,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/data/queries/{id}/cancel")
-  public void cancelQuery(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                          @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.cancel(handle);
@@ -103,7 +105,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/queries/{id}/status")
-  public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                             @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       Status status = exploreService.getStatus(handle);
@@ -120,7 +123,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/queries/{id}/schema")
-  public void getQueryResultsSchema(HttpRequest request, HttpResponder responder,
+  public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                         @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
