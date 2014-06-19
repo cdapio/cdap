@@ -5,13 +5,13 @@ import com.google.common.base.Objects;
 import java.util.UUID;
 
 /**
- * Represents an operation that is submitted for execution to {@link ExploreService}.
+ * Represents an operation that is submitted for execution to {@link Explore}.
  */
 public class Handle {
   private final String id;
 
   public static Handle generate() {
-    // TODO: make sure handles are unique across multiple instances.
+    // TODO: make sure handles are unique across multiple instances. - REACTOR-272
     return new Handle(UUID.randomUUID().toString());
   }
 

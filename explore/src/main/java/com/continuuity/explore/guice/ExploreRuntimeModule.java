@@ -7,13 +7,13 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.hive.Hive12ExploreService;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.hive.datasets.DatasetStorageHandler;
 import com.continuuity.http.HttpHandler;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -67,6 +67,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+      handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
 
@@ -119,7 +120,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
           // start a hive metastore / hive server.
-          // TODO try to remove once maven is there
+          // TODO try to remove once maven is there - REACTOR-267
           warehouseDir = new File(warehouseDir, Long.toString(seed));
           databaseDir = new File(databaseDir, Long.toString(seed));
         }
@@ -138,7 +139,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
 
         // Disable security
-        // TODO: verify if auth=NOSASL is really needed
+        // TODO: verify if auth=NOSASL is really needed - REACTOR-267
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NOSASL");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");

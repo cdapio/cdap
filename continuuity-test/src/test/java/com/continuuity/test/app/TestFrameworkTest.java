@@ -1,15 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
-import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;

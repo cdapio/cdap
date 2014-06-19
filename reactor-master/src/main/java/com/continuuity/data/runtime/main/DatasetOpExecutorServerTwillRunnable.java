@@ -8,12 +8,16 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
+import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.logging.ServiceLoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.twill.AbstractReactorTwillRunnable;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -60,7 +64,13 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractReactorTwillRu
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModule(),
+      new LoggingModules().getDistributedModules(),
       new AuthModule());
+
+    injector.getInstance(LogAppenderInitializer.class).initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.DATASET_EXECUTOR));
   }
 
   @Override

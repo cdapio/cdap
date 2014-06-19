@@ -3,7 +3,7 @@ package com.continuuity.explore.service;
 import com.google.common.base.Objects;
 
 /**
- * Describes a column being returned by {@link ExploreService}.
+ * Describes a column being returned by {@link Explore}.
  */
 public class ColumnDesc {
   private final String name;
