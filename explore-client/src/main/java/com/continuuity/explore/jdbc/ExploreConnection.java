@@ -33,10 +33,10 @@ public class ExploreConnection implements Connection {
   private final Explore exploreClient;
 
   public ExploreConnection(String uri, Properties info) {
-    if (!uri.startsWith(Utils.URL_PREFIX)) {
-      throw new IllegalArgumentException("Bad URL format: Missing prefix " + Utils.URL_PREFIX);
+    if (!uri.startsWith(ExploreJDBCUtils.URL_PREFIX)) {
+      throw new IllegalArgumentException("Bad URL format: Missing prefix " + ExploreJDBCUtils.URL_PREFIX);
     }
-    URI jdbcURI = URI.create(uri.substring(Utils.URI_JDBC_PREFIX.length()));
+    URI jdbcURI = URI.create(uri.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
     host = jdbcURI.getHost();
     port = jdbcURI.getPort();
 

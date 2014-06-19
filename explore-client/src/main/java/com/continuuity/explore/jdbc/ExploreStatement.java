@@ -74,6 +74,7 @@ public class ExploreStatement implements Statement {
         throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
                                              "Got final state - %s", sql, status.getState().toString()));
       }
+      resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
       return status.hasResults();
     } catch (HandleNotFoundException e) {
       // Cannot happen unless explore server restarted.

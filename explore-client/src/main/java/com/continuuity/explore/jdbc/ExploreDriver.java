@@ -30,7 +30,7 @@ public class ExploreDriver implements Driver {
 
   @Override
   public boolean acceptsURL(String url) throws SQLException {
-    return Pattern.matches(Utils.URL_PREFIX + ".*", url);
+    return Pattern.matches(ExploreJDBCUtils.URL_PREFIX + ".*", url);
   }
 
   @Override
