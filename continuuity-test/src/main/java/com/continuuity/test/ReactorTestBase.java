@@ -63,7 +63,9 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -75,6 +77,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -333,6 +338,36 @@ public class ReactorTestBase {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, null);
+  }
+
+  /**
+   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   */
+  @Beta
+  protected final Connection getQueryClient() throws Exception {
+
+    // this makes sure the explore JDBC driver is loaded
+    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+
+    InetSocketAddress address = null;
+    // TODO use router port?
+    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+    for (Discoverable discoverable : discovered) {
+      address = discoverable.getSocketAddress();
+    }
+
+    if (null == address) {
+      throw new IOException("Hive server could not be discovered.");
+    }
+
+    String host = "localhost";
+    int port = address.getPort();
+    String jdbcUser = "hive";
+    String jdbcPassword = "";
+
+    String connectString = String.format("jdbc:explore://%s:%d", host, port);
+
+    return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
   }
 
 }
