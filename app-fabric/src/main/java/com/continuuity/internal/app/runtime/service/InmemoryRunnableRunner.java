@@ -77,8 +77,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Preconditions.checkNotNull(runnableSpec, "RuntimeSpecification missing for Runnable \"%s\"", runnableName);
 
       Class<?> clz = null;
-      clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(), true,
-                          program.getMainClass().getClassLoader());
+      clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
+                          true, program.getMainClass().getClassLoader());
 
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
@@ -93,18 +93,20 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       TwillRunnable runnable = new InstantiatorFactory(false).get(TypeToken.of(runnableClass)).create();
       TypeToken<? extends TwillRunnable> runnableType = TypeToken.of(runnableClass);
-      InMemoryRunnableDriver driver = new InMemoryRunnableDriver(
-        runnable, twillContext, new ServiceRunnableLoggingContext(
-        program.getAccountId(), program.getApplicationId(), runId.getId(), twillRunId.getId()));
+      InMemoryRunnableDriver driver = new
+        InMemoryRunnableDriver(runnable, twillContext, new ServiceRunnableLoggingContext(program.getAccountId(),
+                                                                                         program.getApplicationId(),
+                                                                                         runId.getId(),
+                                                                                         twillRunId.getId()));
 
       //Injecting Metrics
       Reflections.visit(runnable, TypeToken.of(runnable.getClass()),
-                        new MetricsFieldSetter(new ServiceRunnableMetrics
-                                                 (metricsCollectionService, program.getApplicationId(),
-                                                  serviceSpec.getName(), runnableName)));
+                        new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
+                                                                          program.getApplicationId(),
+                                                                          serviceSpec.getName(), runnableName)));
 
-      ProgramController controller = new InMemoryRunnableProgramController
-        (program.getName(), runnableName, twillContext, driver);
+      ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,
+                                                                           twillContext, driver);
 
       //configure and initialize the runnable before starting it
       runnable.configure();

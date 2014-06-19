@@ -37,8 +37,8 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    processExecutor = Executors.newSingleThreadExecutor(
-      Threads.createDaemonThreadFactory(getServiceName() + "-executor"));
+    processExecutor = Executors.newSingleThreadExecutor
+      (Threads.createDaemonThreadFactory(getServiceName() + "-executor"));
   }
 
   @Override
@@ -47,6 +47,7 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
     processExecutor.shutdown();
     LOG.info("Runnable {} Stopped", context.getSpecification().getName());
   }
+
   @Override
   protected void run() throws Exception {
     LoggingContextAccessor.setLoggingContext(loggingContext);
@@ -63,8 +64,7 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
         // If in shutdown sequence, cancel the task by interrupting it.
         // Otherwise, just keep waiting until it completes
         if (!isRunning()) {
-          LOG.info("Runnable {} took longer than 30 seconds to quit. Force quitting.",
-                   context.getRunId());
+          LOG.info("Runnable {} took longer than 30 seconds to quit. Force quitting.", context.getRunId());
           processFuture.cancel(true);
         }
       }

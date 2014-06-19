@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -191,7 +189,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     LOG.info("Service Started");
     serviceManager.stop();
     LOG.info("Service Stopped");
-    //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()

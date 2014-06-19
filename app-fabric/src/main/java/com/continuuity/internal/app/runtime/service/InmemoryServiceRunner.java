@@ -73,9 +73,8 @@ public class InMemoryServiceRunner implements ProgramRunner {
       for (Map.Entry<String, RuntimeSpecification> entry : serviceSpec.getRunnables().entrySet()) {
         int instanceCount = entry.getValue().getResourceSpecification().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
-          runnables.put(entry.getKey(), instanceId, startRunnable(program,
-                                                                  createRunnableOptions(entry.getKey(), instanceId,
-                                                                                        instanceCount, runId)));
+          runnables.put(entry.getKey(), instanceId, startRunnable
+            (program, createRunnableOptions(entry.getKey(), instanceId, instanceCount, runId)));
         }
       }
     } catch (Throwable t) {
@@ -90,8 +89,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
   }
 
 
-  private ProgramOptions createRunnableOptions(String name, int instanceId, int instances,
-                                               RunId runId) {
+  private ProgramOptions createRunnableOptions(String name, int instanceId, int instances, RunId runId) {
 
     // Get the right user arguments.
     Arguments userArguments = new BasicArguments();
@@ -99,12 +97,10 @@ public class InMemoryServiceRunner implements ProgramRunner {
       userArguments = programOptions.get(runId).getUserArguments();
     }
 
-    return new SimpleProgramOptions(name, new BasicArguments(
-      ImmutableMap.of(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
-                      ProgramOptionConstants.INSTANCES, Integer.toString(instances),
-                      ProgramOptionConstants.RUN_ID, runId.getId()
-      ))
-      , userArguments);
+    return new SimpleProgramOptions(name, new BasicArguments
+      (ImmutableMap.of(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
+                       ProgramOptionConstants.INSTANCES, Integer.toString(instances),
+                       ProgramOptionConstants.RUN_ID, runId.getId())), userArguments);
   }
 
   class ServiceProgramController extends AbstractProgramController {
@@ -112,8 +108,8 @@ public class InMemoryServiceRunner implements ProgramRunner {
     private final Program program;
     private final ServiceSpecification serviceSpec;
 
-    ServiceProgramController(Table<String, Integer, ProgramController> runnables, RunId runId,
-                             Program program, ServiceSpecification serviceSpec) {
+    ServiceProgramController(Table<String, Integer, ProgramController> runnables,
+                             RunId runId, Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
       this.runnables = runnables;
       this.program = program;
@@ -134,16 +130,16 @@ public class InMemoryServiceRunner implements ProgramRunner {
     @Override
     protected void doStop() throws Exception {
       LOG.info("Stopping Service : " + serviceSpec.getName());
-      Futures.successfulAsList(Iterables.transform
-                                 (runnables.values(), new Function<ProgramController,
-                                    ListenableFuture<ProgramController>>() {
-                                    @Override
-                                    public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                      return input.stop();
-                                    }
-                                  }
-                                 )
-      ).get();
+      Futures.successfulAsList
+        (Iterables.transform(runnables.values(), new Function<ProgramController,
+                               ListenableFuture<ProgramController>>() {
+                               @Override
+                               public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                 return input.stop();
+                               }
+                             }
+         )
+        ).get();
       LOG.info("Service stopped: " + serviceSpec.getName());
     }
 

@@ -12,8 +12,8 @@ public class InMemoryRunnableProgramController extends AbstractProgramController
   private TwillContext context;
   private InMemoryRunnableDriver driver;
 
-  public InMemoryRunnableProgramController(String name, String runnableName,
-                                           BasicTwillContext twillContext, InMemoryRunnableDriver driver) {
+  public InMemoryRunnableProgramController(String name, String runnableName, BasicTwillContext twillContext,
+                                           InMemoryRunnableDriver driver) {
     super(name + ":" + runnableName, twillContext.getRunId());
     this.context = context;
     this.driver = driver;

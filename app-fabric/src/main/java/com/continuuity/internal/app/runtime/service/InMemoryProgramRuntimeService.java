@@ -23,8 +23,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   private final CConfiguration configuration;
 
   @Inject
-  public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory,
-                                       CConfiguration configuration) {
+  public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration configuration) {
     super(programRunnerFactory);
     this.configuration = configuration;
   }
@@ -33,8 +32,8 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     try {
       // TODO: fix possible issue where two run() calls use the same unpackedLocation
-      File destinationUnpackedJarDir = new File(
-        configuration.get(Constants.AppFabric.TEMP_DIR) + "/" + program.getName() + "-" + System.currentTimeMillis());
+      File destinationUnpackedJarDir = new File(configuration.get(Constants.AppFabric.TEMP_DIR) +
+                                                  "/" + program.getName() + "-" + System.currentTimeMillis());
       Preconditions.checkState(!destinationUnpackedJarDir.exists());
       destinationUnpackedJarDir.mkdirs();
 
@@ -47,8 +46,6 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Override
   public LiveInfo getLiveInfo(Id.Program programId, Type type) {
-    return isRunning(programId, type)
-      ? new InMemoryLiveInfo(programId, type)
-      : new NotRunningLiveInfo(programId, type);
+    return isRunning(programId, type) ? new InMemoryLiveInfo(programId, type) : new NotRunningLiveInfo(programId, type);
   }
 }
