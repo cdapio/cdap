@@ -13,6 +13,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.stream.StreamCoordinator;
 import com.continuuity.data.stream.StreamFileWriterFactory;
 import com.continuuity.data.stream.StreamPropertyListener;
+import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -319,6 +320,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
             throw new IllegalStateException("Stream does not exists");
           }
 
+          StreamConfig streamConfig = streamAdmin.getConfig(key.getStreamName());
+
           // TODO: Deal with dynamic resize of stream handler instances
           int groupSize = cConf.getInt(Constants.Stream.CONTAINER_INSTANCES, 1);
           ConsumerConfig config = new ConsumerConfig(key.getGroupId(),
@@ -328,7 +331,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
           StreamConsumer consumer = consumerFactory.create(QueueName.fromStream(key.getStreamName()),
                                                            Constants.Stream.HANDLER_CONSUMER_NS, config);
           Cancellable cancellable = streamCoordinator.addListener(key.getStreamName(),
-                                                                  createStreamPropertyListener(key));
+                                                                  createStreamPropertyListener(key, streamConfig));
           return new StreamDequeuer(consumer, executorFactory, cancellable);
         }
       });
@@ -337,26 +340,38 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   /**
    * Creates a {@link StreamPropertyListener} that would reload cached consumer if any stream properties changed.
    */
-  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key) {
+  private StreamPropertyListener createStreamPropertyListener(final ConsumerCacheKey key,
+                                                              final StreamConfig streamConfig) throws IOException {
+    final int currentGeneration = StreamUtils.getGeneration(streamConfig);
+    final long currentTTL = streamConfig.getTTL();
+
     return new StreamPropertyListener() {
       @Override
       public void generationChanged(String streamName, int generation) {
-        dequeuerCache.refresh(key);
+        if (streamName.equals(streamConfig.getName()) && currentGeneration < generation) {
+          dequeuerCache.refresh(key);
+        }
       }
 
       @Override
       public void generationDeleted(String streamName) {
-        dequeuerCache.refresh(key);
+        if (streamName.equals(streamConfig.getName())) {
+          dequeuerCache.refresh(key);
+        }
       }
 
       @Override
       public void ttlChanged(String streamName, long ttl) {
-        dequeuerCache.refresh(key);
+        if (streamName.equals(streamConfig.getName()) && currentTTL != ttl) {
+          dequeuerCache.refresh(key);
+        }
       }
 
       @Override
       public void ttlDeleted(String streamName) {
-        dequeuerCache.refresh(key);
+        if (streamName.equals(streamConfig.getName())) {
+          dequeuerCache.refresh(key);
+        }
       }
     };
   }
