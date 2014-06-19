@@ -32,8 +32,7 @@ public class DatasetExploreFacade {
   @Inject
   public DatasetExploreFacade(AsyncExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
-    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED,
-                                           Constants.Explore.DEFAULT_CFG_EXPLORE_ENABLED);
+    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     if (!exploreEnabled) {
       LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
     }
@@ -109,16 +108,9 @@ public class DatasetExploreFacade {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
-    String hiveSchema;
-    try {
-      hiveSchema = hiveSchemaFor(scannable);
-    } catch (UnsupportedTypeException e) {
-      LOG.error(String.format(
-        "Can't create Hive table for dataset '%s' because its row type '%s' is not supported",
-        name, scannable.getRowType()), e);
-      return null;
-    }
+  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable)
+    throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaFor(scannable);
 
     // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
@@ -126,9 +118,9 @@ public class DatasetExploreFacade {
     String tableName = name.replaceAll("\\.", "_");
 
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
-                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-                                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                                         Constants.Explore.DATASET_NAME, name);
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                         Constants.Explore.DATASET_NAME, name);
   }
 
   public static String generateDeleteStatement(String name) {
