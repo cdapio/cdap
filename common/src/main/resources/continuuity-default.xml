@@ -550,9 +550,9 @@
     </property>
 
     <property>
-        <name>dataset.max.instances</name>
+        <name>dataset.executor.max.instances</name>
         <value>${reactor.service.max.instances}</value>
-        <description>Maximum Number of Dataset Service Instances</description>
+        <description>Maximum Number of DataSet Executor Instances</description>
     </property>
 
     <property>

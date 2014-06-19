@@ -177,7 +177,7 @@ public final class Constants {
       public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
 
       //max-instances of dataset executor service
-      public static final String MAX_INSTANCES = "dataset.max.instances";
+      public static final String MAX_INSTANCES = "dataset.executor.max.instances";
     }
   }
 
