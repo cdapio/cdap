@@ -45,6 +45,7 @@ public class AccessTokenClient {
   String username;
   String password;
   String filePath;
+  boolean ssl = false;
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -69,6 +70,7 @@ public class AccessTokenClient {
     out.println("  --username <user>       To specify the user to login as");
     out.println("  --password <password>   To specify the user password");
     out.println("  --file <path>           To specify the access token file");
+    out.println("  --ssl                   To use SSL");
     out.println("  --help                  To print this message");
     if (error) {
       throw new UsageException();
@@ -131,6 +133,8 @@ public class AccessTokenClient {
           usage(true);
         }
         filePath = args[pos];
+      } else if ("--verbose".equals(arg)) {
+        ssl = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -148,10 +152,14 @@ public class AccessTokenClient {
     }
     // Default values for host and port.
     if (host == null) {
-      host = "http://localhost";
+      host = "localhost";
     }
     if (port == -1) {
       port = 10009;
+    }
+
+    if (filePath == null) {
+      usage("Specify --file to save to file");
     }
 
     if (username == null) {
@@ -166,6 +174,7 @@ public class AccessTokenClient {
       Console console = System.console();
       password = String.valueOf(console.readPassword("Password: "));
     }
+
   }
 
   public String execute0(String[] args) {
@@ -174,7 +183,13 @@ public class AccessTokenClient {
       return "";
     }
 
-    String baseUrl = String.format("%s:%d", host, port);
+    String baseUrl;
+    if (ssl) {
+      baseUrl = String.format("https://%s:%d", host, port);
+    } else {
+      baseUrl = String.format("http://%s:%d", host, port);
+    }
+
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
 
     HttpClient client = new DefaultHttpClient();
