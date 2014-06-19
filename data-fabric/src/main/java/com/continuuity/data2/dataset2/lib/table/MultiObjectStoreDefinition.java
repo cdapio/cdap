@@ -5,6 +5,7 @@ import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
+import com.continuuity.api.dataset.lib.MultiObjectStore;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
@@ -15,11 +16,9 @@ import java.io.IOException;
 
 /**
  * DatasetDefinition for {@link MultiObjectStoreDataset}.
- *
- * @param <T> Type of object that the {@link MultiObjectStoreDataset} will store.
  */
-public class MultiObjectStoreDefinition<T>
-  extends AbstractDatasetDefinition<MultiObjectStoreDataset<T>, DatasetAdmin> {
+public class MultiObjectStoreDefinition
+  extends AbstractDatasetDefinition<MultiObjectStore, DatasetAdmin> {
 
   private static final Gson GSON = new Gson();
 
@@ -47,13 +46,13 @@ public class MultiObjectStoreDefinition<T>
   }
 
   @Override
-  public MultiObjectStoreDataset<T> getDataset(DatasetSpecification spec) throws IOException {
+  public MultiObjectStoreDataset<?> getDataset(DatasetSpecification spec) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("multiobjects");
     Table table = tableDef.getDataset(tableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new MultiObjectStoreDataset<T>(spec.getName(), table, typeRep, schema);
+    return new MultiObjectStoreDataset(spec.getName(), table, typeRep, schema);
   }
 
 }

@@ -6,6 +6,7 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
@@ -15,11 +16,9 @@ import java.io.IOException;
 
 /**
  * DatasetDefinition for {@link ObjectStoreDataset}.
- *
- * @param <T> Type of object that the {@link ObjectStoreDataset} will store.
  */
-public class ObjectStoreDefinition<T>
-  extends AbstractDatasetDefinition<ObjectStoreDataset<T>, DatasetAdmin> {
+public class ObjectStoreDefinition
+  extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin> {
 
   private static final Gson GSON = new Gson();
 
@@ -47,13 +46,13 @@ public class ObjectStoreDefinition<T>
   }
 
   @Override
-  public ObjectStoreDataset<T> getDataset(DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<?> getDataset(DatasetSpecification spec) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
     KeyValueTable table = tableDef.getDataset(kvTableSpec);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new ObjectStoreDataset<T>(spec.getName(), table, typeRep, schema);
+    return new ObjectStoreDataset(spec.getName(), table, typeRep, schema);
   }
 
 }

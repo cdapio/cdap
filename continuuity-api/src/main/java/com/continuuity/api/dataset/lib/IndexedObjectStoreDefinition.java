@@ -12,18 +12,16 @@ import java.io.IOException;
 
 /**
  * DatasetDefinition for {@link IndexedObjectStore}.
- *
- * @param <T> Type of object that the {@link IndexedObjectStore} will store.
  */
-public class IndexedObjectStoreDefinition<T>
-  extends AbstractDatasetDefinition<IndexedObjectStore<T>, DatasetAdmin> {
+public class IndexedObjectStoreDefinition
+  extends AbstractDatasetDefinition<IndexedObjectStore, DatasetAdmin> {
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
   private final DatasetDefinition<? extends ObjectStore, ?> objectStoreDef;
 
   public IndexedObjectStoreDefinition(String name,
                                       DatasetDefinition<? extends Table, ?> tableDef,
-                                      DatasetDefinition<? extends ObjectStore<T>, ?> objectStoreDef) {
+                                      DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
     super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     Preconditions.checkArgument(objectStoreDef != null, "ObjectStore definition is required");
@@ -49,14 +47,14 @@ public class IndexedObjectStoreDefinition<T>
   }
 
   @Override
-  public IndexedObjectStore<T> getDataset(DatasetSpecification spec) throws IOException {
+  public IndexedObjectStore<?> getDataset(DatasetSpecification spec) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
     Table index = tableDef.getDataset(tableSpec);
-    ObjectStore<T> objectStore = objectStoreDef.getDataset(objectStoreSpec);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec);
 
-    return new IndexedObjectStore<T>(spec.getName(), objectStore, index);
+    return new IndexedObjectStore(spec.getName(), objectStore, index);
   }
 
 }

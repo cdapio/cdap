@@ -35,7 +35,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
 
     DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition("objectStore", kvTableDef);
-    registry.add(objectStoreDef);
+    registry.add(new ObjectStoreDefinition("objectStore", kvTableDef));
     registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), kvTableDef));
 
     registry.add(new IndexedObjectStoreDefinition("indexedObjectStore", tableDef, objectStoreDef));
