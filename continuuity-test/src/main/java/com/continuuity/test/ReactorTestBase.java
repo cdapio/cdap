@@ -35,9 +35,6 @@ import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import com.continuuity.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.metastore.HiveMetastore;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -54,6 +51,7 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -65,9 +63,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -79,9 +75,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.DriverManager;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -102,10 +95,6 @@ public class ReactorTestBase {
   private static DatasetService datasetService;
   private static DatasetFramework datasetFramework;
   private static DiscoveryServiceClient discoveryClient;
-
-  private static HiveMetastore hiveMetastore;
-  private static HiveServer hiveServer;
-
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -174,13 +163,12 @@ public class ReactorTestBase {
     configuration.set(Constants.AppFabric.TEMP_DIR, tmpDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     configuration.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
-    configuration.setBoolean(Constants.Hive.EXPLORE_ENABLED, true);
+    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -211,7 +199,6 @@ public class ReactorTestBase {
                                         expose(StreamHandler.class);
                                       }
                                     },
-                                    new HiveRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
@@ -245,12 +232,6 @@ public class ReactorTestBase {
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    hiveMetastore = injector.getInstance(HiveMetastore.class);
-    hiveServer = injector.getInstance(HiveServer.class);
-
-    // it is important to respect that order: metastore, then HiveServer
-    hiveMetastore.startAndWait();
-    hiveServer.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -293,8 +274,6 @@ public class ReactorTestBase {
 
   @AfterClass
   public static final void finish() {
-    hiveServer.stopAndWait();
-    hiveMetastore.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     datasetService.stopAndWait();
@@ -354,35 +333,6 @@ public class ReactorTestBase {
 
     datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
     return datasetFramework.getAdmin(datasetInstanceName, null);
-  }
-
-  /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
-   */
-  @Beta
-  protected final Connection getQueryClient() throws Exception {
-
-    // this makes sure the hive JDBC driver is loaded
-    Class.forName("org.apache.hive.jdbc.HiveDriver");
-
-    InetSocketAddress address = null;
-    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.HIVE);
-    for (Discoverable discoverable : discovered) {
-       address = discoverable.getSocketAddress();
-    }
-
-    if (null == address) {
-      throw new IOException("Hive server could not be discovered.");
-    }
-
-    String host = "localhost";
-    int port = address.getPort();
-    String jdbcUser = "hive";
-    String jdbcPassword = "";
-
-    String connectString = String.format("jdbc:hive2://%s:%d/default;auth=noSasl", host, port);
-
-    return DriverManager.getConnection(connectString, jdbcUser, jdbcPassword);
   }
 
 }

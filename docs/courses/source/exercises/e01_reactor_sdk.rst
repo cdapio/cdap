@@ -1,23 +1,26 @@
-=============================================================
-Download Continuuity Reactor SDK, Install and Run Quick Start
-=============================================================
+==================================================================
+Download Continuuity Reactor SDK, |br| Install and Run Quick Start
+==================================================================
 
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
+.. rst2pdf: CutStart
 .. Slide Presentation HTML Generation
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
 
-.. |br2| raw:: html
-
-   <br /><br />
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 

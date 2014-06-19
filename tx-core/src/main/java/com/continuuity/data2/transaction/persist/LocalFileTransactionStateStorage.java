@@ -1,12 +1,12 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
-
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,8 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   private File snapshotDir;
 
   @Inject
-  public LocalFileTransactionStateStorage(CConfiguration conf) {
+  public LocalFileTransactionStateStorage(CConfiguration conf, SnapshotCodecProvider codecProvider) {
+    super(codecProvider);
     this.configuredSnapshotDir = conf.get(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }
 
@@ -80,13 +82,17 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
 
   @Override
   public void writeSnapshot(TransactionSnapshot snapshot) throws IOException {
-    // TODO: instead of making an extra in-memory copy, serialize the snapshot directly to the file output stream
-    byte[] serialized = encode(snapshot);
     // save the snapshot to a temporary file
     File snapshotTmpFile = new File(snapshotDir, TMP_SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
     LOG.info("Writing snapshot to temporary file {}", snapshotTmpFile);
-
-    Files.write(serialized, snapshotTmpFile);
+    OutputStream out = Files.newOutputStreamSupplier(snapshotTmpFile).getOutput();
+    boolean threw = true;
+    try {
+      codecProvider.encode(out, snapshot);
+      threw = false;
+    } finally {
+      Closeables.close(out, threw);
+    }
 
     // move the temporary file into place with the correct filename
     File finalFile = new File(snapshotDir, SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
@@ -130,8 +136,7 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
   }
 
   private TransactionSnapshot readSnapshotFile(InputStream is) throws IOException {
-    byte[] serializedSnapshot = ByteStreams.toByteArray(is);
-    return decode(serializedSnapshot);
+    return codecProvider.decode(is);
   }
 
   @Override

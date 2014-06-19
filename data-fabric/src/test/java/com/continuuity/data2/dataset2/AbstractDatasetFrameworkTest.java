@@ -4,7 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.data2.dataset2.module.lib.TableModule;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -69,7 +69,7 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("table", new TableModule());
+    framework.addModule("core", new CoreDatasetsModule());
     framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
 
     // Creating instance
@@ -81,7 +81,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // cleanup
     framework.deleteInstance("my_table");
     framework.deleteModule("keyValue");
-    framework.deleteModule("table");
+    framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 
@@ -91,7 +91,7 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
-    framework.addModule("table", new TableModule());
+    framework.addModule("core", new CoreDatasetsModule());
     framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
     framework.addModule("doubleKeyValue", new SingleTypeModule(DoubleWrappedKVTable.class));
 
@@ -104,7 +104,7 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.deleteInstance("my_table");
     framework.deleteModule("doubleKeyValue");
     framework.deleteModule("keyValue");
-    framework.deleteModule("table");
+    framework.deleteModule("core");
     framework.deleteModule("inMemory");
   }
 

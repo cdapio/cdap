@@ -102,7 +102,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
         deletedFlows.add(programId.getId());
       }
     }
-    deleteMetrics(appSpec.getApplicationId().getAccountId(), appSpec.getApplicationId().getId(), deletedFlows);
+    if (!deletedFlows.isEmpty()) {
+      deleteMetrics(appSpec.getApplicationId().getAccountId(), appSpec.getApplicationId().getId(), deletedFlows);
+    }
+
     emit(appSpec);
   }
 
@@ -142,5 +145,4 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
       }
     }
   }
-
 }

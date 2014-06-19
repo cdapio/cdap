@@ -12,22 +12,21 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
+import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.hive.guice.HiveRuntimeModule;
-import com.continuuity.hive.metastore.HiveMetastore;
-import com.continuuity.hive.server.HiveServer;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -37,7 +36,6 @@ import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.security.guice.SecurityModules;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -76,11 +74,10 @@ public class SingleNodeMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
 
-  private HiveMetastore hiveMetastore;
-  private HiveServer hiveServer;
-
   private ExternalAuthenticationServer externalAuthenticationServer;
   private final DatasetService datasetService;
+
+  private ExploreExecutorService exploreExecutorService;
 
   private InMemoryZKServer zookeeper;
 
@@ -102,12 +99,15 @@ public class SingleNodeMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
-    hiveMetastore = injector.getInstance(HiveMetastore.class);
-    hiveServer = injector.getInstance(HiveServer.class);
-
     boolean securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
+
+    boolean exploreEnabled = configuration.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
+    ExploreServiceUtils.checkHiveVersion(this.getClass().getClassLoader());
+    if (exploreEnabled) {
+      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -156,14 +156,12 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
     streamHttpService.startAndWait();
 
-    if (hiveMetastore != null && hiveServer != null) {
-      // it is important to respect that order: metastore, then HiveServer
-      hiveMetastore.startAndWait();
-      hiveServer.startAndWait();
-    }
-
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.startAndWait();
+    }
+
+    if (exploreExecutorService != null) {
+      exploreExecutorService.startAndWait();
     }
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -189,14 +187,11 @@ public class SingleNodeMain {
     if (externalAuthenticationServer != null) {
       externalAuthenticationServer.stopAndWait();
     }
+    if (exploreExecutorService != null) {
+      exploreExecutorService.stopAndWait();
+    }
     zookeeper.stopAndWait();
     logAppenderInitializer.close();
-    if (hiveServer != null) {
-      hiveServer.stopAndWait();
-    }
-    if (hiveMetastore != null) {
-      hiveMetastore.stopAndWait();
-    }
   }
 
   /**
@@ -280,8 +275,6 @@ public class SingleNodeMain {
     configuration.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    configuration.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
-
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
@@ -320,7 +313,7 @@ public class SingleNodeMain {
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
       new StreamServiceModule(),
-      new HiveRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules()
     );
   }
 
@@ -367,7 +360,7 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceModule(),
-      new HiveRuntimeModule().getSingleNodeModules()
+      new ExploreRuntimeModule().getSingleNodeModules()
     );
   }
 }
