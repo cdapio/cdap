@@ -9,6 +9,7 @@ import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -52,15 +53,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
 
       if (!(dataset instanceof RowScannable)) {
-        responder.sendError(HttpResponseStatus.CONFLICT, "Dataset does not implement RowScannable");
+        // It is not an error to get non-RowScannable datasets, since the type of dataset may not be known where this
+        // call originates from.
+        LOG.debug("Dataset {} does not implement {}", instance, RowScannable.class.getName());
+        responder.sendStatus(HttpResponseStatus.OK);
         return;
       }
 
       RowScannable<?> scannable = (RowScannable) dataset;
-      String createStatement = DatasetExploreFacade.generateCreateStatement(instance, scannable);
-      if (createStatement == null) {
-        LOG.error("Empty create statement for dataset {}", instance);
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Empty create statement for dataset " + instance);
+      String createStatement;
+      try {
+        createStatement = DatasetExploreFacade.generateCreateStatement(instance, scannable);
+      } catch (UnsupportedTypeException e) {
+        LOG.error("Exception while generating create statement for dataset {}", instance, e);
+        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
 
@@ -88,12 +94,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("instance") final String instance) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", instance);
-      String createStatement = DatasetExploreFacade.generateDeleteStatement(instance);
+      String deleteStatement = DatasetExploreFacade.generateDeleteStatement(instance);
       LOG.debug("Running delete statement for dataset {} - {}",
                 instance,
-                createStatement);
+                deleteStatement);
 
-      Handle handle = exploreService.execute(createStatement);
+      Handle handle = exploreService.execute(deleteStatement);
       JsonObject json = new JsonObject();
       json.addProperty("id", handle.getId());
       responder.sendJson(HttpResponseStatus.OK, json);

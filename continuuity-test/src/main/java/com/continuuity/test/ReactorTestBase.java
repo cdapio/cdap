@@ -51,7 +51,6 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -173,7 +172,6 @@ public class ReactorTestBase {
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {

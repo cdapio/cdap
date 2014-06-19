@@ -46,7 +46,7 @@ public class InternalAsyncExploreClient extends AbstractAsyncExploreClient imple
   public Handle enableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "id"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
@@ -55,7 +55,7 @@ public class InternalAsyncExploreClient extends AbstractAsyncExploreClient imple
   public Handle disableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "id"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }

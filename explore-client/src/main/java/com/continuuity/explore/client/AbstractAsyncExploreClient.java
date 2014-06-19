@@ -46,7 +46,7 @@ public abstract class AbstractAsyncExploreClient implements Explore {
   public Handle execute(String statement) throws ExploreException {
     HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "id"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
@@ -97,26 +97,16 @@ public abstract class AbstractAsyncExploreClient implements Explore {
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
   }
 
-  protected String parseResponse(HttpResponse response, String key) throws ExploreException {
-    String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
-    try {
-      Map<String, String> responseMap = GSON.fromJson(responseString, MAP_TYPE_TOKEN);
-      if (responseMap.containsKey(key)) {
-        return responseMap.get(key);
-      }
-
-      String message = String.format("Cannot find key %s in server response: %s", key, responseString);
-      LOG.error(message);
-      throw new ExploreException(message);
-    } catch (JsonSyntaxException e) {
-      String message = String.format("Cannot parse server response: %s", responseString);
-      LOG.error(message, e);
-      throw new ExploreException(message, e);
-    } catch (JsonParseException e) {
-      String message = String.format("Cannot parse server response as map: %s", responseString);
-      LOG.error(message, e);
-      throw new ExploreException(message, e);
+  protected String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
+    Map<String, String> responseMap = parseJson(response, MAP_TYPE_TOKEN);
+    if (responseMap.containsKey(key)) {
+      return responseMap.get(key);
     }
+
+    String message = String.format("Cannot find key %s in server response: %s", key,
+        new String(response.getResponseBody(), Charsets.UTF_8));
+    LOG.error(message);
+    throw new ExploreException(message);
   }
 
   protected <T> T parseJson(HttpResponse response, Type type) throws ExploreException {
