@@ -1,4 +1,4 @@
-package com.continuuity.metrics.runtime;
+package com.continuuity.data.stream;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -12,22 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Metrics Reactor Service Management in Distributed Mode.
+ * Stream Reactor Service management in distributed mode.
  */
-public class MetricsServiceManager extends AbstractDistributedReactorServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsServiceManager.class);
+public class StreamServiceManager extends AbstractDistributedReactorServiceManager {
+  private static final Logger LOG = LoggerFactory.getLogger(StreamServiceManager.class);
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  public MetricsServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                               DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.METRICS, twillRunnerService);
+  public StreamServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
+                              DiscoveryServiceClient discoveryServiceClient) {
+    super(cConf, Constants.Service.STREAMS, twillRunnerService);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Metrics.MAX_INSTANCES);
+    return cConf.getInt(Constants.Stream.MAX_INSTANCES);
   }
 
   @Override
