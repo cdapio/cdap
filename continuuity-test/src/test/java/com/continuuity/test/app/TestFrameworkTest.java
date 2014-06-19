@@ -19,6 +19,7 @@ import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.ServiceManager;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Charsets;
@@ -81,6 +82,8 @@ public class TestFrameworkTest extends ReactorTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
   }
+
+
 
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
@@ -184,6 +187,10 @@ public class TestFrameworkTest extends ReactorTestBase {
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    LOG.info("Service Started");
+    serviceManager.stop();
+    LOG.info("Service Stopped");
     //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
   }
 

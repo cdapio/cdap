@@ -16,6 +16,7 @@ import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.ServiceRunnableLoggingContext;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -27,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * Runs runnable-service in single-node
@@ -43,7 +43,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.metricsCollectionService = metricsCollectionService;
   }
 
-
+  @SuppressWarnings("unchecked")
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     BasicTwillContext twillContext = null;
@@ -67,14 +67,14 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       Type processorType = program.getType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
-      Preconditions.checkArgument(processorType == Type.SERVICE, "Only FLOW process type is supported.");
+      Preconditions.checkArgument(processorType == Type.SERVICE, "Only Service process type is supported.");
 
       String processorName = program.getName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       RuntimeSpecification runnableSpec = serviceSpec.getRunnables().get(runnableName);
-      Preconditions.checkNotNull(runnableSpec, "Definition missing for Runnable \"%s\"", runnableName);
+      Preconditions.checkNotNull(runnableSpec, "RuntimeSpecification missing for Runnable \"%s\"", runnableName);
 
       Class<?> clz = null;
       clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(), true,
@@ -84,7 +84,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
 
-      // todo we might have to generate runId for runnable before
       RunId twillRunId = RunIds.generate();
       // have to fill in the null values
       twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), null, null,
@@ -98,28 +97,27 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         runnable, twillContext, new ServiceRunnableLoggingContext(
         program.getAccountId(), program.getApplicationId(), runId.getId(), twillRunId.getId()));
 
+      //Injecting Metrics
       Reflections.visit(runnable, TypeToken.of(runnable.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics
                                                  (metricsCollectionService, program.getApplicationId(),
                                                   serviceSpec.getName(), runnableName)));
 
-      InMemoryRunnableProgramController controller = new InMemoryRunnableProgramController
+      ProgramController controller = new InMemoryRunnableProgramController
         (program.getName(), runnableName, twillContext, driver);
+
+      //configure and initialize the runnable before starting it
       runnable.configure();
       runnable.initialize(twillContext);
-      LOG.info("Starting flowlet: {}", twillContext);
+
+      LOG.info("Starting Runnable: {}", runnableName);
       driver.start();
-      LOG.info("Flowlet started: {}", twillContext);
+      LOG.info("Runnable started: {}", runnableName);
 
       return controller;
-
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    } catch (UnknownHostException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-    // have to return ProgramController for the runnable
-    return null;
   }
 }
 

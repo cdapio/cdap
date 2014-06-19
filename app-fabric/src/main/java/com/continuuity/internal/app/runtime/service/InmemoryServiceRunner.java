@@ -13,24 +13,30 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.internal.RunIds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 /**
- * Runs Service in single-node
+ * For Running Services in Singlenode.
  */
 public class InMemoryServiceRunner implements ProgramRunner {
-
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryServiceRunner.class);
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final ProgramRunnerFactory programRunnerFactory;
 
@@ -52,7 +58,9 @@ public class InMemoryServiceRunner implements ProgramRunner {
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
+    //RuIid for the service
     RunId runId = RunIds.generate();
+    programOptions.put(runId, options);
     final Table<String, Integer, ProgramController> serviceRunnables = createRunnables(program, runId, serviceSpec);
     return new ServiceProgramController(serviceRunnables, runId, program, serviceSpec);
   }
@@ -63,8 +71,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
     try {
       for (Map.Entry<String, RuntimeSpecification> entry : serviceSpec.getRunnables().entrySet()) {
-        // instancecount will be in context, may be we can pass that from context to twillRunnableSpecification
-        int instanceCount = Integer.parseInt(entry.getValue().getRunnableSpecification().getConfigs().get("instance"));
+        int instanceCount = entry.getValue().getResourceSpecification().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           runnables.put(entry.getKey(), instanceId, startRunnable(program,
                                                                   createRunnableOptions(entry.getKey(), instanceId,
@@ -72,7 +79,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
         }
       }
     } catch (Throwable t) {
-        // Need to stop all started runnable here.
+      // Need to stop all started runnable here.
       throw Throwables.propagate(t);
     }
     return runnables;
@@ -105,8 +112,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
     private final Program program;
     private final ServiceSpecification serviceSpec;
 
-
-    public ServiceProgramController(Table<String, Integer, ProgramController> runnables, RunId runId,
+    ServiceProgramController(Table<String, Integer, ProgramController> runnables, RunId runId,
                              Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
       this.runnables = runnables;
@@ -117,7 +123,7 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
     @Override
     protected void doSuspend() throws Exception {
-      //can iterate through the ProgramControllers for runnables and stop them
+
     }
 
     @Override
@@ -127,16 +133,23 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
-
+      LOG.info("Stopping Service : " + serviceSpec.getName());
+      Futures.successfulAsList(Iterables.transform
+                                 (runnables.values(), new Function<ProgramController,
+                                    ListenableFuture<ProgramController>>() {
+                                    @Override
+                                    public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                      return input.stop();
+                                    }
+                                  }
+                                 )
+      ).get();
+      LOG.info("Service stopped: " + serviceSpec.getName());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-
-    }
-
-    private synchronized void changeInstances(String runnableName, final int newInstanceCount) throws Exception {
 
     }
 
