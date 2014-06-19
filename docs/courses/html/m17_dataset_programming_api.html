@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1740,9 +1744,18 @@ function main() {
             <header><h1>DataSet Programming API</h1></header>
             
             
-            <section><!-- .. reST Editor: .. section-numbering:: -->
-<!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+            <section><table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1850,24 +1863,25 @@ you can use the latter methods to save a conversion</p></section>
             <header><h1><strong>Table</strong> Read, Write and Delete</h1></header>
             
             
-            <section><pre><span class="c1">// Read</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="n">Get</span> <span class="n">get</span><span class="o">)</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">byte</span><span class="o">[]</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">startColumn</span><span class="o">,</span>
-               <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopColumn</span><span class="o">,</span> <span class="kt">int</span> <span class="n">limit</span><span class="o">)</span>
+            <section><pre class="literal-block">
+// Read
+public Row get(Get get)
+public Row get(byte[] row)
+public byte[] get(byte[] row, byte[] column)
+public Row get(byte[] row, byte[][] columns)
+public Row get(byte[] row, byte[] startColumn,
+               byte[] stopColumn, int limit)
 
-<span class="c1">// Write</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="n">Put</span> <span class="n">put</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">put</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">values</span><span class="o">)</span>
+// Write
+public void put(Put put)
+public void put(byte[] row, byte[] column, byte[] value)
+public void put(byte[] row, byte[][] columns, byte[][] values)
 
-<span class="c1">// Delete</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="n">Delete</span> <span class="n">delete</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">void</span> <span class="nf">delete</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">)</span>
+// Delete
+public void delete(Delete delete)
+public void delete(byte[] row)
+public void delete(byte[] row, byte[] column)
+public void delete(byte[] row, byte[][] columns)
 </pre></section>
             
           </div>
@@ -1898,17 +1912,18 @@ you can use the latter methods to save a conversion</p></section>
             <header><h1><strong>Table</strong> Scan, Increment, Compare and Swap</h1></header>
             
             
-            <section><pre><span class="c1">// Scan</span>
-<span class="kd">public</span> <span class="n">Scanner</span> <span class="nf">scan</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">)</span>
+            <section><pre class="literal-block">
+// Scan
+public Scanner scan(byte[] startRow, byte[] stopRow)
 
-<span class="c1">// Increment</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">increment</span><span class="o">(</span><span class="n">Increment</span> <span class="n">increment</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kt">long</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">)</span>
-<span class="kd">public</span> <span class="n">Row</span> <span class="nf">increment</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="n">columns</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">amounts</span><span class="o">)</span>
+// Increment
+public Row increment(Increment increment)
+public long increment(byte[] row, byte[] column, long amount)
+public Row increment(byte[] row, byte[][] columns, long[] amounts)
 
-<span class="c1">// Compare and Swap</span>
-<span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">compareAndSwap</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">row</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">column</span><span class="o">,</span>
-                              <span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedValue</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">)</span>
+// Compare and Swap
+public boolean compareAndSwap(byte[] row, byte[] column,
+                              byte[] expectedValue, byte[] newValue)
 </pre></section>
             
           </div>
@@ -1940,24 +1955,25 @@ you can use the latter methods to save a conversion</p></section>
             
             
             <section><p>A <tt class="docutils literal">get</tt> operation reads all columns or selection of columns of a single row:</p>
-<pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">rowKey1</span><span class="o">;</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnX</span><span class="o">;</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">columnY</span><span class="o">;</span>
-<span class="kt">int</span> <span class="n">n</span><span class="o">;</span>
+<pre class="literal-block">
+Table t;
+byte[] rowKey1;
+byte[] columnX;
+byte[] columnY;
+int n;
 
-<span class="c1">// Read all columns of a row</span>
-<span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+// Read all columns of a row
+Row row = t.get(new Get(&quot;rowKey1&quot;));
 
-<span class="c1">// Read specified columns from a row</span>
-<span class="n">Row</span> <span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+// Read specified columns from a row
+Row rowSelection = t.get(new Get(&quot;rowKey1&quot;).add(&quot;column1&quot;).add(&quot;column2&quot;));
 
-<span class="c1">// Reads a column range from x (inclusive) to y (exclusive)</span>
-<span class="c1">// with a limit of n return values</span>
-<span class="n">rowSelection</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span> <span class="n">columnY</span><span class="o">;</span> <span class="n">n</span><span class="o">);</span>
+// Reads a column range from x (inclusive) to y (exclusive)
+// with a limit of n return values
+rowSelection = t.get(rowKey1, columnX, columnY; n);
 
-<span class="c1">// Read only one column in one row byte[]</span>
-<span class="n">value</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">);</span>
+// Read only one column in one row byte[]
+value = t.get(rowKey1, columnX);
 </pre></section>
             
           </div>
@@ -1994,12 +2010,13 @@ you can use the latter methods to save a conversion</p></section>
 only those columns</li>
 <li>Row object provides an extensive API for accessing returned column values:</li>
 </ul>
-<pre><span class="c1">// Get column value as a byte array</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+<pre class="literal-block">
+// Get column value as a byte array
+byte[] value = row.get(&quot;column1&quot;);
 
-<span class="c1">// Get column value of a specific type</span>
-<span class="n">String</span> <span class="n">valueAsString</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
-<span class="n">Integer</span> <span class="n">valueAsInteger</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
+// Get column value of a specific type
+String valueAsString = row.getString(&quot;column1&quot;);
+Integer valueAsInteger = row.getInt(&quot;column1&quot;);
 </pre></section>
             
           </div>
@@ -2036,8 +2053,9 @@ only those columns</li>
 <li>To return primitive types, the corresponding methods accepts default value to be
 returned when the column is absent:</li>
 </ul>
-<pre><span class="c1">// Get column value as a primitive type or 0 if column is absent</span>
-<span class="kt">long</span> <span class="n">valueAsLong</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+<pre class="literal-block">
+// Get column value as a primitive type or 0 if column is absent
+long valueAsLong = row.getLong(&quot;column1&quot;, 0);
 </pre></section>
             
           </div>
@@ -2069,8 +2087,9 @@ returned when the column is absent:</li>
             
             
             <section><p>A <tt class="docutils literal">put</tt> operation writes data into a row:</p>
-<pre><span class="c1">// Write a set of columns with their values</span>
-<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;value1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+<pre class="literal-block">
+// Write a set of columns with their values
+t.put(new Put(&quot;rowKey1&quot;).add(&quot;column1&quot;, &quot;value1&quot;).add(&quot;column2&quot;, 55L));
 </pre></section>
             
           </div>
@@ -2102,11 +2121,12 @@ returned when the column is absent:</li>
             
             
             <section><p>A <tt class="docutils literal">delete</tt> operation removes an entire row or a subset of its columns:</p>
-<pre><span class="c1">// Delete the entire row</span>
-<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">));</span>
+<pre class="literal-block">
+// Delete the entire row
+t.delete(new Delete(&quot;rowKey1&quot;));
 
-<span class="c1">// Delete a selection of columns from the row</span>
-<span class="n">t</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="k">new</span> <span class="n">Delete</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">));</span>
+// Delete a selection of columns from the row
+t.delete(new Delete(&quot;rowKey1&quot;).add(&quot;column1&quot;).add(&quot;column2&quot;));
 </pre>
 <p>Specifying a set of columns helps to perform delete operation faster</p>
 <p>When you want to delete all the columns of a row and you know all of them,
@@ -2141,19 +2161,20 @@ passing all of them will make the deletion faster</p></section>
             
             
             <section><p>A <tt class="docutils literal">scan</tt> operation fetches a subset of rows or all of the rows of a Table:</p>
-<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">;</span>
-<span class="n">Row</span> <span class="n">row</span><span class="o">;</span>
+<pre class="literal-block">
+byte[] startRow;
+byte[] stopRow;
+Row row;
 
-<span class="c1">// Scan all rows from startRow (inclusive) to stopRow (exclusive)</span>
-<span class="n">Scanner</span> <span class="n">scanner</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">);</span>
-<span class="k">try</span> <span class="o">{</span>
-  <span class="k">while</span> <span class="o">((</span><span class="n">row</span> <span class="o">=</span> <span class="n">scanner</span><span class="o">.</span><span class="na">next</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;column1: &quot;</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;null&quot;</span><span class="o">));</span>
-  <span class="o">}</span>
-<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
-  <span class="n">scanner</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
-<span class="o">}</span>
+// Scan all rows from startRow (inclusive) to stopRow (exclusive)
+Scanner scanner = t.scan(startRow, stopRow);
+try {
+  while ((row = scanner.next()) != null) {
+    LOG.info(&quot;column1: &quot; + row.getString(&quot;column1&quot;, &quot;null&quot;));
+  }
+} finally {
+  scanner.close();
+}
 </pre></section>
             
           </div>
@@ -2186,16 +2207,17 @@ passing all of them will make the deletion faster</p></section>
             
             <section><p>To scan a set of rows not bounded by <tt class="docutils literal">startRow</tt> and/or <tt class="docutils literal">stopRow</tt>
 you can pass <tt class="docutils literal">null</tt> as their value:</p>
-<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
+<pre class="literal-block">
+byte[] startRow;
 
-<span class="c1">// Scan all rows of a table</span>
-<span class="n">Scanner</span> <span class="n">allRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+// Scan all rows of a table
+Scanner allRows = t.scan(null, null);
 
-<span class="c1">// Scan all columns up to stopRow (exclusive)</span>
-<span class="n">Scanner</span> <span class="n">headRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">stopRow</span><span class="o">);</span>
+// Scan all columns up to stopRow (exclusive)
+Scanner headRows = t.scan(null, stopRow);
 
-<span class="c1">// Scan all columns starting from startRow (inclusive)</span>
-<span class="n">Scanner</span> <span class="n">tailRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">startRow</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+// Scan all columns starting from startRow (inclusive)
+Scanner tailRows = t.scan(startRow, null);
 </pre></section>
             
           </div>
@@ -2229,11 +2251,12 @@ you can pass <tt class="docutils literal">null</tt> as their value:</p>
             <section><p>An increment operation increments a <tt class="docutils literal">long</tt> value of one or more columns by either <tt class="docutils literal">1L</tt>
 or an integer amount <em>n</em></p>
 <p>If a column doesn’t exist, it is created with an assumed value before the increment of zero:</p>
-<pre><span class="c1">// Write long value to a column of a row</span>
-<span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
+<pre class="literal-block">
+// Write long value to a column of a row
+t.put(new Put(&quot;rowKey1&quot;).add(&quot;column1&quot;, 55L));
 
-<span class="c1">// Increment values of several columns in a row</span>
-<span class="n">t</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">23L</span><span class="o">));</span>
+// Increment values of several columns in a row
+t.increment(new Increment(&quot;rowKey1&quot;).add(&quot;column1&quot;, 1L).add(&quot;column2&quot;, 23L));
 </pre>
 <p>If the existing value of the column cannot be converted to a <tt class="docutils literal">long</tt>,
 a <tt class="docutils literal">NumberFormatException</tt> will be thrown</p></section>
@@ -2269,12 +2292,13 @@ a <tt class="docutils literal">NumberFormatException</tt> will be thrown</p></se
             <section><p>A swap operation compares the existing value of a column with an expected value,
 and if it matches, replaces it with a new value</p>
 <p>The operation returns <tt class="docutils literal">true</tt> if it succeeds and <tt class="docutils literal">false</tt> otherwise:</p>
-<pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedCurrentValue</span><span class="o">;</span>
-<span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">;</span>
-<span class="k">if</span> <span class="o">(!</span><span class="n">t</span><span class="o">.</span><span class="na">compareAndSwap</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span>
-      <span class="n">expectedCurrentValue</span><span class="o">,</span> <span class="n">newValue</span><span class="o">))</span> <span class="o">{</span>
-  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Current value was different from expected&quot;</span><span class="o">);</span>
-<span class="o">}</span>
+<pre class="literal-block">
+byte[] expectedCurrentValue;
+byte[] newValue;
+if (!t.compareAndSwap(rowKey1, columnX,
+      expectedCurrentValue, newValue)) {
+  LOG.info(&quot;Current value was different from expected&quot;);
+}
 </pre></section>
             
           </div>

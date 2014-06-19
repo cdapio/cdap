@@ -9,6 +9,7 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +26,7 @@ import org.apache.hive.service.cli.thrift.TRowSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,13 +56,20 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       // In Hive 12, CLIService.getOperationStatus returns OperationState.
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
-      Object retStatus = getCliService().getOperationStatus(operationHandle);
-      OperationState operationState = (OperationState) retStatus;
+
+      Class cliServiceClass = getCliService().getClass();
+      Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
+      OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
       Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
-    } catch (HiveSQLException e) {
-      throw new ExploreException(e);
+    } catch (HandleNotFoundException e) {
+      throw e;
+    } catch (Throwable e) {
+      if (e instanceof HiveSQLException) {
+        throw new ExploreException(e);
+      }
+      throw new RuntimeException(e);
     }
   }
 
@@ -70,8 +79,12 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        TRowSet tRowSet = rowSet.toTRowSet();
+        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
+        // so that the compiler does not make assumption on the return type of fetchResults
+        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
+        Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+        Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+        TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
         ImmutableList.Builder<Row> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
@@ -87,6 +100,8 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       }
     } catch (HiveSQLException e) {
       throw new ExploreException(e);
+    } catch (Throwable e) {
+      throw new RuntimeException(e);
     }
   }
 

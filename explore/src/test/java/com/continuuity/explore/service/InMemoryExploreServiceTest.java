@@ -39,7 +39,7 @@ public class InMemoryExploreServiceTest {
     CConfiguration configuration = CConfiguration.create();
     Configuration hConf = new Configuration();
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.set(Constants.Hive.CFG_LOCAL_DATA_DIR,
+    configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
 
     Injector injector = Guice.createInjector(

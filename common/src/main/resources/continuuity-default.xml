@@ -375,6 +375,15 @@
     </property>
 
     <property>
+        <name>data.tx.snapshot.codecs</name>
+        <value>
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
+        </value>
+        <description>Specifies the class names of all supported transaction state codecs.</description>
+    </property>
+
+    <property>
         <name>data.tx.snapshot.dir</name>
         <value>${hdfs.namespace}/tx.snapshot</value>
         <description>Directory in HDFS used to store snapshots and logs of
@@ -541,9 +550,9 @@
     </property>
 
     <property>
-        <name>dataset.service.bind.port</name>
-        <value>45055</value>
-        <description>DataSet service port</description>
+        <name>dataset.executor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+        <description>Maximum Number of DataSet Executor Instances</description>
     </property>
 
     <property>
