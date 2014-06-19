@@ -132,6 +132,10 @@ body {
   background: url('_images/Continuuity-background.jpg');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;

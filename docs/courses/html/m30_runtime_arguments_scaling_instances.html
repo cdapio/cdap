@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1740,8 +1744,18 @@ function main() {
             <header><h1>Runtime Arguments and Scaling Instances</h1></header>
             
             
-            <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+            <section><table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1877,28 +1891,29 @@ in the context</li>
             <header><h1>Runtime Argument Example (2 of 2)</h1></header>
             
             
-            <section><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Greeting</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
+            <section><pre class="literal-block">
+public static class Greeting extends AbstractProcedure {
 
-  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;whom&quot;</span><span class="o">)</span>
-  <span class="n">KeyValueTable</span> <span class="n">whom</span><span class="o">;</span>
-  <span class="kd">private</span> <span class="n">String</span> <span class="n">greeting</span><span class="o">;</span>
+  &#64;UseDataSet(&quot;whom&quot;)
+  KeyValueTable whom;
+  private String greeting;
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">ProcedureContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">args</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">();</span>
-    <span class="n">greeting</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;greeting&quot;</span><span class="o">);</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">greeting</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">greeting</span> <span class="o">=</span> <span class="s">&quot;Hello&quot;</span><span class="o">;</span>
-    <span class="o">}</span>
-  <span class="o">}</span>
+  public void initialize(ProcedureContext context) {
+    Map&lt;String, String&gt; args = context.getRuntimeArguments();
+    greeting = args.get(&quot;greeting&quot;);
+    if (greeting == null) {
+      greeting = &quot;Hello&quot;;
+    }
+  }
 
-  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;greet&quot;</span><span class="o">)</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">greet</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
-                    <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-    <span class="kt">byte</span><span class="o">[]</span> <span class="n">name</span> <span class="o">=</span> <span class="n">whom</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">NameSaver</span><span class="o">.</span><span class="na">NAME</span><span class="o">);</span>
-    <span class="n">String</span> <span class="n">toGreet</span> <span class="o">=</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="o">:</span> <span class="s">&quot;World&quot;</span><span class="o">;</span>
-    <span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">greeting</span> <span class="o">+</span> <span class="s">&quot; &quot;</span> <span class="o">+</span> <span class="n">toGreet</span> <span class="o">+</span> <span class="s">&quot;!&quot;</span><span class="o">);</span>
-  <span class="o">}</span>
-<span class="o">}</span>
+  &#64;Handle(&quot;greet&quot;)
+  public void greet(ProcedureRequest request,
+                    ProcedureResponder responder) throws Exception {
+    byte[] name = whom.read(NameSaver.NAME);
+    String toGreet = name != null ? new String(name) : &quot;World&quot;;
+    responder.sendJson(greeting + &quot; &quot; + toGreet + &quot;!&quot;);
+  }
+}
 </pre></section>
             
           </div>

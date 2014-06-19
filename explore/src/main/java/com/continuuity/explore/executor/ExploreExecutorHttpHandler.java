@@ -59,8 +59,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     this.datasetFramework = datasetFramework;
   }
 
+  /**
+   * This is an internal API to enable ad-hoc exploration of a dataset instance.
+   */
   @POST
-  @Path("/datasets/instances/{instance}/explore/enable")
+  @Path("/explore/instances/{instance}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
@@ -99,8 +102,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * This is an internal API to disable ad-hoc exploration of a dataset instance.
+   */
   @POST
-  @Path("/datasets/instances/{instance}/explore/disable")
+  @Path("/explore/instances/{instance}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("instance") final String instance) {
     try {
@@ -121,7 +127,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/queries")
+  @Path("/data/queries")
   public void query(HttpRequest request, HttpResponder responder) {
     try {
       Map<String, String> args = decodeArguments(request);
@@ -138,7 +144,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/datasets/queries/{id}")
+  @Path("/data/queries/{id}")
   public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @PathParam("id") final String id) {
     try {
@@ -154,9 +160,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/queries/{id}/cancel")
-  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request,
-                          HttpResponder responder, @PathParam("id") final String id) {
+  @Path("/data/queries/{id}/cancel")
+  public void cancelQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                          @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
       exploreService.cancel(handle);
@@ -170,7 +176,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/queries/{id}/status")
+  @Path("/data/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("id") final String id) {
     try {
@@ -186,7 +192,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/datasets/queries/{id}/schema")
+  @Path("/data/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                         @PathParam("id") final String id) {
     try {
@@ -202,7 +208,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/datasets/queries/{id}/nextResults")
+  @Path("/data/queries/{id}/nextResults")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {

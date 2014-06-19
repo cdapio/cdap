@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1741,7 +1745,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1757,7 +1772,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/9
             </aside>
           </footer>
         </div>
@@ -1773,9 +1788,9 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Add DataSets to the example project</li>
+<li>Implement using DataSets in Flowlets</li>
+<li>Ingest data to the DataSets using <tt class="docutils literal">curl</tt> commands</li>
 </ul></section>
             
           </div>
@@ -1792,7 +1807,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/9
             </aside>
           </footer>
         </div>
@@ -1806,17 +1821,23 @@ function main() {
             <header><h1>Exercise Steps</h1></header>
             
             
-            <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
+            <section><p>To the previous example, now add DataSets</p>
+<ul class="simple">
+<li>Specify imports</li>
+<li>Modify the <tt class="docutils literal">ApplicationSpecification</tt></li>
+<li>Modify the <tt class="docutils literal">Update</tt> Flowlet to use the DataSets</li>
 </ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+<p>Add these imports:</p>
+<pre class="literal-block">
+import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
+import com.continuuity.api.data.dataset.TimeseriesTable;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Table;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1832,7 +1853,176 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Exercise Steps</h1></header>
+            
+            
+            <section><p>Change the <tt class="docutils literal">ApplicationSpecification</tt> replacing <tt class="docutils literal">.noDataSet()</tt> with:</p>
+<pre class="literal-block">
+.withDataSets()
+  .add(new Table(&quot;sentiments&quot;))
+  .add(new SimpleTimeseriesTable(&quot;text-sentiments&quot;))
+</pre>
+<p>Change the <tt class="docutils literal">Update</tt> class to use the DataSets by adding:</p>
+<pre class="literal-block">
+&#64;UseDataSet(&quot;sentiments&quot;)
+private Table sentiments;
+
+&#64;UseDataSet(&quot;text-sentiments&quot;)
+private SimpleTimeseriesTable textSentiments;
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Exercise Steps</h1></header>
+            
+            
+            <section><p>Change the <tt class="docutils literal">while</tt> statement of the <tt class="docutils literal">process</tt> method to read:</p>
+<pre class="literal-block">
+while (sentimentItr.hasNext()) {
+  String text = sentimentItr.next();
+  Iterable&lt;String&gt; parts = Splitter.on(&quot;---&quot;).split(text);
+  if (Iterables.size(parts) == 2) {
+    String sentence = Iterables.get(parts, 0);
+    String sentiment = Iterables.get(parts, 1);
+    sentiments.increment(new Increment(&quot;aggregate&quot;, sentiment, 1));
+    textSentiments.write(new TimeseriesTable.Entry(sentiment.getBytes(Charsets.UTF_8),
+                                                   sentence.getBytes(Charsets.UTF_8),
+                                                   System.currentTimeMillis()));
+  }
+}
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Build, Deploy and Run</h1></header>
+            
+            
+            <section><ul class="simple">
+<li>Check that Reactor is running</li>
+<li>If Reactor was already running, stop any existing Flows; you can reset the Reactor using
+the link on the <tt class="docutils literal">Overview</tt> tab of the Reactor Dashboard</li>
+<li>Build the App using <tt class="docutils literal">mvn clean package</tt></li>
+<li>Deploy the App by dragging and dropping</li>
+<li>Send sentences with sentiments using <tt class="docutils literal">curl</tt> and watch them run through the Flow system</li>
+<li>Examples on the following slide</li>
+<li>Note: The sentiments follow the sentence, and are either positive, negative or neutral,
+and are separated from the sentence by three dashes</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/9
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Example Commands with Sentences</h1></header>
+            
+            
+            <section><pre><span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
+<span class="go">  &quot;Continuuity Reactor is awesome---positive&quot;</span>
+<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+
+<span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
+<span class="go">  &quot;I have hard time building apps on Hadoop---negative&quot;</span>
+<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+
+<span class="go">curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -d</span>
+<span class="go">  &quot;Hadoop is a Big Data platform---neutral&quot;</span>
+<span class="go">    http://localhost:10000/v2/streams/sentence</span>
+</pre>
+<p>Each command is to be on a single line</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e06_datasets_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/9
             </aside>
           </footer>
         </div>
@@ -1848,12 +2038,9 @@ function main() {
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Add DataSets to an example project</li>
+<li>Implement using DataSets in Flowlets</li>
+<li>Ingest data to the DataSets using <tt class="docutils literal">curl</tt> commands</li>
 </ul></section>
             
           </div>
@@ -1870,7 +2057,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              4/5
+              8/9
             </aside>
           </footer>
         </div>
@@ -1884,7 +2071,7 @@ function main() {
             <header><h1>Exercise Completed</h1></header>
             
             
-            <section><p><a class="reference external" href="return.html#e07">Chapter Index</a></p></section>
+            <section><p><a class="reference external" href="return.html#e06">Chapter Index</a></p></section>
             
           </div>
           <div class="presenter_notes">
@@ -1900,7 +2087,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              5/5
+              9/9
             </aside>
           </footer>
         </div>
@@ -1933,14 +2120,38 @@ function main() {
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">Exercise Steps</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Exercise Steps</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Build, Deploy and Run</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Example Commands with Sentences</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">Exercise Summary</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Exercise Completed</a></th>
+        <td><a href="#slide9">9</a></td>
       </tr>
       
       
