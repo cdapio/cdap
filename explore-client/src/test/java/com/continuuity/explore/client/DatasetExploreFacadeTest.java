@@ -132,7 +132,7 @@ public class DatasetExploreFacadeTest {
                           "h ARRAY<STRING>, i ARRAY<BOOLEAN>, j MAP<INT,STRING>)",
                         DatasetExploreFacade.hiveSchemaFor(Record.class));
 
-    Assert.assertEquals("(key STRING, value RECORD<ints ARRAY<INT>, name STRING>)",
+    Assert.assertEquals("(key STRING, value STRUCT<ints:ARRAY<INT>, name:STRING>)",
                         DatasetExploreFacade.hiveSchemaFor(KeyValue.class));
   }
 
