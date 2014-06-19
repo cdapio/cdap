@@ -2,22 +2,24 @@
 Streams REST API
 ================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
 
-.. |br2| raw:: html
-
-   <br /><br />
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -163,8 +165,8 @@ Reading Events from a Stream
 - In order to read events from a Stream, a client application must
   first obtain a consumer (group) id, which is then passed to subsequent read requests
 - The ``Consumer-ID`` is returned in a response header
-  and in the body of the response: |br2|
-  ``X-Continuuity-ConsumerId: <consumer-id>`` |br2|
+  and in the body of the response: |br| |br|
+  ``X-Continuuity-ConsumerId: <consumer-id>`` |br| |br|
 - Once you have the ``Consumer-ID``, single events can be read from the Stream
 
 ----

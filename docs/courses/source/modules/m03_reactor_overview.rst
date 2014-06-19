@@ -2,14 +2,24 @@
 Continuuity Reactor Overview
 ============================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
+.. |br| raw:: html
+
+   <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -29,7 +39,7 @@ Continuuity Reactor Application Server
 ======================================
 
 .. image:: ../_images/Reactor_02.png
-   :height: 500px
+   :width: 70%
 
 ----
 
@@ -37,7 +47,7 @@ Continuuity Reactor Architecture
 ================================
 
 .. image:: ../_images/hadoop_chart_01.png
-   :height: 500px
+   :width: 70%
 
 ----
 
@@ -45,7 +55,7 @@ Continuuity Reactor Flow (BigFlow Container)
 ============================================
 
 .. image:: ../_images/Reactor_03.png
-   :height: 500px
+   :width: 60%
 
 ----
 
@@ -100,11 +110,8 @@ Flowlets are wired together into a directed acyclic graph or DAG
 
 The DAG comprises the Flow
 
-.. .. image:: ../_images/Geo-sentiment-Dashboard.jpg
-..   :width: 400px
-
 .. image:: ../_images/dashboard_07_app_crawler_flow_out.png
-   :width: 400px
+   :width: 80%
 
 ----
 
@@ -122,7 +129,7 @@ Can perform data operations to a data store
 Can emit data objects on their outputs
 
 .. image:: ../_images/dashboard_07_app_crawler_flow_in.png
-   :width: 400px
+   :width: 80%
 
 ----
 
@@ -136,7 +143,7 @@ Can be written as in a conventional Hadoop system
 Reactor DataSets can be accessed from MapReduce jobs as both input and output
 
 .. image:: ../_images/dashboard_26_mapreduce.png
-   :width: 400px
+   :width: 80%
 
 ----
 
@@ -150,7 +157,7 @@ A sequence of jobs that follow each other, with an optional schedule
 Goes from job to job unless there is an error, in which case the Workflow is halted
 
 .. image:: ../_images/dashboard_25_workflow.png
-   :width: 400px
+   :width: 80%
 
 ----
 
@@ -168,7 +175,7 @@ Provide generic, reusable Java implementations of common data patterns
 Replace manipulating data with low-level APIs
 
 .. image:: ../_images/dashboard_15_dataset.png
-   :width: 400px
+   :width: 80%
 
 ----
 
@@ -184,7 +191,7 @@ Allow you to perform server-side processing on-demand
 Similar to a stored procedure in a traditional database
 
 .. image:: ../_images/dashboard_17_procedure_ranker.png
-   :width: 400px
+   :width: 80%
 
 ----
 
