@@ -3,7 +3,7 @@ package com.continuuity.explore.service;
 import com.google.common.base.Objects;
 
 /**
- * Represents the status of an operation submitted to {@link ExploreService}.
+ * Represents the status of an operation submitted to {@link Explore}.
  */
 public class Status {
   private final State state;

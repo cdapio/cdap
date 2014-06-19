@@ -15,11 +15,11 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.hive.client.guice.HiveClientModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -45,6 +45,8 @@ public class HiveExploreServiceTest {
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
   private static ExploreService hiveExploreService;
+  private static ExploreExecutorService exploreExecutorService;
+  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -57,6 +59,11 @@ public class HiveExploreServiceTest {
 
     hiveExploreService = injector.getInstance(ExploreService.class);
     hiveExploreService.startAndWait();
+
+    exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
+    exploreExecutorService.startAndWait();
+
+    exploreClient = injector.getInstance(ExploreClient.class);
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
@@ -97,7 +104,8 @@ public class HiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    hiveExploreService.stop();
+    exploreExecutorService.stopAndWait();
+    hiveExploreService.stopAndWait();
     transactionManager.stopAndWait();
     datasetService.startAndWait();
   }
@@ -135,14 +143,14 @@ public class HiveExploreServiceTest {
     runCommand("describe kv_table",
         true,
         Lists.newArrayList(
-            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+          new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                "from deserializer"))
+          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                                             "from deserializer"))
         )
     );
 
@@ -155,13 +163,30 @@ public class HiveExploreServiceTest {
             new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
+    runCommand("select key, value from kv_table where key = '1'",
+               true,
+               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+               Lists.newArrayList(
+                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+    );
+
     runCommand("select * from kv_table",
                true,
                Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
                                   new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
                  new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))));
+                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
+
+    runCommand("select * from kv_table where key = '2'",
+               true,
+               Lists.newArrayList(new ColumnDesc("kv_table.key", "STRING", 1, null),
+                                  new ColumnDesc("kv_table.value", "struct<name:string,ints:array<int>>", 2, null)),
+               Lists.newArrayList(
+                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
 
     runCommand("drop table if exists kv_table",
         false,
@@ -183,10 +208,10 @@ public class HiveExploreServiceTest {
                ImmutableList.<ColumnDesc>of(),
                ImmutableList.<Row>of());
 
-    Handle handle = hiveExploreService.execute("select key, value from kv_table");
-    hiveExploreService.cancel(handle);
+    Handle handle = exploreClient.execute("select key, value from kv_table");
+    exploreClient.cancel(handle);
     Assert.assertEquals(Status.State.CANCELED, waitForCompletionStatus(handle).getState());
-    hiveExploreService.close(handle);
+    exploreClient.close(handle);
 
     runCommand("drop table if exists kv_table",
                false,
@@ -197,16 +222,16 @@ public class HiveExploreServiceTest {
 
   private static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
-    Handle handle = hiveExploreService.execute(command);
+    Handle handle = exploreClient.execute(command);
 
     Status status = waitForCompletionStatus(handle);
     Assert.assertEquals(Status.State.FINISHED, status.getState());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
-    Assert.assertEquals(expectedColumnDescs, hiveExploreService.getResultSchema(handle));
-    Assert.assertEquals(expectedRows, trimColumnValues(hiveExploreService.nextResults(handle, 100)));
+    Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
+    Assert.assertEquals(expectedRows, trimColumnValues(exploreClient.nextResults(handle, 100)));
 
-    hiveExploreService.close(handle);
+    exploreClient.close(handle);
   }
 
   private static List<Row> trimColumnValues(List<Row> rows) {
@@ -229,7 +254,7 @@ public class HiveExploreServiceTest {
     Status status;
     do {
       TimeUnit.MILLISECONDS.sleep(200);
-      status = hiveExploreService.getStatus(handle);
+      status = exploreClient.getStatus(handle);
     } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING);
     return status;
   }
@@ -249,8 +274,7 @@ public class HiveExploreServiceTest {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
-      new ExploreRuntimeModule().getInMemoryModules(),
-      new HiveClientModule()
+      new ExploreRuntimeModule().getInMemoryModules()
     );
   }
 }
