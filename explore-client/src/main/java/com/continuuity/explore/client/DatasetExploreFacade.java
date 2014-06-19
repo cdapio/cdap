@@ -30,7 +30,7 @@ public class DatasetExploreFacade {
   private final boolean exploreEnabled;
 
   @Inject
-  public DatasetExploreFacade(AsyncExploreClient exploreClient, CConfiguration cConf) {
+  public DatasetExploreFacade(InternalAsyncExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED,
                                            Constants.Explore.DEFAULT_CFG_EXPLORE_ENABLED);

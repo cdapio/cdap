@@ -15,7 +15,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.explore.client.AsyncExploreClient;
+import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.executor.ExploreExecutorService;
@@ -61,7 +61,7 @@ public class HiveExploreServiceTest {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
 
-    exploreClient = injector.getInstance(AsyncExploreClient.class);
+    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     String moduleName = "inMemory";
@@ -129,14 +129,14 @@ public class HiveExploreServiceTest {
     runCommand("describe continuuity_user_my_table",
         true,
         Lists.newArrayList(
-          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-          new ColumnDesc("comment", "STRING", 3, "from deserializer")
+            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+            new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                             "from deserializer"))
+            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                "from deserializer"))
         )
     );
 
@@ -150,30 +150,32 @@ public class HiveExploreServiceTest {
     );
 
     runCommand("select key, value from continuuity_user_my_table where key = '1'",
-               true,
-               Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-                                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+        true,
+        Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
+            new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
     );
 
     runCommand("select * from continuuity_user_my_table",
-               true,
-               Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("continuuity_user_my_table.value",
-                                                 "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+        true,
+        Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
+            new ColumnDesc("continuuity_user_my_table.value",
+                "struct<name:string,ints:array<int>>", 2, null)
+        ),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select * from continuuity_user_my_table where key = '2'",
-               true,
-               Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
-                                  new ColumnDesc("continuuity_user_my_table.value",
-                                                 "struct<name:string,ints:array<int>>", 2, null)),
-               Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+        true,
+        Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
+            new ColumnDesc("continuuity_user_my_table.value",
+                "struct<name:string,ints:array<int>>", 2, null)
+        ),
+        Lists.newArrayList(
+            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
   }
 
