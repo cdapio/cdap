@@ -15,11 +15,11 @@ import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -118,14 +118,20 @@ public class ExploreClient implements Explore {
 
   private String parseResponse(HttpResponse response, String key) throws ExploreException {
     String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
-    Map<String, String> responseMap = GSON.fromJson(responseString, MAP_TYPE_TOKEN);
-    if (responseMap.containsKey(key)) {
-      return responseMap.get(key);
-    }
+    try {
+      Map<String, String> responseMap = GSON.fromJson(responseString, MAP_TYPE_TOKEN);
+      if (responseMap.containsKey(key)) {
+        return responseMap.get(key);
+      }
 
-    String message = String.format("Cannot parse %s from server response: %s", key, responseString);
-    LOG.error(message);
-    throw new ExploreException(message);
+      String message = String.format("Cannot find key %s in server response: %s", key, responseString);
+      LOG.error(message);
+      throw new ExploreException(message);
+    } catch (JsonSyntaxException e) {
+      String message = String.format("Cannot parse server response: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    }
   }
 
   private HttpResponse doGet(String resource) throws ExploreException {
@@ -144,8 +150,6 @@ public class ExploreClient implements Explore {
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body,
                                  @Nullable InputStream bodySrc) throws ExploreException {
-    Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
-
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
