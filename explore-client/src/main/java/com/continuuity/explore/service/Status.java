@@ -6,15 +6,15 @@ import com.google.common.base.Objects;
  * Represents the status of an operation submitted to {@link Explore}.
  */
 public class Status {
-  private final EStatus status;
+  private final OpStatus status;
   private final boolean hasResults;
 
-  public Status(EStatus status, boolean hasResults) {
+  public Status(OpStatus status, boolean hasResults) {
     this.status = status;
     this.hasResults = hasResults;
   }
 
-  public EStatus getStatus() {
+  public OpStatus getStatus() {
     return status;
   }
 
@@ -34,7 +34,7 @@ public class Status {
    * Represents the status of an operation.
    */
   @SuppressWarnings("UnusedDeclaration")
-  public enum EStatus {
+  public enum OpStatus {
     INITIALIZED,
     RUNNING,
     FINISHED,

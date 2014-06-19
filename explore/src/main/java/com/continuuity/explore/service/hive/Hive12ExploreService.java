@@ -58,7 +58,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      Status status = new Status(Status.EStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      Status status = new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
     } catch (HandleNotFoundException e) {

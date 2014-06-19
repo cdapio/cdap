@@ -156,7 +156,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      return ImmutableMap.of(); 
+      return ImmutableMap.of();
     }
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {

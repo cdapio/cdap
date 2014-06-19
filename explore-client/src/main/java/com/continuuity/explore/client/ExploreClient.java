@@ -46,7 +46,10 @@ import static com.continuuity.common.conf.Constants.Service;
 public class ExploreClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreClient.class);
   private static final Gson GSON = new Gson();
+
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
+  private static final Type ROW_LIST_TYPE = new TypeToken<List<Row>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
@@ -66,7 +69,7 @@ public class ExploreClient implements Explore {
   public Handle execute(String statement) throws ExploreException {
     HttpResponse response = doPost("", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponse(response, "handle"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
@@ -75,7 +78,7 @@ public class ExploreClient implements Explore {
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "status"), Status.class);
+      return parseJson(response, Status.class);
     }
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
@@ -84,7 +87,7 @@ public class ExploreClient implements Explore {
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doGet(String.format("/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "schema"), new TypeToken<List<ColumnDesc>>() { }.getType());
+      return parseJson(response, COL_DESC_LIST_TYPE);
     }
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
@@ -94,7 +97,7 @@ public class ExploreClient implements Explore {
     HttpResponse response = doPost(String.format("/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(parseResponse(response, "results"), new TypeToken<List<Row>>() { }.getType());
+      return parseJson(response, ROW_LIST_TYPE);
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }
@@ -128,6 +131,21 @@ public class ExploreClient implements Explore {
       String message = String.format("Cannot find key %s in server response: %s", key, responseString);
       LOG.error(message);
       throw new ExploreException(message);
+    } catch (JsonSyntaxException e) {
+      String message = String.format("Cannot parse server response: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    } catch (JsonParseException e) {
+      String message = String.format("Cannot parse server response as map: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    }
+  }
+
+  private <T> T parseJson(HttpResponse response, Type type) throws ExploreException {
+    String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
+    try {
+      return GSON.fromJson(responseString, type);
     } catch (JsonSyntaxException e) {
       String message = String.format("Cannot parse server response: %s", responseString);
       LOG.error(message, e);
