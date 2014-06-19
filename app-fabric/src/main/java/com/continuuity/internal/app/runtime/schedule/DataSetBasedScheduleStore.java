@@ -1,8 +1,6 @@
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -54,7 +52,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   public void initialize(ClassLoadHelper loadHelper, SchedulerSignaler schedSignaler) {
     super.initialize(loadHelper, schedSignaler);
     try {
-      table = tableUtil.getTable();
+      table = tableUtil.getMetaTable();
       Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
                                  ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
       readSchedulesFromPersistentStore();
