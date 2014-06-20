@@ -56,8 +56,8 @@ public class WordCountAppV2 extends AbstractApplication {
     setName("WordCountApp");
     addStream(new Stream("text"));
     addDataSetModule("my-kv", MyKeyValueTableDefinition.Module.class);
-    createDataSet("mydataset", "keyValueTable", DatasetProperties.EMPTY);
-    createDataSet("totals", "keyValueTable", DatasetProperties.EMPTY);
+    createDataSet("mydataset", "myKeyValueTable", DatasetProperties.EMPTY);
+    createDataSet("totals", "myKeyValueTable", DatasetProperties.EMPTY);
     addFlow(new WordCountFlow());
     addProcedure(new WordFrequency());
     addMapReduce(new CountTotal());

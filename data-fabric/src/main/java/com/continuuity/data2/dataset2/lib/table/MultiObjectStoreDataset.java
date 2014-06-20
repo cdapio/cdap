@@ -2,10 +2,10 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.KeyValue;
@@ -19,6 +19,7 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -178,7 +179,7 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
   }
 
   @Override
-  public Type getRowType() {
+  public Type getRecordType() {
     return new TypeToken<KeyValue<byte[], Map<byte[], T>>>() { }.getType();
   }
 
@@ -188,8 +189,8 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
   }
 
   @Override
-  public SplitRowScanner<KeyValue<byte[], Map<byte[], T>>> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split), new MultiObjectRowMaker());
+  public RecordScanner<KeyValue<byte[], Map<byte[], T>>> createSplitRecordScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new MultiObjectRecordMaker());
   }
 
   @Override
@@ -198,13 +199,13 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link MultiObjectStoreDataset}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link MultiObjectStoreDataset}.
    */
-  public class MultiObjectRowMaker
-    implements Scannables.RowMaker<byte[], Map<byte[], T>, KeyValue<byte[], Map<byte[], T>>> {
+  public class MultiObjectRecordMaker
+    implements Scannables.RecordMaker<byte[], Map<byte[], T>, KeyValue<byte[], Map<byte[], T>>> {
 
     @Override
-    public KeyValue<byte[], Map<byte[], T>> makeRow(byte[] key, Map<byte[], T> value) {
+    public KeyValue<byte[], Map<byte[], T>> makeRecord(byte[] key, Map<byte[], T> value) {
       return new KeyValue<byte[], Map<byte[], T>>(key, value);
     }
   }

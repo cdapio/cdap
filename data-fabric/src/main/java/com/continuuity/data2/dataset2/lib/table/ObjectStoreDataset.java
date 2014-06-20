@@ -2,10 +2,11 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.api.dataset.lib.AbstractDataset;
 import com.continuuity.api.dataset.lib.KeyValue;
@@ -13,6 +14,7 @@ import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
@@ -112,12 +114,12 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   @Override
-  public SplitRowScanner<KeyValue<byte[], T>> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split), new ObjectRowMaker());
+  public RecordScanner<KeyValue<byte[], T>> createSplitRecordScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new ObjectRecordMaker());
   }
 
   @Override
-  public Type getRowType() {
+  public Type getRecordType() {
     return typeRep.toType();
   }
 
@@ -136,11 +138,11 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link ObjectStoreDataset}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
    */
-  public class ObjectRowMaker implements Scannables.RowMaker<byte[], T, KeyValue<byte[], T>> {
+  public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, KeyValue<byte[], T>> {
     @Override
-    public KeyValue<byte[], T> makeRow(byte[] key, T value) {
+    public KeyValue<byte[], T> makeRecord(byte[] key, T value) {
       return new KeyValue<byte[], T>(key, value);
     }
   }

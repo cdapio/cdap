@@ -41,11 +41,11 @@ public interface Explore {
    *               indicating the end of results.
    * @param handle handle returned by {@link #execute(String)}.
    * @param size max rows to fetch in the call.
-   * @return list of {@link com.continuuity.explore.service.Row}s.
+   * @return list of {@link Result}s.
    * @throws ExploreException on any error fetching results.
    * @throws HandleNotFoundException when handle is not found.
    */
-  List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException;
+  List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException;
 
   /**
    * Cancel a running Hive operation. After the operation moves into a {@link Status.OpStatus#CANCELED},
