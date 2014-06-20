@@ -21,12 +21,12 @@ public class InMemoryRunnableProgramController extends AbstractProgramController
 
   @Override
   protected void doSuspend() throws Exception {
-
+    //no-op
   }
 
   @Override
   protected void doResume() throws Exception {
-
+    //no-op
   }
 
   @Override
@@ -37,6 +37,6 @@ public class InMemoryRunnableProgramController extends AbstractProgramController
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-
+    //no-op
   }
 }

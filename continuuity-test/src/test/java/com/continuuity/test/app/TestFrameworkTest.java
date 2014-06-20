@@ -185,6 +185,9 @@ public class TestFrameworkTest extends ReactorTestBase {
     LOG.info("Service Started");
     serviceManager.stop();
     LOG.info("Service Stopped");
+    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
+    // TestMetricsCollectionService
+
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()

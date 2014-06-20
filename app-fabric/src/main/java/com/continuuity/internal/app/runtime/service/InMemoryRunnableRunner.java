@@ -12,7 +12,6 @@ import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.context.ServiceRunnableLoggingContext;
 import com.google.common.base.Preconditions;
@@ -34,7 +33,7 @@ import java.net.InetAddress;
  */
 public class InMemoryRunnableRunner implements ProgramRunner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryRunnableRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
 

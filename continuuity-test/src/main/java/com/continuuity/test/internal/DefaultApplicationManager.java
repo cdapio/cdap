@@ -311,12 +311,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     try {
-      // will have to change "service" to "services" once we implement the ServiceHttpHandler endpoints.
-      final ProgramId serviceId = new ProgramId(applicationId, serviceName, "service");
+      final ProgramId serviceId = new ProgramId(applicationId, serviceName, "services");
       Preconditions.checkState(runningProcessses.putIfAbsent(serviceName, serviceId) == null,
                                "Service %s is already running", serviceName);
       try {
-        AppFabricTestHelper.startProgram(httpHandler, applicationId, serviceName, "service", arguments);
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, serviceName, "services", arguments);
       } catch (Exception e) {
         runningProcessses.remove(serviceName);
         throw Throwables.propagate(e);
@@ -327,7 +326,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void stop() {
           try {
             if (runningProcessses.remove(serviceName, serviceId)) {
-              AppFabricTestHelper.stopProgram(httpHandler, applicationId, serviceName, "service");
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, serviceName, "services");
             }
           } catch (Exception e) {
             throw Throwables.propagate(e);

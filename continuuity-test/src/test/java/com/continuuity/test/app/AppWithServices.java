@@ -10,6 +10,8 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -17,6 +19,8 @@ import java.io.IOException;
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AppWithServices.class);
 
     @Override
     public void configure() {
@@ -53,6 +57,12 @@ public class AppWithServices extends AbstractApplication {
     @Override
     public void run() {
       //No-op
+      LOG.info("Runnable DummyService Started");
+    }
+
+    @Override
+    public void stop() {
+      LOG.info("Runnable DummyService Stopped");
     }
   }
 }
