@@ -61,6 +61,7 @@ public class HiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     exploreClient = injector.getInstance(AsyncExploreClient.class);
+    Assert.assertTrue(exploreClient.isAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
