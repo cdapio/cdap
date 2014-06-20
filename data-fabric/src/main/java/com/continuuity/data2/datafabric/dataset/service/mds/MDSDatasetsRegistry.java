@@ -11,7 +11,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.dataset2.SingleTypeModule;
-import com.continuuity.data2.dataset2.tx.TransactionTemplate;
+import com.continuuity.data2.dataset2.tx.TransactionalDatasetRegistry;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Allows transactional operations with datasets metadata.
  */
-public class MDSDatasetsRegistry extends TransactionTemplate<MDSDatasets> {
+public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDatasets> {
   private final Map<String, ? extends DatasetModule> defaultModules;
   private final DatasetFramework dsFramework;
 

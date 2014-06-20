@@ -26,10 +26,10 @@ import java.util.concurrent.Callable;
  *
  * @param <CONTEXT_TYPE> type of the tx operation context
  */
-public abstract class TransactionTemplate<CONTEXT_TYPE extends TxContext> extends AbstractIdleService {
+public abstract class TransactionalDatasetRegistry<CONTEXT_TYPE extends TxContext> extends AbstractIdleService {
   private final TransactionSystemClient txClient;
 
-  public TransactionTemplate(TransactionSystemClient txClient) {
+  public TransactionalDatasetRegistry(TransactionSystemClient txClient) {
     this.txClient = txClient;
   }
 
