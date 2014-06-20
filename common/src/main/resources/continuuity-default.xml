@@ -305,6 +305,12 @@
       <description>Number of YARN container instances for the stream handler</description>
     </property>
 
+    <property>
+      <name>stream.file.cleanup.period</name>
+      <value>300000</value>
+      <description>How often to run stream file cleanup process in milliseconds</description>
+    </property>
+
     <!--
         Data Fabric configuration
     -->
