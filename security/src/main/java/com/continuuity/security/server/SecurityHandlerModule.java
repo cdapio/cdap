@@ -8,7 +8,7 @@ import org.eclipse.jetty.server.Handler;
 import java.util.HashMap;
 
 /**
- *
+ * Guice module to bind handlers.
  */
 public class SecurityHandlerModule extends AbstractModule {
   private final HashMap<String, Handler> handlerMap;

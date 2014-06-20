@@ -383,6 +383,8 @@ public final class Constants {
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
+    /** Long lasting Access token expiration time in milliseconds. */
+    public static final String EXTENDED_TOKEN_EXPIRATION = "security.server.extended.token.expiration.ms";
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
     /** Configuration for enabling the security. */
     public static final String CFG_SECURITY_ENABLED = "security.enabled";

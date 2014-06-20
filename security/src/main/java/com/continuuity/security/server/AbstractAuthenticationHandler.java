@@ -33,6 +33,14 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.configuration = configuration;
   }
 
+  /**
+   * Authentication Handler paths.
+   */
+  public static final class Paths {
+    public static final String GET_TOKEN = "/token";
+    public static final String GET_EXTENDED_TOKEN = "extendedToken";
+  }
+
 
   /**
    * Initialize the handler context and other related services.
@@ -58,12 +66,21 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.doStart();
   }
 
-  @Path("token")
+  @Path(Paths.GET_TOKEN)
   @GET
   public String token(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
 
-    super.handle("/token", Request.getRequest(request), request, response);
+    super.handle(Paths.GET_TOKEN, Request.getRequest(request), request, response);
+    return "";
+  }
+
+  @Path(Paths.GET_EXTENDED_TOKEN)
+  @GET
+  public String extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws IOException, ServletException {
+
+    super.handle(Paths.GET_EXTENDED_TOKEN, Request.getRequest(request), request, response);
     return "";
   }
 

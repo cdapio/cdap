@@ -58,7 +58,15 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     String username = request.getUserPrincipal().getName();
     List<String> userGroups = Collections.emptyList();
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
+    long tokenValidity;
+    if (target.equals(AbstractAuthenticationHandler.Paths.GET_TOKEN)) {
+      tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
+    } else if (target.equals(AbstractAuthenticationHandler.Paths.GET_EXTENDED_TOKEN)) {
+      tokenValidity = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
+    } else {
+      throw new ServletException("Unknown path");
+    }
+
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.

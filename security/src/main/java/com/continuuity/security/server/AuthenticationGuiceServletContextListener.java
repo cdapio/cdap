@@ -11,7 +11,7 @@ import java.util.List;
 import javax.servlet.ServletContext;
 
 /**
- *
+ * RestEasy context listener used to bind handlers. Enables usage of JAX-RS annotations.
  */
 public class AuthenticationGuiceServletContextListener extends GuiceResteasyBootstrapServletContextListener {
   private final HashMap<String, Handler> handlerMap;
