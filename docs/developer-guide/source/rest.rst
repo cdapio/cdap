@@ -20,7 +20,8 @@ The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
 - **Stream:** sending data events to a Stream, or to inspect the contents of a Stream.
 - **Data:** interacting with DataSets (currently limited to Tables).
-- **Procedure:** sending queries to a Procedure.
+- **Query:** sending ad-hoc queries to Reactor DataSets.
+- **Procedure:** sending calls to a stored Procedure.
 - **Reactor:** deploying and managing Applications.
 - **Logs:** retrieving Application logs.
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics).
@@ -809,19 +810,26 @@ This allows you to specify values as numeric strings while using a different enc
 Query HTTP API
 ==============
 
-This interface supports submitting SQL queries over datasets. Executing a query is asynchronous: You first submit the
-query. Then you poll for the query's status until it is finished. Now you can retrieve the result schema and the
-results. Finally you close the query to free the resources that it holds.
+This interface supports submitting SQL queries over DataSets. Executing a query is asynchronous: 
+
+- first, **submit** the query;
+- then poll for the query's **status** until it is finished;
+- once finished, retrieve the **result schema** and the **results**;
+- finally, **close the query** to free the resources that it holds.
 
 Submitting a Query
 ------------------
-
-To submit a SQL query, you post the query string to the queries URL::
+To submit a SQL query, post the query string to the ``queries`` URL::
 
   POST <base-url>/data/queries
+
+The body of the request must contain a JSON string of the form::
+
   {
-    "query": "<SQL query string>"
+    "query": "<SQL-query-string>"
   }
+
+where ``<SQL-query-string>`` is the actual SQL query.
 
 HTTP Responses
 ..............
@@ -832,20 +840,24 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query execution was successfully initiated, and the body contains a handle used to identify the query in
-       subsequent requests::
-
-         { "handle":"<query handle>" }
-
+     - The query execution was successfully initiated, and the body will contain the query-handle
+       used to identify the query in subsequent requests
    * - ``400 Bad Request``
-     - The query is not well-formed or contains an error, such as a non-existent table name.
+     - The query is not well-formed or contains an error, such as a nonexistent table name.
+
+Comments
+........
+If the query execution was successfully initiated, the body will contain a handle 
+used to identify the query in subsequent requests::
+
+	{ "handle":"<query-handle>" }
+
 
 Status of a Query
 -----------------
+The status of a query is obtained using a HTTP GET request to the query's URL::
 
-The status of a query is obtained using a get request to the query's URL::
-
-  GET <base-url>/data/queries/<query handle>
+  GET <base-url>/data/queries/<query-handle>
 
 HTTP Responses
 ..............
@@ -856,22 +868,26 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query exists and the body contains the status of its execution, and whether the query has a results set::
-
-         {
-           "status":"<status code>",
-           "hasResults":<boolean>
-          }
-
-       Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``, ``ERROR``,
-       ``UNKNOWN``, and ``PENDING``.
-
+     - The query exists and the body contains its status
    * - ``404 Not Found``
      - The query handle does not match any current query.
 
+Comments
+........
+If the query exists, the body will contain the status of its execution
+and whether the query has a results set::
+
+	{
+	  "status":"<status-code>",
+	  "hasResults":<boolean>
+	 }
+
+Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
+``ERROR``, ``UNKNOWN``, and ``PENDING``.
+
+
 Obtaining the Result Schema
 ---------------------------
-
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
   GET <base-url>/data/queries/<query-handle>/schema
@@ -885,27 +901,33 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query's result schema is returned in a JSON body as as a list of columns,
-       each given by its name, type and position (if the query has no result set, this list is empty)::
-
-         [
-           {"name":"<name>", "type":<type>, "position":<int>},
-           ...
-         ]
-
-       The type of each column is a data type as defined in the `Hive language manual
-       <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
-
+     - The query was successfully received and the query schema was returned in the body
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
 
-Retrieving Query Results:
--------------------------
+Comments
+........
+The query's result schema is returned in a JSON body as a list of columns,
+each given by its name, type and position; if the query has no result set, this list is empty::
 
-Query results can be retrieved in batches after the query is finished, optinally specifying the batch size in the
-body of the request::
+	[
+	  {"name":"<name>", "type":<type>, "position":<int>},
+	  ...
+	]
+
+The type of each column is a data type as defined in the `Hive language manual
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
+
+
+Retrieving Query Results
+------------------------
+Query results can be retrieved in batches after the query is finished, optionally specifying the batch
+size in the body of the request::
 
   POST <base-url>/data/queries/<query-handle>/next
+
+The body of the request can contain a JSON string specifying the batch size::
+
   {
     "size":<int>
   }
@@ -921,26 +943,31 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The results are is returned in a JSON body as as a list of columns,
-       each given as a structure containing a list of column values.::
-
-         [
-           { "columns": [ <value_1>, <value_2>, ..., ] },
-           ...
-         ]
-
-       The value at each position has the type that was returned in the result schema for that position.
-       For example, if the returned type was ``INT``, then the value will be an integer literal,
-       whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
-       If all results of the query have already been retrieved, then the returned list is empty.
-
+     - The event was successfully received and the result of the query was returned in the body
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
+
+Comments
+........
+The results are returned in a JSON body as a list of columns,
+each given as a structure containing a list of column values.::
+
+	[
+	  { "columns": [ <value_1>, <value_2>, ..., ] },
+	  ...
+	]
+
+The value at each position has the type that was returned in the result schema for that position.
+For example, if the returned type was ``INT``, then the value will be an integer literal,
+whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
+
+Repeat the query to retrieve subsequent results. If all results of the query have already been retrieved, then the returned list is empty. 
+[DOCNOTE: FIXME! How do you reset the query retrieval to the start? Can you?]
+
 
 Closing a Query
 ---------------
-
-The query can be closed by issuing a delete against its URL::
+The query can be closed by issuing an HTTP DELETE against its URL::
 
   DELETE <base-url>/data/queries/<query-handle>
 
@@ -955,16 +982,15 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query was closed,
+     - The query was closed
    * - ``400 Bad Request``
-     - The query is not in a state that can be closed. You have to wait until it is finished, or cancel it.
+     - The query was not in a state that could be closed; either wait until it is finished, or cancel it
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
 
 Canceling a Query
 -----------------
-
-Execution of a query can be canceled before it is finished::
+Execution of a query can be canceled before it is finished with an HTTP POST::
 
   POST <base-url>/data/queries/<query-handle>/cancel
 
@@ -979,16 +1005,17 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The query was canceled,
+     - The query was canceled
    * - ``400 Bad Request``
-     - The query is not in a state that can be canceled.
+     - The query was not in a state that can be canceled
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
+
 
 Procedure HTTP API
 ==================
 
-This interface supports sending queries to the methods of an Application’s Procedures.
+This interface supports sending calls to the methods of an Application’s Procedures.
 
 Executing Procedures
 --------------------
@@ -1999,5 +2026,3 @@ the last of our documentation is:
   a complete Javadoc of the Continuuity Reactor Java APIs.
 
 .. rst2pdf: CutStop
-
-

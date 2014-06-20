@@ -1,16 +1,29 @@
+.. :Author: Continuuity, Inc.
+   :Description: Ad-hoc Querying of Continuuity Reactor DataSets using SQL 
+
+==========================
 Querying DataSets with SQL
 ==========================
 
+Ad-hoc Querying of Continuuity Reactor DataSets using SQL 
+
+.. reST Editor: .. section-numbering::
+.. reST Editor: .. contents::
+
+Introduction
+------------
+
 Procedures are a programmatic way to access and query the data in your DataSets. Yet sometimes you may want to explore
-a DataSet in an ad-hoc manner rather than writing procedure code. This can be done using SQL—if your DataSet fulfills
-these two requirements:
+a DataSet in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your DataSet fulfills
+two requirements:
 
-* It defines the schema for each row; and
-* It has a method to scan its data row by row.
+* it defines the schema for each row; and
+* it has a method to scan its data row by row.
 
-For Reactor DataSets, this is done by implementing the ``RowScannable`` interface. Many of the Reactor built-in
-DataSets already implement this, including ``KeyValueTable`` and ``ObjectStore``. Let's take a closer look at the
-``RowScannable`` interface.
+For Reactor DataSets, this is done by implementing the ``RowScannable`` interface. Many Reactor built-in
+DataSets already implement this, including ``KeyValueTable`` and ``ObjectStore``. 
+[DOCNOTE: Can we list which ones do and/or which ones don't?]
+Let's take a closer look at the ``RowScannable`` interface.
 
 Defining the Row Schema
 -----------------------
@@ -35,8 +48,10 @@ You can implement a row-scannable DataSet that uses ``Entry`` as the row type::
 	    return Entry.class;
 	  } 
       
-Note that Java's ``Class`` implements ``Type`` and therefore you can simply return ``Entry.class`` as the row type.
-The Reactor will use reflection to infer a SQL-style row schema from the row type. In that case, the schema will be::
+Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the row type.
+The Reactor will use reflection to infer a SQL-style row schema from the row type. 
+
+In the case of the above class ``Entry``, the schema will be::
 
 	(key STRING, value INT)
 
@@ -46,7 +61,7 @@ would not be able to derive any fields or types from the interface.
 
 The one exception to this rule is that Java collections such as ``List`` and ``Set`` are supported as well as
 Java ``Map``. This is possible because these interfaces are so commonly used that they deserve special handling.
-Note that these interfaces are parameterized and therefore require special care as described in the next section.
+These interfaces are parameterized and require special care as described in the next section.
 
 Parameterized Types
 -------------------
@@ -78,7 +93,7 @@ erasure.
 Complex Types
 -------------
 
-Your row type can also contain nested structures, lists or maps, and they will be mapped to type names as defined in
+Your row type can also contain nested structures, lists, or maps, and they will be mapped to type names as defined in
 the `Hive language manual <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_. For example, if
 your row type is defined as::
 
@@ -89,7 +104,7 @@ your row type is defined as::
     List<String> reviews;
   }
 
-Then the SQL schema of the dataset is::
+The SQL schema of the dataset would be::
 
   (title STRING, year INT, cast MAP<STRING, STRING>, reviews ARRAY<STRING>)
 
@@ -98,17 +113,18 @@ Refer to the Hive language manual for more details on schema and data types.
 Scanning Rows
 -------------
 The second requirement for enabling SQL queries over a DataSet is to provide a means of scanning the DataSet row
-by row. In a similar fashion as the BatchReadable interface makes a DataSet readable by Map/Reduce jobs by iterating
+by row. Similar to how the ``BatchReadable`` interface makes DataSets readable by Map/Reduce jobs by iterating
 over pairs of key and value, ``RowScannable`` iterates over rows. You need to implement a method to partition the
 DataSet into splits, and an additional method to create a row scanner for each split::
 
       List<Split> getSplits();
       SplitRowScanner<ROW> createSplitScanner(Split split);
 
-The ``SplitRowScanner`` is very similar to a ``SplitReader``, except that instead of ``nextKeyValue()``,
-``getCurrentKey()`` and ``getCurrentValue()``, it implements ``nextRow()`` and ``getCurrentRow()``. Typically,
-you do not implement these methods from scratch but rely on the ``BatchReadable`` implementation of the underlying
-Tables and DataSets. For example, if your DataSet is backed by a ``Table``::
+The ``SplitRowScanner`` is very similar to a ``SplitReader``; except that instead of ``nextKeyValue()``,
+``getCurrentKey()``, and ``getCurrentValue()``, it implements ``nextRow()`` and ``getCurrentRow()``. 
+
+Typically, you do not implement these methods from scratch but rely on the ``BatchReadable``
+implementation of the underlying Tables and DataSets. For example, if your DataSet is backed by a ``Table``::
 
 	class MyDataset implements Dataset, RowScannable<Entry> {
 	
@@ -161,10 +177,11 @@ Tables and DataSets. For example, if your DataSet is backed by a ``Table``::
 	  }
 	}
 
-While this is straightforward, it is even easier if your DataSet already implements ``BatchReadable``. In that case,
-you can reuse its implementation of ``getSplits()`` and implement the split row scanner with a helper
+While this is straightforward, it is even easier if your DataSet already implements ``BatchReadable``.
+In that case, you can reuse its implementation of ``getSplits()`` and implement the split row scanner
+with a helper method [DOCNOTE: what's the import?]
 (``Scannables.splitRowScanner``) already defined by Reactor. It takes a split reader and a ``RowMaker``
-that transforms a key and value, as produced by the ``BatchReadable``s split reader,
+that transforms a key and value, as produced by the ``BatchReadable``'s split reader,
 into a row [DOCNOTE: this example is confusing, because the ``Row`` is actually the value type of the batch readable,
 whereas ``Entry`` is the row type of the row scannable. This is because our built-in Table dataset uses a class named
 ``Row`` for its values, which has nothing to do with the ROW type parameter of row scannable...]::
@@ -197,10 +214,13 @@ An example demonstrating these implementations is included in the Continuuity Re
 
 Formulating Queries
 -------------------
+When creating your queries, keep these limitations in mind:
 
-The query syntax of the Reactor is a subset of the variant of SQL that was first defined by Apache Hive. However,
-in contrast to HiveQL, Reactor queries only allow reading from data sets, not writing (``INSERT``, ``UPDATE``,
-``DELETE``). When addressing your datasets in queries, you need to prefix the data set name with the reactor
-namespace. For example, if your data set is named ``ProductCatalog``, then the corresponding table name is
-``continuuity_user_ProductCatalog``. [DOCNOTE: FIXME! verify this prefix is correct]
+- The query syntax of the Reactor is a subset of the variant of SQL that was first defined by Apache Hive.
+- In contrast to HiveQL, Reactor queries only allow reading from data sets, not writing
+- These SQL commands are not allowed on Reactor DataSets: ``INSERT``, ``UPDATE``, ``DELETE``.
+- When addressing your datasets in queries, you need to prefix the data set name with the Reactor
+  namespace. For example, if your DataSet is named ``ProductCatalog``, then the corresponding table
+  name is ``continuuity_user_ProductCatalog``. [DOCNOTE: FIXME! verify this prefix is correct]
+
 
