@@ -1,5 +1,6 @@
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExternalAsyncExploreClient;
 import com.continuuity.explore.service.Explore;
 
@@ -27,20 +28,10 @@ import java.util.Properties;
  */
 public class ExploreConnection implements Connection {
 
-  private final String host;
-  private final int port;
+  private final ExploreClient exploreClient;
 
-  private final Explore exploreClient;
-
-  public ExploreConnection(String uri, Properties info) {
-    if (!uri.startsWith(ExploreJDBCUtils.URL_PREFIX)) {
-      throw new IllegalArgumentException("Bad URL format: Missing prefix " + ExploreJDBCUtils.URL_PREFIX);
-    }
-    URI jdbcURI = URI.create(uri.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
-    host = jdbcURI.getHost();
-    port = jdbcURI.getPort();
-
-    exploreClient = new ExternalAsyncExploreClient(host, port);
+  public ExploreConnection(ExploreClient exploreClient, Properties info) {
+    this.exploreClient = exploreClient;
   }
 
   @Override

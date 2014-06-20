@@ -1,5 +1,13 @@
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.ExternalAsyncExploreClient;
+import com.continuuity.explore.service.ExploreException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
@@ -11,6 +19,7 @@ import java.util.regex.Pattern;
  *
  */
 public class ExploreDriver implements Driver {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreDriver.class);
   static {
     try {
       java.sql.DriverManager.registerDriver(new ExploreDriver());
@@ -24,8 +33,22 @@ public class ExploreDriver implements Driver {
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
-    // TODO throw SQLException if explore service is down. Means extracting host and port here and ping service
-    return acceptsURL(url) ? new ExploreConnection(url, info) : null;
+    if (!acceptsURL(url)) {
+      return null;
+    }
+    URI jdbcURI = URI.create(url.substring(ExploreJDBCUtils.URI_JDBC_PREFIX.length()));
+    String host = jdbcURI.getHost();
+    int port = jdbcURI.getPort();
+    ExploreClient exploreClient = new ExternalAsyncExploreClient(host, port);
+    try {
+      if (!exploreClient.isAvailable()) {
+        throw new SQLException("Explore is not available on host {}:{}", host, port);
+      }
+    } catch (ExploreException e) {
+      LOG.error("Caught exception when asking for Explore status", e);
+      throw new SQLException(e);
+    }
+    return new ExploreConnection(exploreClient, info);
   }
 
   @Override

@@ -34,13 +34,40 @@ import javax.annotation.Nullable;
 /**
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
-public abstract class AbstractAsyncExploreClient implements Explore {
+public abstract class AbstractAsyncExploreClient implements Explore, ExploreClient {
   private static final Logger LOG = LoggerFactory.getLogger(InternalAsyncExploreClient.class);
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Row>>() { }.getType();
+
+  @Override
+  public boolean isAvailable() throws ExploreException {
+    HttpResponse response = doGet(String.format("explore/status"));
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return true;
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public Handle enableExplore(String datasetInstance) throws ExploreException {
+    HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "id"));
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public Handle disableExplore(String datasetInstance) throws ExploreException {
+    HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return Handle.fromId(parseResponseAsMap(response, "id"));
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+  }
 
   @Override
   public Handle execute(String statement) throws ExploreException {

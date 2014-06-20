@@ -25,7 +25,7 @@ import static com.continuuity.common.conf.Constants.Service;
  * An Explore Client that talks to a server implementing {@link Explore} over HTTP,
  * and that uses discovery to find the endpoints.
  */
-public class InternalAsyncExploreClient extends AbstractAsyncExploreClient implements ExploreClient {
+public class InternalAsyncExploreClient extends AbstractAsyncExploreClient {
   private static final Logger LOG = LoggerFactory.getLogger(InternalAsyncExploreClient.class);
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
@@ -40,33 +40,6 @@ public class InternalAsyncExploreClient extends AbstractAsyncExploreClient imple
             discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE)), 3L, TimeUnit.SECONDS);
       }
     });
-  }
-
-  @Override
-  public boolean isAvailable() throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/status"), null, null);
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return true;
-    }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
-  }
-
-  @Override
-  public Handle enableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponseAsMap(response, "id"));
-    }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
-  }
-
-  @Override
-  public Handle disableExplore(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponseAsMap(response, "id"));
-    }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override

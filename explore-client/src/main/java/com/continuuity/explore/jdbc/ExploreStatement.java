@@ -70,9 +70,9 @@ public class ExploreStatement implements Statement {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 300,
                                                                 TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
-                                             "Got final state - %s", sql, status.getState().toString()));
+                                             "Got final state - %s", sql, status.getStatus().toString()));
       }
       resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
       return status.hasResults();
