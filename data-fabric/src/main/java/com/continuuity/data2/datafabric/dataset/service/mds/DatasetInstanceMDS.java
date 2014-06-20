@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -48,7 +49,7 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return instances.values();
   }
 
-  public Collection<DatasetSpecification> getByTypes(Collection<String> typeNames) {
+  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames) {
     List<DatasetSpecification> filtered = Lists.newArrayList();
 
     for (DatasetSpecification spec : getAll()) {

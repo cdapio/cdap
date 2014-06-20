@@ -14,6 +14,7 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.lang.ClassLoaders;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -223,7 +224,8 @@ public class DatasetTypeManager extends AbstractIdleService {
             throw new DatasetModuleConflictException(msg);
           }
 
-          Collection<DatasetSpecification> dependentInstances = datasets.getInstanceMDS().getByTypes(module.getTypes());
+          Collection<DatasetSpecification> dependentInstances =
+            datasets.getInstanceMDS().getByTypes(ImmutableSet.copyOf(module.getTypes()));
           // cannot delete when there's instance that uses it
           if (dependentInstances.size() > 0) {
             String msg =
