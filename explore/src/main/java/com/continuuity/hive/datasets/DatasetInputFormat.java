@@ -61,7 +61,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     }
     final DatasetInputSplit datasetInputSplit = (DatasetInputSplit) split;
 
-    final RecordScanner recordScanner = recordScannable.createRecordSplitScanner(
+    final RecordScanner recordScanner = recordScannable.createSplitRecordScanner(
         new Split() {
           @Override
           public long getLength() {

@@ -240,7 +240,7 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public RecordScanner<ImmutablePair<byte[], Map<byte[], T>>> createRecordSplitScanner(Split split) {
+  public RecordScanner<ImmutablePair<byte[], Map<byte[], T>>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new MultiObjectRecordMaker());
   }
 

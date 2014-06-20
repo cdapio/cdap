@@ -30,5 +30,5 @@ public interface RecordScannable<RECORD> {
    * @param split The split to create a reader for.
    * @return The instance of a {@link RecordScanner}.
    */
-  RecordScanner<RECORD> createRecordSplitScanner(Split split);
+  RecordScanner<RECORD> createSplitRecordScanner(Split split);
 }

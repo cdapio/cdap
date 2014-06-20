@@ -115,7 +115,7 @@ public class ObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public RecordScanner<ImmutablePair<byte[], T>> createRecordSplitScanner(Split split) {
+  public RecordScanner<ImmutablePair<byte[], T>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new ObjectRecordMaker());
   }
 

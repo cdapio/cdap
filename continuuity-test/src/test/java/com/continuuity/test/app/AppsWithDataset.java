@@ -216,7 +216,7 @@ public class AppsWithDataset {
       }
 
       @Override
-      public RecordScanner<ImmutablePair<String, String>> createRecordSplitScanner(Split split) {
+      public RecordScanner<ImmutablePair<String, String>> createSplitRecordScanner(Split split) {
         return Scannables.splitRecordScanner(
             table.createSplitReader(split),
             new Scannables.RecordMaker<byte[], Row, ImmutablePair<String, String>>() {

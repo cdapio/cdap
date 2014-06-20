@@ -88,7 +88,7 @@ public class KeyStructValueTableDefinition
     }
 
     @Override
-    public RecordScanner<KeyValue> createRecordSplitScanner(Split split) {
+    public RecordScanner<KeyValue> createSplitRecordScanner(Split split) {
       return Scannables.splitRecordScanner(table.createSplitReader(split), KEY_VALUE_ROW_MAKER);
     }
   }

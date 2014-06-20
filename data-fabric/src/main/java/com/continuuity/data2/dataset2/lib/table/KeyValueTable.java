@@ -137,7 +137,7 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public RecordScanner<ImmutablePair<byte[], byte[]>> createRecordSplitScanner(Split split) {
+  public RecordScanner<ImmutablePair<byte[], byte[]>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
   }
 
