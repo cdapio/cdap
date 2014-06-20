@@ -53,7 +53,7 @@ public class AppsWithDataset {
   public static class AppWithAutoCreate extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
+      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addProcedure(new MyProcedure());
     }
   }
@@ -64,7 +64,7 @@ public class AppsWithDataset {
   public static class AppWithAutoDeploy extends AbstractApplication {
     @Override
     public void configure() {
-      createDataSet("myTable", "keyValueTable", DatasetProperties.EMPTY);
+      createDataSet("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addDataSetModule("my-kv", KeyValueTableDefinition.Module.class);
       addProcedure(new MyProcedure());
     }
@@ -235,7 +235,7 @@ public class AppsWithDataset {
       @Override
       public void register(DatasetDefinitionRegistry registry) {
         DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
-        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("keyValueTable", tableDefinition);
+        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("myKeyValueTable", tableDefinition);
         registry.add(keyValueTable);
       }
     }

@@ -9,6 +9,7 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
@@ -82,6 +83,17 @@ public class DatasetServiceClient {
                          new TypeToken<List<DatasetSpecification>>() { }.getType());
   }
 
+  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
+    HttpResponse response = doGet("modules");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         getDetails(response)));
+    }
+
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                         new TypeToken<List<DatasetModuleMeta>>() { }.getType());
+  }
+
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
     HttpResponse response = doGet("types/" + typeName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
@@ -98,8 +110,8 @@ public class DatasetServiceClient {
     throws DatasetManagementException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName,
-                                   GSON.toJson(props),
-                                   ImmutableMap.of("X-Continuuity-Type-Name", datasetType));
+                                  GSON.toJson(props),
+                                  ImmutableMap.of("X-Continuuity-Type-Name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
