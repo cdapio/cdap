@@ -17,6 +17,11 @@ public class AuthenticationGuiceServletContextListener extends GuiceResteasyBoot
   private final HashMap<String, Handler> handlerMap;
   private final CConfiguration configuration;
 
+  /**
+   * Create an AuthenticationGuiceServletContextListener that binds handlers.
+   * @param map
+   * @param configuration
+   */
   public AuthenticationGuiceServletContextListener(HashMap<String, Handler> map, CConfiguration configuration) {
     this.handlerMap = map;
     this.configuration = configuration;

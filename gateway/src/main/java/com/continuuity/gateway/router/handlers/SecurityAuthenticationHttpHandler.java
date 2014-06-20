@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessTokenTransformer;
 import com.continuuity.security.auth.TokenState;
 import com.continuuity.security.auth.TokenValidator;
+import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.gson.JsonArray;
@@ -166,7 +167,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
     do {
       for (Discoverable d : discoverables)  {
-        String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port, "token");
+        String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
+                                                                        AbstractAuthenticationHandler.Paths.GET_TOKEN);
         externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
