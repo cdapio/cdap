@@ -77,8 +77,6 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-
-
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);

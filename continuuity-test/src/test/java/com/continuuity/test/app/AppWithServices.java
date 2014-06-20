@@ -19,7 +19,6 @@ import java.io.IOException;
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
-
   private static final Logger LOG = LoggerFactory.getLogger(AppWithServices.class);
 
     @Override
@@ -59,7 +58,6 @@ public class AppWithServices extends AbstractApplication {
       //No-op
       LOG.info("Runnable DummyService Started");
     }
-
     @Override
     public void stop() {
       LOG.info("Runnable DummyService Stopped");
