@@ -172,13 +172,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
-  private static final Map<String, Type> RUNNABLE_TYPE_MAP = ImmutableMap.of(
-    "mapreduce", Type.MAPREDUCE,
-    "flows", Type.FLOW,
-    "procedures", Type.PROCEDURE,
-    "workflows", Type.WORKFLOW,
-    "webapp", Type.WEBAPP
-  );
+  private static final Map<String, Type> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, Type>()
+    .put("mapreduce", Type.MAPREDUCE)
+    .put("flows", Type.FLOW)
+    .put("procedures", Type.PROCEDURE)
+    .put("workflows", Type.WORKFLOW)
+    .put("webapp", Type.WEBAPP)
+    .put("services", Type.SERVICE)
+    .build();
 
   /**
    * Configuration object passed from higher up.
