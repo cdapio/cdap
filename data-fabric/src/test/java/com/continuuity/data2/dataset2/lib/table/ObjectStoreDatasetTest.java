@@ -7,6 +7,7 @@ import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.lib.IntegerStore;
 import com.continuuity.api.dataset.lib.IntegerStoreModule;
 import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -332,5 +333,9 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     Assert.assertEquals((Integer) 101, ints.read(42));
 
     deleteInstance("ints");
+  }
+
+  private void createObjectStoreInstance(String instanceName, Type type) throws Exception {
+    createInstance("objectStore", instanceName, ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 }
