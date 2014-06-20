@@ -180,7 +180,7 @@ public class KeyStructValueTableDefinition
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
-      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyValueTable", table);
+      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyStructValueTable", table);
       registry.add(keyValueTable);
     }
   }

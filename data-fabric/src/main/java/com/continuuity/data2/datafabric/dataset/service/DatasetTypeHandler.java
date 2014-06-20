@@ -86,7 +86,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     try {
       manager.deleteModules();
     } catch (DatasetModuleConflictException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
     }
     responder.sendStatus(HttpResponseStatus.OK);
@@ -106,7 +106,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
                                      name, existing);
       LOG.warn(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
       return;
     }
 
@@ -142,7 +142,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     try {
       manager.addModule(name, className, archive);
     } catch (DatasetModuleConflictException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
     }
     // todo: response with DatasetModuleMeta of just added module (and log this info)

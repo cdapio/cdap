@@ -62,6 +62,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
+    boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
       // skip if not exists: someone may be deleting it at same time
       if (!instanceManager.delete(spec.getName())) {
@@ -74,12 +75,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
         String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                    spec.getName(), e.getMessage());
         LOG.warn(msg, e);
+        succeeded = false;
         // we continue deleting if something wring happens.
         // todo: Will later be improved by doing all in async: see REACTOR-200
       }
     }
 
-    responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendStatus(succeeded ? HttpResponseStatus.OK : HttpResponseStatus.INTERNAL_SERVER_ERROR);
   }
 
   @GET
@@ -110,7 +112,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.warn(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
       return;
     }
 
@@ -119,7 +121,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String message = String.format("Cannot create dataset %s: unknown type %s",
                                      name, typeName);
       LOG.warn(message);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, message);
+      responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
     }
 
