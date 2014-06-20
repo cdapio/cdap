@@ -1,6 +1,12 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.api.service.ServiceSpecification;
+import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.Id;
+import com.continuuity.app.store.Store;
+import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -9,17 +15,20 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.twill.api.RuntimeSpecification;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
 
 
 /**
@@ -31,12 +40,15 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
+  private final Store store;
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public ServiceHttpHandler(Authenticator authenticator) {
+  public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory) {
     super(authenticator);
+    this.store = storeFactory.create();
   }
 
   /**
@@ -77,20 +89,36 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the number of instances for user twill app
+   * Return the number of instances for the given runnable of a service.
    */
   @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/instances")
+  @Path("/apps/{app-id}/services/{service-name}/runnables/{runnable-id}/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") String appId,
+                           @PathParam("service-name") String serviceName,
                            @PathParam("runnable-id") String runId) {
-    JsonObject reply = new JsonObject();
-    reply.addProperty("instances", 3);
-    responder.sendJson(HttpResponseStatus.OK, reply);
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceName, runId);
+      if (specification == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      } else {
+        JsonObject reply = new JsonObject();
+        reply.addProperty("requested", specification.getResourceSpecification().getInstances());
+        reply.addProperty("provisioned", specification.getResourceSpecification().getInstances());
+        responder.sendJson(HttpResponseStatus.OK, reply);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
-   * set instances
+   * Set instances.
    */
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/instances")
@@ -163,6 +191,31 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     reply.addProperty("type", "twill");
     reply.addProperty("id", "sampleTwill");
     responder.sendJson(HttpResponseStatus.OK, reply);
+  }
+
+  @Nullable
+  private ServiceSpecification getServiceSpecification(String accountId, String id,
+                                                       String serviceName) throws OperationException {
+    Id.Application appId = Id.Application.from(accountId, id);
+    ApplicationSpecification applicationSpecification = store.getApplication(appId);
+    Map<String, ServiceSpecification> serviceSpecs = applicationSpecification.getServices();
+    if (serviceSpecs.containsKey(serviceName)) {
+      return serviceSpecs.get(serviceName);
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  private RuntimeSpecification getRuntimeSpecification (String accountId, String appId, String serviceName,
+                                                        String runnableName) throws OperationException {
+    ServiceSpecification specification = getServiceSpecification(accountId, appId, serviceName);
+    if (specification != null) {
+      Map<String, RuntimeSpecification> runtimeSpecs =  specification.getRunnables();
+      return runtimeSpecs.containsKey(runnableName) ? runtimeSpecs.get(runnableName) : null;
+    } else {
+      return null;
+    }
   }
 
 }
