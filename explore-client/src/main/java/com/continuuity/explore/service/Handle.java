@@ -11,7 +11,7 @@ public class Handle {
   private final String handle;
 
   public static Handle generate() {
-    // TODO: make sure handles are unique across multiple instances.
+    // TODO: make sure handles are unique across multiple instances. - REACTOR-272
     return new Handle(UUID.randomUUID().toString());
   }
 
