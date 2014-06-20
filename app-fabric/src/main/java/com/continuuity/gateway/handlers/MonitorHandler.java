@@ -76,13 +76,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }, null);
   }
 
-  public static synchronized void setRequestedServiceInstance(final String service, final String value,
+  public static synchronized void setRequestedServiceInstance(final String serviceName, final String value,
                                                               final OrderedTable table, TransactionExecutor txExecutor)
     throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        table.put(Bytes.toBytes(service), Bytes.toBytes("instance"), Bytes.toBytes(value));
+        table.put(Bytes.toBytes(serviceName), Bytes.toBytes("instance"), Bytes.toBytes(value));
       }
     });
   }
@@ -127,7 +127,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       }
 
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
-      int instance = getInstances(request);
+      final int instance = getInstances(request);
       String currentInstance = getRequestedServiceInstance(serviceName, table, txExecutor);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
