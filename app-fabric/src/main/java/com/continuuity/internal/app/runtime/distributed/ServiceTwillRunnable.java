@@ -175,7 +175,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getName(), runnableName)));
       delegate.initialize(context);
       LOG.info("Runnable initialized: " + name);
-
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
