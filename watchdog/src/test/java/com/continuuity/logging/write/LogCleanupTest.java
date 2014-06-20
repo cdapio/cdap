@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.save.LogSaver;
+import com.continuuity.logging.save.LogSaverTableUtil;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -56,7 +57,7 @@ public class LogCleanupTest {
     CConfiguration cConf = CConfiguration.create();
 
     DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(cConf);
-    OrderedColumnarTable metaTable = LogSaver.getMetaTable(dataSetAccessor);
+    OrderedColumnarTable metaTable = new LogSaverTableUtil(dataSetAccessor).getMetaTable();
 
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
     txManager.startAndWait();

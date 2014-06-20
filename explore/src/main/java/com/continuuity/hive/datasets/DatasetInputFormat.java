@@ -38,7 +38,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
     Job job = new Job(jobConf);
     JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
-    // TODO: figure out the significance of table paths
+    // TODO: figure out the significance of table paths - REACTOR-277
     Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
 
     List<Split> dsSplits = rowScannable.getSplits();
@@ -165,7 +165,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
     @Override
     public String[] getLocations() throws IOException {
-      // TODO: not currently exposed by BatchReadable
+      // TODO: not currently exposed by BatchReadable - REACTOR-277
       return new String[0];
     }
 

@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -54,20 +54,14 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
 
-    String[] roles = Constants.Security.BASIC_USER_ROLES;
     String username = request.getUserPrincipal().getName();
-    Collection<String> userRoles = new ArrayList<String>();
-    for (String role: roles) {
-      if (request.isUserInRole(role)) {
-        userRoles.add(role);
-      }
-    }
+    List<String> userGroups = Collections.emptyList();
 
     long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
-    AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userRoles, issueTime, expireTime);
+    AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
     AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
     LOG.debug("Issued token for user {}", username);
 

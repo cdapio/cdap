@@ -60,7 +60,7 @@ public class ContextManager {
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    // TODO: need to stop zkClientService at the end
+    // TODO: need to stop zkClientService at the end - REACTOR-273
     zkClientService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
