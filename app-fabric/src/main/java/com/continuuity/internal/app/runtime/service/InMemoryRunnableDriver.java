@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.common.logging.LoggingContextAccessor;
-import com.continuuity.logging.context.ServiceRunnableLoggingContext;
+import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.api.TwillContext;
@@ -24,12 +24,12 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryRunnableDriver.class);
   private TwillRunnable runnable;
   private TwillContext context;
-  private ServiceRunnableLoggingContext loggingContext;
+  private UserServiceLoggingContext loggingContext;
 
   private ExecutorService processExecutor;
 
   public InMemoryRunnableDriver(TwillRunnable runnable, TwillContext context,
-                                ServiceRunnableLoggingContext loggingContext) {
+                                UserServiceLoggingContext loggingContext) {
     this.runnable = runnable;
     this.context = context;
     this.loggingContext = loggingContext;

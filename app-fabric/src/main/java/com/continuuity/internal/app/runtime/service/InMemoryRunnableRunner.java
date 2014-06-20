@@ -13,7 +13,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.lang.Reflections;
-import com.continuuity.logging.context.ServiceRunnableLoggingContext;
+import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -93,10 +93,10 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       TwillRunnable runnable = new InstantiatorFactory(false).get(TypeToken.of(runnableClass)).create();
       TypeToken<? extends TwillRunnable> runnableType = TypeToken.of(runnableClass);
       InMemoryRunnableDriver driver = new
-        InMemoryRunnableDriver(runnable, twillContext, new ServiceRunnableLoggingContext(program.getAccountId(),
-                                                                                         program.getApplicationId(),
-                                                                                         runId.getId(),
-                                                                                         twillRunId.getId()));
+        InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
+                                                                                     program.getApplicationId(),
+                                                                                     runId.getId(),
+                                                                                     twillRunId.getId()));
 
       //Injecting Metrics
       Reflections.visit(runnable, TypeToken.of(runnable.getClass()),
