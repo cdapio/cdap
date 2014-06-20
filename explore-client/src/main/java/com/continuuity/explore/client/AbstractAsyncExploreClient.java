@@ -55,7 +55,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
   public Handle enableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponseAsMap(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
@@ -64,7 +64,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
   public Handle disableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponseAsMap(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }

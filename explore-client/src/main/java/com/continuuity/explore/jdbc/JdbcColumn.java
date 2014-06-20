@@ -79,11 +79,11 @@ public class JdbcColumn {
       return Types.DECIMAL;
     } else if ("binary".equalsIgnoreCase(type)) {
       return Types.BINARY;
-    } else if ("map".equalsIgnoreCase(type)) {
+    } else if (type.toLowerCase().startsWith("map")) {
       return Types.JAVA_OBJECT;
-    } else if ("array".equalsIgnoreCase(type)) {
+    } else if (type.toLowerCase().startsWith("array")) {
       return Types.ARRAY;
-    } else if ("struct".equalsIgnoreCase(type)) {
+    } else if (type.toLowerCase().startsWith("struct")) {
       return Types.STRUCT;
     }
     throw new SQLException("Unrecognized column type: " + type);
@@ -103,7 +103,7 @@ public class JdbcColumn {
     } else if ("double".equalsIgnoreCase(type)) {
       return "double";
     } else if ("boolean".equalsIgnoreCase(type)) {
-      return "double";
+      return "boolean";
     } else if ("tinyint".equalsIgnoreCase(type)) {
       return "tinyint";
     } else if ("smallint".equalsIgnoreCase(type)) {
@@ -122,11 +122,11 @@ public class JdbcColumn {
       return "binary";
     } else if ("void".equalsIgnoreCase(type)) {
       return "void";
-    } else if (type.equalsIgnoreCase("map")) {
+    } else if (type.toLowerCase().startsWith("map")) {
       return "map";
-    } else if (type.equalsIgnoreCase("array")) {
+    } else if (type.toLowerCase().startsWith("array")) {
       return "array";
-    } else if (type.equalsIgnoreCase("struct")) {
+    } else if (type.toLowerCase().startsWith("struct")) {
       return "struct";
     }
     throw new SQLException("Unrecognized column type: " + type);

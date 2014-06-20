@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
@@ -29,6 +31,7 @@ import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +50,7 @@ public class ExploreQueryResultSet implements ResultSet {
   private Iterator<Row> rowsItr;
   private Row currentRow;
   private ExploreResultSetMetaData metaData;
+  private boolean wasNull = false;
 
   private final Explore exploreClient;
   private final Statement statement;
@@ -109,40 +113,78 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public boolean wasNull() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public String getString(int columnIndex) throws SQLException {
-    // Columns count starts at 1
+  public Object getObject(int columnIndex) throws SQLException {
+    if (currentRow == null) {
+      throw new SQLException("No row found.");
+    }
     List<Object> columns = currentRow.getColumns();
     if (columns.isEmpty()) {
       throw new SQLException("RowSet does not contain any columns!");
     }
-    if (columnIndex <= 0 || columnIndex > columns.size()) {
+    if (columnIndex < 1 || columnIndex > columns.size()) {
       throw new SQLException("Invalid columnIndex: " + columnIndex);
     }
-    Object value = columns.get(columnIndex - 1);
-    if (value instanceof String) {
-      return (String) value;
+
+    int columnType = getMetaData().getColumnType(columnIndex);
+    try {
+      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1));
+      wasNull = (evaluated == null);
+      return evaluated;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new SQLException("Unrecognized column type:" + columnType, e);
     }
-    // TODO Improve that
-    return value.toString();
+  }
+
+  @Override
+  public Object getObject(String s) throws SQLException {
+    return getObject(findColumn(s));
+  }
+
+  private Object evaluate(int sqlType, Object value) {
+    if (value == null) {
+      return null;
+    }
+    switch (sqlType) {
+      case Types.BINARY:
+        if (value instanceof String) {
+          return ((String) value).getBytes();
+        }
+        return value;
+      case Types.TIMESTAMP:
+        return Timestamp.valueOf((String) value);
+      case Types.DECIMAL:
+        return new BigDecimal((String) value);
+      case Types.DATE:
+        return Date.valueOf((String) value);
+      case Types.ARRAY:
+      case Types.JAVA_OBJECT:
+      case Types.STRUCT:
+        // todo: returns json string. should recreate object from it?
+        return value;
+      default:
+        // TODO do int, etc.. fall into defaut? write a test case for that
+        return value;
+    }
+  }
+
+  @Override
+  public boolean wasNull() throws SQLException {
+    return wasNull;
   }
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
     if (metaData == null) {
       try {
-        List<ColumnDesc> columnDescss = exploreClient.getResultSchema(stmtHandle);
-        metaData = new ExploreResultSetMetaData(columnDescss);
+        List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
+        metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
         LOG.error("Caught exception", e);
         throw new SQLException(e);
       } catch (HandleNotFoundException e) {
-        LOG.error("Handle not found", e);
-        throw new SQLException("Handle not found", e);
+        LOG.error("Handle not found when retrieving result set meta data", e);
+        throw new SQLException("Handle not found when retrieving result set meta data", e);
       }
     }
     return metaData;
@@ -157,53 +199,177 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public boolean getBoolean(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public String getString(int columnIndex) throws SQLException {
+    Object value = getObject(columnIndex);
+    if (wasNull) {
+      return null;
+    }
+    if (value instanceof byte[]) {
+      return new String((byte[]) value);
+    }
+    return value.toString();
   }
 
   @Override
-  public byte getByte(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public String getString(String name) throws SQLException {
+    return getString(findColumn(name));
   }
 
   @Override
-  public short getShort(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public int getInt(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).intValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Integer.valueOf((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to integer" + e.toString(), e);
+    }
   }
 
   @Override
-  public int getInt(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public int getInt(String s) throws SQLException {
+    return getInt(findColumn(s));
   }
 
   @Override
-  public long getLong(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public boolean getBoolean(int columnIndex) throws SQLException {
+    Object obj = getObject(columnIndex);
+    if (Boolean.class.isInstance(obj)) {
+      return (Boolean) obj;
+    } else if (obj == null) {
+      return false;
+    } else if (Number.class.isInstance(obj)) {
+      return ((Number) obj).intValue() != 0;
+    } else if (String.class.isInstance(obj)) {
+      return !((String) obj).equals("0");
+    }
+    throw new SQLException("Cannot convert column " + columnIndex + " to boolean");
   }
 
   @Override
-  public float getFloat(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public boolean getBoolean(String columnName) throws SQLException {
+    return getBoolean(findColumn(columnName));
   }
 
   @Override
-  public double getDouble(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public byte getByte(int columnIndex) throws SQLException {
+    Object obj = getObject(columnIndex);
+    if (Number.class.isInstance(obj)) {
+      return ((Number) obj).byteValue();
+    } else if (obj == null) {
+      return 0;
+    }
+    throw new SQLException("Cannot convert column " + columnIndex + " to byte");
   }
 
   @Override
-  public BigDecimal getBigDecimal(int i, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+  public short getShort(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).shortValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Short.valueOf((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to short: " + e.toString(), e);
+    }
   }
 
   @Override
-  public byte[] getBytes(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public long getLong(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).longValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Long.valueOf((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to long: " + e.toString(), e);
+    }
   }
 
   @Override
-  public Date getDate(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public float getFloat(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).floatValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Float.valueOf((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to float: " + e.toString(), e);
+    }
+  }
+
+  @Override
+  public double getDouble(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      if (Number.class.isInstance(obj)) {
+        return ((Number) obj).doubleValue();
+      } else if (obj == null) {
+        return 0;
+      } else if (String.class.isInstance(obj)) {
+        return Double.valueOf((String) obj);
+      }
+      throw new Exception("Illegal conversion");
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to double: " + e.toString(), e);
+    }
+  }
+
+  @Override
+  public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
+    MathContext mc = new MathContext(scale);
+    return getBigDecimal(columnIndex).round(mc);
+  }
+
+  @Override
+  public byte[] getBytes(int columnIndex) throws SQLException {
+    try {
+      Object obj = getObject(columnIndex);
+      return (byte[]) obj;
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to double: " + e.toString(), e);
+    }
+  }
+
+  @Override
+  public Date getDate(int columnIndex) throws SQLException {
+    Object obj = getObject(columnIndex);
+    if (obj == null) {
+      return null;
+    }
+    if (obj instanceof Date) {
+      return (Date) obj;
+    }
+    try {
+      if (obj instanceof String) {
+        return Date.valueOf((String) obj);
+      }
+    } catch (Exception e) {
+      throw new SQLException("Cannot convert column " + columnIndex + " to date: " + e.toString(), e);
+    }
+    // If we fell through to here this is not a valid type conversion
+    throw new SQLException("Cannot convert column " + columnIndex + " to date: Illegal conversion");
   }
 
   @Override
@@ -212,8 +378,18 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public Timestamp getTimestamp(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public Timestamp getTimestamp(int columnIndex) throws SQLException {
+    Object obj = getObject(columnIndex);
+    if (obj == null) {
+      return null;
+    }
+    if (obj instanceof Timestamp) {
+      return (Timestamp) obj;
+    }
+    if (obj instanceof String) {
+      return Timestamp.valueOf((String) obj);
+    }
+    throw new SQLException("Illegal conversion");
   }
 
   @Override
@@ -232,58 +408,43 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public String getString(String name) throws SQLException {
-    return getString(findColumn(name));
-  }
-
-  @Override
-  public boolean getBoolean(String s) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
   public byte getByte(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getByte(findColumn(s));
   }
 
   @Override
   public short getShort(String s) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public int getInt(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getShort(findColumn(s));
   }
 
   @Override
   public long getLong(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getLong(findColumn(s));
   }
 
   @Override
-  public float getFloat(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+  public float getFloat(String columnName) throws SQLException {
+    return getFloat(findColumn(columnName));
   }
 
   @Override
   public double getDouble(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getDouble(findColumn(s));
   }
 
   @Override
-  public BigDecimal getBigDecimal(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
+    return getBigDecimal(findColumn(columnName), scale);
   }
 
   @Override
   public byte[] getBytes(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getBytes(findColumn(s));
   }
 
   @Override
   public Date getDate(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getDate(findColumn(s));
   }
 
   @Override
@@ -293,7 +454,7 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public Timestamp getTimestamp(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getTimestamp(findColumn(s));
   }
 
   @Override
@@ -327,16 +488,6 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public Object getObject(int i) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public Object getObject(String s) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
   public Reader getCharacterStream(int i) throws SQLException {
     throw new SQLException("Method not supported");
   }
@@ -347,13 +498,17 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public BigDecimal getBigDecimal(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+    Object val = getObject(columnIndex);
+    if (val == null || val instanceof BigDecimal) {
+      return (BigDecimal) val;
+    }
+    throw new SQLException("Illegal conversion");
   }
 
   @Override
   public BigDecimal getBigDecimal(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    return getBigDecimal(findColumn(s));
   }
 
   @Override
