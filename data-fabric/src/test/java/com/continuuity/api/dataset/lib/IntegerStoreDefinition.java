@@ -1,10 +1,10 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
+import com.continuuity.data2.dataset2.lib.table.ObjectStoreDataset;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.io.IOException;
  *
  */
 public class IntegerStoreDefinition
-  extends AbstractDatasetDefinition<ObjectStore<Integer>, DatasetAdmin> {
+  extends AbstractDatasetDefinition<ObjectStoreDataset<Integer>, DatasetAdmin> {
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
@@ -36,7 +36,7 @@ public class IntegerStoreDefinition
   }
 
   @Override
-  public ObjectStore<Integer> getDataset(DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
     KeyValueTable table = tableDef.getDataset(kvTableSpec);
 

@@ -4,7 +4,9 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.table.Table;
+import com.continuuity.api.dataset.lib.IntegerStore;
+import com.continuuity.api.dataset.lib.IntegerStoreModule;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -12,6 +14,7 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.TypeRepresentation;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -21,37 +24,43 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Object store tests.
+ * Test for {@link com.continuuity.data2.dataset2.lib.table.ObjectStoreDataset}.
  */
-public class MultiObjectStoreTest extends AbstractDatasetTest {
+public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
-  private static final byte[] DEFAULT_OBJECT_STORE_COLUMN = { 'c' };
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
     addModule("core", new CoreDatasetsModule());
+    addModule("integerStore", new IntegerStoreModule());
   }
 
   @After
   public void tearDown() throws Exception {
-    super.tearDown();
+    deleteModule("integerStore");
     deleteModule("core");
+    super.tearDown();
+  }
+
+  private void addIntegerStoreInstance(String instanceName) throws Exception {
+    createInstance("integerStore", instanceName, DatasetProperties.EMPTY);
   }
 
   @Test
   public void testStringStore() throws Exception {
-    createMultiObjectStoreInstance("strings", String.class);
-
-    MultiObjectStore<String> stringStore = getInstance("strings");
+    createObjectStoreInstance("strings", String.class);
+    
+    ObjectStoreDataset<String> stringStore = getInstance("strings");
     String string = "this is a string";
     stringStore.write(a, string);
     String result = stringStore.read(a);
@@ -62,9 +71,9 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testPairStore() throws Exception {
-    createMultiObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
-    MultiObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
@@ -74,36 +83,10 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
   }
 
   @Test
-  public void testMultiValueStore() throws Exception {
-    createMultiObjectStoreInstance("multiString", String.class);
-
-    MultiObjectStore<String> multiStringStore = getInstance("multiString");
-    String string1 = "String1";
-    String string2 = "String2";
-    String string3 = "String3";
-    String string4 = "String4";
-
-    byte[] col1 = {'z'};
-    byte[] col2 = {'y'};
-    byte[] col3 = {'x'};
-    byte[] col4 = {'w'};
-
-    multiStringStore.write(a, col1, string1);
-    multiStringStore.write(a, col2, string2);
-    multiStringStore.write(a, col3, string3);
-    multiStringStore.write(a, col4, string4);
-
-    Map<byte[], String> result = multiStringStore.readAll(a);
-    Assert.assertEquals(4, result.size());
-
-    deleteInstance("multiString");
-  }
-
-  @Test
   public void testCustomStore() throws Exception {
-    createMultiObjectStoreInstance("customs", Custom.class);
+    createObjectStoreInstance("customs", new TypeToken<Custom>() { }.getType());
 
-    MultiObjectStore<Custom> customStore = getInstance("customs");
+    ObjectStoreDataset<Custom> customStore = getInstance("customs");
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
     Custom result = customStore.read(a);
@@ -118,9 +101,9 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testInnerStore() throws Exception {
-    createMultiObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
+    createObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
-    MultiObjectStore<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
+    ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
@@ -131,15 +114,12 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
-    createMultiObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     // note: due to type erasure, this succeeds
-    final MultiObjectStore<Custom> store = getInstance("pairs");
-    final MultiObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
-
+    final ObjectStoreDataset<Custom> store = getInstance("pairs");
     TransactionExecutor storeTxnl = newTransactionExecutor(store);
-    TransactionExecutor pairStoreTxnl = newTransactionExecutor(pairStore);
-
+    // but now it must fail with incompatible type
     try {
       storeTxnl.execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -153,32 +133,46 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
       // expected
     }
 
+    // write a correct object to the pair store
+    final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    TransactionExecutor pairStoreTxnl = newTransactionExecutor(store);
+
+    final ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        // write a correct object to the pair store
-        ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
         pairStore.write(a, pair); // should succeed
       }
     });
 
-    storeTxnl.execute(new TransactionExecutor.Subroutine() {
+    pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        try {
-          Custom custom = store.read(a);
-          Assert.fail("read should have failed with class cast exception");
-        } catch (ClassCastException e) {
-          // only this exception is expected (read will return a pair, but the assignment implicitly casts).
-        }
+        ImmutablePair<Integer, String> actualPair = pairStore.read(a);
+        Assert.assertEquals(pair, actualPair);
       }
     });
+
+    // now try to read that as a custom object, should fail with class cast
+    try {
+      storeTxnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Custom custom = store.read(a);
+          Preconditions.checkNotNull(custom);
+        }
+      });
+      Assert.fail("write should have failed with class cast exception");
+    } catch (TransactionFailureException e) {
+      // expected
+    }
 
     deleteInstance("pairs");
   }
 
   @Test
-  public void testCustomClassLoader() throws Exception {
+  public void testWithCustomClassLoader() throws Exception {
+
     // create a dummy class loader that records the name of the class it loaded
     final AtomicReference<String> lastClassLoaded = new AtomicReference<String>(null);
     ClassLoader loader = new ClassLoader() {
@@ -189,35 +183,88 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
       }
     };
 
-    // create an instance that uses the dummy class loader
-    createInstance("table", "table", DatasetProperties.EMPTY);
+    createInstance("keyValueTable", "kv", DatasetProperties.EMPTY);
 
-    Table table = getInstance("table");
+    KeyValueTable kvTable = getInstance("kv");
     Type type = Custom.class;
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
 
-    MultiObjectStore<Custom> objectStore = new MultiObjectStore<Custom>("kv", table, typeRep, schema, loader);
+    ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<Custom>("kv", kvTable, typeRep, schema, loader);
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
 
-    deleteInstance("table");
+    deleteInstance("kv");
+  }
+
+  @Test
+  public void testBatchCustomList() throws Exception {
+    createObjectStoreInstance("customlist", new TypeToken<List<Custom>>() { }.getType());
+
+    final ObjectStoreDataset<List<Custom>> customStore = getInstance("customlist");
+    TransactionExecutor txnl = newTransactionExecutor(customStore);
+
+    final SortedSet<Long> keysWritten = Sets.newTreeSet();
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        List<Custom> customList1 = Arrays.asList(new Custom(1, Lists.newArrayList("one", "ONE")),
+                                                 new Custom(2, Lists.newArrayList("two", "TWO")));
+        Random rand = new Random(100);
+        long key1 = rand.nextLong();
+        keysWritten.add(key1);
+
+        customStore.write(Bytes.toBytes(key1), customList1);
+
+        List<Custom> customList2 = Arrays.asList(new Custom(3, Lists.newArrayList("three", "THREE")),
+                                                 new Custom(4, Lists.newArrayList("four", "FOUR")));
+        long key2 = rand.nextLong();
+        keysWritten.add(key2);
+
+        customStore.write(Bytes.toBytes(key2), customList2);
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // get the splits for the table
+        List<Split> splits = customStore.getSplits();
+
+        for (Split split : splits) {
+          SplitReader<byte[], List<Custom>> reader = customStore.createSplitReader(split);
+          reader.initialize(split);
+          while (reader.nextKeyValue()) {
+            byte[] key = reader.getCurrentKey();
+            Assert.assertTrue(keysWritten.remove(Bytes.toLong(key)));
+          }
+        }
+        // verify all keys have been read
+        if (!keysWritten.isEmpty()) {
+          System.out.println("Remaining [" + keysWritten.size() + "]: " + keysWritten);
+        }
+        Assert.assertTrue(keysWritten.isEmpty());
+      }
+    });
+
+    deleteInstance("customlist");
   }
 
   @Test
   public void testBatchReads() throws Exception {
-    createMultiObjectStoreInstance("batch", String.class);
+    createObjectStoreInstance("batch", String.class);
 
-    final MultiObjectStore<String> t = getInstance("batch");
+    final ObjectStoreDataset<String> t = getInstance("batch");
     TransactionExecutor txnl = newTransactionExecutor(t);
+
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
 
-    // start a transaction
+    // write 1000 random values to the table and remember them in a set
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        // write 1000 random values to the table and remember them in a set
         Random rand = new Random(451);
         for (int i = 0; i < 1000; i++) {
           long keyLong = rand.nextLong();
@@ -228,7 +275,6 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    // start a sync transaction
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -240,12 +286,11 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
       }
     });
 
-    // start a sync transaction
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // get specific number of splits for a subrange
-        SortedSet<Long> keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
+        TreeSet<Long> keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
         List<Split> splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
         Assert.assertTrue(splits.size() <= 5);
         // read each split and verify the keys
@@ -257,18 +302,16 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
-  private void verifySplits(MultiObjectStore<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
+  private void verifySplits(ObjectStoreDataset<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
     throws InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
-      SplitReader<byte[], Map<byte[], String>> reader = t.createSplitReader(split);
+      SplitReader<byte[], String> reader = t.createSplitReader(split);
       reader.initialize(split);
       while (reader.nextKeyValue()) {
         byte[] key = reader.getCurrentKey();
-        Map<byte[], String> values = reader.getCurrentValue();
-        Assert.assertEquals(1, values.size());
-        String value = values.get(DEFAULT_OBJECT_STORE_COLUMN);
-//        // verify each row has the column written
+        String value = reader.getCurrentValue();
+        // verify each row has the two columns written
         Assert.assertEquals(Long.toString(Bytes.toLong(key)), value);
         Assert.assertTrue(keysToVerify.remove(Bytes.toLong(key)));
       }
@@ -280,64 +323,14 @@ public class MultiObjectStoreTest extends AbstractDatasetTest {
     Assert.assertTrue(keysToVerify.isEmpty());
   }
 
-
   @Test
-  public void testBatchReadMultipleColumns() throws Exception {
-    createMultiObjectStoreInstance("batchTestsMultiCol", String.class);
+  public void testSubclass() throws Exception {
+    addIntegerStoreInstance("ints");
 
-    final MultiObjectStore<String> t = getInstance("batchTestsMultiCol");
-    TransactionExecutor txnl = newTransactionExecutor(t);
-    final byte [] col1 = Bytes.toBytes("c1");
-    final byte [] col2 = Bytes.toBytes("c2");
-    final SortedSet<Integer> keysWritten = Sets.newTreeSet();
+    IntegerStore ints = getInstance("ints");
+    ints.write(42, 101);
+    Assert.assertEquals((Integer) 101, ints.read(42));
 
-    // start a transaction
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // write 1000 random values to the table and remember them in a set
-        Random rand = new Random(451);
-        for (int i = 0; i < 1000; i++) {
-          int keyInt = rand.nextInt();
-          byte[] key = Bytes.toBytes(keyInt);
-          //write two columns
-          t.write(key, col1, Long.toString(keyInt));
-          t.write(key, col2, Long.toString(keyInt * 2));
-
-          keysWritten.add(keyInt);
-        }
-      }
-    });
-
-    // start a sync transaction
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // get the splits for the table
-        List<Split> splits = t.getSplits();
-        // read each split and verify the keys
-        SortedSet<Integer> keysToVerify = Sets.newTreeSet(keysWritten);
-
-        for (Split split : splits) {
-          SplitReader<byte[], Map<byte[], String>> reader = t.createSplitReader(split);
-          reader.initialize(split);
-          while (reader.nextKeyValue()) {
-            byte[] key = reader.getCurrentKey();
-            Map<byte[], String> values = reader.getCurrentValue();
-            Assert.assertEquals(2, values.size());
-            String value1 = values.get(col1);
-            String value2 = values.get(col2);
-
-            // verify each row has the two columns written
-            Assert.assertEquals(Integer.toString(Bytes.toInt(key)), value1);
-            Assert.assertEquals(Integer.toString(Bytes.toInt(key) * 2), value2);
-            Assert.assertTrue(keysToVerify.remove(Bytes.toInt(key)));
-          }
-        }
-      }
-    });
-
-    deleteInstance("batchTestsMultiCol");
+    deleteInstance("ints");
   }
-
 }

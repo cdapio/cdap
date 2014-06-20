@@ -1,8 +1,9 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.Feed;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
+import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
 import org.junit.After;
@@ -13,7 +14,7 @@ import org.junit.Test;
 import java.util.List;
 
 /**
- * Test for {@link IndexedObjectStore}.
+ * Test for {@link com.continuuity.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
