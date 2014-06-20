@@ -158,7 +158,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   /**
-   * Initializes the Authentication handler and returns a HandlerList.
+   * Initializes the handlers.
    * @param handlers
    * @return
    */
