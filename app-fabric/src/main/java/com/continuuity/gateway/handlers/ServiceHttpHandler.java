@@ -30,19 +30,14 @@ import javax.ws.rs.PathParam;
 
 
 /**
- *  Handler class for Twill User Apps
- *  TODO: Currently this is a Mock API, Implementation will be added in next steps.
- *  Will Extend AbstractAppFabricHttpHandler, which will have the required common methods from
- *  AppFabricHttpHandler, once that is merged
+ *  Handler class for User services.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
-  /**
-   * Constructs an new instance. Parameters are binded by Guice.
-   */
+
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory) {
     super(authenticator);
