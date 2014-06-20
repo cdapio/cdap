@@ -124,7 +124,6 @@ public class DataSetServiceModules {
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
-        bind(DatasetService.class);
         expose(DatasetService.class);
 
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);

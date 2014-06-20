@@ -1,16 +1,14 @@
 package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.dataset.Dataset;
-import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
-import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.data2.dataset2.SingleTypeModule;
 import com.continuuity.data2.dataset2.tx.TransactionalDatasetRegistry;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +25,8 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
   private final Map<String, ? extends DatasetModule> defaultModules;
   private final DatasetFramework dsFramework;
 
+  private DatasetMetaTableUtil util;
+
   @Inject
   public MDSDatasetsRegistry(TransactionSystemClient txClient,
                              @Named("defaultDatasetModules")
@@ -37,7 +37,6 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
     this.defaultModules = defaultModules;
     this.dsFramework =
       new NamespacedDatasetFramework(framework, new ReactorDatasetNamespace(conf, DataSetAccessor.Namespace.SYSTEM));
-
   }
 
   @Override
@@ -46,16 +45,8 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
       dsFramework.addModule(moduleEntry.getKey(), moduleEntry.getValue());
     }
 
-    dsFramework.addModule("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class));
-    dsFramework.addModule("instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
-
-    DatasetsUtil.createIfNotExists(dsFramework, "datasets.instance",
-                                                DatasetInstanceMDS.class.getName(),
-                                                DatasetProperties.EMPTY);
-
-    DatasetsUtil.createIfNotExists(dsFramework, "datasets.type",
-                                              DatasetTypeMDS.class.getName(),
-                                              DatasetProperties.EMPTY);
+    this.util = new DatasetMetaTableUtil(dsFramework);
+    this.util.init();
   }
 
   @Override
@@ -64,10 +55,10 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
 
   @Override
   protected MDSDatasets createContext() throws IOException, DatasetManagementException {
-    Map<String, Dataset> datasets = ImmutableMap.of(
+    Map<String, ? extends Dataset> datasets = ImmutableMap.of(
       // "null" for class being in system classpath, for mds it is always true
-      "datasets.instance", dsFramework.getDataset("datasets.instance", null),
-      "datasets.type", dsFramework.getDataset("datasets.type", null)
+      DatasetMetaTableUtil.INSTANCE_TABLE_NAME, util.getInstanceMetaTable(),
+      DatasetMetaTableUtil.META_TABLE_NAME, util.getTypeMetaTable()
     );
 
     return new MDSDatasets(datasets);

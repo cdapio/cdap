@@ -10,7 +10,7 @@ import java.util.Map;
 public abstract class TxContext {
   private final Map<String, ? extends Dataset> datasets;
 
-  protected TxContext(Map<String, Dataset> datasets) {
+  protected TxContext(Map<String, ? extends Dataset> datasets) {
     this.datasets = datasets;
   }
 

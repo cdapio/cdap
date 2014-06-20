@@ -40,6 +40,8 @@ import javax.ws.rs.PathParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
+  public static final String HEADER_CLASS_NAME = "X-Continuuity-Class-Name";
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
   private final DatasetTypeManager manager;
@@ -85,11 +87,10 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void deleteModules(HttpRequest request, final HttpResponder responder) {
     try {
       manager.deleteModules();
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
-      return;
     }
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT
@@ -97,7 +98,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void addModule(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws IOException {
 
-    String className = request.getHeader("X-Continuuity-Class-Name");
+    String className = request.getHeader(HEADER_CLASS_NAME);
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}", name, className);
 

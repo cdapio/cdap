@@ -36,12 +36,12 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new Gson();
 
-  private final RemoteDatasetFramework client;
+  private final RemoteDatasetFramework dsFramework;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework client) {
+  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework) {
     super(authenticator);
-    this.client = client;
+    this.dsFramework = dsFramework;
   }
 
   @POST
@@ -74,7 +74,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -104,7 +104,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -155,7 +155,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   private DatasetAdmin getDatasetAdmin(String instanceName) throws IOException, DatasetManagementException {
-    DatasetAdmin admin = client.getAdmin(instanceName, null);
+    DatasetAdmin admin = dsFramework.getAdmin(instanceName, null);
     if (admin == null) {
       throw new HandlerException(HttpResponseStatus.NOT_FOUND,
                                  "Couldn't obtain DatasetAdmin for dataset instance " + instanceName);

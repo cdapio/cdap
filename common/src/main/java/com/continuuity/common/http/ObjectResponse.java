@@ -20,10 +20,15 @@ public final class ObjectResponse<T> extends HttpResponse {
   private final T object;
 
   @SuppressWarnings("unchecked")
-  public static final <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Type typeOfObject) {
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Type typeOfObject, Gson gson) {
     T object = response.getResponseBody() == null ?
-      null : (T) GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), typeOfObject);
+      null : (T) gson.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), typeOfObject);
     return new ObjectResponse<T>(response, object);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> ObjectResponse<T> fromJsonBody(HttpResponse response, Type typeOfObject) {
+    return fromJsonBody(response, typeOfObject, GSON);
   }
 
   private ObjectResponse(HttpResponse response, T object) {

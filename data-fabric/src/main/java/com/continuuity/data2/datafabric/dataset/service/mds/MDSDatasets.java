@@ -9,7 +9,7 @@ import java.util.Map;
  * Provides transactional access to datasets storing metadata of datasets
  */
 public final class MDSDatasets extends TxContext {
-  MDSDatasets(Map<String, Dataset> datasets) {
+  MDSDatasets(Map<String, ? extends Dataset> datasets) {
     super(datasets);
   }
 

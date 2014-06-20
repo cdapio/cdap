@@ -19,10 +19,7 @@ import java.util.concurrent.Callable;
 /**
  * Utility that wraps the execution of a function into the context of a transaction.
  *
- * <p>
- *   Differs from {@link TransactionExecutor}s by being thread-safe and providing cleaner APIs by giving
- *   {@link TxContext} with {@link Dataset}s "covered" with transaction.
- * </p>
+ * TODO: unify with TransactionExecutor as per comment in https://github.com/continuuity/reactor/pull/1243
  *
  * @param <CONTEXT_TYPE> type of the tx operation context
  */
