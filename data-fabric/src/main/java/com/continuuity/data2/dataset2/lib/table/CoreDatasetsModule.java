@@ -2,6 +2,14 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
+import com.continuuity.api.dataset.lib.IndexedObjectStore;
+import com.continuuity.api.dataset.lib.IndexedObjectStoreDefinition;
+import com.continuuity.api.dataset.lib.IndexedTable;
+import com.continuuity.api.dataset.lib.IndexedTableDefinition;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTableDefinition;
+import com.continuuity.api.dataset.lib.MultiObjectStore;
+import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.OrderedTable;
@@ -27,7 +35,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
 
     DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition("objectStore", kvTableDef);
-    registry.add(objectStoreDef);
+    registry.add(new ObjectStoreDefinition("objectStore", kvTableDef));
     registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), kvTableDef));
 
     registry.add(new IndexedObjectStoreDefinition("indexedObjectStore", tableDef, objectStoreDef));

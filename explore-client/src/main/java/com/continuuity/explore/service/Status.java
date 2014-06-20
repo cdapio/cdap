@@ -6,16 +6,16 @@ import com.google.common.base.Objects;
  * Represents the status of an operation submitted to {@link Explore}.
  */
 public class Status {
-  private final State state;
+  private final OpStatus status;
   private final boolean hasResults;
 
-  public Status(State state, boolean hasResults) {
-    this.state = state;
+  public Status(OpStatus status, boolean hasResults) {
+    this.status = status;
     this.hasResults = hasResults;
   }
 
-  public State getState() {
-    return state;
+  public OpStatus getStatus() {
+    return status;
   }
 
   public boolean hasResults() {
@@ -25,16 +25,16 @@ public class Status {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("state", state)
+      .add("state", status)
       .add("hasResults", hasResults)
       .toString();
   }
 
   /**
-   * Represents the state of an operation.
+   * Represents the status of an operation.
    */
   @SuppressWarnings("UnusedDeclaration")
-  public enum State {
+  public enum OpStatus {
     INITIALIZED,
     RUNNING,
     FINISHED,

@@ -42,7 +42,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
       OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
-      Status status = new Status(Status.State.valueOf(operationStatus.getState().toString()),
+      Status status = new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
                                  operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;

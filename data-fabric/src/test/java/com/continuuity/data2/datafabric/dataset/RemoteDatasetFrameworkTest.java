@@ -5,8 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
@@ -16,7 +14,8 @@ import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.google.common.collect.ImmutableList;
+import com.continuuity.explore.client.AsyncExploreClient;
+import com.continuuity.explore.client.DatasetExploreFacade;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -68,7 +67,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                         new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
-                                 opExecutorClient);
+                                 opExecutorClient,
+                                 new DatasetExploreFacade(new AsyncExploreClient(discoveryService), cConf));
     service.startAndWait();
   }
 

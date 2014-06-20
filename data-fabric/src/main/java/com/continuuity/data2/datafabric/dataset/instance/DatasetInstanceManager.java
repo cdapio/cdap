@@ -3,6 +3,7 @@ package com.continuuity.data2.datafabric.dataset.instance;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -23,7 +24,7 @@ import java.util.concurrent.Callable;
 public class DatasetInstanceManager extends AbstractIdleService {
 
   private final TransactionSystemClient txClient;
-  private final DatasetFramework mdsDatasetFramework;
+  private final DatasetMetaTableUtil mdsTableUtil;
 
   /** dataset types metadata store */
   private DatasetInstanceMDS mds;
@@ -37,15 +38,13 @@ public class DatasetInstanceManager extends AbstractIdleService {
    */
   public DatasetInstanceManager(DatasetFramework mdsDatasetFramework,
                                 TransactionSystemClient txSystemClient) {
-    this.mdsDatasetFramework = mdsDatasetFramework;
+    this.mdsTableUtil = new DatasetMetaTableUtil(mdsDatasetFramework);
     this.txClient = txSystemClient;
   }
 
   @Override
   protected void startUp() throws Exception {
-    // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.instance", "orderedTable",
-                                                         DatasetProperties.EMPTY, null);
+    OrderedTable table = mdsTableUtil.getInstanceMetaTable();
 
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetInstanceMDS(table);

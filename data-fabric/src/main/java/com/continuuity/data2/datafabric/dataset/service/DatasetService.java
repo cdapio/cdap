@@ -13,6 +13,7 @@ import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -53,18 +54,19 @@ public class DatasetService extends AbstractIdleService {
   public DatasetService(CConfiguration cConf,
                         LocationFactory locationFactory,
                         DiscoveryService discoveryService,
-                        @Named("datasetMDS") DatasetFramework mdsDatasetFramework,
+                        @Named("datasetMDS") DatasetFramework baseDatasetFramework,
                         @Named("defaultDatasetModules")
                         Map<String, DatasetModule> defaultModules,
                         TransactionSystemClient txSystemClient,
                         MetricsCollectionService metricsCollectionService,
-                        DatasetOpExecutor opExecutorClient) throws Exception {
+                        DatasetOpExecutor opExecutorClient,
+                        DatasetExploreFacade datasetExploreFacade) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
     // todo: refactor once DataSetAccessor is removed.
     this.mdsDatasetFramework =
-      new NamespacedDatasetFramework(mdsDatasetFramework,
+      new NamespacedDatasetFramework(baseDatasetFramework,
                                      new ReactorDatasetNamespace(cConf, DataSetAccessor.Namespace.SYSTEM));
     // NOTE: order matters
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);
@@ -73,7 +75,7 @@ public class DatasetService extends AbstractIdleService {
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                        opExecutorClient)));
+                                                                        opExecutorClient, datasetExploreFacade)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

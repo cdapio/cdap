@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -651,6 +652,13 @@ public class SerializingMetaDataTable implements MetaDataTable {
       scanner.close();
     }
     return accounts;
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    DataSetManager manager = datasetAccessor.getDataSetManager(OrderedColumnarTable.class,
+                                                               DataSetAccessor.Namespace.SYSTEM);
+    manager.upgrade(META_DATA_TABLE_NAME, new Properties());
   }
 
   /**

@@ -22,6 +22,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.runtime.LocationStreamFileWriterFactory;
 import com.continuuity.data.stream.StreamFileWriterFactory;
+import com.continuuity.data.stream.service.LocalStreamFileJanitorService;
+import com.continuuity.data.stream.service.StreamFileJanitorService;
 import com.continuuity.data.stream.service.StreamHandler;
 import com.continuuity.data.stream.service.StreamServiceModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
@@ -51,7 +53,6 @@ import com.continuuity.test.internal.DefaultStreamWriter;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.StreamWriterFactory;
 import com.continuuity.test.internal.TestMetricsCollectionService;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -168,7 +169,6 @@ public class ReactorTestBase {
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
                       new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
-    configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -182,41 +182,43 @@ public class ReactorTestBase {
       System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
-    injector = Guice.createInjector(createDataFabricModule(configuration),
-                                    new DataSetServiceModules().getInMemoryModule(),
-                                    new ConfigModule(configuration),
-                                    new IOModule(),
-                                    new AuthModule(),
-                                    new LocationRuntimeModule().getInMemoryModules(),
-                                    new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new AppFabricServiceRuntimeModule().getInMemoryModules(),
-                                    new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new StreamServiceModule() {
-                                      @Override
-                                      protected void configure() {
-                                        super.configure();
-                                        bind(StreamHandler.class).in(Scopes.SINGLETON);
-                                        expose(StreamHandler.class);
-                                      }
-                                    },
-                                    new TestMetricsClientModule(),
-                                    new MetricsHandlerModule(),
-                                    new LoggingModules().getInMemoryModules(),
-                                    new AbstractModule() {
-                                      @Override
-                                      protected void configure() {
-                                        install(new FactoryModuleBuilder()
-                                                  .implement(ApplicationManager.class, DefaultApplicationManager.class)
-                                                  .build(ApplicationManagerFactory.class));
-                                        install(new FactoryModuleBuilder()
-                                                  .implement(StreamWriter.class, DefaultStreamWriter.class)
-                                                  .build(StreamWriterFactory.class));
-                                        install(new FactoryModuleBuilder()
-                                                  .implement(ProcedureClient.class, DefaultProcedureClient.class)
-                                                  .build(ProcedureClientFactory.class));
-                                      }
-                                    }
-                                    );
+    injector = Guice.createInjector(
+      createDataFabricModule(configuration),
+      new DataSetServiceModules().getInMemoryModule(),
+      new ConfigModule(configuration),
+      new IOModule(),
+      new AuthModule(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new ProgramRunnerRuntimeModule().getInMemoryModules(),
+      new StreamServiceModule() {
+        @Override
+        protected void configure() {
+          super.configure();
+          bind(StreamHandler.class).in(Scopes.SINGLETON);
+          bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
+          expose(StreamHandler.class);
+        }
+      },
+      new TestMetricsClientModule(),
+      new MetricsHandlerModule(),
+      new LoggingModules().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder()
+                    .implement(ApplicationManager.class, DefaultApplicationManager.class)
+                    .build(ApplicationManagerFactory.class));
+          install(new FactoryModuleBuilder()
+                    .implement(StreamWriter.class, DefaultStreamWriter.class)
+                    .build(StreamWriterFactory.class));
+          install(new FactoryModuleBuilder()
+                    .implement(ProcedureClient.class, DefaultProcedureClient.class)
+                    .build(ProcedureClientFactory.class));
+        }
+      }
+    );
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
