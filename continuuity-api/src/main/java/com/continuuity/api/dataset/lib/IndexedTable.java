@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.table.Delete;
@@ -8,7 +8,6 @@ import com.continuuity.api.dataset.table.Increment;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
 
 import java.util.Arrays;
 

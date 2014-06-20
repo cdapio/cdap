@@ -3,16 +3,18 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.DataSetException;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.KeyValue;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
@@ -27,18 +29,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported are:
- * <ul>
- *   <li>a plain java class</li>
- *   <li>a parametrized class</li>
- *   <li>a static inner class of one of the above</li>
- * </ul>
- * Interfaces and not-static inner classes are not supported.
+ * Default implementation for {@link ObjectStore}
  * @param <T> the type of objects in the store
  */
 @Beta
-public class ObjectStore<T> extends AbstractDataset
-  implements BatchReadable<byte[], T>, RecordScannable<ImmutablePair<byte[], T>> {
+public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStore<T> {
 
   private final KeyValueTable kvTable;
   private final TypeRepresentation typeRep;
@@ -47,8 +42,8 @@ public class ObjectStore<T> extends AbstractDataset
   private final ReflectionDatumWriter<T> datumWriter;
   private final ReflectionDatumReader<T> datumReader;
 
-  public ObjectStore(String name, KeyValueTable kvTable, TypeRepresentation typeRep,
-                     Schema schema, @Nullable ClassLoader classLoader) {
+  public ObjectStoreDataset(String name, KeyValueTable kvTable, TypeRepresentation typeRep,
+                            Schema schema, @Nullable ClassLoader classLoader) {
     super(name, kvTable);
     this.kvTable = kvTable;
     this.typeRep = typeRep;
@@ -58,23 +53,27 @@ public class ObjectStore<T> extends AbstractDataset
     this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
-  public ObjectStore(String name, KeyValueTable kvTable,
-                     TypeRepresentation typeRep, Schema schema) {
+  public ObjectStoreDataset(String name, KeyValueTable kvTable,
+                            TypeRepresentation typeRep, Schema schema) {
     this(name, kvTable, typeRep, schema, null);
   }
 
+  @Override
   public void write(String key, T object) throws Exception {
     kvTable.write(Bytes.toBytes(key), encode(object));
   }
 
+  @Override
   public void write(byte[] key, T object) throws Exception {
     kvTable.write(key, encode(object));
   }
 
+  @Override
   public T read(String key) throws Exception {
     return decode(kvTable.read(Bytes.toBytes(key)));
   }
 
+  @Override
   public T read(byte[] key) throws Exception {
     byte[] read = kvTable.read(key);
     return decode(read);
@@ -115,7 +114,7 @@ public class ObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public RecordScanner<ImmutablePair<byte[], T>> createSplitRecordScanner(Split split) {
+  public RecordScanner<KeyValue<byte[], T>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new ObjectRecordMaker());
   }
 
@@ -139,12 +138,12 @@ public class ObjectStore<T> extends AbstractDataset
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link ObjectStore}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
    */
-  public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, ImmutablePair<byte[], T>> {
+  public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, KeyValue<byte[], T>> {
     @Override
-    public ImmutablePair<byte[], T> makeRecord(byte[] key, T value) {
-      return new ImmutablePair<byte[], T>(key, value);
+    public KeyValue<byte[], T> makeRecord(byte[] key, T value) {
+      return new KeyValue<byte[], T>(key, value);
     }
   }
 
