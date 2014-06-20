@@ -45,8 +45,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/exists")
-  public void exists(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/exists")
+  public void exists(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(datasetAdmin.exists(), null));
@@ -60,8 +60,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/create")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("instance") String name)
+  @Path("/data/datasets/{name}/admin/create")
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("name") String name)
   throws Exception {
 
     String propsHeader = request.getHeader("instance-props");
@@ -90,8 +90,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/drop")
-  public void drop(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName)
+  @Path("/data/datasets/{name}/admin/drop")
+  public void drop(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName)
     throws Exception {
 
     String specHeader = request.getHeader("instance-spec");
@@ -119,8 +119,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/truncate")
-  public void truncate(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/truncate")
+  public void truncate(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.truncate();
@@ -135,8 +135,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/upgrade")
-  public void upgrade(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/upgrade")
+  public void upgrade(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.upgrade();
@@ -155,17 +155,11 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   private DatasetAdmin getDatasetAdmin(String instanceName) throws IOException, DatasetManagementException {
-    DatasetAdmin admin = client.getAdmin(instanceName, getClassLoader(instanceName));
+    DatasetAdmin admin = client.getAdmin(instanceName, null);
     if (admin == null) {
       throw new HandlerException(HttpResponseStatus.NOT_FOUND,
                                  "Couldn't obtain DatasetAdmin for dataset instance " + instanceName);
     }
     return admin;
   }
-
-  private ClassLoader getClassLoader(String instanceName) {
-    // TODO
-    return null;
-  }
-
 }

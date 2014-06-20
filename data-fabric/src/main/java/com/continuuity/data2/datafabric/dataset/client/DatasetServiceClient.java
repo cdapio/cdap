@@ -59,7 +59,7 @@ public class DatasetServiceClient {
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
-    HttpResponse response = doGet("instances/" + instanceName);
+    HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
@@ -72,7 +72,7 @@ public class DatasetServiceClient {
   }
 
   public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
-    HttpResponse response = doGet("instances");
+    HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          getDetails(response)));
@@ -97,7 +97,7 @@ public class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPut("instances/" + datasetInstanceName,
+    HttpResponse response = doPut("datasets/" + datasetInstanceName,
                                    GSON.toJson(props),
                                    ImmutableMap.of("X-Continuuity-Type-Name", datasetType));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
@@ -111,7 +111,7 @@ public class DatasetServiceClient {
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    HttpResponse response = doDelete("instances/" + datasetInstanceName);
+    HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -176,7 +176,7 @@ public class DatasetServiceClient {
   }
 
   public void deleteInstances() throws DatasetManagementException {
-    HttpResponse response = doDelete("instances");
+    HttpResponse response = doDelete("datasets");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",

@@ -60,7 +60,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // create dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
 
-    // verify module cannot be deleted which type is used for the instance
+    // verify module cannot be deleted which type is used for the dataset
     int modulesBeforeDelete = getModules().getResponseObject().size();
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2"));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules());
@@ -187,28 +187,24 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
-    return HttpRequests.put(getUrl("/data/instances/" + instanceName),
+    return HttpRequests.put(getUrl("/data/datasets/" + instanceName),
                              new Gson().toJson(props),
                              "X-Continuuity-Type-Name", typeName).getResponseCode();
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/instances")),
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets")),
                                        new TypeToken<List<DatasetSpecification>>() {
                                        }.getType());
   }
 
   private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/instances/" + instanceName)),
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/datasets/" + instanceName)),
                                        DatasetInstanceMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
-    return HttpRequests.delete(getUrl("/data/instances/" + instanceName)).getResponseCode();
-  }
-
-  private int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/instances")).getResponseCode();
+    return HttpRequests.delete(getUrl("/data/datasets/" + instanceName)).getResponseCode();
   }
 
   /**

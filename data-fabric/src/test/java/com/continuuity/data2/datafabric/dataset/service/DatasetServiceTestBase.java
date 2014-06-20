@@ -34,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,7 +82,9 @@ public abstract class DatasetServiceTestBase {
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory, defaultModules),
+                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
+                                                        // we don't need any default modules in this test
+                                                        Collections.<String, DatasetModule>emptyMap()),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
@@ -122,6 +125,9 @@ public abstract class DatasetServiceTestBase {
                                        }.getType());
   }
 
+  protected int deleteInstances() throws IOException {
+    return HttpRequests.delete(getUrl("/data/datasets")).getResponseCode();
+  }
 
   protected int deleteModule(String moduleName) throws Exception {
     return HttpRequests.delete(getUrl("/data/modules/" + moduleName)).getResponseCode();

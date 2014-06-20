@@ -35,8 +35,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testBasics() throws Exception {
-    cleanModules();
-
     // nothing has been deployed, modules and types list is empty
     List<DatasetModuleMeta> modules = getModules().getResponseObject();
     Assert.assertEquals(0, modules.size());
@@ -135,23 +133,17 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(0, getTypes().getResponseObject().size());
   }
 
-  private void cleanModules() throws Exception {
-    List<DatasetModuleMeta> modules = getModules().getResponseObject();
-    for (DatasetModuleMeta moduleMeta : modules) {
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule(moduleMeta.getName()));
-    }
-  }
-
   private void verify(DatasetTypeMeta typeMeta, String typeName, List<String> modules) {
     Assert.assertEquals(typeName, typeMeta.getName());
-    Assert.assertArrayEquals(modules.toArray(), Lists.transform(typeMeta.getModules(),
-                                                                new Function<DatasetModuleMeta, String>() {
-      @Nullable
-      @Override
-      public String apply(@Nullable DatasetModuleMeta input) {
-        return input == null ? null : input.getName();
-      }
-    }).toArray());
+    Assert.assertArrayEquals(modules.toArray(),
+                             Lists.transform(typeMeta.getModules(),
+                                             new Function<DatasetModuleMeta, String>() {
+                                               @Nullable
+                                               @Override
+                                               public String apply(@Nullable DatasetModuleMeta input) {
+                                                 return input == null ? null : input.getName();
+                                               }
+                                             }).toArray());
   }
 
   static void verify(DatasetModuleMeta moduleMeta, String moduleName, Class moduleClass,

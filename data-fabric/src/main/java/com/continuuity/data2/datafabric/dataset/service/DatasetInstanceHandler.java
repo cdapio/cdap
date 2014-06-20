@@ -50,13 +50,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/data/instances/")
+  @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
   @DELETE
-  @Path("/data/instances/")
+  @Path("/data/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     for (DatasetSpecification spec : instanceManager.getAll()) {
       // skip if not exists: someone may be deleting it at same time
@@ -67,7 +67,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       try {
         opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
       } catch (Exception e) {
-        String msg = String.format("Cannot delete dataset instance %s: executing delete() failed, reason: %s",
+        String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                    spec.getName(), e.getMessage());
         LOG.warn(msg, e);
         // we continue deleting if something wring happens.
@@ -79,9 +79,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/data/instances/{instance-name}")
+  @Path("/data/datasets/{name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,
-                      @PathParam("instance-name") String name) {
+                      @PathParam("name") String name) {
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -92,18 +92,18 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @PUT
-  @Path("/data/instances/{instance-name}")
+  @Path("/data/datasets/{name}")
   public void add(HttpRequest request, final HttpResponder responder,
-                  @PathParam("instance-name") String name) {
+                  @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
     String typeName = request.getHeader("X-Continuuity-Type-Name");
 
-    LOG.info("Creating dataset instance {}, type name: {}, props: {}", name, typeName, props);
+    LOG.info("Creating dataset {}, type name: {}, props: {}", name, typeName, props);
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
-      String message = String.format("Cannot create dataset instance %s: instance with same name already exists %s",
+      String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.warn(message);
       responder.sendString(HttpResponseStatus.CONFLICT, message);
@@ -112,7 +112,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeName);
     if (typeMeta == null) {
-      String message = String.format("Cannot create dataset instance %s: unknown type %s",
+      String message = String.format("Cannot create dataset %s: unknown type %s",
                                      name, typeName);
       LOG.warn(message);
       responder.sendString(HttpResponseStatus.NOT_FOUND, message);
@@ -124,7 +124,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     try {
       spec = opExecutorClient.create(name, typeMeta, props);
     } catch (Exception e) {
-      String msg = String.format("Cannot create dataset instance %s of type %s: executing create() failed, reason: %s",
+      String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
                                  name, typeName, e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
@@ -134,10 +134,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/instances/{instance-name}")
+  @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, final HttpResponder responder,
-                       @PathParam("instance-name") String name) {
-    LOG.info("Deleting dataset instance {}", name);
+                       @PathParam("name") String name) {
+    LOG.info("Deleting dataset {}", name);
 
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
@@ -153,7 +153,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     try {
       opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
     } catch (Exception e) {
-      String msg = String.format("Cannot delete dataset instance %s: executing delete() failed, reason: %s",
+      String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                  name, e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
@@ -163,9 +163,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance-id}/admin/{method}")
+  @Path("/data/datasets/{name}/admin/{method}")
   public void executeAdmin(HttpRequest request, final HttpResponder responder,
-                           @PathParam("instance-id") String instanceName,
+                           @PathParam("name") String instanceName,
                            @PathParam("method") String method) {
 
     try {
@@ -173,7 +173,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String message = null;
 
       // NOTE: one cannot directly call create and drop, instead this should be called thru
-      //       POST/DELETE @ /data/instances/{instance-id}. Because we must create/drop metadata for these at same time
+      //       POST/DELETE @ /data/datasets/{instance-id}. Because we must create/drop metadata for these at same time
       if (method.equals("exists")) {
         result = opExecutorClient.exists(instanceName);
       } else if (method.equals("truncate")) {
@@ -196,9 +196,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance-id}/data/{method}")
+  @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, final HttpResponder responder,
-                           @PathParam("instance-id") String instanceName,
+                           @PathParam("name") String instanceName,
                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
