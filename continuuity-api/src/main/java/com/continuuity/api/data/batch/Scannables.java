@@ -1,7 +1,7 @@
 package com.continuuity.api.data.batch;
 
 /**
- * Utility methods for row scanners.
+ * Utility methods for record scanners.
  */
 public class Scannables {
 
@@ -58,7 +58,7 @@ public class Scannables {
   }
 
   /**
-   * Given a split reader and a way to convert its key/value pairs into rows, return a record scanner that
+   * Given a split reader and a way to convert its key/value pairs into records, return a record scanner that
    * delegates all operations to the underlying split reader.
    */
   public static <KEY, VALUE>
