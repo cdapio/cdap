@@ -164,7 +164,8 @@
             <th style="min-width: 100px;" class="status-col">Status
             </th>
             <th style="min-width: 100px;" class="logs-col">Logs</th>
-            <th style="min-width: 200px;" class="instance-col">Instance</th>
+            <th style="min-width: 200px;" class="instance-col">Instances Requested</th>
+            <th style="min-width: 200px;" class="instance-col">Provisioned</th>
           </thead>
           <tbody>
           {{#each services}}
@@ -201,6 +202,10 @@
                     </a>
                   </div>
                 </div>
+              <td style="max-width: 350px;" class="instance-provisioned service-col">
+              <div class="instance-wrapper">
+                  <div class="instance-num"><span>{{this.provisioned}}</span></div>
+              </div>
               </td>
             </tr>
           {{/each}}
