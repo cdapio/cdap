@@ -67,7 +67,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public boolean isAvailable() throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/status"), null, null);
+    HttpResponse response = doGet(String.format("explore/status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return true;
     }
