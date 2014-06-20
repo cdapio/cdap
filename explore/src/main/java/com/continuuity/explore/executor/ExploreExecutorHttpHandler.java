@@ -77,7 +77,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       Handle handle = exploreService.execute(createStatement);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -101,7 +101,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       Handle handle = exploreService.execute(deleteStatement);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
