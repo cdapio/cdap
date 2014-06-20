@@ -1,12 +1,11 @@
 package com.continuuity.data2.datafabric.dataset.type;
 
 import com.continuuity.api.dataset.DatasetDefinition;
-import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.module.lib.DatasetModules;
@@ -43,7 +42,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
   private final TransactionSystemClient txClient;
-  private final DatasetFramework mdsDatasetFramework;
+  private final DatasetMetaTableUtil mdsTableUtil;
   private final LocationFactory locationFactory;
 
   private final Map<String, DatasetModule> defaultModules;
@@ -61,7 +60,7 @@ public class DatasetTypeManager extends AbstractIdleService {
                             TransactionSystemClient txSystemClient,
                             LocationFactory locationFactory,
                             Map<String, DatasetModule> defaultModules) {
-    this.mdsDatasetFramework = mdsDatasetFramework;
+    this.mdsTableUtil = new DatasetMetaTableUtil(mdsDatasetFramework);
     this.txClient = txSystemClient;
     this.locationFactory = locationFactory;
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);
@@ -70,8 +69,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     // "null" for class being in system classpath, for mds it is always true
-    OrderedTable table = DatasetsUtil.getOrCreateDataset(mdsDatasetFramework, "datasets.type", "orderedTable",
-                                                         DatasetProperties.EMPTY, null);
+    OrderedTable table = mdsTableUtil.getTypeMetaTable();
     this.txAware = (TransactionAware) table;
     this.mds = new DatasetTypeMDS(table);
 

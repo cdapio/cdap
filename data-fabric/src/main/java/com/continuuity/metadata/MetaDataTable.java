@@ -276,4 +276,9 @@ public interface MetaDataTable {
    */
   public Collection<String> listAccounts(OperationContext context)
       throws OperationException;
+
+  /**
+   * Upgrades the metadata table definition for any configuration or coprocessor changes.
+   */
+  public void upgrade() throws Exception;
 }
