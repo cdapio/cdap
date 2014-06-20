@@ -10,6 +10,8 @@ import com.continuuity.explore.service.Handle;
  */
 public interface ExploreClient extends Explore {
 
+  boolean isAvailable() throws ExploreException;
+
   /**
    * Enables ad-hoc exploration of the given {@link RowScannable}.
    * @param datasetInstance dataset instance name.
