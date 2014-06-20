@@ -5,7 +5,7 @@ import com.continuuity.api.dataset.Dataset;
 import java.util.Map;
 
 /**
- *
+ * Provides access to transactional resources, e.g. {@link Dataset}s.
  */
 public abstract class TxContext {
   private final Map<String, ? extends Dataset> datasets;
