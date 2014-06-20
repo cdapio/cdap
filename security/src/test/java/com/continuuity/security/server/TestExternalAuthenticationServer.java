@@ -136,8 +136,9 @@ public class TestExternalAuthenticationServer {
   public void testValidAuthentication() throws Exception {
     server.startAndWait();
     ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/", port);
+    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
@@ -187,10 +188,12 @@ public class TestExternalAuthenticationServer {
   public void testInvalidAuthentication() throws Exception {
     server.startAndWait();
     ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/", port);
+    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "xxxxx");
+
     HttpResponse response = client.execute(request);
 
     // Request is Unauthorized
@@ -198,6 +201,63 @@ public class TestExternalAuthenticationServer {
 
     server.stopAndWait();
     ldapServer.shutDown(true);
+  }
+
+  /**
+   * Test getting a long lasting Access Token.
+   * @throws Exception
+   */
+  @Test
+  public void testExtendedToken() throws Exception {
+    server.startAndWait();
+    ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
+    HttpClient client = new DefaultHttpClient();
+    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_EXTENDED_TOKEN);
+    HttpGet request = new HttpGet(uri);
+    request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+    HttpResponse response = client.execute(request);
+
+    assertTrue(response.getStatusLine().getStatusCode() == 200);
+
+    // Test correct response body
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(response.getEntity().getContent(), bos);
+    String responseBody = bos.toString("UTF-8");
+    bos.close();
+
+    JsonParser parser = new JsonParser();
+    JsonObject responseJson = (JsonObject) parser.parse(responseBody);
+    int expiration = responseJson.get(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN).getAsInt();
+
+    long expectedExpiration =  configuration.getInt(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
+    // Test expiration time in seconds
+    assertTrue(expiration == expectedExpiration / 1000);
+
+    // Test that the server passes back an AccessToken object which can be decoded correctly.
+    String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
+    AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
+    LOG.info("AccessToken got from ExternalAuthenticationServer is: " + Bytes.toStringBinary(tokenCodec.encode(token)));
+
+    server.stopAndWait();
+    ldapServer.shutDown(true);
+  }
+
+  /**
+   * Test that invalid paths return a 404 Not Found.
+   * @throws Exception
+   */
+  @Test
+  public void testInvalidPath() throws Exception {
+    server.startAndWait();
+    ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
+    HttpClient client = new DefaultHttpClient();
+    String uri = String.format("http://localhost:%d/%s", port, "invalid");
+    HttpGet request = new HttpGet(uri);
+    HttpResponse response = client.execute(request);
+
+    assertTrue(response.getStatusLine().getStatusCode() == 404);
   }
 
   /**

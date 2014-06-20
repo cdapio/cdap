@@ -89,5 +89,6 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
+    baseRequest.setHandled(true);
   }
 }

@@ -18,7 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 /**
  * An abstract authentication handler that provides basic functionality including
@@ -67,20 +69,22 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
 
   @Path(Paths.GET_TOKEN)
   @GET
-  public String token(@Context HttpServletRequest request, @Context HttpServletResponse response)
+  @Produces("application/json")
+  public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
 
     super.handle(Paths.GET_TOKEN, Request.getRequest(request), request, response);
-    return "";
+    return Response.status(200).build();
   }
 
   @Path(Paths.GET_EXTENDED_TOKEN)
   @GET
-  public String extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
+  @Produces("application/json")
+  public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
 
     super.handle(Paths.GET_EXTENDED_TOKEN, Request.getRequest(request), request, response);
-    return "";
+    return Response.status(200).build();
   }
 
   /**
