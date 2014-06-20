@@ -56,7 +56,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         // It is not an error to get non-RowScannable datasets, since the type of dataset may not be known where this
         // call originates from.
         LOG.debug("Dataset {} does not implement {}", instance, RowScannable.class.getName());
-        responder.sendStatus(HttpResponseStatus.OK);
+        responder.sendStatus(HttpResponseStatus.NO_CONTENT);
         return;
       }
 

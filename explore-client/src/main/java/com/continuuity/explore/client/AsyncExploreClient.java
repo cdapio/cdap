@@ -80,6 +80,9 @@ public class AsyncExploreClient implements ExploreClient {
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
+//    else if (HttpResponseStatus.NO_CONTENT.getCode() == response.getResponseCode()) {
+//      return null;
+//    }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
