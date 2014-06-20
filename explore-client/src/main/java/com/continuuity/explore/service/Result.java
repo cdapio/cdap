@@ -7,10 +7,10 @@ import java.util.List;
 /**
  * Defines the rows returned by {@link Explore}.
  */
-public class Row {
+public class Result {
   private final List<Object> columns;
 
-  public Row(List<Object> columns) {
+  public Result(List<Object> columns) {
     this.columns = columns;
   }
 
@@ -27,7 +27,7 @@ public class Row {
       return false;
     }
 
-    Row that = (Row) o;
+    Result that = (Result) o;
 
     return Objects.equal(this.columns, that.columns);
   }
