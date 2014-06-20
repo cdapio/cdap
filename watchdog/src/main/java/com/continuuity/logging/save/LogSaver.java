@@ -5,8 +5,6 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
@@ -61,7 +59,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final long eventProcessingDelayMs;
   private final int logCleanupIntervalMins;
 
-  private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
@@ -71,16 +68,16 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private ScheduledFuture<?> cleanupFuture;
 
   @Inject
-  public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
-                  CConfiguration cConfig, LocationFactory locationFactory)
-    throws Exception {
+
+  public LogSaver(LogSaverTableUtil tableUtil, TransactionSystemClient txClient, KafkaClientService kafkaClient,
+                  CConfiguration cConfig, LocationFactory locationFactory) throws Exception {
     LOG.info("Initializing LogSaver...");
 
     this.topic = KafkaTopic.getTopic();
     LOG.info(String.format("Kafka topic is %s", this.topic));
     this.serializer = new LoggingEventSerializer();
 
-    OrderedColumnarTable metaTable = getMetaTable(dataSetAccessor);
+    OrderedColumnarTable metaTable = tableUtil.getMetaTable();
     this.checkpointManager = new CheckpointManager(metaTable, txClient, topic);
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
     this.messageTable = HashBasedTable.create();
@@ -149,16 +146,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
         Threads.createDaemonThreadFactory("log-saver-main")));
     this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
 
-  }
-
-  public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor) throws Exception {
-    DataSetManager dsManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
-                                                                 DataSetAccessor.Namespace.SYSTEM);
-    if (!dsManager.exists(TABLE_NAME)) {
-      dsManager.create(TABLE_NAME);
-    }
-
-    return dataSetAccessor.getDataSetClient(TABLE_NAME, OrderedColumnarTable.class, DataSetAccessor.Namespace.SYSTEM);
   }
 
   @Override
