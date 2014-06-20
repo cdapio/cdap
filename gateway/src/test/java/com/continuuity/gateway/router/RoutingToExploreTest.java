@@ -5,7 +5,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.explore.executor.ExplorePingHandler;
 import com.continuuity.gateway.auth.NoAuthenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -64,7 +63,7 @@ public class RoutingToExploreTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                      new MockExploreExecutorHandler(), new ExplorePingHandler());
+                                      new MockExploreExecutorHandler(), new MockExplorePingHandler());
     mockService.startAndWait();
   }
 
@@ -90,6 +89,15 @@ public class RoutingToExploreTest {
   @Test
   public void testPingHandler() throws Exception {
     Assert.assertEquals("OK.\n", doRequest("/explore/status", "GET"));
+  }
+
+  @Path(Constants.Gateway.GATEWAY_VERSION)
+  public static final class MockExplorePingHandler extends AbstractHttpHandler {
+    @GET
+    @Path("/explore/status")
+    public void status(HttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "OK.\n");
+    }
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
