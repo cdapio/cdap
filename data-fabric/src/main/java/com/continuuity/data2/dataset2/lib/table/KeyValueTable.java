@@ -2,11 +2,11 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.utils.ImmutablePair;
@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>,
-  RowScannable<ImmutablePair<byte[], byte[]>> {
+    RecordScannable<ImmutablePair<byte[], byte[]>> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -127,7 +127,7 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public Type getRowType() {
+  public Type getRecordType() {
     return new TypeToken<ImmutablePair<byte[], byte[]>>() { }.getType();
   }
 
@@ -137,8 +137,8 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public SplitRowScanner<ImmutablePair<byte[], byte[]>> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split), new KeyValueRowMaker());
+  public RecordScanner<ImmutablePair<byte[], byte[]>> createRecordSplitScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
   }
 
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
@@ -151,11 +151,11 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link ObjectStore}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link ObjectStore}.
    */
-  public class KeyValueRowMaker implements Scannables.RowMaker<byte[], byte[], ImmutablePair<byte[], byte[]>> {
+  public class KeyValueRecordMaker implements Scannables.RecordMaker<byte[], byte[], ImmutablePair<byte[], byte[]>> {
     @Override
-    public ImmutablePair<byte[], byte[]> makeRow(byte[] key, byte[] value) {
+    public ImmutablePair<byte[], byte[]> makeRecord(byte[] key, byte[] value) {
       return new ImmutablePair<byte[], byte[]>(key, value);
     }
   }

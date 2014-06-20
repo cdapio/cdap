@@ -4,11 +4,11 @@ import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
 public class MultiObjectStore<T> extends AbstractDataset
   implements BatchReadable<byte[], Map<byte[], T>>,
     BatchWritable<byte[], Map<byte[], T>>,
-    RowScannable<ImmutablePair<byte[], Map<byte[], T>>> {
+    RecordScannable<ImmutablePair<byte[], Map<byte[], T>>> {
 
   // the default column to use for the key
   protected static final byte[] DEFAULT_COLUMN = { 'c' };
@@ -230,7 +230,7 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public Type getRowType() {
+  public Type getRecordType() {
     return new TypeToken<ImmutablePair<byte[], Map<byte[], T>>>() { }.getType();
   }
 
@@ -240,8 +240,8 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public SplitRowScanner<ImmutablePair<byte[], Map<byte[], T>>> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split), new MultiObjectRowMaker());
+  public RecordScanner<ImmutablePair<byte[], Map<byte[], T>>> createRecordSplitScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new MultiObjectRecordMaker());
   }
 
   @Override
@@ -250,13 +250,13 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link MultiObjectStore}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link MultiObjectStore}.
    */
-  public class MultiObjectRowMaker
-    implements Scannables.RowMaker<byte[], Map<byte[], T>, ImmutablePair<byte[], Map<byte[], T>>> {
+  public class MultiObjectRecordMaker
+    implements Scannables.RecordMaker<byte[], Map<byte[], T>, ImmutablePair<byte[], Map<byte[], T>>> {
 
     @Override
-    public ImmutablePair<byte[], Map<byte[], T>> makeRow(byte[] key, Map<byte[], T> value) {
+    public ImmutablePair<byte[], Map<byte[], T>> makeRecord(byte[] key, Map<byte[], T> value) {
       return new ImmutablePair<byte[], Map<byte[], T>>(key, value);
     }
   }

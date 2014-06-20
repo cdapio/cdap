@@ -6,7 +6,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
 import com.google.common.collect.ImmutableList;
@@ -72,7 +72,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
@@ -84,13 +84,13 @@ public class Hive12ExploreService extends BaseHiveExploreService {
         Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
         TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
 
-        ImmutableList.Builder<Row> rowsBuilder = ImmutableList.builder();
+        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
           ImmutableList.Builder<Object> colsBuilder = ImmutableList.builder();
           for (TColumnValue tColumnValue : tRow.getColVals()) {
             colsBuilder.add(columnToObject(tColumnValue));
           }
-          rowsBuilder.add(new Row(colsBuilder.build()));
+          rowsBuilder.add(new Result(colsBuilder.build()));
         }
         return rowsBuilder.build();
       } else {
