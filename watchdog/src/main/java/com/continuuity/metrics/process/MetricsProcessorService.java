@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * MetricsProcessorService with PingHandler used for discovery during reactor-services startup
@@ -35,7 +34,7 @@ public class MetricsProcessorService extends AbstractIdleService {
   @Inject
   public MetricsProcessorService(CConfiguration cConf, DiscoveryService discoveryService,
                          @Named(Constants.MetricsProcessor.METRICS_PROCESSOR_HANDLER) Set<HttpHandler> handlers,
-                         @Nullable MetricsCollectionService metricsCollectionService) {
+                         MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     int workerThreads =  10;
     this.httpService = NettyHttpService.builder()

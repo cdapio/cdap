@@ -19,7 +19,6 @@ import org.apache.twill.discovery.DiscoveryService;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * LogSaver Service, Currently only used for PingHandler, so this service can be discovered during reactor-startup
@@ -32,7 +31,7 @@ public class LogSaverService extends AbstractIdleService {
   @Inject
   public LogSaverService(CConfiguration cConf, DiscoveryService discoveryService,
                          @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
-                         @Nullable MetricsCollectionService metricsCollectionService) {
+                         MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     int workerThreads = 10;
     this.httpService = NettyHttpService.builder()
