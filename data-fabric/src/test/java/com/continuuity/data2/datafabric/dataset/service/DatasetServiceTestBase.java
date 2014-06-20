@@ -4,6 +4,7 @@ import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
@@ -13,12 +14,14 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -31,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
@@ -111,6 +115,13 @@ public abstract class DatasetServiceTestBase {
       is.close();
     }
   }
+
+  protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/modules")),
+                                       new TypeToken<List<DatasetModuleMeta>>() {
+                                       }.getType());
+  }
+
 
   protected int deleteModule(String moduleName) throws Exception {
     return HttpRequests.delete(getUrl("/data/modules/" + moduleName)).getResponseCode();

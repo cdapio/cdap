@@ -167,12 +167,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertTrue(new File(moduleMeta.getJarLocation()).exists());
   }
 
-  private ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/modules")),
-                                       new TypeToken<List<DatasetModuleMeta>>() {
-                                       }.getType());
-  }
-
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {
     return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/types")),
                                        new TypeToken<List<DatasetTypeMeta>>() {

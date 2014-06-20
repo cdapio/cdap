@@ -257,7 +257,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   /**
    * Deletes all modules (apart from default).
    */
-  public void deleteModules() {
+  public void deleteModules() throws DatasetModuleConflictException {
     LOG.warn("Deleting all modules apart {}", Joiner.on(", ").join(defaultModules.keySet()));
     try {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
@@ -289,6 +289,9 @@ public class DatasetTypeManager extends AbstractIdleService {
         }
       });
     } catch (TransactionFailureException e) {
+      if (e.getCause() != null && e.getCause() instanceof DatasetModuleConflictException) {
+        throw (DatasetModuleConflictException) e.getCause();
+      }
       LOG.error("Failed to do a delete of all modules apart {}", Joiner.on(", ").join(defaultModules.keySet()));
       throw Throwables.propagate(e);
     } catch (Exception e) {

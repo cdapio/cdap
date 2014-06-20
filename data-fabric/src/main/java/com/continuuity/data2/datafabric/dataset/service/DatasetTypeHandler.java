@@ -83,7 +83,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, final HttpResponder responder) {
-    manager.deleteModules();
+    try {
+      manager.deleteModules();
+    } catch (DatasetModuleConflictException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      return;
+    }
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
