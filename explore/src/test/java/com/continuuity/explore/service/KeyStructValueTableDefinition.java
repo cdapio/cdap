@@ -1,9 +1,9 @@
 package com.continuuity.explore.service;
 
 import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;

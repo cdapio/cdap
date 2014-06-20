@@ -146,7 +146,8 @@ public class InMemoryExploreServiceTest {
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreService.getResultSchema(handle));
-    Assert.assertEquals(expectedResults.toString(), trimColumnValues(exploreService.nextResults(handle, 100)).toString());
+    Assert.assertEquals(expectedResults.toString(),
+                        trimColumnValues(exploreService.nextResults(handle, 100)).toString());
 
     exploreService.close(handle);
   }

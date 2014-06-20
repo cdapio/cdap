@@ -3,14 +3,15 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.lib.AbstractDataset;
+
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;

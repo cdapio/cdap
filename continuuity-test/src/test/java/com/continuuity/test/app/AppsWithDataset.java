@@ -185,7 +185,8 @@ public class AppsWithDataset {
     /**
      * Custom dataset example: key-value table
      */
-    public static class KeyValueTable extends AbstractDataset implements RecordScannable<ImmutablePair<String, String>> {
+    public static class KeyValueTable extends AbstractDataset
+        implements RecordScannable<ImmutablePair<String, String>> {
 
       private static final byte[] COL = new byte[0];
 
