@@ -118,8 +118,6 @@ public class ReactorServiceMain extends DaemonMain {
   private boolean isHiveEnabled;
   private OrderedTable systemServiceTable;
   private TransactionExecutor txExecutor;
-  private DatasetFramework dsFramework;
-  private DatasetModule hBaseOrderedTableModule;
   private Map<String, String> systemServiceInstance;
 
   public static void main(final String[] args) throws Exception {
@@ -163,10 +161,10 @@ public class ReactorServiceMain extends DaemonMain {
     dsService = baseInjector.getInstance(DatasetService.class);
     systemServiceInstance = baseInjector.getInstance(Key.get(mapOfString, Names.named("service.instance.name")));
 
-    hBaseOrderedTableModule = baseInjector.getInstance(HBaseOrderedTableModule.class);
-
     try {
-      dsFramework = new InMemoryDatasetFramework(baseInjector.getInstance(DefaultDatasetDefinitionRegistry.class));
+      DatasetModule hBaseOrderedTableModule = baseInjector.getInstance(HBaseOrderedTableModule.class);
+      DatasetFramework dsFramework = new InMemoryDatasetFramework(baseInjector.getInstance(
+        DefaultDatasetDefinitionRegistry.class));
       dsFramework.addModule("ordered", hBaseOrderedTableModule);
       systemServiceTable = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INFO_TABLE_NAME,
                                                            "orderedTable", DatasetProperties.EMPTY, null);
@@ -234,6 +232,7 @@ public class ReactorServiceMain extends DaemonMain {
   public void destroy() {
   }
 
+  //Update cConf with system services instance count from systemServiceTable
   private void updateSystemServiceInstances() {
     for (Map.Entry<String, String> entry : systemServiceInstance.entrySet()) {
       String service = entry.getKey();

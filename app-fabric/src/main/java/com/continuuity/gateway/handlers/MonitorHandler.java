@@ -144,27 +144,32 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") final String serviceName) {
     try {
-      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
-      final int instance = getInstances(request);
+      if (!reactorServiceManagementMap.containsKey(serviceName)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Invalid Service Name");
+        return;
+      }
 
+      ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+      int instance = getInstances(request);
+      String currentInstance = getRequestedServiceInstance(serviceName, table, txExecutor);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
                                         serviceManager.getMaxInstances());
         responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
-      } else if (instance == Integer.valueOf(getRequestedServiceInstance(serviceName, table, txExecutor))) {
+      } else if (currentInstance != null && (instance == Integer.valueOf(currentInstance))) {
         responder.sendStatus(HttpResponseStatus.OK);
+        return;
       }
 
       setRequestedServiceInstance(serviceName, String.valueOf(instance), table, txExecutor);
       if (serviceManager.setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation did not succeed");
       }
     } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Invalid Service Name Or Operation Not Valid for this service");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Arguments are incorrect");
     }
   }
 
