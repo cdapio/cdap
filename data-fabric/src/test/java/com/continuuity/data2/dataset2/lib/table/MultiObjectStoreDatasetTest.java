@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
@@ -49,7 +50,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testStringStore() throws Exception {
-    createMultiObjectStoreInstance("strings", String.class);
+    create("strings", String.class);
 
     MultiObjectStoreDataset<String> stringStore = getInstance("strings");
     String string = "this is a string";
@@ -62,7 +63,8 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testPairStore() throws Exception {
-    createMultiObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    create("pairs", new TypeToken<ImmutablePair<Integer, String>>() {
+    }.getType());
 
     MultiObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
@@ -75,7 +77,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testMultiValueStore() throws Exception {
-    createMultiObjectStoreInstance("multiString", String.class);
+    create("multiString", String.class);
 
     MultiObjectStoreDataset<String> multiStringStore = getInstance("multiString");
     String string1 = "String1";
@@ -101,7 +103,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testCustomStore() throws Exception {
-    createMultiObjectStoreInstance("customs", Custom.class);
+    create("customs", Custom.class);
 
     MultiObjectStoreDataset<Custom> customStore = getInstance("customs");
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
@@ -118,7 +120,8 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testInnerStore() throws Exception {
-    createMultiObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
+    create("inners", new TypeToken<CustomWithInner.Inner<Integer>>() {
+    }.getType());
 
     MultiObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
@@ -131,7 +134,8 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
-    createMultiObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    create("pairs", new TypeToken<ImmutablePair<Integer, String>>() {
+    }.getType());
 
     // note: due to type erasure, this succeeds
     final MultiObjectStoreDataset<Custom> store = getInstance("pairs");
@@ -208,7 +212,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testBatchReads() throws Exception {
-    createMultiObjectStoreInstance("batch", String.class);
+    create("batch", String.class);
 
     final MultiObjectStoreDataset<String> t = getInstance("batch");
     TransactionExecutor txnl = newTransactionExecutor(t);
@@ -284,7 +288,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testBatchReadMultipleColumns() throws Exception {
-    createMultiObjectStoreInstance("batchTestsMultiCol", String.class);
+    create("batchTestsMultiCol", String.class);
 
     final MultiObjectStoreDataset<String> t = getInstance("batchTestsMultiCol");
     TransactionExecutor txnl = newTransactionExecutor(t);
@@ -341,4 +345,7 @@ public class MultiObjectStoreDatasetTest extends AbstractDatasetTest {
     deleteInstance("batchTestsMultiCol");
   }
 
+  private void create(String instanceName, Type type) throws Exception {
+    createInstance("multiObjectStore", instanceName, ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+  }
 }

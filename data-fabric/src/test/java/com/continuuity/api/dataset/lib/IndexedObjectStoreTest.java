@@ -2,6 +2,7 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.Feed;
+import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -11,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -193,6 +195,10 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
     deleteInstance("index");
   }
 
+  protected void createIndexedObjectStoreInstance(String instanceName, Type type) throws Exception {
+    createInstance("indexedObjectStore", instanceName,
+                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+  }
 
   private byte[][] getCategories(List<String> categories) {
     byte[][] byteCategories = new byte[categories.size()][];
