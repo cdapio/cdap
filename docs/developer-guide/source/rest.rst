@@ -489,7 +489,7 @@ Listing all DataSets
 
 You can list all DataSets in the Continuuity Reactor by issuing an HTTP GET request to the URL::
 
-	GET <base-url>/data/instances
+	GET <base-url>/data/datasets
 
 The response body will contain a JSON-formatted list of the existing DataSets.
 
@@ -498,7 +498,7 @@ Creating a DataSet
 
 You can create a DataSet by issuing an HTTP POST request to the URL::
 
-	PUT <base-url>/data/instances/<dataset-name>
+	PUT <base-url>/data/datasets/<dataset-name>
   
 with the name of the type as a header::
 
@@ -537,7 +537,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``POST <base-url>/data/instances/mydataset``
+     - ``POST <base-url>/data/datasets/mydataset``
    * - Header
      - ``X-Continuuity-Type-Name: myDataSetType``
    * - Description
@@ -570,17 +570,38 @@ Deleting all DataSets
 
 You can delete all DataSets by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/data/instances
+  DELETE <base-url>/data/unrecoverable/datasets/delete
 
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - DataSets were successfully deleted
 
 Truncating a DataSet
 --------------------
 
 You can truncate a DataSet by issuing an HTTP POST request to the URL::
 
-  POST <base-url>/data/instances/<dataset-name>/admin/truncate
+  POST <base-url>/data/datasets/<dataset-name>/admin/truncate
 
-This will clear the existing data for the DataSet.
+This will clear the existing data for the DataSet. This cannot be undone.
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - DataSet was successfully truncated
 
 .. rst2pdf: PageBreak
 
@@ -652,7 +673,7 @@ HTTP Responses
    * - ``400 Bad Request``
      - The DataSet module jar was not provided in the body of the request
    * - ``409 Conflict``
-     - A DataSet module with the same name already exists
+     - A DataSet module with the same name already exists or one of the declared types by this module already exists
 
 Example
 .......
@@ -690,7 +711,7 @@ HTTP Responses
    * - ``200 OK``
      - Module was successfully deleted
    * - ``409 Conflict``
-     - Module with provided <module-name> cannot be deleted because there's another module that depends on it
+     - Module with provided <module-name> cannot be deleted because there's another module that depends on it or there a DataSet exists of the type that is declared by this module.
    * - ``404 Not Found``
      - Module with provided <module-name> could not be found
 
@@ -701,6 +722,18 @@ To delete all modules, issue an HTTP DELETE request to the URL::
 
   DELETE <base-url>/data/modules
 
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - DataSet modules were successfully deleted
+   * - ``409 Conflict``
+     - DataSet modules cannot be deleted because some of the existing DataSets use types declared by these modules
 
 .. rst2pdf: PageBreak
 
@@ -709,7 +742,7 @@ DataSet Type HTTP API
 
 The DataSet Type API allows you to interact with 
 `Continuuity Reactor DataSet Types <advanced.html#dataset-system>`_ through HTTP.
-You can list all DataSet types and get information about each type. DataSet types are exposed through the  DataSet modules [DOCNOTE: FIXME! add? loaded into Continuuity Reactor].
+You can list all DataSet types and get information about each type. DataSet types are declared by the DataSet modules added to Continnuuity Reactor.
 To delete a DataSet type, you delete the DataSet module that contains the type as described under
 `Deleting a DataSet Module <#deleting-a-dataset-module>`_.
 
@@ -720,6 +753,17 @@ Listing all DataSet Types
 To list all types provided by the existing modules, issue an HTTP GET request to the URL::
 
   GET <base-url>/data/types
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/data/types``
+   * - Description
+     - List all DataSet types
 
 Getting a DataSet Type
 ----------------------
@@ -739,7 +783,7 @@ To get more information about a single type, issue an HTTP GET request to the UR
 
 .. rst2pdf: PageBreak
 
-
+The response will be a JSON String representing a DataSet type metadata along with a list of DataSet modules it depends on.
 
 Data HTTP API (Deprecated)
 ==========================
