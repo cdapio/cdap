@@ -5,7 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
