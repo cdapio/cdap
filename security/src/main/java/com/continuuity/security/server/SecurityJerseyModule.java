@@ -1,7 +1,6 @@
 package com.continuuity.security.server;
 
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import com.google.inject.AbstractModule;
 import org.eclipse.jetty.server.Handler;
 
 import java.util.HashMap;
@@ -9,7 +8,7 @@ import java.util.HashMap;
 /**
  *
  */
-public class SecurityJerseyModule extends JerseyServletModule {
+public class SecurityJerseyModule extends AbstractModule {
   private final HashMap<String, Handler> handlerMap;
 
   public SecurityJerseyModule(HashMap<String, Handler> map) {
@@ -17,11 +16,10 @@ public class SecurityJerseyModule extends JerseyServletModule {
   }
 
   @Override
-  protected void configureServlets() {
+  protected void configure() {
     bind(LDAPAuthenticationHandler.class).toInstance((LDAPAuthenticationHandler)
                                       handlerMap.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER));
     bind(GrantAccessTokenHandler.class).toInstance((GrantAccessTokenHandler)
                                       handlerMap.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER));
-    filter("/*").through(GuiceContainer.class);
   }
 }

@@ -12,7 +12,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
-import com.google.inject.servlet.GuiceFilter;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -21,21 +20,19 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
-import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.servlet.DispatcherType;
 
 /**
  * Jetty service for External Authentication.
@@ -123,8 +120,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
-      context.addFilter(GuiceFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-      context.addServlet(DefaultServlet.class, "/");
+      context.addServlet(HttpServletDispatcher.class, "/");
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
 
       SelectChannelConnector connector = new SelectChannelConnector();
