@@ -102,7 +102,6 @@ public class InMemoryServiceRunner implements ProgramRunner {
     return programRunnerFactory.create(ProgramRunnerFactory.Type.RUNNABLE).run(program, runnableOptions);
   }
 
-
   private ProgramOptions createRunnableOptions(String name, int instanceId, int instances, RunId runId) {
 
     // Get the right user arguments.
@@ -162,6 +161,5 @@ public class InMemoryServiceRunner implements ProgramRunner {
     protected void doCommand(String name, Object value) throws Exception {
 
     }
-
   }
 }
