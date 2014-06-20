@@ -15,12 +15,11 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data.stream.service.StreamHttpService;
-import com.continuuity.data.stream.service.StreamServiceModule;
+import com.continuuity.data.stream.service.StreamServiceRuntimeModule;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionService;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
-import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.ExploreServiceUtils;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.AuthModule;
@@ -313,7 +312,7 @@ public class SingleNodeMain {
       new LoggingModules().getInMemoryModules(),
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
-      new StreamServiceModule(),
+      new StreamServiceRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules()
     );
   }
@@ -360,7 +359,7 @@ public class SingleNodeMain {
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
-      new StreamServiceModule(),
+      new StreamServiceRuntimeModule().getSingleNodeModules(),
       new ExploreRuntimeModule().getSingleNodeModules()
     );
   }

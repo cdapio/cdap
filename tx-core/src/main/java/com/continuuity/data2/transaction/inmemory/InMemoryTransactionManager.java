@@ -11,6 +11,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -145,8 +147,11 @@ public class InMemoryTransactionManager extends AbstractService {
    * If this constructor is used, there is no need to call init().
    */
   public InMemoryTransactionManager() {
-    this(CConfiguration.create(), new NoOpTransactionStateStorage(),
-         new TxMetricsCollector());
+    this(CConfiguration.create());
+  }
+
+  public InMemoryTransactionManager(CConfiguration config) {
+    this(config, new NoOpTransactionStateStorage(new SnapshotCodecProvider(config)), new TxMetricsCollector());
   }
 
   @Inject
@@ -354,6 +359,20 @@ public class InMemoryTransactionManager extends AbstractService {
     LOG.info("Starting snapshot of transaction state with timestamp {}", snapshot.getTimestamp());
     LOG.info("Returning snapshot of state: " + snapshot);
     return snapshot;
+  }
+
+  /**
+   * Take a snapshot of the transaction state and serialize it into the given output stream.
+   * @return whether a snapshot was taken.
+   */
+  public boolean takeSnapshot(OutputStream out) throws IOException {
+    TransactionSnapshot snapshot = getSnapshot();
+    if (snapshot != null) {
+      persistor.writeSnapshot(out, snapshot);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private void doSnapshot(boolean closing) throws IOException {

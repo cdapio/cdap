@@ -56,7 +56,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     // no-op
   }
 
-  public int getMetrics(String context, String metricName) {
+  public synchronized int getMetrics(String context, String metricName) {
     Integer val = metrics.get(context, metricName);
     return val == null ? 0 : val;
   }
@@ -70,7 +70,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
 
     @Override
     public void gauge(String metricName, int value, String... tags) {
-      synchronized (metrics) {
+      synchronized (MockMetricsCollectionService.this) {
         Integer v = metrics.get(context, metricName);
         metrics.put(context, metricName, v == null ? value : v + value);
       }

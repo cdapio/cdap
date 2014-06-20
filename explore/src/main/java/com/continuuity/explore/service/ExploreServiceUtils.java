@@ -1,7 +1,6 @@
 package com.continuuity.explore.service;
 
 import com.continuuity.common.conf.StringUtils;
-
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -17,7 +16,7 @@ import java.net.URLClassLoader;
  * Utility class for the explore service.
  */
 public class ExploreServiceUtils {
-  // todo populate this with whatever hive version CDH4.3 runs with
+  // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
   private static final String[] SUPPORTED_VERSIONS = new String[] { "0.12", "0.13" };
 
   private static Iterable<URL> getClassPath(String hiveClassPath) {

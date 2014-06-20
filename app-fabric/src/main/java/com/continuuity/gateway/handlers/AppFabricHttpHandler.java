@@ -178,7 +178,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     .put("procedures", Type.PROCEDURE)
     .put("workflows", Type.WORKFLOW)
     .put("webapp", Type.WEBAPP)
-    .put("service", Type.SERVICE)
+    .put("services", Type.SERVICE)
     .build();
 
   /**

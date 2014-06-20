@@ -9,6 +9,7 @@ import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -74,6 +75,7 @@ public class TransactionDataJanitorTest {
     testUtil.getDFSCluster().waitClusterUp();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
+    conf.unset(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES);
 
     // write an initial transaction snapshot
     TransactionSnapshot snapshot =
@@ -82,7 +84,8 @@ public class TransactionDataJanitorTest {
         // this will set visibility upper bound to V[6]
         Maps.newTreeMap(ImmutableSortedMap.of(5L, new InMemoryTransactionManager.InProgressTx(V[6], Long.MAX_VALUE))),
         new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
-    HDFSTransactionStateStorage tmpStorage = new HDFSTransactionStateStorage(conf, hConf);
+    HDFSTransactionStateStorage tmpStorage =
+      new HDFSTransactionStateStorage(conf, hConf, new SnapshotCodecProvider(conf));
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(snapshot);
     tmpStorage.stopAndWait();

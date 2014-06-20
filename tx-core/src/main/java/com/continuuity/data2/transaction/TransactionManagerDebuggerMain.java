@@ -4,9 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -14,11 +13,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -78,7 +78,10 @@ public class TransactionManagerDebuggerMain {
 
   private Options options;
 
-  private TransactionManagerDebuggerMain () {
+  private final SnapshotCodecProvider codecProvider;
+
+  private TransactionManagerDebuggerMain (CConfiguration configuration) {
+    codecProvider = new SnapshotCodecProvider(configuration);
     buildOptions();
   }
 
@@ -311,10 +314,13 @@ public class TransactionManagerDebuggerMain {
       System.out.println("Retrieving snapshot from file " + existingFilename);
       File snapshotFile = new File(existingFilename);
       FileInputStream fis = new FileInputStream(snapshotFile);
-      SnapshotCodecV2 codec = new SnapshotCodecV2();
-      TransactionSnapshot snapshot = codec.decodeState(fis);
-      System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
-      return snapshot;
+      try {
+        TransactionSnapshot snapshot = codecProvider.decode(fis);
+        System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
+        return snapshot;
+      } finally {
+        fis.close();
+      }
     } catch (IOException e) {
       System.out.println("File " + existingFilename + " could not be read.");
       e.printStackTrace();
@@ -338,25 +344,25 @@ public class TransactionManagerDebuggerMain {
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         // Retrieve and deserialize the snapshot
-        SnapshotCodecV2 codec = new SnapshotCodecV2();
-
-        TransactionSnapshot snapshot = codec.decodeState(connection.getInputStream());
+        InputStream input = connection.getInputStream();
+        TransactionSnapshot snapshot;
+        try {
+          snapshot = codecProvider.decode(input);
+        } finally {
+          input.close();
+        }
         System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is " +
                            snapshot.getTimestamp() + " ms");
 
         if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
-          FileOutputStream fos = null;
-          File outputFile = null;
+          File outputFile = new File(persistingFilename);
+          OutputStream out = new FileOutputStream(outputFile);
           try {
             // todo use pipes here to avoid having everyhting in memory twice
-            outputFile = new File(persistingFilename);
-            fos = new FileOutputStream(outputFile);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            codec.encodeState(baos, snapshot);
-            baos.writeTo(fos);
+            codecProvider.encode(out, snapshot);
           } finally {
-            fos.close();
+            out.close();
           }
           System.out.println("Snapshot persisted on your disk as " + outputFile.getAbsolutePath() +
                              " for future queries.");
@@ -584,7 +590,7 @@ public class TransactionManagerDebuggerMain {
   public static void main(String[] args) {
     // create a config and load the gateway properties
     CConfiguration config = CConfiguration.create();
-    TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain();
+    TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(config);
     boolean success = instance.execute(args, config);
     if (!success) {
       System.exit(1);

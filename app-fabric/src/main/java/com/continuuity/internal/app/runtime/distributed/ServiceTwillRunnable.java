@@ -2,14 +2,13 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.app.guice.DataFabricFacadeModule;
+import com.continuuity.app.metrics.ServiceRunnableMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -21,14 +20,13 @@ import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.twillservice.ServiceRunnableContext;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.context.UserServiceLoggingContext;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.base.Preconditions;
@@ -59,15 +57,11 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -78,14 +72,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- *
+ * Wrapper TwillRunnable around User Twill Runnable.
  */
 public class ServiceTwillRunnable implements TwillRunnable {
 
@@ -105,10 +95,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
-  private CountDownLatch runlatch;
   private TwillRunnable delegate;
-  private ServiceRunnableContext runnableContext;
-  private ExecutorService executorService;
+  private String runnableName;
 
   protected ServiceTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -129,7 +117,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void initialize(TwillContext context) {
-    runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
@@ -172,29 +159,21 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       ApplicationSpecification appSpec = program.getSpecification();
       String processorName = program.getName();
-      String runnableName = programOpts.getName();
+      runnableName = programOpts.getName();
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
-
-      RunId runId = context.getRunId();
-      int instanceId = context.getInstanceId();
-      int instanceCount = context.getInstanceCount();
 
       String className = runtimeSpec.getRunnableSpecification().getClassName();
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getMainClass().getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-      delegate = new InstantiatorFactory(false).get(TypeToken.of(TwillRunnable.class)).create();
-      runnableContext = new ServiceRunnableContext(program, runnableName, instanceId,
-                                                                          runId, instanceCount, runtimeSpec,
-                                                                          metricsCollectionService);
-
+      delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
-                        new MetricsFieldSetter(runnableContext.getMetrics()));
+                        new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
+                                                                          program.getApplicationId(),
+                                                                          program.getName(), runnableName)));
       delegate.initialize(context);
-      executorService = Executors.newSingleThreadExecutor(
-        Threads.createDaemonThreadFactory(runnableName + "-executor"));
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -204,9 +183,12 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void handleCommand(Command command) throws Exception {
-    // need to make sure controller exists before handling the command
-    runlatch.await();
-    delegate.handleCommand(command);
+    try {
+      delegate.handleCommand(command);
+    } catch (Throwable t) {
+      LOG.error(t.getMessage(), t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
@@ -214,31 +196,39 @@ public class ServiceTwillRunnable implements TwillRunnable {
     try {
       LOG.info("Stopping runnable: {}", name);
       delegate.stop();
-      executorService.shutdown();
-      logAppenderInitializer.close();
     } catch (Exception e) {
-      LOG.error("Fail to stop: {}", e, e);
+      LOG.error("Failed to stop: {}", e, e);
       throw Throwables.propagate(e);
+    } finally {
+      logAppenderInitializer.close();
     }
   }
 
   @Override
   public void run() {
-    LoggingContextAccessor.setLoggingContext(runnableContext.getLoggingContext());
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(
+      program.getAccountId(), program.getApplicationId(), program.getName(), runnableName));
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
-    executorService.submit(delegate);
-    runlatch.countDown();
+    try {
+      delegate.run();
+    } catch (Throwable t) {
+      LOG.error(t.getMessage(), t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
-    delegate.destroy();
-    Futures.getUnchecked(
-      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+    try {
+      delegate.destroy();
+    } finally {
+      Futures.getUnchecked(
+        Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+    }
     LOG.info("Runnable stopped: {}", name);
   }
 
@@ -274,7 +264,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
     return new BasicArguments(args);
   }
 
-  // TODO(terence) make this works for different mode
   protected Module createModule(final TwillContext context) {
     return Modules.combine(
       new ConfigModule(cConf, hConf),
@@ -290,24 +279,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
-            .toInstance(context.getHost());
-
-          // For Binding queue stuff
-          bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
-
           // For program loading
           install(createProgramFactoryModule());
-
-          // For binding DataSet transaction stuff
-          install(new DataFabricFacadeModule());
-
-          bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
-            @Override
-            public Cancellable announce(String serviceName, int port) {
-              return context.announce(serviceName, port);
-            }
-          });
         }
       }
     );
