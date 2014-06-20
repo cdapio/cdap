@@ -129,14 +129,14 @@ public class HiveExploreServiceTest {
     runCommand("describe continuuity_user_my_table",
         true,
         Lists.newArrayList(
-            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+          new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-            new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-            new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                "from deserializer"))
+          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+                                             "from deserializer"))
         )
     );
 

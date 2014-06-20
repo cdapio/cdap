@@ -10,6 +10,9 @@ import com.continuuity.explore.service.Handle;
  */
 public interface ExploreClient extends Explore {
 
+  /**
+   * Returns true if the explore service is up and running.
+   */
   boolean isAvailable() throws ExploreException;
 
   /**
