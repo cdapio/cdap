@@ -8,6 +8,7 @@ import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
+import com.continuuity.explore.client.DatasetExploreFacade;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -47,15 +48,16 @@ public class DatasetService extends AbstractIdleService {
                         DatasetInstanceManager instanceManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
-                        MDSDatasetsRegistry mdsDatasets) throws Exception {
+                        MDSDatasetsRegistry mdsDatasets,
+                        DatasetExploreFacade datasetExploreFacade) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
     this.typeManager = typeManager;
 
-    builder.addHttpHandlers(
-      ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                       new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient)));
+    builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
+                                             new DatasetInstanceHandler(typeManager, instanceManager,
+                                                                        opExecutorClient, datasetExploreFacade)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

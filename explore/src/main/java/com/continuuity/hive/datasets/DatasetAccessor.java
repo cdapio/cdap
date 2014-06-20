@@ -22,14 +22,13 @@ import java.util.Map;
  */
 public class DatasetAccessor {
 
-  // TODO: this will go away when dataset manager does not return datasets having classloader conflict.
+  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newHashMap();
 
   public static RowScannable getRowScannable(Configuration conf) throws IOException {
     RowScannable rowScannable = instantiate(conf);
 
     if (rowScannable instanceof TransactionAware) {
-      // TODO: do we have to commit transaction?
       Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
         ((TransactionAware) rowScannable).startTx(tx);
     }
