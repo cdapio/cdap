@@ -14,6 +14,8 @@ import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
+import com.continuuity.explore.client.AsyncExploreClient;
+import com.continuuity.explore.client.DatasetExploreFacade;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -81,7 +83,8 @@ public abstract class DatasetServiceTestBase {
                                                                         new InMemoryOrderedTableModule()),
                                  txSystemClient,
                                  metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(dsFramework));
+                                 new InMemoryDatasetOpExecutor(dsFramework),
+                                 new DatasetExploreFacade(new AsyncExploreClient(discoveryService), cConf));
     service.startAndWait();
     port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
   }

@@ -2,18 +2,24 @@
 Flow Partitioning
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_m13| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -68,7 +74,7 @@ By default, a Flowlet processes a single data object at a time within a single t
 
 Increase throughput by processing batches of data objects within the same transaction:
 
-.. sourcecode:: java
+::
 
 	@Batch(100)
 	@ProcessInput
@@ -148,9 +154,8 @@ Details of Flow Partitioning Strategies 2/2
 Example Flow Partitioning Strategy: FIFO
 ============================================
 
-A Flowlet that counts words and uses the default strategy of FIFO:
+A Flowlet that counts words and uses the default strategy of FIFO::
 
-.. sourcecode:: java
 
 	public class Counter extends AbstractFlowlet {
 
@@ -169,9 +174,8 @@ A Flowlet that counts words and uses the default strategy of FIFO:
 Example Flow Partitioning Strategy: Round-robin 1/2
 ===================================================
 
-To increase throughput when this Flowlet has many instances, specify round-robin partitioning:
-
-.. sourcecode:: java
+To increase throughput when this Flowlet has many instances, 
+specify round-robin partitioning::
 
 	@RoundRobin
 	@ProcessInput("wordOut")
@@ -202,9 +206,7 @@ for the word *scream* at the same time, leading to a write conflict
 Example Flow Partitioning Strategy: Hash-based 1/3
 ==================================================
 
-To avoid conflicts, use hash-based partitioning:
-
-.. sourcecode:: java
+To avoid conflicts, use hash-based partitioning::
 
 	@HashPartition("wordHash")
 	@ProcessInput("wordOut")
@@ -219,9 +221,7 @@ and there are no more write conflicts
 
 Example Flow Partitioning Strategy: Hash-based 2/3
 ==================================================
-To use, the emitting Flowlet must annotate each data object with the partitioning key:
-
-.. sourcecode:: java
+To use, the emitting Flowlet must annotate each data object with the partitioning key::
 
 	@Output("wordOut")
 	private OutputEmitter<String> wordOutput;
@@ -254,9 +254,7 @@ Example Flow Partitioning Strategy: Hash-based 3/3
 Combining Flow Partitioning and Batch Execution
 ==================================================
 
-Partitioning can be combined with batch execution:
-
-.. sourcecode:: java
+Partitioning can be combined with batch execution::
 
 	@Batch(100)
 	@HashPartition("wordHash")
@@ -286,9 +284,9 @@ with the arguments as a JSON string in the body:
 	{ "instances" : <quantity> }
 
 Parameter : Description
-  ``<app-id>`` : Name of the Application being called |br_m13|
-  ``<flow-id>`` : Name of the Flow |br_m13|
-  ``<flowlet-id>`` : Name of the Flowlet |br_m13|
+  ``<app-id>`` : Name of the Application being called |br|
+  ``<flow-id>`` : Name of the Flow |br|
+  ``<flowlet-id>`` : Name of the Flowlet |br|
   ``<quantity>`` : Number of instances to be used
 
 ----
@@ -339,7 +337,7 @@ A Flowlet icon in the DAG shows:
 - The number of instances of that Flowlet in the small circle in the upper right of the icon:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_13_flowlet_icon.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -350,7 +348,7 @@ Clicking on a Flowlet’s icon in the DAG brings up the configuration dialog for
 the number of instance of the Flowlet:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_27_dag1.png
-   :width: 600px
+   :width: 80%
 
 -----
 
@@ -369,4 +367,4 @@ You should now be able to:
 Module Completed
 ================
 
-`Chapter Index <return.html#m13>`__
+`Chapter Index <return.html#m12>`__
