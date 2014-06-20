@@ -49,15 +49,14 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
 
       @Override
       public void run() {
-        LOG.info("Execute stream file cleanup.");
+        LOG.debug("Execute stream file cleanup.");
 
         try {
           janitor.cleanAll();
-          LOG.info("Completed stream file cleanup.");
+          LOG.debug("Completed stream file cleanup.");
         } catch (Throwable e) {
           LOG.error("Failed to cleanup stream file.", e);
         } finally {
-          LOG.info("Cleanup period: {}", cleanupPeriod);
           // Compute the next cleanup time. It is aligned to work clock based on the period.
           long now = System.currentTimeMillis();
           long delay = (now / cleanupPeriod + 1) * cleanupPeriod - now;
@@ -65,7 +64,7 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
           if (delay <= 0) {
             executor.submit(this);
           } else {
-            LOG.info("Schedule stream file cleanup in {} ms", delay);
+            LOG.debug("Schedule stream file cleanup in {} ms", delay);
             executor.schedule(this, delay, TimeUnit.MILLISECONDS);
           }
         }
