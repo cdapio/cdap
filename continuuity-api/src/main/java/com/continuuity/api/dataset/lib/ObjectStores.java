@@ -4,17 +4,21 @@ import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Type;
 
 /**
- * Utility for creating {@link ObjectStore} and similar data sets within application configuration.
+ * Utility for describing {@link ObjectStore} and similar data sets within application configuration.
  */
 public final class ObjectStores {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   private ObjectStores() {}
 

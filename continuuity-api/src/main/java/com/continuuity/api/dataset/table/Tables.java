@@ -4,7 +4,7 @@ import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.dataset.DatasetProperties;
 
 /**
- * Utility for creating {@link Table} data sets and those that accept same properties  within application configuration.
+ * Utility for describing {@link Table} and derived data sets within application configuration.
  */
 public final class Tables {
   private Tables() {}

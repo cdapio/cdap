@@ -8,9 +8,11 @@ import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.internal.io.Schema;
+import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 
@@ -20,7 +22,9 @@ import java.io.IOException;
 public class ObjectStoreDefinition
   extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin> {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
