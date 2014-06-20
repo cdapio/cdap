@@ -3,6 +3,7 @@ package com.continuuity.gateway.handlers;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.Constants;
@@ -10,10 +11,9 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import org.apache.twill.api.RuntimeSpecification;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -21,11 +21,9 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,35 +56,66 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void listServices(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") String appId) {
-    List<String> result = Lists.newArrayList();
-    result.add("LocationService");
-    result.add("MaskService");
-    responder.sendJson(HttpResponseStatus.OK, result);
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
+      if (spec != null) {
+        JsonArray services = new JsonArray();
+        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
+          JsonObject service = new JsonObject();
+          service.addProperty("type", Type.SERVICE.toString());
+          service.addProperty("app", appId);
+          service.addProperty("id", entry.getValue().getName());
+          service.addProperty("name", entry.getValue().getName());
+          service.addProperty("description", entry.getValue().getDescription());
+          services.add(service);
+        }
+        responder.sendJson(HttpResponseStatus.OK, services);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
-   * Return the runtimeargs for the specified twill app
+   * Return the service details of a given service.
    */
+  @Path("/apps/{app-id}/services/{service-name}")
   @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/runtimeargs")
-  public void getRuntimeArgs(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") String appId,
-                             @PathParam("runnable-id") String runId) {
-    Map<String, String> runtimeArgs = Maps.newHashMap();
-    runtimeArgs.put("threshold", "100");
-    responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
+  public void getService(HttpRequest request, HttpResponder responder,
+                         @PathParam("app-id") String appId,
+                         @PathParam("service-name") String serviceName) {
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceName);
+      if (spec != null) {
+        JsonObject service = new JsonObject();
+        service.addProperty("id", spec.getName());
+        service.addProperty("name", spec.getName());
+        service.addProperty("description", spec.getDescription());
+        JsonArray runnables = new JsonArray();
+        for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
+          runnables.add(new JsonPrimitive(entry.getKey()));
+        }
+        responder.sendJson(HttpResponseStatus.OK, service);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  /**
-   * save the runtimeargs for the twill app
-   */
-  @PUT
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/runtimeargs")
-  public void setRuntimeArgs(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") String appId,
-                             @PathParam("runnable-id") String runId) {
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
 
   /**
    * Return the number of instances for the given runnable of a service.
@@ -128,76 +157,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  /**
-   * start twill app
-   */
-  @POST
-  @Path("/apps/{app-id}/services/{service-id}/runnables/start")
-  public void start(HttpRequest request, HttpResponder responder,
-                    @PathParam("app-id") String appId) {
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  /**
-   * stop twill app
-   */
-  @POST
-  @Path("/apps/{app-id}/services/{service-id}/runnables/stop")
-  public void stop(HttpRequest request, HttpResponder responder,
-                   @PathParam("app-id") String appId) {
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  /**
-   * twill app status
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/status")
-  public void status(HttpRequest request, HttpResponder responder,
-                     @PathParam("app-id") String appId) {
-    JsonObject object = new JsonObject();
-    object.addProperty("status", "RUNNING");
-    responder.sendJson(HttpResponseStatus.OK, object);
-  }
-
-  /**
-   * twill app history
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/history")
-  public void history(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") String appId) {
-    JsonArray history = new JsonArray();
-    JsonObject object = new JsonObject();
-    object.addProperty("runid", "123");
-    object.addProperty("start", "75644443");
-    object.addProperty("end", "75644499");
-    object.addProperty("status", "STOPPED");
-    history.add(object);
-
-    responder.sendJson(HttpResponseStatus.OK, history);
-  }
-
-  /**
-   * live info of a twill app
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/live-info")
-  public void liveInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("runnable-id") String runId) {
-    JsonObject reply = new JsonObject();
-    reply.addProperty("app", appId);
-    reply.addProperty("type", "twill");
-    reply.addProperty("id", "sampleTwill");
-    responder.sendJson(HttpResponseStatus.OK, reply);
-  }
-
   @Nullable
   private ServiceSpecification getServiceSpecification(String accountId, String id,
                                                        String serviceName) throws OperationException {
-    Id.Application appId = Id.Application.from(accountId, id);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
+    ApplicationSpecification applicationSpecification = store.getApplication(Id.Application.from(accountId, id));
     Map<String, ServiceSpecification> serviceSpecs = applicationSpecification.getServices();
     if (serviceSpecs.containsKey(serviceName)) {
       return serviceSpecs.get(serviceName);
@@ -217,5 +180,4 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
   }
-
 }
