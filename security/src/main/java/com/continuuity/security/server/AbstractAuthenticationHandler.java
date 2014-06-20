@@ -37,10 +37,9 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
    * Authentication Handler paths.
    */
   public static final class Paths {
-    public static final String GET_TOKEN = "/token";
-    public static final String GET_EXTENDED_TOKEN = "extendedToken";
+    public static final String GET_TOKEN = "token";
+    public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
-
 
   /**
    * Initialize the handler context and other related services.
