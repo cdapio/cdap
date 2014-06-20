@@ -3,7 +3,6 @@
  */
 package com.continuuity.app.guice;
 
-import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -16,9 +15,6 @@ import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.stream.StreamServiceManager;
 import com.continuuity.data2.datafabric.dataset.DatasetExecutorServiceManager;
-import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
-import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.MonitorHandler;
 import com.continuuity.gateway.handlers.PingHandler;
@@ -101,9 +97,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  InMemoryReactorServiceManager.class);
-
-                               bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
-                                 .toInstance(new InMemoryOrderedTableModule());
                              }
                            });
   }
@@ -134,9 +127,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  InMemoryReactorServiceManager.class);
-
-                               bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
-                                 .toInstance(new LevelDBOrderedTableModule());
                              }
                            });
   }
@@ -164,9 +154,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  DatasetExecutorServiceManager.class);
-
-                               bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
-                                .toInstance(new HBaseOrderedTableModule());
                              }
                            });
   }

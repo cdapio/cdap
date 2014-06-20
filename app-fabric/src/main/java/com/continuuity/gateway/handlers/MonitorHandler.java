@@ -1,20 +1,9 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.dataset.DatasetProperties;
-import com.continuuity.api.dataset.module.DatasetModule;
-import com.continuuity.api.dataset.table.OrderedTable;
+import com.continuuity.app.store.ServiceStore;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.ReactorServiceManager;
-import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
-import com.continuuity.data2.transaction.TransactionAware;
-import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionFailureException;
-import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -22,7 +11,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -48,43 +36,14 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
   private static final String NOTAPPLICABLE = "NA";
   private static final Gson GSON = new Gson();
-  private final OrderedTable table;
-  private final TransactionExecutor txExecutor;
+  private final ServiceStore serviceStore;
 
   @Inject
-  public MonitorHandler(Authenticator authenticator,
-                        Map<String, ReactorServiceManager> serviceMap,
-                        @Named("serviceModule") DatasetModule datasetModule,
-                        DefaultDatasetDefinitionRegistry dsRegistry) throws Exception {
+  public MonitorHandler(CConfiguration cConf, Authenticator authenticator,
+                        Map<String, ReactorServiceManager> serviceMap, ServiceStore serviceStore) throws Exception {
     super(authenticator);
     this.reactorServiceManagementMap = serviceMap;
-    DatasetFramework dsFramework = new InMemoryDatasetFramework(dsRegistry);
-    dsFramework.addModule("ordered", datasetModule);
-    table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INFO_TABLE_NAME,
-                                                         "orderedTable", DatasetProperties.EMPTY, null);
-    txExecutor = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
-  }
-
-  public static synchronized String getRequestedServiceInstance(final String serviceName, final OrderedTable table,
-                                                                TransactionExecutor txExecutor)
-    throws TransactionFailureException {
-    return txExecutor.execute(new TransactionExecutor.Function<Object, String>() {
-      @Override
-      public String apply(Object input) throws Exception {
-        return Bytes.toString(table.get(Bytes.toBytes(serviceName), Bytes.toBytes("instance")));
-      }
-    }, null);
-  }
-
-  public static synchronized void setRequestedServiceInstance(final String serviceName, final String value,
-                                                              final OrderedTable table, TransactionExecutor txExecutor)
-    throws TransactionFailureException {
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        table.put(Bytes.toBytes(serviceName), Bytes.toBytes("instance"), Bytes.toBytes(value));
-      }
-    });
+    this.serviceStore = serviceStore;
   }
 
   /**
@@ -96,17 +55,16 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("service-name") final String serviceName) throws Exception {
     final Map<String, String> instances = new HashMap<String, String>();
     if (reactorServiceManagementMap.containsKey(serviceName)) {
-      String actualInstance = String.valueOf(reactorServiceManagementMap.get(serviceName).getInstances());
-      instances.put("provisioned", actualInstance);
+      int actualInstance = reactorServiceManagementMap.get(serviceName).getInstances();
+      instances.put("provisioned", String.valueOf(actualInstance));
 
-      String requestedInstance = getRequestedServiceInstance(serviceName, table, txExecutor);
-      //If entry in HBase Table is not present, then create one.
+      Integer requestedInstance = serviceStore.getServiceInstance(serviceName);
       if (requestedInstance == null) {
         requestedInstance = actualInstance;
-        setRequestedServiceInstance(serviceName, actualInstance, table, txExecutor);
+        serviceStore.updateServiceInstance(serviceName, actualInstance);
       }
 
-      instances.put("requested", requestedInstance);
+      instances.put("requested", String.valueOf(requestedInstance));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(instances));
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
@@ -128,18 +86,18 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
       final int instance = getInstances(request);
-      String currentInstance = getRequestedServiceInstance(serviceName, table, txExecutor);
+      Integer currentInstance = serviceStore.getServiceInstance(serviceName);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
                                         serviceManager.getMaxInstances());
         responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
-      } else if (currentInstance != null && (instance == Integer.valueOf(currentInstance))) {
+      } else if (currentInstance != null && (instance == currentInstance)) {
         responder.sendStatus(HttpResponseStatus.OK);
         return;
       }
 
-      setRequestedServiceInstance(serviceName, String.valueOf(instance), table, txExecutor);
+      serviceStore.updateServiceInstance(serviceName, instance);
       if (serviceManager.setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
