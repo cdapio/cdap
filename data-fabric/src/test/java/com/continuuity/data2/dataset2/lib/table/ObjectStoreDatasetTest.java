@@ -4,6 +4,10 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.lib.IntegerStore;
+import com.continuuity.api.dataset.lib.IntegerStoreModule;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset2.AbstractDatasetTest;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -29,9 +33,9 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Test for {@link ObjectStore}.
+ * Test for {@link com.continuuity.data2.dataset2.lib.table.ObjectStoreDataset}.
  */
-public class ObjectStoreTest extends AbstractDatasetTest {
+public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   private static final byte[] a = { 'a' };
 
@@ -57,7 +61,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testStringStore() throws Exception {
     createObjectStoreInstance("strings", String.class);
     
-    ObjectStore<String> stringStore = getInstance("strings");
+    ObjectStoreDataset<String> stringStore = getInstance("strings");
     String string = "this is a string";
     stringStore.write(a, string);
     String result = stringStore.read(a);
@@ -70,7 +74,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testPairStore() throws Exception {
     createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
-    ObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
@@ -83,7 +87,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testCustomStore() throws Exception {
     createObjectStoreInstance("customs", new TypeToken<Custom>() { }.getType());
 
-    ObjectStore<Custom> customStore = getInstance("customs");
+    ObjectStoreDataset<Custom> customStore = getInstance("customs");
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
     Custom result = customStore.read(a);
@@ -100,7 +104,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testInnerStore() throws Exception {
     createObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
-    ObjectStore<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
+    ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
@@ -114,7 +118,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
     createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     // note: due to type erasure, this succeeds
-    final ObjectStore<Custom> store = getInstance("pairs");
+    final ObjectStoreDataset<Custom> store = getInstance("pairs");
     TransactionExecutor storeTxnl = newTransactionExecutor(store);
     // but now it must fail with incompatible type
     try {
@@ -131,7 +135,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
     }
 
     // write a correct object to the pair store
-    final ObjectStore<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
     TransactionExecutor pairStoreTxnl = newTransactionExecutor(store);
 
     final ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
@@ -187,7 +191,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
 
-    ObjectStore<Custom> objectStore = new ObjectStore<Custom>("kv", kvTable, typeRep, schema, loader);
+    ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<Custom>("kv", kvTable, typeRep, schema, loader);
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
@@ -199,7 +203,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testBatchCustomList() throws Exception {
     createObjectStoreInstance("customlist", new TypeToken<List<Custom>>() { }.getType());
 
-    final ObjectStore<List<Custom>> customStore = getInstance("customlist");
+    final ObjectStoreDataset<List<Custom>> customStore = getInstance("customlist");
     TransactionExecutor txnl = newTransactionExecutor(customStore);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -253,7 +257,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   public void testBatchReads() throws Exception {
     createObjectStoreInstance("batch", String.class);
 
-    final ObjectStore<String> t = getInstance("batch");
+    final ObjectStoreDataset<String> t = getInstance("batch");
     TransactionExecutor txnl = newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
@@ -299,7 +303,7 @@ public class ObjectStoreTest extends AbstractDatasetTest {
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
-  private void verifySplits(ObjectStore<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
+  private void verifySplits(ObjectStoreDataset<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
     throws InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
@@ -329,5 +333,9 @@ public class ObjectStoreTest extends AbstractDatasetTest {
     Assert.assertEquals((Integer) 101, ints.read(42));
 
     deleteInstance("ints");
+  }
+
+  private void createObjectStoreInstance(String instanceName, Type type) throws Exception {
+    createInstance("objectStore", instanceName, ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 }

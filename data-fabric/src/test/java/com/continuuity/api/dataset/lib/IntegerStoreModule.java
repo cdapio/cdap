@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;

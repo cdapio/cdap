@@ -8,13 +8,12 @@ import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
-import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.util.Bytes;

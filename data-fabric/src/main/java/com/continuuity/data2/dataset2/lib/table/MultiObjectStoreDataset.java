@@ -2,21 +2,19 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.BatchWritable;
-import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.data.dataset.DataSetException;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.lib.KeyValue;
+import com.continuuity.api.dataset.lib.MultiObjectStore;
 import com.continuuity.api.dataset.table.Put;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
@@ -34,23 +32,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * This data set allows to store objects of a particular class into a table. The types that are supported are:
- * <ul>
- *   <li>a plain java class</li>
- *   <li>a parametrized class</li>
- *   <li>a static inner class of one of the above</li>
- * </ul>
- * Interfaces and not-static inner classes are not supported.
- * ObjectStore supports storing one or more objects for the same key. Multiple objects can be stored using different
- * column names for each object. If no column name is specified in read or write operations a default column 'c' will
- * be used.
+ * Default implementation of {@link MultiObjectStore}
  * @param <T> the type of objects in the store
  */
 @Beta
-public class MultiObjectStore<T> extends AbstractDataset
-  implements BatchReadable<byte[], Map<byte[], T>>,
-    BatchWritable<byte[], Map<byte[], T>>,
-    RowScannable<ImmutablePair<byte[], Map<byte[], T>>> {
+public class MultiObjectStoreDataset<T> extends AbstractDataset implements MultiObjectStore<T> {
 
   // the default column to use for the key
   protected static final byte[] DEFAULT_COLUMN = { 'c' };
@@ -71,8 +57,8 @@ public class MultiObjectStore<T> extends AbstractDataset
    * @param name the name of the data set/object store
    * @param typeRep the type of the objects in the store
    */
-  public MultiObjectStore(String name, Table table, TypeRepresentation typeRep,
-                     Schema schema, @Nullable ClassLoader classLoader) {
+  public MultiObjectStoreDataset(String name, Table table, TypeRepresentation typeRep,
+                                 Schema schema, @Nullable ClassLoader classLoader) {
     super(name, table);
     this.table = table;
     this.typeRep = typeRep;
@@ -82,7 +68,7 @@ public class MultiObjectStore<T> extends AbstractDataset
     this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
-  public MultiObjectStore(String name, Table table, TypeRepresentation typeRep, Schema schema) {
+  public MultiObjectStoreDataset(String name, Table table, TypeRepresentation typeRep, Schema schema) {
     this(name, table, typeRep, schema, null);
   }
 
@@ -92,25 +78,17 @@ public class MultiObjectStore<T> extends AbstractDataset
     return (TypeToken<T>) TypeToken.of(this.typeRep.toType());
   }
 
-  /**
-   * Write an object with a given key. Writes the object to the default column 'c'
-   * @param key the key of the object
-   * @param object the object to be stored
-   */
+  @Override
   public void write(byte[] key, T object) {
     table.put(key, DEFAULT_COLUMN, encode(object));
   }
 
+  @Override
   public void write(String key, T object) throws Exception {
     table.put(Bytes.toBytes(key), DEFAULT_COLUMN, encode(object));
   }
 
-  /**
-   * Write an object with a given key and a column.
-   * @param key the key of the object.
-   * @param col column where the object should be written.
-   * @param object object to be stored.
-   */
+  @Override
   public void write(byte[] key, byte[] col, T object) {
     table.put(key, col, encode(object));
   }
@@ -124,57 +102,34 @@ public class MultiObjectStore<T> extends AbstractDataset
     table.put(put);
   }
 
-  /**
-   * Read an object with a given key.
-   * @param key the key of the object
-   * @return the object if found, or null if not found
-   */
+  @Override
   public T read(byte[] key) {
     byte[] bytes = table.get(key, DEFAULT_COLUMN);
     return decode(bytes);
   }
 
-  /**
-   * Read an object with a given key.
-   * @param key the key of the object
-   * @param col to read
-   * @return the object if found, or null if not found
-   */
+  @Override
   public T read(byte[] key, byte[] col) {
     byte[] bytes = table.get(key, col);
     return decode(bytes);
   }
 
-  /**
-   * Delete the object specified with specified key and column.
-   * @param key key of the object to be deleted
-   * @param col col of the object to be deleted
-   */
+  @Override
   public void delete(byte[] key, byte[] col) {
     table.delete(key, col);
   }
 
-  /**
-   * Delete the object in the default column for the specified key.
-   * @param key key of the object to be deleted in the default column
-   */
+  @Override
   public void delete(byte[] key) {
     table.delete(key, DEFAULT_COLUMN);
   }
 
-  /**
-   * Delete the objects across all the columns for the given key.
-   * @param key key of the object to be deleted
-   */
+  @Override
   public void deleteAll(byte[] key) {
     table.delete(key);
   }
 
-  /**
-   * Read all the objects with the given key.
-   * @param key the key of the object
-   * @return Map of column key and Object, null if entry for the key doesn't exist
-   */
+  @Override
   public Map<byte[], T> readAll(byte[] key) {
     Row row = table.get(key);
     return Maps.transformValues(row.getColumns(), new Function<byte[], T>() {
@@ -216,14 +171,7 @@ public class MultiObjectStore<T> extends AbstractDataset
     }
   }
 
-  /**
-   * Returns splits for a range of keys in the table.
-   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less or equal to zero, any number of splits can be returned.
-   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
-   * @param stop If non-null, the returned splits will only cover keys that are less.
-   * @return list of {@link com.continuuity.api.data.batch.Split}
-   */
+  @Override
   @Beta
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return table.getSplits(numSplits, start, stop);
@@ -231,7 +179,7 @@ public class MultiObjectStore<T> extends AbstractDataset
 
   @Override
   public Type getRowType() {
-    return new TypeToken<ImmutablePair<byte[], Map<byte[], T>>>() { }.getType();
+    return new TypeToken<KeyValue<byte[], Map<byte[], T>>>() { }.getType();
   }
 
   @Override
@@ -240,7 +188,7 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   @Override
-  public SplitRowScanner<ImmutablePair<byte[], Map<byte[], T>>> createSplitScanner(Split split) {
+  public SplitRowScanner<KeyValue<byte[], Map<byte[], T>>> createSplitScanner(Split split) {
     return Scannables.splitRowScanner(createSplitReader(split), new MultiObjectRowMaker());
   }
 
@@ -250,14 +198,14 @@ public class MultiObjectStore<T> extends AbstractDataset
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link MultiObjectStore}.
+   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link MultiObjectStoreDataset}.
    */
   public class MultiObjectRowMaker
-    implements Scannables.RowMaker<byte[], Map<byte[], T>, ImmutablePair<byte[], Map<byte[], T>>> {
+    implements Scannables.RowMaker<byte[], Map<byte[], T>, KeyValue<byte[], Map<byte[], T>>> {
 
     @Override
-    public ImmutablePair<byte[], Map<byte[], T>> makeRow(byte[] key, Map<byte[], T> value) {
-      return new ImmutablePair<byte[], Map<byte[], T>>(key, value);
+    public KeyValue<byte[], Map<byte[], T>> makeRow(byte[] key, Map<byte[], T> value) {
+      return new KeyValue<byte[], Map<byte[], T>>(key, value);
     }
   }
 

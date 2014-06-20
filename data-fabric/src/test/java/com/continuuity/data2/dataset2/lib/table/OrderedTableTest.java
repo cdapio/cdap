@@ -2,6 +2,7 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
+import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Scanner;

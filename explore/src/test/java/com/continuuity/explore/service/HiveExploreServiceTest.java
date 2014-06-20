@@ -179,8 +179,8 @@ public class HiveExploreServiceTest {
     Handle handle = exploreClient.execute("select key, value from continuuity_user_my_table");
     exploreClient.cancel(handle);
     Assert.assertEquals(
-      Status.State.CANCELED,
-      ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 100).getState()
+      Status.OpStatus.CANCELED,
+      ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 100).getStatus()
     );
     exploreClient.close(handle);
   }
@@ -190,7 +190,7 @@ public class HiveExploreServiceTest {
     Handle handle = exploreClient.execute(command);
 
     Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
-    Assert.assertEquals(Status.State.FINISHED, status.getState());
+    Assert.assertEquals(Status.OpStatus.FINISHED, status.getStatus());
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));

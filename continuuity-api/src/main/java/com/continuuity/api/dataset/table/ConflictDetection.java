@@ -1,4 +1,4 @@
-package com.continuuity.data2.dataset2.lib.table;
+package com.continuuity.api.dataset.table;
 
 /**
 * Conflict detection level of a table.

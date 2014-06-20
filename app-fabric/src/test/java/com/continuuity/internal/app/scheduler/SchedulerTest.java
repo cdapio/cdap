@@ -7,6 +7,7 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
+import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.Guice;
@@ -55,7 +56,7 @@ public class SchedulerTest {
     throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
-      js = new DataSetBasedScheduleStore(factory, accessor);
+      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(accessor));
     } else {
       js = new RAMJobStore();
     }
