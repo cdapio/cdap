@@ -16,9 +16,8 @@ public class LogSaverServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named(
-                                                                        Constants.LogSaver.LOG_SAVER_HANDLER));
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
+      (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
     handlerBinder.addBinding().to(PingHandler.class);
     bind(LogSaverService.class).in(Scopes.SINGLETON);
     expose(LogSaverService.class);
