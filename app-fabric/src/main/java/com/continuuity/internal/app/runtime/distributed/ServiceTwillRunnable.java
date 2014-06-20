@@ -173,13 +173,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
-      try {
-        delegate.initialize(context);
-        LOG.info("Runnable initialized: " + name);
-      } catch (Exception e) {
-        LOG.error("Runnable {} didn't initialize: {}", name, e.getMessage(), e);
-        throw Throwables.propagate(e);
-      }
+      delegate.initialize(context);
+      LOG.info("Runnable initialized: " + name);
+
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -201,10 +197,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
     try {
       LOG.info("Stopping runnable: {}", name);
       delegate.stop();
-      logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Failed to stop: {}", e, e);
       throw Throwables.propagate(e);
+    } finally {
+      logAppenderInitializer.close();
     }
   }
 
