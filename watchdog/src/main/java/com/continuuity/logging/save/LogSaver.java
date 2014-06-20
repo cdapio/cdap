@@ -5,7 +5,6 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -30,8 +29,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -39,7 +36,6 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,14 +67,12 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final LogCleanup logCleanup;
 
   private Cancellable kafkaCancel;
-  private Cancellable cancelDiscovery;
-  private DiscoveryService discoveryService;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
 
   @Inject
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
-                  CConfiguration cConfig, LocationFactory locationFactory, DiscoveryService discoveryService)
+                  CConfiguration cConfig, LocationFactory locationFactory)
     throws Exception {
     LOG.info("Initializing LogSaver...");
 
@@ -154,7 +148,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
     this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
-    this.discoveryService = discoveryService;
+
   }
 
   public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor) throws Exception {
@@ -180,17 +174,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
-    cancelDiscovery = discoveryService.register(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.LOGSAVER;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return new InetSocketAddress(1);
-      }
-    });
   }
 
   @Override
@@ -198,7 +181,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info("Stopping LogSaver...");
 
     kafkaCancel.cancel();
-    cancelDiscovery.cancel();
     scheduledExecutor.shutdown();
 
     logFileWriter.flush();

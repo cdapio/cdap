@@ -110,7 +110,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogSaver logSaver =
       new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   cConf, new LocalLocationFactory(), new InMemoryDiscoveryService());
+                   cConf, new LocalLocationFactory());
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);

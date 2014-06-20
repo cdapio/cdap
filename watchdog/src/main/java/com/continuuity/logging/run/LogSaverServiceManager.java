@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,21 +35,22 @@ public class LogSaverServiceManager extends AbstractDistributedReactorServiceMan
     return cConf.getInt(Constants.LogSaver.MAX_INSTANCES);
   }
 
-  @Override
   public boolean isServiceAvailable() {
     try {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
-      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
-      Discoverable discoverable = endpointStrategy.pick();
-      if (discoverable == null) {
-        return false;
+      for (Discoverable discoverable : discoverables) {
+        //Ping the discovered service to check its status.
+        String url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort());
+        if (checkGetStatus(url).equals(HttpResponseStatus.OK)) {
+          return true;
+        }
       }
-      return true;
+      return false;
     } catch (IllegalArgumentException e) {
       return false;
     } catch (Exception e) {
-      LOG.warn("Unable to discover {} : Reason : {}", serviceName, e.getMessage());
+      LOG.warn("Unable to ping {} : Reason : {}", serviceName, e.getMessage());
       return false;
     }
   }

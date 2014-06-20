@@ -335,6 +335,10 @@ public final class Constants {
     public static final String NUM_CORES = "metrics.processor.num.cores";
     public static final String MEMORY_MB = "metrics.processor.memory.mb";
     public static final String MAX_INSTANCES = "metrics.processor.max.instances";
+
+
+    public static final String METRICS_PROCESSOR_HANDLER = "metrics.processor.handler";
+    public static final String ADDRESS = "metrics.processor.bind.address";
   }
 
   /**
@@ -344,6 +348,9 @@ public final class Constants {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
+
+    public static final String LOG_SAVER_HANDLER = "log.saver.handler";
+    public static final String ADDRESS = "logsaver.bind.address";
   }
 
   /**
