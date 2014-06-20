@@ -24,8 +24,8 @@ import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
-import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -46,6 +46,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
@@ -71,6 +74,7 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,6 +88,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
+  final TypeLiteral<Map<String, String>> mapOfString = new TypeLiteral<Map<String, String>>() { };
 
   public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
@@ -115,6 +120,7 @@ public class ReactorServiceMain extends DaemonMain {
   private TransactionExecutor txExecutor;
   private DatasetFramework dsFramework;
   private DatasetModule hBaseOrderedTableModule;
+  private Map<String, String> systemServiceInstance;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting Reactor Service Main...");
@@ -155,13 +161,12 @@ public class ReactorServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
+    systemServiceInstance = baseInjector.getInstance(Key.get(mapOfString, Names.named("service.instance.name")));
 
     hBaseOrderedTableModule = baseInjector.getInstance(HBaseOrderedTableModule.class);
 
     try {
-      DatasetDefinitionRegistryFactory registryFactory = MonitorHandler.createInjector(cConf, hConf).getInstance(
-        DatasetDefinitionRegistryFactory.class);
-      dsFramework = new InMemoryDatasetFramework(registryFactory);
+      dsFramework = new InMemoryDatasetFramework(baseInjector.getInstance(DefaultDatasetDefinitionRegistry.class));
       dsFramework.addModule("ordered", hBaseOrderedTableModule);
       systemServiceTable = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INFO_TABLE_NAME,
                                                            "orderedTable", DatasetProperties.EMPTY, null);
@@ -169,17 +174,6 @@ public class ReactorServiceMain extends DaemonMain {
                                                   (TransactionAware) systemServiceTable);
     } catch (Exception e) {
       LOG.error("Error retrieving System Service Instance Table : {}", e.getMessage(), e);
-    }
-
-    try {
-      String metricsCount = MonitorHandler.getRequestedServiceInstance(Constants.Service.METRICS,
-                                                                       systemServiceTable,
-                                                                       txExecutor);
-      if (metricsCount != null) {
-        cConf.setInt(Constants.Metrics.NUM_INSTANCES, Integer.valueOf(metricsCount));
-      }
-    } catch (Exception e) {
-      LOG.error("Couldn't retrieve metrics instance count {}", e.getMessage(), e);
     }
   }
 
@@ -200,6 +194,7 @@ public class ReactorServiceMain extends DaemonMain {
         appFabricServer = injector.getInstance(AppFabricServer.class);
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
+        updateSystemServiceInstances();
         runTwillApps();
         isLeader.set(true);
       }
@@ -237,6 +232,22 @@ public class ReactorServiceMain extends DaemonMain {
 
   @Override
   public void destroy() {
+  }
+
+  private void updateSystemServiceInstances() {
+    for (Map.Entry<String, String> entry : systemServiceInstance.entrySet()) {
+      String service = entry.getKey();
+      String instanceVariable = entry.getValue();
+      try {
+        String savedCount = MonitorHandler.getRequestedServiceInstance(service, systemServiceTable, txExecutor);
+        if (savedCount != null) {
+          cConf.setInt(instanceVariable, Integer.valueOf(savedCount));
+          LOG.info("Setting instance count of {} Service to {}", service, savedCount);
+        }
+      } catch (Exception e) {
+        LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
+      }
+    }
   }
 
   private InetAddress getLocalHost() {

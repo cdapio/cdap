@@ -4,13 +4,11 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.data2.datafabric.dataset.DatasetsUtil;
-import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -23,11 +21,8 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.name.Named;
-import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -61,14 +56,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private final TransactionExecutor txExecutor;
 
   @Inject
-  public MonitorHandler(Authenticator authenticator, CConfiguration cConf, Configuration hConf,
+  public MonitorHandler(Authenticator authenticator,
                         Map<String, ReactorServiceManager> serviceMap,
-                        @Named("serviceModule") DatasetModule datasetModule) throws Exception {
+                        @Named("serviceModule") DatasetModule datasetModule,
+                        DefaultDatasetDefinitionRegistry dsRegistry) throws Exception {
     super(authenticator);
     this.reactorServiceManagementMap = serviceMap;
-    DatasetDefinitionRegistryFactory registryFactory = createInjector(cConf, hConf).getInstance(
-      DatasetDefinitionRegistryFactory.class);
-    DatasetFramework dsFramework = new InMemoryDatasetFramework(registryFactory);
+    DatasetFramework dsFramework = new InMemoryDatasetFramework(dsRegistry);
     dsFramework.addModule("ordered", datasetModule);
     table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INFO_TABLE_NAME,
                                                          "orderedTable", DatasetProperties.EMPTY, null);
@@ -242,12 +236,5 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     json = (GSON).toJson(serviceSpec);
     responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
-  }
-
-  public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new MonitorHandlerModule()
-    );
   }
 }
