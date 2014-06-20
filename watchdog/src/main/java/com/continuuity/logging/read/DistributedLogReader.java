@@ -17,6 +17,7 @@ import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.LogSaver;
+import com.continuuity.logging.save.LogSaverTableUtil;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -87,7 +88,7 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient, locationFactory);
+        new FileMetaDataManager(new LogSaverTableUtil(dataSetAccessor).getMetaTable(), txClient, locationFactory);
 
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
