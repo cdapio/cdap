@@ -1,9 +1,12 @@
-package com.continuuity.data2.datafabric.dataset;
+package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Scanner;
+import com.continuuity.data2.dataset2.lib.AbstractDataset;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -19,7 +22,7 @@ import javax.annotation.Nullable;
  * Provides handy methods to manage objects in {@link OrderedTable}.
  */
 // todo: review usage of OrderedTable after adding handy methods to it (operating on objects Get, Put, etc.)
-public abstract class AbstractObjectsStore implements Closeable {
+public abstract class AbstractObjectsStore extends AbstractDataset {
   private static final Gson GSON = new Gson();
 
   /**
@@ -29,7 +32,8 @@ public abstract class AbstractObjectsStore implements Closeable {
 
   private final OrderedTable table;
 
-  public AbstractObjectsStore(OrderedTable table) {
+  public AbstractObjectsStore(DatasetSpecification spec, OrderedTable table) {
+    super(spec.getName(), table);
     this.table = table;
   }
 

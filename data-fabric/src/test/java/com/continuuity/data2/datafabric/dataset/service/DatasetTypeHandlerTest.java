@@ -69,7 +69,9 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     // cannot deploy same module again
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class));
-    
+    // cannot deploy module with same types
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("not-module1", TestModule1.class));
+
     // deploy another module which depends on the first one
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module2", TestModule2.class));
 

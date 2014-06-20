@@ -60,6 +60,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // create dataset instance
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props));
 
+    // verify module cannot be deleted which type is used for the instance
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2"));
+
     // verify instance was created
     instances = getInstances().getResponseObject();
     Assert.assertEquals(1, instances.size());

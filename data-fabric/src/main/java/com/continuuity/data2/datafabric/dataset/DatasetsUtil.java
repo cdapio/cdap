@@ -31,6 +31,17 @@ public final class DatasetsUtil {
                                                    DatasetProperties props, ClassLoader cl)
     throws DatasetManagementException, IOException {
 
+    createIfNotExists(datasetFramework, instanceName, typeName, props);
+    return (T) datasetFramework.getDataset(instanceName, null);
+  }
+
+  /**
+   * Creates instance of the data set if not exists
+   */
+  public static void createIfNotExists(DatasetFramework datasetFramework,
+                                       String instanceName, String typeName,
+                                       DatasetProperties props) throws DatasetManagementException, IOException {
+
     if (!datasetFramework.hasInstance(instanceName)) {
       try {
         datasetFramework.addInstance(typeName, instanceName, props);
@@ -42,6 +53,5 @@ public final class DatasetsUtil {
         throw Throwables.propagate(e);
       }
     }
-    return (T) datasetFramework.getDataset(instanceName, null);
   }
 }
