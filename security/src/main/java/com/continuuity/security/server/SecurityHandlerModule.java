@@ -8,7 +8,7 @@ import org.eclipse.jetty.server.Handler;
 import java.util.HashMap;
 
 /**
- * Guice module to bind handlers.
+ * Guice module to bind handlers used by RestEasy context listener.
  */
 public class SecurityHandlerModule extends AbstractModule {
   private final HashMap<String, Handler> handlerMap;
