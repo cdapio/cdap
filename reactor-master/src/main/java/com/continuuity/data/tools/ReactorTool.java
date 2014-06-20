@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.tools;
 
-import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
@@ -15,14 +14,10 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
 import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
-import com.continuuity.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.gateway.auth.AuthModule;
@@ -43,9 +38,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Data-Fabric command line tool.
+ * Reactor command line tool.
  */
-public class DataFabricTool {
+public class ReactorTool {
 
   /**
    * Set of Action available in this tool.
@@ -189,6 +184,6 @@ public class DataFabricTool {
   }
 
   public static void main(String[] args) throws Exception {
-    new DataFabricTool().doMain(args);
+    new ReactorTool().doMain(args);
   }
 }
