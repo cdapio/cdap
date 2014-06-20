@@ -26,8 +26,6 @@ import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +43,6 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorHandler.class);
   private final Map<String, ReactorServiceManager> reactorServiceManagementMap;
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
@@ -68,7 +65,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     txExecutor = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
   }
 
-  public synchronized static String getRequestedServiceInstance(final String serviceName, final OrderedTable table,
+  public static synchronized String getRequestedServiceInstance(final String serviceName, final OrderedTable table,
                                                                 TransactionExecutor txExecutor)
     throws TransactionFailureException {
     return txExecutor.execute(new TransactionExecutor.Function<Object, String>() {
@@ -79,7 +76,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }, null);
   }
 
-  public synchronized static void setRequestedServiceInstance(final String service, final String value,
+  public static synchronized void setRequestedServiceInstance(final String service, final String value,
                                                               final OrderedTable table, TransactionExecutor txExecutor)
     throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {

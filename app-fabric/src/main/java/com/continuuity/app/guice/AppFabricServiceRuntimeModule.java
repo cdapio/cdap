@@ -137,7 +137,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
                                  .toInstance(new LevelDBOrderedTableModule());
-                               }
+                             }
                            });
   }
 

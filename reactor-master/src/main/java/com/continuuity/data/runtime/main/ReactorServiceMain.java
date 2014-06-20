@@ -88,7 +88,7 @@ public class ReactorServiceMain extends DaemonMain {
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
-  final TypeLiteral<Map<String, String>> mapOfString = new TypeLiteral<Map<String, String>>() { };
+  private static final TypeLiteral<Map<String, String>> mapOfString = new TypeLiteral<Map<String, String>>() { };
 
   public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
