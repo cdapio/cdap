@@ -355,14 +355,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 

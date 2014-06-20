@@ -12,7 +12,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.AsyncExploreClient;
@@ -64,12 +63,10 @@ public class HiveExploreServiceTest {
     exploreClient = injector.getInstance(AsyncExploreClient.class);
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    String moduleName = "inMemory";
-    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
-    datasetFramework.addModule("keyValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
