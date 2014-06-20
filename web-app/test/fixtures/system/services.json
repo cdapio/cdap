@@ -5,7 +5,9 @@
     "status": "NA",
     "logs": "NOTOK",
     "name": "saver",
-    "cur": "1"
+    "cur": "1",
+    "requested": "2",
+    "provisioned": "1"
   },
   {
     "min": "1",
@@ -13,7 +15,9 @@
     "status": "OK",
     "logs": "OK",
     "name": "transaction",
-    "cur": "1"
+    "cur": "1",
+    "requested": "2",
+    "provisioned": "1"
   },
   {
     "min": "1",
@@ -21,7 +25,9 @@
     "status": "NA",
     "logs": "NOTOK",
     "name": "metrics.processor",
-    "cur": "1"
+    "cur": "1",
+    "requested": "2",
+    "provisioned": "1"
   },
   {
     "min": "1",
@@ -29,7 +35,9 @@
     "status": "OK",
     "logs": "OK",
     "name": "metrics",
-    "cur": "1"
+    "cur": "1",
+    "requested": "2",
+    "provisioned": "1"
   },
   {
     "min": "1",
@@ -37,6 +45,8 @@
     "status": "OK",
     "logs": "OK",
     "name": "appfabric",
-    "cur": "1"
+    "cur": "1",
+    "requested": "2",
+    "provisioned": "1"
   }
 ]
