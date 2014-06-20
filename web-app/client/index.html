@@ -272,10 +272,18 @@
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{#if token}}
-            <div>This is an long lasting Access Token that you can use to authenticate against Reactor.</div>
             <table>
               <tr>
-                <td>Your Access Token is: </td>
+                <td>
+                  This is a long lasting Access Token that you can use to authenticate against Reactor. Access Tokens
+                  are used to identify and authenticate users. Save the downloaded file as "access_token" under the
+                  "bin" directory of your downloaded SDK to use the provided tools with a secured Reactor. 
+                </td>
+              </tr>
+            </table>
+            <table>
+              <tr>
+                <td>Access Token: </td>
                 <td>{{token}}</td>
               </tr>
               <tr>
