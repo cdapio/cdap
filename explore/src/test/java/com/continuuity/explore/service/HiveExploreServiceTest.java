@@ -12,7 +12,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.runtime.DataSetServiceModules;
 import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.explore.client.AsyncExploreClient;
@@ -62,14 +61,13 @@ public class HiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     exploreClient = injector.getInstance(AsyncExploreClient.class);
+    Assert.assertTrue(exploreClient.isAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    String moduleName = "inMemory";
-    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
-    datasetFramework.addModule("keyValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
@@ -124,7 +122,7 @@ public class HiveExploreServiceTest {
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new Row(Lists.<Object>newArrayList("continuuity_user_my_table"))));
+               Lists.newArrayList(new Result(Lists.<Object>newArrayList("continuuity_user_my_table"))));
 
     runCommand("describe continuuity_user_my_table",
         true,
@@ -134,8 +132,8 @@ public class HiveExploreServiceTest {
           new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-          new Row(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-          new Row(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
+          new Result(Lists.<Object>newArrayList("key", "string", "from deserializer")),
+          new Result(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
                                              "from deserializer"))
         )
     );
@@ -145,8 +143,8 @@ public class HiveExploreServiceTest {
         Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
             new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
         Lists.newArrayList(
-            new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+            new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select key, value from continuuity_user_my_table where key = '1'",
@@ -154,7 +152,7 @@ public class HiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
+                 new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
     );
 
     runCommand("select * from continuuity_user_my_table",
@@ -163,8 +161,8 @@ public class HiveExploreServiceTest {
                                   new ColumnDesc("continuuity_user_my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+                 new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select * from continuuity_user_my_table where key = '2'",
@@ -173,7 +171,7 @@ public class HiveExploreServiceTest {
                                   new ColumnDesc("continuuity_user_my_table.value",
                                                  "struct<name:string,ints:array<int>>", 2, null)),
                Lists.newArrayList(
-                 new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
   }
 
@@ -189,7 +187,7 @@ public class HiveExploreServiceTest {
   }
 
   private static void runCommand(String command, boolean expectedHasResult,
-                                 List<ColumnDesc> expectedColumnDescs, List<Row> expectedRows) throws Exception {
+                                 List<ColumnDesc> expectedColumnDescs, List<Result> expectedResults) throws Exception {
     Handle handle = exploreClient.execute(command);
 
     Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 20);
@@ -197,25 +195,25 @@ public class HiveExploreServiceTest {
     Assert.assertEquals(expectedHasResult, status.hasResults());
 
     Assert.assertEquals(expectedColumnDescs, exploreClient.getResultSchema(handle));
-    Assert.assertEquals(expectedRows, trimColumnValues(exploreClient.nextResults(handle, 100)));
+    Assert.assertEquals(expectedResults, trimColumnValues(exploreClient.nextResults(handle, 100)));
 
     exploreClient.close(handle);
   }
 
-  private static List<Row> trimColumnValues(List<Row> rows) {
-    List<Row> newRows = Lists.newArrayList();
-    for (Row row : rows) {
+  private static List<Result> trimColumnValues(List<Result> results) {
+    List<Result> newResults = Lists.newArrayList();
+    for (Result result : results) {
       List<Object> newCols = Lists.newArrayList();
-      for (Object obj : row.getColumns()) {
+      for (Object obj : result.getColumns()) {
         if (obj instanceof String) {
           newCols.add(((String) obj).trim());
         } else {
           newCols.add(obj);
         }
       }
-      newRows.add(new Row(newCols));
+      newResults.add(new Result(newCols));
     }
-    return newRows;
+    return newResults;
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

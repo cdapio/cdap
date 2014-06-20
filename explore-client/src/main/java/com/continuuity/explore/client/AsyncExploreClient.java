@@ -11,7 +11,7 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -49,7 +49,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
-  private static final Type ROW_LIST_TYPE = new TypeToken<List<Row>>() { }.getType();
+  private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
@@ -67,7 +67,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public boolean isAvailable() throws ExploreException {
-    HttpResponse response = doPost(String.format("explore/status"), null, null);
+    HttpResponse response = doGet(String.format("explore/status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return true;
     }
@@ -120,7 +120,7 @@ public class AsyncExploreClient implements ExploreClient {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {

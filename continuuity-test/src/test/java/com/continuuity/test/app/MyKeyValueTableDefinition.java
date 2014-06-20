@@ -98,7 +98,7 @@ public class MyKeyValueTableDefinition
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       TableDefinition tableDefinition = registry.get("table");
-      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("keyValueTable", tableDefinition);
+      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("myKeyValueTable", tableDefinition);
       registry.add(keyValueTable);
     }
   }
