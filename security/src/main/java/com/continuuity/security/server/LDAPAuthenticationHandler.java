@@ -12,7 +12,6 @@ import javax.security.auth.login.Configuration;
 /**
  * An Authentication handler that authenticates against a LDAP server instance for External Authentication.
  */
-
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
                                                                                 "userRdnAttribute", "userObjectClass" };
