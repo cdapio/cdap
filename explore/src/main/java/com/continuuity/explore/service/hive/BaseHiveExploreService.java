@@ -47,7 +47,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
 
-  // TODO: timeout operations
+  // TODO: timeout operations - REACTOR-269
   private final ConcurrentMap<Handle, OperationInfo> handleMap = Maps.newConcurrentMap();
 
   private final CLIService cliService;
@@ -62,7 +62,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    // TODO figure out why this hive conf does not contain our env properties
+    // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
     // return hiveConf;
     return new HiveConf();
   }

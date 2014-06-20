@@ -8,10 +8,10 @@ import java.util.UUID;
  * Represents an operation that is submitted for execution to {@link Explore}.
  */
 public class Handle {
-  private final String id;
+  private final String handle;
 
   public static Handle generate() {
-    // TODO: make sure handles are unique across multiple instances.
+    // TODO: make sure handles are unique across multiple instances. - REACTOR-272
     return new Handle(UUID.randomUUID().toString());
   }
 
@@ -19,18 +19,18 @@ public class Handle {
     return new Handle(id);
   }
 
-  private Handle(String id) {
-    this.id = id;
+  private Handle(String handle) {
+    this.handle = handle;
   }
 
-  public String getId() {
-    return id;
+  public String getHandle() {
+    return handle;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("id", id)
+      .add("id", handle)
       .toString();
   }
 
@@ -45,11 +45,11 @@ public class Handle {
 
     Handle that = (Handle) o;
 
-    return Objects.equal(this.id, that.id);
+    return Objects.equal(this.handle, that.handle);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(handle);
   }
 }

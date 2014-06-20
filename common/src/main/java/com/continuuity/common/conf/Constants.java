@@ -191,6 +191,7 @@ public final class Constants {
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
+    public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
@@ -383,8 +384,6 @@ public final class Constants {
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
-    public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
-
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
     /** Configuration for enabling the security. */
     public static final String CFG_SECURITY_ENABLED = "security.enabled";

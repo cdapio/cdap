@@ -9,7 +9,6 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Row;
 import com.continuuity.explore.service.Status;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -19,7 +18,6 @@ import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
-import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
@@ -60,7 +58,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       Class cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
-      Status status = new Status(Status.State.valueOf(operationState.toString()), operationHandle.hasResultSet());
+      Status status = new Status(Status.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
     } catch (HandleNotFoundException e) {
