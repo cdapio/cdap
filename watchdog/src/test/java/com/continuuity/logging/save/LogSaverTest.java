@@ -1,6 +1,5 @@
 package com.continuuity.logging.save;
 
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.AccountLoggingContext;
 import com.continuuity.common.logging.ApplicationLoggingContext;

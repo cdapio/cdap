@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import javax.annotation.Nullable;
+
 /**
  * MetricsProcessorService with PingHandler used for discovery during reactor-services startup
  */
@@ -87,6 +88,4 @@ public class MetricsProcessorService extends AbstractIdleService {
       .add("bindAddress", httpService.getBindAddress())
       .toString();
   }
-
-
 }

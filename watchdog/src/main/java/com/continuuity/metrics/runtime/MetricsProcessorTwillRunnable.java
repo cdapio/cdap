@@ -93,7 +93,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractReactorTwillRun
     services.add(kafkaClientService);
     services.add(kafkaMetricsProcessorService);
     services.add(metricsProcessorService);
-
   }
 
   public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {

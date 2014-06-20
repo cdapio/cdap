@@ -10,7 +10,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 /**
- * Metrics Processort Service Module for service discovery
+ * Metrics Processor Service Module for the MetricsProcessorService
  */
 public class MetricsProcessorServiceModule extends PrivateModule {
 

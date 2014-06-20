@@ -12,7 +12,7 @@ import com.google.inject.name.Names;
 /**
  * Module for LogSaverService
  */
-public class LogServiceModule extends PrivateModule {
+public class LogSaverServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {

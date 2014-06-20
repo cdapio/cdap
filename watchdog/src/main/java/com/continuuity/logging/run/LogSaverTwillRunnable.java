@@ -15,7 +15,7 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.LoggingConfiguration;
-import com.continuuity.logging.guice.LogServiceModule;
+import com.continuuity.logging.guice.LogSaverServiceModule;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.service.LogSaverService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -118,7 +118,6 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
                                               createPartitionChangeHandler(logSaver));
 
       logSaverService = injector.getInstance(LogSaverService.class);
-
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -184,7 +183,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new LogServiceModule()
+      new LogSaverServiceModule()
     );
   }
 }

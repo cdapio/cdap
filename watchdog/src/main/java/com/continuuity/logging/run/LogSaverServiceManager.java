@@ -2,9 +2,6 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.twill.AbstractDistributedReactorServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
@@ -14,7 +11,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 
 /**
  * Log Saver Reactor Service Management in Distributed Mode.
