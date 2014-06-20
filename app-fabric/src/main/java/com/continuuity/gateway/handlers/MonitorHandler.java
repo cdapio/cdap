@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -69,40 +68,20 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     txExecutor = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
   }
 
-  /**
-   * Stops Reactor Service
-   */
-  @Path("/system/services/{service-name}/stop")
-  @POST
-  public void stopService(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("service-name") String serviceName) throws Exception {
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  /**
-   * Starts Reactor Service
-   */
-  @Path("/system/services/{service-name}/start")
-  @POST
-  public void startService(final HttpRequest request, final HttpResponder responder,
-                           @PathParam("service-name") String serviceName) {
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  public static String getRequestedServiceInstance(final String serviceName, final OrderedTable table,
-                                                    TransactionExecutor txExecutor) throws TransactionFailureException {
-    final List<String> list = new ArrayList<String>();
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
+  public synchronized static String getRequestedServiceInstance(final String serviceName, final OrderedTable table,
+                                                                TransactionExecutor txExecutor)
+    throws TransactionFailureException {
+    return txExecutor.execute(new TransactionExecutor.Function<Object, String>() {
       @Override
-      public void apply() throws Exception {
-        list.add(Bytes.toString(table.get(Bytes.toBytes(serviceName), Bytes.toBytes("instance"))));
+      public String apply(Object input) throws Exception {
+        return Bytes.toString(table.get(Bytes.toBytes(serviceName), Bytes.toBytes("instance")));
       }
-    });
-    return list.get(0);
+    }, null);
   }
 
-  public static void setRequestedServiceInstance(final String service, final String value, final OrderedTable table,
-                                                  TransactionExecutor txExecutor) throws TransactionFailureException {
+  public synchronized static void setRequestedServiceInstance(final String service, final String value,
+                                                              final OrderedTable table, TransactionExecutor txExecutor)
+    throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -124,6 +103,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       instances.put("provisioned", actualInstance);
 
       String requestedInstance = getRequestedServiceInstance(serviceName, table, txExecutor);
+      //If entry in HBase Table is not present, then create one.
       if (requestedInstance == null) {
         requestedInstance = actualInstance;
         setRequestedServiceInstance(serviceName, actualInstance, table, txExecutor);

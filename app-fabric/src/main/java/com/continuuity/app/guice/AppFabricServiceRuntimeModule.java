@@ -137,7 +137,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
                                  .toInstance(new LevelDBOrderedTableModule());
-
                                }
                            });
   }
@@ -166,7 +165,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
                                  DatasetExecutorServiceManager.class);
 
-                              bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
+                               bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
                                 .toInstance(new HBaseOrderedTableModule());
                              }
                            });

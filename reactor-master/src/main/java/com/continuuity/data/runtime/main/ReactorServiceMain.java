@@ -171,7 +171,7 @@ public class ReactorServiceMain extends DaemonMain {
       txExecutor = new DefaultTransactionExecutor(new MinimalTxSystemClient(),
                                                   (TransactionAware) systemServiceTable);
     } catch (Exception e) {
-      LOG.error("Error retrieving System Service Instance Table : {}", e.getMessage(), e);
+      LOG.error("Error retrieving System Service Table : {}", e.getMessage(), e);
     }
   }
 
