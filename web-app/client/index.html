@@ -272,6 +272,7 @@
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{#if token}}
+            <div>This is an long lasting Access Token that you can use to authenticate against Reactor.</div>
             <table>
               <tr>
                 <td>Your Access Token is: </td>
@@ -279,11 +280,11 @@
               </tr>
               <tr>
                 <td>Expires in: </td>
-                <td>{{token_expires}}</td>
+                <td>{{token_expires}} sec</td>
               </tr>
               <tr>
                 <td>
-                  <a href="data:text;charset=utf-8,{{unbound token}}">Download</a>
+                  <a href="data:text;charset=utf-8,{{unbound token}}"><b>Download</b></a>
                 </td>
                 <td></td>
               </tr>
