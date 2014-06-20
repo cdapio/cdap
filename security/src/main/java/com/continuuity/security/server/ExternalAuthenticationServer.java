@@ -121,7 +121,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
       context.addServlet(HttpServletDispatcher.class, "/");
-      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
+      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());

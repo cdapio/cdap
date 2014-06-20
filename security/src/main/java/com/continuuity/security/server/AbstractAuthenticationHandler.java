@@ -8,14 +8,23 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.security.Constraint;
 
+import java.io.IOException;
 import javax.security.auth.login.Configuration;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Context;
 
 /**
  * An abstract authentication handler that provides basic functionality including
  * setting of constraints and setting of different required services.
  */
+@Path("/")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
   protected final CConfiguration configuration;
 
@@ -47,6 +56,15 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
     this.doStart();
+  }
+
+  @Path("token")
+  @GET
+  public String token(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws IOException, ServletException {
+
+    super.handle("/token", Request.getRequest(request), request, response);
+    return "";
   }
 
   /**

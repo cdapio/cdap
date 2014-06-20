@@ -4,23 +4,15 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
-import org.eclipse.jetty.server.Request;
 
-import java.io.IOException;
 import java.util.HashMap;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Context;
 
 /**
  * An Authentication handler that authenticates against a LDAP server instance for External Authentication.
  */
-@Path("/")
+
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   private static final String[] mandatoryConfigurables = new String[] { "debug", "hostname", "port", "userBaseDn",
                                                                                 "userRdnAttribute", "userObjectClass" };
@@ -37,15 +29,6 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
   @Inject
   public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
     super(configuration);
-  }
-
-  @Path("token")
-  @GET
-  public String token(@Context HttpServletRequest request, @Context HttpServletResponse response)
-    throws IOException, ServletException {
-
-    super.handle("/token", Request.getRequest(request), request, response);
-    return "";
   }
 
   /**

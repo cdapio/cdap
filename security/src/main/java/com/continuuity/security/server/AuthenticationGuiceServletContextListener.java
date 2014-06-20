@@ -1,5 +1,6 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -18,9 +19,11 @@ import javax.servlet.ServletContext;
  */
 public class AuthenticationGuiceServletContextListener extends GuiceResteasyBootstrapServletContextListener {
   private final HashMap<String, Handler> handlerMap;
+  private final CConfiguration configuration;
 
-  public AuthenticationGuiceServletContextListener(HashMap<String, Handler> map) {
+  public AuthenticationGuiceServletContextListener(HashMap<String, Handler> map, CConfiguration configuration) {
     this.handlerMap = map;
+    this.configuration = configuration;
   }
 
   @Override
@@ -28,7 +31,7 @@ public class AuthenticationGuiceServletContextListener extends GuiceResteasyBoot
     return Lists.newArrayList(new IOModule(), new ConfigModule(),
                               new DiscoveryRuntimeModule().getSingleNodeModules(),
                               new SecurityModules().getSingleNodeModules(),
-                              new SecurityJerseyModule(handlerMap));
+                              new SecurityHandlerModule(handlerMap, configuration));
   }
 
 }
