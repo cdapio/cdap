@@ -3,19 +3,30 @@
  */
 package com.continuuity.data.tools;
 
+import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset2.DatasetFramework;
+import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
+import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
+import com.continuuity.logging.save.LogSaverTableUtil;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,9 +38,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Data-Fabric command line tool.
+ * Reactor command line tool.
  */
-public class DataFabricTool {
+public class ReactorTool {
 
   /**
    * Set of Action available in this tool.
@@ -73,6 +84,8 @@ public class DataFabricTool {
         new ConfigModule(cConf, hConf),
         new LocationRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
+        new KafkaClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -80,6 +93,8 @@ public class DataFabricTool {
           }
         },
         new ZKClientModule(),
+        new IOModule(),
+        new AuthModule(),
         new DiscoveryRuntimeModule().getDistributedModules()
       );
 
@@ -127,6 +142,12 @@ public class DataFabricTool {
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     MetricsTableFactory metricsTableFactory = injector.getInstance(MetricsTableFactory.class);
+    MetaDataTable metaDataTable = injector.getInstance(MetaDataTable.class);
+    LogSaverTableUtil logSaverUtil = injector.getInstance(LogSaverTableUtil.class);
+    ScheduleStoreTableUtil scheduleStoreUtil = injector.getInstance(ScheduleStoreTableUtil.class);
+
+    DatasetFramework framework = getDatasetFramework(injector);
+    DatasetMetaTableUtil datasetTableUtil = new DatasetMetaTableUtil(framework);
 
     // Upgrade all user tables.
     Properties properties = new Properties();
@@ -139,11 +160,30 @@ public class DataFabricTool {
     queueAdmin.upgrade();
     streamAdmin.upgrade();
 
+    // Upgrade the metadata table
+    metaDataTable.upgrade();
+
+    // Upgrade schedule store
+    scheduleStoreUtil.upgrade();
+
+    // Upgrade log saver meta table
+    logSaverUtil.upgrade();
+
+    // Upgrade the dataset types table
+    datasetTableUtil.upgrade();
+
     // Upgrade metrics table
     metricsTableFactory.upgrade();
   }
 
+  private DatasetFramework getDatasetFramework(Injector injector) throws Exception {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+
+    DatasetDefinitionRegistry registry = injector.getInstance(DefaultDatasetDefinitionRegistry.class);
+    return DatasetMetaTableUtil.createRegisteredDatasetFramework(registry, cConf);
+  }
+
   public static void main(String[] args) throws Exception {
-    new DataFabricTool().doMain(args);
+    new ReactorTool().doMain(args);
   }
 }

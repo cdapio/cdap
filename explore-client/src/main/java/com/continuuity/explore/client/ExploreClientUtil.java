@@ -38,8 +38,8 @@ public class ExploreClientUtil {
       if (++tries > maxTries) {
         break;
       }
-    } while (status.getState() == Status.State.RUNNING || status.getState() == Status.State.PENDING ||
-      status.getState() == Status.State.INITIALIZED || status.getState() == Status.State.UNKNOWN);
+    } while (status.getStatus() == Status.OpStatus.RUNNING || status.getStatus() == Status.OpStatus.PENDING ||
+             status.getStatus() == Status.OpStatus.INITIALIZED || status.getStatus() == Status.OpStatus.UNKNOWN);
     return status;
   }
 }

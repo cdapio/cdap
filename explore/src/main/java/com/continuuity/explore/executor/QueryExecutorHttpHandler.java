@@ -62,7 +62,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Received query: {}", query);
       Handle handle = exploreService.execute(query);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -135,7 +135,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/nextResults")
+  @Path("/data/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {

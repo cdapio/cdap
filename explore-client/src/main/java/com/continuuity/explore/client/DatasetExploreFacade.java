@@ -51,9 +51,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
@@ -86,9 +86,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {

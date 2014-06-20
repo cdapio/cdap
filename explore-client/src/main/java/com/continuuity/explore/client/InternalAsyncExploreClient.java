@@ -43,6 +43,15 @@ public class InternalAsyncExploreClient extends AbstractAsyncExploreClient imple
   }
 
   @Override
+  public boolean isAvailable() throws ExploreException {
+    HttpResponse response = doPost(String.format("explore/status"), null, null);
+    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+      return true;
+    }
+    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+  }
+
+  @Override
   public Handle enableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
