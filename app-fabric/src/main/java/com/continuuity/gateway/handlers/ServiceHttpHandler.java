@@ -59,7 +59,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user twill apps for an application
+   * Return the list of user twill apps for an application.
    */
   @Path("/apps/{app-id}/services")
   @GET
@@ -95,15 +95,15 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Return the service details of a given service.
    */
-  @Path("/apps/{app-id}/services/{service-name}")
+  @Path("/apps/{app-id}/services/{service-id}")
   @GET
   public void getService(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId,
-                         @PathParam("service-name") String serviceName) {
+                         @PathParam("service-id") String serviceId) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceName);
+      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
       if (spec != null) {
         JsonObject service = new JsonObject();
         service.addProperty("id", spec.getName());
@@ -130,21 +130,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
    * Return the number of instances for the given runnable of a service.
    */
   @GET
-  @Path("/apps/{app-id}/services/{service-name}/runnables/{runnable-name}/instances")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") String appId,
-                           @PathParam("service-name") String serviceName,
+                           @PathParam("service-id") String serviceId,
                            @PathParam("runnable-name") String runnableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceName, runnableName);
+      RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceId, runnableName);
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       } else {
         JsonObject reply = new JsonObject();
         reply.addProperty("requested", specification.getResourceSpecification().getInstances());
-        reply.addProperty("provisioned", getRunnableCount(accountId, appId, serviceName, runnableName));
+        reply.addProperty("provisioned", getRunnableCount(accountId, appId, serviceId, runnableName));
         responder.sendJson(HttpResponseStatus.OK, reply);
       }
     } catch (SecurityException e) {
@@ -159,11 +159,11 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
    * Set instances.
    */
   @PUT
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/instances")
+  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
   public void setInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") String appId,
                            @PathParam("service-id") String serviceId,
-                           @PathParam("runnable-id") String runnableId) {
+                           @PathParam("runnable-name") String runnableName) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -175,16 +175,16 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      store.setServiceRunnableInstances(programId, runnableId, instances);
+      store.setServiceRunnableInstances(programId, runnableName, instances);
 
-      int oldInstances = store.getServiceRunnableInstances(programId, runnableId);
+      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                       programId.getApplicationId(),
                                                                       programId.getId(),
                                                                       Type.SERVICE);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
-                                            ImmutableMap.of("runnable", runnableId,
+                                            ImmutableMap.of("runnable", runnableName,
                                                             "newInstances", String.valueOf(instances),
                                                             "oldInstances", String.valueOf(oldInstances))).get();
       }
@@ -193,6 +193,26 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
       LOG.error("Got exception : ", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/live-info")
+  public void liveInfo(HttpRequest request, HttpResponder responder,
+                       @PathParam("app-id") String appId,
+                       @PathParam("service-id") String serviceId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    serviceId),
+                                                    Type.SERVICE));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
