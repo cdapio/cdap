@@ -74,6 +74,7 @@ public class AsyncExploreClient implements ExploreClient {
       }
       return false;
     } catch (Exception e) {
+      LOG.info("Caught exception when checking Explore availability", e);
       return false;
     }
   }
