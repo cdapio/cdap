@@ -15,16 +15,15 @@
  */
 package com.continuuity.examples.logger;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -48,30 +47,22 @@ import java.util.regex.Pattern;
  * An Application that analyzes Apache access log events to count the number of occurrences of
  * each HTTP status code.
  */
-public class ResponseCodeAnalyticsApp implements Application {
+public class ResponseCodeAnalyticsApp extends AbstractApplication {
   // The constant to define the row key of a table
   private static final byte [] ROW_KEY = Bytes.toBytes("status");
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("ResponseCodeAnalytics")
-      .setDescription("HTTP response code analytics")
-      // Ingest data into the app via Streams
-      .withStreams()
-        .add(new Stream("logEventStream"))
-      // Store processed data in DataSets
-      .withDataSets()
-        .add(new Table("statusCodeTable"))
-      // Process log events in real-time using Flows
-      .withFlows()
-        .add(new LogAnalyticsFlow())
-      // Query the processed data using Procedures
-      .withProcedures()
-        .add(new StatusCodeProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("ResponseCodeAnalytics");
+    setDescription("HTTP response code analytics");
+    // Ingest data into the app via Streams
+    addStream(new Stream("logEventStream"));
+    // Store processed data in DataSets
+    createDataSet("statusCodeTable", Table.class);
+    // Process log events in real-time using Flows
+    addFlow(new LogAnalyticsFlow());
+    // Query the processed data using Procedures
+    addProcedure(new StatusCodeProcedure());
   }
 
   /**
