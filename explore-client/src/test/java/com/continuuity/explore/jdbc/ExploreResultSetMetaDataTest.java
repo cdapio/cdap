@@ -20,7 +20,7 @@ public class ExploreResultSetMetaDataTest {
 
   private void assertMetaData(List<ColumnDesc> columnDescs, List<String> expectedTypeNames, List<Integer> expectedTypes,
                               List<String> expectedClassNames, List<String> expectedNames)
-      throws Exception{
+      throws Exception {
     ResultSetMetaData metaData = new ExploreResultSetMetaData(columnDescs);
     Assert.assertEquals(columnDescs.size(), metaData.getColumnCount());
     for (int i = 0; i < expectedTypeNames.size(); i++) {

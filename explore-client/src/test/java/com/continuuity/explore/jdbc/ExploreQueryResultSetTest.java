@@ -37,26 +37,24 @@ public class ExploreQueryResultSetTest {
             new ColumnDesc("column10", "date", 10, ""),
             new ColumnDesc("column11", "timestamp", 11, ""),
             new ColumnDesc("column12", "decimal", 12, ""),
-            new ColumnDesc("column13", "binary", 13, ""),
-            new ColumnDesc("column14", "map<string,string>", 14, ""),
-            new ColumnDesc("column15", "array<string>", 15, ""),
-            new ColumnDesc("column16", "struct<name:string,attr:string>", 16, "")
+            new ColumnDesc("column14", "map<string,string>", 13, ""),
+            new ColumnDesc("column15", "array<string>", 14, ""),
+            new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
         ImmutableMap.of("foobar", (List<Row>) Lists.newArrayList(
             new Row(ImmutableList.<Object>of(
                 "value1",
                 1,
                 "c",
-                new Float(0.1f),
-                new Double(0.2d),
+                0.1f,
+                0.2d,
                 true,
                 0x1,
-                new Short((short) 2),
+                (short) 2,
                 new Long(10),
-                new Date(10),
-                new Timestamp(10),
-                new BigDecimal("1000000000"),
-                new byte[] { 'a' },
+                "2014-06-20",
+                "2014-06-20 07:37:00",
+                "1000000000",
                 "\"{\"key1\":\"value1\"}",
                 "[\"a\",\"b\",\"c\"]",
                 "{\"name\":\"first\",\"attr\":\"second\"}"
@@ -76,13 +74,12 @@ public class ExploreQueryResultSetTest {
     Assert.assertEquals(0x1, resultSet.getByte(7));
     Assert.assertEquals(2, resultSet.getShort(8));
     Assert.assertEquals(10, resultSet.getLong(9));
-    Assert.assertEquals(new Date(10), resultSet.getDate(10));
-    Assert.assertEquals(new Timestamp(10), resultSet.getTimestamp(11));
+    Assert.assertEquals(Date.valueOf("2014-06-20"), resultSet.getDate(10));
+    Assert.assertEquals(Timestamp.valueOf("2014-06-20 07:37:00"), resultSet.getTimestamp(11));
     Assert.assertEquals(new BigDecimal("1000000000"), resultSet.getBigDecimal(12));
-    Assert.assertEquals(new byte[] { 'a' }, resultSet.getBytes(13));
-    Assert.assertEquals("\"{\"key1\":\"value1\"}", resultSet.getString(14));
-    Assert.assertEquals("[\"a\",\"b\",\"c\"]", resultSet.getString(15));
-    Assert.assertEquals("{\"name\":\"first\",\"attr\":\"second\"}", resultSet.getString(16));
+    Assert.assertEquals("\"{\"key1\":\"value1\"}", resultSet.getString(13));
+    Assert.assertEquals("[\"a\",\"b\",\"c\"]", resultSet.getString(14));
+    Assert.assertEquals("{\"name\":\"first\",\"attr\":\"second\"}", resultSet.getString(15));
     Assert.assertFalse(resultSet.next());
   }
 }

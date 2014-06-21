@@ -29,6 +29,7 @@ import java.util.Properties;
 public class ExploreConnection implements Connection {
 
   private final ExploreClient exploreClient;
+  private boolean isClosed = false;
 
   public ExploreConnection(ExploreClient exploreClient, Properties info) {
     this.exploreClient = exploreClient;
@@ -36,14 +37,29 @@ public class ExploreConnection implements Connection {
 
   @Override
   public Statement createStatement() throws SQLException {
-    // TODO check if connection is closed and return exception in this case
-    return new ExploreStatement(exploreClient);
+    if (isClosed) {
+      throw new SQLException("Can't create Statement, connection is closed");
+    }
+    return new ExploreStatement(this, exploreClient);
   }
 
   @Override
   public PreparedStatement prepareStatement(String sql) throws SQLException {
-    // TODO check if connection is closed and return exception in this case
-    return new ExplorePreparedStatement(exploreClient, sql);
+    if (isClosed) {
+      throw new SQLException("Can't create Statement, connection is closed");
+    }
+    return new ExplorePreparedStatement(this, exploreClient, sql);
+  }
+
+  @Override
+  public void close() throws SQLException {
+    // Close is a no-op, since the client does not keep a state
+    isClosed = true;
+  }
+
+  @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
   }
 
   @Override
@@ -77,17 +93,8 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public void close() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
   public DatabaseMetaData getMetaData() throws SQLException {
+    // TODO Hive jdbc driver supports that
     throw new SQLException("Method not supported");
   }
 

@@ -42,24 +42,25 @@ import java.util.Map;
  */
 public class ExploreQueryResultSet implements ResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
-  private static final int NEXT_RESULTS = 1000;
 
   private boolean isClosed = false;
+  private int fetchSize;
 
   private boolean hasMoreResults = true;
   private Iterator<Row> rowsItr;
   private Row currentRow;
   private ExploreResultSetMetaData metaData;
-  private boolean wasNull = false;
 
+  private boolean wasNull = false;
   private final Explore exploreClient;
   private final Statement statement;
   private final Handle stmtHandle;
 
-  public ExploreQueryResultSet(Explore exploreClient, Statement statement, Handle stmtHandle) {
+  public ExploreQueryResultSet(Explore exploreClient, Statement statement, Handle stmtHandle) throws SQLException {
     this.exploreClient = exploreClient;
     this.statement = statement;
     this.stmtHandle = stmtHandle;
+    this.fetchSize = statement.getFetchSize();
   }
 
   @Override
@@ -81,7 +82,7 @@ public class ExploreQueryResultSet implements ResultSet {
       if (stmtHandle == null) {
         throw new SQLException("Handle is null.");
       }
-      List<Row> fetchedRows = exploreClient.nextResults(stmtHandle, NEXT_RESULTS);
+      List<Row> fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
       if (fetchedRows.isEmpty()) {
         hasMoreResults = false;
         currentRow = null;
@@ -163,7 +164,6 @@ public class ExploreQueryResultSet implements ResultSet {
         // todo: returns json string. should recreate object from it?
         return value;
       default:
-        // TODO do int, etc.. fall into defaut? write a test case for that
         return value;
     }
   }
@@ -175,6 +175,9 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
     if (metaData == null) {
       try {
         List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
@@ -393,6 +396,14 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
+  public void setFetchSize(int rows) throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    fetchSize = rows;
+  }
+
+  @Override
   public InputStream getAsciiStream(int i) throws SQLException {
     throw new SQLException("Method not supported");
   }
@@ -582,13 +593,11 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public void setFetchSize(int i) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
   public int getFetchSize() throws SQLException {
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    return fetchSize;
   }
 
   @Override

@@ -14,8 +14,8 @@ import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
+import com.continuuity.explore.client.InternalAsyncExploreClient;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;

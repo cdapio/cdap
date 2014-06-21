@@ -25,6 +25,8 @@ public class ExploreStatement implements Statement {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreStatement.class);
   private static final int MAX_POLL_TRIES = 1000000;
 
+  private int fetchSize = 50;
+
   /**
    * We need to keep a reference to the result set to support the following:
    * <code>
@@ -41,9 +43,11 @@ public class ExploreStatement implements Statement {
 
   private Handle stmtHandle = null;
 
+  private final Connection connection;
   private final Explore exploreClient;
 
-  public ExploreStatement(Explore exploreClient) {
+  public ExploreStatement(Connection connection, Explore exploreClient) {
+    this.connection = connection;
     this.exploreClient = exploreClient;
   }
 
@@ -93,13 +97,13 @@ public class ExploreStatement implements Statement {
 
   @Override
   public ResultSet getResultSet() throws SQLException {
-    return null;
+    return resultSet;
   }
 
   @Override
   public int executeUpdate(String sql) throws SQLException {
-    execute(sql);
-    return 0;
+    // We don't support writes in explore yet
+    throw new SQLException("Method not supported");
   }
 
   public void closeClientOperation() throws SQLException {
@@ -128,117 +132,117 @@ public class ExploreStatement implements Statement {
 
   @Override
   public int getMaxFieldSize() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setMaxFieldSize(int i) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getMaxRows() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setMaxRows(int i) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setEscapeProcessing(boolean b) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getQueryTimeout() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setQueryTimeout(int i) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void cancel() throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    return null;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setCursorName(String s) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getUpdateCount() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean getMoreResults() throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setFetchDirection(int i) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getFetchDirection() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setFetchSize(int i) throws SQLException {
-
+    fetchSize = i;
   }
 
   @Override
   public int getFetchSize() throws SQLException {
-    return 0;
+    return fetchSize;
   }
 
   @Override
   public int getResultSetConcurrency() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getResultSetType() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void addBatch(String s) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void clearBatch() throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int[] executeBatch() throws SQLException {
-    return new int[0];
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public Connection getConnection() throws SQLException {
-    return null;
+    return connection;
   }
 
   @Override
@@ -249,66 +253,66 @@ public class ExploreStatement implements Statement {
 
   @Override
   public ResultSet getGeneratedKeys() throws SQLException {
-    return null;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int executeUpdate(String s, int i) throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int executeUpdate(String s, int[] ints) throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int executeUpdate(String s, String[] strings) throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean execute(String s, int i) throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean execute(String s, int[] ints) throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean execute(String s, String[] strings) throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public int getResultSetHoldability() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean isClosed() throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public void setPoolable(boolean b) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean isPoolable() throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    return null;
+    throw new SQLException("Method not supported");
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    return false;
+    throw new SQLException("Method not supported");
   }
 }
