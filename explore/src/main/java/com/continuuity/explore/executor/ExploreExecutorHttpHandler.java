@@ -54,8 +54,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       if (!(dataset instanceof RecordScannable)) {
         // It is not an error to get non-RowScannable datasets, since the type of dataset may not be known where this
-        // call originates from.
-        responder.sendStatus(HttpResponseStatus.NO_CONTENT);
+        // call originates from. We send it as NO_CONTENT to differentiate from OK in the caller.
         LOG.debug("Dataset {} does not implement {}", instance, RecordScannable.class.getName());
         responder.sendStatus(HttpResponseStatus.NO_CONTENT);
         return;

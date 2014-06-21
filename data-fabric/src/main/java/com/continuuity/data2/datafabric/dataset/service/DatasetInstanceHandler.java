@@ -144,7 +144,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
                                  name, typeName, e.getMessage());
       LOG.error(msg, e);
-      // responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
     }
 
     responder.sendStatus(HttpResponseStatus.OK);

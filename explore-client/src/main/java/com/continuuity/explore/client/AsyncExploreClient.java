@@ -67,11 +67,15 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public boolean isAvailable() throws ExploreException {
-    HttpResponse response = doGet(String.format("explore/status"));
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return true;
+    try {
+      HttpResponse response = doGet(String.format("explore/status"));
+      if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+        return true;
+      }
+      return false;
+    } catch (Exception e) {
+      return false;
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override
@@ -79,11 +83,11 @@ public class AsyncExploreClient implements ExploreClient {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
+    } else if (HttpResponseStatus.NO_CONTENT.getCode() == response.getResponseCode()) {
+      return Handle.NO_OP;
     }
-//    else if (HttpResponseStatus.NO_CONTENT.getCode() == response.getResponseCode()) {
-//      return null;
-//    }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override
@@ -92,7 +96,8 @@ public class AsyncExploreClient implements ExploreClient {
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override

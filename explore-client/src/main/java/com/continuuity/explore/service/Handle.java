@@ -8,6 +8,9 @@ import java.util.UUID;
  * Represents an operation that is submitted for execution to {@link Explore}.
  */
 public class Handle {
+
+  public static final Handle NO_OP = Handle.fromId("NO_OP");
+
   private final String handle;
 
   public static Handle generate() {
