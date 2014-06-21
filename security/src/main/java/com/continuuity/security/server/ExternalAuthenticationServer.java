@@ -163,8 +163,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
     ((AbstractAuthenticationHandler) authHandler).init();
 
-    Handler grant = handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
-    ((GrantAccessTokenHandler) grant).doStart();
+    GrantAccessTokenHandler tokenHandler = (GrantAccessTokenHandler) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
+    tokenHandler.doStart();
   }
 
   @Override
