@@ -574,8 +574,7 @@ public class MDTBasedStore implements Store {
                                                        id.getApplication(), id.getId(), runnable));
     }
 
-    ResourceSpecification resourceSpec = replaceInstanceCount(runtimeSpec.getResourceSpecification(),
-                                                              count);
+    ResourceSpecification resourceSpec = replaceInstanceCount(runtimeSpec.getResourceSpecification(), count);
     RuntimeSpecification newRuntimeSpec = replaceResourceSpec(runtimeSpec, resourceSpec);
 
     Preconditions.checkNotNull(newRuntimeSpec);
@@ -584,8 +583,9 @@ public class MDTBasedStore implements Store {
                                                              replaceRuntimeSpec(runnable, serviceSpec, newRuntimeSpec));
     storeAppSpec(id.getApplication(), newAppSpec, timestamp);
 
-    LOG.trace("Setting program instances: account: {}, application: {}, procedure: {}, new instances count: {}",
-              id.getAccountId(), id.getApplicationId(), id.getId(), count);
+    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, runnable: {}," +
+              " new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), runnable, count);
 
   }
 
