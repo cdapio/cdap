@@ -1,0 +1,45 @@
+#!/bin/bash
+
+ROOT=`pwd`
+NAME=continuuity-sdk
+DIR=/tmp
+BASE_DIR=$DIR/$NAME
+
+rm -rf $BASE_DIR
+
+mkdir -p $BASE_DIR $BASE_DIR/javadocs $BASE_DIR/lib \
+         $BASE_DIR/conf $BASE_DIR/libexec $BASE_DIR/bin \
+         $BASE_DIR/data $BASE_DIR/web-app $BASE_DIR/lib/native \
+         $BASE_DIR/examples
+
+mvn package site -P dist,javadocs,release,examples -DskipTests -pl singlenode -am
+if [[ $? -ne 0 ]]; then
+  echo "Build failed. Fix the build before proceeding"
+  exit 1
+fi
+
+cp    $ROOT/continuuity-api/target/*.jar $BASE_DIR
+cp    $ROOT/singlenode/target/stage-packaging/opt/continuuity/singlenode/VERSION $BASE_DIR
+cp -r $ROOT/continuuity-api/target/site/apidocs/* $BASE_DIR/javadocs
+cp -r $ROOT/singlenode/target/stage-packaging/opt/continuuity/singlenode/lib/* $BASE_DIR/lib
+cp -r $ROOT/singlenode/src/dist/* $BASE_DIR
+cp -r $ROOT/singlenode/libexec/bin/* $BASE_DIR/libexec
+cp -r $ROOT/singlenode/src/main/resources/* $BASE_DIR/conf
+
+# Copying the selected files to bin.
+cp -r $ROOT/data-fabric/bin/tx-debugger* $BASE_DIR/bin
+cp -r $ROOT/gateway/bin/stream-client $BASE_DIR/bin
+cp -r $ROOT/gateway/bin/meta-client $BASE_DIR/bin
+cp -r $ROOT/gateway/bin/data-client $BASE_DIR/bin
+cp -r $ROOT/singlenode/bin/* $BASE_DIR/bin
+cp -r $ROOT/singlenode/bin/* $BASE_DIR/bin
+
+# Copying web-app
+cp -r $ROOT/web-app/target/local $BASE_DIR/web-app/
+
+cp $ROOT/continuuity-test/src/main/resources/hadoop.dll $BASE_DIR/lib/native
+cp $ROOT/continuuity-test/src/main/resources/*.exe $BASE_DIR/bin
+
+# Copying examples
+rsync -av --exclude='target' --exclude='build.gradle' $ROOT/examples $BASE_DIR/examples
+find examples -name "*.jar" | egrep -v 'sources|javadoc|original' | rsync -av --files-from=-  . $BASE_DIR/

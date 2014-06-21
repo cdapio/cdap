@@ -227,7 +227,12 @@ GOTO :FINALLY
 REM New user experience, enable if it is not enabled already
 if not exist %CONTINUUITY_HOME%\.nux_dashboard (
   REM Deploy app
-  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-1.0.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
+  if exist %~VERSION (
+    for /F %%i in (%~VERSION) do (
+      SET VERSION=%%i
+    )
+  )
+  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-%VERSION%.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
   REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
   REM Start flow
   curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start

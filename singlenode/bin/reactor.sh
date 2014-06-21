@@ -61,6 +61,7 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
 NUX_FILE="$APP_HOME/.nux_dashboard"
+VERSION=`cat $APP_HOME/VERSION`
 
 CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
 
@@ -235,7 +236,7 @@ nux_enabled() {
 
 nux() {
   # Deploy apps
-  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-1.0.jar" -X POST http://127.0.0.1:10000/v2/apps
+  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-$VERSION.jar" -X POST http://127.0.0.1:10000/v2/apps
   # Start flow and procedure
   curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
   curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
