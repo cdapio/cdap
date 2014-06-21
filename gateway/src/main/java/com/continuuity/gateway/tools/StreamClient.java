@@ -33,6 +33,7 @@ import org.apache.log4j.Level;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -101,6 +102,7 @@ public class StreamClient extends ClientToolBase {
 
   public StreamClient(String toolName) {
     super(toolName);
+    buildOptions();
   }
 
   public StreamClient disallowSSL() {
@@ -130,8 +132,8 @@ public class StreamClient extends ClientToolBase {
 
   @Override
   public void printUsage(boolean error) {
-    PrintWriter out = error ? new PrintWriter(System.err) : new PrintWriter(System.out);
-    out.println("Usage: ");
+    PrintStream out = error ? System.err : System.out;
+    out.println("Usage:\n");
     out.println("\t" + getToolName() + " create --stream <id>");
     out.println("\t" + getToolName() + " send --stream <id> --body <value> [ <option> ... ]");
     out.println("\t" + getToolName() + " group --stream <id> [ <option> ... ]");
@@ -139,7 +141,7 @@ public class StreamClient extends ClientToolBase {
     out.println("\t" + getToolName() + " view --stream <id> [ <option> ... ]");
     out.println("\t" + getToolName() + " info --stream <id> [ <option> ... ]");
     out.println("\t" + getToolName() + " truncate --stream <id>");
-    out.println("\t" + getToolName() + " config --stream <id> [ <option> ... ]");
+    out.println("\t" + getToolName() + " config --stream <id> [ <option> ... ]\n");
     super.printUsage(error);
   }
 
@@ -226,16 +228,28 @@ public class StreamClient extends ClientToolBase {
       hex = line.hasOption(HEX_OPTION);
       urlenc = line.hasOption(URL_OPTION);
       all = line.hasOption(ALL_OPTION);
-      consumer = line.hasOption(GROUP_OPTION) ? line.getOptionValue(GROUP_OPTION) : null;
       // validate consumer is a numerical value
-      try {
-        Long.valueOf(consumer);
-      } catch (NumberFormatException e) {
-        usage("--" + GROUP_OPTION + " must have a long integer argument");
+      if (line.hasOption(GROUP_OPTION)) {
+        consumer = line.getOptionValue(GROUP_OPTION);
+        try {
+          Long.valueOf(consumer);
+        } catch (NumberFormatException e) {
+          usage("--" + GROUP_OPTION + " must have a long integer argument");
+        }
+      } else {
+        consumer = null;
       }
-      first = parseNumericArg(line, FIRST_OPTION).intValue();
-      last = parseNumericArg(line, LAST_OPTION).intValue();
-      ttl = parseNumericArg(line, TTL_OPTION);
+
+      try {
+        first = parseNumericArg(line, FIRST_OPTION).intValue();
+      } catch (NullPointerException e) { }
+      try {
+        last = parseNumericArg(line, LAST_OPTION).intValue();
+      } catch (NullPointerException e) { }
+      try {
+        ttl = parseNumericArg(line, TTL_OPTION);
+      } catch (NullPointerException e) { }
+
       // TODO Check for extra params
       // expect at least 1 extra arg because of pos arg, the command to run
       if (line.getArgs().length > 1) {
@@ -352,7 +366,7 @@ public class StreamClient extends ClientToolBase {
     }
     // first validate the command
     if (!supportedCommands.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
+      usage("Please provide a valid command");
     }
     // verify that either --body or --body-file is given
     if ("send".equals(command) && body != null && bodyFile != null) {
@@ -807,15 +821,4 @@ public class StreamClient extends ClientToolBase {
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 
-  /**
-   * Error Description from HTTPResponse
-   */
-  private class ErrorMessage {
-    @SerializedName("error_description")
-    private String errorDescription;
-
-    public String getErrorDescription() {
-      return errorDescription;
-    }
-  }
 }

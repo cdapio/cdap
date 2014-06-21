@@ -63,7 +63,6 @@ public abstract class ClientToolBase {
   }
 
   public void buildOptions() {
-    options = new Options();
     options.addOption(null, HOST_OPTION, true, "To specify the reactor host");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port "
                       + Constants.Gateway.DEFAULT_PORT);
@@ -272,7 +271,6 @@ public abstract class ClientToolBase {
       out.println(statusLine);
       return false;
     }
-    // other errors
     if (verbose) {
       System.out.println(statusLine);
     }
@@ -281,5 +279,6 @@ public abstract class ClientToolBase {
 
   public ClientToolBase(String toolName) {
     this.toolName = toolName;
+    options = new Options();
   }
 }
