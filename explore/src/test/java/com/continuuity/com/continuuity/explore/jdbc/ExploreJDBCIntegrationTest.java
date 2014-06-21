@@ -16,6 +16,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.explore.jdbc.ExploreJDBCUtils;
@@ -68,12 +69,10 @@ public class ExploreJDBCIntegrationTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    String moduleName = "inMemory";
-    datasetFramework.addModule(moduleName, new InMemoryOrderedTableModule());
-    datasetFramework.addModule("keyValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
     DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
     Assert.assertNotNull(admin);
     admin.create();
@@ -131,10 +130,10 @@ public class ExploreJDBCIntegrationTest {
     rowSet = stmt.executeQuery();
     Assert.assertTrue(rowSet.next());
     Assert.assertEquals(1, rowSet.getInt(1));
-    Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2)); // TODO change to toObject
+    Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2));
     Assert.assertTrue(rowSet.next());
     Assert.assertEquals(2, rowSet.getInt(1));
-    Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2)); // TODO change to toObject
+    Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2));
     stmt.close();
 
     connection.close();
@@ -143,7 +142,7 @@ public class ExploreJDBCIntegrationTest {
   @AfterClass
   public static void after() throws Exception {
     datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteModule("keyValue");
+    datasetFramework.deleteModule("keyStructValue");
 
     exploreExecutorService.stopAndWait();
     transactionManager.stopAndWait();

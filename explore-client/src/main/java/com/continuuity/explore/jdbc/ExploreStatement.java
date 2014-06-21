@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Explore JDBC statement.
@@ -36,12 +37,11 @@ public class ExploreStatement implements Statement {
    */
   private ResultSet resultSet = null;
 
-  /**
-   * Keep state so we can fail certain calls made after close().
-   */
   private boolean isClosed = false;
 
   private Handle stmtHandle = null;
+
+  private ReentrantLock clientLock = new ReentrantLock(true);
 
   private final Connection connection;
   private final Explore exploreClient;
@@ -70,11 +70,17 @@ public class ExploreStatement implements Statement {
 
     // TODO in future, the polling logic should be in another SyncExploreClient
     try {
-      stmtHandle = exploreClient.execute(sql);
-      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 300,
+      try {
+        clientLock.lock();
+        stmtHandle = exploreClient.execute(sql);
+      } finally {
+        clientLock.unlock();
+      }
+      // We don't care about passing the lock for getting status
+      Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
                                                                 TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
 
-      if (status.getStatus() != Status.OpStatus.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED && status.getStatus() != Status.OpStatus.CANCELED) {
         throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
                                              "Got final state - %s", sql, status.getStatus().toString()));
       }
@@ -101,22 +107,30 @@ public class ExploreStatement implements Statement {
   }
 
   @Override
-  public int executeUpdate(String sql) throws SQLException {
-    // We don't support writes in explore yet
-    throw new SQLException("Method not supported");
+  public void setFetchSize(int i) throws SQLException {
+    fetchSize = i;
+  }
+
+  @Override
+  public int getFetchSize() throws SQLException {
+    return fetchSize;
   }
 
   public void closeClientOperation() throws SQLException {
     if (stmtHandle != null) {
       try {
+        clientLock.lock();
         exploreClient.close(stmtHandle);
+        stmtHandle = null;
       } catch (HandleNotFoundException e) {
         LOG.error("Ignoring cannot find handle during close.");
       } catch (ExploreException e) {
+        LOG.error("Caught exception when closing statement", e);
         throw new SQLException(e.toString(), e);
+      } finally {
+        clientLock.unlock();
       }
     }
-    stmtHandle = null;
   }
 
   @Override
@@ -128,6 +142,43 @@ public class ExploreStatement implements Statement {
     closeClientOperation();
     resultSet = null;
     isClosed = true;
+  }
+
+  @Override
+  public void cancel() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Can't cancel after statement has been closed");
+    }
+    if (stmtHandle == null) {
+      LOG.info("Trying to cancel with no query.");
+      return;
+    }
+    try {
+      clientLock.lock();
+      exploreClient.cancel(stmtHandle);
+    } catch (HandleNotFoundException e) {
+      LOG.error("Ignoring cannot find handle during cancel.");
+    } catch (ExploreException e) {
+      LOG.error("Caught exception when closing statement", e);
+      throw new SQLException(e.toString(), e);
+    } finally {
+      clientLock.unlock();
+    }
+  }
+
+  @Override
+  public Connection getConnection() throws SQLException {
+    return connection;
+  }
+
+  ReentrantLock getClientLock() {
+    return clientLock;
+  }
+
+  @Override
+  public int executeUpdate(String sql) throws SQLException {
+    // We don't support writes in explore yet
+    throw new SQLException("Method not supported");
   }
 
   @Override
@@ -162,11 +213,6 @@ public class ExploreStatement implements Statement {
 
   @Override
   public void setQueryTimeout(int i) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public void cancel() throws SQLException {
     throw new SQLException("Method not supported");
   }
 
@@ -206,16 +252,6 @@ public class ExploreStatement implements Statement {
   }
 
   @Override
-  public void setFetchSize(int i) throws SQLException {
-    fetchSize = i;
-  }
-
-  @Override
-  public int getFetchSize() throws SQLException {
-    return fetchSize;
-  }
-
-  @Override
   public int getResultSetConcurrency() throws SQLException {
     throw new SQLException("Method not supported");
   }
@@ -238,11 +274,6 @@ public class ExploreStatement implements Statement {
   @Override
   public int[] executeBatch() throws SQLException {
     throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public Connection getConnection() throws SQLException {
-    return connection;
   }
 
   @Override

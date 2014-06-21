@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -61,7 +62,9 @@ public class ExploreQueryResultSetTest {
         ))
     );
 
-    ExploreQueryResultSet resultSet = new ExploreQueryResultSet(exploreClient, null, Handle.fromId("foobar"));
+    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
+                                                    new ExploreStatement(null, exploreClient),
+                                                    Handle.fromId("foobar"));
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
     Assert.assertEquals("value1", resultSet.getString(1));

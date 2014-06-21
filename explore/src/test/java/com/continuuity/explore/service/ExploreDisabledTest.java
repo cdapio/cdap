@@ -14,8 +14,8 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.explore.client.AsyncExploreClient;
 import com.continuuity.explore.client.ExploreClient;
+import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -52,7 +52,7 @@ public class ExploreDisabledTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    exploreClient = injector.getInstance(AsyncExploreClient.class);
+    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
     Assert.assertFalse(exploreClient.isAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -60,8 +60,6 @@ public class ExploreDisabledTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteInstance("my_table");
-
     transactionManager.stopAndWait();
     datasetService.startAndWait();
   }
@@ -104,6 +102,9 @@ public class ExploreDisabledTest {
     table.startTx(tx2);
 
     Assert.assertEquals(value1, table.get("1"));
+
+    datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteModule("keyStructValue");
   }
 
   @Test

@@ -1,10 +1,7 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.client.ExploreClient;
-import com.continuuity.explore.client.ExternalAsyncExploreClient;
-import com.continuuity.explore.service.Explore;
 
-import java.net.URI;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -52,6 +49,12 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public DatabaseMetaData getMetaData() throws SQLException {
+    // TODO Hive jdbc driver supports that
+    throw new SQLException("Method not supported");
+  }
+
+  @Override
   public void close() throws SQLException {
     // Close is a no-op, since the client does not keep a state
     isClosed = true;
@@ -93,14 +96,8 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public DatabaseMetaData getMetaData() throws SQLException {
-    // TODO Hive jdbc driver supports that
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
   public void setReadOnly(boolean b) throws SQLException {
-
+    throw new SQLException("Method not supported");
   }
 
   @Override
@@ -250,12 +247,12 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setClientInfo(String s, String s2) throws SQLClientInfoException {
-
+    throw new SQLClientInfoException("Method not supported", null);
   }
 
   @Override
   public void setClientInfo(Properties properties) throws SQLClientInfoException {
-
+    throw new SQLClientInfoException("Method not supported", null);
   }
 
   @Override

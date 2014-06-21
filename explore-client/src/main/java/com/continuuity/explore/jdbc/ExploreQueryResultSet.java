@@ -52,10 +52,11 @@ public class ExploreQueryResultSet implements ResultSet {
 
   private boolean wasNull = false;
   private final Explore exploreClient;
-  private final Statement statement;
+  private final ExploreStatement statement;
   private final Handle stmtHandle;
 
-  public ExploreQueryResultSet(Explore exploreClient, Statement statement, Handle stmtHandle) throws SQLException {
+  public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
+      throws SQLException {
     this.exploreClient = exploreClient;
     this.statement = statement;
     this.stmtHandle = stmtHandle;
@@ -81,7 +82,13 @@ public class ExploreQueryResultSet implements ResultSet {
       if (stmtHandle == null) {
         throw new SQLException("Handle is null.");
       }
-      List<Result> fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
+      List<Result> fetchedRows;
+      try {
+        statement.getClientLock().lock();
+        fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
+      } finally {
+        statement.getClientLock().unlock();
+      }
       if (fetchedRows.isEmpty()) {
         hasMoreResults = false;
         currentRow = null;
@@ -179,6 +186,7 @@ public class ExploreQueryResultSet implements ResultSet {
     }
     if (metaData == null) {
       try {
+        statement.getClientLock().lock();
         List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
         metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
@@ -187,6 +195,8 @@ public class ExploreQueryResultSet implements ResultSet {
       } catch (HandleNotFoundException e) {
         LOG.error("Handle not found when retrieving result set meta data", e);
         throw new SQLException("Handle not found when retrieving result set meta data", e);
+      } finally {
+        statement.getClientLock().unlock();
       }
     }
     return metaData;
