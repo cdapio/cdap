@@ -64,13 +64,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
-      // skip if not exists: someone may be deleting it at same time
-      if (!instanceManager.delete(spec.getName())) {
-        continue;
-      }
-
       try {
-        opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+        // It is okay if dataset not exists: someone may be deleting it at same time
+        dropDataset(spec);
       } catch (Exception e) {
         String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                    spec.getName(), e.getMessage());
@@ -138,6 +134,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     instanceManager.add(spec);
 
     // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - REACTOR-314
     try {
       datasetExploreFacade.enableExplore(name);
     } catch (ExploreException e) {
@@ -158,30 +155,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                        @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
-
-    // First disable ad-hoc exploration of dataset
-    try {
-      datasetExploreFacade.disableExplore(name);
-    } catch (ExploreException e) {
-      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
-                                 name, e.getMessage());
-      LOG.error(msg, e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-    }
-
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    if (!instanceManager.delete(name)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
     try {
-      opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+      if (!dropDataset(spec)) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
     } catch (Exception e) {
       String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                  name, e.getMessage());
@@ -234,4 +218,31 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
+  /**
+   * Drops a dataset.
+   * @param spec specification of dataset to be dropped.
+   * @return true if dropped successfully, false if dataset is not found.
+   * @throws Exception on error.
+   */
+  private boolean dropDataset(DatasetSpecification spec) throws Exception {
+    String name = spec.getName();
+
+    // First disable ad-hoc exploration of dataset
+    // Note: today explore disable is not transactional with dataset delete - REACTOR-314
+    try {
+      datasetExploreFacade.disableExplore(name);
+    } catch (ExploreException e) {
+      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
+                                 name, e.getMessage());
+      LOG.error(msg, e);
+      throw e;
+    }
+
+    if (!instanceManager.delete(name)) {
+      return false;
+    }
+
+    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    return true;
+  }
 }

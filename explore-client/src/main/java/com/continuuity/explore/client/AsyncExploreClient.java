@@ -69,10 +69,7 @@ public class AsyncExploreClient implements ExploreClient {
   public boolean isAvailable() throws ExploreException {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
-      if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-        return true;
-      }
-      return false;
+      return HttpResponseStatus.OK.getCode() == response.getResponseCode();
     } catch (Exception e) {
       LOG.info("Caught exception when checking Explore availability", e);
       return false;
@@ -220,7 +217,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   private String resolve(String resource) {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null) {
+    if (endpointStrategy == null || endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
       LOG.error(message);
       throw new RuntimeException(message);
