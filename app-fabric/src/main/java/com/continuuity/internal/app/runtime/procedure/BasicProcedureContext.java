@@ -14,6 +14,7 @@ import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -104,5 +105,10 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       arguments.put(it.next());
     }
     return arguments.build();
+  }
+
+  @Override
+  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+    return null;
   }
 }

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -227,6 +228,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       arguments.put(it.next());
     }
     return arguments.build();
+  }
+
+  @Override
+  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
+    return null;
   }
 
   public void flushOperations() throws Exception {
