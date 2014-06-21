@@ -5,7 +5,7 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
 import com.google.common.collect.Lists;
@@ -21,10 +21,11 @@ import java.util.Set;
 public class MockExploreClient implements ExploreClient {
 
   private final Map<String, List<ColumnDesc>> handlesToMetadata;
-  private final Map<String, List<Row>> handlesToResults;
+  private final Map<String, List<Result>> handlesToResults;
   private final Set<String> fetchedResults;
 
-  public MockExploreClient(Map<String, List<ColumnDesc>> handlesToMetadata, Map<String, List<Row>> handlesToResults) {
+  public MockExploreClient(Map<String, List<ColumnDesc>> handlesToMetadata,
+                           Map<String, List<Result>> handlesToResults) {
     this.handlesToMetadata = handlesToMetadata;
     this.handlesToResults = handlesToResults;
     this.fetchedResults = Sets.newHashSet();
@@ -64,7 +65,7 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     // For now we don't consider the size - until needed by other tests
 
     if (fetchedResults.contains(handle.getHandle())) {

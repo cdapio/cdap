@@ -3,7 +3,7 @@ package com.continuuity.explore.jdbc;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -41,8 +40,8 @@ public class ExploreQueryResultSetTest {
             new ColumnDesc("column15", "array<string>", 14, ""),
             new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
-        ImmutableMap.of("foobar", (List<Row>) Lists.newArrayList(
-            new Row(ImmutableList.<Object>of(
+        ImmutableMap.of("foobar", (List<Result>) Lists.newArrayList(
+            new Result(ImmutableList.<Object>of(
                 "value1",
                 1,
                 "c",

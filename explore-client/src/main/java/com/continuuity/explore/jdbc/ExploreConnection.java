@@ -24,14 +24,14 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- *
+ * Explore JDBC connection.
  */
 public class ExploreConnection implements Connection {
 
   private final ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  public ExploreConnection(ExploreClient exploreClient, Properties info) {
+  public ExploreConnection(ExploreClient exploreClient) {
     this.exploreClient = exploreClient;
   }
 

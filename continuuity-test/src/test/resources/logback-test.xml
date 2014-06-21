@@ -25,9 +25,9 @@
         </layout>
     </appender>
 
-    <logger name="com.continuuity" level="INFO" />
+    <logger name="com.continuuity" level="DEBUG" />
 
-    <root level="WARN">
+    <root level="DEBUG">
         <appender-ref ref="CLOG"/>
         <appender-ref ref="STDOUT"/>
     </root>

@@ -1,10 +1,10 @@
-package com.continuuity.data2.datafabric.dataset;
+package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Testcase for {@link AbstractObjectsStore}
+ * Testcase for {@link com.continuuity.data2.datafabric.dataset.service.mds.AbstractObjectsStore}
  */
 public class AbstractObjectsStoreTest {
   @Test

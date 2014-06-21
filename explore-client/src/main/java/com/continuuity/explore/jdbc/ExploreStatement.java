@@ -19,7 +19,7 @@ import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Explore JDBC statement.
  */
 public class ExploreStatement implements Statement {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreStatement.class);

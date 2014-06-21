@@ -1,15 +1,13 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.service.Handle;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
@@ -142,10 +140,10 @@ public class ExploreDriverTest {
     @POST
     @Path("v2/data/queries/{id}/nextResults")
     public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
-      List<Row> rows = Lists.newArrayList();
+      List<Result> rows = Lists.newArrayList();
       if (!handleWithFetchedResutls.contains(id)) {
-        rows.add(new Row(ImmutableList.<Object>of("1", "one")));
-        rows.add(new Row(ImmutableList.<Object>of("2", "two")));
+        rows.add(new Result(ImmutableList.<Object>of("1", "one")));
+        rows.add(new Result(ImmutableList.<Object>of("2", "two")));
         handleWithFetchedResutls.add(id);
       }
       responder.sendJson(HttpResponseStatus.OK, rows);

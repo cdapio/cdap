@@ -30,7 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -40,6 +40,8 @@ import javax.ws.rs.PathParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
+  public static final String HEADER_CLASS_NAME = "X-Continuuity-Class-Name";
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
   private final DatasetTypeManager manager;
@@ -83,16 +85,20 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, final HttpResponder responder) {
-    manager.deleteModules();
-    responder.sendStatus(HttpResponseStatus.OK);
+    try {
+      manager.deleteModules();
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (DatasetModuleConflictException e) {
+      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
+    }
   }
 
-  @POST
+  @PUT
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws IOException {
 
-    String className = request.getHeader("class-name");
+    String className = request.getHeader(HEADER_CLASS_NAME);
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}", name, className);
 
@@ -101,7 +107,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
                                      name, existing);
       LOG.warn(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
+      responder.sendError(HttpResponseStatus.CONFLICT, message);
       return;
     }
 
@@ -137,7 +143,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     try {
       manager.addModule(name, className, archive);
     } catch (DatasetModuleConflictException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
     }
     // todo: response with DatasetModuleMeta of just added module (and log this info)

@@ -16,7 +16,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
- *
+ * Explore JDBC Driver.
  */
 public class ExploreDriver implements Driver {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreDriver.class);
@@ -48,7 +48,7 @@ public class ExploreDriver implements Driver {
       LOG.error("Caught exception when asking for Explore status", e);
       throw new SQLException(e);
     }
-    return new ExploreConnection(exploreClient, info);
+    return new ExploreConnection(exploreClient);
   }
 
   @Override
@@ -58,8 +58,7 @@ public class ExploreDriver implements Driver {
 
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String s, Properties properties) throws SQLException {
-    // TODO implement
-    return new DriverPropertyInfo[0];
+    throw new SQLException("Method not supported");
   }
 
   @Override

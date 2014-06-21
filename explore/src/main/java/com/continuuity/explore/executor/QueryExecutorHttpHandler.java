@@ -5,7 +5,7 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
@@ -142,8 +142,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       Map<String, String> args = decodeArguments(request);
       int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
       Handle handle = Handle.fromId(id);
-      List<Row> rows = exploreService.nextResults(handle, size);
-      responder.sendJson(HttpResponseStatus.OK, rows);
+      List<Result> results = exploreService.nextResults(handle, size);
+      responder.sendJson(HttpResponseStatus.OK, results);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {

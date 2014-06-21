@@ -5,14 +5,13 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.net.URL;
@@ -47,8 +46,8 @@ public class ExploreQueryResultSet implements ResultSet {
   private int fetchSize;
 
   private boolean hasMoreResults = true;
-  private Iterator<Row> rowsItr;
-  private Row currentRow;
+  private Iterator<Result> rowsItr;
+  private Result currentRow;
   private ExploreResultSetMetaData metaData;
 
   private boolean wasNull = false;
@@ -82,7 +81,7 @@ public class ExploreQueryResultSet implements ResultSet {
       if (stmtHandle == null) {
         throw new SQLException("Handle is null.");
       }
-      List<Row> fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
+      List<Result> fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
       if (fetchedRows.isEmpty()) {
         hasMoreResults = false;
         currentRow = null;

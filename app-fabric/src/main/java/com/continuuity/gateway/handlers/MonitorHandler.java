@@ -134,7 +134,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         if (reactorServiceManager.isServiceAvailable()) {
           responder.sendString(HttpResponseStatus.OK, STATUSOK);
         } else {
-          responder.sendString(HttpResponseStatus.NOT_FOUND, STATUSNOTOK);
+          responder.sendString(HttpResponseStatus.OK, STATUSNOTOK);
         }
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");

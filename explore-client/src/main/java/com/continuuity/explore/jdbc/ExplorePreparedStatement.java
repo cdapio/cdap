@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 /**
- *
+ * Explore JDBC prepared statement.
  */
 public class ExplorePreparedStatement extends ExploreStatement implements PreparedStatement {
 

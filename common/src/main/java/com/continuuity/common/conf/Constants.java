@@ -191,6 +191,7 @@ public final class Constants {
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
+    public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
