@@ -3,6 +3,7 @@ package com.continuuity.data.runtime.main;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.guice.ServiceStoreModules;
+import com.continuuity.app.store.ServiceStore;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -34,7 +35,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
@@ -59,6 +62,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +100,8 @@ public class ReactorServiceMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
+  private ServiceStore serviceStore;
+  private Map<String, String> systemServiceInstanceMap;
 
   private String serviceName;
   private TwillApplication twillApplication;
@@ -111,13 +117,7 @@ public class ReactorServiceMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     isHiveEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
-    twillApplication = createTwillApplication();
-    if (twillApplication == null) {
-      throw new IllegalArgumentException("TwillApplication cannot be null");
-    }
-
-    serviceName = twillApplication.configure().getName();
-
+    serviceName = Constants.Service.REACTOR_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     baseInjector = Guice.createInjector(
@@ -143,6 +143,8 @@ public class ReactorServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
+    systemServiceInstanceMap = baseInjector.getInstance(Key.get(mapOfString, Names.named("service.instance.name")));
   }
 
   @Override
@@ -152,6 +154,12 @@ public class ReactorServiceMain extends DaemonMain {
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
+        Map<String, Integer> instanceCount = getSystemServiceInstances();
+        twillApplication = createTwillApplication(instanceCount);
+        if (twillApplication == null) {
+          throw new IllegalArgumentException("TwillApplication cannot be null");
+        }
+
         LOG.info("Became leader.");
         Injector injector = baseInjector.createChildInjector();
 
@@ -210,9 +218,29 @@ public class ReactorServiceMain extends DaemonMain {
     }
   }
 
-  private TwillApplication createTwillApplication() {
+  private Map<String, Integer> getSystemServiceInstances() {
+    Map<String, Integer> instanceCount = new HashMap<String, Integer>();
+    for (Map.Entry<String, String> entry : systemServiceInstanceMap.entrySet()) {
+      String service = entry.getKey();
+      String instanceVariable = entry.getValue();
+      try {
+        Integer savedCount = serviceStore.getServiceInstance(service);
+        if (savedCount == null) {
+          savedCount = cConf.getInt(instanceVariable);
+        }
+
+        instanceCount.put(service, savedCount);
+        LOG.info("Setting instance count of {} Service to {}", service, savedCount);
+      } catch (Exception e) {
+        LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
+      }
+    }
+    return instanceCount;
+  }
+
+  private TwillApplication createTwillApplication(final Map<String, Integer> serviceInstanceCount) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled, serviceInstanceCount);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

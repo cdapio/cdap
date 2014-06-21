@@ -12,7 +12,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
 /**
- *
+ * ServiceStore Guice Modules.
  */
 public class ServiceStoreModules {
 

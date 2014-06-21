@@ -23,7 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 /**
- *
+ * DataSetService Store implements ServiceStore using DataSets without Transaction.
  */
 public class DatasetServiceStore implements ServiceStore {
 
@@ -47,7 +47,7 @@ public class DatasetServiceStore implements ServiceStore {
       @Override
       public Integer apply(Object input) throws Exception {
         String count = Bytes.toString(table.get(Bytes.toBytes(serviceName), Bytes.toBytes("instance")));
-        return Integer.valueOf(count);
+        return (count != null) ? Integer.valueOf(count) : null;
       }
     }, null);
   }
