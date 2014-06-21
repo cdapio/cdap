@@ -62,7 +62,7 @@ public class ExploreDisabledTest {
   }
 
   @Test
-  public void testDeploRecordScannable() throws Exception {
+  public void testDeployRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
     datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
