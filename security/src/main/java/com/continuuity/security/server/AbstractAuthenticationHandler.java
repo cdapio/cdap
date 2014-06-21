@@ -8,39 +8,22 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.security.Constraint;
 
-import java.io.IOException;
 import javax.security.auth.login.Configuration;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
 
 /**
  * An abstract authentication handler that provides basic functionality including
  * setting of constraints and setting of different required services.
  */
-@Path("/")
+@Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
   protected final CConfiguration configuration;
 
   @Inject
   public AbstractAuthenticationHandler(CConfiguration configuration) {
     this.configuration = configuration;
-  }
-
-  /**
-   * Authentication Handler paths.
-   */
-  public static final class Paths {
-    public static final String GET_TOKEN = "token";
-    public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
 
   /**
@@ -65,26 +48,6 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
     this.doStart();
-  }
-
-  @Path(Paths.GET_TOKEN)
-  @GET
-  @Produces("application/json")
-  public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
-    throws IOException, ServletException {
-
-    super.handle(Paths.GET_TOKEN, Request.getRequest(request), request, response);
-    return Response.status(200).build();
-  }
-
-  @Path(Paths.GET_EXTENDED_TOKEN)
-  @GET
-  @Produces("application/json")
-  public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
-    throws IOException, ServletException {
-
-    super.handle(Paths.GET_EXTENDED_TOKEN, Request.getRequest(request), request, response);
-    return Response.status(200).build();
   }
 
   /**

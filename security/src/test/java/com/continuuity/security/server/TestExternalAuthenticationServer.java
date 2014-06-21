@@ -138,7 +138,7 @@ public class TestExternalAuthenticationServer {
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_TOKEN);
+    String uri = String.format("http://localhost:%d/%s", port, GrantAccessTokenHandler.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
@@ -190,7 +190,7 @@ public class TestExternalAuthenticationServer {
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_TOKEN);
+    String uri = String.format("http://localhost:%d/%s", port, GrantAccessTokenHandler.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "xxxxx");
 
@@ -213,7 +213,7 @@ public class TestExternalAuthenticationServer {
     ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
     HttpClient client = new DefaultHttpClient();
-    String uri = String.format("http://localhost:%d/%s", port, AbstractAuthenticationHandler.Paths.GET_EXTENDED_TOKEN);
+    String uri = String.format("http://localhost:%d/%s", port, GrantAccessTokenHandler.Paths.GET_EXTENDED_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);

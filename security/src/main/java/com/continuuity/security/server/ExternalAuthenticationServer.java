@@ -9,6 +9,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -116,10 +117,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.setServer(server);
       context.addServlet(HttpServletDispatcher.class, "/");
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
+      context.setSecurityHandler((SecurityHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER));
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());
       connector.setPort(port);
+
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
@@ -159,6 +162,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   protected void initHandlers(HashMap<String, Handler> handlers) throws Exception {
     Handler authHandler = handlers.get(HandlerType.AUTHENTICATION_HANDLER);
     ((AbstractAuthenticationHandler) authHandler).init();
+
+    Handler grant = handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
+    ((GrantAccessTokenHandler) grant).doStart();
   }
 
   @Override

@@ -21,10 +21,16 @@ import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 /**
  * Generate and grant access token to authorized users.
  */
+@Path("/")
 public class GrantAccessTokenHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(GrantAccessTokenHandler.class);
   private final TokenManager tokenManager;
@@ -50,6 +56,30 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     tokenManager.stop();
   }
 
+  public static final class Paths {
+    public static final String GET_TOKEN = "token";
+    public static final String GET_EXTENDED_TOKEN = "extendedtoken";
+  }
+
+  @Path(Paths.GET_TOKEN)
+  @GET
+  @Produces("application/json")
+  public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
+      throws IOException, ServletException {
+    this.handle(Paths.GET_TOKEN, Request.getRequest(request), request, response);
+    return Response.status(200).build();
+  }
+
+  @Path(Paths.GET_EXTENDED_TOKEN)
+  @GET
+  @Produces("application/json")
+  public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws IOException, ServletException {
+    this.handle(Paths.GET_EXTENDED_TOKEN, Request.getRequest(request), request, response);
+    return Response.status(200).build();
+  }
+
+
   @Override
   public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
@@ -58,9 +88,9 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     List<String> userGroups = Collections.emptyList();
 
     long tokenValidity;
-    if (target.equals(AbstractAuthenticationHandler.Paths.GET_TOKEN)) {
+    if (target.equals(Paths.GET_TOKEN)) {
       tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
-    } else if (target.equals(AbstractAuthenticationHandler.Paths.GET_EXTENDED_TOKEN)) {
+    } else if (target.equals(Paths.GET_EXTENDED_TOKEN)) {
       tokenValidity = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
     } else {
       throw new ServletException("Unknown path");

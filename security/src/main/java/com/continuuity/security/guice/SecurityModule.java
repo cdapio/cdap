@@ -13,7 +13,6 @@ import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.auth.TokenValidator;
-import com.continuuity.security.server.AbstractAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.inject.Binder;
@@ -96,13 +95,7 @@ public abstract class SecurityModule extends PrivateModule {
 
     @Inject
     public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Handler> handlers) {
-      handlerMap = new HashMap<String, Handler>();
-      Handler securityHandler = handlers.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER);
-      Handler grantAccessTokenHandler = handlers.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER);
-      ((AbstractAuthenticationHandler) securityHandler).setHandler(grantAccessTokenHandler);
-
-      handlerMap.put(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER, securityHandler);
-      handlerMap.put(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER, grantAccessTokenHandler);
+      handlerMap = new HashMap<String, Handler>(handlers);
     }
 
     @Override
