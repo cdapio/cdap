@@ -34,6 +34,8 @@ public class GrantAccessToken {
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
+  private final long tokenExpiration;
+  private final long extendedTokenExpiration;
 
   /**
    * Create a new GrantAccessToken object to generate tokens for authorized users.
@@ -48,6 +50,8 @@ public class GrantAccessToken {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
     this.cConf = cConfiguration;
+    this.tokenExpiration = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
+    this.extendedTokenExpiration = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
   }
 
   /**
@@ -85,7 +89,7 @@ public class GrantAccessToken {
   @Produces("application/json")
   public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
       throws IOException, ServletException {
-    this.grantToken(Paths.GET_TOKEN, request, response);
+    this.grantToken(request, response, tokenExpiration);
     return Response.status(200).build();
   }
 
@@ -102,24 +106,15 @@ public class GrantAccessToken {
   @Produces("application/json")
   public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
-    this.grantToken(Paths.GET_EXTENDED_TOKEN, request, response);
+    this.grantToken(request, response, extendedTokenExpiration);
     return Response.status(200).build();
   }
 
-  private void grantToken(String target, HttpServletRequest request, HttpServletResponse response)
+  private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
     throws IOException, ServletException {
 
     String username = request.getUserPrincipal().getName();
     List<String> userGroups = Collections.emptyList();
-
-    long tokenValidity;
-    if (target.equals(Paths.GET_TOKEN)) {
-      tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
-    } else if (target.equals(Paths.GET_EXTENDED_TOKEN)) {
-      tokenValidity = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
-    } else {
-      throw new ServletException("Unknown path");
-    }
 
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
