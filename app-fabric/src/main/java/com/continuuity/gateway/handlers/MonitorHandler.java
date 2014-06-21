@@ -1,7 +1,6 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.app.store.ServiceStore;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
@@ -39,8 +38,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private final ServiceStore serviceStore;
 
   @Inject
-  public MonitorHandler(CConfiguration cConf, Authenticator authenticator,
-                        Map<String, ReactorServiceManager> serviceMap, ServiceStore serviceStore) throws Exception {
+  public MonitorHandler(Authenticator authenticator, Map<String, ReactorServiceManager> serviceMap,
+                        ServiceStore serviceStore) throws Exception {
     super(authenticator);
     this.reactorServiceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
@@ -61,7 +60,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       Integer requestedInstance = serviceStore.getServiceInstance(serviceName);
       if (requestedInstance == null) {
         requestedInstance = actualInstance;
-        serviceStore.updateServiceInstance(serviceName, actualInstance);
+        serviceStore.setServiceInstance(serviceName, actualInstance);
       }
 
       instances.put("requested", String.valueOf(requestedInstance));
@@ -97,7 +96,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      serviceStore.updateServiceInstance(serviceName, instance);
+      serviceStore.setServiceInstance(serviceName, instance);
       if (serviceManager.setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {

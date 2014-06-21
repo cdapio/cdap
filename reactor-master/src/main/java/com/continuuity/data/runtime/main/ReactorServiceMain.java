@@ -219,7 +219,7 @@ public class ReactorServiceMain extends DaemonMain {
   }
 
   private Map<String, Integer> getSystemServiceInstances() {
-    Map<String, Integer> instanceCount = new HashMap<String, Integer>();
+    Map<String, Integer> instanceCountMap = new HashMap<String, Integer>();
     for (Map.Entry<String, String> entry : systemServiceInstanceMap.entrySet()) {
       String service = entry.getKey();
       String instanceVariable = entry.getValue();
@@ -229,18 +229,18 @@ public class ReactorServiceMain extends DaemonMain {
           savedCount = cConf.getInt(instanceVariable);
         }
 
-        instanceCount.put(service, savedCount);
+        instanceCountMap.put(service, savedCount);
         LOG.info("Setting instance count of {} Service to {}", service, savedCount);
       } catch (Exception e) {
         LOG.error("Couldn't retrieve instance count {} : {}", service, e.getMessage(), e);
       }
     }
-    return instanceCount;
+    return instanceCountMap;
   }
 
-  private TwillApplication createTwillApplication(final Map<String, Integer> serviceInstanceCount) {
+  private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled, serviceInstanceCount);
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isHiveEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

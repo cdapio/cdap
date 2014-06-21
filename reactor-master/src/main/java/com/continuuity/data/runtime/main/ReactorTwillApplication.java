@@ -28,15 +28,15 @@ public class ReactorTwillApplication implements TwillApplication {
   private final File hConfFile;
 
   private final boolean runHiveService;
-  private final Map<String, Integer> instanceCount;
+  private final Map<String, Integer> instanceCountMap;
 
   public ReactorTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
-                                 Map<String, Integer> serviceInstanceCount) {
+                                 Map<String, Integer> instanceCountMap) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
     this.runHiveService = runHiveService;
-    this.instanceCount = serviceInstanceCount;
+    this.instanceCountMap = instanceCountMap;
   }
 
   @Override
@@ -68,7 +68,7 @@ public class ReactorTwillApplication implements TwillApplication {
   private TwillSpecification.Builder.RunnableSetter addLogSaverService(TwillSpecification.Builder.MoreRunnable
                                                                          builder) {
 
-    int numInstances = instanceCount.get(Constants.Service.LOGSAVER);
+    int numInstances = instanceCountMap.get(Constants.Service.LOGSAVER);
     Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
                                 numInstances);
 
@@ -94,7 +94,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
     int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES, 1);
     int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB, 512);
-    int instances = instanceCount.get(Constants.Service.METRICS_PROCESSOR);
+    int instances = instanceCountMap.get(Constants.Service.METRICS_PROCESSOR);
 
     ResourceSpecification metricsProcessorSpec = ResourceSpecification.Builder
       .with()
@@ -115,7 +115,7 @@ public class ReactorTwillApplication implements TwillApplication {
                                                                         builder) {
     int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
     int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB, 2048);
-    int metricsInstances = instanceCount.get(Constants.Service.METRICS);
+    int metricsInstances = instanceCountMap.get(Constants.Service.METRICS);
 
     ResourceSpecification metricsSpec = ResourceSpecification.Builder
       .with()
@@ -136,7 +136,7 @@ public class ReactorTwillApplication implements TwillApplication {
                                                                             builder) {
     int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 2);
     int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 2048);
-    int txInstances = instanceCount.get(Constants.Service.TRANSACTION);
+    int txInstances = instanceCountMap.get(Constants.Service.TRANSACTION);
 
     ResourceSpecification transactionSpec = ResourceSpecification.Builder
       .with()
@@ -155,7 +155,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
 
-    int instances = instanceCount.get(Constants.Service.STREAMS);
+    int instances = instanceCountMap.get(Constants.Service.STREAMS);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES, 1))
@@ -172,7 +172,7 @@ public class ReactorTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addDatasetOpExecutor(
     TwillSpecification.Builder.MoreRunnable builder) {
-    int instances = instanceCount.get(Constants.Service.DATASET_EXECUTOR);
+    int instances = instanceCountMap.get(Constants.Service.DATASET_EXECUTOR);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES, 1))

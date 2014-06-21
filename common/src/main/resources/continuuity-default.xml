@@ -562,9 +562,9 @@
     </property>
 
     <property>
-      <name>dataset.executor.container.instances</name>
-      <value>1</value>
-      <description>Number of DataSet Executor Instances</description>
+        <name>dataset.executor.container.instances</name>
+        <value>1</value>
+        <description>Number of DataSet Executor Instances</description>
     </property>
 
     <property>

@@ -19,5 +19,5 @@ public interface ServiceStore {
    * @param serviceName Service Name.
    * @param instances Instance Count.
    */
-  void updateServiceInstance(String serviceName, int instances) throws TransactionFailureException;
+  void setServiceInstance(String serviceName, int instances) throws TransactionFailureException;
 }

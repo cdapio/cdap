@@ -53,7 +53,7 @@ public class DatasetServiceStore implements ServiceStore {
   }
 
   @Override
-  public void updateServiceInstance(final String serviceName, final int instances) throws TransactionFailureException {
+  public void setServiceInstance(final String serviceName, final int instances) throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
