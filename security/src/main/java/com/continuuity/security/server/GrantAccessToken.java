@@ -35,6 +35,12 @@ public class GrantAccessToken {
   private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
 
+  /**
+   * Create a new GrantAccessToken object to generate tokens for authorized users.
+   * @param tokenManager
+   * @param tokenCodec
+   * @param cConfiguration
+   */
   @Inject
   public GrantAccessToken(TokenManager tokenManager,
                           Codec<AccessToken> tokenCodec,
@@ -58,11 +64,22 @@ public class GrantAccessToken {
     tokenManager.stop();
   }
 
+  /**
+   * Paths to get Access Tokens.
+   */
   public static final class Paths {
     public static final String GET_TOKEN = "token";
     public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
 
+  /**
+   * Get an AccessToken.
+   * @param request
+   * @param response
+   * @return
+   * @throws IOException
+   * @throws ServletException
+   */
   @Path(Paths.GET_TOKEN)
   @GET
   @Produces("application/json")
@@ -72,6 +89,14 @@ public class GrantAccessToken {
     return Response.status(200).build();
   }
 
+  /**
+   * Get a long lasting Access Token.
+   * @param request
+   * @param response
+   * @return
+   * @throws IOException
+   * @throws ServletException
+   */
   @Path(Paths.GET_EXTENDED_TOKEN)
   @GET
   @Produces("application/json")
