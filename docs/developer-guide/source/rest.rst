@@ -570,7 +570,7 @@ Deleting all DataSets
 
 You can delete all DataSets by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/data/unrecoverable/datasets/delete
+  DELETE <base-url>/data/unrecoverable/datasets
 
 HTTP Responses
 ..............
