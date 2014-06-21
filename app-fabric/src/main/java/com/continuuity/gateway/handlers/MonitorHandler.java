@@ -8,6 +8,7 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -69,9 +70,15 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
+    JsonObject reply = new JsonObject();
     if (reactorServiceManagementMap.containsKey(serviceName)) {
-      int instances = reactorServiceManagementMap.get(serviceName).getInstances();
-      responder.sendString(HttpResponseStatus.OK, String.valueOf(instances));
+      String requestedInstances = String.valueOf
+        (reactorServiceManagementMap.get(serviceName).getRequestedInstances());
+      String provisionedInstances = String.valueOf
+        (reactorServiceManagementMap.get(serviceName).getProvisionedInstances());
+      reply.addProperty("requested", requestedInstances);
+      reply.addProperty("provisioned", provisionedInstances);
+      responder.sendJson(HttpResponseStatus.OK, reply);
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
     }
@@ -147,31 +154,29 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services")
   @GET
   public void getServiceSpec(final HttpRequest request, final HttpResponder responder) {
-    List<Map<String, String>> serviceSpec = new ArrayList<Map<String, String>>();
-    String json;
+    List<JsonObject> serviceSpec = new ArrayList<JsonObject>();
     SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
     List<String> serviceList = new ArrayList<String>(services);
     for (String service : serviceList) {
-      Map<String, String> spec = new HashMap<String, String>();
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
       String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       String canCheck = serviceManager.canCheckStatus() ? (
         serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
       String minInstance = String.valueOf(serviceManager.getMinInstances());
       String maxInstance = String.valueOf(serviceManager.getMaxInstances());
-      String curInstance = String.valueOf(serviceManager.getInstances());
-      spec.put("name", service);
-      spec.put("logs", logs);
-      spec.put("status", canCheck);
-      spec.put("min", minInstance);
-      spec.put("max", maxInstance);
-      spec.put("cur", curInstance);
+      String reqInstance = String.valueOf(serviceManager.getRequestedInstances());
+      String provInstance = String.valueOf(serviceManager.getProvisionedInstances());
+      JsonObject reply = new JsonObject();
+      reply.addProperty("name", service);
+      reply.addProperty("logs", logs);
+      reply.addProperty("status", canCheck);
+      reply.addProperty("min", minInstance);
+      reply.addProperty("max", maxInstance);
+      reply.addProperty("requested", reqInstance);
+      reply.addProperty("provisioned", provInstance);
       //TODO: Add metric name for Event Rate monitoring
-      serviceSpec.add(spec);
+      serviceSpec.add(reply);
     }
-
-    json = (GSON).toJson(serviceSpec);
-    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    responder.sendJson(HttpResponseStatus.OK, serviceSpec);
   }
 }
