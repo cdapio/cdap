@@ -2,7 +2,6 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
@@ -14,7 +13,6 @@ import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;

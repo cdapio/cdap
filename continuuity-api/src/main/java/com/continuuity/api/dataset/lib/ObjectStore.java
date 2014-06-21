@@ -2,6 +2,7 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
+import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.dataset.Dataset;
 
 /**
@@ -15,7 +16,7 @@ import com.continuuity.api.dataset.Dataset;
  * @param <T> the type of objects in the store
  */
 @Beta
-public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T> {
+public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   /**
    * Write an object with a given key.
