@@ -15,13 +15,12 @@
  */
 package com.continuuity.examples.analytics;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -49,28 +48,16 @@ import java.util.regex.Pattern;
  * An Application that analyzes Apache access log events to find
  * the distribution of page views of a particular page.
  */
-public class PageViewAnalyticsApp implements Application {
+public class PageViewAnalyticsApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("PageViewAnalytics")
-      .setDescription("Page view analysis")
-      // Ingest data into the app via Streams
-      .withStreams()
-        .add(new Stream("logEventStream"))
-      // Store processed data in DataSets
-      .withDataSets()
-        .add(new PageViewStore("pageViewCDS"))
-      // Process log events in real-time using Flows
-      .withFlows()
-        .add(new LogAnalyticsFlow())
-      // Query the processed data using Procedures
-      .withProcedures()
-        .add(new PageViewProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("PageViewAnalytics");
+    setDescription("Page view analysis");
+    addStream(new Stream("logEventStream"));
+    createDataSet("pageViewCDS", PageViewStore.class);
+    addFlow(new LogAnalyticsFlow());
+    addProcedure(new PageViewProcedure());
   }
 
   /**

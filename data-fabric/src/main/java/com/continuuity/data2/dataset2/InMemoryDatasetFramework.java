@@ -82,6 +82,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean hasType(String typeName) throws DatasetManagementException {
+    return registry.get(typeName) != null;
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());

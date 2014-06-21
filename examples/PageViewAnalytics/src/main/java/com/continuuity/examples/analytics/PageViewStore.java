@@ -16,10 +16,12 @@
 package com.continuuity.examples.analytics;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.table.Increment;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,14 +29,14 @@ import java.util.Map;
 /**
  *  A custom-defined DataSet is used to track page views.
  */
-public class PageViewStore extends DataSet {
+public class PageViewStore extends AbstractDataset {
 
   // Define the underlying table
   private Table table;
 
-  public PageViewStore(String name) {
-    super(name);
-    this.table = new Table("tracks");
+  public PageViewStore(DatasetSpecification spec, @EmbeddedDataSet("tracks") Table table) {
+    super(spec.getName(), table);
+    this.table = table;
   }
 
   /**

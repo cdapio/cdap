@@ -15,30 +15,21 @@
  */
 package com.continuuity.examples.countrandom;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 
 /**
  * CountRandomDemo application contains a Flow {@code CountRandom}.
  */
-public class CountRandom implements Application {
+public class CountRandom extends AbstractApplication {
 
   public static final String TABLE_NAME = "randomTable";
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("CountRandom")
-      .setDescription("Example random count application")
-      .noStream()
-      .withDataSets()
-        .add(new KeyValueTable(TABLE_NAME))
-      .withFlows()
-        .add(new CountRandomFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("CountRandom");
+    setDescription("Example random count application");
+    createDataSet(TABLE_NAME, KeyValueTable.class);
+    addFlow(new CountRandomFlow());
   }
 }

@@ -30,7 +30,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
    */
   private static final byte[] TYPE_TO_MODULE_PREFIX = Bytes.toBytes("t_");
 
-  public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataSet("data") OrderedTable table) {
+  public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataSet("") OrderedTable table) {
     super(spec, table);
   }
 

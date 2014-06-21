@@ -15,11 +15,10 @@
  */
 package com.continuuity.examples.purchase;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
+import com.continuuity.api.dataset.lib.ObjectStores;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 /**
@@ -27,28 +26,21 @@ import com.continuuity.internal.io.UnsupportedTypeException;
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
  * see package-info for more details.
  */
-public class PurchaseApp implements Application {
+public class PurchaseApp extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
+  public void configure() {
+    setName("PurchaseHistory");
+    setDescription("Purchase history app");
+    addStream(new Stream("purchaseStream"));
+    createDataSet("frequentCustomers", KeyValueTable.class);
+    addFlow(new PurchaseFlow());
+    addProcedure(new PurchaseQuery());
+    addWorkflow(new PurchaseHistoryWorkflow());
+
     try {
-      return ApplicationSpecification.Builder.with()
-        .setName("PurchaseHistory")
-        .setDescription("Purchase history app")
-        .withStreams()
-          .add(new Stream("purchaseStream"))
-        .withDataSets()
-          .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
-          .add(new ObjectStore<Purchase>("purchases", Purchase.class))
-          .add(new KeyValueTable("frequentCustomers"))
-        .withFlows()
-          .add(new PurchaseFlow())
-        .withProcedures()
-          .add(new PurchaseQuery())
-        .noMapReduce()
-        .withWorkflows()
-          .add(new PurchaseHistoryWorkflow())
-        .build();
+      ObjectStores.createObjectStore(getConfigurer(), "history", PurchaseHistory.class);
+      ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
       // an interface and not a class, then there is no auto-magic way deserialize an object. In this case that
