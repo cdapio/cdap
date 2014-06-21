@@ -3,6 +3,7 @@ package com.continuuity.explore.service;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -18,6 +19,7 @@ import com.continuuity.explore.client.ExploreClientUtil;
 import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
+import com.continuuity.explore.jdbc.ExploreJDBCUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 
@@ -27,12 +29,19 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +51,7 @@ import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyV
  * Tests Hive13ExploreService.
  */
 public class HiveExploreServiceTest {
+  private static Injector injector;
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
@@ -50,7 +60,7 @@ public class HiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    Injector injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
+    injector = Guice.createInjector(createInMemoryModules(CConfiguration.create(), new Configuration()));
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     transactionManager.startAndWait();
 
@@ -184,6 +194,40 @@ public class HiveExploreServiceTest {
                Lists.newArrayList(
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
+  }
+
+  @Test
+  public void exploreDriverTest() throws Exception {
+    // Register explore jdbc driver
+    Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
+
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Discoverable discoverable = new RandomEndpointStrategy(
+        discoveryServiceClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
+    InetSocketAddress addr = discoverable.getSocketAddress();
+    String serviceUrl = String.format("%s%s:%d", ExploreJDBCUtils.URL_PREFIX, addr.getHostName(), addr.getPort());
+
+    Connection connection = DriverManager.getConnection(serviceUrl);
+    PreparedStatement stmt;
+    ResultSet rowSet;
+
+    stmt = connection.prepareStatement("show tables");
+    rowSet = stmt.executeQuery();
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals("continuuity_user_my_table", rowSet.getString(1));
+    stmt.close();
+
+    stmt = connection.prepareStatement("select key, value from continuuity_user_my_table");
+    rowSet = stmt.executeQuery();
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals(1, rowSet.getInt(1));
+    Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2));
+    Assert.assertTrue(rowSet.next());
+    Assert.assertEquals(2, rowSet.getInt(1));
+    Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2));
+    stmt.close();
+
+    connection.close();
   }
 
   @Test
