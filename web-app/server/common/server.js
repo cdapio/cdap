@@ -64,6 +64,11 @@ WebAppServer.prototype.config = {};
 WebAppServer.prototype.configSet = false;
 
 /**
+ * How often to call security server in case no response is found.
+ */
+WebAppServer.prototype.SECURITY_TIMER = 1000;
+
+/**
  * Globals
  */
 var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
@@ -73,34 +78,38 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
-WebAppServer.prototype.setSecurityStatus = function(setAddress) {
-  // Hit any endpoint to check if authentication is enabled.
-  var options = {
-    host: this.config['gateway.server.address'],
-    port: this.config['gateway.server.port'],
-    path: '/' + this.API_VERSION + '/apps',
-    method: 'GET'
-  };
-
-  var req = this.lib.request(options, function (response) {
-      var data = '';
-      response.on("data", function(chunk) {
-          data += chunk;
-      });
-
-      response.on('end', function () {
+/**
+ * Determines security status. Continues until it is able to determine if security is enabled if
+ * reactor is down.
+ * @param  {Function} callback to call after security status is determined.
+ */
+WebAppServer.prototype.setSecurityStatus = function (callback) {
+  var self = this;
+  
+  var path = '/' + this.API_VERSION + '/apps';
+  var url = ('http://' + this.config['gateway.server.address'] + ':' 
+    + this.config['gateway.server.port'] + path);
+  var interval = setInterval(function () {
+    self.logger.info('Calling security endpoint: ', url);
+    request({
+      method: 'GET',
+      url: url
+    }, function (err, response, body) {
+      if (!err && response && body) {
+        clearInterval(interval);
         if (response.statusCode === 401) {
           SECURITY_ENABLED = true;
           AUTH_SERVER_ADDRESSES = JSON.parse(data).auth_uri;
         } else {
           SECURITY_ENABLED = false;
         }
-        if (typeof setAddress === 'function') {
-          setAddress();
+        self.logger.info('Security configuration found. Security is enabled: ', SECURITY_ENABLED);
+        if (typeof callback === 'function') {
+          callback();
         }
-      });
-  });
-  req.end();
+      }
+    });
+  }, self.SECURITY_TIMER);
 };
 
 /**
@@ -111,7 +120,7 @@ WebAppServer.prototype.getAuthServerAddress = function() {
     return null;
   }
   return AUTH_SERVER_ADDRESSES[Math.floor(Math.random() * AUTH_SERVER_ADDRESSES.length)];
-}
+};
 
 /**
  * Sets version if a version file exists.
