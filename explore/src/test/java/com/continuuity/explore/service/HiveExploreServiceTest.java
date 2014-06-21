@@ -109,6 +109,18 @@ public class HiveExploreServiceTest {
   }
 
   @Test
+  public void testDeployNotRecordScannable() throws Exception {
+    // Try to deploy a dataset that is not record scannable, when explore is enabled.
+    // This should be processed with no exceptionbeing thrown
+    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
+                                 DatasetProperties.EMPTY);
+    DatasetAdmin admin = datasetFramework.getAdmin("my_table_not_record_scannable", null);
+    Assert.assertNotNull(admin);
+    admin.create();
+  }
+
+  @Test
   public void testTable() throws Exception {
     KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
     Assert.assertNotNull(table);

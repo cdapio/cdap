@@ -44,11 +44,16 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
 
   @Override
   public boolean isAvailable() throws ExploreException {
-    HttpResponse response = doGet(String.format("explore/status"));
-    if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return true;
+    try {
+      HttpResponse response = doGet(String.format("explore/status"));
+      if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
+        return true;
+      }
+      return false;
+    } catch (Exception e) {
+      LOG.info("Caught exception when checking Explore availability", e);
+      return false;
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override
@@ -57,7 +62,8 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override
@@ -66,7 +72,8 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override

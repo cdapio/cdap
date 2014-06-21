@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Map reduce input format to read from datasets that implement RowScannable.
+ * Map reduce input format to read from datasets that implement RecordScannable.
  */
 public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   private static final Gson GSON = new Gson();
@@ -35,7 +35,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
 
-    RecordScannable recordScannable = DatasetAccessor.getRowScannable(jobConf);
+    RecordScannable recordScannable = DatasetAccessor.getRecordScannable(jobConf);
 
     Job job = new Job(jobConf);
     JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
@@ -54,7 +54,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   public RecordReader<Void, ObjectWritable> getRecordReader(final InputSplit split, JobConf jobConf, Reporter reporter)
     throws IOException {
 
-    final RecordScannable recordScannable = DatasetAccessor.getRowScannable(jobConf);
+    final RecordScannable recordScannable = DatasetAccessor.getRecordScannable(jobConf);
 
     if (!(split instanceof DatasetInputSplit)) {
       throw new IOException("Invalid type for InputSplit: " + split.getClass().getName());
