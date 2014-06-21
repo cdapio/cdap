@@ -25,7 +25,7 @@ public class DatasetAccessor {
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newHashMap();
 
-  public static RecordScannable getRowScannable(Configuration conf) throws IOException {
+  public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
     RecordScannable recordScannable = instantiate(conf);
 
     if (recordScannable instanceof TransactionAware) {
@@ -36,7 +36,7 @@ public class DatasetAccessor {
     return recordScannable;
   }
 
-  public static Type getRowScannableType(Configuration conf) throws IOException {
+  public static Type getRecordScannableType(Configuration conf) throws IOException {
     return instantiate(conf).getRecordType();
   }
 
@@ -61,7 +61,7 @@ public class DatasetAccessor {
 
       if (!(dataset instanceof RecordScannable)) {
         throw new IOException(
-          String.format("Dataset %s does not implement RowScannable, and hence cannot be queried in Hive.",
+          String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
                         datasetName));
       }
 
