@@ -1,6 +1,7 @@
 package com.continuuity.explore.service;
 
 import com.google.common.base.Objects;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import java.util.UUID;
 
@@ -9,7 +10,8 @@ import java.util.UUID;
  */
 public class Handle {
 
-  public static final Handle NO_OP = Handle.fromId("NO_OP");
+  private static final String NO_OP_ID = "NO_OP";
+  public static final Handle NO_OP = new Handle(NO_OP_ID);
 
   private final String handle;
 
@@ -19,6 +21,9 @@ public class Handle {
   }
 
   public static Handle fromId(String id) {
+    if (id.equals(NO_OP_ID)) {
+      return NO_OP;
+    }
     return new Handle(id);
   }
 

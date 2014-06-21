@@ -83,8 +83,6 @@ public class AsyncExploreClient implements ExploreClient {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return Handle.fromId(parseResponseAsMap(response, "handle"));
-    } else if (HttpResponseStatus.NO_CONTENT.getCode() == response.getResponseCode()) {
-      return Handle.NO_OP;
     }
     throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
                                getDetails(response));
