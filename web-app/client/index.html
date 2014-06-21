@@ -232,7 +232,6 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title"></div>Log into Reactor</div>
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{view C.Embed.Login}}
@@ -268,7 +267,6 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title"></div>Access Token</div>
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{#if token}}
@@ -292,7 +290,7 @@
               </tr>
               <tr>
                 <td>
-                  <a href="data:text;charset=utf-8,{{unbound token}}"><b>Download</b></a>
+                  <button class="btn btn-blank btn-default"><a href="data:text;charset=utf-8,{{unbound token}}"><b>Download</b></a></button>
                 </td>
                 <td></td>
               </tr>
@@ -311,7 +309,7 @@
               <tr>
                 <td></td>
                 <td>
-                <button {{action 'submit' on="click"}}>Login</button>
+                <button class="btn btn-blank btn-default" {{action 'submit' on="click"}}>Login</button>
                 </td>
               </tr>
             </table>

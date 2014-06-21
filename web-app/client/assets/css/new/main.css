@@ -3318,3 +3318,11 @@ div.tooltip {
 .btn-group.start-stop-btns .btn.stop:hover {
 	background: white;
 }
+
+/**
+ *Login form
+ */
+.panel table td, .panel table th {
+  border-top: 0;
+  border-bottom: 1px solid #EEE;
+}
