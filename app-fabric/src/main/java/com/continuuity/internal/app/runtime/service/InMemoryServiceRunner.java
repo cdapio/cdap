@@ -118,14 +118,12 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
   class ServiceProgramController extends AbstractProgramController {
     private final Table<String, Integer, ProgramController> runnables;
-    private final Program program;
     private final ServiceSpecification serviceSpec;
 
     ServiceProgramController(Table<String, Integer, ProgramController> runnables,
                              RunId runId, Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
       this.runnables = runnables;
-      this.program = program;
       this.serviceSpec = serviceSpec;
       started();
     }

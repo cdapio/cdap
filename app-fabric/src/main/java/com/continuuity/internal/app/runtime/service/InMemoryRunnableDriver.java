@@ -40,10 +40,10 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
     LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
       runnable.run();
-      destroy();
     } catch (Exception ex) {
       LOG.info(" Starting Runnable {} Failed ", context.getSpecification().getName());
+    } finally {
+      destroy();
     }
   }
-
 }
