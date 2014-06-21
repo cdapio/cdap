@@ -9,6 +9,8 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
@@ -21,6 +23,9 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClients;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -32,6 +37,8 @@ import java.util.Map;
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
+  private final String accountId;
+  private final CConfiguration cConf;
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
   private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
@@ -41,6 +48,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final long logicalStartTime;
   private final String workflowBatch;
   private final Metrics mapredMetrics;
+  private final ZKClientService zkClientService;
   private final MetricsCollectionService metricsCollectionService;
 
   private BatchReadable inputDataset;
@@ -51,21 +59,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   // todo: having it here seems like a hack will be fixed with further post-integration refactoring
   private final Iterable<TransactionAware> txAwares;
 
-  public BasicMapReduceContext(Program program,
-                               MapReduceMetrics.TaskType type,
-                               RunId runId,
-                               Arguments runtimeArguments,
-                               Map<String, Closeable> datasets,
-                               MapReduceSpecification spec,
-                               Iterable<TransactionAware> txAwares,
-                               long logicalStartTime,
-                               String workflowBatch) {
-    this(program, type, runId, runtimeArguments, datasets,
-         spec, txAwares, logicalStartTime, workflowBatch, null);
-  }
-
-
-  public BasicMapReduceContext(Program program,
+  public BasicMapReduceContext(CConfiguration cConf, Program program,
                                MapReduceMetrics.TaskType type,
                                RunId runId,
                                Arguments runtimeArguments,
@@ -74,11 +68,30 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
                                String workflowBatch,
+                               ZKClientService zkClientService) {
+    this(cConf, program, type, runId, runtimeArguments, datasets,
+         spec, txAwares, logicalStartTime, workflowBatch, zkClientService, null);
+  }
+
+
+  public BasicMapReduceContext(CConfiguration cConf, Program program,
+                               MapReduceMetrics.TaskType type,
+                               RunId runId,
+                               Arguments runtimeArguments,
+                               Map<String, Closeable> datasets,
+                               MapReduceSpecification spec,
+                               Iterable<TransactionAware> txAwares,
+                               long logicalStartTime,
+                               String workflowBatch,
+                               ZKClientService zkClientService,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
+    this.cConf = cConf;
+    this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
+    this.zkClientService = zkClientService;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -231,8 +244,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Override
-  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    return null;
+  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
+    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
+    String zkNamespace = String.format("%s/service.%s.%s.%s", twillNamespace, accountId, appId, serviceId);
+    ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(ZKClients.namespace(zkClientService, zkNamespace));
+    return zkDiscoveryService.discover(serviceName);
   }
 
   public void flushOperations() throws Exception {

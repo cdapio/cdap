@@ -68,6 +68,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.RunIds;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +97,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final ZKClientService zkClientService;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -108,7 +110,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionExecutorFactory txExecutorFactory) {
+                                TransactionExecutorFactory txExecutorFactory, ZKClientService zkClientService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -118,6 +120,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
+    this.zkClientService = zkClientService;
   }
 
   @Inject (optional = true)
@@ -164,12 +167,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                               Sets.union(dataSetSpecs.keySet(), datasetSpecs.keySet()));
 
     final BasicMapReduceContext context =
-      new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
+      new BasicMapReduceContext(cConf, program, null, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch,
-                                metricsCollectionService);
+                                workflowBatch, zkClientService, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();

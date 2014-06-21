@@ -10,6 +10,7 @@ import com.continuuity.app.program.DefaultProgram;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.lang.jar.BundleJarUtil;
 import com.continuuity.common.lang.jar.ProgramClassLoader;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -30,6 +31,7 @@ import com.google.inject.Injector;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,13 +132,16 @@ public abstract class AbstractMapReduceContextBuilder {
     Map<String, Closeable> dataSets = DataSets.createDataSets(
       dataSetContext, Sets.union(programSpec.getDataSets().keySet(), programSpec.getDatasets().keySet()));
 
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
+
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, type, RunIds.fromString(runId),
+      new BasicMapReduceContext(cConf, program, type, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
                                 dataSetContext.getTransactionAware(), logicalStartTime,
-                                workflowBatch, metricsCollectionService);
+                                workflowBatch, zkClientService, metricsCollectionService);
 
     if (type == MapReduceMetrics.TaskType.Mapper) {
       dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemMapperMetrics());
