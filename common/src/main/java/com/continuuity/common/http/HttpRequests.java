@@ -85,6 +85,13 @@ public final class HttpRequests {
   }
 
   /**
+   * Same as {@link #put(java.net.URL, String, java.util.Map)} with no extra headers
+   */
+  public static HttpResponse put(URL url, String body) throws IOException {
+    return doRequest("PUT", url, null, body, null);
+  }
+
+  /**
    * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
    */
   public static HttpResponse put(URL url, String body, String headerName, String headerValue) throws IOException {

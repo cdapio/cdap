@@ -60,7 +60,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/datasets/")
+  @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
@@ -98,10 +98,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-    DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
-    String typeName = request.getHeader("X-Continuuity-Type-Name");
 
-    LOG.info("Creating dataset {}, type name: {}, props: {}", name, typeName, props);
+    DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
+
+    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
@@ -112,10 +113,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeName);
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, typeName);
+                                     name, typeAndProps.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -124,10 +125,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, props);
+      spec = opExecutorClient.create(name, typeMeta, typeAndProps.getProperties());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
@@ -139,7 +140,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       datasetExploreFacade.enableExplore(name);
     } catch (ExploreException e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
 //      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -216,6 +217,27 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                            @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+  }
+
+  /**
+   * POJO that carries dataset type and properties infor for create dataset request
+   */
+  public static final class DatasetTypeAndProperties {
+    private final String typeName;
+    private final DatasetProperties props;
+
+    public DatasetTypeAndProperties(String typeName, DatasetProperties props) {
+      this.typeName = typeName;
+      this.props = props;
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+
+    public DatasetProperties getProperties() {
+      return props;
+    }
   }
 
   /**

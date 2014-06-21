@@ -130,7 +130,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/datasets")).getResponseCode();
+    return HttpRequests.delete(getUrl("/data/unrecoverable/datasets")).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {
