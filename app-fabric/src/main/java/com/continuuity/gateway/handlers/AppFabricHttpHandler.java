@@ -706,6 +706,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
       }
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {

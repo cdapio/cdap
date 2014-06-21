@@ -57,6 +57,11 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean hasType(String typeName) throws DatasetManagementException {
+    return delegate.hasType(typeName);
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException {
     delegate.deleteInstance(namespace(datasetInstanceName));
   }
