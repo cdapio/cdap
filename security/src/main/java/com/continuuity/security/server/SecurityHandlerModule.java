@@ -11,10 +11,10 @@ import java.util.HashMap;
  * Guice module to bind handlers used by RestEasy context listener.
  */
 public class SecurityHandlerModule extends AbstractModule {
-  private final HashMap<String, Handler> handlerMap;
+  private final HashMap<String, Object> handlerMap;
   private final CConfiguration configuration;
 
-  public SecurityHandlerModule(HashMap<String, Handler> map, CConfiguration configuration) {
+  public SecurityHandlerModule(HashMap<String, Object> map, CConfiguration configuration) {
     this.handlerMap = map;
     this.configuration = configuration;
   }
@@ -23,8 +23,9 @@ public class SecurityHandlerModule extends AbstractModule {
   protected void configure() {
     Class<Handler> handlerClass = (Class<Handler>) configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS,
                                                                                                   null, Handler.class);
-    bind(handlerClass).toInstance(handlerMap.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER));
-    bind(GrantAccessTokenHandler.class).toInstance((GrantAccessTokenHandler)
+    bind(handlerClass).toInstance((AbstractAuthenticationHandler)
+                                      handlerMap.get(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER));
+    bind(GrantAccessToken.class).toInstance((GrantAccessToken)
                                       handlerMap.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER));
   }
 }

@@ -10,8 +10,6 @@ import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,28 +29,32 @@ import javax.ws.rs.core.Response;
  * Generate and grant access token to authorized users.
  */
 @Path("/")
-public class GrantAccessTokenHandler extends AbstractHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(GrantAccessTokenHandler.class);
+public class GrantAccessToken {
+  private static final Logger LOG = LoggerFactory.getLogger(GrantAccessToken.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
 
   @Inject
-  public GrantAccessTokenHandler(TokenManager tokenManager,
-                                 Codec<AccessToken> tokenCodec,
-                                 CConfiguration cConfiguration) {
+  public GrantAccessToken(TokenManager tokenManager,
+                          Codec<AccessToken> tokenCodec,
+                          CConfiguration cConfiguration) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
     this.cConf = cConfiguration;
   }
 
-  @Override
-  protected void doStart() {
+  /**
+   * Initialize the TokenManager.
+   */
+  public void init() {
     tokenManager.start();
   }
 
-  @Override
-  protected void doStop() {
+  /**
+   * Stop the TokenManager.
+   */
+  public void destroy() {
     tokenManager.stop();
   }
 
@@ -66,7 +68,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   @Produces("application/json")
   public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
       throws IOException, ServletException {
-    this.handle(Paths.GET_TOKEN, Request.getRequest(request), request, response);
+    this.grantToken(Paths.GET_TOKEN, request, response);
     return Response.status(200).build();
   }
 
@@ -75,13 +77,11 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   @Produces("application/json")
   public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
     throws IOException, ServletException {
-    this.handle(Paths.GET_EXTENDED_TOKEN, Request.getRequest(request), request, response);
+    this.grantToken(Paths.GET_EXTENDED_TOKEN, request, response);
     return Response.status(200).build();
   }
 
-
-  @Override
-  public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+  private void grantToken(String target, HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException {
 
     String username = request.getUserPrincipal().getName();
@@ -119,6 +119,5 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
-    baseRequest.setHandled(true);
   }
 }

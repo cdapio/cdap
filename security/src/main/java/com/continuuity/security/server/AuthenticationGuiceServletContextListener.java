@@ -3,7 +3,6 @@ package com.continuuity.security.server;
 import com.continuuity.common.conf.CConfiguration;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
-import org.eclipse.jetty.server.Handler;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
 
 import java.util.HashMap;
@@ -14,7 +13,7 @@ import javax.servlet.ServletContext;
  * RestEasy context listener used to bind handlers. Enables usage of JAX-RS annotations.
  */
 public class AuthenticationGuiceServletContextListener extends GuiceResteasyBootstrapServletContextListener {
-  private final HashMap<String, Handler> handlerMap;
+  private final HashMap<String, Object> handlerMap;
   private final CConfiguration configuration;
 
   /**
@@ -22,7 +21,7 @@ public class AuthenticationGuiceServletContextListener extends GuiceResteasyBoot
    * @param map
    * @param configuration
    */
-  public AuthenticationGuiceServletContextListener(HashMap<String, Handler> map, CConfiguration configuration) {
+  public AuthenticationGuiceServletContextListener(HashMap<String, Object> map, CConfiguration configuration) {
     this.handlerMap = map;
     this.configuration = configuration;
   }
