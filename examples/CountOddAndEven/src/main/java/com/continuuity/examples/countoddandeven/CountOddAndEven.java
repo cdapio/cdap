@@ -15,25 +15,16 @@
  */
 package com.continuuity.examples.countoddandeven;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 
 /**
  * CountOddAndEven application contains a Flow {@code CountOddAndEvenFlow}.
  */
-public class CountOddAndEven implements Application {
+public class CountOddAndEven extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("CountOddAndEven")
-      .setDescription("Example application that counts odd and even random numbers")
-      .noStream()
-      .noDataSet()
-      .withFlows()
-      .add(new CountOddAndEvenFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("CountOddAndEven");
+    setDescription("Example application that counts odd and even random numbers");
+    addFlow(new CountOddAndEvenFlow());
   }
 }

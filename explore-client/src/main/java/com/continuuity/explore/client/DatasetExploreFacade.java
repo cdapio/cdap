@@ -1,6 +1,6 @@
 package com.continuuity.explore.client;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
@@ -39,7 +39,7 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Enables ad-hoc exploration of the given {@link RowScannable}.
+   * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   public void enableExplore(String datasetInstance) throws ExploreException {
@@ -51,9 +51,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
@@ -74,7 +74,7 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Disable ad-hoc exploration of the given {@link RowScannable}.
+   * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   public void disableExplore(String datasetInstance) throws ExploreException {
@@ -86,9 +86,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
@@ -108,7 +108,7 @@ public class DatasetExploreFacade {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable)
+  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(scannable);
 
@@ -139,8 +139,8 @@ public class DatasetExploreFacade {
    * @return the hive schema
    * @throws UnsupportedTypeException if the row type is not a record or contains null types.
    */
-  static <ROW> String hiveSchemaFor(RowScannable<ROW> dataset) throws UnsupportedTypeException {
-    return hiveSchemaFor(dataset.getRowType());
+  static <ROW> String hiveSchemaFor(RecordScannable<ROW> dataset) throws UnsupportedTypeException {
+    return hiveSchemaFor(dataset.getRecordType());
   }
 
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {

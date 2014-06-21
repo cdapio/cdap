@@ -1,6 +1,6 @@
 package com.continuuity.explore.executor;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -52,15 +52,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RowScannable)) {
-        // It is not an error to get non-RowScannable datasets, since the type of dataset may not be known where this
+      if (!(dataset instanceof RecordScannable)) {
+        // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", instance, RowScannable.class.getName());
-        responder.sendStatus(HttpResponseStatus.OK);
+        LOG.debug("Dataset {} does not implement {}", instance, RecordScannable.class.getName());
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", Handle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
         return;
       }
 
-      RowScannable<?> scannable = (RowScannable) dataset;
+      RecordScannable<?> scannable = (RecordScannable) dataset;
       String createStatement;
       try {
         createStatement = DatasetExploreFacade.generateCreateStatement(instance, scannable);
@@ -77,7 +79,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       Handle handle = exploreService.execute(createStatement);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -101,7 +103,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       Handle handle = exploreService.execute(deleteStatement);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);

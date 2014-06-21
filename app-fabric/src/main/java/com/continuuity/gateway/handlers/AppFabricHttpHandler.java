@@ -41,6 +41,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.datafabric.ReactorDatasetNamespace;
+import com.continuuity.data2.datafabric.dataset.DatasetMetaTableUtil;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.dataset.api.DataSetManager;
@@ -706,6 +707,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
       if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
       }
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
@@ -3235,6 +3237,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // Don't truncate log table too - we would like to retain logs across resets.
       datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+      // Don't remove datasets
+      datasetsToKeep.add(DatasetMetaTableUtil.META_TABLE_NAME);
+      datasetsToKeep.add(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
 
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);

@@ -109,6 +109,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean hasType(String typeName) throws DatasetManagementException {
+    return client.getType(typeName) != null;
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
     client.deleteInstance(namespace(datasetInstanceName));
   }
@@ -136,7 +141,14 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
     DatasetDefinition impl = getDatasetDefinition(instanceInfo.getType(), classLoader);
 
-    return (T) impl.getDataset(instanceInfo.getSpec());
+    // Temporarily use caller's classloader as default.
+    // TODO: This is to avoid passing classloader to DatasetDefinition.getDataset(). Should be done cleaner
+    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(classLoader);
+    T dataset = (T) impl.getDataset(instanceInfo.getSpec());
+    Thread.currentThread().setContextClassLoader(contextClassLoader);
+
+    return dataset;
   }
 
   private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {

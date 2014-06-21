@@ -5,12 +5,13 @@ import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -62,7 +63,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Received query: {}", query);
       Handle handle = exploreService.execute(query);
       JsonObject json = new JsonObject();
-      json.addProperty("id", handle.getId());
+      json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -76,7 +77,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                          @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
-      exploreService.close(handle);
+      if (!handle.equals(Handle.NO_OP)) {
+        exploreService.close(handle);
+      }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -92,7 +95,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                           @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
-      exploreService.cancel(handle);
+      if (!handle.equals(Handle.NO_OP)) {
+        exploreService.cancel(handle);
+      }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -108,7 +113,12 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
-      Status status = exploreService.getStatus(handle);
+      Status status;
+      if (!handle.equals(Handle.NO_OP)) {
+        status = exploreService.getStatus(handle);
+      } else {
+        status = Status.NO_OP;
+      }
       responder.sendJson(HttpResponseStatus.OK, status);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -121,10 +131,15 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                                        @PathParam("id") final String id) {
+                                    @PathParam("id") final String id) {
     try {
       Handle handle = Handle.fromId(id);
-      List<ColumnDesc> schema = exploreService.getResultSchema(handle);
+      List<ColumnDesc> schema;
+      if (!handle.equals(Handle.NO_OP)) {
+        schema = exploreService.getResultSchema(handle);
+      } else {
+        schema = Lists.newArrayList();
+      }
       responder.sendJson(HttpResponseStatus.OK, schema);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -135,15 +150,20 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/queries/{id}/nextResults")
+  @Path("/data/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
-      Map<String, String> args = decodeArguments(request);
-      int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
       Handle handle = Handle.fromId(id);
-      List<Row> rows = exploreService.nextResults(handle, size);
-      responder.sendJson(HttpResponseStatus.OK, rows);
+      List<Result> results;
+      if (handle.equals(Handle.NO_OP)) {
+        results = Lists.newArrayList();
+      } else {
+        Map<String, String> args = decodeArguments(request);
+        int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
+        results = exploreService.nextResults(handle, size);
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
