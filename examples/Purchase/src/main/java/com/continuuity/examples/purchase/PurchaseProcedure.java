@@ -26,7 +26,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 /**
  * A Procedure for querying the history DataSet for a customer's purchase history.
  */
-public class PurchaseQuery extends AbstractProcedure {
+public class PurchaseProcedure extends AbstractProcedure {
 
   @UseDataSet("history")
   private ObjectStore<PurchaseHistory> store;

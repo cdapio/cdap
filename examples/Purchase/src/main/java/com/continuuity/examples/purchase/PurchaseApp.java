@@ -44,14 +44,15 @@ public class PurchaseApp implements Application {
         .withFlows()
           .add(new PurchaseFlow())
         .withProcedures()
-          .add(new PurchaseQuery())
+          .add(new PurchaseProcedure())
         .noMapReduce()
         .withWorkflows()
           .add(new PurchaseHistoryWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {
-      // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is
-      // an interface and not a class, then there is no auto-magic way deserialize an object. In this case that
+      // This exception is thrown by ObjectStore if its parameter type cannot be 
+      // (de)serialized (for example, if it is an interface and not a class, then there is
+      // no auto-magic way deserialize an object.) In this case that
       // cannot happen because PurchaseHistory is an actual class.
       throw new RuntimeException(e);
     }
