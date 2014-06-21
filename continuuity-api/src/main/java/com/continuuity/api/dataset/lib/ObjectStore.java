@@ -2,7 +2,7 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.dataset.Dataset;
 
 /**
@@ -16,7 +16,7 @@ import com.continuuity.api.dataset.Dataset;
  * @param <T> the type of objects in the store
  */
 @Beta
-public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, RecordScannable<KeyValue<byte[], T>> {
+public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   /**
    * Write an object with a given key.
@@ -24,7 +24,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Recor
    * @param key the key of the object
    * @param object the object to be stored
    */
-  void write(String key, T object) throws Exception;
+  void write(String key, T object);
 
   /**
    * Write an object with a given key.
@@ -32,19 +32,19 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Recor
    * @param key the key of the object
    * @param object the object to be stored
    */
-  void write(byte[] key, T object) throws Exception;
+  void write(byte[] key, T object);
 
   /**
    * Read an object with a given key.
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
-  T read(String key) throws Exception;
+  T read(String key);
 
   /**
    * Read an object with a given key.
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
-  T read(byte[] key) throws Exception;
+  T read(byte[] key);
 }

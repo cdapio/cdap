@@ -1,6 +1,5 @@
 package com.continuuity.explore.service;
 
-import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -61,23 +60,17 @@ public class HiveExploreServiceTest {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
 
-    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
-    Assert.assertTrue(exploreClient.isAvailable());
-
     datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
-    Assert.assertNotNull(admin);
-    admin.create();
-
-    Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
     Assert.assertNotNull(table);
+
+    Transaction tx1 = transactionManager.startShort(100);
     table.startTx(tx1);
 
     KeyValue.Value value1 = new KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5));
@@ -97,15 +90,20 @@ public class HiveExploreServiceTest {
     table.startTx(tx2);
 
     Assert.assertEquals(value1, table.get("1"));
+
+    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
+    Assert.assertTrue(exploreClient.isAvailable());
+
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteModule("keyStructValue");
 
     exploreExecutorService.stopAndWait();
+    datasetService.stopAndWait();
     transactionManager.stopAndWait();
-    datasetService.startAndWait();
   }
 
   @Test
@@ -115,9 +113,9 @@ public class HiveExploreServiceTest {
     datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
     datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
                                  DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table_not_record_scannable", null);
-    Assert.assertNotNull(admin);
-    admin.create();
+
+    datasetFramework.deleteInstance("my_table_not_record_scannable");
+    datasetFramework.deleteModule("module2");
   }
 
   @Test

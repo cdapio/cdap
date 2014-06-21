@@ -1,6 +1,5 @@
 package com.continuuity.explore.service;
 
-import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -19,7 +18,6 @@ import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -41,7 +39,6 @@ public class ExploreDisabledTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetService datasetService;
-  private static ExploreClient exploreClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -52,7 +49,7 @@ public class ExploreDisabledTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
-    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
+    ExploreClient exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
     Assert.assertFalse(exploreClient.isAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -60,26 +57,23 @@ public class ExploreDisabledTest {
 
   @AfterClass
   public static void stop() throws Exception {
+    datasetService.stopAndWait();
     transactionManager.stopAndWait();
-    datasetService.startAndWait();
   }
 
   @Test
-  public void testDeploRecordScannable() throws Exception {
+  public void testDeployRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
-    // This should be processed with no exceptionbeing thrown
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    // This should be processed with no exception being thrown
+    datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
-    Assert.assertNotNull(admin);
-    admin.create();
+    datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("table1", null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -103,8 +97,8 @@ public class ExploreDisabledTest {
 
     Assert.assertEquals(value1, table.get("1"));
 
-    datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteInstance("table1");
+    datasetFramework.deleteModule("module1");
   }
 
   @Test
@@ -114,15 +108,12 @@ public class ExploreDisabledTest {
     datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_2", DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table_2", null);
-    Assert.assertNotNull(admin);
-    admin.create();
+    datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
-    NotRecordScannableTableDefinition.KeyValueTable table = datasetFramework.getDataset("my_table_2", null);
+    NotRecordScannableTableDefinition.KeyValueTable table = datasetFramework.getDataset("table2", null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -141,6 +132,9 @@ public class ExploreDisabledTest {
     table.startTx(tx2);
 
     Assert.assertEquals("value1", new String(table.read("key1")));
+
+    datasetFramework.deleteInstance("table2");
+    datasetFramework.deleteModule("module2");
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

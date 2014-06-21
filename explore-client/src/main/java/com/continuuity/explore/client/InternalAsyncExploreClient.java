@@ -45,7 +45,7 @@ public class InternalAsyncExploreClient extends AbstractAsyncExploreClient {
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null) {
+    if (endpointStrategy == null || endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
       LOG.error(message);
       throw new RuntimeException(message);

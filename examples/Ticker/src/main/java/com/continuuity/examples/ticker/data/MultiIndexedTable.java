@@ -15,17 +15,19 @@
  */
 package com.continuuity.examples.ticker.data;
 
-import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetContext;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.dataset.table.Delete;
-import com.continuuity.api.data.dataset.table.Put;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Scanner;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.table.Delete;
+import com.continuuity.api.dataset.table.Put;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Scanner;
+import com.continuuity.api.dataset.table.Table;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,10 @@ import java.util.Set;
  * Note that <em>all key-values for a single row must be written with the same timestamp</em> in order for
  * reading by indexes to work correctly.
  */
-public class MultiIndexedTable extends DataSet {
+public class MultiIndexedTable extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MultiIndexedTable.class);
+
+  private static final Gson GSON = new Gson();
   
   // Use a null value as separator for multiple field in the row key
   private static final byte NULL_BYTE = (byte) 0x0;
@@ -53,36 +57,28 @@ public class MultiIndexedTable extends DataSet {
   // Meta key prefix used to store a record of the index rows created for each origin row
   private static final byte[] META_ROW_PREFIX = Bytes.toBytes("_meta_");
 
-  // The index table matching the primary data Table will be named by adding this suffix
-  private static final String INDEX_SUFFIX = "-idx";
-
   private final Table table;
   private final Table indexTable;
   
   // String representation of the field storing timestamp values
-  @Property
-  private String timestampFieldName;
-  private byte[] timestampField;
-  private Set<byte[]> ignoreIndexing;
+  private final byte[] timestampField;
+  private final Set<byte[]> ignoreIndexing;
 
-  public MultiIndexedTable(String name, byte[] timestampField, Set<byte[]> doNotIndex) {
-    super(name);
-    this.table = new Table(name);
-    this.indexTable = new Table(name + INDEX_SUFFIX);
-    this.timestampFieldName = Bytes.toString(timestampField);
-    this.ignoreIndexing = doNotIndex;
+  public static DatasetProperties properties(byte[] timestampField, Set<byte[]> doNotIndex) {
+    return DatasetProperties.builder()
+      .add("timestampField", Bytes.toString(timestampField))
+      .add("ignoreIndexing", GSON.toJson(doNotIndex))
+      .build();
   }
 
-  @Override
-  public void initialize(DataSetSpecification spec, DataSetContext context) {
-    super.initialize(spec, context);
-    this.timestampField = Bytes.toBytes(timestampFieldName);
-  }
-
-  @Override
-  public void close() {
-    this.table.close();
-    this.indexTable.close();
+  public MultiIndexedTable(DatasetSpecification spec,
+                           @EmbeddedDataSet("data") Table dataTable,
+                           @EmbeddedDataSet("idx") Table idxTable) {
+    super(spec.getName(), dataTable, idxTable);
+    this.table = dataTable;
+    this.indexTable = idxTable;
+    this.timestampField = Bytes.toBytes(spec.getProperty("timestampField"));
+    this.ignoreIndexing = GSON.fromJson(spec.getProperty("ignoreIndexing"), new TypeToken<Set<byte[]>>() { }.getType());
   }
 
   /**

@@ -46,10 +46,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
   public boolean isAvailable() throws ExploreException {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
-      if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-        return true;
-      }
-      return false;
+      return HttpResponseStatus.OK.getCode() == response.getResponseCode();
     } catch (Exception e) {
       LOG.info("Caught exception when checking Explore availability", e);
       return false;
