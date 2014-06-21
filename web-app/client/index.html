@@ -68,7 +68,9 @@
             <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
             <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
           {{else}}
+            {{#unless C.isEnterprise}}
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
+            {{/unless}}
             <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
           {{/if}}
       {{/if}}
@@ -114,7 +116,9 @@
     <span>&nbsp;·&nbsp;</span>
     <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
     <span>&nbsp;·&nbsp;</span>
+    {{#unless C.isEnterprise}}
     <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
+    {{/unless}}
     {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
@@ -290,7 +294,7 @@
               </tr>
               <tr>
                 <td>
-                  <button class="btn btn-blank btn-default"><a href="data:text;charset=utf-8,{{unbound token}}"><b>Download</b></a></button>
+                  <button class="btn btn-blank btn-default"><a href="data:text;charset=utf-8,{{unbound token}}" download=".continuuity.accesstoken"><b>Download</b></a></button>
                 </td>
                 <td></td>
               </tr>
