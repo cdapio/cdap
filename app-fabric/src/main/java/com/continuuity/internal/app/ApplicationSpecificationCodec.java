@@ -10,8 +10,10 @@ import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.internal.service.DefaultServiceSpecification;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
@@ -31,11 +33,6 @@ import java.util.Map;
  */
 final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<ApplicationSpecification> {
 
-  private final TwillSpecificationAdapter adapter;
-  public ApplicationSpecificationCodec() {
-    adapter = TwillSpecificationAdapter.create();
-  }
-
   @Override
   public JsonElement serialize(ApplicationSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
@@ -50,7 +47,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
-    jsonObj.add("services", serializeServices(src.getServices()));
+    jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
 
     return jsonObj;
   }
@@ -80,33 +77,12 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 
-    Map<String, TwillSpecification> services = deseralizeServices(jsonObj.get("services"));
+    Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
+                                                                context, ServiceSpecification.class);
 
     return new DefaultApplicationSpecification(name, description, streams, datasets,
                                                datasetModules, datasetInstances,
                                                flows, procedures, mapReduces,
                                                workflows, services);
-  }
-
-  private Map<String, TwillSpecification> deseralizeServices(JsonElement services) {
-    Map<String, TwillSpecification> servicesMap = Maps.newHashMap();
-    if (services != null) {
-      for (JsonElement element : services.getAsJsonArray()) {
-        String spec = element.getAsJsonObject().get("spec").getAsString();
-        TwillSpecification twillSpecification = adapter.fromJson(spec);
-        servicesMap.put(twillSpecification.getName(), twillSpecification);
-      }
-    }
-    return servicesMap;
-  }
-
-  private JsonArray serializeServices(Map<String, TwillSpecification> services) {
-    JsonArray array = new JsonArray();
-    for (TwillSpecification spec : services.values()) {
-      JsonObject object = new JsonObject();
-      object.addProperty("spec", adapter.toJson(spec));
-      array.add(object);
-    }
-    return array;
   }
 }

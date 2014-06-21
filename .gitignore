@@ -29,8 +29,9 @@ logs/
 .nux_enabled
 .nux_dashboard
 
-# Singlenode run files.
+# Singlenode and test data files.
 /data/
+/data-fabric-tests/data/
 
 # gateway test leftover
 /gateway/data/

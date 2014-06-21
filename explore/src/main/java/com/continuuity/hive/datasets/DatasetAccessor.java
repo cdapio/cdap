@@ -1,6 +1,6 @@
 package com.continuuity.hive.datasets;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.dataset.Dataset;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -22,26 +22,25 @@ import java.util.Map;
  */
 public class DatasetAccessor {
 
-  // TODO: this will go away when dataset manager does not return datasets having classloader conflict.
+  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newHashMap();
 
-  public static RowScannable getRowScannable(Configuration conf) throws IOException {
-    RowScannable rowScannable = instantiate(conf);
+  public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
+    RecordScannable recordScannable = instantiate(conf);
 
-    if (rowScannable instanceof TransactionAware) {
-      // TODO: do we have to commit transaction?
+    if (recordScannable instanceof TransactionAware) {
       Transaction tx = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
-        ((TransactionAware) rowScannable).startTx(tx);
+        ((TransactionAware) recordScannable).startTx(tx);
     }
 
-    return rowScannable;
+    return recordScannable;
   }
 
-  public static Type getRowScannableType(Configuration conf) throws IOException {
-    return instantiate(conf).getRowType();
+  public static Type getRecordScannableType(Configuration conf) throws IOException {
+    return instantiate(conf).getRecordType();
   }
 
-  private static RowScannable instantiate(Configuration conf) throws IOException {
+  private static RecordScannable instantiate(Configuration conf) throws IOException {
     String datasetName = conf.get(Constants.Explore.DATASET_NAME);
     if (datasetName == null) {
       throw new IOException(String.format("Dataset name property %s not defined.", Constants.Explore.DATASET_NAME));
@@ -60,13 +59,13 @@ public class DatasetAccessor {
         DATASET_CLASSLOADERS.put(datasetName, dataset.getClass().getClassLoader());
       }
 
-      if (!(dataset instanceof RowScannable)) {
+      if (!(dataset instanceof RecordScannable)) {
         throw new IOException(
-          String.format("Dataset %s does not implement RowScannable, and hence cannot be queried in Hive.",
+          String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
                         datasetName));
       }
 
-      return (RowScannable) dataset;
+      return (RecordScannable) dataset;
     } catch (DatasetManagementException e) {
       throw new IOException(e);
     }

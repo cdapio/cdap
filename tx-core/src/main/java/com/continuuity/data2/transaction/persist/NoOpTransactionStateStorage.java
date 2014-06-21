@@ -1,8 +1,12 @@
 package com.continuuity.data2.transaction.persist;
 
+import com.continuuity.data2.transaction.snapshot.SnapshotCodec;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +14,25 @@ import java.util.List;
  * Minimal {@link TransactionStateStorage} implementation that does nothing, i.e. does not maintain any actual state.
  */
 public class NoOpTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
+
+  private final SnapshotCodec codec;
+
+  @Inject
+  public NoOpTransactionStateStorage(SnapshotCodecProvider codecProvider) {
+    codec = codecProvider;
+  }
+
   @Override
   protected void startUp() throws Exception {
   }
 
   @Override
   protected void shutDown() throws Exception {
+  }
+
+  @Override
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException {
+    codec.encode(out, snapshot);
   }
 
   @Override

@@ -392,6 +392,10 @@ body {
   background: url('data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABQAAD/4QMtaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJBRTQ5MDNCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NzJBRTQ5MDRCOUM0MTFFM0E5RkZCQzRDQ0UxMDNBQjgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo3MkFFNDkwMUI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo3MkFFNDkwMkI5QzQxMUUzQTlGRkJDNENDRTEwM0FCOCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv/uAA5BZG9iZQBkwAAAAAH/2wCEAAICAgICAgICAgIDAgICAwQDAgIDBAUEBAQEBAUGBQUFBQUFBgYHBwgHBwYJCQoKCQkMDAwMDAwMDAwMDAwMDAwBAwMDBQQFCQYGCQ0LCQsNDw4ODg4PDwwMDAwMDw8MDAwMDAwPDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDP/AABEIACEAIQMBEQACEQEDEQH/xAB2AAACAwEBAAAAAAAAAAAAAAACAwABBAYJAQEBAAMAAAAAAAAAAAAAAAAAAQIGBxAAAQMAAw8CBwEAAAAAAAAAAQACA7ESMhEhMUFxkSJykrITIzNTc+EEUYGhUoIUNFQRAQEBAQAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/APJeaaaSWXmvMhe6/WOlfppy4ekSNKZ+LL3XbRVDJZZaw5jrDMZ+0JIKEkjQHOkcbtltY5ygP933X+h+cphpMvVk1jSkKnU8m9605cIMkAaWucLpLGVW/iL5UgQSSbpN0lURVD5ZZeLJzHWzjPxUkVQkkaA50jiTZbWOcqB0s0srwTK/iFjMZ0tEfVJDWbiy9120VRfFl7jtooDkAbJI5wukuNVvzwlAgkkkm+SiDltDUZuhIqdTyb3rTlwgtBq97/X7jyOpUnCsyqDltDUZuhIoEHQLBX//2Q==');
 }
 
+tt.docutils.literal {
+  color:#28B2E7;
+}
+
 div.presentation {
   position: absolute;
   width: 100%;
@@ -1741,7 +1745,18 @@ function main() {
             
             
             <section><!-- Slide Presentation HTML Generation -->
-<p class="logo">&nbsp;</p></section>
+<table border="1" class="borderless docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><p class="logo">&nbsp;</p></td>
+<td><p class="copyright first last">© Copyright 2014 Continuuity, Inc. All Rights Reserved.</p>
+</td>
+</tr>
+</tbody>
+</table></section>
             
           </div>
           <div class="presenter_notes">
@@ -1757,7 +1772,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              1/5
+              1/6
             </aside>
           </footer>
         </div>
@@ -1773,9 +1788,10 @@ function main() {
             
             <section><p>In this exercise, you will:</p>
 <ul class="simple">
-<li>Download and install the SDK</li>
-<li>Basic Continuuity Reactor operations Start and Stop</li>
-<li>Run the Quick Start tour</li>
+<li>Control the example application's lifecycle</li>
+<li>Start and stop Flows and Procedures</li>
+<li>Deploy the example application</li>
+<li>Truncate an existing DataSet</li>
 </ul></section>
             
           </div>
@@ -1792,7 +1808,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              2/5
+              2/6
             </aside>
           </footer>
         </div>
@@ -1803,20 +1819,21 @@ function main() {
         <div class="slide">
           <div class="inner">
             
-            <header><h1>Exercise Steps</h1></header>
+            <header><h1>Exercise Steps (1 of 2)</h1></header>
             
             
-            <section><ul class="simple">
-<li>Go to Continuuity Reactor Download: <tt class="docutils literal"><span class="pre">http://www.continuuity.com/download</span></tt></li>
-<li>Register for free account</li>
-<li>Download <tt class="docutils literal"><span class="pre">continuuity-sdk-&lt;version&gt;.zip</span></tt></li>
-<li>Unzip the download</li>
-<li>Open a command line window, go to <tt class="docutils literal">/bin</tt> and run <tt class="docutils literal">reactor.sh start</tt></li>
-<li>Open a browser window, go to <tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt></li>
-<li>Follow the steps of the <em>Log Analytics Application</em> Tour</li>
-<li>When finished, shut down the Reactor with <tt class="docutils literal">reactor.sh stop</tt></li>
-</ul>
-<p>These steps are online at <tt class="docutils literal"><span class="pre">http://continuuity.com/developers/quickstart</span></tt></p></section>
+            <section><p>Stop the <tt class="docutils literal">analysis</tt> Flow (or another Procedure, MapReduce job) associated with the application:</p>
+<pre class="literal-block">
+curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -X POST
+  http://localhost:10000/v2/apps/SentimentAnalysisApp/flows/analysis/stop
+</pre>
+<p>Using a similar <tt class="docutils literal">curl</tt> command, stop the <tt class="docutils literal"><span class="pre">sentiment-query</span></tt> procedure</p>
+<p>Now deploy the app using a <tt class="docutils literal">curl</tt> command, executed from the directory where you are building the application:</p>
+<pre class="literal-block">
+curl -o /dev/null -sL -w &quot;%{http_code}\\n&quot; -H &quot;X-Archive-Name: SentimentAnalysisApp&quot;
+  -X POST http://localhost:10000/v2/apps
+  --data-binary &#64;target/SentimentAnalysis-1.0-SNAPSHOT.jar
+</pre></section>
             
           </div>
           <div class="presenter_notes">
@@ -1832,7 +1849,42 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              3/5
+              3/6
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: /Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Exercise Steps (2 of 2)</h1></header>
+            
+            
+            <section><p>Re-use the previous commands to start the <tt class="docutils literal">analysis</tt> Flow and <br />
+<tt class="docutils literal"><span class="pre">sentiment-query</span></tt> Procedure</p>
+<p>Use a DataSet command to truncate the two tables in the example; the command is of the form:</p>
+<pre class="literal-block">
+POST &lt;base-url&gt;/datasets/&lt;dataset-name&gt;/truncate
+</pre></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst">/Users/john/Source/current/reactor/docs/courses/source/courses/../exercises/e12_controlling_application_exercise.rst_temp.rst</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/6
             </aside>
           </footer>
         </div>
@@ -1848,12 +1900,10 @@ function main() {
             
             <section><p>You should now be able to:</p>
 <ul class="simple">
-<li>Perform basic Reactor operations of Start and Stop</li>
-<li>Taken the Quick Start tour</li>
-<li>Use the Dashboard for basic operations</li>
-<li>Inject and Query Data through the Dashboard</li>
-<li>Modify an Application</li>
-<li>Redeploy and restart an Application</li>
+<li>Control an application's lifecycle using external commands</li>
+<li>Start and stop Flows and Procedures</li>
+<li>Deploy applications</li>
+<li>Truncate an existing DataSet</li>
 </ul></section>
             
           </div>
@@ -1870,7 +1920,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              4/5
+              5/6
             </aside>
           </footer>
         </div>
@@ -1900,7 +1950,7 @@ function main() {
             </aside>
             
             <aside class="page_number">
-              5/5
+              6/6
             </aside>
           </footer>
         </div>
@@ -1927,20 +1977,26 @@ function main() {
       
       
       <tr id="toc-row-3">
-        <th><a href="#slide3">Exercise Steps</a></th>
+        <th><a href="#slide3">Exercise Steps (1 of 2)</a></th>
         <td><a href="#slide3">3</a></td>
       </tr>
       
       
       <tr id="toc-row-4">
-        <th><a href="#slide4">Exercise Summary</a></th>
+        <th><a href="#slide4">Exercise Steps (2 of 2)</a></th>
         <td><a href="#slide4">4</a></td>
       </tr>
       
       
       <tr id="toc-row-5">
-        <th><a href="#slide5">Exercise Completed</a></th>
+        <th><a href="#slide5">Exercise Summary</a></th>
         <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">Exercise Completed</a></th>
+        <td><a href="#slide6">6</a></td>
       </tr>
       
       

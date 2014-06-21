@@ -15,10 +15,10 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.TxConstants;
-import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -54,7 +54,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   }
 
   @Override
-  protected TransactionStateStorage getSateStorage() throws Exception {
+  protected TransactionStateStorage getStateStorage() throws Exception {
     return txStateStorage;
   }
 
@@ -113,20 +113,23 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    TransactionStateStorage stateStorage = getSateStorage();
+    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(cConf);
 
     Transaction tx1 = client.startShort();
     long currentTime = System.currentTimeMillis();
 
     InputStream in = client.getSnapshotInputStream();
-    SnapshotCodecV2 codec = new SnapshotCodecV2();
-    TransactionSnapshot snapshot = codec.decodeState(in);
-
+    TransactionSnapshot snapshot;
+    try {
+      snapshot = codecProvider.decode(in);
+    } finally {
+      in.close();
+    }
     Assert.assertTrue(snapshot.getTimestamp() >= currentTime);
     Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
 
     // Ensures that getSnapshot didn't persist a snapshot
-    TransactionSnapshot snapshotAfter = stateStorage.getLatestSnapshot();
+    TransactionSnapshot snapshotAfter = getStateStorage().getLatestSnapshot();
     if (snapshotAfter != null) {
       Assert.assertEquals(1L, snapshotAfter.getWritePointer());
       Assert.assertEquals(0L, snapshotAfter.getReadPointer());

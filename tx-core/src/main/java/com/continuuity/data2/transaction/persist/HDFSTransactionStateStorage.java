@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 
 import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -60,7 +61,9 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf) {
+  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf,
+                                     SnapshotCodecProvider codecProvider) {
+    super(codecProvider);
     this.conf = config;
     this.hConf = hConf;
     configuredSnapshotDir = config.get(TxConstants.Manager.CFG_TX_SNAPSHOT_DIR);
@@ -103,8 +106,11 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
 
     FSDataOutputStream out = fs.create(snapshotTmpFile, false, BUFFER_SIZE);
     // encode the snapshot and stream the serialized version to the file
-    encode(out, snapshot);
-    out.close();
+    try {
+      codecProvider.encode(out, snapshot);
+    } finally {
+      out.close();
+    }
 
     // move the temporary file into place with the correct filename
     Path finalFile = new Path(snapshotDir, SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
@@ -138,7 +144,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
   }
 
   private TransactionSnapshot readSnapshotInputStream(InputStream in) throws IOException {
-    return decode(in);
+    return codecProvider.decode(in);
   }
 
   private TransactionSnapshot readSnapshotFile(Path filePath) throws IOException {
@@ -323,6 +329,7 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
     }
   }
 
+  // TODO move this out as a separate command line tool
   private enum CLIMode { SNAPSHOT, TXLOG };
   /**
    * Reads a transaction state snapshot or transaction log from HDFS and prints the entries to stdout.
@@ -352,8 +359,10 @@ public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage
       printUsage("ERROR: Either -s or -l is required to set mode.", 1);
     }
 
+    CConfiguration config = CConfiguration.create();
+
     HDFSTransactionStateStorage storage =
-      new HDFSTransactionStateStorage(CConfiguration.create(), new Configuration());
+      new HDFSTransactionStateStorage(config, new Configuration(), new SnapshotCodecProvider(config));
     storage.startAndWait();
     try {
       switch (mode) {

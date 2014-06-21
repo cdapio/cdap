@@ -10,6 +10,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -17,7 +18,6 @@ import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,11 +55,12 @@ public class ApplicationSpecificationTest {
     ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();;
     ApplicationSpecification spec = adapter.fromJson(adapter.toJson(appSpec));
 
-    Map<String, TwillSpecification> services = spec.getServices();
+    Map<String, ServiceSpecification> services = spec.getServices();
     Assert.assertEquals(1, services.size());
 
     Assert.assertTrue(services.containsKey("NoOpService"));
-    TwillSpecification specification = services.get("NoOpService");
+
+    ServiceSpecification specification = services.get("NoOpService");
     Map<String, RuntimeSpecification> runnables = specification.getRunnables();
     Assert.assertEquals(1, runnables.size());
   }
