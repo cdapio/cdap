@@ -9,7 +9,6 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
@@ -38,6 +37,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
   private Cancellable serviceCancellable;
+  private final GrantAccessToken grantAccessToken;
+  private final AbstractAuthenticationHandler authenticationHandler;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
   private InetAddress address;
@@ -68,6 +69,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.handlers = handlers;
     this.discoveryService = discoveryService;
     this.configuration = configuration;
+    this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
+    this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
   }
 
   /**
@@ -110,13 +113,13 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       threadPool.setMaxThreads(maxThreads);
       server.setThreadPool(threadPool);
 
-      initHandlers(handlers);
+      initHandlers();
 
       ServletContextHandler context = new ServletContextHandler();
       context.setServer(server);
       context.addServlet(HttpServletDispatcher.class, "/");
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers, configuration));
-      context.setSecurityHandler((SecurityHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER));
+      context.setSecurityHandler(authenticationHandler);
 
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());
@@ -154,15 +157,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   /**
    * Initializes the handlers.
-   * @param handlers
    * @return
    */
-  protected void initHandlers(HashMap<String, Object> handlers) throws Exception {
-    AbstractAuthenticationHandler authHandler = ((AbstractAuthenticationHandler)
-                                                                    handlers.get(HandlerType.AUTHENTICATION_HANDLER));
-    authHandler.init();
-    GrantAccessToken tokenHandler = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
-    tokenHandler.init();
+  protected void initHandlers() throws Exception {
+    authenticationHandler.init();
+    grantAccessToken.init();
   }
 
   @Override
@@ -181,8 +180,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     try {
       serviceCancellable.cancel();
       server.stop();
-      GrantAccessToken tokenHandler = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
-      tokenHandler.destroy();
+      grantAccessToken.destroy();
     } catch (Exception e) {
       LOG.error("Error stopping ExternalAuthenticationServer.");
       LOG.error(e.getMessage());
