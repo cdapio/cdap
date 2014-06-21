@@ -99,7 +99,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
         clearInterval(interval);
         if (response.statusCode === 401) {
           SECURITY_ENABLED = true;
-          AUTH_SERVER_ADDRESSES = JSON.parse(data).auth_uri;
+          AUTH_SERVER_ADDRESSES = JSON.parse(body).auth_uri;
         } else {
           SECURITY_ENABLED = false;
         }
