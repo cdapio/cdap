@@ -71,9 +71,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerInfo;
-import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.FLOWLET;
-import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.PROCEDURE;
+import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerInfo;
+import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.FLOWLET;
+import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.PROCEDURE;
+import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.SERVICE;
 
 /**
  *
@@ -291,7 +292,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
         DistributedLiveInfo liveInfo = new DistributedLiveInfo(program, type, report.getApplicationId());
-        DistributedLiveInfo.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET : PROCEDURE;
+        Containers.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET :
+                                                 Type.PROCEDURE.equals(type) ? PROCEDURE : SERVICE;
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {
             liveInfo.addContainer(new ContainerInfo(containerType,
