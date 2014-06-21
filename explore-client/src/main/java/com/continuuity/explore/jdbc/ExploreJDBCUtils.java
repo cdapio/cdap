@@ -1,7 +1,7 @@
 package com.continuuity.explore.jdbc;
 
 /**
- *
+ * Utility methods and constants to use in Explore JDBC driver.
  */
 public class ExploreJDBCUtils {
 

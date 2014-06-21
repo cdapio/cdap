@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- *
+ * Result Set returned when executing a query using Explore JDBC {@link ExploreStatement}.
  */
 public class ExploreResultSetMetaData implements ResultSetMetaData {
 

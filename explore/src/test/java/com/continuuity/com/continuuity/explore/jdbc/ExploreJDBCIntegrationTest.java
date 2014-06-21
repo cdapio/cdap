@@ -130,24 +130,25 @@ public class ExploreJDBCIntegrationTest {
     stmt = connection.prepareStatement("select key, value from continuuity_user_my_table");
     rowSet = stmt.executeQuery();
     Assert.assertTrue(rowSet.next());
-    Assert.assertEquals(1, rowSet.getInt(1));  // TODO change to getInt
+    Assert.assertEquals(1, rowSet.getInt(1));
     Assert.assertEquals("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", rowSet.getString(2)); // TODO change to toObject
     Assert.assertTrue(rowSet.next());
-    Assert.assertEquals(2, rowSet.getInt(1));  // TODO change to getInt
+    Assert.assertEquals(2, rowSet.getInt(1));
     Assert.assertEquals("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}", rowSet.getString(2)); // TODO change to toObject
     stmt.close();
 
-    // TODO method not yet supported, change that
-    // connection.close();
+    connection.close();
   }
 
   @AfterClass
   public static void after() throws Exception {
     datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteModule("keyValue");
 
     exploreExecutorService.stopAndWait();
     transactionManager.stopAndWait();
     datasetService.startAndWait();
+
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
