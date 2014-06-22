@@ -6,6 +6,8 @@ import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -14,8 +16,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -31,6 +38,7 @@ public class MetaDataClient {
     Logger.getRootLogger().setLevel(Level.OFF);
   }
 
+  private static final Gson GSON = new Gson();
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
@@ -43,6 +51,8 @@ public class MetaDataClient {
   String hostname = null;        // the hostname of the gateway
   int port = -1;                 // the port of the gateway
   String apikey = null;          // the api key for authentication.
+  String accessToken = null;     // the access token for connecting to secure reactor
+  String tokenFile = null;       // path to file which contains an access token
 
   String command = null;         // the command to run
 
@@ -79,6 +89,9 @@ public class MetaDataClient {
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
+    out.println("  --token <token>         To specify the access token for a secure connection");
+    out.println("  --token-file <path>     Alternative to --token, to specify a file that");
+    out.println("                          contains the access token for a secure connection");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -96,6 +109,24 @@ public class MetaDataClient {
       System.err.println("Error: " + errorMessage);
     }
     usage(true);
+  }
+
+  /**
+   * Reads the access token from the tokenFile path
+   */
+  void readTokenFile() {
+    if (tokenFile != null) {
+      PrintStream out = verbose ? System.out : System.err;
+      try {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
+        String line = bufferedReader.readLine();
+        accessToken = line;
+      } catch (FileNotFoundException e) {
+        out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
+      } catch (IOException e) {
+        out.println("Could not read access token file: " + tokenFile + "\nNo access token will be used");
+      }
+    }
   }
 
   /**
@@ -129,6 +160,16 @@ public class MetaDataClient {
         } catch (NumberFormatException e) {
           usage(true);
         }
+      } else if ("--token".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
+        accessToken = args[pos].trim().replaceAll("(\r|\n)", "");
+      } else if ("--token-file".equals(arg)) {
+        if (++pos >= args.length) {
+          usage(true);
+        }
+        tokenFile = args[pos];
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -186,6 +227,11 @@ public class MetaDataClient {
       usage("Unsupported command '" + command + "'.");
     }
 
+    // use accessToken if both file and token are provided
+    if (tokenFile != null && accessToken != null) {
+      tokenFile = null;
+    }
+
     if (type == null) {
       usage("--type must be specified");
     }
@@ -213,13 +259,14 @@ public class MetaDataClient {
       return "";
     }
 
-    boolean useSsl = !forceNoSSL && (apikey != null);
-    // TODO
-    String baseUrl = "MetaDataClient should be re-implemented towards new gateway";
-    // = Util.findBaseUrl(config, MetaDataRestAccessor.class, null, hostname, port, useSsl);
+    if (tokenFile != null) {
+      readTokenFile();
+    }
+
+    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, !forceNoSSL && apikey != null);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
-                           "Please use --host and --port to specify.");
+                         "Please use --host and --port to specify.");
       return null;
     } else {
       if (verbose) {
@@ -257,20 +304,25 @@ public class MetaDataClient {
     if (apikey != null) {
       get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
+    if (accessToken != null) {
+      get.setHeader("Authorization", "Bearer " + accessToken);
+    }
     try {
       response = client.execute(get);
-      client.getConnectionManager().shutdown();
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
+      if (printResponse(response) == null) {
+        return null;
+      }
+      return "OK.";
     } catch (IOException e) {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
+    } finally {
+      client.getConnectionManager().shutdown();
     }
-    if (!checkHttpStatus(response)) {
-      return null;
-    }
-    if (printResponse(response) == null) {
-      return null;
-    }
-    return "OK.";
+
   }
 
   public String printResponse(HttpResponse response) {
@@ -294,6 +346,25 @@ public class MetaDataClient {
    */
   boolean checkHttpStatus(HttpResponse response) {
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+        PrintStream out = (verbose ? System.out : System.err);
+        out.println(response.getStatusLine());
+        if (accessToken == null) {
+          out.println("No access token provided");
+        } else {
+          Reader reader = null;
+          try {
+            reader = new InputStreamReader(response.getEntity().getContent());
+            String responseError = GSON.fromJson(reader, ErrorMessage.class).getErrorDescription();
+            if (responseError != null && !responseError.isEmpty()) {
+              out.println(responseError);
+            }
+          } catch (Exception e) {
+            out.println("Unknown unauthorized error");
+          }
+        }
+        return false;
+      }
       if (verbose) {
         System.out.println(response.getStatusLine());
       } else {
@@ -317,6 +388,18 @@ public class MetaDataClient {
       }
     }
     return null;
+  }
+
+  /**
+   * Error Description from HTTPResponse
+   */
+  private class ErrorMessage {
+    @SerializedName("error_description")
+    private String errorDescription;
+
+    public String getErrorDescription() {
+      return errorDescription;
+    }
   }
 
   /**
