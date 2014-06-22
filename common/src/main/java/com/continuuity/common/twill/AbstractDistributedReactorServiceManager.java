@@ -33,6 +33,12 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
   }
 
   @Override
+  public boolean isServiceEnabled() {
+    // By default all the services are enabled. extending classes can override if the behavior should be different.
+    return true;
+  }
+
+  @Override
   public int getRequestedInstances() {
     //todo this will be updated
     Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);

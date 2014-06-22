@@ -5,12 +5,9 @@ import com.continuuity.common.twill.ReactorServiceManager;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.continuuity.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -71,16 +68,19 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
     JsonObject reply = new JsonObject();
-    if (reactorServiceManagementMap.containsKey(serviceName)) {
-      String requestedInstances = String.valueOf
-        (reactorServiceManagementMap.get(serviceName).getRequestedInstances());
-      String provisionedInstances = String.valueOf
-        (reactorServiceManagementMap.get(serviceName).getProvisionedInstances());
+    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+    ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+    if (serviceManager.isServiceEnabled()) {
+      String requestedInstances = String.valueOf(serviceManager.getRequestedInstances());
+      String provisionedInstances = String.valueOf(serviceManager.getProvisionedInstances());
       reply.addProperty("requested", requestedInstances);
       reply.addProperty("provisioned", provisionedInstances);
       responder.sendJson(HttpResponseStatus.OK, reply);
     } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
+      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
     }
   }
 
@@ -92,7 +92,15 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) {
     try {
+      if (!reactorServiceManagementMap.containsKey(serviceName)) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+        return;
+      }
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+      if (!serviceManager.isServiceEnabled()) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+        return;
+      }
       int instance = getInstances(request);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
@@ -100,15 +108,14 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
       }
-
       if (serviceManager.setInstances(instance)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation Not Valid for this service");
       }
     } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Invalid Service Name Or Operation Not Valid for this service");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           String.format("Error updating instances for service: %s", serviceName));
     }
   }
 
@@ -117,37 +124,35 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
-    String json;
     for (String service : reactorServiceManagementMap.keySet()) {
       ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
-      if (reactorServiceManager.canCheckStatus()) {
+      if (reactorServiceManager.isServiceEnabled() && reactorServiceManager.canCheckStatus()) {
         String status = reactorServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
         result.put(service, status);
       }
     }
-
-    json = (GSON).toJson(result);
-    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    responder.sendJson(HttpResponseStatus.OK, result);
   }
 
-  @Path("/system/services/{service-id}/status")
+  @Path("/system/services/{service-name}/status")
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
-                      @PathParam("service-id") final String service) {
-    if (reactorServiceManagementMap.containsKey(service)) {
-      ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(service);
-      if (reactorServiceManager.canCheckStatus()) {
-        if (reactorServiceManager.isServiceAvailable()) {
-          responder.sendString(HttpResponseStatus.OK, STATUSOK);
-        } else {
-          responder.sendString(HttpResponseStatus.OK, STATUSNOTOK);
-        }
-      } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
-      }
+                      @PathParam("service-name") final String serviceName) {
+    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+    ReactorServiceManager reactorServiceManager = reactorServiceManagementMap.get(serviceName);
+    if (!reactorServiceManager.isServiceEnabled()) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+      return;
+    }
+    if (reactorServiceManager.canCheckStatus() && reactorServiceManager.isServiceAvailable()) {
+      responder.sendString(HttpResponseStatus.OK, STATUSOK);
+    } else if (reactorServiceManager.canCheckStatus()) {
+      responder.sendString(HttpResponseStatus.OK, STATUSNOTOK);
     } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
     }
   }
 
@@ -159,23 +164,25 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     List<String> serviceList = new ArrayList<String>(services);
     for (String service : serviceList) {
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
-      String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
-      String canCheck = serviceManager.canCheckStatus() ? (
-        serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
-      String minInstance = String.valueOf(serviceManager.getMinInstances());
-      String maxInstance = String.valueOf(serviceManager.getMaxInstances());
-      String reqInstance = String.valueOf(serviceManager.getRequestedInstances());
-      String provInstance = String.valueOf(serviceManager.getProvisionedInstances());
-      JsonObject reply = new JsonObject();
-      reply.addProperty("name", service);
-      reply.addProperty("logs", logs);
-      reply.addProperty("status", canCheck);
-      reply.addProperty("min", minInstance);
-      reply.addProperty("max", maxInstance);
-      reply.addProperty("requested", reqInstance);
-      reply.addProperty("provisioned", provInstance);
-      //TODO: Add metric name for Event Rate monitoring
-      serviceSpec.add(reply);
+      if (serviceManager.isServiceEnabled()) {
+        String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
+        String canCheck = serviceManager.canCheckStatus() ? (
+          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
+        String minInstance = String.valueOf(serviceManager.getMinInstances());
+        String maxInstance = String.valueOf(serviceManager.getMaxInstances());
+        String reqInstance = String.valueOf(serviceManager.getRequestedInstances());
+        String provInstance = String.valueOf(serviceManager.getProvisionedInstances());
+        JsonObject reply = new JsonObject();
+        reply.addProperty("name", service);
+        reply.addProperty("logs", logs);
+        reply.addProperty("status", canCheck);
+        reply.addProperty("min", minInstance);
+        reply.addProperty("max", maxInstance);
+        reply.addProperty("requested", reqInstance);
+        reply.addProperty("provisioned", provInstance);
+        //TODO: Add metric name for Event Rate monitoring
+        serviceSpec.add(reply);
+      }
     }
     responder.sendJson(HttpResponseStatus.OK, serviceSpec);
   }
