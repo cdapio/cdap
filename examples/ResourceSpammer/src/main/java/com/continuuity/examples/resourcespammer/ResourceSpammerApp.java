@@ -15,32 +15,20 @@
  */
 package com.continuuity.examples.resourcespammer;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 
 /**
  * ResourceSpammer application that demonstrates CPU limits.
  */
-public class ResourceSpammerApp implements Application {
-
-  public static final String TABLE_NAME = "randomTable";
-
+public class ResourceSpammerApp extends AbstractApplication {
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("ResourceSpammerApp")
-      .setDescription("Application that uses lots of system resources")
-      .noStream()
-      .withDataSets()
-        .add(new KeyValueTable("input"))
-        .add(new KeyValueTable("output"))
-      .withFlows()
-        .add(new CPUSpammerFlow())
-      .withProcedures()
-        .add(new CPUSpamProcedure())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("ResourceSpammerApp");
+    setDescription("Application that uses lots of system resources");
+    createDataSet("input", KeyValueTable.class);
+    createDataSet("output", KeyValueTable.class);
+    addFlow(new CPUSpammerFlow());
+    addProcedure(new CPUSpamProcedure());
   }
 }

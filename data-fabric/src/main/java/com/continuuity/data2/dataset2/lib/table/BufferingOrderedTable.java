@@ -3,6 +3,7 @@ package com.continuuity.data2.dataset2.lib.table;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.dataset.metrics.MeteredDataset;
+import com.continuuity.api.dataset.table.ConflictDetection;
 import com.continuuity.api.dataset.table.Scanner;
 import com.continuuity.api.dataset.table.TableSplit;
 import com.continuuity.data2.transaction.Transaction;

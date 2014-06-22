@@ -11,15 +11,16 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -45,7 +46,10 @@ import static com.continuuity.common.conf.Constants.Service;
 public class AsyncExploreClient implements ExploreClient {
   private static final Logger LOG = LoggerFactory.getLogger(AsyncExploreClient.class);
   private static final Gson GSON = new Gson();
+
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
+  private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
@@ -62,65 +66,76 @@ public class AsyncExploreClient implements ExploreClient {
   }
 
   @Override
+  public boolean isAvailable() throws ExploreException {
+    try {
+      HttpResponse response = doGet(String.format("explore/status"));
+      return HttpResponseStatus.OK.getCode() == response.getResponseCode();
+    } catch (Exception e) {
+      LOG.info("Caught exception when checking Explore availability", e);
+      return false;
+    }
+  }
+
+  @Override
   public Handle enableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/enable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override
   public Handle disableExplore(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("explore/instances/%s/disable", datasetInstance), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
+    throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
+                               getDetails(response));
   }
 
   @Override
   public Handle execute(String statement) throws ExploreException {
     HttpResponse response = doPost("data/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return Handle.fromId(parseResponse(response, "id"));
+      return Handle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot execute query. Reason: " + getDetails(response));
   }
 
   @Override
   public Status getStatus(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getId(), "status"));
+    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "status"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Status.class);
+      return parseJson(response, Status.class);
     }
     throw new ExploreException("Cannot get status. Reason: " + getDetails(response));
   }
 
   @Override
   public List<ColumnDesc> getResultSchema(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getId(), "schema"));
+    HttpResponse response = doGet(String.format("data/queries/%s/%s", handle.getHandle(), "schema"));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                           new TypeToken<List<ColumnDesc>>() { }.getType());
+      return parseJson(response, COL_DESC_LIST_TYPE);
     }
     throw new ExploreException("Cannot get result schema. Reason: " + getDetails(response));
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getId(), "nextResults"),
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
-      return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                           new TypeToken<List<Row>>() { }.getType());
+      return parseJson(response, ROW_LIST_TYPE);
     }
     throw new ExploreException("Cannot get next results. Reason: " + getDetails(response));
   }
 
   @Override
   public void cancel(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getId(), "cancel"), null, null);
+    HttpResponse response = doPost(String.format("data/queries/%s/%s", handle.getHandle(), "cancel"), null, null);
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
@@ -129,23 +144,38 @@ public class AsyncExploreClient implements ExploreClient {
 
   @Override
   public void close(Handle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doDelete(String.format("data/queries/%s", handle.getId()));
+    HttpResponse response = doDelete(String.format("data/queries/%s", handle.getHandle()));
     if (HttpResponseStatus.OK.getCode() == response.getResponseCode()) {
       return;
     }
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
   }
 
-  private String parseResponse(HttpResponse response, String key) throws ExploreException {
-    String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
-    Map<String, String> responseMap = GSON.fromJson(responseString, MAP_TYPE_TOKEN);
+  private String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
+    Map<String, String> responseMap = parseJson(response, MAP_TYPE_TOKEN);
     if (responseMap.containsKey(key)) {
       return responseMap.get(key);
     }
 
-    String message = String.format("Cannot parse %s from server response: %s", key, responseString);
+    String message = String.format("Cannot find key %s in server response: %s", key,
+                                   new String(response.getResponseBody(), Charsets.UTF_8));
     LOG.error(message);
     throw new ExploreException(message);
+  }
+
+  private <T> T parseJson(HttpResponse response, Type type) throws ExploreException {
+    String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
+    try {
+      return GSON.fromJson(responseString, type);
+    } catch (JsonSyntaxException e) {
+      String message = String.format("Cannot parse server response: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    } catch (JsonParseException e) {
+      String message = String.format("Cannot parse server response as map: %s", responseString);
+      LOG.error(message, e);
+      throw new ExploreException(message, e);
+    }
   }
 
   private HttpResponse doGet(String resource) throws ExploreException {
@@ -164,8 +194,6 @@ public class AsyncExploreClient implements ExploreClient {
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body,
                                  @Nullable InputStream bodySrc) throws ExploreException {
-    Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");
-
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
@@ -189,7 +217,7 @@ public class AsyncExploreClient implements ExploreClient {
 
   private String resolve(String resource) {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null) {
+    if (endpointStrategy == null || endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
       LOG.error(message);
       throw new RuntimeException(message);

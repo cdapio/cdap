@@ -97,7 +97,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   private URL resolve(String instanceName, String opName) throws MalformedURLException {
-    return resolve(String.format("instances/%s/admin/%s", instanceName, opName));
+    return resolve(String.format("datasets/%s/admin/%s", instanceName, opName));
   }
 
   private URL resolve(String path) throws MalformedURLException {

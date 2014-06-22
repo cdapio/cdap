@@ -18,7 +18,7 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 

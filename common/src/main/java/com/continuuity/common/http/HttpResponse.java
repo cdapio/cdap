@@ -6,7 +6,7 @@ package com.continuuity.common.http;
 /**
  * Return type for http requests executed by {@link HttpResponse}
  */
-public final class HttpResponse {
+public class HttpResponse {
   private final int responseCode;
   private final String responseMessage;
   private final byte[] responseBody;

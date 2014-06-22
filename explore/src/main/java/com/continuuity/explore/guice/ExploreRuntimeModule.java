@@ -7,6 +7,8 @@ import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.explore.executor.ExploreExecutorHttpHandler;
 import com.continuuity.explore.executor.ExploreExecutorService;
+import com.continuuity.explore.executor.ExplorePingHandler;
+import com.continuuity.explore.executor.QueryExecutorHttpHandler;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.hive.Hive12ExploreService;
 import com.continuuity.explore.service.hive.Hive13ExploreService;
@@ -68,7 +70,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
       Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+      handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
+      handlerBinder.addBinding().to(ExplorePingHandler.class);
       handlerBinder.addBinding().to(PingHandler.class);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
@@ -126,6 +130,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
         LOG.debug("Setting {} to {}",
                   HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
         System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
+
+        // Set derby log location
+        System.setProperty("derby.stream.error.file",
+                           cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR) + File.separator + "derby.log");
 
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);

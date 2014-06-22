@@ -1,6 +1,6 @@
 package com.continuuity.explore.client;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ExploreException;
@@ -32,15 +32,14 @@ public class DatasetExploreFacade {
   @Inject
   public DatasetExploreFacade(AsyncExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
-    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED,
-                                           Constants.Explore.DEFAULT_CFG_EXPLORE_ENABLED);
+    this.exploreEnabled = cConf.getBoolean(Constants.Explore.CFG_EXPLORE_ENABLED);
     if (!exploreEnabled) {
       LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
     }
   }
 
   /**
-   * Enables ad-hoc exploration of the given {@link RowScannable}.
+   * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   public void enableExplore(String datasetInstance) throws ExploreException {
@@ -52,9 +51,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Enable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot enable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
@@ -75,7 +74,7 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Disable ad-hoc exploration of the given {@link RowScannable}.
+   * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   public void disableExplore(String datasetInstance) throws ExploreException {
@@ -87,9 +86,9 @@ public class DatasetExploreFacade {
     try {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, handle, 200, TimeUnit.MILLISECONDS, 50);
 
-      if (status.getState() != Status.State.FINISHED) {
+      if (status.getStatus() != Status.OpStatus.FINISHED) {
         LOG.error("Disable explore did not finish successfully for dataset instance {}. Got final state - {}",
-                  datasetInstance, status.getState());
+                  datasetInstance, status.getStatus());
         throw new ExploreException("Cannot disable explore for dataset instance " + datasetInstance);
       }
     } catch (HandleNotFoundException e) {
@@ -109,16 +108,9 @@ public class DatasetExploreFacade {
     }
   }
 
-  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
-    String hiveSchema;
-    try {
-      hiveSchema = hiveSchemaFor(scannable);
-    } catch (UnsupportedTypeException e) {
-      LOG.error(String.format(
-        "Can't create Hive table for dataset '%s' because its row type '%s' is not supported",
-        name, scannable.getRowType()), e);
-      return null;
-    }
+  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
+    throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaFor(scannable);
 
     // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
@@ -126,9 +118,9 @@ public class DatasetExploreFacade {
     String tableName = name.replaceAll("\\.", "_");
 
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
-                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-                                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                                         Constants.Explore.DATASET_NAME, name);
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                         Constants.Explore.DATASET_NAME, name);
   }
 
   public static String generateDeleteStatement(String name) {
@@ -147,8 +139,8 @@ public class DatasetExploreFacade {
    * @return the hive schema
    * @throws UnsupportedTypeException if the row type is not a record or contains null types.
    */
-  static <ROW> String hiveSchemaFor(RowScannable<ROW> dataset) throws UnsupportedTypeException {
-    return hiveSchemaFor(dataset.getRowType());
+  static <ROW> String hiveSchemaFor(RecordScannable<ROW> dataset) throws UnsupportedTypeException {
+    return hiveSchemaFor(dataset.getRecordType());
   }
 
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
