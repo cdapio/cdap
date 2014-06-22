@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service manager for explore service to
+ * Service manager for explore service in distributed mode.
  */
 public class ExploreServiceManager extends AbstractDistributedReactorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(StreamServiceManager.class);
