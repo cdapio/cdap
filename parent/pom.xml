@@ -1207,6 +1207,38 @@
               </execution>
             </executions>
           </plugin>
+          <!-- Determine the deploy.url for non-standard (e.g. zip, rpm, deb) deployment -->
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.5</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>1.5.8</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>choose-deploy-url</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    if (project.version.endsWith("-SNAPSHOT")){
+                      project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
+                    }
+                    else {
+                      project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                    }
+                  </source>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
