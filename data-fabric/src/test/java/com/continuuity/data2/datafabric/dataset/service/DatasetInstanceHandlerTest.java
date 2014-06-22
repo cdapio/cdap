@@ -188,8 +188,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private int createInstance(String instanceName, String typeName, DatasetProperties props) throws IOException {
     return HttpRequests.put(getUrl("/data/datasets/" + instanceName),
-                             new Gson().toJson(props),
-                             "X-Continuuity-Type-Name", typeName).getResponseCode();
+                            new Gson().toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(typeName, props)))
+      .getResponseCode();
   }
 
   private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
