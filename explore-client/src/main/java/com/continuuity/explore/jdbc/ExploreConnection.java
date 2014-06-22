@@ -50,8 +50,10 @@ public class ExploreConnection implements Connection {
 
   @Override
   public DatabaseMetaData getMetaData() throws SQLException {
-    // TODO Hive jdbc driver supports that
-    throw new SQLException("Method not supported");
+    if (isClosed) {
+      throw new SQLException("Connection is closed");
+    }
+    return new ExploreDatabaseMetaData();
   }
 
   @Override
@@ -82,7 +84,7 @@ public class ExploreConnection implements Connection {
 
   @Override
   public boolean getAutoCommit() throws SQLException {
-    throw new SQLException("Method not supported");
+    return true;
   }
 
   @Override

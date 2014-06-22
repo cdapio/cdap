@@ -37,6 +37,14 @@ public class ExploreStatement implements Statement {
    */
   private ResultSet resultSet = null;
 
+  /**
+   * Sets the limit for the maximum number of rows that any ResultSet object produced by this
+   * Statement can contain to the given number. If the limit is exceeded, the excess rows
+   * are silently dropped. The value must be >= 0, and 0 means there is not limit.
+   */
+  // TODO pass it to the result set
+  private int maxRows = 0;
+
   private boolean isClosed = false;
 
   private Handle stmtHandle = null;
@@ -104,6 +112,19 @@ public class ExploreStatement implements Statement {
   @Override
   public ResultSet getResultSet() throws SQLException {
     return resultSet;
+  }
+
+  @Override
+  public int getMaxRows() throws SQLException {
+    return maxRows;
+  }
+
+  @Override
+  public void setMaxRows(int max) throws SQLException {
+    if (max < 0) {
+      throw new SQLException("max rows must be >= 0");
+    }
+    maxRows = max;
   }
 
   @Override
@@ -188,16 +209,6 @@ public class ExploreStatement implements Statement {
 
   @Override
   public void setMaxFieldSize(int i) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public int getMaxRows() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public void setMaxRows(int i) throws SQLException {
     throw new SQLException("Method not supported");
   }
 
