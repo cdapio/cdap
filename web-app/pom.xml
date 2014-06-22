@@ -226,7 +226,7 @@
             <executions>
               <execution>
                 <id>copy-enterprise</id>
-                <phase>package</phase>
+                <phase>prepare-package</phase>
                 <goals>
                   <goal>run</goal>
                 </goals>
@@ -247,7 +247,7 @@
     </profile>
 
     <profile>
-      <id>rpm-prepare</id>
+      <id>fpm-prepare</id>
       <build>
         <plugins>
           <plugin>
@@ -263,6 +263,20 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>fpm</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.3.1</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
   </profiles>
 
 </project>

@@ -2,7 +2,6 @@ package com.continuuity.common.lang.jar;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

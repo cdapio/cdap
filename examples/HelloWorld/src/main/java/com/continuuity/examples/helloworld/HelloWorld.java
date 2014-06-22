@@ -15,14 +15,13 @@
  */
 package com.continuuity.examples.helloworld;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -43,24 +42,16 @@ import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
  *   <li>A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
  * </uL>
  */
-public class HelloWorld implements Application {
+public class HelloWorld extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("HelloWorld")
-      .setDescription("A Hello World program for the Continuuity Reactor")
-      .withStreams()
-        .add(new Stream("who"))
-      .withDataSets()
-        .add(new KeyValueTable("whom"))
-      .withFlows()
-        .add(new WhoFlow())
-      .withProcedures()
-        .add(new Greeting())
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("HelloWorld");
+    setDescription("A Hello World program for the Continuuity Reactor");
+    addStream(new Stream("who"));
+    createDataSet("whom", KeyValueTable.class);
+    addFlow(new WhoFlow());
+    addProcedure(new Greeting());
   }
 
   /**

@@ -5,15 +5,21 @@ Instrumenting Application Health via Metrics
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 .. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -440,7 +446,7 @@ Adding User-defined Metrics
 Adding User-defined Metrics: Flowlet Example
 ============================================
 
-.. sourcecode:: java
+::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -475,7 +481,7 @@ Use the Continuuity Reactor Dashboard to view metrics
 In the top portion of the Overview you can see the **Metrics** button
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
-   :width: 600px
+   :width: 80%
 
 This takes you to the *Metrics Explorer*
 
@@ -487,7 +493,7 @@ Using the Metrics Explorer (1 of 3)
 Monitor a variety of different statistics for elements of the Reactor
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_18_metrics_explorer1.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -501,7 +507,7 @@ Using the Metrics Explorer (2 of 3)
 - *Pause* the sampling to prevent excessive load on the Reactor
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_20_metrics_explorer3.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -511,7 +517,7 @@ Using the Metrics Explorer (3 of 3)
 As you mouse over the graph, you will get detailed information about the statistics presented
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_19_metrics_explorer2.png
-   :width: 600px
+   :width: 80%
 
 ----
 

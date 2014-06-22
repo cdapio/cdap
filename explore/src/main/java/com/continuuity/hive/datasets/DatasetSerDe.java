@@ -22,14 +22,14 @@ import java.util.Properties;
 public class DatasetSerDe extends AbstractSerDe {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
 
-  private Type rowType;
+  private Type recordType;
 
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     entries.set(Constants.Explore.DATASET_NAME, datasetName);
     try {
-      rowType = DatasetAccessor.getRowScannableType(entries);
+      recordType = DatasetAccessor.getRecordScannableType(entries);
     } catch (IOException e) {
       LOG.error("Got exception while trying to instantiate dataset {}", datasetName, e);
       throw new SerDeException(e);
@@ -49,7 +49,7 @@ public class DatasetSerDe extends AbstractSerDe {
 
   @Override
   public SerDeStats getSerDeStats() {
-    // TODO: add real Sataset stats
+    // TODO: add real Sataset stats - REACTOR-278
     return new SerDeStats();
   }
 
@@ -61,6 +61,6 @@ public class DatasetSerDe extends AbstractSerDe {
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
-    return ObjectInspectorFactory.getReflectionObjectInspector(rowType);
+    return ObjectInspectorFactory.getReflectionObjectInspector(recordType);
   }
 }

@@ -1,5 +1,7 @@
 package com.continuuity.security.runtime;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -12,6 +14,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Services;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Server for authenticating clients accessing Reactor.  When a client authenticates successfully, it is issued
@@ -19,6 +23,7 @@ import org.apache.twill.zookeeper.ZKClientService;
  * (such as the router) can independently verify client identities based on the token contents.
  */
 public class AuthenticationServerMain extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationServerMain.class);
   private ZKClientService zkClientService;
   private ExternalAuthenticationServer authServer;
 
@@ -29,18 +34,33 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new SecurityModules().getDistributedModules(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new ZKClientModule());
-    this.zkClientService = injector.getInstance(ZKClientService.class);
-    this.authServer = injector.getInstance(ExternalAuthenticationServer.class);
+    CConfiguration configuration = injector.getInstance(CConfiguration.class);
+
+    if (configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+      this.zkClientService = injector.getInstance(ZKClientService.class);
+      this.authServer = injector.getInstance(ExternalAuthenticationServer.class);
+    }
   }
 
   @Override
   public void start() {
-    Services.chainStart(zkClientService, authServer);
+    if (authServer != null) {
+      LOG.info("Starting AuthenticationServer.");
+      Services.chainStart(zkClientService, authServer);
+    } else {
+      String error = "AuthenticationServer not started since security is disabled." +
+                      " To enable security, set \"security.enabled\" = \"true\" in continuuity-site.xml" +
+                      " and edit the appropriate configuration.";
+      LOG.error(error);
+    }
   }
 
   @Override
   public void stop() {
-    Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
+    if (authServer != null) {
+      LOG.info("Stopping AuthenticationServer.");
+      Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
+    }
   }
 
   @Override

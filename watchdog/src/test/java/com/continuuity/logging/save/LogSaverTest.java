@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -73,6 +74,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   private static InMemoryTxSystemClient txClient = null;
   private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static LogSaverTableUtil tableUtil;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -107,9 +109,10 @@ public class LogSaverTest extends KafkaTestBase {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
     kafkaClient.startAndWait();
 
+    tableUtil = new LogSaverTableUtil(dataSetAccessor);
     LogSaver logSaver =
-      new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   cConf, new LocalLocationFactory());
+      new LogSaver(tableUtil, txClient, kafkaClient,
+                   cConf, new LocalLocationFactory(), new InMemoryDiscoveryService());
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
@@ -133,7 +136,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = new CheckpointManager(LogSaver.getMetaTable(dataSetAccessor),
+    CheckpointManager checkpointManager = new CheckpointManager(tableUtil.getMetaTable(),
                                                                 txClient, KafkaTopic.getTopic());
     Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
     Assert.assertEquals(120, checkpointManager.getCheckpoint(1));

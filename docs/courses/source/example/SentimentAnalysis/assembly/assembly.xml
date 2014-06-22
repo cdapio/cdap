@@ -1,0 +1,56 @@
+<assembly>
+  <id>${project.version}</id>
+
+  <formats>
+    <format>zip</format>
+  </formats>
+
+  <fileSets>
+
+   <fileSet>
+    <directory>docs</directory>
+    <outputDirectory>docs</outputDirectory>
+    <includes>
+      <include>*/**</include>
+    </includes>
+    <excludes>
+      <exclude>doc-apps.txt</exclude>
+    </excludes>
+   </fileSet>
+
+   <fileSet>
+    <directory>webapp</directory>
+    <outputDirectory>webapp</outputDirectory>
+    <includes>
+      <include>*/**</include>
+    </includes>
+   </fileSet>
+  
+   <fileSet>
+    <directory>bin</directory>
+    <outputDirectory>bin</outputDirectory>
+    <lineEnding>unix</lineEnding>
+    <fileMode>0755</fileMode>
+   </fileSet>
+
+   <fileSet>
+    <directory>target</directory>
+    <outputDirectory>lib</outputDirectory>
+    <includes>
+      <include>*.jar</include>
+    </includes>
+    <excludes>
+      <exclude>original-*.jar</exclude>
+    </excludes>
+   </fileSet>
+
+   <fileSet>
+    <directory>conf</directory>
+    <outputDirectory>conf</outputDirectory>
+    <excludes>
+      <exclude>your-app.conf</exclude>
+    </excludes>
+   </fileSet>
+
+  </fileSets>
+</assembly>

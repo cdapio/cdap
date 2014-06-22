@@ -34,6 +34,13 @@ public abstract class AbstractApplication implements Application {
     configure();
   }
 
+  /**
+   * @return {@link ApplicationConfigurer} used to configure this {@link Application}
+   */
+  protected ApplicationConfigurer getConfigurer() {
+    return configurer;
+  }
+
   protected final ApplicationContext getContext() {
     return context;
   }
@@ -102,6 +109,14 @@ public abstract class AbstractApplication implements Application {
                                Class<? extends Dataset> datasetClass,
                                DatasetProperties props) {
     configurer.createDataSet(datasetInstanceName, datasetClass, props);
+  }
+
+  /**
+   * @see ApplicationConfigurer#createDataSet(String, Class, DatasetProperties) and passes epty properties
+   */
+  protected void createDataSet(String datasetInstanceName,
+                               Class<? extends Dataset> datasetClass) {
+    configurer.createDataSet(datasetInstanceName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**
