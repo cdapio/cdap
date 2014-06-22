@@ -5,6 +5,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -75,6 +76,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -501,9 +503,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
         if (inputDataSetName.startsWith("stream://")) {
           batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
         } else {
-          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
           // We checked on validation phase that it implements BatchReadable
-          mapReduceContext.setInput(inputDataSet, inputDataSet.getSplits());
+          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
+          List<Split> inputSplits = mapReduceContext.getInputDataSelection();
+          if (inputSplits == null) {
+            inputSplits = inputDataSet.getSplits();
+          }
+          mapReduceContext.setInput(inputDataSet, inputSplits);
         }
       }
     }

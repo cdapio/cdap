@@ -27,7 +27,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
  */
 public class PurchaseStreamReader extends AbstractFlowlet {
 
-  OutputEmitter<Purchase> out;
+  private OutputEmitter<Purchase> out;
 
   @ProcessInput
   public void process(StreamEvent event) {

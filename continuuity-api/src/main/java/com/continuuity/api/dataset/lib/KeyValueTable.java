@@ -2,11 +2,11 @@ package com.continuuity.api.dataset.lib;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.BatchReadable;
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
 import com.google.common.reflect.TypeToken;
@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>,
-  RowScannable<KeyValue<byte[], byte[]>> {
+    RecordScannable<KeyValue<byte[], byte[]>> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -125,7 +125,7 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public Type getRowType() {
+  public Type getRecordType() {
     return new TypeToken<KeyValue<byte[], byte[]>>() { }.getType();
   }
 
@@ -135,8 +135,8 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   @Override
-  public SplitRowScanner<KeyValue<byte[], byte[]>> createSplitScanner(Split split) {
-    return Scannables.splitRowScanner(createSplitReader(split), new KeyValueRowMaker());
+  public RecordScanner<KeyValue<byte[], byte[]>> createSplitRecordScanner(Split split) {
+    return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
   }
 
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
@@ -149,11 +149,11 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * {@link com.continuuity.api.data.batch.Scannables.RowMaker} for {@link #createSplitReader(Split)}.
+   * {@link com.continuuity.api.data.batch.Scannables.RecordMaker} for {@link #createSplitReader(Split)}.
    */
-  public class KeyValueRowMaker implements Scannables.RowMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
+  public class KeyValueRecordMaker implements Scannables.RecordMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
     @Override
-    public KeyValue<byte[], byte[]> makeRow(byte[] key, byte[] value) {
+    public KeyValue<byte[], byte[]> makeRecord(byte[] key, byte[] value) {
       return new KeyValue<byte[], byte[]>(key, value);
     }
   }

@@ -6,6 +6,7 @@ import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +30,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, ProcedureSpecification> procedures;
   private final Map<String, MapReduceSpecification> mapReduces;
   private final Map<String, WorkflowSpecification> workflows;
-  private final Map<String, TwillSpecification> services;
+  private final Map<String, ServiceSpecification> services;
 
 
   public DefaultApplicationSpecification(String name, String description,
@@ -42,7 +43,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this(name, description, streams, datasets,
          Maps.<String, String>newHashMap(),
          Maps.<String, DatasetInstanceCreationSpec>newHashMap(),
-         flows, procedures, mapReduces, workflows, Maps.<String, TwillSpecification>newHashMap());
+         flows, procedures, mapReduces, workflows, Maps.<String, ServiceSpecification>newHashMap());
 
   }
 
@@ -55,7 +56,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ProcedureSpecification> procedures,
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, WorkflowSpecification> workflows,
-                                         Map<String, TwillSpecification> services) {
+                                         Map<String, ServiceSpecification> services) {
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
@@ -126,7 +127,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return workflows;
   }
 
-  public Map<String, TwillSpecification> getServices() {
+  public Map<String, ServiceSpecification> getServices() {
     return services;
   }
 }

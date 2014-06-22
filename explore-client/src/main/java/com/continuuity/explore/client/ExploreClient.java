@@ -1,6 +1,5 @@
 package com.continuuity.explore.client;
 
-import com.continuuity.api.data.batch.RowScannable;
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
@@ -16,13 +15,13 @@ public interface ExploreClient extends Explore {
   boolean isAvailable() throws ExploreException;
 
   /**
-   * Enables ad-hoc exploration of the given {@link RowScannable}.
+   * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   Handle enableExplore(String datasetInstance) throws ExploreException;
 
   /**
-   * Disable ad-hoc exploration of the given {@link RowScannable}.
+   * Disable ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
   Handle disableExplore(String datasetInstance) throws ExploreException;

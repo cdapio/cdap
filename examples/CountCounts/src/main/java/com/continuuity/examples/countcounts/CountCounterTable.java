@@ -16,10 +16,12 @@
 package com.continuuity.examples.countcounts;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.dataset.table.Get;
-import com.continuuity.api.data.dataset.table.Row;
-import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.lib.AbstractDataset;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
+import com.continuuity.api.dataset.table.Get;
+import com.continuuity.api.dataset.table.Row;
+import com.continuuity.api.dataset.table.Table;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,15 +29,15 @@ import java.util.TreeMap;
 /**
  *
  */
-public class CountCounterTable extends DataSet {
+public class CountCounterTable extends AbstractDataset {
 
   private Table table;
 
   private static final byte[] KEY_ONLY_COLUMN = new byte[]{'c'};
 
-  public CountCounterTable(String name) {
-    super(name);
-    this.table = new Table("cct_" + getName());
+  public CountCounterTable(DatasetSpecification spec, @EmbeddedDataSet("cct") Table table) {
+    super(spec.getName(), table);
+    this.table = table;
   }
 
   // Word count methods

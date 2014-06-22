@@ -1,8 +1,11 @@
-package com.continuuity.data2.datafabric.dataset.type;
+package com.continuuity.data2.datafabric.dataset.service.mds;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.api.dataset.module.EmbeddedDataSet;
 import com.continuuity.api.dataset.table.OrderedTable;
-import com.continuuity.data2.datafabric.dataset.AbstractObjectsStore;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
@@ -13,7 +16,7 @@ import javax.annotation.Nullable;
 /**
  * Dataset types and modules metadata store
  */
-final class DatasetTypeMDS extends AbstractObjectsStore {
+public class DatasetTypeMDS extends AbstractObjectsStore {
   /**
    * Prefix for rows containing module info.
    * NOTE: we store in same table list of modules, with keys being <MODULES_PREFIX><module_name> and
@@ -27,8 +30,8 @@ final class DatasetTypeMDS extends AbstractObjectsStore {
    */
   private static final byte[] TYPE_TO_MODULE_PREFIX = Bytes.toBytes("t_");
 
-  public DatasetTypeMDS(OrderedTable table) {
-    super(table);
+  public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataSet("") OrderedTable table) {
+    super(spec, table);
   }
 
   @Nullable
