@@ -227,6 +227,7 @@
                         <include>**/target/*.jar</include>
                       </includes>
                       <excludes>
+                        <exclude>pom.xml</exclude>
                         <exclude>build.gradle</exclude>
                         <exclude>README.rst</exclude>
                         <exclude>**/target/original*.jar</exclude>
@@ -235,15 +236,39 @@
                   </resources>
                 </configuration>
               </execution>
+              <!-- Copy example deploy pom -->
+              <execution>
+                <id>copy-examples-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${project.build.directory}/examples</outputDirectory>
+                  <delimiters>
+                    <delimiter>@</delimiter>
+                  </delimiters>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.parent.basedir}/examples</directory>
+                      <includes>
+                        <include>deploy_pom.xml</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
-          <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
-          <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.6</version>
+            <version>1.7</version>
             <executions>
+              <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+              <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
               <execution>
                 <id>bin-permission</id>
                 <phase>prepare-package</phase>
@@ -255,6 +280,19 @@
                 <goals>
                   <goal>run</goal>
                 </goals>
+              </execution>
+              <!-- Rename examples deploy_pom.xml to pom.xml -->
+              <execution>
+                <id>rename-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
               </execution>
             </executions>
           </plugin>
