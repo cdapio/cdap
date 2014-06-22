@@ -88,6 +88,33 @@ public class LocalMapreduceClasspathSetterTest {
     System.clearProperty(HiveConf.ConfVars.HADOOPBIN.toString());
   }
 
+  @Test
+  public void testClasspathSetupNone() throws Exception {
+    System.clearProperty(HiveConf.ConfVars.HADOOPBIN.toString());
+    String originalHadoopBin = new HiveConf().get(HiveConf.ConfVars.HADOOPBIN.toString());
+
+    List<String> inputURLs = Lists.newArrayList();
+    inputURLs.add("/usr/lib/hbase/lib/hbase-hadoop2-compat-0.96.1.2.0.11.0-1-hadoop2.jar");
+    inputURLs.add("/usr/lib/hbase/lib/hbase-thrift-0.96.1.2.0.11.0-1-hadoop2.jar");
+    inputURLs.add("/usr/lib/hadoop/hadoop-common-2.2.0.2.0.11.0-1-tests.jar");
+
+    HiveConf hiveConf = new HiveConf();
+    LocalMapreduceClasspathSetter classpathSetter =
+      new LocalMapreduceClasspathSetter(hiveConf, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    for (String url : inputURLs) {
+      classpathSetter.accept(url);
+    }
+
+    Assert.assertTrue(classpathSetter.getHbaseProtocolJarPaths().isEmpty());
+
+    classpathSetter.setupClasspathScript();
+
+    String newHadoopBin = new HiveConf().get(HiveConf.ConfVars.HADOOPBIN.toString());
+    Assert.assertEquals(originalHadoopBin, newHadoopBin);
+    System.clearProperty(HiveConf.ConfVars.HADOOPBIN.toString());
+  }
+
   private static final String generatedHadoopBinMulti =
     "#!/usr/bin/env bash\n" +
       "# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n" +
