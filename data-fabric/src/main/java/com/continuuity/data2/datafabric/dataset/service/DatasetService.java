@@ -56,8 +56,8 @@ public class DatasetService extends AbstractIdleService {
     this.typeManager = typeManager;
 
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                        opExecutorClient, datasetExploreFacade)));
+                                             new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
+                                                                        datasetExploreFacade, cConf)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
