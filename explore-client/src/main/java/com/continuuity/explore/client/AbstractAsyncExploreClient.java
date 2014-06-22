@@ -35,15 +35,17 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractAsyncExploreClient implements Explore, ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(InternalAsyncExploreClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractAsyncExploreClient.class);
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
+  protected abstract InetSocketAddress getExploreServiceAddress();
+
   @Override
-  public boolean isAvailable() throws ExploreException {
+  public boolean isAvailable() {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
       return HttpResponseStatus.OK.getCode() == response.getResponseCode();
@@ -128,7 +130,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
   }
 
-  protected String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
+  private String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
     Map<String, String> responseMap = parseJson(response, MAP_TYPE_TOKEN);
     if (responseMap.containsKey(key)) {
       return responseMap.get(key);
@@ -140,7 +142,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     throw new ExploreException(message);
   }
 
-  protected <T> T parseJson(HttpResponse response, Type type) throws ExploreException {
+  private <T> T parseJson(HttpResponse response, Type type) throws ExploreException {
     String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
     try {
       return GSON.fromJson(responseString, type);
@@ -155,15 +157,15 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     }
   }
 
-  protected HttpResponse doGet(String resource) throws ExploreException {
+  private HttpResponse doGet(String resource) throws ExploreException {
     return doRequest(resource, "GET", null, null, null);
   }
 
-  protected HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
+  private HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
     return doRequest(resource, "POST", headers, body, null);
   }
 
-  protected HttpResponse doDelete(String resource) throws ExploreException {
+  private HttpResponse doDelete(String resource) throws ExploreException {
     return doRequest(resource, "DELETE", null, null, null);
   }
 
@@ -184,7 +186,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     }
   }
 
-  protected String getDetails(HttpResponse response) {
+  private String getDetails(HttpResponse response) {
     return String.format("Response code: %s, message:'%s', body: '%s'",
         response.getResponseCode(), response.getResponseMessage(),
         response.getResponseBody() == null ?
@@ -199,6 +201,4 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     LOG.trace("Explore URL = {}", url);
     return url;
   }
-
-  protected abstract InetSocketAddress getExploreServiceAddress();
 }

@@ -32,7 +32,7 @@ public class MockExploreClient implements ExploreClient {
   }
 
   @Override
-  public boolean isAvailable() throws ExploreException {
+  public boolean isAvailable() {
     return true;
   }
 

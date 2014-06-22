@@ -38,19 +38,19 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   @Override
   public boolean execute() throws SQLException {
-    // TODO update the SQL string with parameters set by setXXX methods
+    // TODO update the SQL string with parameters set by setXXX methods [REACTOR-320]
     return super.execute(sql);
   }
 
   @Override
   public ResultSet executeQuery() throws SQLException {
-    // TODO update the SQL string with parameters set by setXXX methods
+    // TODO update the SQL string with parameters set by setXXX methods [REACTOR-320]
     return super.executeQuery(sql);
   }
 
   @Override
   public int executeUpdate() throws SQLException {
-    return 0;
+    throw new SQLException("Method not supported");
   }
 
   @Override

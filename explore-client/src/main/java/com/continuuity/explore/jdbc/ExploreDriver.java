@@ -24,11 +24,13 @@ public class ExploreDriver implements Driver {
     try {
       java.sql.DriverManager.registerDriver(new ExploreDriver());
     } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOG.error("Caught exception when registering Reactor JDBC Driver", e);
     }
   }
 
+  private static final Pattern CONNECTION_URL_PATTERN = Pattern.compile(ExploreJDBCUtils.URL_PREFIX + ".*");
+
+  // The explore jdbc driver is not JDBC compliant, as tons of functionalities are missing
   private static final boolean JDBC_COMPLIANT = false;
 
   @Override
@@ -40,20 +42,15 @@ public class ExploreDriver implements Driver {
     String host = jdbcURI.getHost();
     int port = jdbcURI.getPort();
     ExploreClient exploreClient = new ExternalAsyncExploreClient(host, port);
-    try {
-      if (!exploreClient.isAvailable()) {
-        throw new SQLException("Explore is not available on host {}:{}", host, port);
-      }
-    } catch (ExploreException e) {
-      LOG.error("Caught exception when asking for Explore status", e);
-      throw new SQLException(e);
+    if (!exploreClient.isAvailable()) {
+      throw new SQLException("Cannot connect to {}, service unavailable", url);
     }
     return new ExploreConnection(exploreClient);
   }
 
   @Override
   public boolean acceptsURL(String url) throws SQLException {
-    return Pattern.matches(ExploreJDBCUtils.URL_PREFIX + ".*", url);
+    return CONNECTION_URL_PATTERN.matcher(url).matches();
   }
 
   @Override
@@ -63,13 +60,13 @@ public class ExploreDriver implements Driver {
 
   @Override
   public int getMajorVersion() {
-    // TODO implement
+    // TODO implement [REACTOR-319]
     return 0;
   }
 
   @Override
   public int getMinorVersion() {
-    // TODO implement
+    // TODO implement [REACTOR-319]
     return 0;
   }
 

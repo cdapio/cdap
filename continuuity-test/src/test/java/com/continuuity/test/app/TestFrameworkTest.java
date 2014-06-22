@@ -430,6 +430,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       connection.close();
+      appManager.stopAll();
     }
   }
 

@@ -178,7 +178,7 @@ public class ReactorTestBase {
     configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     configuration.setBoolean(Constants.Explore.CFG_EXPLORE_ENABLED, true);
     configuration.set(Constants.Explore.CFG_LOCAL_DATA_DIR,
-                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+                      tmpFolder.newFolder("hive").getAbsolutePath());
 
     // Windows specific requirements
     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -370,7 +370,7 @@ public class ReactorTestBase {
       throw new IOException("Explore service could not be discovered.");
     }
 
-    String host = "localhost";
+    String host = address.getHostName();
     int port = address.getPort();
 
     String connectString = String.format("jdbc:explore://%s:%d", host, port);

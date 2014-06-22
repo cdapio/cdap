@@ -8,6 +8,7 @@ import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
 
 import com.google.common.base.Throwables;
+import com.sun.org.apache.bcel.internal.classfile.Unknown;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +36,10 @@ public class ExploreStatement implements Statement {
    *  statement.getResultSet();
    * </code>.
    */
-  private ResultSet resultSet = null;
-
-  private boolean isClosed = false;
-
-  private Handle stmtHandle = null;
-
-  private ReentrantLock clientLock = new ReentrantLock(true);
+  private volatile ResultSet resultSet = null;
+  private volatile boolean isClosed = false;
+  private volatile Handle stmtHandle = null;
+  private volatile boolean stmtCompleted;
 
   private final Connection connection;
   private final Explore exploreClient;
@@ -67,19 +65,19 @@ public class ExploreStatement implements Statement {
     if (isClosed) {
       throw new SQLException("Can't execute after statement has been closed");
     }
+    stmtCompleted = false;
+    if (resultSet != null) {
+      // As requested by the Statement interface javadoc, "All execution methods in the Statement interface
+      // implicitly close a statment's current ResultSet object if an open one exists"
+      resultSet.close();
+    }
 
     // TODO in future, the polling logic should be in another SyncExploreClient
     try {
-      try {
-        clientLock.lock();
-        stmtHandle = exploreClient.execute(sql);
-      } finally {
-        clientLock.unlock();
-      }
-      // We don't care about passing the lock for getting status
+      stmtHandle = exploreClient.execute(sql);
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
                                                                 TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
-
+      stmtCompleted = true;
       if (status.getStatus() != Status.OpStatus.FINISHED && status.getStatus() != Status.OpStatus.CANCELED) {
         throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
                                              "Got final state - %s", sql, status.getStatus().toString()));
@@ -88,12 +86,11 @@ public class ExploreStatement implements Statement {
       return status.hasResults();
     } catch (HandleNotFoundException e) {
       // Cannot happen unless explore server restarted.
-      LOG.error("Error running enable explore", e);
-      throw Throwables.propagate(e);
+      LOG.error("Error executing query", e);
+      throw new SQLException("Unknown state");
     } catch (InterruptedException e) {
       LOG.error("Caught exception", e);
       Thread.currentThread().interrupt();
-      // TODO is this the correct behavior?
       return false;
     } catch (ExploreException e) {
       LOG.error("Caught exception", e);
@@ -116,19 +113,20 @@ public class ExploreStatement implements Statement {
     return fetchSize;
   }
 
-  public void closeClientOperation() throws SQLException {
+  /**
+   * This method is not private to let {@link ExploreQueryResultSet} access it when closing its results.
+   */
+  void closeClientOperation() throws SQLException {
     if (stmtHandle != null) {
       try {
-        clientLock.lock();
         exploreClient.close(stmtHandle);
-        stmtHandle = null;
       } catch (HandleNotFoundException e) {
         LOG.error("Ignoring cannot find handle during close.");
       } catch (ExploreException e) {
         LOG.error("Caught exception when closing statement", e);
         throw new SQLException(e.toString(), e);
       } finally {
-        clientLock.unlock();
+        stmtHandle = null;
       }
     }
   }
@@ -139,9 +137,15 @@ public class ExploreStatement implements Statement {
       return;
     }
 
-    closeClientOperation();
-    resultSet = null;
-    isClosed = true;
+    try {
+      if (resultSet != null) {
+        resultSet.close();
+      }
+      closeClientOperation();
+    } finally {
+      resultSet = null;
+      isClosed = true;
+    }
   }
 
   @Override
@@ -149,30 +153,27 @@ public class ExploreStatement implements Statement {
     if (isClosed) {
       throw new SQLException("Can't cancel after statement has been closed");
     }
+    if (stmtCompleted) {
+      LOG.info("Trying to cancel a completed query.");
+      return;
+    }
     if (stmtHandle == null) {
       LOG.info("Trying to cancel with no query.");
       return;
     }
     try {
-      clientLock.lock();
       exploreClient.cancel(stmtHandle);
     } catch (HandleNotFoundException e) {
       LOG.error("Ignoring cannot find handle during cancel.");
     } catch (ExploreException e) {
       LOG.error("Caught exception when closing statement", e);
       throw new SQLException(e.toString(), e);
-    } finally {
-      clientLock.unlock();
     }
   }
 
   @Override
   public Connection getConnection() throws SQLException {
     return connection;
-  }
-
-  ReentrantLock getClientLock() {
-    return clientLock;
   }
 
   @Override

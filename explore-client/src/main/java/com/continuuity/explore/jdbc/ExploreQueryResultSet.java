@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Result set created by an {@link ExploreStatement}, containing the results of a query made to the Explore service.
  */
 public class ExploreQueryResultSet implements ResultSet {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryResultSet.class);
@@ -83,12 +83,7 @@ public class ExploreQueryResultSet implements ResultSet {
         throw new SQLException("Handle is null.");
       }
       List<Result> fetchedRows;
-      try {
-        statement.getClientLock().lock();
-        fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
-      } finally {
-        statement.getClientLock().unlock();
-      }
+      fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
       if (fetchedRows.isEmpty()) {
         hasMoreResults = false;
         currentRow = null;
@@ -186,7 +181,6 @@ public class ExploreQueryResultSet implements ResultSet {
     }
     if (metaData == null) {
       try {
-        statement.getClientLock().lock();
         List<ColumnDesc> columnDescs = exploreClient.getResultSchema(stmtHandle);
         metaData = new ExploreResultSetMetaData(columnDescs);
       } catch (ExploreException e) {
@@ -195,8 +189,6 @@ public class ExploreQueryResultSet implements ResultSet {
       } catch (HandleNotFoundException e) {
         LOG.error("Handle not found when retrieving result set meta data", e);
         throw new SQLException("Handle not found when retrieving result set meta data", e);
-      } finally {
-        statement.getClientLock().unlock();
       }
     }
     return metaData;
