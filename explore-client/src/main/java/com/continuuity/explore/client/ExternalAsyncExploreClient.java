@@ -1,6 +1,10 @@
 package com.continuuity.explore.client;
 
+import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.Handle;
+
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server

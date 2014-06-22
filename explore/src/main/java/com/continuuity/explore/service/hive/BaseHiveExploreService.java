@@ -7,9 +7,11 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.ExploreMetaData;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.hive.context.CConfCodec;
 import com.continuuity.hive.context.ConfigurationUtil;
 import com.continuuity.hive.context.ContextManager;
@@ -23,14 +25,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
+import org.apache.hive.service.cli.GetInfoType;
+import org.apache.hive.service.cli.GetInfoValue;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
+import org.apache.hive.service.cli.thrift.TCLIService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -40,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
  * starting/stopping transactions, serializing configuration and saving operation information.
  */
-public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
+public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService, ExploreMetaData {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
 
   private final CConfiguration cConf;
@@ -84,6 +90,133 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected void shutDown() throws Exception {
     LOG.info("Stopping {}...", Hive13ExploreService.class.getSimpleName());
     cliService.stop();
+  }
+
+  @Override
+  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+      throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog,
+          schemaPattern, tableNamePattern, columnNamePattern);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
+                catalog, schemaPattern, tableNamePattern, columnNamePattern);
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalogName, schemaName);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving schemas: catalog {}, schema {}",
+                catalogName, schemaName);
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalogName, schemaName, functionName);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
+                catalogName, schemaName, functionName);
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public MetaDataInfo getInfo(String infoName) throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      MetaDataInfo.InfoType exploreInfoType = MetaDataInfo.InfoType.fromString(infoName);
+      if (exploreInfoType == null) {
+        return null;
+      }
+      // Convert to GetInfoType
+      GetInfoType hiveInfoType = null;
+      for (GetInfoType t : GetInfoType.values()) {
+        if (t.equals("CLI_" + exploreInfoType.name())) {
+          hiveInfoType = t;
+        }
+      }
+      if (hiveInfoType == null) {
+        // Should not come here, unless there is a mismatch between Explore and Hive info types.
+        return null;
+      }
+      GetInfoValue val = cliService.getInfo(sessionHandle, hiveInfoType);
+      LOG.trace("Retrieving info: {}", infoName);
+      return new MetaDataInfo(val.getStringValue(), val.getShortValue(), val.getIntValue(), val.getLongValue());
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Handle getTables(String catalogName, String schemaName, String tableName, List<String> tableTypes)
+      throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getTables(sessionHandle, catalogName,
+          schemaName, tableName, tableTypes);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving tables: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
+                catalogName, schemaName, tableName, tableTypes);
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Handle getTableTypes() throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getTableTypes(sessionHandle);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving table types");
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
+  }
+
+  @Override
+  public Handle getTypeInfo() throws ExploreException {
+    try {
+      Map<String, String> sessionConf = startSession();
+      // TODO: allow changing of hive user and password - REACTOR-271
+      SessionHandle sessionHandle = cliService.openSession("hive", "", sessionConf);
+      OperationHandle operationHandle = cliService.getTypeInfo(sessionHandle);
+      Handle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf);
+      LOG.trace("Retrieving type info");
+      return handle;
+    } catch (Exception e) {
+      throw new ExploreException(e);
+    }
   }
 
   @Override

@@ -2,12 +2,13 @@ package com.continuuity.explore.client;
 
 import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
+import com.continuuity.explore.service.ExploreMetaData;
 import com.continuuity.explore.service.Handle;
 
 /**
  * Explore client discovers explore service, and executes explore commands using the service.
  */
-public interface ExploreClient extends Explore {
+public interface ExploreClient extends Explore, ExploreMetaData {
 
   /**
    * Returns true if the explore service is up and running.

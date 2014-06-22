@@ -8,6 +8,7 @@ import com.continuuity.explore.service.Explore;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
+import com.continuuity.explore.service.MetaDataInfo;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
@@ -126,6 +127,44 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
       return;
     }
     throw new ExploreException("Cannot close operation. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public Handle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
+      throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getSchemas(String catalogName, String schemaName) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getFunctions(String catalogName, String schemaName, String functionName) throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public MetaDataInfo getInfo(String infoName) throws ExploreException {
+    // TODO careful, the signature is going to change
+    return null;
+  }
+
+  @Override
+  public Handle getTables(String catalogName, String schemaName, String tableName, List<String> tableTypes)
+      throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getTableTypes() throws ExploreException {
+    return null;
+  }
+
+  @Override
+  public Handle getTypeInfo() throws ExploreException {
+    return null;
   }
 
   protected String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
