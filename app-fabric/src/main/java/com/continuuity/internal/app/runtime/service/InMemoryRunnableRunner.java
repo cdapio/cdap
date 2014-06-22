@@ -84,14 +84,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Class<? extends TwillRunnable> runnableClass = (Class<? extends TwillRunnable>) clz;
 
       RunId twillRunId = RunIds.generate();
-
       twillContext = new BasicTwillContext(twillRunId, runId, InetAddress.getLocalHost(), null, null,
                                            runnableSpec.getRunnableSpecification(), instanceId, null, null,
                                            instanceCount, runnableSpec.getResourceSpecification().getMemorySize(),
                                            runnableSpec.getResourceSpecification().getVirtualCores());
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
-
       TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();
       InMemoryRunnableDriver driver = new
         InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
