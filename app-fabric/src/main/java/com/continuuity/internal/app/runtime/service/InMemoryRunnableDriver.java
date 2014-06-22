@@ -25,6 +25,11 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
   }
 
   @Override
+  protected void startUp() {
+    runnable.initialize(context);
+  }
+
+  @Override
   protected void triggerShutdown() {
     runnable.stop();
     LOG.info("Runnable {} Stopped ", context.getSpecification().getName());

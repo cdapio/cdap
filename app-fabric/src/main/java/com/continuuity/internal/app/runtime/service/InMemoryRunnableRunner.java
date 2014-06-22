@@ -90,7 +90,9 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                            instanceCount, runnableSpec.getResourceSpecification().getMemorySize(),
                                            runnableSpec.getResourceSpecification().getVirtualCores());
 
-      TwillRunnable runnable = new InstantiatorFactory(false).get(TypeToken.of(runnableClass)).create();
+      TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
+
+      TwillRunnable runnable = new InstantiatorFactory(false).get(runnableType).create();
       InMemoryRunnableDriver driver = new
         InMemoryRunnableDriver(runnable, twillContext, new UserServiceLoggingContext(program.getAccountId(),
                                                                                      program.getApplicationId(),
@@ -98,16 +100,13 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                                                                      twillRunId.getId()));
 
       //Injecting Metrics
-      Reflections.visit(runnable, TypeToken.of(runnableClass),
+      Reflections.visit(runnable, runnableType,
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           serviceSpec.getName(), runnableName)));
 
       ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,
                                                                            twillContext, driver);
-
-      //initialize the runnable before starting it
-      runnable.initialize(twillContext);
 
       LOG.info("Starting Runnable: {}", runnableName);
       driver.start();
