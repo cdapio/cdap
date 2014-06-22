@@ -3,13 +3,19 @@ package com.continuuity.data2.datafabric.dataset.service;
 import com.continuuity.api.dataset.module.DatasetModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.HttpRequests;
+import com.continuuity.common.http.ObjectResponse;
 import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.NoOpMetricsCollectionService;
 import com.continuuity.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import com.continuuity.data2.datafabric.dataset.RemoteDatasetFramework;
 import com.continuuity.data2.datafabric.dataset.client.DatasetServiceClient;
+import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
+import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;
 import com.continuuity.data2.dataset2.InMemoryDatasetFramework;
 import com.continuuity.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -18,12 +24,7 @@ import com.continuuity.explore.client.AsyncExploreClient;
 import com.continuuity.explore.client.DatasetExploreFacade;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
@@ -32,18 +33,17 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Type;
-import javax.annotation.Nullable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
  */
 public abstract class DatasetServiceTestBase {
-  private static final Gson GSON = new Gson();
-
   private int port;
   private DatasetService service;
   protected InMemoryTransactionManager txManager;
@@ -72,18 +72,26 @@ public abstract class DatasetServiceTestBase {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
+    LocalLocationFactory locationFactory = new LocalLocationFactory();
     dsFramework = new RemoteDatasetFramework(new DatasetServiceClient(discoveryService), cConf,
-                                             new LocalLocationFactory(), new InMemoryDefinitionRegistryFactory());
+                                             locationFactory, new InMemoryDefinitionRegistryFactory());
+
+    ImmutableMap<String, ? extends DatasetModule> defaultModules =
+      ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule());
+
+    MDSDatasetsRegistry mdsDatasetsRegistry =
+      new MDSDatasetsRegistry(txSystemClient, defaultModules, new InMemoryDatasetFramework(), cConf);
 
     service = new DatasetService(cConf,
-                                 new LocalLocationFactory(),
+                                 locationFactory,
                                  discoveryService,
-                                 new InMemoryDatasetFramework(),
-                                 ImmutableMap.<String, DatasetModule>of("memoryTable",
-                                                                        new InMemoryOrderedTableModule()),
-                                 txSystemClient,
+                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
+                                                        // we don't need any default modules in this test
+                                                        Collections.<String, DatasetModule>emptyMap()),
+                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
+                                 mdsDatasetsRegistry,
                                  new DatasetExploreFacade(new AsyncExploreClient(discoveryService), cConf));
     service.startAndWait();
     port = discoveryService.discover(Constants.Service.DATASET_MANAGER).iterator().next().getSocketAddress().getPort();
@@ -98,52 +106,38 @@ public abstract class DatasetServiceTestBase {
     }
   }
 
-  protected String getUrl(String resource) {
-    return "http://" + "localhost" + ":" + port + Constants.Gateway.GATEWAY_VERSION + resource;
+  protected URL getUrl(String resource) throws MalformedURLException {
+    return new URL("http://" + "localhost" + ":" + port + Constants.Gateway.GATEWAY_VERSION + resource);
   }
 
-  // todo: use HttpUrlConnection
-  protected int deployModule(String moduleName, Class moduleClass) throws IOException {
+  protected int deployModule(String moduleName, Class moduleClass) throws Exception {
     String jarPath = JarFinder.getJar(moduleClass);
 
-    HttpPost post = new HttpPost(getUrl("/data/modules/" + moduleName));
-    post.setEntity(new FileEntity(new File(jarPath), "application/octet-stream"));
-    post.addHeader("class-name", moduleClass.getName());
-
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(post);
-
-    return response.getStatusLine().getStatusCode();
-  }
-
-  // todo: use HttpUrlConnection
-  protected int deleteModule(String moduleName) throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/data/modules/" + moduleName));
-    HttpResponse response = new DefaultHttpClient().execute(delete);
-    return response.getStatusLine().getStatusCode();
-  }
-
-  // todo: use HttpUrlConnection
-  protected int deleteModules() throws IOException {
-    HttpDelete delete = new HttpDelete(getUrl("/data/modules"));
-    HttpResponse response = new DefaultHttpClient().execute(delete);
-    return response.getStatusLine().getStatusCode();
-  }
-
-  @SuppressWarnings("unchecked")
-  protected static <T> Response<T> parseResponse(HttpResponse response, Type typeOfT) throws IOException {
-    Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-    return new Response<T>(response.getStatusLine().getStatusCode(), (T) GSON.fromJson(reader, typeOfT));
-  }
-
-  static final class Response<T> {
-    final int status;
-    @Nullable
-    final T value;
-
-    private Response(int status, @Nullable T value) {
-      this.status = status;
-      this.value = value;
+    FileInputStream is = new FileInputStream(jarPath);
+    try {
+      return HttpRequests.doRequest("PUT", getUrl("/data/modules/" + moduleName),
+                                    ImmutableMap.of("X-Continuuity-Class-Name", moduleClass.getName()),
+                                    null, is).getResponseCode();
+    } finally {
+      is.close();
     }
+  }
+
+  protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
+    return ObjectResponse.fromJsonBody(HttpRequests.get(getUrl("/data/modules")),
+                                       new TypeToken<List<DatasetModuleMeta>>() {
+                                       }.getType());
+  }
+
+  protected int deleteInstances() throws IOException {
+    return HttpRequests.delete(getUrl("/data/datasets")).getResponseCode();
+  }
+
+  protected int deleteModule(String moduleName) throws Exception {
+    return HttpRequests.delete(getUrl("/data/modules/" + moduleName)).getResponseCode();
+  }
+
+  protected int deleteModules() throws IOException {
+    return HttpRequests.delete(getUrl("/data/modules/")).getResponseCode();
   }
 }

@@ -50,29 +50,16 @@ The PageViewAnalytics Application
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components
 of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
-	public class PageViewAnalyticsApp implements Application {
-	
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("PageViewAnalytics")
-	      .setDescription("Page view analysis")
-	      // Ingest data into the Application via Streams
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in DataSets
-	      .withDataSets()
-	        .add(new PageViewStore("pageViewCDS"))
-	      // Process log events in real-time using Flows
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures
-	      .withProcedures()
-	        .add(new PageViewProcedure())
-	      .noMapReduce()
-	      .noWorkflow()
-	      .build();
-	  }
+	public class PageViewAnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("PageViewAnalytics");
+      setDescription("Page view analysis");
+      addStream(new Stream("logEventStream"));
+      createDataSet("pageViewCDS", PageViewStore.class);
+      addFlow(new LogAnalyticsFlow());
+      addProcedure(new PageViewProcedure());
+    }
 
 
 ``PageViewStore``: Custom Data Storage

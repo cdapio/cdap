@@ -15,8 +15,7 @@
  */
 package com.continuuity.examples.ticker.data;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.google.common.collect.Sets;
@@ -26,21 +25,16 @@ import java.util.Set;
 /**
  *
  */
-public class AppWithMultiIndexedTable implements Application {
+public class AppWithMultiIndexedTable extends AbstractApplication {
 
   @Override
-  public ApplicationSpecification configure() {
+  public void configure() {
     Set<byte[]> ignoredFields = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    return ApplicationSpecification.Builder.with()
-      .setName("AppWithMultiIndexedTable")
-      .setDescription("Simple app with indexed table dataset")
-      .noStream()
-      .withDataSets().add(new MultiIndexedTable("indexedTable", Bytes.toBytes("ts"), ignoredFields))
-      .noFlow()
-      .withProcedures().add(new AbstractProcedure("fooProcedure") {
-      })
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+    setName("AppWithMultiIndexedTable");
+    setDescription("Simple app with indexed table dataset");
+    createDataSet("indexedTable", MultiIndexedTable.class,
+                  MultiIndexedTable.properties(Bytes.toBytes("ts"), ignoredFields));
+    addProcedure(new AbstractProcedure("fooProcedure") {
+    });
   }
 }

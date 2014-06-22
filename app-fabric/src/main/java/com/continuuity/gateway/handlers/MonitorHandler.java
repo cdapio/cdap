@@ -9,6 +9,7 @@ import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -56,14 +57,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     if (reactorServiceManagementMap.containsKey(serviceName)) {
       int actualInstance = reactorServiceManagementMap.get(serviceName).getInstances();
       instances.put("provisioned", String.valueOf(actualInstance));
-
-      Integer requestedInstance = serviceStore.getServiceInstance(serviceName);
-      if (requestedInstance == null) {
-        requestedInstance = actualInstance;
-        serviceStore.setServiceInstance(serviceName, actualInstance);
-      }
-
-      instances.put("requested", String.valueOf(requestedInstance));
+      instances.put("requested", String.valueOf(getSystemServiceInstanceCount(serviceName)));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(instances));
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Service Name");
@@ -85,13 +79,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
       final int instance = getInstances(request);
-      Integer currentInstance = serviceStore.getServiceInstance(serviceName);
+      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
       if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
         String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
                                         serviceManager.getMaxInstances());
         responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
         return;
-      } else if (currentInstance != null && (instance == currentInstance)) {
+      } else if (instance == currentInstance) {
         responder.sendStatus(HttpResponseStatus.OK);
         return;
       }
@@ -148,32 +142,44 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/system/services")
   @GET
-  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) {
-    List<Map<String, String>> serviceSpec = new ArrayList<Map<String, String>>();
-    String json;
+  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
+    List<JsonObject> serviceSpec = new ArrayList<JsonObject>();
     SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
     List<String> serviceList = new ArrayList<String>(services);
     for (String service : serviceList) {
-      Map<String, String> spec = new HashMap<String, String>();
       ReactorServiceManager serviceManager = reactorServiceManagementMap.get(service);
       String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
       String canCheck = serviceManager.canCheckStatus() ? (
         serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
       String minInstance = String.valueOf(serviceManager.getMinInstances());
       String maxInstance = String.valueOf(serviceManager.getMaxInstances());
-      String curInstance = String.valueOf(serviceManager.getInstances());
-      spec.put("name", service);
-      spec.put("logs", logs);
-      spec.put("status", canCheck);
-      spec.put("min", minInstance);
-      spec.put("max", maxInstance);
-      spec.put("cur", curInstance);
+      String provInstance = String.valueOf(serviceManager.getInstances());
+      String reqInstance = String.valueOf(getSystemServiceInstanceCount(service));
+      JsonObject reply = new JsonObject();
+      reply.addProperty("name", service);
+      reply.addProperty("logs", logs);
+      reply.addProperty("status", canCheck);
+      reply.addProperty("min", minInstance);
+      reply.addProperty("max", maxInstance);
+      reply.addProperty("requested", reqInstance);
+      reply.addProperty("provisioned", provInstance);
       //TODO: Add metric name for Event Rate monitoring
-      serviceSpec.add(spec);
+      serviceSpec.add(reply);
+    }
+    responder.sendJson(HttpResponseStatus.OK, serviceSpec);
+  }
+
+  private int getSystemServiceInstanceCount(String serviceName) throws Exception {
+    Integer count = serviceStore.getServiceInstance(serviceName);
+    int provisioned = 0;
+    //If entry is not present in the table, create one by setting to provisioned instance count for the service
+    if (count == null) {
+      provisioned = reactorServiceManagementMap.get(serviceName).getInstances();
+    } else {
+      return count;
     }
 
-    json = (GSON).toJson(serviceSpec);
-    responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    serviceStore.setServiceInstance(serviceName, provisioned);
+    return provisioned;
   }
 }

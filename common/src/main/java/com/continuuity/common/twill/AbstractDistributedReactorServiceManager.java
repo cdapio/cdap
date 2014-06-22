@@ -37,6 +37,7 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
 
   @Override
   public int getInstances() {
+    //todo this will be updated
     Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
     int instances = 0;
     if (twillControllerList != null) {

@@ -6,8 +6,8 @@ package com.continuuity.common.twill;
  */
 public interface ReactorServiceManager {
   /**
-   * Used to get the count of the instances of the Reactor Service.
-   * @return the number of instances of the Reactor Service.
+   * Used to get the count of the instances of the Reactor Service that was requested.
+   * @return the number of instances of the Reactor Service requested.
    */
   public int getInstances();
 

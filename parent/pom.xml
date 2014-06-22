@@ -43,6 +43,7 @@
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
     <guice.version>3.0</guice.version>
+    <resteasy.version>3.0.8.Final</resteasy.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
@@ -98,6 +99,21 @@
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
         <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-servlet</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-servlet-initializer</artifactId>
+        <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-guice</artifactId>
+        <version>${resteasy.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -319,6 +335,38 @@
           <exclusion>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -964,46 +1012,6 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>2.2.1</version>
-          <configuration>
-            <excludeResources>true</excludeResources>
-          </configuration>
-          <executions>
-            <execution>
-              <id>attach-sources</id>
-              <phase>package</phase>
-              <goals>
-                <goal>jar-no-fork</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.9</version>
-          <configuration>
-            <excludePackageNames>*.internal.*</excludePackageNames>
-            <links>
-              <link>http://download.oracle.com/javase/6/docs/api/</link>
-            </links>
-            <bottom>
-              <![CDATA[Copyright &#169; 2012-2014 <a href="http://www.continuuity.com">Continuuity Inc</a>. All rights reserved.]]>
-            </bottom>
-          </configuration>
-          <executions>
-            <execution>
-              <id>attach-javadoc</id>
-              <phase>package</phase>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>2.4</version>
         </plugin>
@@ -1045,13 +1053,11 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>2.9.1</version>
+            <configuration>
+              <stylesheetfile>${project.parent.parent.basedir}/distributions/src/javadoc/stylesheet.css</stylesheetfile>
+            </configuration>
           </plugin>
         </plugins>
       </build>

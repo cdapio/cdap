@@ -15,15 +15,14 @@
  */
 package com.continuuity.examples.traffic;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.DatasetProperties;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -57,41 +56,28 @@ import java.util.regex.Pattern;
  * TrafficAnalyticsApp analyzes Apache access log data and aggregates
  * the number of HTTP requests each hour over the last 24 hours.
  */
-public class TrafficAnalyticsApp implements Application {
+public class TrafficAnalyticsApp extends AbstractApplication {
   
-  // The row key of SimpleTimeseriesTable.
+  // The row key of TimeseriesTable.
   private static final byte[] ROW_KEY = Bytes.toBytes("f");
   
   // The time window of 1 day converted into milliseconds.
   private static final long TIME_WINDOW = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("TrafficAnalytics")
-      .setDescription("HTTP request counts on an hourly basis")
-      // Ingest data into the app via Streams.
-      .withStreams()
-        .add(new Stream("logEventStream"))
-      // Store processed data in Datasets.
-      .withDataSets()
-        .add(new SimpleTimeseriesTable("logEventTable"))
-        .add(new SimpleTimeseriesTable("countTable"))
-      // Process log data in real-time using Flows.
-      .withFlows()
-        .add(new LogAnalyticsFlow())
-      // Query the processed data using Procedures.
-      .withProcedures()
-        .add(new LogCountProcedure())
-      // Process log data in MapReduce.
-      .withMapReduce()
-        .add(new LogCountMapReduce())
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("TrafficAnalytics");
+    setDescription("HTTP request counts on an hourly basis");
+    addStream(new Stream("logEventStream"));
+    createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    createDataSet("countTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+    addFlow(new LogAnalyticsFlow());
+    addProcedure(new LogCountProcedure());
+    addMapReduce(new LogCountMapReduce());
   }
 
   /**
-   * The Flow parses log data from the Stream and stores it in a SimpleTimeseriesTable.
+   * The Flow parses log data from the Stream and stores it in a TimeseriesTable.
   */
   public static class LogAnalyticsFlow implements Flow {
     @Override
@@ -109,7 +95,7 @@ public class TrafficAnalyticsApp implements Application {
   }
 
   /**
-   * Parse time field of log data and store in a SimpleTimeseriesTable.
+   * Parse time field of log data and store in a TimeseriesTable.
    */
   public static class LogEventStoreFlowlet extends AbstractFlowlet {
     
@@ -124,7 +110,7 @@ public class TrafficAnalyticsApp implements Application {
 
     // A Table to store the log data for MapReduce to process.
     @UseDataSet("logEventTable")
-    private SimpleTimeseriesTable logs;
+    private TimeseriesTable logs;
 
     // Annotation indicates that this method can process incoming data.
     @ProcessInput
@@ -155,7 +141,7 @@ public class TrafficAnalyticsApp implements Application {
     
     // Annotation indicates the DataSet used in this MapReduce.
     @UseDataSet("logEventTable")
-    private SimpleTimeseriesTable logs;
+    private TimeseriesTable logs;
 
     @Override
     public MapReduceSpecification configure() {
@@ -236,7 +222,7 @@ public class TrafficAnalyticsApp implements Application {
     }
 
     /**
-     * Aggregate the number of requests per hour and store the results in a SimpleTimeseriesTable.
+     * Aggregate the number of requests per hour and store the results in a TimeseriesTable.
      */
     public static class LogReducer extends Reducer<LongWritable, IntWritable, byte[], TimeseriesTable.Entry> {
       /**
@@ -272,7 +258,7 @@ public class TrafficAnalyticsApp implements Application {
   public static class LogCountProcedure extends AbstractProcedure {
     // Annotation indicates that countTable dataset is used in the procedure.
     @UseDataSet("countTable")
-    private SimpleTimeseriesTable countTable;
+    private TimeseriesTable countTable;
 
     @Handle("getCounts")
     public void getAllCounts(ProcedureRequest request, ProcedureResponder responder)
