@@ -190,10 +190,7 @@ public class HiveExploreServiceTest {
   public void testJoin() throws Exception {
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyValueTable", "my_table_1", DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table_1", null);
-    Assert.assertNotNull(admin);
-    admin.create();
+    datasetFramework.addInstance("keyStructValueTable", "my_table_1", DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
@@ -223,7 +220,7 @@ public class HiveExploreServiceTest {
                            new ColumnDesc("continuuity_user_my_table.value",
                                           "struct<name:string,ints:array<int>>", 2, null)),
         Lists.newArrayList(
-            new Row(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     datasetFramework.deleteInstance("my_table_1");
