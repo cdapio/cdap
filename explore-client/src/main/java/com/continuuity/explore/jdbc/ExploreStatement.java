@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Explore JDBC statement.
+ * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
+ * of this class.
  */
 public class ExploreStatement implements Statement {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreStatement.class);
@@ -51,6 +52,9 @@ public class ExploreStatement implements Statement {
 
   @Override
   public ResultSet executeQuery(String sql) throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Can't execute after statement has been closed");
+    }
     if (!execute(sql)) {
       throw new SQLException("The query did not generate a result set!");
     }
@@ -68,8 +72,9 @@ public class ExploreStatement implements Statement {
     stmtCompleted = false;
     if (resultSet != null) {
       // As requested by the Statement interface javadoc, "All execution methods in the Statement interface
-      // implicitly close a statment's current ResultSet object if an open one exists"
+      // implicitly close a statement's current ResultSet object if an open one exists"
       resultSet.close();
+      resultSet = null;
     }
 
     // TODO in future, the polling logic should be in another SyncExploreClient
@@ -78,12 +83,19 @@ public class ExploreStatement implements Statement {
       Status status = ExploreClientUtil.waitForCompletionStatus(exploreClient, stmtHandle, 200,
                                                                 TimeUnit.MILLISECONDS, MAX_POLL_TRIES);
       stmtCompleted = true;
-      if (status.getStatus() != Status.OpStatus.FINISHED && status.getStatus() != Status.OpStatus.CANCELED) {
-        throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
-                                             "Got final state - %s", sql, status.getStatus().toString()));
+      switch (status.getStatus()) {
+        case FINISHED:
+          resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
+          // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"
+          // Here we have a result, it may contain rows or may be empty, but it exists.
+          return true;
+        case CANCELED:
+          return false;
+        default:
+          // Any other state can be considered as a "database" access error
+          throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
+                                               "Got final state - %s", sql, status.getStatus().toString()));
       }
-      resultSet = new ExploreQueryResultSet(exploreClient, this, stmtHandle);
-      return status.hasResults();
     } catch (HandleNotFoundException e) {
       // Cannot happen unless explore server restarted.
       LOG.error("Error executing query", e);
@@ -138,6 +150,8 @@ public class ExploreStatement implements Statement {
     }
 
     try {
+      // As stated by ResultSet javadoc, "A ResultSet object is automatically closed when
+      // the Statement object that generated it is closed"
       if (resultSet != null) {
         resultSet.close();
       }
@@ -152,10 +166,6 @@ public class ExploreStatement implements Statement {
   public void cancel() throws SQLException {
     if (isClosed) {
       throw new SQLException("Can't cancel after statement has been closed");
-    }
-    if (stmtCompleted) {
-      LOG.info("Trying to cancel a completed query.");
-      return;
     }
     if (stmtHandle == null) {
       LOG.info("Trying to cancel with no query.");
@@ -173,6 +183,9 @@ public class ExploreStatement implements Statement {
 
   @Override
   public Connection getConnection() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Can't get connection after statement has been closed");
+    }
     return connection;
   }
 

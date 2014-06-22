@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Statement;
@@ -107,15 +108,27 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public void close() throws SQLException {
+    if (isClosed) {
+      // No-op
+      return;
+    }
     if (this.statement != null && (this.statement instanceof ExploreStatement)) {
-      ExploreStatement s = (ExploreStatement) this.statement;
+      ExploreStatement s = this.statement;
       s.closeClientOperation();
     }
     isClosed = true;
   }
 
   @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
+  }
+
+  @Override
   public Object getObject(int columnIndex) throws SQLException {
+    if (isClosed) {
+      throw new SQLException("ResultSet is closed");
+    }
     if (currentRow == null) {
       throw new SQLException("No row found.");
     }
@@ -163,6 +176,8 @@ public class ExploreQueryResultSet implements ResultSet {
       case Types.JAVA_OBJECT:
       case Types.STRUCT:
         // todo: returns json string. should recreate object from it?
+        // Use UDTs in the future to allow users to define custom types
+        // so we know how to recreate the object (see Connection interface javadoc)
         return value;
       default:
         return value;
@@ -171,7 +186,44 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public boolean wasNull() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
     return wasNull;
+  }
+
+  @Override
+  public int getFetchSize() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    return fetchSize;
+  }
+
+  @Override
+  public void setFetchSize(int rows) throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    fetchSize = rows;
+  }
+
+  @Override
+  public int getType() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    // Our Explore Client interface only allows to move forward in the results
+    return TYPE_FORWARD_ONLY;
+  }
+
+  @Override
+  public int getConcurrency() throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
+    // We cannot update a ExploreResultSet object
+    return CONCUR_READ_ONLY;
   }
 
   @Override
@@ -196,10 +248,14 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public int findColumn(String name) throws SQLException {
+    if (isClosed) {
+      throw new SQLException("Resultset is closed");
+    }
     if (metaData == null) {
       getMetaData();
     }
-    return metaData.getColumnPosition(name);
+    // Column names are case insensitive, as per the ResultSet interface javadoc
+    return metaData.getColumnPosition(name.toLowerCase());
   }
 
   @Override
@@ -273,6 +329,11 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
+  public byte getByte(String s) throws SQLException {
+    return getByte(findColumn(s));
+  }
+
+  @Override
   public short getShort(int columnIndex) throws SQLException {
     try {
       Object obj = getObject(columnIndex);
@@ -287,6 +348,11 @@ public class ExploreQueryResultSet implements ResultSet {
     } catch (Exception e) {
       throw new SQLException("Cannot convert column " + columnIndex + " to short: " + e.toString(), e);
     }
+  }
+
+  @Override
+  public short getShort(String s) throws SQLException {
+    return getShort(findColumn(s));
   }
 
   @Override
@@ -307,6 +373,11 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
+  public long getLong(String s) throws SQLException {
+    return getLong(findColumn(s));
+  }
+
+  @Override
   public float getFloat(int columnIndex) throws SQLException {
     try {
       Object obj = getObject(columnIndex);
@@ -321,6 +392,11 @@ public class ExploreQueryResultSet implements ResultSet {
     } catch (Exception e) {
       throw new SQLException("Cannot convert column " + columnIndex + " to float: " + e.toString(), e);
     }
+  }
+
+  @Override
+  public float getFloat(String columnName) throws SQLException {
+    return getFloat(findColumn(columnName));
   }
 
   @Override
@@ -341,9 +417,33 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
+  public double getDouble(String s) throws SQLException {
+    return getDouble(findColumn(s));
+  }
+
+  @Override
+  public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+    Object val = getObject(columnIndex);
+    if (val == null || val instanceof BigDecimal) {
+      return (BigDecimal) val;
+    }
+    throw new SQLException("Illegal conversion");
+  }
+
+  @Override
+  public BigDecimal getBigDecimal(String s) throws SQLException {
+    return getBigDecimal(findColumn(s));
+  }
+
+  @Override
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
     MathContext mc = new MathContext(scale);
     return getBigDecimal(columnIndex).round(mc);
+  }
+
+  @Override
+  public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
+    return getBigDecimal(findColumn(columnName), scale);
   }
 
   @Override
@@ -354,6 +454,11 @@ public class ExploreQueryResultSet implements ResultSet {
     } catch (Exception e) {
       throw new SQLException("Cannot convert column " + columnIndex + " to double: " + e.toString(), e);
     }
+  }
+
+  @Override
+  public byte[] getBytes(String s) throws SQLException {
+    return getBytes(findColumn(s));
   }
 
   @Override
@@ -377,8 +482,8 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public Time getTime(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public Date getDate(String s) throws SQLException {
+    return getDate(findColumn(s));
   }
 
   @Override
@@ -397,11 +502,13 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public void setFetchSize(int rows) throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    fetchSize = rows;
+  public Timestamp getTimestamp(String s) throws SQLException {
+    return getTimestamp(findColumn(s));
+  }
+
+  @Override
+  public Time getTime(int i) throws SQLException {
+    throw new SQLException("Method not supported");
   }
 
   @Override
@@ -420,53 +527,8 @@ public class ExploreQueryResultSet implements ResultSet {
   }
 
   @Override
-  public byte getByte(String s) throws SQLException {
-    return getByte(findColumn(s));
-  }
-
-  @Override
-  public short getShort(String s) throws SQLException {
-    return getShort(findColumn(s));
-  }
-
-  @Override
-  public long getLong(String s) throws SQLException {
-    return getLong(findColumn(s));
-  }
-
-  @Override
-  public float getFloat(String columnName) throws SQLException {
-    return getFloat(findColumn(columnName));
-  }
-
-  @Override
-  public double getDouble(String s) throws SQLException {
-    return getDouble(findColumn(s));
-  }
-
-  @Override
-  public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
-    return getBigDecimal(findColumn(columnName), scale);
-  }
-
-  @Override
-  public byte[] getBytes(String s) throws SQLException {
-    return getBytes(findColumn(s));
-  }
-
-  @Override
-  public Date getDate(String s) throws SQLException {
-    return getDate(findColumn(s));
-  }
-
-  @Override
   public Time getTime(String s) throws SQLException {
     throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public Timestamp getTimestamp(String s) throws SQLException {
-    return getTimestamp(findColumn(s));
   }
 
   @Override
@@ -507,20 +569,6 @@ public class ExploreQueryResultSet implements ResultSet {
   @Override
   public Reader getCharacterStream(String s) throws SQLException {
     throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-    Object val = getObject(columnIndex);
-    if (val == null || val instanceof BigDecimal) {
-      return (BigDecimal) val;
-    }
-    throw new SQLException("Illegal conversion");
-  }
-
-  @Override
-  public BigDecimal getBigDecimal(String s) throws SQLException {
-    return getBigDecimal(findColumn(s));
   }
 
   @Override
@@ -565,7 +613,9 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public int getRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    // As per the javadoc:
+    // "Support for the getRow method is optional for ResultSets with a result set type of TYPE_FORWARD_ONLY"
+    throw new SQLFeatureNotSupportedException("");
   }
 
   @Override
@@ -590,24 +640,6 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public int getFetchDirection() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public int getFetchSize() throws SQLException {
-    if (isClosed) {
-      throw new SQLException("Resultset is closed");
-    }
-    return fetchSize;
-  }
-
-  @Override
-  public int getType() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public int getConcurrency() throws SQLException {
     throw new SQLException("Method not supported");
   }
 
@@ -1008,11 +1040,6 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public int getHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
     throw new SQLException("Method not supported");
   }
 

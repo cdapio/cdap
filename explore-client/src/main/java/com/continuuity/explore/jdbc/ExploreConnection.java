@@ -12,6 +12,7 @@ import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
@@ -22,6 +23,9 @@ import java.util.Properties;
 
 /**
  * Explore JDBC connection.
+ *
+ * A connection is made using a client that does not keep state. Therefore, closing a connection
+ * will not affect executing statements, and results will not be lost.
  */
 public class ExploreConnection implements Connection {
 
@@ -66,6 +70,12 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
+  public boolean getAutoCommit() throws SQLException {
+    // We don't (yet) support write, but with Hive, every statement is auto commit.
+    return true;
+  }
+
+  @Override
   public CallableStatement prepareCall(String s) throws SQLException {
     throw new SQLException("Method not supported");
   }
@@ -77,11 +87,6 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setAutoCommit(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public boolean getAutoCommit() throws SQLException {
     throw new SQLException("Method not supported");
   }
 
@@ -136,13 +141,16 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public Statement createStatement(int i, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    // The resultSetType can only be TYPE_FORWARD_ONLY and concurrency CONCUR_READ_ONLY
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public PreparedStatement prepareStatement(String s, int i, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency)
+      throws SQLException {
+    // The resultSetType can only be TYPE_FORWARD_ONLY and concurrency CONCUR_READ_ONLY
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -152,7 +160,7 @@ public class ExploreConnection implements Connection {
 
   @Override
   public Map<String, Class<?>> getTypeMap() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
@@ -191,13 +199,17 @@ public class ExploreConnection implements Connection {
   }
 
   @Override
-  public Statement createStatement(int i, int i2, int i3) throws SQLException {
-    throw new SQLException("Method not supported");
+  public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+      throws SQLException {
+    // The resultSetType can only be TYPE_FORWARD_ONLY and concurrency CONCUR_READ_ONLY
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
-  public PreparedStatement prepareStatement(String s, int i, int i2, int i3) throws SQLException {
-    throw new SQLException("Method not supported");
+  public PreparedStatement prepareStatement(String s, int resultSetType, int resultSetConcurrency,
+                                            int resultSetHoldability) throws SQLException {
+    // The resultSetType can only be TYPE_FORWARD_ONLY and concurrency CONCUR_READ_ONLY
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override

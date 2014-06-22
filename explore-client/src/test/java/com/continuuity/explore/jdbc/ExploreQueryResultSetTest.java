@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -83,5 +84,45 @@ public class ExploreQueryResultSetTest {
     Assert.assertEquals("[\"a\",\"b\",\"c\"]", resultSet.getString(14));
     Assert.assertEquals("{\"name\":\"first\",\"attr\":\"second\"}", resultSet.getString(15));
     Assert.assertFalse(resultSet.next());
+
+    Assert.assertFalse(resultSet.next());
+    try {
+      resultSet.getObject(1);
+    } catch (SQLException e) {
+      // Expected: no more rows
+    }
+  }
+
+  @Test
+  public void sameNamedColumns() throws Exception {
+    ExploreClient exploreClient = new MockExploreClient(
+        ImmutableMap.of("foobar", (List<ColumnDesc>) Lists.newArrayList(
+            new ColumnDesc("column1", "STRING", 2, ""),
+            new ColumnDesc("column1", "int", 1, "")
+        )),
+        ImmutableMap.of("foobar", (List<Result>) Lists.newArrayList(
+            new Result(ImmutableList.<Object>of(1, "value1"))
+        ))
+    );
+
+    ResultSet resultSet = new ExploreQueryResultSet(exploreClient,
+                                                    new ExploreStatement(null, exploreClient),
+                                                    Handle.fromId("foobar"));
+    Assert.assertTrue(resultSet.next());
+    Assert.assertEquals(1, resultSet.findColumn("column1"));
+    Assert.assertEquals(1, resultSet.getObject("column1"));
+
+    // Can't call get... after resultSet is closed, nor findColumn
+    resultSet.close();
+    try {
+      resultSet.getObject(1);
+    } catch (SQLException e) {
+      // Expected
+    }
+    try {
+      resultSet.findColumn("column1");
+    } catch (SQLException e) {
+      // Expected
+    }
   }
 }

@@ -9,6 +9,7 @@ import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import java.util.List;
@@ -26,8 +27,8 @@ public class MockExploreClient implements ExploreClient {
 
   public MockExploreClient(Map<String, List<ColumnDesc>> handlesToMetadata,
                            Map<String, List<Result>> handlesToResults) {
-    this.handlesToMetadata = handlesToMetadata;
-    this.handlesToResults = handlesToResults;
+    this.handlesToMetadata = Maps.newHashMap(handlesToMetadata);
+    this.handlesToResults = Maps.newHashMap(handlesToResults);
     this.fetchedResults = Sets.newHashSet();
   }
 

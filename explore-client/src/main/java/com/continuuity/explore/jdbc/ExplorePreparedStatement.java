@@ -33,6 +33,9 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
 
   public ExplorePreparedStatement(Connection connection, Explore exploreClient, String sql) {
     super(connection, exploreClient);
+
+    // Although a PreparedStatement is meant to precompile sql statement, our Explore client
+    // interface does not allow it.
     this.sql = sql;
   }
 

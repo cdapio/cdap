@@ -154,7 +154,7 @@ public class ExploreDriverTest {
 
     Assert.assertFalse(statement.execute());
     ResultSet rs = statement.getResultSet();
-    Assert.assertFalse(rs.next());
+    Assert.assertNull(rs);
   }
 
   public static class MockExploreExecutorHandler extends AbstractHttpHandler {
