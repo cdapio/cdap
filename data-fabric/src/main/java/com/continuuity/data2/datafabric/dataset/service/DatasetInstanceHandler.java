@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -44,13 +45,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
   private final DatasetExploreFacade datasetExploreFacade;
 
+  private final CConfiguration conf;
+
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade) {
+                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade,
+                                CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
+    this.conf = conf;
   }
 
   @GET
@@ -62,6 +67,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
+    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      return;
+    }
+
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
       try {
@@ -220,7 +231,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * POJO that carries dataset type and properties infor for create dataset request
+   * POJO that carries dataset type and properties information for create dataset request
    */
   public static final class DatasetTypeAndProperties {
     private final String typeName;
