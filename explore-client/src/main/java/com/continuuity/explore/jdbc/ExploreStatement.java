@@ -6,9 +6,6 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
-
-import com.google.common.base.Throwables;
-import com.sun.org.apache.bcel.internal.classfile.Unknown;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +15,6 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
@@ -29,6 +25,11 @@ public class ExploreStatement implements Statement {
   private static final int MAX_POLL_TRIES = 1000000;
 
   private int fetchSize = 50;
+
+  /**
+   * The maximum number of rows this statement should return (0 => all rows).
+   */
+  private int maxRows = 0;
 
   /**
    * We need to keep a reference to the result set to support the following:
@@ -207,12 +208,13 @@ public class ExploreStatement implements Statement {
 
   @Override
   public int getMaxRows() throws SQLException {
-    throw new SQLException("Method not supported");
+    return maxRows;
   }
 
   @Override
-  public void setMaxRows(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+  public void setMaxRows(int maxRows) throws SQLException {
+    // TODO: implement max rows
+    this.maxRows = maxRows;
   }
 
   @Override

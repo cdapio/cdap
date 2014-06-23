@@ -1,9 +1,6 @@
 package com.continuuity.explore.jdbc;
 
-import java.math.BigInteger;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 
 
@@ -11,50 +8,162 @@ import java.sql.Types;
  * Column metadata.
  */
 public class JdbcColumn {
+  private final String columnName;
+  private final String tableName;
+  private final String tableCatalog;
+  private final String type;
+  private final String comment;
+  private final int ordinalPos;
 
-  /**
-   * Sql types and corresponding hive type names and Java classes names.
-   */
-  public enum SqlTypes {
-    STRING("string", Types.VARCHAR, String.class.getName()),
-    VARCHAR("varchar", Types.VARCHAR, String.class.getName()),
-    CHAR("char", Types.CHAR, String.class.getName()),
-    FLOAT("float", Types.FLOAT, Float.class.getName()),
-    DOUBLE("double", Types.DOUBLE, Double.class.getName()),
-    BOOLEAN("boolean", Types.BOOLEAN, Boolean.class.getName()),
-    TINYINT("tinyint", Types.TINYINT, Byte.class.getName()),
-    SMALLINT("smallint", Types.SMALLINT, Short.class.getName()),
-    INT("int", Types.INTEGER, Integer.class.getName()),
-    BIGINT("bigint", Types.BIGINT, Long.class.getName()),
-    TIMESTAMP("timestamp", Types.TIMESTAMP, Timestamp.class.getName()),
-    DATE("date", Types.DATE, Date.class.getName()),
-    DECIMAL("decimal", Types.DECIMAL, BigInteger.class.getName()),
-    BINARY("binary", Types.BINARY, byte[].class.getName()),
-    MAP("map", Types.JAVA_OBJECT, String.class.getName()),
-    ARRAY("array", Types.ARRAY, String.class.getName()),
-    STRUCT("struct", Types.STRUCT, String.class.getName());
+  public JdbcColumn(String columnName, String tableName, String tableCatalog
+    , String type, String comment, int ordinalPos) {
+    this.columnName = columnName;
+    this.tableName = tableName;
+    this.tableCatalog = tableCatalog;
+    this.type = type;
+    this.comment = comment;
+    this.ordinalPos = ordinalPos;
+  }
 
-    private String typeName;
-    private int sqlType;
-    private String className;
+  public String getColumnName() {
+    return columnName;
+  }
 
-    SqlTypes(String typeName, int sqlType, String className) {
-      this.typeName = typeName;
-      this.sqlType = sqlType;
-      this.className = className;
+  public String getTableName() {
+    return tableName;
+  }
+
+  public String getTableCatalog() {
+    return tableCatalog;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public Integer getSqlType() throws SQLException {
+    return hiveTypeToSqlType(type);
+  }
+
+  static int columnDisplaySize(int columnType) throws SQLException {
+    // according to hiveTypeToSqlType possible options are:
+    switch(columnType) {
+      case Types.BOOLEAN:
+        return columnPrecision(columnType);
+      case Types.VARCHAR:
+        return Integer.MAX_VALUE; // hive has no max limit for strings
+      case Types.TINYINT:
+      case Types.SMALLINT:
+      case Types.INTEGER:
+      case Types.BIGINT:
+        return columnPrecision(columnType) + 1; // allow +/-
+      case Types.DATE:
+        return 10;
+      case Types.TIMESTAMP:
+        return columnPrecision(columnType);
+      // see http://download.oracle.com/javase/6/docs/api/constant-values.html#java.lang.Float.MAX_EXPONENT
+      case Types.FLOAT:
+        return 24; // e.g. -(17#).e-###
+      // see http://download.oracle.com/javase/6/docs/api/constant-values.html#java.lang.Double.MAX_EXPONENT
+      case Types.DOUBLE:
+        return 25; // e.g. -(17#).e-####
+      case Types.DECIMAL:
+        return Integer.MAX_VALUE;
+      default:
+        throw new SQLException("Invalid column type: " + columnType);
     }
+  }
 
-    public String getTypeName() {
-      return typeName;
+  static int columnPrecision(int columnType) throws SQLException {
+    // according to hiveTypeToSqlType possible options are:
+    switch(columnType) {
+      case Types.BOOLEAN:
+        return 1;
+      case Types.VARCHAR:
+        return Integer.MAX_VALUE; // hive has no max limit for strings
+      case Types.TINYINT:
+        return 3;
+      case Types.SMALLINT:
+        return 5;
+      case Types.INTEGER:
+        return 10;
+      case Types.BIGINT:
+        return 19;
+      case Types.FLOAT:
+        return 7;
+      case Types.DOUBLE:
+        return 15;
+      case Types.DATE:
+        return 10;
+      case Types.TIMESTAMP:
+        return 29;
+      case Types.DECIMAL:
+        return Integer.MAX_VALUE;
+      default:
+        throw new SQLException("Invalid column type: " + columnType);
     }
+  }
 
-    public String getClassName() {
-      return className;
+  static int columnScale(int columnType) throws SQLException {
+    // according to hiveTypeToSqlType possible options are:
+    switch(columnType) {
+      case Types.BOOLEAN:
+      case Types.VARCHAR:
+      case Types.TINYINT:
+      case Types.SMALLINT:
+      case Types.INTEGER:
+      case Types.BIGINT:
+      case Types.DATE:
+        return 0;
+      case Types.FLOAT:
+        return 7;
+      case Types.DOUBLE:
+        return 15;
+      case Types.TIMESTAMP:
+        return 9;
+      case Types.DECIMAL:
+        return Integer.MAX_VALUE;
+      default:
+        throw new SQLException("Invalid column type: " + columnType);
     }
+  }
 
-    public int getSqlType() {
-      return sqlType;
+  public Integer getColumnSize() throws SQLException {
+    int precision = columnPrecision(hiveTypeToSqlType(type));
+
+    return precision == 0 ? null : precision;
+  }
+
+  public Integer getDecimalDigits() throws SQLException {
+    return columnScale(hiveTypeToSqlType(type));
+  }
+
+  public Integer getNumPrecRadix() {
+    if (type.equalsIgnoreCase("tinyint")) {
+      return 10;
+    } else if (type.equalsIgnoreCase("smallint")) {
+      return 10;
+    } else if (type.equalsIgnoreCase("int")) {
+      return 10;
+    } else if (type.equalsIgnoreCase("bigint")) {
+      return 10;
+    } else if (type.equalsIgnoreCase("decimal")) {
+      return 10;
+    } else if (type.equalsIgnoreCase("float")) {
+      return 2;
+    } else if (type.equalsIgnoreCase("double")) {
+      return 2;
+    } else { // anything else including boolean and string is null
+      return null;
     }
+  }
+
+  public String getComment() {
+    return comment;
+  }
+
+  public int getOrdinalPos() {
+    return ordinalPos;
   }
 
   static String columnClassName(int columnType) throws SQLException {
