@@ -1768,7 +1768,6 @@ The status of these Reactor services can be checked.
      - ``dataset.executor``
      - Service that handles all data related HTTP requests 
    * - ``Explore service``
-:DOCNOTE: Check with Poorna/Andreas on the naming.
      - ``explore.service``
      - Service that handles all HTTP requests for adhoc data exploration
    
