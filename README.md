@@ -28,6 +28,12 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
 ### Build all examples
     mvn package -DskipTests -pl examples -am -amd -P examples
 
+### Build Singlenode distribution ZIP
+    mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+
+### Build distributions (rpm, deb, tgz)
+    mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
+
 ### Show dependency tree
     mvn package dependency:tree -DskipTests
 

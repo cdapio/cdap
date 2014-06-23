@@ -205,12 +205,12 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec) {
+      public Dataset getDataset(DatasetSpecification spec, ClassLoader classLoader) {
         return null;
       }
     };
