@@ -1231,9 +1231,10 @@
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
                       project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
-                    }
-                    else {
+                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.snapshots";
+                    } else {
                       project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                      project.properties['dist.deploy.groupId'] = "com.continuuity.distributions.release";
                     }
                   </source>
                 </configuration>
