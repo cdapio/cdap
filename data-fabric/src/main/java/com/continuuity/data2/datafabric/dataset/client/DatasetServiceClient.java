@@ -8,7 +8,9 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
+import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
+import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
 import com.continuuity.data2.dataset2.DatasetManagementException;
 import com.continuuity.data2.dataset2.InstanceConflictException;
@@ -59,7 +61,7 @@ public class DatasetServiceClient {
   }
 
   public DatasetInstanceMeta getInstance(String instanceName) throws DatasetManagementException {
-    HttpResponse response = doGet("instances/" + instanceName);
+    HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
@@ -72,7 +74,7 @@ public class DatasetServiceClient {
   }
 
   public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
-    HttpResponse response = doGet("instances");
+    HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          getDetails(response)));
@@ -80,6 +82,17 @@ public class DatasetServiceClient {
 
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
                          new TypeToken<List<DatasetSpecification>>() { }.getType());
+  }
+
+  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
+    HttpResponse response = doGet("modules");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         getDetails(response)));
+    }
+
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                         new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
@@ -97,9 +110,8 @@ public class DatasetServiceClient {
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
 
-    HttpResponse response = doPost("instances/" + datasetInstanceName,
-                                   GSON.toJson(props),
-                                   ImmutableMap.of("type-name", datasetType));
+    HttpResponse response = doPut("datasets/" + datasetInstanceName,
+                                  GSON.toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props)));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -111,7 +123,7 @@ public class DatasetServiceClient {
   }
 
   public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    HttpResponse response = doDelete("instances/" + datasetInstanceName);
+    HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -135,8 +147,8 @@ public class DatasetServiceClient {
     HttpResponse response;
     try {
       response = doRequest("modules/" + moduleName,
-                       "POST",
-                       ImmutableMap.of("class-name", className),
+                       "PUT",
+                       ImmutableMap.of("X-Continuuity-Class-Name", className),
                        null, is);
     } finally {
       Closeables.closeQuietly(is);
@@ -176,7 +188,7 @@ public class DatasetServiceClient {
   }
 
   public void deleteInstances() throws DatasetManagementException {
-    HttpResponse response = doDelete("instances");
+    HttpResponse response = doDelete("unrecoverable/datasets");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
@@ -188,10 +200,10 @@ public class DatasetServiceClient {
     return doRequest(resource, "GET", null, null, null);
   }
 
-  private HttpResponse doPost(String resource, String body, Map<String, String> headers)
+  private HttpResponse doPut(String resource, String body)
     throws DatasetManagementException {
 
-    return doRequest(resource, "POST", headers, body, null);
+    return doRequest(resource, "PUT", null, body, null);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
@@ -199,9 +211,9 @@ public class DatasetServiceClient {
   }
 
   private HttpResponse doRequest(String resource, String requestMethod,
-                                                             @Nullable Map<String, String> headers,
-                                                             @Nullable String body,
-                                                             @Nullable InputStream bodySrc)
+                                 @Nullable Map<String, String> headers,
+                                 @Nullable String body,
+                                 @Nullable InputStream bodySrc)
     throws DatasetManagementException {
 
     Preconditions.checkArgument(!(body != null && bodySrc != null), "only one of body and bodySrc can be used as body");

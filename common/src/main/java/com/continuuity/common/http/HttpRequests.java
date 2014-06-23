@@ -5,6 +5,7 @@ package com.continuuity.common.http;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 
 import java.io.FileNotFoundException;
@@ -53,6 +54,57 @@ public final class HttpRequests {
    */
   public static HttpResponse post(URL url, String body, Map<String, String> headers) throws IOException {
     return doRequest("POST", url, headers, body, null);
+  }
+
+  /**
+   * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
+   */
+  public static HttpResponse post(URL url, String body, String headerName, String headerValue) throws IOException {
+    return doRequest("POST", url, ImmutableMap.of(headerName, headerValue), body, null);
+  }
+
+  /**
+   * Same as {@link #post(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
+   */
+  public static HttpResponse post(URL url, String body,
+                                  String header1Name, String header1Value,
+                                  String header2Name, String header2Value) throws IOException {
+    return doRequest("POST", url, ImmutableMap.of(header1Name, header1Value, header2Name, header2Value), body, null);
+  }
+
+  /**
+   * Executes a PUT request to the url provided.
+   * @param url URL of the request.
+   * @param body Body of the request.
+   * @param headers Headers of the request.
+   * @return response of the request
+   * @throws IOException
+   */
+  public static HttpResponse put(URL url, String body, Map<String, String> headers) throws IOException {
+    return doRequest("PUT", url, headers, body, null);
+  }
+
+  /**
+   * Same as {@link #put(java.net.URL, String, java.util.Map)} with no extra headers
+   */
+  public static HttpResponse put(URL url, String body) throws IOException {
+    return doRequest("PUT", url, null, body, null);
+  }
+
+  /**
+   * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
+   */
+  public static HttpResponse put(URL url, String body, String headerName, String headerValue) throws IOException {
+    return doRequest("PUT", url, ImmutableMap.of(headerName, headerValue), body, null);
+  }
+
+  /**
+   * Same as {@link #put(java.net.URL, String, java.util.Map)}, accepts headers as string params for convenience
+   */
+  public static HttpResponse put(URL url, String body,
+                                  String header1Name, String header1Value,
+                                  String header2Name, String header2Value) throws IOException {
+    return doRequest("PUT", url, ImmutableMap.of(header1Name, header1Value, header2Name, header2Value), body, null);
   }
 
   /**

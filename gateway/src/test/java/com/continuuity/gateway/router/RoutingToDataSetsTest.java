@@ -89,10 +89,10 @@ public class RoutingToDataSetsTest {
 
   @Test
   public void testInstanceHandlerRequests() throws Exception {
-    Assert.assertEquals("list", doRequest("/data/instances", "GET"));
-    Assert.assertEquals("post:myInstance", doRequest("/data/instances/myInstance", "POST"));
-    Assert.assertEquals("delete:myInstance", doRequest("/data/instances/myInstance", "DELETE"));
-    Assert.assertEquals("get:myInstance", doRequest("/data/instances/myInstance", "GET"));
+    Assert.assertEquals("list", doRequest("/data/datasets", "GET"));
+    Assert.assertEquals("post:myInstance", doRequest("/data/datasets/myInstance", "POST"));
+    Assert.assertEquals("delete:myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
+    Assert.assertEquals("get:myInstance", doRequest("/data/datasets/myInstance", "GET"));
   }
 
   @Path(Constants.Gateway.GATEWAY_VERSION)
@@ -139,27 +139,27 @@ public class RoutingToDataSetsTest {
   @Path(Constants.Gateway.GATEWAY_VERSION)
   public static final class DatasetInstanceHandler extends AbstractHttpHandler {
     @GET
-    @Path("/data/instances/")
+    @Path("/data/datasets/")
     public void list(HttpRequest request, final HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "list");
     }
 
     @GET
-    @Path("/data/instances/{instance-name}")
+    @Path("/data/datasets/{instance-name}")
     public void getInfo(HttpRequest request, final HttpResponder responder,
                         @PathParam("instance-name") String name) {
       responder.sendString(HttpResponseStatus.OK, "get:" + name);
     }
 
     @POST
-    @Path("/data/instances/{instance-name}")
+    @Path("/data/datasets/{instance-name}")
     public void add(HttpRequest request, final HttpResponder responder,
                     @PathParam("instance-name") String name) {
       responder.sendString(HttpResponseStatus.OK, "post:" + name);
     }
 
     @DELETE
-    @Path("/data/instances/{instance-name}")
+    @Path("/data/datasets/{instance-name}")
     public void drop(HttpRequest request, final HttpResponder responder,
                      @PathParam("instance-name") String instanceName) {
       responder.sendString(HttpResponseStatus.OK, "delete:" + instanceName);

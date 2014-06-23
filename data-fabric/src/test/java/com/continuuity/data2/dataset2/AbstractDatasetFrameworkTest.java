@@ -26,10 +26,14 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
     String moduleName = "inMemory";
 
+    Assert.assertFalse(framework.hasType("orderedTable"));
     framework.addModule(moduleName, new InMemoryOrderedTableModule());
+    Assert.assertTrue(framework.hasType("orderedTable"));
 
+    Assert.assertFalse(framework.hasInstance("my_table"));
     // Creating instance
     framework.addInstance("orderedTable", "my_table", DatasetProperties.EMPTY);
+    Assert.assertTrue(framework.hasInstance("my_table"));
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin("my_table", null);
@@ -70,11 +74,15 @@ public abstract class AbstractDatasetFrameworkTest {
 
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
+    Assert.assertFalse(framework.hasType(SimpleKVTable.class.getName()));
     framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
+    Assert.assertTrue(framework.hasType(SimpleKVTable.class.getName()));
 
     // Creating instance
+    Assert.assertFalse(framework.hasInstance("my_table"));
     framework.addInstance(SimpleKVTable.class.getName(),
                           "my_table", DatasetProperties.EMPTY);
+    Assert.assertTrue(framework.hasInstance("my_table"));
 
     testCompositeDataset(framework);
 
@@ -93,10 +101,14 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
     framework.addModule("keyValue", new SingleTypeModule(SimpleKVTable.class));
+    Assert.assertFalse(framework.hasType(DoubleWrappedKVTable.class.getName()));
     framework.addModule("doubleKeyValue", new SingleTypeModule(DoubleWrappedKVTable.class));
+    Assert.assertTrue(framework.hasType(DoubleWrappedKVTable.class.getName()));
 
     // Creating instance
+    Assert.assertFalse(framework.hasInstance("my_table"));
     framework.addInstance(DoubleWrappedKVTable.class.getName(), "my_table", DatasetProperties.EMPTY);
+    Assert.assertTrue(framework.hasInstance("my_table"));
 
     testCompositeDataset(framework);
 

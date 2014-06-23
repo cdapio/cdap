@@ -7,7 +7,6 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.explore.service.ExploreService;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -23,7 +22,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * Provides various REST endpoints to execute SQL commands via {@link ExploreExecutorHttpHandler}.
+ * Provides various REST endpoints to execute SQL commands via {@link QueryExecutorHttpHandler}.
  * In charge of starting and stopping the {@link com.continuuity.explore.service.ExploreService}.
  */
 public class ExploreExecutorService extends AbstractIdleService {
@@ -103,9 +102,4 @@ public class ExploreExecutorService extends AbstractIdleService {
         .add("bindAddress", httpService.getBindAddress())
         .toString();
   }
-
-  public NettyHttpService getHttpService() {
-    return httpService;
-  }
-
 }

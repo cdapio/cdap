@@ -11,11 +11,13 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.util.security.Constraint;
 
 import javax.security.auth.login.Configuration;
+import javax.ws.rs.Path;
 
 /**
  * An abstract authentication handler that provides basic functionality including
  * setting of constraints and setting of different required services.
  */
+@Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
   protected final CConfiguration configuration;
 
@@ -24,11 +26,10 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.configuration = configuration;
   }
 
-
   /**
    * Initialize the handler context and other related services.
    */
-  public void init() {
+  public void init() throws Exception {
     Constraint constraint = new Constraint();
     constraint.setRoles(new String[]{"*"});
     constraint.setAuthenticate(true);
@@ -46,6 +47,7 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.setIdentityService(getHandlerIdentityService());
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());
+    this.doStart();
   }
 
   /**

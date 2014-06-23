@@ -1,6 +1,7 @@
 package com.continuuity.data2.datafabric.dataset;
 
 import com.continuuity.api.dataset.Dataset;
+import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DatasetManagementException;
@@ -31,6 +32,17 @@ public final class DatasetsUtil {
                                                    DatasetProperties props, ClassLoader cl)
     throws DatasetManagementException, IOException {
 
+    createIfNotExists(datasetFramework, instanceName, typeName, props);
+    return (T) datasetFramework.getDataset(instanceName, null);
+  }
+
+  /**
+   * Creates instance of the data set if not exists
+   */
+  public static void createIfNotExists(DatasetFramework datasetFramework,
+                                       String instanceName, String typeName,
+                                       DatasetProperties props) throws DatasetManagementException, IOException {
+
     if (!datasetFramework.hasInstance(instanceName)) {
       try {
         datasetFramework.addInstance(typeName, instanceName, props);
@@ -42,6 +54,14 @@ public final class DatasetsUtil {
         throw Throwables.propagate(e);
       }
     }
-    return (T) datasetFramework.getDataset(instanceName, null);
+  }
+
+  /**
+   * Performs an upgrade of a dataset instance.
+   */
+  public static void upgradeDataset(DatasetFramework datasetFramework, String instanceName, ClassLoader cl)
+    throws Exception {
+    DatasetAdmin admin = datasetFramework.getAdmin(instanceName, cl);
+    admin.upgrade();
   }
 }
