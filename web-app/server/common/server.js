@@ -805,8 +805,8 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.post('/accesstoken', function (req, res) {
      req.session.regenerate(function () {
        var auth_uri = self.getAuthServerAddress();
-//       auth_uri = auth_uri.slice(0, -5);
-//       auth_uri += "extendedtoken";
+       auth_uri = auth_uri.slice(0, -5);
+       auth_uri += "extendedtoken";
        if (auth_uri === null) {
          res.send(500, "No Authentication service to connect to was found.");
        } else {

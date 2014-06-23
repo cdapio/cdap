@@ -890,51 +890,32 @@
     <!--
      External Authentication login module settings
     -->
-  <property>
-    <name>security.authentication.handlerClassName</name>
-    <value>com.continuuity.security.server.LDAPAuthenticationHandler</value>
-  </property>
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+    </property>
 
-  <property>
-    <name>security.authentication.loginmodule.className</name>
-    <value>org.eclipse.jetty.plus.jaas.spi.LdapLoginModule</value>
-  </property>
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+    </property>
 
-  <property>
-    <name>security.authentication.handler.debug</name>
-    <value>true</value>
-  </property>
-
-  <property>
-    <name>security.authentication.handler.hostname</name>
-    <value>crowd.continuuity.com</value>
-  </property>
-
-  <property>
-    <name>security.authentication.handler.port</name>
-    <value>389</value>
-  </property>
-
-  <property>
-    <name>security.authentication.handler.userBaseDn</name>
-    <value>ou=people,dc=continuuity,dc=com</value>
-  </property>
-
-  <property>
-    <name>security.authentication.handler.userRdnAttribute</name>
-    <value>cn</value>
-  </property>
-
-  <property>
-    <name>security.authentication.handler.userObjectClass</name>
-    <value>inetorgperson</value>
-  </property>
+    <property>
+      <name>security.authentication.basic.realmfile</name>
+      <value></value>
+    </property>
 
     <property>
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
         for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
+        <value>604800000</value>
     </property>
 
     <property>
@@ -948,7 +929,7 @@
     -->
     <property>
         <name>security.enabled</name>
-        <value>true</value>
+        <value>false</value>
         <description>If this is set to true, security layer will be up and active in reactor</description>
     </property>
 
