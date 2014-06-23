@@ -1,10 +1,10 @@
 package com.continuuity.batch.stream;
 
 import com.continuuity.test.ApplicationManager;
-import com.continuuity.test.LargeTests;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.StreamWriter;
+import com.continuuity.test.XSlowTests;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(LargeTests.class)
+@Category(XSlowTests.class)
 public class TestBatchStreamIntegration extends ReactorTestBase {
   @Test
   public void testStreamBatch() throws Exception {

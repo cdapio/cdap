@@ -4,7 +4,7 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.junit.AfterClass;
@@ -14,7 +14,7 @@ import org.junit.experimental.categories.Category;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class DistributedDataSetAccessorTest extends NamespacingDataSetAccessorTest {
   private static DataSetAccessor dsAccessor;
 

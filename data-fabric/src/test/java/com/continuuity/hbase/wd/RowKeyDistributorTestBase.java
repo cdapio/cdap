@@ -15,7 +15,7 @@
  */
 package com.continuuity.hbase.wd;
 
-import com.continuuity.test.LargeTests;
+import com.continuuity.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.KeyValue;
@@ -46,7 +46,7 @@ import java.util.concurrent.Executors;
 /**
  * Provides basic tests for row key distributor
  */
-@Category(LargeTests.class)
+@Category(XSlowTests.class)
 public abstract class RowKeyDistributorTestBase {
 
   // Controls for test suite for whether to run BeforeClass/AfterClass

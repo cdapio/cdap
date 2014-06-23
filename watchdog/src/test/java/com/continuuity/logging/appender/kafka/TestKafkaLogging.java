@@ -13,7 +13,7 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.read.DistributedLogReader;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -30,7 +30,7 @@ import java.io.PrintStream;
 /**
  * Kafka Test for logging.
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class TestKafkaLogging extends KafkaTestBase {
   private static InMemoryTxSystemClient txClient = null;
 

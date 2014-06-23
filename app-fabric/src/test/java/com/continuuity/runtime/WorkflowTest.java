@@ -14,7 +14,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.LargeTests;
+import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -39,7 +39,7 @@ import java.io.IOException;
 /**
  *
  */
-@Category(LargeTests.class)
+@Category(XSlowTests.class)
 public class WorkflowTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTest.class);

@@ -10,7 +10,7 @@ import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
 *
 */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class SchedulerTest {
 
   private static Injector injector;

@@ -12,7 +12,7 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class HBaseOrderedTableTest extends BufferingOrederedTableTest<HBaseOrderedTable> {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();

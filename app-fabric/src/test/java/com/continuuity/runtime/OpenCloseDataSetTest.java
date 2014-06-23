@@ -19,7 +19,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.LargeTests;
+import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * tests that flowlets, procedures and batch jobs close their data sets.
  */
-@Category(LargeTests.class)
+@Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
 
   @ClassRule

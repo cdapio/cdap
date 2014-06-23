@@ -22,7 +22,7 @@ import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConsumerFactory;
 import com.continuuity.data2.transaction.stream.StreamConsumerTestBase;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,7 +38,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
   @ClassRule

@@ -20,7 +20,7 @@ import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -42,7 +42,7 @@ import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyV
 /**
  * Tests Hive13ExploreService.
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
@@ -148,7 +148,7 @@ public class HiveExploreServiceTest {
         Lists.newArrayList(
           new Result(Lists.<Object>newArrayList("key", "string", "from deserializer")),
           new Result(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                             "from deserializer"))
+                                                "from deserializer"))
         )
     );
 

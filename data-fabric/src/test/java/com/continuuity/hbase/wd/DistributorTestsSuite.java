@@ -1,6 +1,6 @@
 package com.continuuity.hbase.wd;
 
-import com.continuuity.test.LargeTests;
+import com.continuuity.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
@@ -10,7 +10,7 @@ import org.junit.runners.Suite;
 /**
  *
  */
-@Category(LargeTests.class)
+@Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   IdentityHashDistributorTestRun.class,

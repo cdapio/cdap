@@ -10,7 +10,7 @@ import com.continuuity.data.file.FileReader;
 import com.continuuity.data.file.FileWriter;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
 import com.continuuity.data2.transaction.stream.StreamConfig;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -461,7 +461,7 @@ public abstract class StreamDataFileTestBase {
   /**
    * Test live stream reader with new partitions and/or sequence file being created over time.
    */
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testLiveStream() throws Exception {
     String streamName = "live";

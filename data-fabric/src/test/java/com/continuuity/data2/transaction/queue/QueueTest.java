@@ -18,7 +18,7 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.stream.StreamAdmin;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -200,7 +200,7 @@ public abstract class QueueTest {
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multififo");
@@ -214,7 +214,7 @@ public abstract class QueueTest {
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testMultiHash() throws Exception {
     QueueName queueName = QueueName.fromStream("bingoBang");
@@ -222,7 +222,7 @@ public abstract class QueueTest {
   }
 
   // Batch enqueue and batch dequeue with one consumer.
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "batchhash");
@@ -548,7 +548,7 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testConcurrentEnqueue() throws Exception {
     // This test is for testing multiple producers that writes with a delay after a transaction started.

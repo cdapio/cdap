@@ -4,7 +4,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -285,7 +285,7 @@ public abstract class MetaDataTableTest {
     Assert.assertNotNull(mds.get(context, "b", "q", "c", "z"));
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testConcurrentUpdateField() throws Exception {
     // create a meta data entry with two fields, one text one bin
@@ -417,7 +417,7 @@ public abstract class MetaDataTableTest {
     }
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testConcurrentSwapField() throws Exception {
     System.out.println("testSwapField:");
@@ -493,7 +493,7 @@ public abstract class MetaDataTableTest {
     }
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testConcurrentUpdate() throws Exception {
     System.out.println("testConcurrentUpdate:");

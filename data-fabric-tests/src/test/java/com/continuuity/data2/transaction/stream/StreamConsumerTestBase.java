@@ -19,7 +19,7 @@ import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -436,7 +436,7 @@ public abstract class StreamConsumerTestBase {
     consumer.close();
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testTTLStartingFile() throws Exception {
     String stream = "testTTLStartingFile";

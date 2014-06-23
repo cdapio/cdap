@@ -24,7 +24,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class FlowTest {
 
   @ClassRule

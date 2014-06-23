@@ -16,7 +16,7 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -28,7 +28,7 @@ import org.junit.experimental.categories.Category;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class EntityTableTest {
 
   private static DataSetAccessor accessor;

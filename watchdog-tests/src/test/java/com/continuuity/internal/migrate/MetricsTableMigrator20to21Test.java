@@ -21,7 +21,7 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class MetricsTableMigrator20to21Test {
   private static MetricsTableFactory tableFactory;
   private static MetricsTableMigrator20to21 upgrader;

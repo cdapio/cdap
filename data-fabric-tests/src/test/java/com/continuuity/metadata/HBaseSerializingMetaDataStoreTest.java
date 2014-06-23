@@ -5,7 +5,7 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Throwables;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -15,7 +15,7 @@ import org.junit.experimental.categories.Category;
 /**
  * HBase Serialize meta data store test.
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
 
   @BeforeClass

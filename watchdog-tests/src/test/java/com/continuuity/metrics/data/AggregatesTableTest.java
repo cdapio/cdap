@@ -15,7 +15,7 @@ import com.continuuity.data2.transaction.runtime.TransactionMetricsModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.continuuity.test.MediumTests;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class AggregatesTableTest {
 
   private static MetricsTableFactory tableFactory;
