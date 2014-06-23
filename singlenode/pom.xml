@@ -80,6 +80,42 @@
   </dependencies>
 
   <profiles>
+    <!-- Profile for building the SDK -->
+    <profile>
+      <id>sdk</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>1.3.1</version>
+              <executions>
+                <execution>
+                  <id>build-sdk</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                    <workingDirectory>${basedir}/build</workingDirectory>
+                    <executable>build-sdk</executable>
+                    <arguments>
+                      <argument>-t</argument>
+                      <argument>zip</argument>
+
+                      <argument>-o</argument>
+                      <argument>${project.build.directory}</argument>
+                    </arguments>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
     <profile>
       <id>dist</id>
       <build>
