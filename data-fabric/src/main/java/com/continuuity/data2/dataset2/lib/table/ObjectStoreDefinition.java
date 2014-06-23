@@ -56,7 +56,7 @@ public class ObjectStoreDefinition
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new ObjectStoreDataset(spec.getName(), table, typeRep, schema);
+    return new ObjectStoreDataset(spec.getName(), table, typeRep, schema, classLoader);
   }
 
 }
