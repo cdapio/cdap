@@ -9,7 +9,9 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
+import com.continuuity.test.LargeTests;
 import com.continuuity.test.MapReduceManager;
+import com.continuuity.test.MediumTests;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
@@ -26,6 +28,7 @@ import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
+@Category(MediumTests.class)
 public class TestFrameworkTest extends ReactorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
@@ -76,6 +80,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(LargeTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
@@ -128,6 +133,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
+  @Category(LargeTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
@@ -164,11 +170,13 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(LargeTests.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountApp2.class, false, "text2");
   }
 
+  @Category(LargeTests.class)
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
@@ -256,6 +264,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
+  @Category(MediumTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);

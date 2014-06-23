@@ -1005,6 +1005,13 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
+    <!-- To support different test groups -->
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -1033,6 +1040,16 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>2.14</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <groups>${testcase.groups}</groups>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1296,6 +1313,20 @@
           </plugins>
         </pluginManagement>
       </build>
+    </profile>
+    <profile>
+      <id>test-small</id>
+      <!-- Runs only small tests -->
+      <properties>
+        <testcase.groups>!com.continuuity.test.MediumTests</testcase.groups>
+      </properties>
+    </profile>
+    <profile>
+      <!-- Runs small and medium tests -->
+      <id>test-medium</id>
+      <properties>
+        <testcase.groups>!com.continuuity.test.LargeTests</testcase.groups>
+      </properties>
     </profile>
 
     <!-- Profile for prepare debian package. The "dist" profile must be activated as well. -->
