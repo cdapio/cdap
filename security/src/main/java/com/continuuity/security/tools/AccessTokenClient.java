@@ -2,6 +2,7 @@ package com.continuuity.security.tools;
 
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.security.server.ExternalAuthenticationServer;
+import com.continuuity.security.server.GrantAccessToken;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -37,15 +38,15 @@ public class AccessTokenClient {
    */
   public static boolean debug = false;
 
-  boolean help = false;
+  private boolean help = false;
 
-  String host;
-  int port = -1;
+  private String host;
+  private int port = -1;
 
-  String username;
-  String password;
-  String filePath;
-  boolean ssl = false;
+  private String username;
+  private String password;
+  private String filePath;
+  private boolean ssl = false;
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -187,12 +188,8 @@ public class AccessTokenClient {
       return "";
     }
 
-    String baseUrl;
-    if (ssl) {
-      baseUrl = String.format("https://%s:%d", host, port);
-    } else {
-      baseUrl = String.format("http://%s:%d", host, port);
-    }
+    String protocol = ssl ? "https" : "http";
+    String baseUrl = String.format("%s://%s:%d/%s", protocol, host, port, GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
 
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
 
