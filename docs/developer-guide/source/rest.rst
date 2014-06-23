@@ -922,7 +922,8 @@ because they belong to your account, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
-elements and Workflows,
+elements, Workflows or Services,
+
 and query for their status using HTTP POST and GET methods::
 
 	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
@@ -937,9 +938,9 @@ and query for their status using HTTP POST and GET methods::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, or *WorkFlow*) being called
+     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *WorkFlow*, or *Service*) being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
@@ -996,73 +997,6 @@ To retrieve the runtime arguments saved for an Application's element, issue an H
 
 This will return the saved runtime arguments in JSON format.
 
-Services: Start, Stop, Status, and Runtime Arguments
-----------------------------------------------------
-Reactor Application can have Services that can be started, stopped and queried for their
-status using HTTP POST and GET methods::
-
-	POST <base-url>/apps/<app-id>/services/<service-id>/runnables/<operation>
-	GET <base-url>/apps/<app-id>/services/<service-id>/runnables/status
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application being called
-   * - ``<service-id>``
-     - Name of the Service being called
-   * - ``<operation>``
-     - One of ``start`` or ``stop``
-
-Examples
-........
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/HelloWorld/services/WhoService/runnables/start``
-   * - Description
-     - Start a Service *WhoService* in the Application *HelloWorld*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/services/CountService/runnables/stop``
-   * - Description
-     - Stop the Service *CountService* in the Application *WordCount*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables/status``
-   * - Description
-     - Get the status of the Service *WhoService* in the Application *HelloWorld*
-
-
-To save the runtime arguments so that the Reactor will use them every time you start the Service,
-issue an HTTP PUT with the parameter ``runtimeargs``::
-
-	PUT <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
-
-with the arguments as a JSON string in the body::
-
-	{"foo":"bar","this":"that"}
-
-To retrieve the runtime arguments saved for an Application's Service, issue an HTTP GET request to the Service's URL
-using the same parameter ``runtimeargs``::
-
-	GET <base-url>/apps/HelloWorld/services/WhoService/runnables/WhoRunnable/runtimeargs
-
-This will return the saved runtime arguments in JSON format.
-
 Container Information
 ---------------------
 
@@ -1080,9 +1014,9 @@ the Reactor for a Procedure or Flow’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<element-type>``
-     - One of either ``flows`` or ``procedures``
+     - One of ``flows``, ``procedures`` or ``services``
    * - ``<element-id>``
-     - Name of the element (*Flow* or *Procedure*)
+     - Name of the element (*Flow*, *Procedure* or *Service*)
 
 Example::
 
