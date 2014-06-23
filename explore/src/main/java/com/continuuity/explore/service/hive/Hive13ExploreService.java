@@ -6,7 +6,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
-import com.continuuity.explore.service.Row;
+import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
 
 import com.google.common.collect.ImmutableList;
@@ -42,7 +42,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
     try {
       OperationHandle operationHandle = getOperationHandle(handle);
       OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
-      Status status = new Status(Status.State.valueOf(operationStatus.getState().toString()),
+      Status status = new Status(Status.OpStatus.valueOf(operationStatus.getState().toString()),
                                  operationHandle.hasResultSet());
       LOG.trace("Status of handle {} is {}", handle, status);
       return status;
@@ -52,15 +52,15 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  public List<Row> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
+  public List<Result> nextResults(Handle handle, int size) throws ExploreException, HandleNotFoundException {
     try {
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-        ImmutableList.Builder<Row> rowsBuilder = ImmutableList.builder();
+        ImmutableList.Builder<Result> rowsBuilder = ImmutableList.builder();
         for (Object[] objects : rowSet) {
-          rowsBuilder.add(new Row(Lists.newArrayList(objects)));
+          rowsBuilder.add(new Result(Lists.newArrayList(objects)));
         }
         return rowsBuilder.build();
       } else {

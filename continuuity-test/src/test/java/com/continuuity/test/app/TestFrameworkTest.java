@@ -1,15 +1,11 @@
 package com.continuuity.test.app;
 
 import com.continuuity.api.app.Application;
-import com.continuuity.api.data.batch.RowScannable;
-import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.app.program.RunRecord;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
@@ -184,6 +180,13 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
+  }
+
+  @Test
+  public void testAppwithServices() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    LOG.info("Deployed.");
+    //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
@@ -361,14 +364,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
@@ -400,22 +403,5 @@ public class TestFrameworkTest extends ReactorTestBase {
       TimeUnit.SECONDS.sleep(2);
       applicationManager.stopAll();
     }
-  }
-
-  public static <ROW> String generateCreateStatement(String name, RowScannable<ROW> scannable) {
-    String hiveSchema;
-    try {
-      hiveSchema = Scannables.hiveSchemaFor(scannable);
-    } catch (UnsupportedTypeException e) {
-      LOG.error(String.format(
-        "Can't create Hive table for dataset '%s' because its row type is not supported", name), e);
-      return null;
-    }
-    String hiveStatement = String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Continuuity Reactor Dataset\" " +
-                                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
-                                         name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                                         Constants.Explore.DATASET_NAME, name);
-    LOG.info("Command for Hive: {}", hiveStatement);
-    return hiveStatement;
   }
 }

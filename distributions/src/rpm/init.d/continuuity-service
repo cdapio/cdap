@@ -1,12 +1,12 @@
 #!/bin/bash
 #
 # chkconfig: 2345 96 15 
-# description: Starts and stops the ${project.artifactId} service
+# description: Starts and stops the @service.name@ service
 # processname: java
 #
 ### BEGIN INIT INFO
-# Provides:          continuuity-${project.artifactId}
-# Short-Description: Continuuity ${project.artifactId}
+# Provides:          continuuity-@service.name@
+# Short-Description: Continuuity @service.name@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -19,8 +19,8 @@
 # drop permissions to continuuity user and run service script
 
 if [[ $UID -eq 0 ]]; then
-    su continuuity -c "cd /opt/continuuity/${project.artifactId}/bin; exec ./svc-${project.artifactId} $*"
+    su continuuity -c "cd /opt/continuuity/@package.name@/bin; exec ./svc-@service.name@ $*"
 else
-    cd /opt/continuuity/${project.artifactId}/bin; exec ./svc-${project.artifactId} $*
+    cd /opt/continuuity/@package.name@/bin; exec ./svc-@service.name@ $*
 fi
 

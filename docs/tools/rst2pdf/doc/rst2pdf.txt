@@ -77,15 +77,15 @@ OPTIONS
 --smart-quotes=VALUE  Try to convert ASCII quotes, ellipsis and dashes to
                       the typographically correct equivalent. Default=0
 
-The possible values are:
+                      The possible values are:
 
-0. Suppress all transformations. (Do nothing.)
+                      0. Suppress all transformations. (Do nothing.)
         
-1. Performs default SmartyPants transformations: quotes (including backticks-style), em-dashes, and ellipses. "--" (dash dash) is used to signify an em-dash; there is no support for en-dashes.
+                      1. Performs default SmartyPants transformations: quotes (including backticks-style), em-dashes, and ellipses. "--" (dash dash) is used to signify an em-dash; there is no support for en-dashes.
         
-2. Same as --smart-quotes=1, except that it uses the old-school typewriter shorthand for dashes: "--" (dash dash) for en-dashes, "---" (dash dash dash) for em-dashes.
+                      2. Same as --smart-quotes=1, except that it uses the old-school typewriter shorthand for dashes: "--" (dash dash) for en-dashes, "---" (dash dash dash) for em-dashes.
 
-3. Same as --smart-quotes=2, but inverts the shorthand for dashes: "--" (dash dash) for em-dashes, and "---" (dash dash dash) for en-dashes.
+                      3. Same as --smart-quotes=2, but inverts the shorthand for dashes: "--" (dash dash) for em-dashes, and "---" (dash dash dash) for en-dashes.
 
 --fit-literal-mode=MODE
                     What to do when a literal is too wide.
@@ -126,16 +126,15 @@ The possible values are:
 --show-frame-boundary   Show frame borders (only useful for debugging).
                         Default=False
 
---disable-splittables
-                        Don't use splittable flowables in some elements. Only
+--disable-splittables   Don't use splittable flowables in some elements. Only
                         try this if you can't process a document any other
                         way.
 
 -b LEVEL, --break-level=LEVEL
                     Maximum section level that starts in a new page. Default: 0
                    
---first-page-on-right When using double sided pages, the first page will start
-                      on the right hand side. (Book Style) 
+--first-page-on-right  When using double sided pages, the first page will start
+                       on the right hand side. (Book Style) 
                         
 --blank-first-page    Add a blank page at the beginning of the document.
 

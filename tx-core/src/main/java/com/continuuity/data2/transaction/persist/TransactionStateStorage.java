@@ -3,12 +3,18 @@ package com.continuuity.data2.transaction.persist;
 import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
  * Defines the common contract for persisting transaction state changes.
  */
 public interface TransactionStateStorage extends Service {
+
+  /**
+   * Persists a snapshot of transaction state to an output stream.
+   */
+  public void writeSnapshot(OutputStream out, TransactionSnapshot snapshot) throws IOException;
 
   /**
    * Persists a snapshot of transaction state.

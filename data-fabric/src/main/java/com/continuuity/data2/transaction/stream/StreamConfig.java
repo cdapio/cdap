@@ -79,7 +79,7 @@ public final class StreamConfig {
       .add("duration", partitionDuration)
       .add("indexInterval", indexInterval)
       .add("ttl", ttl)
-      .add("location", location)
+      .add("location", location.toURI())
       .toString();
   }
 }

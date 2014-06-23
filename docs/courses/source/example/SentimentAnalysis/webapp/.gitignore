@@ -1,0 +1,3 @@
+server/streamy-lite.conf.js
+*.log
+.DS_Store

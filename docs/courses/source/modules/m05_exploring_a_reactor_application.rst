@@ -5,11 +5,21 @@ Exploring an Example Reactor Application
 .. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
+.. |br| raw:: html
+
+   <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -44,7 +54,7 @@ Dashboard: Overview
 ===================
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
-   :width: 600px
+   :width: 80%
 
 *Dashboard running on an Enterprise Continuuity Reactor*
 
@@ -104,7 +114,7 @@ details: name, storage, number of events and the arrival rate, with a graph show
 arrivals based on the sampling rate menu setting
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_03_collect.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -119,7 +129,7 @@ Clicking on a Stream's name takes you to the Stream's pane, showing:
 - Clicking on a Flow name will take you to that Flow's pane
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_21_stream.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -130,7 +140,7 @@ Flows,
 MapReduce Jobs and Workflows in the Reactor
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_04_process.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -144,7 +154,7 @@ MapReduce Jobs and Workflows in the Reactor
 - For MapReduce Jobs, shows the mapping status and the reducing status
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_04_process.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -158,7 +168,7 @@ MapReduce Jobs and Workflows in the Reactor
   Flow status and management controls
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_07_app_crawler_flow_rss.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -174,7 +184,7 @@ The upper-right management cluster:
 - Start and stop buttons for the Flow
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_11_app_crawler_detail.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -185,7 +195,7 @@ The gear icon brings up a dialog for setting the runtime configuration parameter
 that have been built into the Flow:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_23_app_crawler_detail_config.png
-   :width: 400px
+   :width: 40%
 
 ----
 
@@ -195,7 +205,7 @@ that have been built into the Flow:
 The directed acyclic graph (DAG) shows all the Streams and Flowlets:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_24_app_crawler_detail_dag.png
-   :width: 600px
+   :width: 60%
 
 ----
 
@@ -208,7 +218,7 @@ A Stream icon shows:
 - Number of events processed in the current sampling period
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_12_stream_icon.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -222,7 +232,7 @@ A Flowlet icon shows:
 - Number of instances of that Flowlet (small circle, upper right of the icon)
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_13_flowlet_icon.png
-   :width: 200px
+   :width: 40%
 
 ----
 
@@ -233,7 +243,7 @@ Mapping and Reducing activity is shown, along with status and
 management controls for starting, stopping and configuration
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_26_mapreduce.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -244,7 +254,7 @@ Time until the next scheduled run is shown, along with status and
 management controls for starting, stopping and configuration
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_25_workflow.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -256,7 +266,7 @@ management controls for starting, stopping and configuration
 - List of Flows attached to the DataSet with their processing rate and busyness
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_15_dataset.png
-   :width: 600px
+   :width: 80%
 
 ----
 
@@ -270,7 +280,7 @@ The dialog box shown allows for the generation of 'ad-hoc' requests,
 where JSON string parameters are passed to the Procedure when calling its methods:
 
 .. image:: ../../../developer-guide/source/_images/dashboard/dashboard_17_procedure_ranker.png
-   :width: 600px
+   :width: 80%
 
 ----
 
