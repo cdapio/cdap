@@ -14,12 +14,13 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * This class hijacks Hadoop bin, and adds hbase-protocol jar to HADOOP_CLASSPATH - REACTOR-325.
+ * This class hijacks Hadoop bin, and adds hbase-protocol jar to HADOOP_CLASSPATH, more info on why this
+ * is needed - REACTOR-325.
  */
 public class LocalMapreduceClasspathSetter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalMapreduceClasspathSetter.class);
-  private static final Pattern HEARSE_PROTOCOL_JAR_NAME_PATTERN =
-    Pattern.compile(".*" + File.separatorChar + "hbase-protocol-.+\\.jar\\b");
+  private static final Pattern HBASE_PROTOCOL_JAR_NAME_PATTERN =
+    Pattern.compile(".*" + File.separatorChar + "hbase-protocol-.+\\.jar$");
 
   private final HiveConf hiveConf;
   private final String directory;
@@ -31,7 +32,7 @@ public class LocalMapreduceClasspathSetter {
   }
 
   public void accept(String jar) {
-    if (HEARSE_PROTOCOL_JAR_NAME_PATTERN.matcher(jar).matches()) {
+    if (HBASE_PROTOCOL_JAR_NAME_PATTERN.matcher(jar).matches()) {
       hbaseProtocolJarPaths.add(jar);
     }
   }

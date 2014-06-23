@@ -178,7 +178,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     }
   }
 
-  static void setupClasspath() throws IOException {
+  private static void setupClasspath() throws IOException {
     // Here we find the transitive dependencies and remove all paths that come from the boot class path -
     // those paths are not needed because the new JVM will have them in its boot class path.
     // It could even be wrong to keep them because in the target container, the boot class path may be different
@@ -200,7 +200,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
     Set<String> hBaseTableDeps = traceDependencies(new HBaseTableUtilFactory().get().getClass().getCanonicalName(),
                                                    bootstrapClassPaths);
 
-    // Note the order of dependency jars is important
+    // Note the order of dependency jars is important so that HBase jars come first in the classpath order
+    // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<String> orderedDependencies = new LinkedHashSet<String>();
     orderedDependencies.addAll(hBaseTableDeps);
     orderedDependencies.addAll(traceDependencies(DatasetServiceClient.class.getCanonicalName(), bootstrapClassPaths));
@@ -210,7 +211,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     LOG.info("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
              System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
-    // Setup HADOOP_CLASSPATH hack - REACTOR-325
+    // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
     LocalMapreduceClasspathSetter classpathSetter =
       new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"));
     for (String jar : hBaseTableDeps) {
