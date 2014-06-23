@@ -7,6 +7,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -49,6 +54,15 @@ public class AccessTokenClient {
   private String username;
   private String password;
   private String filePath;
+  private Options options;
+
+  private static final class ConfigurableOptions {
+    private static final String HOST = "host";
+    private static final String USER_NAME = "username";
+    private static final String PASSWORD = "password";
+    private static final String FILE = "file";
+    private static final String HELP = "help";
+  }
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -67,16 +81,28 @@ public class AccessTokenClient {
     out.println("Usage: ");
     out.println("  " + name + " [ --host <host> ] [ --username <username> ]");
     out.println();
-    out.println("Additional options:");
-    out.println("  --host <name>           To specify the host of gateway");
-    out.println("  --username <user>       To specify the user to login as");
-    out.println("  --password <password>   To specify the user password");
-    out.println("  --file <path>           To specify the access token file");
-    out.println("  --ssl                   To use SSL");
-    out.println("  --help                  To print this message");
+    printOptions(error);
+  }
+
+  private void printOptions(boolean error) {
+    PrintWriter pw = error ? new PrintWriter(System.err) : new PrintWriter(System.out);
+    pw.println("Options:\n");
+    HelpFormatter formatter = new HelpFormatter();
+    formatter.printOptions(pw, 100, options, 0, 10);
+    pw.flush();
+    pw.close();
     if (error) {
       throw new UsageException();
     }
+  }
+
+  private void buildOptions() {
+    options = new Options();
+    options.addOption(null, ConfigurableOptions.HOST, true, "To specify the host of gateway");
+    options.addOption(null, ConfigurableOptions.USER_NAME, true, "To specify the user to login as");
+    options.addOption(null, ConfigurableOptions.PASSWORD, true, "To specify the user password");
+    options.addOption(null, ConfigurableOptions.FILE, true, "To specify the access token file");
+    options.addOption(null, ConfigurableOptions.HELP, false, "To print this message");
   }
 
   /**
@@ -95,44 +121,35 @@ public class AccessTokenClient {
    * Parse the command line arguments.
    */
   void parseArguments(String[] args) {
-    if (args.length == 0) {
+    CommandLineParser parser = new BasicParser();
+    CommandLine commandLine = null;
+    try {
+      commandLine = parser.parse(options, args);
+    } catch (org.apache.commons.cli.ParseException e) {
+      System.err.println("Could not parse arguments correctly.");
       usage(true);
     }
-    if ("--help".equals(args[0])) {
+
+    if (commandLine.hasOption("help")) {
       usage(false);
       help = true;
       return;
     }
+    if (commandLine.hasOption(ConfigurableOptions.HOST)) {
+      host = commandLine.getOptionValue(ConfigurableOptions.HOST);
+    }
+    if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
+      username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME);
+    }
+    if (commandLine.hasOption(ConfigurableOptions.PASSWORD)) {
+      password = commandLine.getOptionValue(ConfigurableOptions.PASSWORD);
+    }
+    if (commandLine.hasOption(ConfigurableOptions.FILE)) {
+      filePath = commandLine.getOptionValue(ConfigurableOptions.FILE);
+    }
 
-    for (int pos = 0; pos < args.length; pos++) {
-      String arg = args[pos];
-      if ("--host".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        host = args[pos];
-      } else if ("--username".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        username = args[pos];
-      } else if ("--password".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        password = args[pos];
-      } else if ("--file".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        filePath = args[pos];
-      } else if ("--help".equals(arg)) {
-        help = true;
-        usage(false);
-        return;
-      } else {
-        usage(true);
-      }
+    if (commandLine.getArgs().length > 0) {
+      usage(true);
     }
   }
 
@@ -189,6 +206,7 @@ public class AccessTokenClient {
   }
 
   public String execute0(String[] args) {
+    buildOptions();
     validateArguments(args);
     if (help) {
       return "";
