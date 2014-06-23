@@ -41,6 +41,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
@@ -68,7 +69,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.RunIds;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +97,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final ZKClientService zkClientService;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -110,7 +110,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionExecutorFactory txExecutorFactory, ZKClientService zkClientService) {
+                                TransactionExecutorFactory txExecutorFactory,
+                                ProgramServiceDiscovery serviceDiscovery) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -120,7 +121,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
-    this.zkClientService = zkClientService;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Inject (optional = true)
@@ -167,11 +168,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                               Sets.union(dataSetSpecs.keySet(), datasetSpecs.keySet()));
 
     final BasicMapReduceContext context =
-      new BasicMapReduceContext(cConf, program, null, runId, options.getUserArguments(),
+      new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch, zkClientService, metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();
