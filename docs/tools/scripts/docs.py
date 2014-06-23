@@ -15,8 +15,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+#
 # Tests
-# python docs.py -o ../../install-guide/build-pdf/install.pdf ../../install-guide/source/install.rst
+#
+# PDF generation
+# python docs.py -g pdf -o ../../install-guide/build-pdf/install.pdf ../../install-guide/source/install.rst
+#
 
 VERSION = "0.0.1"
 DEFAULT_OUTPUT_PDF_FILE = "output.pdf"
@@ -35,11 +39,13 @@ RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
 	PageBreak"""
 
+
 from optparse import OptionParser
 import os
 import subprocess
 import sys
 import tempfile
+
 
 def parse_options():
     """ Parses args options.
@@ -67,7 +73,8 @@ def parse_options():
     parser.add_option(
         "-g", "--generate",
         dest="generate",
-        help="One of html, pdf, slides (default %s)" % DEFAULT_GENERATE,
+        help="One of html, pdf, or slides "
+             "(default %s)" % DEFAULT_GENERATE,
         default=DEFAULT_GENERATE)
 
     (options, args) = parser.parse_args()
@@ -84,26 +91,13 @@ def parse_options():
 
     return options, args[0]
 
+
 def log(message, type):
     """Basic logger, print output directly to stdout and errors to stderr.
     """
     (sys.stdout if type == 'notice' else sys.stderr).write(message + "\n")
 
-def run(input_file, options):
-    """ Runs using parsed options.
-    """
-    options.logger = log
-    if options.generate == "pdf":
-        print "PDF generation..."
-        process_pdf(input_file, options)
-    elif options.generate == "html":
-        print "HTML generation not implemented"
-    elif options.generate == "slides":
-        print "Slides generation not implemented"
-    else:
-        print "Unknown generation type: %s" % options.generate
-        sys.exit(1)
-    
+
 def process_pdf(input_file, options):
     output = ""
     config = ""
@@ -111,7 +105,6 @@ def process_pdf(input_file, options):
     print "input_file: %s" % input_file
     f = open(input_file,'r')
     lines = []
-    i = 0
     rst2pdf_cut = False
     for line in f:
         if line_starts_with(line, RST2PDF_CUT_START):
@@ -144,6 +137,8 @@ def process_pdf(input_file, options):
             
     # Set paths
     source_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # def get_absolute_path() Factor out duplicate code in this section
     
     if not os.path.isabs(input_file):
         input_file = os.path.join(source_path, input_file)
@@ -197,8 +192,13 @@ def process_pdf(input_file, options):
         
     print "Completed process_pdf"
 
+#
+# Utility functions
+#
+
 def line_starts_with(line, left):
     return bool(line[:len(left)] == left)
+
 
 def line_right_end(line, left):
     # Given a line of text (that may end with a carriage return)
@@ -207,16 +207,34 @@ def line_right_end(line, left):
     t = line[len(left):]
     return t.strip('\n')
 
+# def get_absolute_path(
+
+
+#
+# Main function
+#
+
 def main():
     """ Main program entry point.
     """
     options, input_file = parse_options()
 
     try:
-        run(input_file, options)
+        options.logger = log
+        if options.generate == "pdf":
+            print "PDF generation..."
+            process_pdf(input_file, options)
+        elif options.generate == "html":
+            print "HTML generation not implemented"
+        elif options.generate == "slides":
+            print "Slides generation not implemented"
+        else:
+            print "Unknown generation type: %s" % options.generate
+            sys.exit(1)
     except Exception, e:
         sys.stderr.write("Error: %s\n" % e)
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
