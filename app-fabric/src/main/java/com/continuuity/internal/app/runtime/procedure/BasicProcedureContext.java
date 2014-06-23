@@ -6,20 +6,16 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.discovery.ZKDiscoveryService;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClients;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -40,13 +36,12 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureLoggingContext procedureLoggingContext;
   private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
-  private final ZKClientService zkClientService;
-  private final CConfiguration cConf;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
                         Map<String, Closeable> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
-                        ZKClientService zkClientService, CConfiguration cConf) {
+                        ProgramServiceDiscovery serviceDiscovery) {
     super(program, runId, datasets);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
@@ -57,8 +52,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
     this.systemMetrics = getMetricsCollector(MetricsScope.REACTOR, collectionService, getMetricsContext());
-    this.zkClientService = zkClientService;
-    this.cConf = cConf;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -120,9 +114,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
 
   @Override
   public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
-    String zkNamespace = String.format("%s/service.%s.%s.%s", twillNamespace, accountId, appId, serviceId);
-    ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(ZKClients.namespace(zkClientService, zkNamespace));
-    return zkDiscoveryService.discover(serviceName);
+    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 }

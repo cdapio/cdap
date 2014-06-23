@@ -8,7 +8,6 @@ import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -17,6 +16,7 @@ import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -27,7 +27,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.RunIds;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -63,8 +62,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
-  private final ZKClientService zkClientService;
-  private final CConfiguration cConf;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
 
@@ -76,14 +74,13 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory, ServiceAnnouncer serviceAnnouncer,
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                                MetricsCollectionService metricsCollectionService, ZKClientService zkClientService,
-                                CConfiguration cConf) {
+                                MetricsCollectionService metricsCollectionService,
+                                ProgramServiceDiscovery serviceDiscovery) {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
-    this.zkClientService = zkClientService;
-    this.cConf = cConf;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Inject(optional = true)
@@ -93,10 +90,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec,
-                                                            ZKClientService zkClientService, CConfiguration cConf) {
+                                                            ProgramServiceDiscovery serviceDiscovery) {
 
     return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
-                                            procedureSpec, metricsCollectionService, zkClientService, cConf);
+                                            procedureSpec, metricsCollectionService, serviceDiscovery);
   }
 
   @Override
@@ -122,14 +119,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec,
-                                                                         zkClientService, cConf);
+                                                                         serviceDiscovery);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                                    ImmutableMap.<String, Closeable>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
-                                                   zkClientService, cConf);
+                                                   serviceDiscovery);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();
