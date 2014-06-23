@@ -1758,9 +1758,50 @@ These metrics are available in the DataSets context:
 
 Monitor HTTP API
 ================
-Reactor internally uses a variety of services that are critical to its functionality. Hence, the ability to check the health of those services can act as an useful initial debug step. This is faciliated by the Metrics HTTP API. To check the status of a service, send a HTTP GET request::
+Reactor internally uses a variety of system services that are critical to its functionality. This section describes REST Apis that can be used to get more visibility into system services
 
-	GET <base-url>/system/services/<service-id>/status
+Get details of all available system services
+............................................
+
+To get the detailed information of all available System services use:
+
+	GET <base-url>/system/services
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+Checking status of all Reactor system services
+..............................................
+
+To check the status of all the system service use:
+
+	GET <base-url>/system/services/status
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+Checking status of a specific Reactor system service
+....................................................
+
+To check the status of a specific system service use:
+
+	GET <base-url>/system/services/<service-name>/status
 
 The status of these Reactor services can be checked.
 
@@ -1768,12 +1809,12 @@ The status of these Reactor services can be checked.
    :header-rows: 1
    :widths: 20 20 60
    
-   * - Service Name
-     - Service-Id
+   * - Service 
+     - Service-Name
      - Description of the Service
    * - ``Metrics``
      - ``metrics``
-     - Service that handles metrics related requests
+     - Service that handles metrics related HTTP requests
    * - ``Transaction``
      - ``transaction``
      - Service handling transactions 
@@ -1783,6 +1824,20 @@ The status of these Reactor services can be checked.
    * - ``App Fabric``
      - ``appfabric``
      - Service handling Application Fabric requests
+   * - ``Log Saver``
+     - ``saver``
+     - Service aggregating all system and application logs
+   * - ``Metrics Processor``
+     - ``metrics.processor``
+     - Service that aggregates all system and application metrics 
+   * - ``DataSet executor``
+     - ``dataset.executor``
+     - Service that handles all data related HTTP requests 
+   * - ``Explore service``
+:DOCNOTE: Check with Poorna/Andreas on the naming.
+     - ``explore.service``
+     - Service that handles all HTTP requests for adhoc data exploration
+   
 
 Note that the service status checks are more useful when the Reactor is running in a distributed cluster mode and that some of the status checks may not work in the Local Reactor mode.
 
@@ -1809,6 +1864,55 @@ HTTP Responses
      - The service is up and running
    * - ``404 Not Found``
      - The service is not running or not found
+
+Scaling system services
+.......................
+
+The number of instances for system services can be queried and changed by using the following API:
+
+        GET <base-url>/system/services/<service-name>/instances
+        PUT <base-url>/system/services/<service-name>/instances
+
+with the arguments as a JSON string in the body::
+
+        { "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<system-name>``
+     - Name of the system service 
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Examples
+........
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/system/services/metrics/instances``
+       ``instances``
+   * - Description
+     - Find out the number of instances of the metrics HTTP service 
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``PUT <base-url>/system/services/metrics/instances``
+       ``instances``
+
+       with the arguments as a JSON string in the body::
+
+          { "instances" : 2 }
+   * - Description
+     - Change the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: CutStart
 
