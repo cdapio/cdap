@@ -2,8 +2,9 @@ package com.continuuity.security.tools;
 
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.security.server.ExternalAuthenticationServer;
-import com.continuuity.security.server.GrantAccessToken;
 import com.google.common.io.ByteStreams;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.codec.binary.Base64;
@@ -21,7 +22,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Client to get an AccessToken using username:password authentication.
@@ -41,12 +44,11 @@ public class AccessTokenClient {
   private boolean help = false;
 
   private String host;
-  private int port = -1;
+  private int port = 10000;
 
   private String username;
   private String password;
   private String filePath;
-  private boolean ssl = false;
 
   /**
    * Print the usage statement and return null (or empty string if this is not
@@ -66,8 +68,7 @@ public class AccessTokenClient {
     out.println("  " + name + " [ --host <host> ] [ --username <username> ]");
     out.println();
     out.println("Additional options:");
-    out.println("  --host <name>           To specify the host to send to");
-    out.println("  --port <number>         To specify the port to use");
+    out.println("  --host <name>           To specify the host of gateway");
     out.println("  --username <user>       To specify the user to login as");
     out.println("  --password <password>   To specify the user password");
     out.println("  --file <path>           To specify the access token file");
@@ -110,15 +111,6 @@ public class AccessTokenClient {
           usage(true);
         }
         host = args[pos];
-      } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        try {
-          port = Integer.parseInt(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
       } else if ("--username".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -134,8 +126,6 @@ public class AccessTokenClient {
           usage(true);
         }
         filePath = args[pos];
-      } else if ("--ssl".equals(arg)) {
-        ssl = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -154,13 +144,6 @@ public class AccessTokenClient {
     // Default values for host and port.
     if (host == null) {
       host = "localhost";
-    }
-    if (port == -1) {
-      if (ssl) {
-        port = 10010;
-      } else {
-        port = 10009;
-      }
     }
 
     if (filePath == null) {
@@ -182,14 +165,42 @@ public class AccessTokenClient {
 
   }
 
+  private String getAuthenticationServerAddress() throws IOException {
+    HttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(String.format("http://%s:%d", host, port));
+    HttpResponse response = client.execute(get);
+
+    if (response.getStatusLine().getStatusCode() == 200) {
+      System.out.println("Security is not enabled for Reactor. No Access Token may be acquired");
+      System.exit(0);
+    }
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(response.getEntity().getContent(), bos);
+    String responseBody = bos.toString("UTF-8");
+    bos.close();
+    JsonParser parser = new JsonParser();
+    JsonObject responseJson = (JsonObject) parser.parse(responseBody);
+    JsonArray addresses = responseJson.get("auth_uri").getAsJsonArray();
+    ArrayList<String> list = new ArrayList<String>();
+    for(JsonElement e : addresses){
+      list.add(e.getAsString());
+    }
+    return list.get(new Random().nextInt(list.size()));
+  }
+
   public String execute0(String[] args) {
     validateArguments(args);
     if (help) {
       return "";
     }
 
-    String protocol = ssl ? "https" : "http";
-    String baseUrl = String.format("%s://%s:%d/%s", protocol, host, port, GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
+    String baseUrl;
+    try {
+      baseUrl = getAuthenticationServerAddress();
+    } catch (IOException e) {
+      System.err.println("Could not find Authentication service to connect to.");
+      return null;
+    }
 
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
 
