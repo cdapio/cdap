@@ -16,12 +16,12 @@ import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.annotations.SerializedName;
+import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -29,12 +29,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.log4j.Level;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -57,7 +55,6 @@ import java.util.TreeMap;
  */
 public class StreamClient extends ClientToolBase {
 
-  private static final Gson GSON = new Gson();
   private static final String HEX_OPTION = "hex";
   private static final String STREAM_OPTION = "stream";
   private static final String BODY_OPTION = "body";
@@ -69,11 +66,7 @@ public class StreamClient extends ClientToolBase {
   private static final String LAST_OPTION = "last";
   private static final String TTL_OPTION = "ttl";
   private static final String NAME = "stream-client";
-
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
-  }
+  private static final String HEADER_OPTION = "header";
 
   /**
    * for debugging. should only be set to true in unit tests.
@@ -81,7 +74,6 @@ public class StreamClient extends ClientToolBase {
    */
   public static boolean debug = false;
 
-  String command = null;         // the command to run
   boolean hex = false;           // whether body is in hex noatation
   boolean urlenc = false;        // whether body is in url encoding
   String body = null;            // the body of the event as a String
@@ -98,6 +90,7 @@ public class StreamClient extends ClientToolBase {
 
   public StreamClient() {
     super("stream-client");
+    buildOptions();
   }
 
   public StreamClient(String toolName) {
@@ -105,15 +98,16 @@ public class StreamClient extends ClientToolBase {
     buildOptions();
   }
 
-  public StreamClient disallowSSL() {
-    this.forceNoSSL = true;
-    return this;
-  }
-
   @Override
   public void buildOptions() {
     // build the default options
     super.buildOptions();
+    options.addOption(OptionBuilder
+                        .withLongOpt(HEADER_OPTION)
+                        .hasArgs(2)
+                        .withDescription("To specify a header for the event to send. " +
+                                           "Can be specified multiple times.")
+                        .create());
     options.addOption(null, STREAM_OPTION, true, "To specify the destination event stream of the" +
                       "form <flow> or <flow>/<stream>.");
     options.addOption(null, BODY_OPTION, true, "To specify the body of the event as a string");
@@ -147,58 +141,40 @@ public class StreamClient extends ClientToolBase {
 
   public boolean parseArguments(String[] args) {
     // parse generic args first
-    CommandLineParser parser = new GnuParser();
+    CommandLineParser parser = new BasicParser();
     // Check all the options of the command line
     try {
       command = args[0];
-      // check for header arguments
-      for (int pos = 1; pos < args.length; ++pos) {
-        if ("--header".equals(args[pos])) {
-          if (pos + 2 >= args.length) {
-            printUsage(true);
-          }
-          headers.put(args[++pos], args[++pos]);
-        }
-      }
       CommandLine line = parser.parse(options, args);
       parseBasicArgs(line);
       // returns false if help was passed
       if (help) {
         return false;
       }
-      destination = line.hasOption(STREAM_OPTION) ? line.getOptionValue(STREAM_OPTION) : null;
-      body = line.hasOption(BODY_OPTION) ? line.getOptionValue(BODY_OPTION) : null;
-      bodyFile = line.hasOption(BODY_FILE_OPTION) ? line.getOptionValue(BODY_FILE_OPTION) : null;
+      destination = line.getOptionValue(STREAM_OPTION, null);
+      body = line.getOptionValue(BODY_OPTION, null);
+      bodyFile = line.getOptionValue(BODY_FILE_OPTION, null);
       hex = line.hasOption(HEX_OPTION);
       urlenc = line.hasOption(URL_OPTION);
       all = line.hasOption(ALL_OPTION);
-      // validate consumer is a numerical value
-      if (line.hasOption(GROUP_OPTION)) {
-        consumer = line.getOptionValue(GROUP_OPTION);
-        try {
-          Long.valueOf(consumer);
-        } catch (NumberFormatException e) {
-          usage("--" + GROUP_OPTION + " must have a long integer argument");
+      if (line.hasOption(HEADER_OPTION)) {
+        String[] headerList = line.getOptionValues(HEADER_OPTION);
+        // must pass header arguments in pairs
+        if (headerList.length % 2 != 0) {
+          usage("--" + HEADER_OPTION + " arguments must be passed in pairs");
         }
-      } else {
-        consumer = null;
+        for (int i = 0; i < headerList.length; i += 2) {
+          headers.put(headerList[i], headerList[i + 1]);
+        }
       }
-
-      try {
-        first = parseNumericArg(line, FIRST_OPTION).intValue();
-      } catch (NullPointerException e) { }
-      try {
-        last = parseNumericArg(line, LAST_OPTION).intValue();
-      } catch (NullPointerException e) { }
-      try {
-        ttl = parseNumericArg(line, TTL_OPTION);
-      } catch (NullPointerException e) { }
-
-      // TODO Check for extra params
+      // validate consumer is a numerical value
+      consumer = line.hasOption(GROUP_OPTION) ? parseNumericArg(line, GROUP_OPTION).toString() : null;
+      first = line.hasOption(FIRST_OPTION) ? parseNumericArg(line, FIRST_OPTION).intValue() : null;
+      last = line.hasOption(LAST_OPTION) ? parseNumericArg(line, LAST_OPTION).intValue() : null;
+      ttl = line.hasOption(TTL_OPTION) ? parseNumericArg(line, TTL_OPTION) : null;
       // expect at least 1 extra arg because of pos arg, the command to run
       if (line.getArgs().length > 1) {
-        System.err.println("Found extra args");
-        printUsage(true);
+        usage("Extra arguments provided");
       }
     } catch (ParseException e) {
       printUsage(true);
@@ -211,7 +187,7 @@ public class StreamClient extends ClientToolBase {
   static List<String> supportedCommands =
     Arrays.asList("create", "send", "group", "fetch", "view", "info", "truncate", "config");
 
-  void validateArguments(String[] args) {
+  protected void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) {
@@ -368,7 +344,7 @@ public class StreamClient extends ClientToolBase {
       byte[] binaryBody = readBody();
       if (binaryBody == null) {
         System.err.println("Cannot send an event without body. " +
-                             "Please use --body or --body-file to specify the body.");
+                           "Please use --body or --body-file to specify the body.");
         return null;
       }
 
@@ -453,39 +429,11 @@ public class StreamClient extends ClientToolBase {
       HttpPost post = new HttpPost(requestUrl + "/truncate");
       return (sendHttpRequest(post, null) != null) ? "OK." : null;
     } else if ("config".equals(command)) {
-      try {
-        URL url = new URL(requestUrl + "/config");
-        try {
-          HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-          try {
-            urlConn.setDoOutput(true);
-            urlConn.setRequestMethod("PUT");
-            if (apikey != null) {
-              urlConn.setRequestProperty(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-            }
-            if (accessToken != null) {
-              urlConn.setRequestProperty("Authorization", "Bearer " + accessToken);
-            }
-            JsonObject streamConfig = new JsonObject();
-            streamConfig.addProperty("ttl", ttl);
-            urlConn.getOutputStream().write(GSON.toJson(streamConfig).getBytes(Charsets.UTF_8));
-            if (!checkHttpStatus(urlConn.getResponseCode(), urlConn.getHeaderField(0),
-                                 urlConn.getErrorStream(), Collections.singletonList(HttpStatus.SC_OK))) {
-              return null;
-            }
-            return "OK.";
-          } finally {
-            urlConn.disconnect();
-          }
-        } catch (IOException e) {
-          System.err.println("Error sending HTTP request: " + e.getMessage());
-          return null;
-        }
-      } catch (MalformedURLException e) {
-        // Shouldn't happen
-        System.err.println("Error sending HTTP request to " + requestUrl + "/config");
-        return null;
-      }
+      HttpPut put = new HttpPut(requestUrl + "/config");
+      JsonObject streamConfig = new JsonObject();
+      streamConfig.addProperty("ttl", ttl);
+      put.setEntity(new ByteArrayEntity(GSON.toJson(streamConfig).getBytes(Charsets.UTF_8)));
+      return (sendHttpRequest(put, null) != null) ? "OK." : null;
     }
     return null;
   }

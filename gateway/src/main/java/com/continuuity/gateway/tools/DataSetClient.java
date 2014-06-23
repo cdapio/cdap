@@ -1,17 +1,18 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -19,12 +20,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -40,255 +36,154 @@ import java.util.Map;
 /**
  *
  */
-public class DataSetClient {
+public class DataSetClient extends ClientToolBase {
 
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    Logger.getRootLogger().setLevel(Level.OFF);
-  }
+  private static final String TABLE_OPTION = "table";
+  private static final String ROW_OPTION = "row";
+  private static final String COLUMN_OPTION = "column";
+  private static final String COLUMNS_OPTION = "columns";
+  private static final String VALUE_OPTION = "value";
+  private static final String VALUES_OPTION = "values";
+  private static final String START_OPTION = "start";
+  private static final String STOP_OPTION = "stop";
+  private static final String LIMIT_OPTION = "limit";
+  private static final String HEX_OPTION = "hex";
+  private static final String URL_OPTION = "url";
+  private static final String BASE_64_OPTION = "base64";
+  private static final String COUNTER_OPTION = "counter";
+  private static final String JSON_OPTION = "json";
+  private static final String PRETTY_OPTION = "pretty";
 
-  private static final Gson GSON = new Gson();
-
-   /**
+  /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
    */
   public static boolean debug = false;
 
-  boolean help = false;          // whether --help was there
-  boolean verbose = false;       // for debug output
   boolean pretty = true;         // for pretty-printing
-  String command = null;         // the command to run
-
-  String hostname = null;        // the hostname of the gateway
-  int port = -1;                 // the port of the gateway
-  String apikey = null;          // the api key for authentication.
-  String accessToken = null;     // the access token for secure connections
-  String tokenFile = null;       // path to file which contains an access token
-
   String row = null;             // the row to read/write/delete/increment
   LinkedList<String> columns = Lists.newLinkedList(); // the columns to read/delete/write/increment
   LinkedList<String> values = Lists.newLinkedList(); // the values to write/increment
   String encoding = null;        // the encoding for row keys, column keys, values
   boolean counter = false;         // to interpret values as counters
-
   String table = null;           // the name of the table to operate on
-
   String startcol = null;        // the column to start a range
   String stopcol = null;         // the column to end a range
   int limit = -1;                // the limit for a range
 
-  boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
-
-  public DataSetClient disallowSSL() {
-    this.forceNoSSL = true;
-    return this;
+  public DataSetClient() {
+    super("data-client");
+    buildOptions();
   }
 
-  /**
-   * Print the usage statement and return null (or empty string if this is not
-   * an error case). See getValue() for an explanation of the return type.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws com.continuuity.common.utils.UsageException
-   *          in case of error
-   */
-  void usage(boolean error) {
+  public DataSetClient(String toolName) {
+    super(toolName);
+    buildOptions();
+  }
+
+  @Override
+  public void buildOptions() {
+    super.buildOptions();
+    options.addOption(null, TABLE_OPTION, true, "To specify the table to operate on");
+    options.addOption(null, ROW_OPTION, true, "To specify the row to operate on");
+    options.addOption(null, COLUMN_OPTION, true, "To specify a single columns to operate on");
+    options.addOption(OptionBuilder.withLongOpt(COLUMNS_OPTION)
+                        .hasArgs()
+                        .withDescription("To specify a list of columns to operate on.\n--" +
+                                           COLUMNS_OPTION + " column1 column2 ...")
+                        .create());
+    options.addOption(null, VALUE_OPTION, true, "To specify a single value to write/increment");
+    options.addOption(OptionBuilder.withLongOpt(VALUES_OPTION)
+                        .hasArgs()
+                        .withDescription("To specify a list of values to operate on.\n--" +
+                                           VALUES_OPTION + " value1 value2 ...")
+                        .create());
+    options.addOption(null, START_OPTION, true, "To specify the start of a column range");
+    options.addOption(null, STOP_OPTION, true, "To specify the end of a column range");
+    options.addOption(null, LIMIT_OPTION, true, "To specify a limit for a column range");
+    options.addOption(null, HEX_OPTION, false, "To specify hex encoding for keys/values");
+    options.addOption(null, URL_OPTION, false, "To specify url encoding for keys/values");
+    options.addOption(null, BASE_64_OPTION, false, "To specify base64 encoding for keys/values");
+    options.addOption(null, COUNTER_OPTION, false, "To interpret values as long counters");
+    options.addOption(null, JSON_OPTION, false, "To see the raw JSON output");
+    options.addOption(null, PRETTY_OPTION, false, "To see pretty printed output");
+  }
+
+  public void printUsage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    String name = "data-client";
-    if (System.getProperty("script") != null) {
-      name = System.getProperty("script").replaceAll("[./]", "");
-    }
     out.println("Usage: ");
-    out.println("  " + name + " create --table name");
-    out.println("  " + name + " read --table name --row <row key> ...");
-    out.println("  " + name + " write --table name --row <row key> ...");
-    out.println("  " + name + " increment --table name --row <row key> ...");
-    out.println("  " + name + " delete --table name --row <row key> ...");
-    out.println("  " + name + " clear --table name ...");
-    out.println();
-    out.println("Additional options:");
-    out.println("  --table <name>          To specify the table to operate on");
-    out.println("  --row <row key>         To specify the row to operate on");
-    out.println("  --column <key>          To specify a single columns to operate on");
-    out.println("  --columns <key,...>     To specify a list of columns to operate on");
-    out.println("  --value <value>         To specify a single value to write/increment");
-    out.println("  --values <value,...>    To specify a list of values to operate on");
-    out.println("  --start <key>           To specify the start of a column range");
-    out.println("  --stop <key>            To specify the end of a column range");
-    out.println("  --limit <number>        To specify a limit for a column range");
-    out.println("  --hex                   To specify hex encoding for keys/values");
-    out.println("  --url                   To specify hex encoding for keys/values");
-    out.println("  --base64                To specify base64 encoding for keys/values");
-    out.println("  --counter               To interpret values as long counters");
-    out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --port <number>         To specify the port to use");
-    out.println("  --apikey <apikey>       To specify an API key for authentication");
-    out.println("  --token <token>         To specify the access token for a secure connection");
-    out.println("  --token-file <path>     Alternative to --token, to specify a file that");
-    out.println("                          contains the access token for a secure connection");
-    out.println("  --json                  To see the raw JSON output");
-    out.println("  --pretty                To see pretty printed output");
-    out.println("  --verbose               To see more verbose output");
-    out.println("  --help                  To print this message");
-    if (error) {
-      throw new UsageException();
-    }
-  }
-
-  /**
-   * Print an error message followed by the usage statement.
-   *
-   * @param errorMessage the error message
-   */
-  void usage(String errorMessage) {
-    if (errorMessage != null) {
-      System.err.println("Error: " + errorMessage);
-    }
-    usage(true);
-  }
-
-  /**
-   * Reads the access token from the tokenFile path
-   */
-  void readTokenFile() {
-    if (tokenFile != null) {
-      PrintStream out = verbose ? System.out : System.err;
-      try {
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
-        String line = bufferedReader.readLine();
-        accessToken = line;
-      } catch (FileNotFoundException e) {
-        out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
-      } catch (IOException e) {
-        out.println("Could not read access token file: " + tokenFile + "\nNo access token will be used");
-      }
-    }
+    out.println("\t" + getToolName() + " create --table name");
+    out.println("\t" + getToolName() + " read --table name --row <row key> [ <option> ... ]");
+    out.println("\t" + getToolName() + " write --table name --row <row key> [ <option> ... ]");
+    out.println("\t" + getToolName() + " increment --table name --row <row key> [ <option> ... ]");
+    out.println("\t" + getToolName() + " delete --table name --row <row key> [ <option> ... ]");
+    out.println("\t" + getToolName() + " clear --table name [ <option> ... ]\n");
+    super.printUsage(error);
   }
 
   /**
    * Parse the command line arguments.
    */
-  void parseArguments(String[] args) {
-    if (args.length == 0) {
-      usage(true);
-    }
-    if ("--help".equals(args[0])) {
-      usage(false);
-      help = true;
-      return;
-    } else {
+  protected boolean parseArguments(String[] args) {
+    // parse generic args first
+    CommandLineParser parser = new GnuParser();
+    // Check all the options of the command line
+    try {
       command = args[0];
-    }
-    // go through all the arguments
-    for (int pos = 1; pos < args.length; pos++) {
-      String arg = args[pos];
-      if ("--host".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        hostname = args[pos];
-      } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        try {
-          port = Integer.parseInt(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        apikey = args[pos];
-      } else if ("--token".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        accessToken = args[pos].trim().replaceAll("(\r|\n)", "");
-      } else if ("--token-file".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        tokenFile = args[pos];
-      } else if ("--table".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        table = args[pos];
-      } else if ("--row".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        row = args[pos];
-      } else if ("--start".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        startcol = args[pos];
-      } else if ("--stop".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        stopcol = args[pos];
-      } else if ("--limit".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        try {
-          limit = Integer.parseInt(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--column".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        columns.add(args[pos]);
-      } else if ("--columns".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        Collections.addAll(columns, args[pos].split(","));
-      } else if ("--value".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        values.add(args[pos]);
-      } else if ("--values".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        Collections.addAll(values, args[pos].split(","));
-      } else if ("--counter".equals(arg)) {
-        counter = true;
-      } else if ("--hex".equals(arg)) {
-        encoding = "hex";
-      } else if ("--url".equals(arg)) {
-        encoding = "url";
-      } else if ("--base64".equals(arg)) {
-        encoding = "base64";
-      } else if ("--verbose".equals(arg)) {
-        verbose = true;
-      } else if ("--pretty".equals(arg)) {
-        pretty = true;
-      } else if ("--json".equals(arg)) {
-        pretty = false;
-      } else if ("--help".equals(arg)) {
-        help = true;
-        usage(false);
-        return;
-      } else {  // unknown argument
-        usage(true);
+      CommandLine line = parser.parse(options, args);
+      parseBasicArgs(line);
+      // dont parse more if help was specified
+      if (help) {
+        return false;
       }
+      // try to get the value and use default value if we cant get the value
+      table = line.getOptionValue(TABLE_OPTION, null);
+      row = line.getOptionValue(ROW_OPTION, null);
+      startcol = line.getOptionValue(START_OPTION, null);
+      stopcol = line.getOptionValue(STOP_OPTION, null);
+      counter = line.hasOption(COUNTER_OPTION);
+      encoding = line.hasOption(HEX_OPTION) ? "hex" : encoding;
+      encoding = line.hasOption(URL_OPTION) ? "url" : encoding;
+      encoding = line.hasOption(BASE_64_OPTION) ? "base64" : encoding;
+      // either pretty or json is allowed
+      pretty = line.hasOption(PRETTY_OPTION) || pretty;
+      pretty = line.hasOption(JSON_OPTION) || pretty;
+      limit = line.hasOption(LIMIT_OPTION) ? parseNumericArg(line, LIMIT_OPTION).intValue() : -1;
+      if (line.hasOption(COLUMN_OPTION)) {
+        String[] columnList = line.getOptionValues(COLUMN_OPTION);
+        Collections.addAll(columns, columnList);
+      }
+      if (line.hasOption(COLUMNS_OPTION)) {
+        String[] columnList = line.getOptionValues(COLUMNS_OPTION);
+        for (String column : columnList) {
+          System.err.println(column);
+        }
+        Collections.addAll(columns, columnList);
+      }
+      if (line.hasOption(VALUE_OPTION)) {
+        String[] valueList = line.getOptionValues(VALUE_OPTION);
+        Collections.addAll(values, valueList);
+      }
+      if (line.hasOption(VALUES_OPTION)) {
+        String[] valueList = line.getOptionValues(VALUES_OPTION);
+        Collections.addAll(values, valueList);
+      }
+      // expect at least 1 extra arg because of pos arg, the command to run
+      if (line.getArgs().length > 1) {
+        usage("Extra arguments provided");
+      }
+    } catch (ParseException e) {
+      printUsage(true);
+    } catch (IndexOutOfBoundsException e) {
+      printUsage(true);
     }
+    return true;
   }
 
   static List<String> supportedCommands =
     Arrays.asList("read", "write", "increment", "delete", "create", "clear");
 
-  void validateArguments(String[] args) {
+  protected void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) {
@@ -297,12 +192,7 @@ public class DataSetClient {
 
     // first validate the command
     if (!supportedCommands.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
-    }
-
-    // use accessToken if both are given
-    if (tokenFile != null && accessToken != null) {
-      tokenFile = null;
+      usage("Please enter a valid command.");
     }
 
     if (table == null && !"clear".equals(command)) {
@@ -367,7 +257,7 @@ public class DataSetClient {
       return "";
     }
 
-    if (tokenFile != null) {
+    if (accessToken == null && tokenFile != null) {
       readTokenFile();
     }
 
@@ -400,47 +290,13 @@ public class DataSetClient {
     String requestUrl = baseUrl + "tables/" + table;
     if ("create".equals(command)) {
       // url is already complete, submit as a put
-      try {
-        HttpPut put = new HttpPut(requestUrl);
-        if (apikey != null) {
-          put.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          put.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(put);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return "OK.";
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      } finally {
-        client.getConnectionManager().shutdown();
-      }
+      HttpPut put = new HttpPut(requestUrl);
+      return (sendHttpRequest(put, null) != null) ? "OK." : null;
     }
     if ("clear".equals(command)) {
-      // url is already complete, submit as a put
-      try {
+      // url is already complete, submit as a post
         HttpPost post = new HttpPost(baseUrl + "datasets/" + table + "/truncate");
-        if (apikey != null) {
-          post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          post.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(post);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return "OK.";
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      } finally {
-        client.getConnectionManager().shutdown();
-      }
+        return (sendHttpRequest(post, null) != null) ? "OK." : null;
     }
     // all operations other than create require row
     requestUrl += "/rows/" + row;
@@ -474,25 +330,12 @@ public class DataSetClient {
         requestUrl += sep + "counter=1";
       }
       // now execute this as a get
-      try {
-        HttpGet get = new HttpGet(requestUrl);
-        if (apikey != null) {
-          get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          get.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(get);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return printResponse(response);
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
+      HttpGet get = new HttpGet(requestUrl);
+      response = sendHttpRequest(get, null);
+      if (response == null) {
         return null;
-      } finally {
-        client.getConnectionManager().shutdown();
       }
+      return printResponse(response);
     }
 
     if ("write".equals(command)) {
@@ -507,26 +350,9 @@ public class DataSetClient {
       byte[] requestBody = buildJson(false);
 
       // url and body ready, now submit as put
-      try {
-        HttpPut put = new HttpPut(requestUrl);
-        put.setEntity(new ByteArrayEntity(requestBody));
-        if (apikey != null) {
-          put.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          put.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(put);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return "OK.";
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      } finally {
-        client.getConnectionManager().shutdown();
-      }
+      HttpPut put = new HttpPut(requestUrl);
+      put.setEntity(new ByteArrayEntity(requestBody));
+      return (sendHttpRequest(put, null) != null) ? "OK." : null;
     }
 
     if ("increment".equals(command)) {
@@ -538,26 +364,13 @@ public class DataSetClient {
       byte[] requestBody = buildJson(true);
 
       // url and body ready, now submit as post
-      try {
-        HttpPost post = new HttpPost(requestUrl);
-        post.setEntity(new ByteArrayEntity(requestBody));
-        if (apikey != null) {
-          post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          post.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(post);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return printResponse(response);
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
+      HttpPost post = new HttpPost(requestUrl);
+      post.setEntity(new ByteArrayEntity(requestBody));
+      response = sendHttpRequest(post, null);
+      if (response == null) {
         return null;
-      } finally {
-        client.getConnectionManager().shutdown();
       }
+      return printResponse(response);
     }
 
     if ("delete".equals(command)) {
@@ -570,28 +383,9 @@ public class DataSetClient {
         requestUrl += "&encoding=" + encoding;
       }
       // url is ready, now submit as delete
-      try {
-        HttpDelete delete = new HttpDelete(requestUrl);
-        if (apikey != null) {
-          delete.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-        }
-        if (accessToken != null) {
-          delete.setHeader("Authorization", "Bearer " + accessToken);
-        }
-        response = client.execute(delete);
-        if (!checkHttpStatus(response)) {
-          return null;
-        }
-        return "OK.";
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      } finally {
-        client.getConnectionManager().shutdown();
-      }
-
+      HttpDelete delete = new HttpDelete(requestUrl);
+      return (sendHttpRequest(delete, null) != null) ? "OK." : null;
     }
-
     return null;
   }
 
@@ -618,63 +412,6 @@ public class DataSetClient {
     }
     builder.append('}');
     return builder.toString().getBytes(Charsets.UTF_8);
-  }
-
-  /**
-   * Check whether the Http return code is positive. If not, print the error
-   * message and return false. Otherwise, if verbose is on, print the response
-   * status line.
-   *
-   * @param response the HTTP response
-   * @return whether the response indicates success
-   */
-  boolean checkHttpStatus(HttpResponse response) {
-    try {
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-          PrintStream out = verbose ? System.out : System.err;
-          out.println(response.getStatusLine());
-          if (accessToken == null) {
-            out.println("No access token provided");
-          } else {
-            Reader reader = null;
-            try {
-              reader = new InputStreamReader(response.getEntity().getContent());
-              String responseError = GSON.fromJson(reader, ErrorMessage.class).getErrorDescription();
-              if (responseError != null && !responseError.isEmpty()) {
-                out.println(responseError);
-              }
-            } catch (Exception e) {
-              out.println("Unknown unauthorized error");
-            }
-          }
-          return false;
-        }
-        // get the error message from the body of the response
-        String reason = response.getEntity() == null || response.getEntity().getContent() == null ? null :
-          IOUtils.toString(response.getEntity().getContent());
-        if (verbose) {
-          System.out.println(response.getStatusLine());
-          if (reason != null && !reason.isEmpty()) {
-            System.out.println(reason);
-          }
-        } else {
-          if (reason != null && !reason.isEmpty()) {
-            System.err.println(response.getStatusLine().getReasonPhrase() + ": " + reason);
-          } else {
-            System.err.println(response.getStatusLine().getReasonPhrase());
-          }
-        }
-        return false;
-      }
-      if (verbose) {
-        System.out.println(response.getStatusLine());
-      }
-      return true;
-    } catch (IOException e) {
-      System.err.println("Error reading HTTP response: " + e.getMessage());
-      return false;
-    }
   }
 
   public String printResponse(HttpResponse response) {
@@ -723,23 +460,11 @@ public class DataSetClient {
   }
 
   /**
-   * Error Description from HTTPResponse
-   */
-  private class ErrorMessage {
-    @SerializedName("error_description")
-    private String errorDescription;
-
-    public String getErrorDescription() {
-      return errorDescription;
-    }
-  }
-
-  /**
    * This is the main method. It delegates to getValue() in order to make
    * it possible to test the return value.
    */
   public static void main(String[] args) {
-    // create a config and load the gateway properties
+      // create a config and load the gateway properties
     CConfiguration config = CConfiguration.create();
     // create a data client and run it with the given arguments
     DataSetClient instance = new DataSetClient();

@@ -1,28 +1,19 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.Reader;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -31,191 +22,105 @@ import java.util.List;
 /**
  * Command line meta data client.
  */
-public class MetaDataClient {
+public class MetaDataClient extends ClientToolBase {
 
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    Logger.getRootLogger().setLevel(Level.OFF);
-  }
-
-  private static final Gson GSON = new Gson();
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
    */
   public static boolean debug = false;
 
-  boolean help = false;          // whether --help was there
-  boolean verbose = false;       // for debug output
-
-  String hostname = null;        // the hostname of the gateway
-  int port = -1;                 // the port of the gateway
-  String apikey = null;          // the api key for authentication.
-  String accessToken = null;     // the access token for connecting to secure reactor
-  String tokenFile = null;       // path to file which contains an access token
-
-  String command = null;         // the command to run
+  private static final String APP_OPTION = "app";
+  private static final String TYPE_OPTION = "type";
+  private static final String ID_OPTION = "id";
+  private static final String FILTER_OPTION = "filter";
+  private static final String VALUE_OPTION = "value";
 
   String app = null;             // the application to inspect, optional
   String type = null;            // the type of entries
   String id = null;              // the id of the entry to show, optional
 
-  boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
-
   LinkedList<String> filters = Lists.newLinkedList(); // filter fields
   LinkedList<String> values = Lists.newLinkedList();  // corresponding values
 
-  /**
-   * Print the usage statement and return null (or empty string if this is not
-   * an error case). See getValue() for an explanation of the return type.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws com.continuuity.common.utils.UsageException
-   *          in case of error
-   */
-  void usage(boolean error) {
+  public MetaDataClient() {
+    super("meta-client");
+    buildOptions();
+  }
+
+  public MetaDataClient(String toolName) {
+    super(toolName);
+    buildOptions();
+  }
+
+  @Override
+  public void buildOptions() {
+    // build the default options
+    super.buildOptions();
+    options.addOption(OptionBuilder.withLongOpt(FILTER_OPTION)
+                        .hasArg(true)
+                        .withDescription("To specify a field to filter on")
+                        .create());
+    options.addOption(OptionBuilder.withLongOpt(VALUE_OPTION)
+                        .hasArg(true)
+                        .withDescription("To specify a value to filter on")
+                        .create());
+    options.addOption(null, APP_OPTION, true, "To specify the application to inspect");
+    options.addOption(null, TYPE_OPTION, true, "To specify the type of entries");
+    options.addOption(null, ID_OPTION, true, "The id of the entry to show");
+  }
+
+  @Override
+  public void printUsage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    String name = "meta-client";
-    if (System.getProperty("script") != null) {
-      name = System.getProperty("script").replaceAll("[./]", "");
-    }
     out.println("Usage: ");
-    out.println("  " + name + " list [ --application <id> ] --type <name>");
-    out.println("  " + name + " read [ --application <id> ] --type <name> --id <id>");
-    out.println();
-    out.println("Additional options:");
-    out.println("  --filter <name>         To specify a field to filter on");
-    out.println("  --value <name>          To specify a value to filter on");
-    out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --port <number>         To specify the port to use");
-    out.println("  --apikey <apikey>       To specify an API key for authentication");
-    out.println("  --token <token>         To specify the access token for a secure connection");
-    out.println("  --token-file <path>     Alternative to --token, to specify a file that");
-    out.println("                          contains the access token for a secure connection");
-    out.println("  --verbose               To see more verbose output");
-    out.println("  --help                  To print this message");
-    if (error) {
-      throw new UsageException();
-    }
-  }
-
-  /**
-   * Print an error message followed by the usage statement.
-   *
-   * @param errorMessage the error message
-   */
-  void usage(String errorMessage) {
-    if (errorMessage != null) {
-      System.err.println("Error: " + errorMessage);
-    }
-    usage(true);
-  }
-
-  /**
-   * Reads the access token from the tokenFile path
-   */
-  void readTokenFile() {
-    if (tokenFile != null) {
-      PrintStream out = verbose ? System.out : System.err;
-      try {
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
-        String line = bufferedReader.readLine();
-        accessToken = line;
-      } catch (FileNotFoundException e) {
-        out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
-      } catch (IOException e) {
-        out.println("Could not read access token file: " + tokenFile + "\nNo access token will be used");
-      }
-    }
+    out.println("\t" + getToolName() + " list [ --application <id> ] --type <name>");
+    out.println("\t" + getToolName() + " read [ --application <id> ] --type <name> --id <id>\n");
+    super.printUsage(error);
   }
 
   /**
    * Parse the command line arguments.
    */
-  void parseArguments(String[] args) {
-    if (args.length == 0) {
-      usage(true);
-    }
-    if ("--help".equals(args[0])) {
-      usage(false);
-      help = true;
-      return;
-    } else {
+  protected boolean parseArguments(String[] args) {
+    // parse generic args first
+    CommandLineParser parser = new GnuParser();
+    // Check all the options of the command line
+    try {
       command = args[0];
-    }
-    // go through all the arguments
-    for (int pos = 1; pos < args.length; pos++) {
-      String arg = args[pos];
-      if ("--host".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
+      CommandLine line = parser.parse(options, args);
+      parseBasicArgs(line);
+      if (line.hasOption(FILTER_OPTION)) {
+        String[] filterList = line.getOptionValues(FILTER_OPTION);
+        for (int i = 0; i < filterList.length; ++i) {
+          filters.add(filterList[i]);
         }
-        hostname = args[pos];
-      } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        try {
-          port = Integer.parseInt(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--token".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        accessToken = args[pos].trim().replaceAll("(\r|\n)", "");
-      } else if ("--token-file".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        tokenFile = args[pos];
-      } else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        apikey = args[pos];
-      } else if ("--application".equals(arg) || "--app".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        app = args[pos];
-      } else if ("--type".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        type = args[pos];
-      } else if ("--id".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        id = args[pos];
-      } else if ("--filter".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        filters.add(args[pos]);
-      } else if ("--value".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        values.add(args[pos]);
-      } else if ("--verbose".equals(arg)) {
-        verbose = true;
-      } else if ("--help".equals(arg)) {
-        help = true;
-        usage(false);
-        return;
-      } else {  // unkown argument
-        usage(true);
       }
+      if (line.hasOption(VALUE_OPTION)) {
+        String[] valueList = line.getOptionValues(VALUE_OPTION);
+        for (int i = 0; i < valueList.length; ++i) {
+          values.add(valueList[i]);
+        }
+      }
+      app = line.getOptionValue(APP_OPTION, null);
+      type = line.getOptionValue(TYPE_OPTION, null);
+      id = line.getOptionValue(ID_OPTION, null);
+
+      // expect at least 1 extra arg because of pos arg, the command to run
+      if (line.getArgs().length > 1) {
+        usage("Extra arguments provided");
+      }
+    } catch (ParseException e) {
+      printUsage(true);
+    } catch (IndexOutOfBoundsException e) {
+      printUsage(true);
     }
+    return true;
   }
 
-  static List<String> supportedCommands =
-    Arrays.asList("list", "read");
+  static List<String> supportedCommands = Arrays.asList("list", "read");
 
-  void validateArguments(String[] args) {
+  protected void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) {
@@ -224,14 +129,8 @@ public class MetaDataClient {
 
     // first validate the command
     if (!supportedCommands.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
+      usage("Please provide a valid command.");
     }
-
-    // use accessToken if both file and token are provided
-    if (tokenFile != null && accessToken != null) {
-      tokenFile = null;
-    }
-
     if (type == null) {
       usage("--type must be specified");
     }
@@ -258,12 +157,11 @@ public class MetaDataClient {
     if (help) {
       return "";
     }
-
-    if (tokenFile != null) {
+    if (accessToken == null && tokenFile != null) {
       readTokenFile();
     }
-
-    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, !forceNoSSL && apikey != null);
+    boolean useSsl = !forceNoSSL && (apikey != null);
+    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, useSsl);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
                          "Please use --host and --port to specify.");
@@ -273,10 +171,6 @@ public class MetaDataClient {
         System.out.println("Using base URL: " + baseUrl);
       }
     }
-
-    // prepare for HTTP
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response;
 
     // construct the full URL and verify its well-formedness
     try {
@@ -301,32 +195,18 @@ public class MetaDataClient {
       sep = "&";
     }
     HttpGet get = new HttpGet(requestUri);
-    if (apikey != null) {
-      get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-    }
-    if (accessToken != null) {
-      get.setHeader("Authorization", "Bearer " + accessToken);
-    }
-    try {
-      response = client.execute(get);
-      if (!checkHttpStatus(response)) {
-        return null;
-      }
-      if (printResponse(response) == null) {
-        return null;
-      }
-      return "OK.";
-    } catch (IOException e) {
-      System.err.println("Error sending HTTP request: " + e.getMessage());
+    HttpResponse response = sendHttpRequest(get, null);
+    if (printResponse(response) == null) {
       return null;
-    } finally {
-      client.getConnectionManager().shutdown();
     }
-
+    return "OK.";
   }
 
   public String printResponse(HttpResponse response) {
     // read the binary value from the HTTP response
+    if (response == null) {
+      return null;
+    }
     byte[] binaryResponse = Util.readHttpResponse(response);
     if (binaryResponse == null) {
       return null;
@@ -334,48 +214,6 @@ public class MetaDataClient {
     // now make returned value available to user
     System.out.println(new String(binaryResponse, Charsets.UTF_8));
     return "OK.";
-  }
-
-  /**
-   * Check whether the Http return code is positive. If not, print the error
-   * message and return false. Otherwise, if verbose is on, print the response
-   * status line.
-   *
-   * @param response the HTTP response
-   * @return whether the response indicates success
-   */
-  boolean checkHttpStatus(HttpResponse response) {
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-        PrintStream out = (verbose ? System.out : System.err);
-        out.println(response.getStatusLine());
-        if (accessToken == null) {
-          out.println("No access token provided");
-        } else {
-          Reader reader = null;
-          try {
-            reader = new InputStreamReader(response.getEntity().getContent());
-            String responseError = GSON.fromJson(reader, ErrorMessage.class).getErrorDescription();
-            if (responseError != null && !responseError.isEmpty()) {
-              out.println(responseError);
-            }
-          } catch (Exception e) {
-            out.println("Unknown unauthorized error");
-          }
-        }
-        return false;
-      }
-      if (verbose) {
-        System.out.println(response.getStatusLine());
-      } else {
-        System.err.println(response.getStatusLine().getReasonPhrase());
-      }
-      return false;
-    }
-    if (verbose) {
-      System.out.println(response.getStatusLine());
-    }
-    return true;
   }
 
   public String execute(String[] args, CConfiguration config) {
@@ -388,18 +226,6 @@ public class MetaDataClient {
       }
     }
     return null;
-  }
-
-  /**
-   * Error Description from HTTPResponse
-   */
-  private class ErrorMessage {
-    @SerializedName("error_description")
-    private String errorDescription;
-
-    public String getErrorDescription() {
-      return errorDescription;
-    }
   }
 
   /**

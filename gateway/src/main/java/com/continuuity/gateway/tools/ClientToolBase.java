@@ -1,5 +1,6 @@
 package com.continuuity.gateway.tools;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.UsageException;
 import com.google.common.base.Charsets;
@@ -9,11 +10,13 @@ import com.google.gson.annotations.SerializedName;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.log4j.Level;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,26 +35,27 @@ import java.util.List;
 public abstract class ClientToolBase {
 
   private String toolName;
-  public static final Gson GSON = new Gson();
+  protected static final Gson GSON = new Gson();
 
   private static final String HOST_OPTION = "host";
   private static final String PORT_OPTION = "port";
   private static final String HELP_OPTION = "help";
   private static final String VERBOSE_OPTION = "verbose";
-  private static final String API_KEY_OPTION = "api-key";
+  private static final String API_KEY_OPTION = "apikey";
   private static final String TOKEN_FILE_OPTION = "token-file";
   private static final String TOKEN_OPTION = "token";
 
-  public Options options;
+  protected Options options;
 
-  public boolean help = false;
-  public boolean verbose = false;
-  public boolean forceNoSSL = false;
-  public String apikey = null;          // the api key for authentication
-  public String tokenFile = null;       // the file containing the access token only
-  public String accessToken = null;     // the access token for secure connections
-  public String hostname = null;
-  public int port = -1;
+  protected boolean help = false;
+  protected boolean verbose = false;
+  protected boolean forceNoSSL = false;
+  protected String command = null;
+  protected String apikey = null;          // the api key for authentication
+  protected String tokenFile = null;       // the file containing the access token only
+  protected String accessToken = null;     // the access token for secure connections
+  protected String hostname = null;
+  protected int port = -1;
 
   public String getToolName() {
     return this.toolName;
@@ -62,7 +66,7 @@ public abstract class ClientToolBase {
     return this;
   }
 
-  public void buildOptions() {
+  protected void buildOptions() {
     options.addOption(null, HOST_OPTION, true, "To specify the reactor host");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port "
                       + Constants.Gateway.DEFAULT_PORT);
@@ -73,15 +77,15 @@ public abstract class ClientToolBase {
     options.addOption(null, TOKEN_FILE_OPTION, true, "To specify a path to the access token for secure reactor");
   }
 
-  public boolean parseBasicArgs(CommandLine line) {
+  protected boolean parseBasicArgs(CommandLine line) {
     if (line.hasOption(HELP_OPTION)) {
       printUsage(false);
       help = true;
       return false;
     }
     verbose = line.hasOption(VERBOSE_OPTION);
-    hostname = line.hasOption(HOST_OPTION) ? line.getOptionValue(HOST_OPTION) : null;
-    port = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) : -1;
+    hostname = line.getOptionValue(HOST_OPTION, null);
+    port = line.hasOption(PORT_OPTION) ? parseNumericArg(line, PORT_OPTION).intValue() : -1;
     apikey = line.hasOption(API_KEY_OPTION) ? line.getOptionValue(API_KEY_OPTION) : null;
     accessToken = line.hasOption(TOKEN_OPTION) ? line.getOptionValue(TOKEN_OPTION).replaceAll("(\r|\n)", "") : null;
     tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
@@ -89,8 +93,14 @@ public abstract class ClientToolBase {
     return true;
   }
 
-  abstract boolean parseArguments(String[] args);
-  abstract void validateArguments(String[] args);
+  protected abstract boolean parseArguments(String[] args);
+  protected abstract void validateArguments(String[] args);
+  public abstract String execute(String[] args, CConfiguration config);
+
+  static {
+    // this turns off all logging but we don't need that for a cmdline tool
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.OFF);
+  }
 
   /**
    * Sends http requests with apikey and access token headers
@@ -102,7 +112,7 @@ public abstract class ClientToolBase {
    * @return The HttpResponse if the request was successfully sent and the request status code
    * is one of expectedCodes or OK if expectedCodes is null. Otherwise, returns null.
    */
-  HttpResponse sendHttpRequest(HttpRequestBase requestBase, List<Integer> expectedCodes) {
+  protected HttpResponse sendHttpRequest(HttpRequestBase requestBase, List<Integer> expectedCodes) {
     if (apikey != null) {
       requestBase.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
@@ -131,7 +141,7 @@ public abstract class ClientToolBase {
     }
   }
 
-  public Long parseNumericArg(CommandLine line, String option) {
+  protected Long parseNumericArg(CommandLine line, String option) {
     if (line.hasOption(option)) {
       try {
         return Long.valueOf(line.getOptionValue(option));
@@ -147,14 +157,14 @@ public abstract class ClientToolBase {
    *
    * @param errorMessage the error message
    */
-  public void usage(String errorMessage) {
+  protected void usage(String errorMessage) {
     if (errorMessage != null) {
       System.err.println("Error: " + errorMessage);
     }
     printUsage(true);
   }
 
-  public void printUsage(boolean error) {
+  protected void printUsage(boolean error) {
     PrintWriter pw = error ? new PrintWriter(System.err) : new PrintWriter(System.out);
     pw.println("Options:\n");
     HelpFormatter formatter = new HelpFormatter();
@@ -170,15 +180,14 @@ public abstract class ClientToolBase {
    * Reads the access token from the access token file. Returns null if the read fails
    * @return the access token from the access token file. Null if the read fails.
    */
-  public String readTokenFile() {
+  protected String readTokenFile() {
     if (tokenFile != null) {
-      PrintStream out = verbose ? System.out : System.err;
       try {
         return Files.toString(new File(tokenFile), Charsets.UTF_8).replaceAll("(\r|\n)", "");
       } catch (FileNotFoundException e) {
-        out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
+        usage("Could not find access token file: " + tokenFile);
       } catch (IOException e) {
-        out.println("Could not read access token file: " + tokenFile + "\nNo access token will be used");
+        usage("Could not read access token file: " + tokenFile);
       }
     }
     return null;
@@ -200,7 +209,7 @@ public abstract class ClientToolBase {
    * Prints the error response from the connection
    * @param errorStream the stream to read the response from
    */
-  public void readUnauthorizedError(InputStream errorStream) {
+  protected void readUnauthorizedError(InputStream errorStream) {
     PrintStream out = verbose ? System.out : System.err;
     out.println(HttpStatus.SC_UNAUTHORIZED + " Unauthorized");
     if (accessToken == null) {
@@ -227,7 +236,7 @@ public abstract class ClientToolBase {
    * @param expected the expected HTTP status code
    * @return whether the response is as expected
    */
-  boolean checkHttpStatus(HttpResponse response, int expected) {
+  protected boolean checkHttpStatus(HttpResponse response, int expected) {
     return checkHttpStatus(response, Collections.singletonList(expected));
   }
 
@@ -240,15 +249,15 @@ public abstract class ClientToolBase {
    * @param expected the list of expected HTTP status codes
    * @return whether the response is as expected
    */
-  boolean checkHttpStatus(HttpResponse response, List<Integer> expected) {
+  protected boolean checkHttpStatus(HttpResponse response, List<Integer> expected) {
     try {
       return checkHttpStatus(response.getStatusLine().getStatusCode(), response.getStatusLine().toString(),
                              response.getEntity().getContent(), expected);
-    } catch (IOException e) {
-      System.err.println("Could not get error stream");
+    } catch (Exception e) {
+      // error stream cannot be received
+      return checkHttpStatus(response.getStatusLine().getStatusCode(), response.getStatusLine().toString(),
+                             null, expected);
     }
-    // in case the first part fails we just need to return if we expect the status code or not
-    return expected.contains(response.getStatusLine().getStatusCode());
   }
 
   /**
@@ -260,12 +269,16 @@ public abstract class ClientToolBase {
    * @param expected the expeced status codes
    * @return
    */
-  public boolean checkHttpStatus(int statusCode, String statusLine, InputStream errorStream, List<Integer> expected) {
+  protected boolean checkHttpStatus(int statusCode, String statusLine,
+                                    InputStream errorStream,
+                                    List<Integer> expected) {
     if (!expected.contains(statusCode)) {
       PrintStream out = verbose ? System.out : System.err;
       if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-        readUnauthorizedError(errorStream);
-        return false;
+        if (errorStream != null) {
+          readUnauthorizedError(errorStream);
+          return false;
+        }
       }
       // other errors
       out.println(statusLine);
