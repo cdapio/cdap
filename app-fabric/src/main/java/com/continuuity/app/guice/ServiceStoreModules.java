@@ -8,6 +8,7 @@ import com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModu
 import com.continuuity.gateway.handlers.DatasetServiceStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
@@ -22,7 +23,7 @@ public class ServiceStoreModules {
       protected void configure() {
         bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
           .toInstance(new InMemoryOrderedTableModule());
-        bind(ServiceStore.class).to(DatasetServiceStore.class);
+        bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
         expose(ServiceStore.class);
       }
     };
@@ -34,7 +35,7 @@ public class ServiceStoreModules {
       protected void configure() {
         bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
           .toInstance(new LevelDBOrderedTableModule());
-        bind(ServiceStore.class).to(DatasetServiceStore.class);
+        bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
         expose(ServiceStore.class);
       }
     };
@@ -46,7 +47,7 @@ public class ServiceStoreModules {
       protected void configure() {
         bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
           .toInstance(new HBaseOrderedTableModule());
-        bind(ServiceStore.class).to(DatasetServiceStore.class);
+        bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
         expose(ServiceStore.class);
       }
     };

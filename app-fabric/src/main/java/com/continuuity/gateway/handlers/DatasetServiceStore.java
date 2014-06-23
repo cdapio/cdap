@@ -26,7 +26,6 @@ import com.google.inject.name.Named;
  * DataSetService Store implements ServiceStore using DataSets without Transaction.
  */
 public class DatasetServiceStore implements ServiceStore {
-
   private OrderedTable table;
   private TransactionExecutor txExecutor;
 
@@ -42,7 +41,7 @@ public class DatasetServiceStore implements ServiceStore {
   }
 
   @Override
-  public Integer getServiceInstance(final String serviceName) throws TransactionFailureException {
+  public synchronized Integer getServiceInstance(final String serviceName) throws TransactionFailureException {
     return txExecutor.execute(new TransactionExecutor.Function<Object, Integer>() {
       @Override
       public Integer apply(Object input) throws Exception {
@@ -53,7 +52,8 @@ public class DatasetServiceStore implements ServiceStore {
   }
 
   @Override
-  public void setServiceInstance(final String serviceName, final int instances) throws TransactionFailureException {
+  public synchronized void setServiceInstance(final String serviceName, final int instances)
+    throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
