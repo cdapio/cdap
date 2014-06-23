@@ -924,9 +924,6 @@ public class HiveMetadataTest {
 //    }
 //    ]
 
-
-    handle = ;
-    handle = null;
     }
 
   private static void runCommand(String command, boolean expectedHasResult,
