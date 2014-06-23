@@ -13,7 +13,7 @@ To enable security in the Continuuity Reactor, add these properties to ``continu
    Property                                   Value
 ==========================================  ===========
 security.enabled                              true
-security.auth.server.address                  <host>
+security.auth.server.address                  <hostname>
 ==========================================  ===========
 
 
