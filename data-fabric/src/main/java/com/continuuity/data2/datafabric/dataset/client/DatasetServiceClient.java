@@ -8,6 +8,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
+import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import com.continuuity.data2.datafabric.dataset.service.DatasetInstanceMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetModuleMeta;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeMeta;
@@ -110,8 +111,7 @@ public class DatasetServiceClient {
     throws DatasetManagementException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName,
-                                  GSON.toJson(props),
-                                  ImmutableMap.of("X-Continuuity-Type-Name", datasetType));
+                                  GSON.toJson(new DatasetInstanceHandler.DatasetTypeAndProperties(datasetType, props)));
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, getDetails(response)));
@@ -188,7 +188,7 @@ public class DatasetServiceClient {
   }
 
   public void deleteInstances() throws DatasetManagementException {
-    HttpResponse response = doDelete("datasets");
+    HttpResponse response = doDelete("unrecoverable/datasets");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
@@ -200,10 +200,10 @@ public class DatasetServiceClient {
     return doRequest(resource, "GET", null, null, null);
   }
 
-  private HttpResponse doPut(String resource, String body, Map<String, String> headers)
+  private HttpResponse doPut(String resource, String body)
     throws DatasetManagementException {
 
-    return doRequest(resource, "PUT", headers, body, null);
+    return doRequest(resource, "PUT", null, body, null);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
