@@ -33,7 +33,6 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.async.ExecutorUtils;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
@@ -60,6 +59,7 @@ import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
@@ -86,7 +86,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.RunIds;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,30 +111,28 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramRunner.class);
 
-  private final CConfiguration cConf;
   private final SchemaGenerator schemaGenerator;
   private final DatumWriterFactory datumWriterFactory;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final StreamCoordinator streamCoordinator;
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
-  private final ZKClientService zkClientService;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   @Inject
-  public FlowletProgramRunner(CConfiguration cConf, SchemaGenerator schemaGenerator,
+  public FlowletProgramRunner(SchemaGenerator schemaGenerator,
                               DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
-                              ZKClientService zkClientService) {
-    this.cConf = cConf;
+                              ProgramServiceDiscovery serviceDiscovery) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.streamCoordinator = streamCoordinator;
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
-    this.zkClientService = zkClientService;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @SuppressWarnings("unused")
@@ -195,7 +192,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, zkClientService, cConf);
+                                               metricsCollectionService, serviceDiscovery);
 
       // hack for propagating metrics collector to datasets
       if (dataSetContext instanceof DataSetInstantiationBase) {
