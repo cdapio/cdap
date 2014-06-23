@@ -20,7 +20,7 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 
@@ -31,10 +31,10 @@ public class Spammer1Core extends AbstractFlowlet {
   private final Spammer spammer;
 
   @UseDataSet("output")
-  KeyValueTable output;
+  private KeyValueTable output;
 
   @UseDataSet("input")
-  KeyValueTable input;
+  private KeyValueTable input;
 
   @Override
   public FlowletSpecification configure() {

@@ -2,18 +2,24 @@
 Introduction to DataSets
 ============================================
 
-.. .. reST Editor: .. section-numbering::
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_m15| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
@@ -126,7 +132,7 @@ To use a DataSet, you must declare it in the Application specification
 To specify that your Application
 uses a ``KeyValueTable`` DataSet named *myCounters*, write:
 
-.. sourcecode:: java
+::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -143,7 +149,7 @@ To use a DataSet in a Flowlet or a Procedure, instruct the runtime
 system to inject an instance of the DataSet with the ``@UseDataSet``
 annotation:
 
-.. sourcecode:: java
+::
 
 	Class MyFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")

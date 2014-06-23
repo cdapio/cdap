@@ -8,6 +8,7 @@ import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.transaction.snapshot.SnapshotCodecProvider;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -24,6 +25,7 @@ public class TransactionDistributedModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(SnapshotCodecProvider.class).in(Singleton.class);
     bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
       .to(HDFSTransactionStateStorage.class).in(Singleton.class);
     bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);

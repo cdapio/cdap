@@ -305,6 +305,12 @@
       <description>Number of YARN container instances for the stream handler</description>
     </property>
 
+    <property>
+      <name>stream.file.cleanup.period</name>
+      <value>300000</value>
+      <description>How often to run stream file cleanup process in milliseconds</description>
+    </property>
+
     <!--
         Data Fabric configuration
     -->
@@ -372,6 +378,15 @@
         <name>data.queue.table.name</name>
         <value>queues</value>
         <description>Specifies the name of the table for queues.</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.codecs</name>
+        <value>
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV1,
+          com.continuuity.data2.transaction.snapshot.SnapshotCodecV2
+        </value>
+        <description>Specifies the class names of all supported transaction state codecs.</description>
     </property>
 
     <property>
@@ -541,9 +556,9 @@
     </property>
 
     <property>
-        <name>dataset.service.bind.port</name>
-        <value>45055</value>
-        <description>DataSet service port</description>
+        <name>dataset.executor.max.instances</name>
+        <value>${reactor.service.max.instances}</value>
+        <description>Maximum Number of DataSet Executor Instances</description>
     </property>
 
     <property>
@@ -895,6 +910,12 @@
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
         for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
+        <value>604800000</value>
     </property>
 
     <property>

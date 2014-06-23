@@ -11,16 +11,17 @@ define([], function () {
 			var count = 0;
 			var buffer = (C.POLLING_INTERVAL / 1000);
 			var metrics = this.get('metrics');
+      var curModel = this.get('model') || this.get('content');
 
 			clearInterval(self.interval);
 
 			for (var i = 0; i < metrics.length; i ++) {
 				var metric = metrics[i];
 
-				if (this.get('model') && this.get('model').timeseries &&
-					this.get('model').timeseries[C.Util.enc(metric)]) {
+				if (curModel && curModel.timeseries &&
+          curModel.timeseries[C.Util.enc(metric)]) {
 
-					var data = this.get('model').timeseries[C.Util.enc(metric)].value;
+					var data = curModel.timeseries[C.Util.enc(metric)].value;
 
 					if (data && data.length) {
 						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
@@ -57,6 +58,7 @@ define([], function () {
 			var id = this.get('entityId');
 			var type = this.get('entityType');
 			var ctl = this.get('controller');
+      var curModel = this.get('model') || this.get('content');
 
 			if (type && ctl.get('elements.' + type)) {
 
@@ -70,7 +72,7 @@ define([], function () {
 
 			} else {
 
-				this.set('model', ctl.get('model'));
+				this.set('model', ctl.get('model') || curModel);
 
 			}
 

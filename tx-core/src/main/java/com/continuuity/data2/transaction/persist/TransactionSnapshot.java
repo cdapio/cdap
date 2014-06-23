@@ -25,9 +25,9 @@ public class TransactionSnapshot {
   private Map<Long, Set<ChangeId>> committingChangeSets;
   private Map<Long, Set<ChangeId>> committedChangeSets;
 
-  TransactionSnapshot(long timestamp, long readPointer, long writePointer,
-                      Collection<Long> invalid, NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
-                      Map<Long, Set<ChangeId>> committing, Map<Long, Set<ChangeId>> committed) {
+  public TransactionSnapshot(long timestamp, long readPointer, long writePointer, Collection<Long> invalid,
+                             NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
+                             Map<Long, Set<ChangeId>> committing, Map<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
     this.readPointer = readPointer;
     this.writePointer = writePointer;

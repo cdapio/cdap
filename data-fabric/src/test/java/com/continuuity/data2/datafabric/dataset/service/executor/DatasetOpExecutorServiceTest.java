@@ -90,7 +90,6 @@ public class DatasetOpExecutorServiceTest {
 
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.setInt(Constants.Dataset.Manager.PORT, Networks.getRandomPort());
 
     cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());
@@ -207,7 +206,7 @@ public class DatasetOpExecutorServiceTest {
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
-    String path = String.format("/data/instances/%s/admin/%s", instanceName, opName);
+    String path = String.format("/data/datasets/%s/admin/%s", instanceName, opName);
 
     URL targetUrl = resolve(path);
     HttpResponse response = HttpRequests.post(targetUrl);

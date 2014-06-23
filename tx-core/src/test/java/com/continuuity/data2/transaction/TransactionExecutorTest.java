@@ -7,6 +7,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.runtime.TransactionModules;
+import com.continuuity.data2.transaction.snapshot.DefaultSnapshotCodec;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -18,6 +19,7 @@ import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -29,29 +31,37 @@ import javax.annotation.Nullable;
  */
 public class TransactionExecutorTest {
   static final CConfiguration CCONF = CConfiguration.create();
-  static final Injector INJECTOR = Guice.createInjector(
-    new ConfigModule(CCONF),
-    new LocationRuntimeModule().getInMemoryModules(),
-    new DiscoveryRuntimeModule().getInMemoryModules(),
-    Modules.override(
-      new TransactionModules().getInMemoryModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        InMemoryTransactionManager txManager = new InMemoryTransactionManager();
-        txManager.startAndWait();
-        bind(InMemoryTransactionManager.class).toInstance(txManager);
-        bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
-      }
-    }));
+  static Injector injector;
+  static DummyTxClient txClient;
+  static TransactionExecutorFactory factory;
 
-  static final DummyTxClient TX_CLIENT = (DummyTxClient) INJECTOR.getInstance(TransactionSystemClient.class);
-  static final TransactionExecutorFactory FACTORY = INJECTOR.getInstance(TransactionExecutorFactory.class);
+  @BeforeClass
+  public static void setup() {
+    CCONF.set(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES, DefaultSnapshotCodec.class.getName());
+    injector = Guice.createInjector(
+      new ConfigModule(CCONF),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      Modules.override(
+        new TransactionModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          InMemoryTransactionManager txManager = new InMemoryTransactionManager(CCONF);
+          txManager.startAndWait();
+          bind(InMemoryTransactionManager.class).toInstance(txManager);
+          bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
+        }
+      }));
+
+    txClient = (DummyTxClient) injector.getInstance(TransactionSystemClient.class);
+    factory = injector.getInstance(TransactionExecutorFactory.class);
+  }
 
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
   final Collection<TransactionAware> txAwares = ImmutableList.<TransactionAware>of(ds1, ds2);
 
   private TransactionExecutor getExecutor() {
-    return FACTORY.createExecutor(txAwares);
+    return factory.createExecutor(txAwares);
   }
 
   static final byte[] A = { 'a' };
@@ -92,7 +102,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
     Assert.assertTrue(100 == result);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Committed);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
@@ -116,7 +126,7 @@ public class TransactionExecutorTest {
     Assert.assertTrue(ds2.postCommitted);
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Committed);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Committed);
   }
 
   @Test
@@ -140,7 +150,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
@@ -164,7 +174,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
@@ -189,7 +199,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
@@ -214,12 +224,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
   public void testCommitFalse() throws TransactionFailureException {
-    TX_CLIENT.failCommitOnce = true;
+    txClient.failCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -238,12 +248,12 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
   public void testCanCommitFalse() throws TransactionFailureException {
-    TX_CLIENT.failCanCommitOnce = true;
+    txClient.failCanCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
       getExecutor().execute(testFunction, 10);
@@ -262,7 +272,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
   @Test
@@ -287,7 +297,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
@@ -311,7 +321,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertTrue(ds1.rolledBack);
     Assert.assertTrue(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Invalidated);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Invalidated);
   }
 
   @Test
@@ -335,7 +345,7 @@ public class TransactionExecutorTest {
     Assert.assertFalse(ds2.postCommitted);
     Assert.assertFalse(ds1.rolledBack);
     Assert.assertFalse(ds2.rolledBack);
-    Assert.assertEquals(TX_CLIENT.state, DummyTxClient.CommitState.Aborted);
+    Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
   enum InduceFailure { NoFailure, ReturnFalse, ThrowException }

@@ -2,24 +2,31 @@
 Solving Big Data Problems with Reactor
 ======================================
 
+.. reST Editor: .. section-numbering::
 .. reST Editor: .. contents::
 
-.. Slide Presentation HTML Generation
+.. rst2pdf: CutStart
 .. landslide: theme ../_theme/slides-generation/
 .. landslide: build ../../html/
 
-.. include:: ../_slide-fragments/continuuity_logo.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
-.. |br_e00| raw:: html
+.. |br| raw:: html
 
    <br />
+.. rst2pdf: CutStop
+
+.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../pdf/
+.. rst2pdf: .. |br|  unicode:: U+0020 .. space
 
 ----
 
 Module Objectives
 =================
 
-- Introducing a Big Data Problem: |br_e00| 
+- Introducing a Big Data Problem: |br| 
   Realtime geo-sentiment analysis of social media
 - Solving it using Continuuity Reactor
 - Problems of alternative solutions
@@ -29,7 +36,7 @@ Module Objectives
 Introducing a Big Data Problem 1/3
 ==================================
 
-**Why**: Companies want to know what is happening in realtime
+**Why:** Companies want to know what is happening in realtime
 
 - What are people saying about them?
 - What are people saying about their products?
@@ -48,7 +55,7 @@ A large company launches a new mobile phone product, and wants to know:
 Introducing a Big Data Problem 2/3
 ==================================
 
-**What**
+**What:**
 
 One approach is **Geo-Sentiment analysis of social media data**
 
@@ -79,7 +86,7 @@ Introducing a Big Data Problem 3/3
 - Visualize results
 
 .. image:: ../_images/ingest-block-diagram.png
-   :width: 400 px
+   :width: 60%
 
 ----
 
@@ -87,7 +94,7 @@ Continuuity Reactor *Geo-sentiment*
 ===================================
 
 .. image:: ../_images/Geo-sentiment-UI.jpg
-   :height: 300px
+   :width: 50%
 
 A web user interface
 
@@ -142,7 +149,7 @@ Continuuity Reactor *Geo-sentiment*
 ========================================================
 
 .. image:: ../_images/Geo-sentiment-Flow.jpg
-   :width: 600px
+   :width: 80%
 
 *Geo-sentiment* as seen in the Continuuity Reactor *Dashboard*
 
