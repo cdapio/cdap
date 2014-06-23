@@ -5,12 +5,12 @@ import com.continuuity.api.dataset.DatasetProperties;
 /**
  * Information for creating dataset instance.
  */
-public final class DatasetInstanceCreationSpec {
+public final class DatasetCreationSpec {
   private final String instanceName;
   private final String typeName;
   private final DatasetProperties props;
 
-  public DatasetInstanceCreationSpec(String instanceName, String typeName, DatasetProperties props) {
+  public DatasetCreationSpec(String instanceName, String typeName, DatasetProperties props) {
     this.instanceName = instanceName;
     this.typeName = typeName;
     this.props = props;

@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.pipeline.AbstractStage;
@@ -38,9 +38,9 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
   public void process(ApplicationSpecLocation input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-    for (Map.Entry<String, DatasetInstanceCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
-      DatasetInstanceCreationSpec instanceSpec = instanceEntry.getValue();
+      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       try {
         if (!datasetFramework.hasInstance(instanceName)) {
           datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());

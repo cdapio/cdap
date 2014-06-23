@@ -89,7 +89,7 @@ public class DataSetTestBase {
     }
     // create an instantiator the resulting list of data set specs
     instantiator = new DataSetInstantiator(fabric, datasetFramework, null);
-    instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
+    instantiator.setDataSets(specs, Collections.<DatasetCreationSpec>emptyList());
   }
 
   /**

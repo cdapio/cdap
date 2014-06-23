@@ -12,7 +12,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -37,7 +37,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetInstanceCreationSpec.class));
+    jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetCreationSpec.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
@@ -60,9 +60,9 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, DataSetSpecification> datasets = deserializeMap(jsonObj.get("datasets"),
                                                                 context, DataSetSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetInstanceCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
+    Map<String, DatasetCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
                                                                                context,
-                                                                               DatasetInstanceCreationSpec.class);
+                                                                               DatasetCreationSpec.class);
     Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
                                                           context, FlowSpecification.class);
     Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
