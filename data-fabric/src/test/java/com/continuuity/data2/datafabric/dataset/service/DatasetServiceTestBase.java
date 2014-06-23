@@ -62,6 +62,7 @@ public abstract class DatasetServiceTestBase {
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -130,7 +131,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected int deleteInstances() throws IOException {
-    return HttpRequests.delete(getUrl("/data/datasets")).getResponseCode();
+    return HttpRequests.delete(getUrl("/data/unrecoverable/datasets")).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {

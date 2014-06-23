@@ -54,6 +54,14 @@
       <groupId>org.apache.geronimo.components</groupId>
       <artifactId>geronimo-jaspi</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-servlet-initializer</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-guice</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>

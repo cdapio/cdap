@@ -43,6 +43,7 @@
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
     <guice.version>3.0</guice.version>
+    <resteasy.version>3.0.8.Final</resteasy.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
@@ -98,6 +99,21 @@
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
         <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-servlet</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-servlet-initializer</artifactId>
+        <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.resteasy</groupId>
+        <artifactId>resteasy-guice</artifactId>
+        <version>${resteasy.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -319,6 +335,38 @@
           <exclusion>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1155,6 +1203,38 @@
                   <regex>-SNAPSHOT</regex>
                   <replacement>.${package.build.timestamp}</replacement>
                   <failIfNoMatch>false</failIfNoMatch>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- Determine the deploy.url for non-standard (e.g. zip, rpm, deb) deployment -->
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <version>1.5</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>1.5.8</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>choose-deploy-url</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <source>
+                    if (project.version.endsWith("-SNAPSHOT")){
+                      project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
+                    }
+                    else {
+                      project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                    }
+                  </source>
                 </configuration>
               </execution>
             </executions>

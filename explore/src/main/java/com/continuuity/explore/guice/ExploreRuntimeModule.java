@@ -131,6 +131,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
                   HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsoluteFile());
         System.setProperty(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(), warehouseDir.getAbsolutePath());
 
+        // Set derby log location
+        System.setProperty("derby.stream.error.file",
+                           cConf.get(Constants.Explore.CFG_LOCAL_DATA_DIR) + File.separator + "derby.log");
+
         String connectUrl = String.format("jdbc:derby:;databaseName=%s;create=true", databaseDir.getAbsoluteFile());
         LOG.debug("Setting {} to {}", HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
         System.setProperty(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), connectUrl);
