@@ -228,6 +228,26 @@ public interface Store {
   int getProcedureInstances(Id.Program id) throws OperationException;
 
   /**
+   * Sets the number of instances of a service runnable.
+   *
+   * @param id program id
+   * @param runnableName name of the runnable
+   * @param instances number of instances
+   * @throws OperationException
+   */
+  void setServiceRunnableInstances(Id.Program id, String runnableName, int instances) throws OperationException;
+
+  /**
+   * Gets runnable instances of service.
+   *
+   * @param id program id
+   * @param runnableName name of the runnable
+   * @return number of instances
+   * @throws OperationException
+   */
+  int getServiceRunnableInstances(Id.Program id, String runnableName) throws OperationException;
+
+  /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id
