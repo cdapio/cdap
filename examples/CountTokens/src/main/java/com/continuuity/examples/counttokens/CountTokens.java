@@ -15,33 +15,24 @@
  */
 package com.continuuity.examples.counttokens;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 
 /**
  * CountTokens application contains a Flow {@code CountTokens} and is attached
  * to a Stream named "text".  It utilizes a KeyValueTable to persist data.
  */
-public class CountTokens implements Application {
+public class CountTokens extends AbstractApplication {
 
   public static final String TABLE_NAME = "tokenCountTable";
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("CountTokens")
-      .setDescription("Example applicaiton that counts tokens")
-      .withStreams()
-        .add(new Stream("text"))
-      .withDataSets()
-        .add(new KeyValueTable(TABLE_NAME))
-      .withFlows()
-        .add(new CountTokensFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("CountTokens");
+    setDescription("Example applicaiton that counts tokens");
+    addStream(new Stream("text"));
+    createDataSet(TABLE_NAME, KeyValueTable.class);
+    addFlow(new CountTokensFlow());
   }
 }

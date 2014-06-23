@@ -148,6 +148,7 @@ public class ReactorTool {
 
     DatasetFramework framework = getDatasetFramework(injector);
     DatasetMetaTableUtil datasetTableUtil = new DatasetMetaTableUtil(framework);
+    datasetTableUtil.init();
 
     // Upgrade all user tables.
     Properties properties = new Properties();

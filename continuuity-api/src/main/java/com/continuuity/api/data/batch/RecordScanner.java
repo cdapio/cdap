@@ -6,30 +6,30 @@ package com.continuuity.api.data.batch;
 
 /**
  * Defines a reader of a dataset {@link com.continuuity.api.data.batch.Split}.
- * @param <ROW> the type of objects that represents a single row
+ * @param <RECORD> the type of objects that represents a single record
  */
-public abstract class SplitRowScanner<ROW> {
+public abstract class RecordScanner<RECORD> {
 
   /**
    * Called once at initialization.
-   * @param split The split that defines the range of rows to read.
+   * @param split The split that defines the range of records to read.
    * @throws InterruptedException
    */
   public abstract void initialize(Split split) throws InterruptedException;
 
   /**
-   * Read the next row.
-   * @return true if a row was read.
+   * Read the next record.
+   * @return true if a record was read.
    * @throws InterruptedException
    */
-  public abstract boolean nextRow() throws InterruptedException;
+  public abstract boolean nextRecord() throws InterruptedException;
 
   /**
-   * Get the current row.
-   * @return The current row, or null if there is no current row.
+   * Get the current record.
+   * @return The current record, or null if there is no current record.
    * @throws InterruptedException
    */
-  public abstract ROW getCurrentRow() throws InterruptedException;
+  public abstract RECORD getCurrentRecord() throws InterruptedException;
 
   /**
    * The current progress of the record reader through its data.

@@ -174,6 +174,13 @@ public class TestFrameworkTest extends ReactorTestBase {
     testApp(WordCountAppV2.class, true, "text");
   }
 
+  @Test
+  public void testAppwithServices() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    LOG.info("Deployed.");
+    //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
+  }
+
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
   private void testApp(Class<?> app, boolean datasetV2, String streamName)
     throws IOException, TimeoutException, InterruptedException {
@@ -348,14 +355,14 @@ public class TestFrameworkTest extends ReactorTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("keyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 

@@ -33,15 +33,18 @@ public final class StreamHttpService extends AbstractIdleService {
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private final StreamCoordinator streamCoordinator;
+  private final StreamFileJanitorService janitorService;
   private Cancellable cancellable;
 
   @Inject
   public StreamHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                            StreamCoordinator streamCoordinator,
+                           StreamFileJanitorService janitorService,
                            @Named(Constants.Stream.STREAM_HANDLER) Set<HttpHandler> handlers,
                            @Nullable MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.streamCoordinator = streamCoordinator;
+    this.janitorService = janitorService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
     this.httpService = NettyHttpService.builder()
@@ -73,10 +76,14 @@ public final class StreamHttpService extends AbstractIdleService {
         return httpService.getBindAddress();
       }
     });
+
+    janitorService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    janitorService.stopAndWait();
+
     try {
       if (cancellable != null) {
         cancellable.cancel();

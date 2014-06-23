@@ -1,6 +1,7 @@
 package com.continuuity.explore.service;
 
 import com.google.common.base.Objects;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import java.util.UUID;
 
@@ -8,6 +9,10 @@ import java.util.UUID;
  * Represents an operation that is submitted for execution to {@link Explore}.
  */
 public class Handle {
+
+  private static final String NO_OP_ID = "NO_OP";
+  public static final Handle NO_OP = new Handle(NO_OP_ID);
+
   private final String handle;
 
   public static Handle generate() {
@@ -16,6 +21,9 @@ public class Handle {
   }
 
   public static Handle fromId(String id) {
+    if (id.equals(NO_OP_ID)) {
+      return NO_OP;
+    }
     return new Handle(id);
   }
 
