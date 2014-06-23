@@ -18,7 +18,7 @@ security.enabled                              true
 
 Configuring SSL
 ================
-To configure SSL, add these properties to ``continuuity-site.xml``:
+To configure the granting of ``AccessToken``\s via SSL, add these properties to ``continuuity-site.xml``:
 
 ==========================================  ===========
    Property                                   Value
