@@ -1315,17 +1315,17 @@
       </build>
     </profile>
     <profile>
-      <id>test-small</id>
-      <!-- Runs only small tests -->
+      <id>test-fast</id>
+      <!-- Runs only fast tests -->
       <properties>
-        <testcase.groups>!com.continuuity.test.MediumTests</testcase.groups>
+        <testcase.groups>!com.continuuity.test.SlowTests</testcase.groups>
       </properties>
     </profile>
     <profile>
-      <!-- Runs small and medium tests -->
-      <id>test-medium</id>
+      <!-- Runs fast and slow tests, but not xslow -->
+      <id>test-slow</id>
       <properties>
-        <testcase.groups>!com.continuuity.test.LargeTests</testcase.groups>
+        <testcase.groups>!com.continuuity.test.XSlowTests</testcase.groups>
       </properties>
     </profile>
 

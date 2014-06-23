@@ -9,16 +9,16 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
-import com.continuuity.test.LargeTests;
 import com.continuuity.test.MapReduceManager;
-import com.continuuity.test.MediumTests;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
+import com.continuuity.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-@Category(MediumTests.class)
+@Category(SlowTests.class)
 public class TestFrameworkTest extends ReactorTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTest.class);
 
@@ -80,7 +80,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Category(LargeTests.class)
+  @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
@@ -133,7 +133,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
   }
 
-  @Category(LargeTests.class)
+  @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
@@ -170,13 +170,13 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Category(LargeTests.class)
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testApp() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountApp2.class, false, "text2");
   }
 
-  @Category(LargeTests.class)
+  @Category(XSlowTests.class)
   @Test(timeout = 360000)
   public void testAppWithDatasetV2() throws InterruptedException, IOException, TimeoutException {
     testApp(WordCountAppV2.class, true, "text");
@@ -264,7 +264,7 @@ public class TestFrameworkTest extends ReactorTestBase {
     }
   }
 
-  @Category(MediumTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
