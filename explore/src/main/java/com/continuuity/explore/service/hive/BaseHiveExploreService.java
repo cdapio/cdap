@@ -46,6 +46,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final HiveConf hiveConf;
+  private final TransactionSystemClient txClient;
 
   // TODO: timeout operations - REACTOR-269
   private final ConcurrentMap<Handle, OperationInfo> handleMap = Maps.newConcurrentMap();
@@ -58,7 +59,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.cliService = new CLIService();
-    ContextManager.initialize(txClient, datasetFramework);
+    this.txClient = txClient;
+    ContextManager.initialize(datasetFramework);
   }
 
   protected HiveConf getHiveConf() {
@@ -227,7 +229,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   private Transaction startTransaction() throws IOException {
-    TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
     Transaction tx = txClient.startLong();
     LOG.debug("Transaction {} started.", tx);
     return tx;
@@ -241,7 +242,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                              TxnCodec.INSTANCE);
       LOG.debug("Closing transaction {} for handle {}", tx, handle);
 
-      TransactionSystemClient txClient = ContextManager.getTxClient(hiveConf);
       // Transaction doesn't involve any changes. We still commit it to take care of any side effect changes that
       // SplitReader may have.
       if (!(txClient.canCommit(tx, ImmutableList.<byte[]>of()) && txClient.commit(tx))) {

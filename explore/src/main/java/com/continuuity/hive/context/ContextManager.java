@@ -8,7 +8,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset2.DatasetFramework;
-import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -20,20 +19,10 @@ import java.io.IOException;
  * Stores/creates context for Hive queries to run in MapReduce jobs.
  */
 public class ContextManager {
-  private static TransactionSystemClient txClient;
   private static DatasetFramework datasetFramework;
 
-  public static void initialize(TransactionSystemClient txClient, DatasetFramework datasetFramework) {
-    ContextManager.txClient = txClient;
+  public static void initialize(DatasetFramework datasetFramework) {
     ContextManager.datasetFramework = datasetFramework;
-  }
-
-  public static TransactionSystemClient getTxClient(Configuration conf) throws IOException {
-    if (txClient == null) {
-      selfInit(conf);
-    }
-
-    return txClient;
   }
 
   public static DatasetFramework getDatasetManager(Configuration conf) throws IOException {
@@ -64,6 +53,5 @@ public class ContextManager {
     zkClientService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    txClient = injector.getInstance(TransactionSystemClient.class);
   }
 }
