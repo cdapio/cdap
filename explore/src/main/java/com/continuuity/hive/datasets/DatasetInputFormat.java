@@ -127,8 +127,11 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
       @Override
       public void close() throws IOException {
-        recordScanner.close();
-        recordScannable.close();
+        try {
+          recordScanner.close();
+        } finally {
+          recordScannable.close();
+        }
       }
 
       @Override
