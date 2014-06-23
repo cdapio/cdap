@@ -182,7 +182,7 @@ public class AccessTokenClient {
     JsonObject responseJson = (JsonObject) parser.parse(responseBody);
     JsonArray addresses = responseJson.get("auth_uri").getAsJsonArray();
     ArrayList<String> list = new ArrayList<String>();
-    for(JsonElement e : addresses){
+    for (JsonElement e : addresses) {
       list.add(e.getAsString());
     }
     return list.get(new Random().nextInt(list.size()));
