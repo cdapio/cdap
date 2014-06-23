@@ -3,7 +3,6 @@ package com.continuuity.hive.datasets;
 import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Split;
-
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
@@ -43,6 +42,8 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
 
     List<Split> dsSplits = recordScannable.getSplits();
+    recordScannable.close();
+
     InputSplit[] inputSplits = new InputSplit[dsSplits.size()];
     for (int i = 0; i < dsSplits.size(); i++) {
       inputSplits[i] = new DatasetInputSplit(dsSplits.get(i), tablePaths[0]);
@@ -124,6 +125,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
       @Override
       public void close() throws IOException {
         recordScanner.close();
+        recordScannable.close();
       }
 
       @Override
