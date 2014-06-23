@@ -2,10 +2,12 @@ package com.continuuity.data2.util.hbase;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.test.SlowTests;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Tests reading and writing {@link CConfiguration} instances to an HBase table.
  */
+@Category(SlowTests.class)
 public class ConfigurationTableTest {
   private static HBaseTestingUtility hbaseUtil;
 

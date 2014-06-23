@@ -19,6 +19,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.test.XSlowTests;
 import com.continuuity.test.internal.AppFabricTestHelper;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
@@ -37,6 +38,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -49,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * tests that flowlets, procedures and batch jobs close their data sets.
  */
+@Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
 
   @ClassRule

@@ -23,7 +23,7 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
    */
   private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
 
-  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataSet("data") OrderedTable table) {
+  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataSet("") OrderedTable table) {
     super(spec, table);
   }
 

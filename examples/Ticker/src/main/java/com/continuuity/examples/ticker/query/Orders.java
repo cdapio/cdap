@@ -18,7 +18,7 @@ package com.continuuity.examples.ticker.query;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;

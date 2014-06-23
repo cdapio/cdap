@@ -2,6 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.exception.HandlerException;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -44,13 +45,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
   private final DatasetExploreFacade datasetExploreFacade;
 
+  private final CConfiguration conf;
+
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade) {
+                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade,
+                                CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
+    this.conf = conf;
   }
 
   @GET
@@ -60,17 +65,19 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/data/datasets/")
+  @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
+    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                  Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      return;
+    }
+
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
-      // skip if not exists: someone may be deleting it at same time
-      if (!instanceManager.delete(spec.getName())) {
-        continue;
-      }
-
       try {
-        opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+        // It is okay if dataset not exists: someone may be deleting it at same time
+        dropDataset(spec);
       } catch (Exception e) {
         String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                    spec.getName(), e.getMessage());
@@ -102,10 +109,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void add(HttpRequest request, final HttpResponder responder,
                   @PathParam("name") String name) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-    DatasetProperties props = GSON.fromJson(reader, DatasetProperties.class);
-    String typeName = request.getHeader("X-Continuuity-Type-Name");
 
-    LOG.info("Creating dataset {}, type name: {}, props: {}", name, typeName, props);
+    DatasetTypeAndProperties typeAndProps = GSON.fromJson(reader, DatasetTypeAndProperties.class);
+
+    LOG.info("Creating dataset {}, type name: {}, typeAndProps: {}",
+             name, typeAndProps.getTypeName(), typeAndProps.getProperties());
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
@@ -116,10 +124,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeName);
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(typeAndProps.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot create dataset %s: unknown type %s",
-                                     name, typeName);
+                                     name, typeAndProps.getTypeName());
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.NOT_FOUND, message);
       return;
@@ -128,23 +136,26 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
     try {
-      spec = opExecutorClient.create(name, typeMeta, props);
+      spec = opExecutorClient.create(name, typeMeta, typeAndProps.getProperties());
     } catch (Exception e) {
       String msg = String.format("Cannot create dataset %s of type %s: executing create() failed, reason: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getTypeName(), e.getMessage());
       LOG.error(msg, e);
       throw new RuntimeException(msg, e);
     }
     instanceManager.add(spec);
 
     // Enable ad-hoc exploration of dataset
+    // Note: today explore enable is not transactional with dataset create - REACTOR-314
     try {
       datasetExploreFacade.enableExplore(name);
     } catch (ExploreException e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, typeName, e.getMessage());
+                                 name, typeAndProps.getProperties(), e.getMessage());
       LOG.error(msg, e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
+//      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
+//      return;
     }
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -156,30 +167,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                        @PathParam("name") String name) {
     LOG.info("Deleting dataset {}", name);
 
-
-    // First disable ad-hoc exploration of dataset
-    try {
-      datasetExploreFacade.disableExplore(name);
-    } catch (ExploreException e) {
-      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
-                                 name, e.getMessage());
-      LOG.error(msg, e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-    }
-
     DatasetSpecification spec = instanceManager.get(name);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    if (!instanceManager.delete(name)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
     try {
-      opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+      if (!dropDataset(spec)) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
     } catch (Exception e) {
       String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                  name, e.getMessage());
@@ -232,4 +230,52 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
+  /**
+   * POJO that carries dataset type and properties information for create dataset request
+   */
+  public static final class DatasetTypeAndProperties {
+    private final String typeName;
+    private final DatasetProperties props;
+
+    public DatasetTypeAndProperties(String typeName, DatasetProperties props) {
+      this.typeName = typeName;
+      this.props = props;
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+
+    public DatasetProperties getProperties() {
+      return props;
+    }
+  }
+
+  /**
+   * Drops a dataset.
+   * @param spec specification of dataset to be dropped.
+   * @return true if dropped successfully, false if dataset is not found.
+   * @throws Exception on error.
+   */
+  private boolean dropDataset(DatasetSpecification spec) throws Exception {
+    String name = spec.getName();
+
+    // First disable ad-hoc exploration of dataset
+    // Note: today explore disable is not transactional with dataset delete - REACTOR-314
+    try {
+      datasetExploreFacade.disableExplore(name);
+    } catch (ExploreException e) {
+      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
+                                 name, e.getMessage());
+      LOG.error(msg, e);
+      throw e;
+    }
+
+    if (!instanceManager.delete(name)) {
+      return false;
+    }
+
+    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    return true;
+  }
 }

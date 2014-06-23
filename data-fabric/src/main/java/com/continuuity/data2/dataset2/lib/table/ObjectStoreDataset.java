@@ -2,7 +2,6 @@ package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
@@ -14,7 +13,6 @@ import com.continuuity.api.dataset.lib.KeyValueTable;
 import com.continuuity.api.dataset.lib.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
 import com.continuuity.internal.io.Schema;
@@ -59,22 +57,22 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   @Override
-  public void write(String key, T object) throws Exception {
+  public void write(String key, T object) {
     kvTable.write(Bytes.toBytes(key), encode(object));
   }
 
   @Override
-  public void write(byte[] key, T object) throws Exception {
+  public void write(byte[] key, T object) {
     kvTable.write(key, encode(object));
   }
 
   @Override
-  public T read(String key) throws Exception {
+  public T read(String key) {
     return decode(kvTable.read(Bytes.toBytes(key)));
   }
 
   @Override
-  public T read(byte[] key) throws Exception {
+  public T read(byte[] key) {
     byte[] read = kvTable.read(key);
     return decode(read);
   }
@@ -113,12 +111,14 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     }
   }
 
-  @Override
+  // TODO: it should implement RecordScannable, but due to classloading issues it doesn't
+//  @Override
   public RecordScanner<KeyValue<byte[], T>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new ObjectRecordMaker());
   }
 
-  @Override
+  // TODO: it should implement RecordScannable, but due to classloading issues it doesn't
+//  @Override
   public Type getRecordType() {
     return typeRep.toType();
   }

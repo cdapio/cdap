@@ -178,7 +178,8 @@
             <th style="min-width: 100px;" class="status-col">Status
             </th>
             <th style="min-width: 100px;" class="logs-col">Logs</th>
-            <th style="min-width: 200px;" class="instance-col">Instance</th>
+            <th style="min-width: 200px;" class="instance-col">Instances Requested</th>
+            <th style="min-width: 200px;" class="instance-col">Provisioned</th>
           </thead>
           <tbody>
           {{#each services}}
@@ -205,16 +206,20 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.cur}}</span></div>
+                  <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
                       <img src="assets/img/minus.png" />
                     </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
                       <img src="assets/img/plus.png" />
                     </a>
                   </div>
                 </div>
+              <td style="max-width: 350px;" class="instance-provisioned service-col">
+              <div class="instance-wrapper">
+                  <div class="instance-num"><span>{{this.provisioned}}</span></div>
+              </div>
               </td>
             </tr>
           {{/each}}
