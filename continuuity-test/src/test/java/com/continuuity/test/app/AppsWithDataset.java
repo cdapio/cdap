@@ -178,8 +178,9 @@ public class AppsWithDataset {
     }
 
     @Override
-    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-      return new KeyValueTable(spec, getDataset("data", Table.class, spec));
+    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            ClassLoader classLoader) throws IOException {
+      return new KeyValueTable(spec, getDataset("data", Table.class, spec, classLoader));
     }
 
     /**
