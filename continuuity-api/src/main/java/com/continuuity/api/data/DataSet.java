@@ -22,7 +22,11 @@ import java.io.Closeable;
  *   </li>
  * <li>Hence every DataSet must implement a configure() method and a
  *   constructor from DataSetSpecification.</li>
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.Dataset} or {@link com.continuuity.api.dataset.DatasetDefinition}
+ * instead.
  */
+@Deprecated
 public abstract class DataSet implements Closeable {
 
   // the name of the data set (instance)

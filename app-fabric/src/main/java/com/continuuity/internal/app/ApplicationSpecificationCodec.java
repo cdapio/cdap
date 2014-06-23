@@ -5,7 +5,6 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -13,17 +12,13 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
-import com.continuuity.internal.service.DefaultServiceSpecification;
-import com.google.common.collect.Maps;
-import com.google.gson.JsonArray;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.internal.json.TwillSpecificationAdapter;
 
 import java.lang.reflect.Type;
 import java.util.Map;

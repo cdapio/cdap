@@ -6,7 +6,10 @@ import javax.annotation.Nullable;
 
 /**
  * Represents an empty row (a row with no columns).
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.EmptyRow} instead
  */
+@Deprecated
 public class EmptyRow implements Row {
   private final byte[] row;
 

@@ -35,8 +35,10 @@ import java.util.Map;
  * column names for each object. If no column name is specified in read or write operations a default column 'c' will
  * be used.
  * @param <T> the type of objects in the store
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.MultiObjectStore} instead.
  */
-@Beta
+@Deprecated
 public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[], Map<byte[], T>>,
                                                             BatchWritable<byte[], Map<byte[], T>> {
 

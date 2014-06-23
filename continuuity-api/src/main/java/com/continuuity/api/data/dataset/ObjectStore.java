@@ -29,8 +29,10 @@ import java.util.List;
  * </ul>
  * Interfaces and not-static inner classes are not supported.
  * @param <T> the type of objects in the store
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.ObjectStore} instead.
  */
-@Beta
+@Deprecated
 public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {
 
   private static final Gson GSON = new GsonBuilder()

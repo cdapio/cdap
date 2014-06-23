@@ -19,7 +19,10 @@ import java.util.Map;
  *     An increment operation should at least change the value of one column.
  *   </li>
  * </ul>
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Increment} instead
  */
+@Deprecated
 public class Increment {
   /** 
    * Row to change. 

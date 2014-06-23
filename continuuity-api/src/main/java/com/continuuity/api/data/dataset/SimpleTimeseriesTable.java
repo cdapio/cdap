@@ -99,7 +99,10 @@ import java.util.Map;
  *   </li>
  * </ol>
  * </p>
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.TimeseriesTable} instead.
  */
+@Deprecated
 public class SimpleTimeseriesTable extends DataSet
   implements TimeseriesTable,
              BatchReadable<byte[], TimeseriesTable.Entry>,

@@ -15,7 +15,10 @@ import javax.annotation.Nullable;
 /**
  * This is the DataSet implementation of named tables -- other DataSets can be
  * defined by embedding instances of {@link Table} (and other DataSets).
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Table} instead.
  */
+@Deprecated
 public class Table extends DataSet implements
   BatchReadable<byte[], Row>, BatchWritable<byte[], Put> {
 

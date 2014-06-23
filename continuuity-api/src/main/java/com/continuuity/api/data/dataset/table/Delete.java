@@ -4,7 +4,10 @@ import java.util.Collection;
 
 /**
  * A Delete removes one or more or all columns from a row.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Delete} instead
  */
+@Deprecated
 public class Delete extends RowColumns<Delete> {
   /**
    * Delete whole row.

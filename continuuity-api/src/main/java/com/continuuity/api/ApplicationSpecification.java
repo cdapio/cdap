@@ -31,7 +31,9 @@ import java.util.Map;
  * Implements the ApplicationSpecifications interface configure() method,
  * and invoke the ApplicationSpecification.Builder.with() method to create a Reactor application.
  *
+ * @deprecated use {@link com.continuuity.api.app.Application} instead.
  */
+@Deprecated
 public interface ApplicationSpecification {
 
   /**

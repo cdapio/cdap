@@ -7,7 +7,10 @@ import javax.annotation.Nullable;
  * Represents one row in a table with a subset of columns.
  * NOTE: Depending on the operation that returns {@link Row} as a result, it may contain all or just a subset of column
  *       values.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Row} instead
  */
+@Deprecated
 public interface Row {
   /**
    * @return key of this row

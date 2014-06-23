@@ -63,7 +63,10 @@ package com.continuuity.api;
  * @see com.continuuity.api.procedure.Procedure Procedure
  * @see com.continuuity.api.mapreduce.MapReduce MapReduce
  * @see com.continuuity.api.workflow.Workflow Workflow
+ *
+ * @deprecated use {@link com.continuuity.api.app.Application} instead.
  */
+@Deprecated
 public interface Application {
   /**
    * Configures the {@link Application} by returning an {@link ApplicationSpecification}.

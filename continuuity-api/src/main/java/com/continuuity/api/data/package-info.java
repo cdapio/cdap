@@ -6,5 +6,7 @@
  * Specifies and instantiates {@link com.continuuity.api.data.DataSet DataSets}.
  *
  * All data access is performed via system or user defined (custom) {@link com.continuuity.api.data.DataSet DataSets}.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset} instead.
  */
 package com.continuuity.api.data;

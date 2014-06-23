@@ -4,7 +4,6 @@ import com.continuuity.api.app.Application;
 import com.continuuity.api.app.ApplicationConfigurer;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.dataset.Dataset;
@@ -19,6 +18,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.continuuity.internal.flow.DefaultFlowSpecification;
@@ -28,7 +28,6 @@ import com.continuuity.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 

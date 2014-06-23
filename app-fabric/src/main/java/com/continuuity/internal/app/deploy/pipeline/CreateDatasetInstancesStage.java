@@ -4,8 +4,8 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.pipeline.AbstractStage;

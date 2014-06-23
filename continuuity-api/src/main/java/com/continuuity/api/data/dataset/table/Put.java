@@ -7,7 +7,10 @@ import java.util.Map;
 
 /**
  * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Put} instead
  */
+@Deprecated
 public class Put {
   /** row to write to. */
   private final byte[] row;

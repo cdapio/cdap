@@ -8,7 +8,10 @@ import java.util.List;
 
 /**
  * Defines simple timeseries dataset.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.TimeseriesTable} instead.
  */
+@Deprecated
 public interface TimeseriesTable {
 
   /**

@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;
 

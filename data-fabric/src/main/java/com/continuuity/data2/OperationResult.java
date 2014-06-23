@@ -1,6 +1,6 @@
 package com.continuuity.data2;
 
-import com.continuuity.api.data.StatusCode;
+import com.continuuity.data.operation.StatusCode;
 
 /**
  * This class is used to return results of data operations. It allows to return "nothing" with a status code and a

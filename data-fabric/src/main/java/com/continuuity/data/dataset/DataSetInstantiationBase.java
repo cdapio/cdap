@@ -4,7 +4,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;

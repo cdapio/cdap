@@ -1,10 +1,10 @@
 package com.continuuity.internal.app.verification;
 
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.app.verification.AbstractVerifier;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 
 /**
- * This class verifies a {@link com.continuuity.api.data.DatasetInstanceCreationSpec}.
+ * This class verifies a {@link com.continuuity.data.dataset.DatasetInstanceCreationSpec}.
  * <p>
  * Following are the checks that are done.
  * <ul>

@@ -6,7 +6,6 @@ package com.continuuity.app;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
@@ -18,6 +17,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 
 import java.util.Map;
 

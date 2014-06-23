@@ -26,7 +26,10 @@ import java.util.Arrays;
  * asynchronously, as part of the enclosing transaction (some operations
  * require multiple writes, and we want to make sure they are all committed
  * together).
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.IndexedTable} instead.
  */
+@Deprecated
 public class IndexedTable extends DataSet {
 
   // the two underlying tables

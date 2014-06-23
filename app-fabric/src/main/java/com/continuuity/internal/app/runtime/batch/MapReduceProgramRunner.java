@@ -2,7 +2,6 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -27,6 +26,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;

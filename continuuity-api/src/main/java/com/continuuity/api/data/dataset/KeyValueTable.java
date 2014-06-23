@@ -16,7 +16,10 @@ import javax.annotation.Nullable;
 /**
  * This class implements a key/value map on top of Table. Supported
  * operations are read, write, delete, and swap.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.lib.KeyValueTable} instead.
  */
+@Deprecated
 public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
 
   // the fixed single column to use for the key

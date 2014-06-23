@@ -2,12 +2,12 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.dataset.DataSetTestBase;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.collect.Lists;

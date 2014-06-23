@@ -10,7 +10,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Ordered named table.
  */
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>, Dataset {
   /**

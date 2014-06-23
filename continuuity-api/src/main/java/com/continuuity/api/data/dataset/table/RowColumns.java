@@ -9,7 +9,10 @@ import java.util.List;
 /**
  * Base class for defining a row with set of columns.
  * @param <T> implementor type - to support handy builder-like methods.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.RowColumns} instead
  */
+@Deprecated
 public abstract class RowColumns<T> {
   private final byte[] row;
 

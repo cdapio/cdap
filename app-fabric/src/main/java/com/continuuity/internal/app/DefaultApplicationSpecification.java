@@ -1,7 +1,6 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -9,9 +8,9 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.data.dataset.DatasetInstanceCreationSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import org.apache.twill.api.TwillSpecification;
 
 import java.util.Map;
 

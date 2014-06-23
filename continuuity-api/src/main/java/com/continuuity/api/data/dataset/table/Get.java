@@ -4,7 +4,10 @@ import java.util.Collection;
 
 /**
  * A Get reads one, multiple, or all columns of a row.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.table.Get} instead
  */
+@Deprecated
 public class Get extends RowColumns<Get> {
   /**
    * Get all of the columns of a row.
