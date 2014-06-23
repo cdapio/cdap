@@ -88,32 +88,38 @@ public class ExploreConnection implements Connection {
 
   @Override
   public CallableStatement prepareCall(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public String nativeSQL(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setAutoCommit(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void commit() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void rollback() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setReadOnly(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -123,7 +129,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setCatalog(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -133,7 +140,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setTransactionIsolation(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -159,7 +167,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public CallableStatement prepareCall(String s, int i, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -169,37 +178,44 @@ public class ExploreConnection implements Connection {
 
   @Override
   public void setTypeMap(Map<String, Class<?>> stringClassMap) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setHoldability(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Savepoint setSavepoint() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Savepoint setSavepoint(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void rollback(Savepoint savepoint) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -218,7 +234,8 @@ public class ExploreConnection implements Connection {
 
   @Override
   public CallableStatement prepareCall(String s, int i, int i2, int i3) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -231,76 +248,91 @@ public class ExploreConnection implements Connection {
 
   @Override
   public PreparedStatement prepareStatement(String s, int[] ints) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public PreparedStatement prepareStatement(String s, String[] strings) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Clob createClob() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Blob createBlob() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public NClob createNClob() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public SQLXML createSQLXML() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isValid(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setClientInfo(String s, String s2) throws SQLClientInfoException {
-    throw new SQLClientInfoException("Method not supported", null);
+    throw new SQLClientInfoException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber(), null);
   }
 
   @Override
   public void setClientInfo(Properties properties) throws SQLClientInfoException {
-    throw new SQLClientInfoException("Method not supported", null);
+    throw new SQLClientInfoException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber(), null);
   }
 
   @Override
   public String getClientInfo(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Properties getClientInfo() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Array createArrayOf(String s, Object[] objects) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Struct createStruct(String s, Object[] objects) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreConnection " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 }

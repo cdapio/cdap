@@ -55,6 +55,8 @@ public class ExploreQueryResultSet implements ResultSet {
   private final ExploreStatement statement;
   private final Handle stmtHandle;
 
+  private SQLWarning warningChain = null;
+
   public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
       throws SQLException {
     this.exploreClient = exploreClient;
@@ -547,12 +549,12 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLException("Method getWarnings not supported");
+    return warningChain;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLException("Method clearWarnings not supported");
+    warningChain = null;
   }
 
   @Override
@@ -734,531 +736,637 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateObject(int i, Object o, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateObject(int i, Object o) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNull(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBoolean(String s, boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateByte(String s, byte b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateShort(String s, short i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateInt(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateLong(String s, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateFloat(String s, float v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateDouble(String s, double v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBigDecimal(String s, BigDecimal bigDecimal) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateString(String s, String s2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBytes(String s, byte[] bytes) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateDate(String s, Date date) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateTime(String s, Time time) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateTimestamp(String s, Timestamp timestamp) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateObject(String s, Object o, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateObject(String s, Object o) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void insertRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void deleteRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void refreshRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void cancelRowUpdates() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void moveToInsertRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void moveToCurrentRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Statement getStatement() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Object getObject(int i, Map<String, Class<?>> stringClassMap) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Ref getRef(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Blob getBlob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Clob getClob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Array getArray(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Object getObject(String s, Map<String, Class<?>> stringClassMap) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Ref getRef(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Blob getBlob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Clob getClob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Array getArray(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Date getDate(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Date getDate(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Time getTime(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Time getTime(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Timestamp getTimestamp(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Timestamp getTimestamp(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public URL getURL(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public URL getURL(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateRef(int i, Ref ref) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateRef(String s, Ref ref) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(int i, Blob blob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(String s, Blob blob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(int i, Clob clob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(String s, Clob clob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateArray(int i, Array array) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateArray(String s, Array array) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public RowId getRowId(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public RowId getRowId(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateRowId(int i, RowId rowId) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateRowId(String s, RowId rowId) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNString(int i, String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNString(String s, String s2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(int i, NClob nClob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(String s, NClob nClob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public NClob getNClob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public NClob getNClob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public SQLXML getSQLXML(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public SQLXML getSQLXML(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateSQLXML(int i, SQLXML sqlxml) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateSQLXML(String s, SQLXML sqlxml) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public String getNString(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public String getNString(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Reader getNCharacterStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public Reader getNCharacterStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNCharacterStream(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNCharacterStream(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateAsciiStream(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNCharacterStream(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNCharacterStream(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateAsciiStream(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateBlob(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateClob(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void updateNClob(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreQueryResultSet " +
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 }

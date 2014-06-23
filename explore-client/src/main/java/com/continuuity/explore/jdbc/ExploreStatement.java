@@ -32,6 +32,11 @@ public class ExploreStatement implements Statement {
   private int maxRows = 0;
 
   /**
+   * Add SQLWarnings to the warningChain if needed.
+   */
+  private SQLWarning warningChain = null;
+
+  /**
    * We need to keep a reference to the result set to support the following:
    * <code>
    *  statement.execute(String sql);
@@ -193,17 +198,20 @@ public class ExploreStatement implements Statement {
   @Override
   public int executeUpdate(String sql) throws SQLException {
     // We don't support writes in explore yet
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getMaxFieldSize() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setMaxFieldSize(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
@@ -219,147 +227,173 @@ public class ExploreStatement implements Statement {
 
   @Override
   public void setEscapeProcessing(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getQueryTimeout() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setQueryTimeout(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    return warningChain;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    warningChain = null;
   }
 
   @Override
   public void setCursorName(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getUpdateCount() throws SQLException {
-    throw new SQLException("Method not supported");
+    return 0;
   }
 
   @Override
   public boolean getMoreResults() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setFetchDirection(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getFetchDirection() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getResultSetConcurrency() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getResultSetType() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void addBatch(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void clearBatch() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int[] executeBatch() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean getMoreResults(int i) throws SQLException {
     // In case our client.execute returned more than one list of results, which is never the case
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public ResultSet getGeneratedKeys() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int executeUpdate(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int executeUpdate(String s, int[] ints) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int executeUpdate(String s, String[] strings) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean execute(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean execute(String s, int[] ints) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean execute(String s, String[] strings) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public int getResultSetHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isClosed() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public void setPoolable(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isPoolable() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreStatement" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 }

@@ -57,7 +57,8 @@ public class ExploreDriver implements Driver {
 
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String s, Properties properties) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported" + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @Override

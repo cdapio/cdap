@@ -48,7 +48,8 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean allProceduresAreCallable() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean allTablesAreSelectable() throws SQLException {
@@ -56,33 +57,40 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean deletesAreDetected(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getAttributes(String catalog, String schemaPattern,
                                  String typeNamePattern, String attributeNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getBestRowIdentifier(String catalog, String schema,
                                         String table, int scope, boolean nullable) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getCatalogSeparator() throws SQLException {
@@ -118,13 +126,15 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
         public <T> T getObject(String columnLabel, Class<T> type)
           throws SQLException {
           // JDK 1.7
-          throw new SQLException("Method not supported");
+          throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
         }
 
         public <T> T getObject(int columnIndex, Class<T> type)
           throws SQLException {
           // JDK 1.7
-          throw new SQLException("Method not supported");
+          throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
         }
       };
     } catch (Exception e) {
@@ -133,24 +143,28 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public ResultSet getClientInfoProperties() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getColumnPrivileges(String catalog, String schema,
                                        String table, String columnNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public ResultSet getPseudoColumns(String catalog, String schemaPattern,
                                     String tableNamePattern, String columnNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public boolean generatedKeyAlwaysReturned() throws SQLException {
     // JDK 1.7
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
 
@@ -266,13 +280,15 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
         public <T> T getObject(String columnLabel, Class<T> type)
           throws SQLException {
           // JDK 1.7
-          throw new SQLException("Method not supported");
+          throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
         }
 
         public <T> T getObject(int columnIndex, Class<T> type)
           throws SQLException {
           // JDK 1.7
-          throw new SQLException("Method not supported");
+          throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
         }
       };
     } catch (Exception e) {
@@ -403,21 +419,25 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public Connection getConnection() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getCrossReference(String primaryCatalog,
                                      String primarySchema, String primaryTable, String foreignCatalog,
                                      String foreignSchema, String foreignTable) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getDatabaseMajorVersion() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getDatabaseMinorVersion() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getDatabaseProductName() throws SQLException {
@@ -455,35 +475,42 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
 
   public ResultSet getExportedKeys(String catalog, String schema, String table)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getExtraNameCharacters() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getFunctionColumns(String arg0, String arg1, String arg2,
                                       String arg3) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getFunctions(String arg0, String arg1, String arg2)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getIdentifierQuoteString() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getImportedKeys(String catalog, String schema, String table)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getIndexInfo(String catalog, String schema, String table,
                                 boolean unique, boolean approximate) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getJDBCMajorVersion() throws SQLException {
@@ -495,15 +522,18 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public int getMaxBinaryLiteralLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxCatalogNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxCharLiteralLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   /**
@@ -515,67 +545,83 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public int getMaxColumnsInGroupBy() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxColumnsInIndex() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxColumnsInOrderBy() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxColumnsInSelect() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxColumnsInTable() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxConnections() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxCursorNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxIndexLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxProcedureNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxRowSize() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxSchemaNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxStatementLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxStatements() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxTableNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxTablesInSelect() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getMaxUserNameLength() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getNumericFunctions() throws SQLException {
@@ -584,17 +630,20 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
 
   public ResultSet getPrimaryKeys(String catalog, String schema, String table)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getProcedureColumns(String catalog, String schemaPattern,
                                        String procedureNamePattern, String columnNamePattern)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getProcedureTerm() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getProcedures(String catalog, String schemaPattern,
@@ -603,15 +652,18 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public int getResultSetHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public RowIdLifetime getRowIdLifetime() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getSQLKeywords() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public int getSQLStateType() throws SQLException {
@@ -638,13 +690,15 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
       public <T> T getObject(String columnLabel, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
 
       public <T> T getObject(int columnIndex, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
     };
 
@@ -660,12 +714,14 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
 
   public ResultSet getSuperTables(String catalog, String schemaPattern,
                                   String tableNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getSuperTypes(String catalog, String schemaPattern,
                                  String typeNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getSystemFunctions() throws SQLException {
@@ -674,7 +730,8 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
 
   public ResultSet getTablePrivileges(String catalog, String schemaPattern,
                                       String tableNamePattern) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getTableTypes() throws SQLException {
@@ -699,13 +756,15 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
       public <T> T getObject(String columnLabel, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
 
       public <T> T getObject(int columnIndex, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
     };
   }
@@ -778,13 +837,15 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
       public <T> T getObject(String columnLabel, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
 
       public <T> T getObject(int columnIndex, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
 
     };
@@ -830,7 +891,8 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public ResultSet getTypeInfo() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getUDTs(String catalog, String schemaPattern,
@@ -849,124 +911,153 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
       public <T> T getObject(String columnLabel, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
 
       public <T> T getObject(int columnIndex, Class<T> type)
         throws SQLException {
         // JDK 1.7
-        throw new SQLException("Method not supported");
+        throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
       }
     };
   }
 
   public String getURL() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public String getUserName() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public ResultSet getVersionColumns(String catalog, String schema, String table)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean insertsAreDetected(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean isCatalogAtStart() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean isReadOnly() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean locatorsUpdateCopy() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean nullPlusNonNullIsNull() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean nullsAreSortedAtEnd() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean nullsAreSortedAtStart() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean nullsAreSortedHigh() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean nullsAreSortedLow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean othersDeletesAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean othersInsertsAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean othersUpdatesAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean ownDeletesAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean ownInsertsAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean ownUpdatesAreVisible(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesLowerCaseIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesMixedCaseIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesUpperCaseIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsANSI92EntryLevelSQL() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsANSI92FullSQL() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsANSI92IntermediateSQL() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsAlterTableWithAddColumn() throws SQLException {
@@ -1006,48 +1097,59 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsConvert() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsConvert(int fromType, int toType) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsCoreSQLGrammar() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsCorrelatedSubqueries() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsDataDefinitionAndDataManipulationTransactions()
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsDifferentTableCorrelationNames() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsExpressionsInOrderBy() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsExtendedSQLGrammar() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsFullOuterJoins() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsGetGeneratedKeys() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsGroupBy() throws SQLException {
@@ -1055,39 +1157,48 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsGroupByBeyondSelect() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsGroupByUnrelated() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsIntegrityEnhancementFacility() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsLikeEscapeClause() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsLimitedOuterJoins() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsMinimumSQLGrammar() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsMixedCaseIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsMultipleOpenResults() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsMultipleResultSets() throws SQLException {
@@ -1095,11 +1206,13 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsMultipleTransactions() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsNamedParameters() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsNonNullableColumns() throws SQLException {
@@ -1107,23 +1220,28 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsOrderByUnrelated() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsOuterJoins() throws SQLException {
@@ -1140,7 +1258,8 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
 
   public boolean supportsResultSetConcurrency(int type, int concurrency)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsResultSetHoldability(int holdability)
@@ -1181,11 +1300,13 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsStatementPooling() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsStoredProcedures() throws SQLException {
@@ -1193,28 +1314,34 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsSubqueriesInComparisons() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsSubqueriesInExists() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsSubqueriesInIns() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsSubqueriesInQuantifieds() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsTableCorrelationNames() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsTransactionIsolationLevel(int level)
     throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsTransactions() throws SQLException {
@@ -1222,31 +1349,38 @@ public class ExploreDatabaseMetaData implements java.sql.DatabaseMetaData {
   }
 
   public boolean supportsUnion() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean supportsUnionAll() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean updatesAreDetected(int type) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean usesLocalFilePerTable() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean usesLocalFiles() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public <T> T unwrap(Class<T> iface) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLException("Method not supported ExploreDatabaseMetaData " + 
+      new Exception().getStackTrace()[0].getLineNumber());
   }
 
   public static void main(String[] args) throws SQLException {
