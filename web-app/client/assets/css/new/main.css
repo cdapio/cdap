@@ -245,6 +245,20 @@ progress::-moz-progress-bar {
 	border-color: #eaeaea;
 }
 
+table .lrg-width {
+	width: 600px;
+	max-width: 600px;
+}
+
+table .med-width {
+	width: 400px;
+	max-width: 400px;
+}
+
+.bolder-font {
+	font-weight: 500 !important;
+}
+
 .modal.fade.in {
 	top: 25%;
 }
@@ -461,6 +475,11 @@ a, a:visited {
 	border-bottom: 1px solid #CECED0;
 }
 
+#header-logout {
+	padding-top: 3px;
+	border-right: 0 !important;
+}
+
 #global .topmenu-top-padding {
   padding-top: 3px;
 }
@@ -482,12 +501,15 @@ a, a:visited {
 	float: right;
 	height: 36px;
 	text-decoration: none;
+	padding-right: 12px;
+	border-right: 1px solid #ccc;
 }
 
 #global .metrics-link {
 	background-image: url('/assets/img/v2/metrics_icon.png');
 	background-repeat: no-repeat;
-	padding-left: 40px;
+	padding-left: 45px;
+	padding-top: 3px;
 	white-space: nowrap;
 }
 
@@ -502,6 +524,34 @@ a, a:visited {
 	padding-left: 50px;
   padding-top: 3px;
 	white-space: nowrap;
+	border-right: 1px solid #ccc;
+}
+
+#global .user-link.small-pad {
+	padding-left: 30px;
+	color: black;
+}
+
+ul.top-dropdown-listholder {
+
+}
+
+ul.top-dropdown-listholder li {
+	
+}
+
+#global ul.top-dropdown-listholder li a { 
+	margin-left: 0px;
+	float: none;
+	text-align: center;
+	height: 30px;
+	line-height: 2em;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+#global ul.top-dropdown-listholder li a:hover {
+	color: white;
 }
 
 #global .user-link:hover {
@@ -519,7 +569,7 @@ a, a:visited {
 	background-image: url('/assets/img/v2/support_active_icon.png');
 }
 
-#global a:last-child {
+#global a:first-child {
 	border: 0;
 }
 .cloud-link {
@@ -695,6 +745,10 @@ h1 span {
 	padding: 2px 4px;
 	font-weight: normal;
 	letter-spacing: 0.1em;
+}
+
+.panel .token-table td{
+	word-wrap: break-word;
 }
 
 .app-list-count span {

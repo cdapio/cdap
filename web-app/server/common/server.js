@@ -783,7 +783,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
           request(options, function (nerr, nres, nbody) {
             if (nerr || nres.statusCode !== 200) {
-              res.locals.errorMessage = "Please specify a valid username and password";
+              res.locals.errorMessage = "Please specify a valid username and password.";
               res.redirect('/#/login');
             } else {
               var nbody = JSON.parse(nbody);
@@ -824,8 +824,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
          request(options, function (nerr, nres, nbody) {
            if (nerr || nres.statusCode !== 200) {
-             res.locals.errorMessage = "Please specify a valid username and password";
-             res.redirect('/#/accesstoken');
+             res.send(400, "Please specify a valid username and password.");
            } else {
              var nbody = JSON.parse(nbody);
              res.send(nbody);
@@ -833,6 +832,12 @@ WebAppServer.prototype.bindRoutes = function() {
          });
        }
      });
+  });
+
+  this.app.get('/download-access-token/*', function (req, res) {
+    var accessToken = req.params[0];
+    res.attachment('.continuuity.accesstoken');
+    res.end(accessToken, 'utf-8');
   });
 
   /**
