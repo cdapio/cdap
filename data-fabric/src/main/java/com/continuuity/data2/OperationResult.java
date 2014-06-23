@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data2;
 
 import com.continuuity.data.operation.StatusCode;

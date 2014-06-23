@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.common.Bytes;
@@ -10,7 +14,7 @@ import java.util.List;
  * Base class for defining a row with set of columns.
  * @param <T> implementor type - to support handy builder-like methods.
  *
- * @deprecated use {@link com.continuuity.api.dataset.table.RowColumns} instead
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.RowColumns}
  */
 @Deprecated
 public abstract class RowColumns<T> {

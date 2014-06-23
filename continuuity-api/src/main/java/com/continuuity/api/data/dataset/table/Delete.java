@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import java.util.Collection;
@@ -5,7 +9,7 @@ import java.util.Collection;
 /**
  * A Delete removes one or more or all columns from a row.
  *
- * @deprecated use {@link com.continuuity.api.dataset.table.Delete} instead
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Delete}
  */
 @Deprecated
 public class Delete extends RowColumns<Delete> {

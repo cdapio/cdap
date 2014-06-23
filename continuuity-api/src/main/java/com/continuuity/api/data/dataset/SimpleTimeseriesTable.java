@@ -100,7 +100,7 @@ import java.util.Map;
  * </ol>
  * </p>
  *
- * @deprecated use {@link com.continuuity.api.dataset.lib.TimeseriesTable} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.TimeseriesTable}
  */
 @Deprecated
 public class SimpleTimeseriesTable extends DataSet

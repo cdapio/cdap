@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.dataset.DatasetProperties;

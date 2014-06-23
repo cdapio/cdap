@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
@@ -30,7 +34,7 @@ import java.util.List;
  * Interfaces and not-static inner classes are not supported.
  * @param <T> the type of objects in the store
  *
- * @deprecated use {@link com.continuuity.api.dataset.lib.ObjectStore} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.ObjectStore}
  */
 @Deprecated
 public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>, BatchWritable<byte[], T> {

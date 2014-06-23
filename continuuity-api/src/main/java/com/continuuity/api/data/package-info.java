@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 /**
@@ -7,6 +7,6 @@
  *
  * All data access is performed via system or user defined (custom) {@link com.continuuity.api.data.DataSet DataSets}.
  *
- * @deprecated use {@link com.continuuity.api.dataset} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset}
  */
 package com.continuuity.api.data;

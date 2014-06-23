@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data;
 
 import com.google.common.base.Preconditions;
@@ -23,8 +27,8 @@ import java.io.Closeable;
  * <li>Hence every DataSet must implement a configure() method and a
  *   constructor from DataSetSpecification.</li>
  *
- * @deprecated use {@link com.continuuity.api.dataset.Dataset} or {@link com.continuuity.api.dataset.DatasetDefinition}
- * instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.Dataset}
+ *             or {@link com.continuuity.api.dataset.DatasetDefinition}
  */
 @Deprecated
 public abstract class DataSet implements Closeable {

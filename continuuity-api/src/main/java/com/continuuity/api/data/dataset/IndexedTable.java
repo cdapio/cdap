@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Property;
@@ -27,7 +31,7 @@ import java.util.Arrays;
  * require multiple writes, and we want to make sure they are all committed
  * together).
  *
- * @deprecated use {@link com.continuuity.api.dataset.lib.IndexedTable} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.IndexedTable}
  */
 @Deprecated
 public class IndexedTable extends DataSet {

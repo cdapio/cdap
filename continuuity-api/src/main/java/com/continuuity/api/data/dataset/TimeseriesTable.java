@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Defines simple timeseries dataset.
  *
- * @deprecated use {@link com.continuuity.api.dataset.lib.TimeseriesTable} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.TimeseriesTable}
  */
 @Deprecated
 public interface TimeseriesTable {

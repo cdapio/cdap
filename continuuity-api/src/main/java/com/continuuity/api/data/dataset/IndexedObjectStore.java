@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
@@ -22,7 +26,7 @@ import java.util.TreeSet;
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
  * @param <T> the type of objects in the store
  *
- * @deprecated use {@link com.continuuity.api.dataset.lib.IndexedObjectStore} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.IndexedObjectStore}
  */
 @Deprecated
 public class IndexedObjectStore<T> extends DataSet {

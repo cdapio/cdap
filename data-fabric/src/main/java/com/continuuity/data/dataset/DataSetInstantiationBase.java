@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
@@ -43,8 +47,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
- * built-in data sets.
+ * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
+ * built-in datasets.
  */
 public class DataSetInstantiationBase {
 

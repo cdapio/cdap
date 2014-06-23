@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.common.Bytes;
@@ -20,7 +24,7 @@ import java.util.Map;
  *   </li>
  * </ul>
  *
- * @deprecated use {@link com.continuuity.api.dataset.table.Increment} instead
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Increment}
  */
 @Deprecated
 public class Increment {

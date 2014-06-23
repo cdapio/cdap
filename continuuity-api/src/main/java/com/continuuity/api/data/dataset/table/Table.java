@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.annotation.Beta;
@@ -16,7 +20,7 @@ import javax.annotation.Nullable;
  * This is the DataSet implementation of named tables -- other DataSets can be
  * defined by embedding instances of {@link Table} (and other DataSets).
  *
- * @deprecated use {@link com.continuuity.api.dataset.table.Table} instead.
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Table}
  */
 @Deprecated
 public class Table extends DataSet implements
