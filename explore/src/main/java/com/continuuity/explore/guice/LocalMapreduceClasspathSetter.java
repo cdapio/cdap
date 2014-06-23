@@ -49,6 +49,11 @@ public class LocalMapreduceClasspathSetter {
 
     String hadoopBin = hiveConf.get(HiveConf.ConfVars.HADOOPBIN.toString());
 
+    // We over-ride HADOOPBIN setting in HiveConf to the script below, so that Hive uses this script to execute
+    // map reduce jobs.
+    // The below script updates HADOOP_CLASSPATH to contain hbase-protocol jar for RunJar commands,
+    // so that the right version of protocol buffer jar gets loaded for HBase.
+    // It then calls the real Hadoop bin with the same arguments.
     StringBuilder fileBuilder = new StringBuilder();
     fileBuilder.append("#!/usr/bin/env bash\n");
     fileBuilder.append("# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n");
