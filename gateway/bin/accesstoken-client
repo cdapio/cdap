@@ -42,7 +42,7 @@ if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-auth_file="$bin/access_token"
+auth_file="$HOME/.continuuity.accesstoken"
 containsTokenFileArg=0
 for var in "$@"
 do
