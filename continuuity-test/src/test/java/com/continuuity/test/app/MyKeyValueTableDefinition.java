@@ -33,8 +33,10 @@ public class MyKeyValueTableDefinition
   }
 
   @Override
-  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-    return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(), getDataset("table", Table.class, spec));
+  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+                                                            ClassLoader classLoader) throws IOException {
+    return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
+                                                       getDataset("table", Table.class, spec, classLoader));
   }
 
   /**

@@ -34,6 +34,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -72,6 +73,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -173,7 +175,22 @@ public class ServiceTwillRunnable implements TwillRunnable {
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
-      delegate.initialize(context);
+
+      List<String> appArgList = Lists.newArrayList();
+      Arguments userargs = programOpts.getUserArguments();
+      for (Map.Entry<String, String> kv : userargs) {
+        appArgList.add(kv.getKey());
+        appArgList.add(kv.getValue());
+      }
+
+      final String[] argArray = appArgList.toArray(new String[appArgList.size()]);
+      delegate.initialize(new ForwardingTwillContext(context) {
+        @Override
+        public String[] getApplicationArguments() {
+          return argArray;
+        }
+      });
+
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);

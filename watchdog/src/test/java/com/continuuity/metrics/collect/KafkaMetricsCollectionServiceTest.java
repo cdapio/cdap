@@ -15,6 +15,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metrics.transport.MetricsRecord;
+import com.continuuity.test.SlowTests;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -32,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Category(SlowTests.class)
 public class KafkaMetricsCollectionServiceTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionServiceTest.class);

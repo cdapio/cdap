@@ -105,6 +105,8 @@ set_classpath()
     HBASE_CP=`hbase classpath`
   fi
 
+  export HBASE_CP
+
   if [ -n "$HBASE_CP" ]; then
     CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   else
@@ -154,8 +156,8 @@ set_hive_classpath() {
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
     HIVE_CLASSPATH=$HIVE_CLASSPATH:$HIVE_EXEC:$OTHER_HIVE_JARS
 
-    # Remove leading and ending ':'
-    HIVE_CLASSPATH=${HIVE_CLASSPATH:1:${#HIVE_CLASSPATH}-2}
+    # Remove leading and ending ':' and add hbase classpath
+    HIVE_CLASSPATH=${HIVE_CLASSPATH:1:${#HIVE_CLASSPATH}-2}:$HBASE_CP
     echo $HIVE_CLASSPATH
     export HIVE_CLASSPATH
   fi

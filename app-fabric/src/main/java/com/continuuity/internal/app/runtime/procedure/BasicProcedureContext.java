@@ -11,9 +11,11 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -24,6 +26,7 @@ import java.util.Map;
  */
 final class BasicProcedureContext extends AbstractContext implements ProcedureContext {
 
+  private final String accountId;
   private final String procedureId;
   private final int instanceId;
   private volatile int instanceCount;
@@ -33,12 +36,14 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureLoggingContext procedureLoggingContext;
   private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
-                        Map<String, Closeable> datasets,
-                        Arguments runtimeArguments, ProcedureSpecification procedureSpec,
-                        MetricsCollectionService collectionService) {
+                        Map<String, Closeable> datasets, Arguments runtimeArguments,
+                        ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
+                        ProgramServiceDiscovery serviceDiscovery) {
     super(program, runId, datasets);
+    this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
@@ -47,6 +52,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
     this.systemMetrics = getMetricsCollector(MetricsScope.REACTOR, collectionService, getMetricsContext());
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -104,5 +110,10 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       arguments.put(it.next());
     }
     return arguments.build();
+  }
+
+  @Override
+  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
+    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 }

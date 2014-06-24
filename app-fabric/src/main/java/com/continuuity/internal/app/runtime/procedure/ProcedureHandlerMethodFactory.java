@@ -147,6 +147,8 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       } catch (TransactionFailureException e) {
         Throwable cause = e.getCause() == null ? e : e.getCause();
         LOG.error("Procedure throws exception during destroy.", cause);
+      } catch (InterruptedException e) {
+        // nothing to do: shutting down
       } finally {
         context.close();
       }

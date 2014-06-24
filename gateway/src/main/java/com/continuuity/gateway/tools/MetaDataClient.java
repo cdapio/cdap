@@ -1,20 +1,17 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.util.Arrays;
@@ -24,12 +21,7 @@ import java.util.List;
 /**
  * Command line meta data client.
  */
-public class MetaDataClient {
-
-  static {
-    // this turns off all logging but we don't need that for a cmdline tool
-    Logger.getRootLogger().setLevel(Level.OFF);
-  }
+public class MetaDataClient extends ClientToolBase {
 
   /**
    * for debugging. should only be set to true in unit tests.
@@ -37,199 +29,117 @@ public class MetaDataClient {
    */
   public static boolean debug = false;
 
-  boolean help = false;          // whether --help was there
-  boolean verbose = false;       // for debug output
-
-  String hostname = null;        // the hostname of the gateway
-  int port = -1;                 // the port of the gateway
-  String apikey = null;          // the api key for authentication.
+  private static final String APP_OPTION = "app";
+  private static final String TYPE_OPTION = "type";
+  private static final String ID_OPTION = "id";
+  private static final String FILTER_OPTION = "filter";
+  private static final String VALUE_OPTION = "value";
 
   String command = null;         // the command to run
-
   String app = null;             // the application to inspect, optional
   String type = null;            // the type of entries
   String id = null;              // the id of the entry to show, optional
 
-  boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
-
   LinkedList<String> filters = Lists.newLinkedList(); // filter fields
   LinkedList<String> values = Lists.newLinkedList();  // corresponding values
 
-  /**
-   * Print the usage statement and return null (or empty string if this is not
-   * an error case). See getValue() for an explanation of the return type.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws com.continuuity.common.utils.UsageException
-   *          in case of error
-   */
-  void usage(boolean error) {
+  public MetaDataClient() {
+    super("meta-client");
+  }
+
+  public MetaDataClient(String toolName) {
+    super(toolName);
+  }
+
+  @Override
+  protected void addOptions(Options options) {
+    options.addOption(OptionBuilder.withLongOpt(FILTER_OPTION)
+                        .hasArg(true)
+                        .withDescription("To specify a field to filter on")
+                        .create());
+    options.addOption(OptionBuilder.withLongOpt(VALUE_OPTION)
+                        .hasArg(true)
+                        .withDescription("To specify a value to filter on")
+                        .create());
+    options.addOption(null, APP_OPTION, true, "To specify the application to inspect");
+    options.addOption(null, TYPE_OPTION, true, "To specify the type of entries");
+    options.addOption(null, ID_OPTION, true, "The id of the entry to show");
+  }
+
+  @Override
+  public void printUsageTop(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    String name = "meta-client";
-    if (System.getProperty("script") != null) {
-      name = System.getProperty("script").replaceAll("[./]", "");
-    }
     out.println("Usage: ");
-    out.println("  " + name + " list [ --application <id> ] --type <name>");
-    out.println("  " + name + " read [ --application <id> ] --type <name> --id <id>");
-    out.println();
-    out.println("Additional options:");
-    out.println("  --filter <name>         To specify a field to filter on");
-    out.println("  --value <name>          To specify a value to filter on");
-    out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --port <number>         To specify the port to use");
-    out.println("  --apikey <apikey>       To specify an API key for authentication");
-    out.println("  --verbose               To see more verbose output");
-    out.println("  --help                  To print this message");
-    if (error) {
-      throw new UsageException();
-    }
+    out.println("\t" + getToolName() + " list [ --application <id> ] --type <name>");
+    out.println("\t" + getToolName() + " read [ --application <id> ] --type <name> --id <id>\n");
   }
 
-  /**
-   * Print an error message followed by the usage statement.
-   *
-   * @param errorMessage the error message
-   */
-  void usage(String errorMessage) {
-    if (errorMessage != null) {
-      System.err.println("Error: " + errorMessage);
-    }
-    usage(true);
-  }
-
-  /**
-   * Parse the command line arguments.
-   */
-  void parseArguments(String[] args) {
-    if (args.length == 0) {
-      usage(true);
-    }
-    if ("--help".equals(args[0])) {
-      usage(false);
-      help = true;
-      return;
-    } else {
-      command = args[0];
-    }
-    // go through all the arguments
-    for (int pos = 1; pos < args.length; pos++) {
-      String arg = args[pos];
-      if ("--host".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        hostname = args[pos];
-      } else if ("--port".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        try {
-          port = Integer.parseInt(args[pos]);
-        } catch (NumberFormatException e) {
-          usage(true);
-        }
-      } else if ("--apikey".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        apikey = args[pos];
-      } else if ("--application".equals(arg) || "--app".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        app = args[pos];
-      } else if ("--type".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        type = args[pos];
-      } else if ("--id".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        id = args[pos];
-      } else if ("--filter".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        filters.add(args[pos]);
-      } else if ("--value".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        values.add(args[pos]);
-      } else if ("--verbose".equals(arg)) {
-        verbose = true;
-      } else if ("--help".equals(arg)) {
-        help = true;
-        usage(false);
-        return;
-      } else {  // unkown argument
-        usage(true);
+  @Override
+  protected boolean parseAdditionalArguments(CommandLine line) {
+    if (line.hasOption(FILTER_OPTION)) {
+      String[] filterList = line.getOptionValues(FILTER_OPTION);
+      for (int i = 0; i < filterList.length; ++i) {
+        filters.add(filterList[i]);
       }
     }
+    if (line.hasOption(VALUE_OPTION)) {
+      String[] valueList = line.getOptionValues(VALUE_OPTION);
+      for (int i = 0; i < valueList.length; ++i) {
+        values.add(valueList[i]);
+      }
+    }
+    app = line.getOptionValue(APP_OPTION, null);
+    type = line.getOptionValue(TYPE_OPTION, null);
+    id = line.getOptionValue(ID_OPTION, null);
+    // should have 1 arg remaining, the command which is positional
+    String[] remaining = line.getArgs();
+    if (remaining.length != 1) {
+      return false;
+    }
+    command = remaining[0];
+    return true;
   }
 
-  static List<String> supportedCommands =
-    Arrays.asList("list", "read");
+  static List<String> supportedCommands = Arrays.asList("list", "read");
 
-  void validateArguments(String[] args) {
-    // first parse command arguments
-    parseArguments(args);
-    if (help) {
-      return;
-    }
-
-    // first validate the command
+  @Override
+  protected String validateArguments() {
     if (!supportedCommands.contains(command)) {
-      usage("Unsupported command '" + command + "'.");
+      return "Please provide a valid command.";
     }
-
     if (type == null) {
-      usage("--type must be specified");
+      return "--type must be specified";
     }
     if ("read".equals(command)) {
       if (id == null) {
-        usage("--id must be specified");
+        return "--id must be specified";
       }
       if (!filters.isEmpty()) {
-        usage("--filter is not allowed with read");
+        return "--filter is not allowed with read";
       }
     } else {
       if (id != null) {
-        usage("--id is not alllowed with list");
+        return "--id is not alllowed with list";
       }
     }
     if (filters.size() != values.size()) {
-      usage("number of --filter and --value does not match");
+      return "number of --filter and --value does not match";
     }
+    return null;
   }
 
-  public String execute0(String[] args, CConfiguration config) {
-    // parse and validate arguments
-    validateArguments(args);
-    if (help) {
-      return "";
-    }
-
+  protected String execute(CConfiguration config) {
     boolean useSsl = !forceNoSSL && (apikey != null);
-    // TODO
-    String baseUrl = "MetaDataClient should be re-implemented towards new gateway";
-    // = Util.findBaseUrl(config, MetaDataRestAccessor.class, null, hostname, port, useSsl);
+    String baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, useSsl);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
-                           "Please use --host and --port to specify.");
+                         "Please use --host and --port to specify.");
       return null;
     } else {
       if (verbose) {
         System.out.println("Using base URL: " + baseUrl);
       }
     }
-
-    // prepare for HTTP
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response;
 
     // construct the full URL and verify its well-formedness
     try {
@@ -254,27 +164,30 @@ public class MetaDataClient {
       sep = "&";
     }
     HttpGet get = new HttpGet(requestUri);
-    if (apikey != null) {
-      get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
-    }
+    HttpClient client = new DefaultHttpClient();
+
     try {
-      response = client.execute(get);
+      HttpResponse response = sendHttpRequest(client, get, null);
+      if (printResponse(response) == null) {
+        return null;
+      }
+      return "OK.";
+    } finally {
       client.getConnectionManager().shutdown();
-    } catch (IOException e) {
-      System.err.println("Error sending HTTP request: " + e.getMessage());
-      return null;
     }
-    if (!checkHttpStatus(response)) {
-      return null;
-    }
-    if (printResponse(response) == null) {
-      return null;
-    }
-    return "OK.";
   }
 
+  /**
+   * Prints the contents of HTTP response if it is not null.
+   *
+   * @param response The HttpResponse to print
+   * @return String specifying whether the procedure succeeded or null otherwise.
+   */
   public String printResponse(HttpResponse response) {
     // read the binary value from the HTTP response
+    if (response == null) {
+      return null;
+    }
     byte[] binaryResponse = Util.readHttpResponse(response);
     if (binaryResponse == null) {
       return null;
@@ -282,41 +195,6 @@ public class MetaDataClient {
     // now make returned value available to user
     System.out.println(new String(binaryResponse, Charsets.UTF_8));
     return "OK.";
-  }
-
-  /**
-   * Check whether the Http return code is positive. If not, print the error
-   * message and return false. Otherwise, if verbose is on, print the response
-   * status line.
-   *
-   * @param response the HTTP response
-   * @return whether the response indicates success
-   */
-  boolean checkHttpStatus(HttpResponse response) {
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      if (verbose) {
-        System.out.println(response.getStatusLine());
-      } else {
-        System.err.println(response.getStatusLine().getReasonPhrase());
-      }
-      return false;
-    }
-    if (verbose) {
-      System.out.println(response.getStatusLine());
-    }
-    return true;
-  }
-
-  public String execute(String[] args, CConfiguration config) {
-    try {
-      return execute0(args, config);
-    } catch (UsageException e) {
-      if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
-        e.printStackTrace(System.err);
-      }
-    }
-    return null;
   }
 
   /**

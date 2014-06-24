@@ -33,6 +33,7 @@
     <module>HelloWorld</module>
     <module>PageViewAnalytics</module>
     <module>Purchase</module>
+    <module>PurchaseAnalytics</module>
     <module>ResourceSpammer</module>
     <module>ResponseCodeAnalytics</module>
     <module>SimpleWriteAndRead</module>
@@ -65,6 +66,24 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
+        <configuration>
+          <argLine>-Xmx2048m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
+          <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
+          <reuseForks>false</reuseForks>
+          <reportFormat>plain</reportFormat>
+          <systemPropertyVariables>
+            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+          </systemPropertyVariables>
+          <includes>
+            <include>**/*TestsSuite.java</include>
+            <include>**/Test*.java</include>
+            <include>**/*Test.java</include>
+            <include>**/*TestCase.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*TestRun.java</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -98,6 +117,11 @@
       <artifactId>continuuity-api</artifactId>
       <version>${continuuity.reactor.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>http</artifactId>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

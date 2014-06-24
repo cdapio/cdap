@@ -39,12 +39,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * Guice runtime module for the explore functionality.
  */
 public class ExploreRuntimeModule extends RuntimeModule {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreRuntimeModule.class);
 
   @Override
   public Module getInMemoryModules() {
@@ -79,8 +81,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
   }
 
   private static final class ExploreLocalModule extends PrivateModule {
-    private static final Logger LOG = LoggerFactory.getLogger(ExploreLocalModule.class);
-
     private final boolean isInMemory;
 
     public ExploreLocalModule(boolean isInMemory) {
@@ -165,10 +165,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         bind(ExploreService.class).to(Hive12ExploreService.class).in(Scopes.SINGLETON);
         expose(ExploreService.class);
 
-        String auxJarsPath = generateAuxJarsClasspath();
-        System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), auxJarsPath);
-        LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
-                  System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+        setupClasspath();
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
         System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
@@ -179,45 +176,72 @@ public class ExploreRuntimeModule extends RuntimeModule {
         throw Throwables.propagate(e);
       }
     }
+  }
 
-    private String generateAuxJarsClasspath() throws IOException {
-      // Here we find the transitive dependencies and remove all paths that come from the boot class path -
-      // those paths are not needed because the new JVM will have them in its boot class path.
-      // It could even be wrong to keep them because in the target container, the boot class path may be different
-      // (for example, if Hadoop uses a different Java version than Reactor).
+  private static void setupClasspath() throws IOException {
+    // Here we find the transitive dependencies and remove all paths that come from the boot class path -
+    // those paths are not needed because the new JVM will have them in its boot class path.
+    // It could even be wrong to keep them because in the target container, the boot class path may be different
+    // (for example, if Hadoop uses a different Java version than Reactor).
 
-      final Set<URL> uris = Sets.newHashSet();
-
-      ImmutableSet.Builder<String> builder = ImmutableSet.builder();
-      for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
-        File file = new File(classpath);
-        builder.add(file.getAbsolutePath());
-        try {
-          builder.add(file.getCanonicalPath());
-        } catch (IOException e) {
-          LOG.warn("Could not add canonical path to aux class path for file {}", file.toString(), e);
-        }
+    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+      File file = new File(classpath);
+      builder.add(file.getAbsolutePath());
+      try {
+        builder.add(file.getCanonicalPath());
+      } catch (IOException e) {
+        LOG.warn("Could not add canonical path to aux class path for file {}", file.toString(), e);
       }
-
-      final Set<String> bootstrapClassPaths = builder.build();
-      Dependencies.findClassDependencies(
-          this.getClass().getClassLoader(),
-          new Dependencies.ClassAcceptor() {
-            @Override
-            public boolean accept(String className, URL classUrl, URL classPathUrl) {
-              if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
-                return false;
-              }
-
-              uris.add(classPathUrl);
-              return true;
-            }
-          },
-          DatasetServiceClient.class.getCanonicalName(), DatasetStorageHandler.class.getCanonicalName(),
-          new HBaseTableUtilFactory().get().getClass().getCanonicalName()
-      );
-
-      return Joiner.on(',').join(uris);
     }
+
+    Set<String> bootstrapClassPaths = builder.build();
+
+    Set<String> hBaseTableDeps = traceDependencies(new HBaseTableUtilFactory().get().getClass().getCanonicalName(),
+                                                   bootstrapClassPaths);
+
+    // Note the order of dependency jars is important so that HBase jars come first in the classpath order
+    // LinkedHashSet maintains insertion order while removing duplicate entries.
+    Set<String> orderedDependencies = new LinkedHashSet<String>();
+    orderedDependencies.addAll(hBaseTableDeps);
+    orderedDependencies.addAll(traceDependencies(DatasetServiceClient.class.getCanonicalName(), bootstrapClassPaths));
+    orderedDependencies.addAll(traceDependencies(DatasetStorageHandler.class.getCanonicalName(), bootstrapClassPaths));
+
+    System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependencies));
+    LOG.info("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
+             System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
+
+    // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
+    LocalMapreduceClasspathSetter classpathSetter =
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"));
+    for (String jar : hBaseTableDeps) {
+      classpathSetter.accept(jar);
+    }
+    classpathSetter.setupClasspathScript();
+  }
+
+  private static Set<String> traceDependencies(String className, final Set<String> bootstrapClassPaths)
+    throws IOException {
+    final Set<String> jarFiles = Sets.newHashSet();
+
+    Dependencies.findClassDependencies(
+      ExploreRuntimeModule.class.getClassLoader(),
+      new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+            return false;
+          }
+
+          // Note: the class path entries need to be prefixed with "file://" for the jars to work when
+          // Hive starts local map-reduce job.
+          jarFiles.add("file://" + classPathUrl.getFile());
+          return true;
+        }
+      },
+      className
+    );
+
+    return jarFiles;
   }
 }

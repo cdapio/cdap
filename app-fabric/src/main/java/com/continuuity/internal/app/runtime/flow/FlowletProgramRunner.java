@@ -59,6 +59,7 @@ import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
@@ -116,18 +117,22 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final StreamCoordinator streamCoordinator;
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   @Inject
-  public FlowletProgramRunner(SchemaGenerator schemaGenerator, DatumWriterFactory datumWriterFactory,
+  public FlowletProgramRunner(SchemaGenerator schemaGenerator,
+                              DatumWriterFactory datumWriterFactory,
                               DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
                               QueueReaderFactory queueReaderFactory,
-                              MetricsCollectionService metricsCollectionService) {
+                              MetricsCollectionService metricsCollectionService,
+                              ProgramServiceDiscovery serviceDiscovery) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.streamCoordinator = streamCoordinator;
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @SuppressWarnings("unused")
@@ -186,9 +191,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
                                                runId, instanceCount,
                                                DataSets.createDataSets(dataSetContext, flowletDef.getDatasets()),
-                                               options.getUserArguments(),
-                                               flowletDef.getFlowletSpec(),
-                                               metricsCollectionService);
+                                               options.getUserArguments(), flowletDef.getFlowletSpec(),
+                                               metricsCollectionService, serviceDiscovery);
 
       // hack for propagating metrics collector to datasets
       if (dataSetContext instanceof DataSetInstantiationBase) {

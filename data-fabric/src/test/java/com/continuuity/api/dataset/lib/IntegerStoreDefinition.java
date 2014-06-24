@@ -31,14 +31,14 @@ public class IntegerStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("table"), classLoader);
   }
 
   @Override
-  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec);
+    KeyValueTable table = tableDef.getDataset(kvTableSpec, classLoader);
 
     try {
       return new IntegerStore(spec.getName(), table);
