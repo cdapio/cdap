@@ -12,6 +12,9 @@ import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.StickyEndpointStrategy;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
@@ -58,6 +61,7 @@ import com.continuuity.test.internal.TestMetricsCollectionService;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -360,16 +364,14 @@ public class ReactorTestBase {
     // this makes sure the Explore JDBC driver is loaded
     Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
 
-    InetSocketAddress address = null;
-    ServiceDiscovered discovered = discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-    for (Discoverable discoverable : discovered) {
-      address = discoverable.getSocketAddress();
-    }
+    Discoverable discoverable = new StickyEndpointStrategy(
+      discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
-    if (null == address) {
+    if (null == discoverable) {
       throw new IOException("Explore service could not be discovered.");
     }
 
+    InetSocketAddress address = discoverable.getSocketAddress();
     String host = address.getHostName();
     int port = address.getPort();
 
