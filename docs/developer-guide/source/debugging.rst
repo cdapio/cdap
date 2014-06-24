@@ -162,6 +162,33 @@ the counts::
 
 The assertion will verify that the correct result was received.
 
+Validating Test Data with SQL
+-----------------------------
+Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
+in the test case are record-scannable [DOCNOTE: add a reference to the programming guide section - how?]. This can be
+done using a JDBC connection obtained from the test base::
+
+  // Obtain a JDBC connection
+  Connection connection = getQueryClient();
+  try {
+      // run a query over the dataset
+      results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      results.close();
+      connection.close();
+    }
+
+The JDBC connection does not implement the full JDBC functionality: It does not allow variable replacement and also
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: You can create
+or prepare statements and execute queries, then iterate over the results set and validate its correctness.
+
+
 Debugging Reactor Applications
 ==============================
 
