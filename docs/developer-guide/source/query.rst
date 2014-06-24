@@ -17,20 +17,20 @@ Procedures are a programmatic way to access and query the data in your DataSets.
 a DataSet in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your DataSet fulfills
 two requirements:
 
-* it defines the schema for each row; and
-* it has a method to scan its data row by row.
+* it defines the schema for each record; and
+* it has a method to scan its data record by record.
 
-For Reactor DataSets, this is done by implementing the ``RowScannable`` interface. Many Reactor built-in
+For Reactor DataSets, this is done by implementing the ``RecordScannable`` interface. Many Reactor built-in
 DataSets already implement this, including ``KeyValueTable`` and ``ObjectStore``. 
 [DOCNOTE: Can we list which ones do and/or which ones don't?]
-Let's take a closer look at the ``RowScannable`` interface.
+Let's take a closer look at the ``RecordScannable`` interface.
 
-Defining the Row Schema
------------------------
-The row schema is given by returning the Java type of each row, and the Reactor will derive the row schema from
+Defining the Record Schema
+--------------------------
+The record schema is given by returning the Java type of each record, and the Reactor will derive the record schema from
 that type::
 
-	Type getRowType();
+	Type getRecordType();
 
 For example, suppose you have a class ``Entry`` defined as::
 
@@ -40,28 +40,43 @@ For example, suppose you have a class ``Entry`` defined as::
 	  ...
 	} 
 
-You can implement a row-scannable DataSet that uses ``Entry`` as the row type::
+You can implement a record-scannable DataSet that uses ``Entry`` as the record type::
 
-	class MyDataset ... implements RowScannable<Entry> {
+	class MyDataset ... implements RecordScannable<Entry> {
 	  ...
-	  public Type getRowType() {
+	  public Type getRecordType() {
 	    return Entry.class;
 	  } 
       
-Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the row type.
-The Reactor will use reflection to infer a SQL-style row schema from the row type. 
+Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the record type.
+The Reactor will use reflection to infer a SQL-style schema from the record type.
 
 In the case of the above class ``Entry``, the schema will be::
 
 	(key STRING, value INT)
 
-Note that the row type must be that of an actual Java class, not an interface. The same applies to the types of any
-fields contained in the type. The reason is that interfaces only define methods but not fields; hence, reflection
-would not be able to derive any fields or types from the interface.
+Limitations
+-----------
 
-The one exception to this rule is that Java collections such as ``List`` and ``Set`` are supported as well as
-Java ``Map``. This is possible because these interfaces are so commonly used that they deserve special handling.
-These interfaces are parameterized and require special care as described in the next section.
+* The record type must be that of an actual Java class, not an interface. The same applies to the types of any
+  fields contained in the type. The reason is that interfaces only define methods but not fields; hence, reflection
+  would not be able to derive any fields or types from the interface.
+
+  The one exception to this rule is that Java collections such as ``List`` and ``Set`` are supported as well as
+  Java ``Map``. This is possible because these interfaces are so commonly used that they deserve special handling.
+  These interfaces are parameterized and require special care as described in the next section.
+
+* A dataset can only be used in ad-hoc queries if its record type is completely contained in the dataset definition.
+  This means that if the record type is or contains a parametrized type, then the type parameters must be present in
+  the dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
+  If a type parameter depends on the jar file of the application that created the dataset, then this jar file is not
+  available to the query execution runtime.
+
+  For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
+  the application jar. However, if you define your own dataset type ``MyObjectStore`` that extends or encapsulates an
+  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``. See the
+  Purchase application for an example.
+
 
 Parameterized Types
 -------------------
@@ -75,15 +90,15 @@ and value::
 	  ...
 	} 
 
-We should easily be able to implement ``RowScannable<GenericEntry<String, Integer>>`` by defining ``getRowType()``.
+We should easily be able to implement ``RecordScannable<GenericEntry<String, Integer>>`` by defining ``getRecordType()``.
 However, due to Java's runtime type erasure, returning ``GenericEntry.class`` does not convey complete information
-about the row type. With reflection, the Reactor can only determine the names of the two fields, but not their types.
+about the record type. With reflection, the Reactor can only determine the names of the two fields, but not their types.
 
 To convey information about the type parameters, we must instead return a ``ParameterizedType``, which Java's
 ``Class`` does not implement. An easy way is to use Guava's ``TypeToken``::
 
-	class MyDataset ... implements RowScannable<GenericEntry<String, Integer>>
-	  public Type getRowType() {
+	class MyDataset ... implements RecordScannable<GenericEntry<String, Integer>>
+	  public Type getRecordType() {
 	    return new TypeToken<GenericEntry<String, Integer>>() { }.getType();
 	  } 
 
@@ -93,9 +108,9 @@ erasure.
 Complex Types
 -------------
 
-Your row type can also contain nested structures, lists, or maps, and they will be mapped to type names as defined in
+Your record type can also contain nested structures, lists, or maps, and they will be mapped to type names as defined in
 the `Hive language manual <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_. For example, if
-your row type is defined as::
+your record type is defined as::
 
   class Movie {
     String title;
@@ -110,23 +125,23 @@ The SQL schema of the dataset would be::
 
 Refer to the Hive language manual for more details on schema and data types.
 
-Scanning Rows
--------------
-The second requirement for enabling SQL queries over a DataSet is to provide a means of scanning the DataSet row
-by row. Similar to how the ``BatchReadable`` interface makes DataSets readable by Map/Reduce jobs by iterating
-over pairs of key and value, ``RowScannable`` iterates over rows. You need to implement a method to partition the
-DataSet into splits, and an additional method to create a row scanner for each split::
+Scanning Records
+----------------
+The second requirement for enabling SQL queries over a DataSet is to provide a means of scanning the DataSet record
+by record. Similar to how the ``BatchReadable`` interface makes DataSets readable by Map/Reduce jobs by iterating
+over pairs of key and value, ``RecordScannable`` iterates over records. You need to implement a method to partition the
+DataSet into splits, and an additional method to create a record scanner for each split::
 
       List<Split> getSplits();
-      SplitRowScanner<ROW> createSplitScanner(Split split);
+      RecordScanner<RECORD> createSplitRecordScanner(Split split);
 
-The ``SplitRowScanner`` is very similar to a ``SplitReader``; except that instead of ``nextKeyValue()``,
-``getCurrentKey()``, and ``getCurrentValue()``, it implements ``nextRow()`` and ``getCurrentRow()``. 
+The ``RecordScanner`` is very similar to a ``SplitReader``; except that instead of ``nextKeyValue()``,
+``getCurrentKey()``, and ``getCurrentValue()``, it implements ``nextRecord()`` and ``getCurrentRecord()``.
 
 Typically, you do not implement these methods from scratch but rely on the ``BatchReadable``
 implementation of the underlying Tables and DataSets. For example, if your DataSet is backed by a ``Table``::
 
-	class MyDataset implements Dataset, RowScannable<Entry> {
+	class MyDataset implements Dataset, RecordScannable<Entry> {
 	
 	  private Table table;
 	  private static final byte[] VALUE_COLUMN = { 'c' };
@@ -136,7 +151,7 @@ implementation of the underlying Tables and DataSets. For example, if your DataS
 	  // ...
 	
 	  @Override
-	  public Type getRowType() {
+	  public Type getRecordType() {
 	    return Entry.class;
 	  }
 	
@@ -146,23 +161,23 @@ implementation of the underlying Tables and DataSets. For example, if your DataS
 	  }
 	
 	  @Override
-	  public SplitRowScanner<Entry> createSplitScanner(Split split) {
+	  public RecordScanner<Entry> createSplitRecordScanner(Split split) {
 
 	    final SplitReader<byte[], Row> reader = table.createSplitReader(split);
 
-	    return new SplitRowScanner<Entry>() {
+	    return new RecordScanner<Entry>() {
 	      @Override
 	      public void initialize(Split split) {
 	        reader.initialize(split);
 	      }
 	
 	      @Override
-	      public boolean nextRow() {
+	      public boolean nextRecord() {
 	        return reader.nextKeyValue();
 	      }
 	
 	      @Override
-	      public Entry getCurrentRow()  {
+	      public Entry getCurrentRecord()  {
 	        return new Entry(
 	          Bytes.toString(reader.getCurrentKey()),
 	          reader.getCurrentValue().getInt(VALUE_COLUMN));
@@ -178,35 +193,33 @@ implementation of the underlying Tables and DataSets. For example, if your DataS
 	}
 
 While this is straightforward, it is even easier if your DataSet already implements ``BatchReadable``.
-In that case, you can reuse its implementation of ``getSplits()`` and implement the split row scanner
+In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
 with a helper method [DOCNOTE: what's the import?]
-(``Scannables.splitRowScanner``) already defined by Reactor. It takes a split reader and a ``RowMaker``
+(``Scannables.splitRecordScanner``) already defined by Reactor. It takes a split reader and a ``RecordMaker``
 that transforms a key and value, as produced by the ``BatchReadable``'s split reader,
-into a row [DOCNOTE: this example is confusing, because the ``Row`` is actually the value type of the batch readable,
-whereas ``Entry`` is the row type of the row scannable. This is because our built-in Table dataset uses a class named
-``Row`` for its values, which has nothing to do with the ROW type parameter of row scannable...]::
+into a record::
 
 	@Override
-	public SplitRowScanner<Entry> createSplitScanner(Split split) {
-	  return Scannables.splitRowScanner(
+	public RecordScanner<Entry> createSplitRecordScanner(Split split) {
+	  return Scannables.splitRecordScanner(
 	    table.createSplitReader(split),
-	    new Scannables.RowMaker<byte[], Row, Entry>() {
+	    new Scannables.RecordMaker<byte[], Row, Entry>() {
 	      @Override
-	      public Entry makeRow(byte[] key, Row row) {
+	      public Entry makeRecord(byte[] key, Row row) {
 	        return new Entry(Bytes.toString(key), row.getInt(VALUE_COLUMN));
 	      }
 	    });
 	}
 
-Note there is an even simpler helper (``Scannables.valueRowScanner``) that derives a split
-row scanner from a split reader. For each key and value returned by the split reader it ignores the key
+Note there is an even simpler helper (``Scannables.valueRecordScanner``) that derives a split
+record scanner from a split reader. For each key and value returned by the split reader it ignores the key
 and returns each the value. For example,
-if your dataset implements ``BatchReadable<String, Employee>``, then you can implement ``RowScannable<Employee>`` by
+if your dataset implements ``BatchReadable<String, Employee>``, then you can implement ``RecordScannable<Employee>`` by
 defining::
 
 	@Override
-	public SplitRowScanner<Employee> createSplitScanner(Split split) {
-	  return Scannables.valueRowScanner(table.createSplitReader(split));
+	public RecordScanner<Employee> createSplitRecordScanner(Split split) {
+	  return Scannables.valueRecordScanner(table.createSplitReader(split));
 	}
 
 An example demonstrating these implementations is included in the Continuuity Reactor SDK in the directory
