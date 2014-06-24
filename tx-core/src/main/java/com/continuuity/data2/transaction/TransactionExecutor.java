@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
  */
 // todo: implementations should throw different from TransactionFailureException in case of user code error?
 // todo: accept only Callable? Executors util has a way to convert everything to Callable...
+// TODO: Unify with TransactionalDatasetRegistry, see https://jira.continuuity.com/browse/REACTOR-324
 public interface TransactionExecutor {
 
   /**
