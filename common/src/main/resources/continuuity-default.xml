@@ -701,6 +701,12 @@
         <description>Size of Memory in MB for Metrics Processor Service Twill Runnable</description>
     </property>
 
+    <property>
+        <name>metrics.processor.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding metrics processor http service.</description>
+    </property>
+
     <!--
         Logging Configuration
     -->
@@ -755,6 +761,12 @@
         <name>log.saver.run.memory.megs</name>
         <value>1024</value>
         <description>Memory in MB for log saver instances to run in yarn</description>
+    </property>
+
+    <property>
+        <name>log.saver.status.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Default inet address for binding logsaver http service.</description>
     </property>
 
     <!--
