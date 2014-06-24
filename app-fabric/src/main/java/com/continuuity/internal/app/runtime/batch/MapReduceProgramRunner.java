@@ -348,7 +348,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void beforeSubmit(final MapReduce job,
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -369,7 +369,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final BasicMapReduceContext context,
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {

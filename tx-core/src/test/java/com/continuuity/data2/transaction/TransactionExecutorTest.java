@@ -87,7 +87,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testSuccessful() throws TransactionFailureException {
+  public void testSuccessful() throws TransactionFailureException, InterruptedException {
     // execute: add a change to ds1 and ds2
     Integer result = getExecutor().execute(testFunction, 10);
     // verify both are committed and post-committed
@@ -106,7 +106,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testPostCommitFailure() throws TransactionFailureException {
+  public void testPostCommitFailure() throws TransactionFailureException, InterruptedException {
     ds1.failPostCommitTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
@@ -130,7 +130,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testPersistFailure() throws TransactionFailureException {
+  public void testPersistFailure() throws TransactionFailureException, InterruptedException {
     ds1.failCommitTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {
@@ -154,7 +154,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testPersistFalse() throws TransactionFailureException {
+  public void testPersistFalse() throws TransactionFailureException, InterruptedException {
     ds1.failCommitTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
     try {
@@ -178,7 +178,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testPersistAndRollbackFailure() throws TransactionFailureException {
+  public void testPersistAndRollbackFailure() throws TransactionFailureException, InterruptedException {
     ds1.failCommitTxOnce = InduceFailure.ThrowException;
     ds1.failRollbackTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
@@ -203,7 +203,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testPersistAndRollbackFalse() throws TransactionFailureException {
+  public void testPersistAndRollbackFalse() throws TransactionFailureException, InterruptedException {
     ds1.failCommitTxOnce = InduceFailure.ReturnFalse;
     ds1.failRollbackTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
@@ -228,7 +228,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testCommitFalse() throws TransactionFailureException {
+  public void testCommitFalse() throws TransactionFailureException, InterruptedException {
     txClient.failCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
@@ -252,7 +252,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testCanCommitFalse() throws TransactionFailureException {
+  public void testCanCommitFalse() throws TransactionFailureException, InterruptedException {
     txClient.failCanCommitOnce = true;
     // execute: add a change to ds1 and ds2
     try {
@@ -276,7 +276,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testChangesAndRollbackFailure() throws TransactionFailureException {
+  public void testChangesAndRollbackFailure() throws TransactionFailureException, InterruptedException {
     ds1.failChangesTxOnce = InduceFailure.ThrowException;
     ds1.failRollbackTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
@@ -301,7 +301,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testFunctionAndRollbackFailure() throws TransactionFailureException {
+  public void testFunctionAndRollbackFailure() throws TransactionFailureException, InterruptedException {
     ds1.failRollbackTxOnce = InduceFailure.ReturnFalse;
     // execute: add a change to ds1 and ds2
     try {
@@ -325,7 +325,7 @@ public class TransactionExecutorTest {
   }
 
   @Test
-  public void testStartAndRollbackFailure() throws TransactionFailureException {
+  public void testStartAndRollbackFailure() throws TransactionFailureException, InterruptedException {
     ds1.failStartTxOnce = InduceFailure.ThrowException;
     // execute: add a change to ds1 and ds2
     try {

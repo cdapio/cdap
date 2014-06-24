@@ -93,6 +93,10 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       // make sure the context releases all resources, datasets, ...
       context.close();
       throw Throwables.propagate(cause);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.close();
+      throw Throwables.propagate(e);
     }
   }
 

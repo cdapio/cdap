@@ -56,24 +56,24 @@ public interface TransactionExecutor {
    * @throws TransactionConflictException if there is a write conflict with another transaction.
    * @throws TransactionFailureException if any exception is caught, be it from the function or from the datasets.
    */
-  <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException;
+  <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException, InterruptedException;
 
   // CHECKSTYLE ON
 
   /**
    * Like {@link #execute(Function, Object)} but without a return value.
    */
-  <I> void execute(Procedure<I> procedure, I input) throws TransactionFailureException;
+  <I> void execute(Procedure<I> procedure, I input) throws TransactionFailureException, InterruptedException;
 
   /**
    * Like {@link #execute(Function, Object)} but the callable has no argument.
    */
-  <O> O execute(Callable<O> callable) throws TransactionFailureException;
+  <O> O execute(Callable<O> callable) throws TransactionFailureException, InterruptedException;
 
   /**
    * Like {@link #execute(Function, Object)} but without argument or return value.
    */
-  void execute(Subroutine subroutine) throws TransactionFailureException;
+  void execute(Subroutine subroutine) throws TransactionFailureException, InterruptedException;
 
   /**
    * Same as {@link #execute(Function, Object)} but
