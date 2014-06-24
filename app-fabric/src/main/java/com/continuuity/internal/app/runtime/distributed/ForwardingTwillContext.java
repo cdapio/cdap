@@ -9,7 +9,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import java.net.InetAddress;
 
 /**
- * Forwarding Twill Context for use in Service Wrapper
+ * Forwarding Twill Context for use in Service TwillRunnable.
  */
 public abstract class ForwardingTwillContext implements TwillContext {
   private final TwillContext delegate;

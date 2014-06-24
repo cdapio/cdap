@@ -209,7 +209,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
           return appArgList.toArray(new String[appArgList.size()]);
         }
       });
-      
+
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
