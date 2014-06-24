@@ -140,7 +140,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceId, runnableName);
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
       } else {
         JsonObject reply = new JsonObject();
         reply.addProperty("requested", specification.getResourceSpecification().getInstances());
@@ -187,8 +186,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                                             ImmutableMap.of("runnable", runnableName,
                                                             "newInstances", String.valueOf(instances),
                                                             "oldInstances", String.valueOf(oldInstances))).get();
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
-      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
@@ -230,7 +231,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @Nullable
-  private RuntimeSpecification getRuntimeSpecification (String accountId, String appId, String serviceName,
+  private RuntimeSpecification getRuntimeSpecification(String accountId, String appId, String serviceName,
                                                         String runnableName) throws OperationException {
     ServiceSpecification specification = getServiceSpecification(accountId, appId, serviceName);
     if (specification != null) {

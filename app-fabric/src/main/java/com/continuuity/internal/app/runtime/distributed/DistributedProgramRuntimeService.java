@@ -292,8 +292,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
         DistributedLiveInfo liveInfo = new DistributedLiveInfo(program, type, report.getApplicationId());
+
+        // if program type is flow then the container type is flowlet.
         Containers.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET :
-                                                 Type.PROCEDURE.equals(type) ? PROCEDURE : SERVICE;
+                                                 Containers.ContainerType.valueOf(type.name());
+
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {
             liveInfo.addContainer(new ContainerInfo(containerType,
