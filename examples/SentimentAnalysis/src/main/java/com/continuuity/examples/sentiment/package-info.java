@@ -19,6 +19,6 @@
  * An Application that analyzes Apache access log events to find
  * the distribution of page views of a particular page.
  */
-package com.continuuity.examples.sentimentAnalysis;
+package com.continuuity.examples.sentiment;
 
 
