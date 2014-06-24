@@ -32,6 +32,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>explore-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.quartz-scheduler</groupId>
       <artifactId>quartz</artifactId>
     </dependency>
