@@ -39,7 +39,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    flows, procedures, mapreduce, service
+    flows, procedures, mapreduce, services
   }
 
   @Inject
@@ -317,48 +317,10 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
-      case service:
+      case services:
         return LoggingContextHelper.EntityType.SERVICE;
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", entityType));
     }
   }
-
-  private void sendMockLog(HttpResponder responder) {
-    final JsonArray logResults = new JsonArray();
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("log", "Info : Test log message");
-    jsonObject.addProperty("offset", 0);
-    logResults.add(jsonObject);
-    responder.sendJson(HttpResponseStatus.OK, logResults);
-  }
-
-  /*
-    TODO: currently Mock Endpoints for user twill-service logs, implementation will be added later.
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs")
-  public void serviceList(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
-                          @PathParam("runnable-id") String runId) {
-    sendMockLog(responder);
-  }
-
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/next")
-  public void serviceNext(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
-                          @PathParam("runnable-id") String runId) {
-    sendMockLog(responder);
-  }
-
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-id}/logs/prev")
-  public void servicePrev(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") String appId, @PathParam("service-id") String serviceId,
-                          @PathParam("runnable-id") String runId) {
-    sendMockLog(responder);
-  }
-
-
 }
