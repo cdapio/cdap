@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramServiceDiscovery;
+import com.continuuity.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
@@ -13,6 +14,15 @@ public class ProgramServiceDiscoveryModules {
       @Override
       protected void configure() {
         bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class);
+      }
+    };
+  }
+
+  public Module getInMemoryModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class);
       }
     };
   }

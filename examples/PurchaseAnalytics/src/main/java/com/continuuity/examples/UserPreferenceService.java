@@ -37,6 +37,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+
+
 
 /**
  * User preference service runs a HTTP service that returns user interest for a given user id.
