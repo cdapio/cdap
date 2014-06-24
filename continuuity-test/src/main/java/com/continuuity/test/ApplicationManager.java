@@ -81,4 +81,20 @@ public interface ApplicationManager {
    * @return {@link WorkflowManager} for controlling the started workflow.
    */
   WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
+
+  /**
+   * Starts a service.
+   * @param serviceName Name of the service to be started.
+   * @return {@link ServiceManager} to control the running service.
+   */
+  ServiceManager startService(String serviceName);
+
+  /**
+   * Starts a service.
+   * @param serviceName Name of the service to be started.
+   * @param arguments Arguments to be passed for the service.
+   * @return {@link ServiceManager} to control the running service.
+   */
+  ServiceManager startService(String serviceName, Map<String, String> arguments);
+
 }

@@ -15,6 +15,7 @@ import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
+import com.continuuity.test.ServiceManager;
 import com.continuuity.test.SlowTests;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
@@ -186,7 +187,13 @@ public class TestFrameworkTest extends ReactorTestBase {
   public void testAppwithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    //TODO: Add more tests with stop/start after the support for running TwillService in test-framework is done.
+    ServiceManager serviceManager = applicationManager.startService("NoOpService");
+    LOG.info("Service Started");
+    serviceManager.stop();
+    LOG.info("Service Stopped");
+    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
+    // TestMetricsCollectionService
+
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
