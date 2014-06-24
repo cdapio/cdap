@@ -58,6 +58,10 @@ In the case of the above class ``Entry``, the schema will be::
 Limitations
 -----------
 
+* The record type must be a structured type, that is, a Java class with fields. This is because SQL tables require
+  a structure type at the top level. That means, the record type cannot be a primitive,
+  collection or map type. However, these types may appear nested inside the record type.
+
 * The record type must be that of an actual Java class, not an interface. The same applies to the types of any
   fields contained in the type. The reason is that interfaces only define methods but not fields; hence, reflection
   would not be able to derive any fields or types from the interface.
@@ -65,6 +69,11 @@ Limitations
   The one exception to this rule is that Java collections such as ``List`` and ``Set`` are supported as well as
   Java ``Map``. This is possible because these interfaces are so commonly used that they deserve special handling.
   These interfaces are parameterized and require special care as described in the next section.
+
+* Fields of a class that are declared static or transient are ignored during schema generation. This means that the
+  record type must have at least one non-transient and non-static field. For example,
+  the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
+  supported and will result in an exception when the dataset is created.
 
 * A dataset can only be used in ad-hoc queries if its record type is completely contained in the dataset definition.
   This means that if the record type is or contains a parametrized type, then the type parameters must be present in
