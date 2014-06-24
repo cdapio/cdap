@@ -911,7 +911,7 @@ The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
 	[
-	  {"name":"<name>", "type":<type>, "position":<int>},
+	  {"name":"<name>", "type":"<type>", "position":<int>},
 	  ...
 	]
 
