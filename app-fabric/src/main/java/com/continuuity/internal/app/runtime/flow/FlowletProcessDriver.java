@@ -192,10 +192,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       // Clear the interrupted flag and execute Flowlet.destroy()
       Thread.interrupted();
-      destroyFlowlet();
     } catch (InterruptedException e) {
-      destroyFlowlet();
+      // It is ok to do nothing: we are shutting down
     } finally {
+      destroyFlowlet();
       serviceHook.stopAndWait();
     }
   }
