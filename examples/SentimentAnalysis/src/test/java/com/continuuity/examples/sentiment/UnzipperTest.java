@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.sentimentAnalysis;
+package com.continuuity.examples.sentiment;
 
 import org.junit.Assert;
 import org.junit.ClassRule;

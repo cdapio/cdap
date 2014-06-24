@@ -13,23 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.continuuity.examples.sentimentAnalysis;
+package com.continuuity.examples.sentiment;
 
-import com.continuuity.api.app.AbstractApplication;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.annotation.Batch;
-import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.lib.TimeseriesTable;
-import com.continuuity.api.dataset.table.Get;
 import com.continuuity.api.dataset.table.Increment;
-import com.continuuity.api.dataset.table.Row;
 import com.continuuity.api.dataset.table.Table;
-import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -38,17 +32,11 @@ import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.api.procedure.AbstractProcedure;
-import com.continuuity.api.procedure.ProcedureRequest;
-import com.continuuity.api.procedure.ProcedureResponder;
-import com.continuuity.api.procedure.ProcedureResponse;
-import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,53 +45,26 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Application that analyzes sentiment of sentences as positive, negative or neutral.
+ * Flow for sentiment analysis.
  */
-public class SentimentAnalysis extends AbstractApplication {
+public class SentimentAnalysisFlow implements Flow {
 
   @Override
-  public void configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("sentiment")
-      .setDescription("Sentiment Analysis")
-      .withStreams()
-        .add(new Stream("sentence"))
-      .withDataSets()
-        .add(new Table("sentiments"))
-        .add(new TimeseriesTable("text-sentiments"))
-      .withFlows()
-        .add(new SentimentAnalysisFlow())
-      .withProcedures()
-        .add(new SentimentAnalysisProcedure())
-      .noMapReduce()
-      .noWorkflow()
+  public FlowSpecification configure() {
+    return FlowSpecification.Builder.with()
+      .setName("analysis")
+      .setDescription("Analysis of text to generate sentiments")
+      .withFlowlets()
+        .add(new Normalization())
+        .add(new Analyze())
+        .add(new Update())
+      .connect()
+        .fromStream("sentence").to(new Normalization())
+        .from(new Normalization()).to(new Analyze())
+        .from(new Analyze()).to(new Update())
       .build();
-  }
-
-  /**
-   * Flow for sentiment analysis.
-   */
-  public static class SentimentAnalysisFlow implements Flow {
-    @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("analysis")
-        .setDescription("Analysis of text to generate sentiments")
-        .withFlowlets()
-          .add(new Normalization())
-          .add(new Analyze())
-          .add(new Update())
-        .connect()
-          .fromStream("sentence").to(new Normalization())
-          .from(new Normalization()).to(new Analyze())
-          .from(new Analyze()).to(new Update())
-        .build();
-    }
   }
 
   /**
@@ -228,7 +189,6 @@ public class SentimentAnalysis extends AbstractApplication {
       }
     }
   }
-
   /**
    * Updates the timeseries table with sentiments received.
    */
@@ -237,7 +197,7 @@ public class SentimentAnalysis extends AbstractApplication {
 
     @UseDataSet("sentiments")
     private Table sentiments;
-    
+
     @UseDataSet("text-sentiments")
     private TimeseriesTable textSentiments;
 
@@ -269,64 +229,6 @@ public class SentimentAnalysis extends AbstractApplication {
       return FlowletSpecification.Builder.with()
         .setName("update")
         .setDescription("Updates the sentiment counts")
-        .withResources(ResourceSpecification.BASIC)
-        .build();
-    }
-  }
-
-  /**
-   * Procedure that returns the aggregates timeseries sentiment data.
-   */
-  public static class SentimentAnalysisProcedure extends AbstractProcedure {
-    private static final Logger LOG = LoggerFactory.getLogger(SentimentAnalysisProcedure.class);
-
-    @UseDataSet("sentiments")
-    private Table sentiments;
-
-    @UseDataSet("text-sentiments")
-    private TimeseriesTable textSentiments;
-
-    @Handle("aggregates")
-    public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response) throws Exception {
-      Row row = sentiments.get(new Get("aggregate"));
-      Map<byte[], byte[]> result = row.getColumns();
-      if (result == null) {
-        response.error(ProcedureResponse.Code.FAILURE, "No sentiments processed.");
-        return;
-      }
-      Map<String, Long> resp = Maps.newHashMap();
-      for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
-        resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
-      }
-      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
-    }
-
-    @Handle("sentiments")
-    public void getSentiments(ProcedureRequest request, ProcedureResponder response) throws Exception {
-      String sentiment = request.getArgument("sentiment");
-      if (sentiment == null) {
-        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
-        return;
-      }
-
-      long time = System.currentTimeMillis();
-      List<TimeseriesTable.Entry> entries =
-        textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
-                            time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
-                            time);
-
-      Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
-      for (TimeseriesTable.Entry entry : entries) {
-        textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
-      }
-      response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
-    }
-
-    @Override
-    public ProcedureSpecification configure() {
-      return ProcedureSpecification.Builder.with()
-        .setName("sentiment-query")
-        .setDescription("Sentiments Procedure")
         .withResources(ResourceSpecification.BASIC)
         .build();
     }
