@@ -1,5 +1,6 @@
 package com.continuuity.api.data.batch;
 
+import java.io.Closeable;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -8,11 +9,11 @@ import java.util.List;
  * {@link BatchReadable}.
  * @param <RECORD> the type of objects that represents a single record
  */
-public interface RecordScannable<RECORD> {
+public interface RecordScannable<RECORD> extends Closeable {
 
   /**
    * This method is needed because Java does not remember the RECORD type parameter at runtime.
-   * @returns the schema type, that is RECORD.
+   * @return the schema type, that is RECORD.
    */
   Type getRecordType();
 
