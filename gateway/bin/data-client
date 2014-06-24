@@ -46,7 +46,7 @@ auth_file="$HOME/.continuuity.accesstoken"
 containsTokenFileArg=0
 for var in "$@"
 do
-  if [ "$var" == "--token-file" ]; then
+  if [ "$var" = "--token-file" ]; then
     containsTokenFileArg=1
   fi
 done
