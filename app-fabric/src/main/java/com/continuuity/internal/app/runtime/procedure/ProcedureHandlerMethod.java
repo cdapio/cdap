@@ -94,8 +94,8 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       context.close();
       throw Throwables.propagate(cause);
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       context.close();
+      Thread.currentThread().interrupt();
       throw Throwables.propagate(e);
     }
   }

@@ -244,7 +244,7 @@ public class TransactionExecutorTest {
     }
 
     txClient.failCommits = 0;
-    
+
     // verify both are rolled back and tx is aborted
     Assert.assertTrue(ds1.started);
     Assert.assertTrue(ds2.started);

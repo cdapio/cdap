@@ -12,6 +12,7 @@ import java.util.Map;
  */
 public interface MetaDataTable {
 
+  public static final int DEFAULT_RETRIES_ON_CONFLICT = 3;
   public static final String META_DATA_TABLE_NAME = "meta";
 
   /**

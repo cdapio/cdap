@@ -9,10 +9,13 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.DefaultTransactionExecutor;
+import com.continuuity.data2.transaction.RetryStrategies;
 import com.continuuity.data2.transaction.TransactionAware;
+import com.continuuity.data2.transaction.TransactionConflictException;
 import com.continuuity.data2.transaction.TransactionExecutor;
-import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +39,7 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SerializingMetaDataTable.class);
 
-  private final TransactionExecutorFactory executorFactory;
+  private final TransactionSystemClient txClient;
   private final DataSetAccessor datasetAccessor;
 
   // To avoid the overhead of creating new serializer, table client and tx executor for every call,
@@ -53,7 +56,12 @@ public class SerializingMetaDataTable implements MetaDataTable {
         LOG.error("Failed to get a dataset client for meta data table.", e);
         throw Throwables.propagate(e);
       }
-      TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.of((TransactionAware) table));
+
+      // NOTE: this code is old and needs major redoing. We don't want to break what was working for long time, hence
+      //       using no retries the most plain way
+      TransactionExecutor executor =
+        new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) table),
+                                       RetryStrategies.noRetries());
       return new PerThread(new MetaDataSerializer(), table, executor);
     }
   };
@@ -71,8 +79,8 @@ public class SerializingMetaDataTable implements MetaDataTable {
   }
 
   @Inject
-  public SerializingMetaDataTable(TransactionExecutorFactory factory, DataSetAccessor accessor) {
-    this.executorFactory = factory;
+  public SerializingMetaDataTable(TransactionSystemClient txClient, DataSetAccessor accessor) {
+    this.txClient = txClient;
     this.datasetAccessor = accessor;
 
     // ensure the meta data table exists
@@ -143,12 +151,36 @@ public class SerializingMetaDataTable implements MetaDataTable {
     throws OperationException {
 
     Preconditions.checkNotNull(entry, "entry cannot be null");
-    getTransactionExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        doWrite(expected, entry, isUpdate, resolve);
+    final TransactionExecutor executor = getTransactionExecutor();
+
+    for (int tries = 0; tries <= DEFAULT_RETRIES_ON_CONFLICT; tries++) {
+      try {
+        executor.execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            doWrite(expected, entry, isUpdate, resolve);
+          }
+        });
+        return;
+      } catch (TransactionConflictException e) {
+        // attempt conflict resolution: did someone else attempt to write the same value?
+        if (resolve && entry.equals(
+          get(context, entry.getAccount(), entry.getApplication(), entry.getType(), entry.getId()))) {
+          return;
+        }
+        // someone else wrote something else... retry
+      } catch (TransactionFailureException e) {
+        // some other problem
+        throw propagateException(e);
+
+      } catch (InterruptedException e) {
+        // should NEVER happen, since using NoRetryStrategy in tx executor
+        Thread.currentThread().interrupt();
+        throw Throwables.propagate(e);
       }
-    });
+    }
+    // we can only reach this point if there is a conflict and we have retried too many times
+    throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data writes.");
   }
 
   private void doWrite(MetaDataEntry expected, MetaDataEntry entry, boolean update, boolean resolve) throws Exception {
@@ -262,12 +294,32 @@ public class SerializingMetaDataTable implements MetaDataTable {
     final byte[] row = makeRowKey(account);
     final byte[] column = makeColumnKey(application, type, id);
 
-    getTransactionExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        doUpdateField(row, column, textField, binField, textOld, binOld, textValue, binValue, doCompareAndSwap);
+    final TransactionExecutor executor = getTransactionExecutor();
+    final int numRetries = retryAttempts < 0 ? DEFAULT_RETRIES_ON_CONFLICT : retryAttempts;
+
+    for (int tries = 0; tries <= numRetries; tries++) {
+      try {
+        executor.execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            doUpdateField(row, column, textField, binField, textOld, binOld, textValue, binValue, doCompareAndSwap);
+          }
+        });
+        return;
+      } catch (TransactionConflictException e) {
+        // conflict... try again
+      } catch (TransactionFailureException e) {
+        // some other problem
+        throw propagateException(e);
+
+      } catch (InterruptedException e) {
+        // should NEVER happen, since using NoRetryStrategy in tx executor
+        Thread.currentThread().interrupt();
+        throw Throwables.propagate(e);
       }
-    });
+    }
+    // we can only reach this point if there is a conflict and we have retried too many times
+    throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data writes.");
   }
 
   void doUpdateField(byte[] row, byte[] column,
@@ -338,7 +390,9 @@ public class SerializingMetaDataTable implements MetaDataTable {
     final byte[] row = makeRowKey(account);
     final byte[] column = makeColumnKey(application, type, id);
 
-    return getTransactionExecutor().executeUnchecked(new TransactionExecutor.Function<Object, MetaDataEntry>() {
+    try {
+      return getTransactionExecutor().execute(new TransactionExecutor.Function<Object, MetaDataEntry>() {
+
         @Override
         public MetaDataEntry apply(Object input) throws Exception {
 
@@ -350,6 +404,16 @@ public class SerializingMetaDataTable implements MetaDataTable {
           return bytes == null ? null : getSerializer().deserialize(bytes);
         }
       }, null);
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -367,12 +431,28 @@ public class SerializingMetaDataTable implements MetaDataTable {
     final byte[] row = makeRowKey(account);
     final byte[] column = makeColumnKey(application, type, id);
 
-    getTransactionExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+    try {
+      getTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+
         @Override
         public void apply() throws Exception {
           getMetaTable().delete(row, new byte[][] { column });
         }
       });
+
+    } catch (TransactionConflictException e) {
+      // conflict... report correct status
+      throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data delete.");
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -386,12 +466,27 @@ public class SerializingMetaDataTable implements MetaDataTable {
       cols[i] = makeColumnKey(entries.get(i));
     }
 
-    getTransactionExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+    try {
+      getTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           getMetaTable().delete(row, cols);
         }
       });
+
+    } catch (TransactionConflictException e) {
+      // conflict... report correct status
+      throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data delete.");
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -410,19 +505,30 @@ public class SerializingMetaDataTable implements MetaDataTable {
     final byte[] start = startColumnKey(application, type);
     final byte[] stop = stopColumnKey(application, type);
 
-    return getTransactionExecutor().executeUnchecked(new TransactionExecutor.Function<Object, List<MetaDataEntry>>() {
+    try {
+      return getTransactionExecutor().execute(new TransactionExecutor.Function<Object, List<MetaDataEntry>>() {
         @Override
         public List<MetaDataEntry> apply(Object input) throws Exception {
           return doList(row, start, stop, application, type, fields);
         }
       }, null);
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public List<MetaDataEntry> list(final OperationContext context, final String account,
                                   final String application, final String type,
                                   final String startId, final String stopId, final int count)
-                                  throws OperationException {
+    throws OperationException {
     Preconditions.checkNotNull(account, "account cannot be null");
     Preconditions.checkArgument(!account.isEmpty(), "account cannot be empty");
     Preconditions.checkArgument(application == null || !application.isEmpty(), "application cannot be empty");
@@ -437,12 +543,23 @@ public class SerializingMetaDataTable implements MetaDataTable {
     final byte[] start = makeColumnKey(application, type, startId);
     final byte[] stop = makeColumnKey(application, type, stopId);
 
-    return getTransactionExecutor().executeUnchecked(new TransactionExecutor.Function<Object, List<MetaDataEntry>>() {
+    try {
+      return getTransactionExecutor().execute(new TransactionExecutor.Function<Object, List<MetaDataEntry>>() {
         @Override
         public List<MetaDataEntry> apply(Object input) throws Exception {
           return doList(row, start, stop, count);
         }
       }, null);
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   private List<MetaDataEntry> doList(byte[] row, byte[] start, byte[] stop,
@@ -486,7 +603,7 @@ public class SerializingMetaDataTable implements MetaDataTable {
   }
 
   private List<MetaDataEntry> doList(byte[] row, byte[] start, byte[] stop, int count)
-                                    throws Exception {
+    throws Exception {
     Map<byte[], byte[]> result = getMetaTable().get(row, start, stop, count);
     List<MetaDataEntry> entries = Lists.newArrayList();
     for (byte[] bytes : result.values()) {
@@ -506,12 +623,26 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
     final byte[] row = makeRowKey(account);
 
-    getTransactionExecutor().executeUnchecked(new TransactionExecutor.Subroutine() {
+    try {
+      getTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           doClear(row, application);
         }
       });
+    } catch (TransactionConflictException e) {
+      // conflict... report correct status
+      throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data delete.");
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   private void doClear(byte[] row, String application) throws Exception {
@@ -538,12 +669,23 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
   @Override
   public Collection<String> listAccounts(OperationContext context) throws OperationException {
-    return getTransactionExecutor().executeUnchecked(new TransactionExecutor.Function<Object, Collection<String>>() {
+    try {
+      return getTransactionExecutor().execute(new TransactionExecutor.Function<Object, Collection<String>>() {
         @Override
         public List<String> apply(Object input) throws Exception {
           return doListAccounts();
         }
       }, null);
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+
+    } catch (InterruptedException e) {
+      // should NEVER happen, since using NoRetryStrategy in tx executor
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(e);
+    }
   }
 
   private List<String> doListAccounts() throws Exception {
