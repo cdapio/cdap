@@ -846,6 +846,12 @@
         <name>hive.local.data.dir</name>
         <value>${local.data.dir}/hive</value>
     </property>
+    <property>
+        <name>explore.executor.max.instances</name>
+        <value>1</value>
+        <description>Maximum number of explore executor instances</description>
+    </property>
+
 
 
     <!--
@@ -910,6 +916,12 @@
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
         for signing tokens should be retired.</description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
+        <value>604800000</value>
     </property>
 
     <property>

@@ -15,33 +15,24 @@
  */
 package com.continuuity.examples.simplewriteandread;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.app.AbstractApplication;
 import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.dataset.lib.KeyValueTable;
 
 /**
  * The SimpleWriteAndRead application uses one dataset, one flow, three flowlets, and one stream to demonstrate
  * how to write to and read from a dataset. 
  */
-public class SimpleWriteAndRead implements Application {
+public class SimpleWriteAndRead extends AbstractApplication {
 
   public static final String TABLE_NAME = "writeAndRead";
 
   @Override
-  public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with()
-      .setName("SimpleWriteAndRead")
-      .setDescription("Flow that writes key=value then reads back the key")
-      .withStreams()
-        .add(new Stream("keyValues"))
-      .withDataSets()
-        .add(new KeyValueTable(TABLE_NAME))
-      .withFlows()
-        .add(new SimpleWriteAndReadFlow())
-      .noProcedure()
-      .noMapReduce()
-      .noWorkflow()
-      .build();
+  public void configure() {
+    setName("SimpleWriteAndRead");
+    setDescription("Flow that writes key=value then reads back the key");
+    addStream(new Stream("keyValues"));
+    createDataSet(TABLE_NAME, KeyValueTable.class);
+    addFlow(new SimpleWriteAndReadFlow());
   }
 }

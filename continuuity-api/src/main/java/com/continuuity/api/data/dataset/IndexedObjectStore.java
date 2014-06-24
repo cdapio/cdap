@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
@@ -21,7 +25,10 @@ import java.util.TreeSet;
  *
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
  * @param <T> the type of objects in the store
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.IndexedObjectStore}
  */
+@Deprecated
 public class IndexedObjectStore<T> extends DataSet {
   // NOTE: cannot use byte[0] as empty value because byte[0] is treated as null
   private static final byte[] EMPTY_VALUE = new byte[1];

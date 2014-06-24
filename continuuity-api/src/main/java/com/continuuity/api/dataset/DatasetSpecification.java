@@ -96,6 +96,26 @@ public final class DatasetSpecification {
   }
 
   /**
+   * Lookup a custom property of the dataset.
+   * @param key the name of the property
+   * @param defaultValue the value to return if property does not exist
+   * @return the value of the property or defaultValue if the property does not exist
+   */
+  public long getLongProperty(String key, long defaultValue) {
+    return properties.containsKey(key) ? Long.parseLong(getProperty(key)) : defaultValue;
+  }
+
+  /**
+   * Lookup a custom property of the dataset.
+   * @param key the name of the property
+   * @param defaultValue the value to return if property does not exist
+   * @return the value of the property or defaultValue if the property does not exist
+   */
+  public int getIntProperty(String key, int defaultValue) {
+    return properties.containsKey(key) ? Integer.parseInt(getProperty(key)) : defaultValue;
+  }
+
+  /**
    * Return map of all properties set in this specification.
    * @return an immutable map.
    */

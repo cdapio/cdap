@@ -128,6 +128,10 @@ public class LevelDBOcTableCore {
     db.write(batch, service.getWriteOptions());
   }
 
+  public void put(byte[] row, byte[] column, byte[] value, long version) throws IOException {
+    getDB().put(createPutKey(row, column, version), value);
+  }
+
   public void undo(Map<byte[], ? extends Map<byte[], byte[]>> persisted, long version) throws IOException {
     if (persisted.isEmpty()) {
       return;

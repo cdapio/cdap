@@ -4,8 +4,8 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.InstanceConflictException;
 import com.continuuity.pipeline.AbstractStage;
@@ -38,11 +38,13 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
   public void process(ApplicationSpecLocation input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-    for (Map.Entry<String, DatasetInstanceCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
+    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
-      DatasetInstanceCreationSpec instanceSpec = instanceEntry.getValue();
+      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       try {
-        datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+        if (!datasetFramework.hasInstance(instanceName)) {
+          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+        }
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
         // TODO: verify that the created instance is from this app

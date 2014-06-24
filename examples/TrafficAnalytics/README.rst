@@ -37,36 +37,17 @@ The TrafficAnalytics Application
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
-	public class TrafficAnalyticsApp implements Application {
-	  // The row key of SimpleTimeseriesTable.
-	  private static final byte[] ROW_KEY = Bytes.toBytes("f");
-	  // The time window of 1 day converted into milliseconds.
-	  private static final long TIME_WINDOW = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
-	
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("TrafficAnalytics")
-	      .setDescription("HTTP request counts on an hourly basis")
-	      // Ingest data into the Application via Streams.
-	      .withStreams()
-	        .add(new Stream("logEventStream"))
-	      // Store processed data in Datasets.
-	      .withDataSets()
-	        .add(new SimpleTimeseriesTable("logEventTable"))
-	        .add(new SimpleTimeseriesTable("countTable"))
-	      // Process log data in real-time using Flows.
-	      .withFlows()
-	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using Procedures.
-	      .withProcedures()
-	        .add(new LogCountProcedure())
-	      // Process log data in MapReduce.
-	      .withMapReduce()
-	        .add(new LogCountMapReduce())
-	      .noWorkflow()
-	      .build();
-	  }
+	public class TrafficAnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("TrafficAnalytics");
+      setDescription("HTTP request counts on an hourly basis");
+      addStream(new Stream("logEventStream"));
+      createDataSet("logEventTable", TimeseriesTable.class, DatasetProperties.EMPTY);
+      addFlow(new LogAnalyticsFlow());
+      addProcedure(new LogCountProcedure());
+      addMapReduce(new LogCountMapReduce());
+    }
 
 Many elements are similar, but there are a few new entries.
 

@@ -2,9 +2,9 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.stream.StreamBatchReadable;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
@@ -26,6 +26,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.dataset.DatasetCreationSpec;
 import com.continuuity.data.stream.StreamUtils;
 import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.dataset2.DatasetFramework;
@@ -76,6 +77,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -161,7 +163,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, datasetFramework,
                                                                       program.getClassLoader());
     Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
-    Map<String, DatasetInstanceCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
+    Map<String, DatasetCreationSpec> datasetSpecs = program.getSpecification().getDatasets();
     dataSetInstantiator.setDataSets(dataSetSpecs.values(), datasetSpecs.values());
 
     Map<String, Closeable> dataSets = DataSets.createDataSets(dataSetInstantiator,
@@ -504,9 +506,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
         if (inputDataSetName.startsWith("stream://")) {
           batchReadable = new StreamBatchReadable(inputDataSetName.substring("stream://".length()));
         } else {
-          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
           // We checked on validation phase that it implements BatchReadable
-          mapReduceContext.setInput(inputDataSet, inputDataSet.getSplits());
+          BatchReadable inputDataSet = (BatchReadable) mapReduceContext.getDataSet(inputDataSetName);
+          List<Split> inputSplits = mapReduceContext.getInputDataSelection();
+          if (inputSplits == null) {
+            inputSplits = inputDataSet.getSplits();
+          }
+          mapReduceContext.setInput(inputDataSet, inputSplits);
         }
       }
     }

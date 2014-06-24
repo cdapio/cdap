@@ -103,7 +103,7 @@ public final class TypeRepresentation implements ParameterizedType {
     try {
       return ClassLoaders.loadClass(this.rawType, classLoader, this);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException("cannot convert + " + this.rawType + " to a type. ", e);
+      throw new RuntimeException("cannot convert " + this.rawType + " to a type. ", e);
     }
   }
 

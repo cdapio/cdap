@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.common.Bytes;
@@ -7,7 +11,10 @@ import java.util.Map;
 
 /**
  * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.table.Put}
  */
+@Deprecated
 public class Put {
   /** row to write to. */
   private final byte[] row;

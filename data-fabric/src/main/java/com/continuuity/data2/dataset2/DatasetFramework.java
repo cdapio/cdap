@@ -82,6 +82,12 @@ public interface DatasetFramework {
   boolean hasInstance(String instanceName) throws DatasetManagementException;
 
   /**
+   * @return true if type exists, false otherwise
+   * @throws DatasetManagementException
+   */
+  boolean hasType(String typeName) throws DatasetManagementException;
+
+  /**
    * Deletes dataset instance from the system.
    *
    * NOTE: It will NOT delete physical data set, use {@link #getAdmin(String, ClassLoader)} to obtain
