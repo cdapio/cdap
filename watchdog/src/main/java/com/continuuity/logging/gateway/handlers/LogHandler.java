@@ -12,8 +12,6 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.filter.FilterParser;
 import com.continuuity.logging.read.LogReader;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -21,12 +19,12 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Handler to serve log requests.
