@@ -39,9 +39,8 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     this.httpService = NettyHttpService.builder()
       .addHttpHandlers(handlers)
-      .setHandlerHooks(ImmutableList.of
-        (new MetricsReporterHook(metricsCollectionService,
-                                 Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)))
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                        Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)))
       .setHost(cConf.get(Constants.MetricsProcessor.ADDRESS))
       .build();
   }
