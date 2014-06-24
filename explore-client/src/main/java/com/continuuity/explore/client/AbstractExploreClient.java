@@ -1,9 +1,6 @@
 package com.continuuity.explore.client;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.HttpRequests;
 import com.continuuity.common.http.HttpResponse;
 import com.continuuity.explore.service.ColumnDesc;
@@ -13,17 +10,14 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 import com.continuuity.explore.service.Status;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,38 +29,23 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-import static com.continuuity.common.conf.Constants.Service;
-
 /**
- * An Explore Client that talks to a server implementing {@link Explore} over HTTP.
+ * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
-public class AsyncExploreClient implements ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(AsyncExploreClient.class);
+public abstract class AbstractExploreClient implements Explore, ExploreClient {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type COL_DESC_LIST_TYPE = new TypeToken<List<ColumnDesc>>() { }.getType();
   private static final Type ROW_LIST_TYPE = new TypeToken<List<Result>>() { }.getType();
 
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
-
-  @Inject
-  public AsyncExploreClient(final DiscoveryServiceClient discoveryClient) {
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(
-            discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE)), 3L, TimeUnit.SECONDS);
-      }
-    });
-  }
+  protected abstract InetSocketAddress getExploreServiceAddress();
 
   @Override
-  public boolean isAvailable() throws ExploreException {
+  public boolean isAvailable() {
     try {
       HttpResponse response = doGet(String.format("explore/status"));
       return HttpResponseStatus.OK.getCode() == response.getResponseCode();
@@ -216,14 +195,7 @@ public class AsyncExploreClient implements ExploreClient {
   }
 
   private String resolve(String resource) {
-    EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null || endpointStrategy.pick() == null) {
-      String message = String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE);
-      LOG.error(message);
-      throw new RuntimeException(message);
-    }
-
-    InetSocketAddress addr = endpointStrategy.pick().getSocketAddress();
+    InetSocketAddress addr = getExploreServiceAddress();
     String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
                                Constants.Gateway.GATEWAY_VERSION, resource);
     LOG.trace("Explore URL = {}", url);

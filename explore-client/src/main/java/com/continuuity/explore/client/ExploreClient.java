@@ -12,7 +12,7 @@ public interface ExploreClient extends Explore {
   /**
    * Returns true if the explore service is up and running.
    */
-  boolean isAvailable() throws ExploreException;
+  boolean isAvailable();
 
   /**
    * Enables ad-hoc exploration of the given {@link com.continuuity.api.data.batch.RecordScannable}.

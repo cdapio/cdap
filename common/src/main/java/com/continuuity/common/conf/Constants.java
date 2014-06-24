@@ -440,9 +440,16 @@ public final class Constants {
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
 
+    /**
+     * Explore JDBC constants.
+     */
+    public static final class Jdbc {
+      public static final String URL_PREFIX = "jdbc:reactor://";
+    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
