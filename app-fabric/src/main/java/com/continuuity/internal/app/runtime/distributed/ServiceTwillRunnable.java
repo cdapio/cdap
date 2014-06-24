@@ -34,6 +34,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -72,7 +73,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -176,7 +176,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      List<String> appArgList = new ArrayList<String>();
+      List<String> appArgList = Lists.newArrayList();
       Arguments userargs = programOpts.getUserArguments();
       for (Map.Entry<String, String> kv : userargs) {
         appArgList.add(kv.getKey());
