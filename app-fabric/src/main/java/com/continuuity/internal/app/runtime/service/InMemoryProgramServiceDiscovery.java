@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.service;
 
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
@@ -10,15 +10,17 @@ import org.apache.twill.discovery.ServiceDiscovered;
  */
 public class InMemoryProgramServiceDiscovery implements ProgramServiceDiscovery {
 
-  private InMemoryDiscoveryService discoveryService;
+  private DiscoveryServiceClient dsClient;
 
   @Inject
-  public InMemoryProgramServiceDiscovery(InMemoryDiscoveryService discoveryService) {
-    this.discoveryService = discoveryService;
+  public InMemoryProgramServiceDiscovery(DiscoveryServiceClient discoveryService) {
+    this.dsClient = discoveryService;
   }
 
   @Override
-  public ServiceDiscovered discover(String accId, String appId, String serviceId, String serviceName) {
-    return discoveryService.discover(serviceName);
+  public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
+    String serviceNamespace = String.format("service.%s.%s.%s.%s", accountId, appId, serviceId, serviceName);
+    System.out.println("Looking for " + serviceNamespace);
+    return dsClient.discover(serviceNamespace);
   }
 }

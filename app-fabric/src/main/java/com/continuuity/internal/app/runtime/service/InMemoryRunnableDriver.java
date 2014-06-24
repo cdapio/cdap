@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.service;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.slf4j.Logger;
@@ -38,6 +39,10 @@ public class InMemoryRunnableDriver extends AbstractExecutionThreadService {
   private void destroy() throws Exception {
     runnable.destroy();
     LOG.info("Runnable {} Destroyed ", context.getSpecification().getName());
+  }
+
+  public void handleCommand(Command cmd) throws Exception {
+    runnable.handleCommand(cmd);
   }
 
   @Override

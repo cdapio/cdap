@@ -39,7 +39,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    flows, procedures, mapreduce, service
+    flows, procedures, mapreduce, services
   }
 
   @Inject
@@ -317,7 +317,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
-      case service:
+      case services:
         return LoggingContextHelper.EntityType.SERVICE;
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", entityType));

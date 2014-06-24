@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.api.common.RuntimeArgumentsUtil;
 import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.metrics.ServiceRunnableMetrics;
@@ -34,7 +35,6 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
@@ -73,7 +73,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -176,14 +175,13 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      List<String> appArgList = Lists.newArrayList();
+      ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
       Arguments userargs = programOpts.getUserArguments();
       for (Map.Entry<String, String> kv : userargs) {
-        appArgList.add(kv.getKey());
-        appArgList.add(kv.getValue());
+        userArgMapBuilder.put(kv);
       }
 
-      final String[] argArray = appArgList.toArray(new String[appArgList.size()]);
+      final String[] argArray = RuntimeArgumentsUtil.toPosixArray(userArgMapBuilder.build());
       delegate.initialize(new ForwardingTwillContext(context) {
         @Override
         public String[] getApplicationArguments() {
