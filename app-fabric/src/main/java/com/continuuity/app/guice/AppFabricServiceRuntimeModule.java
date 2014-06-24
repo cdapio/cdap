@@ -24,6 +24,7 @@ import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import com.continuuity.internal.app.runtime.distributed.TransactionServiceManager;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import com.continuuity.internal.app.runtime.schedule.DistributedSchedulerService;
@@ -33,6 +34,7 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
+import com.continuuity.logging.run.InMemoryLogSaverServiceMananger;
 import com.continuuity.logging.run.LogSaverServiceManager;
 import com.continuuity.metrics.runtime.MetricsProcessorServiceManager;
 import com.continuuity.metrics.runtime.MetricsServiceManager;
@@ -79,6 +81,25 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryLogSaverServiceMananger.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryTransactionServiceManager.class);
+                               //Using LogSaverServiceManager since status check and logs are not available
+                               //for metrics.processor as well
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryLogSaverServiceMananger.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -92,6 +113,25 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(
+                                 InMemoryLogSaverServiceMananger.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(
+                                 InMemoryTransactionServiceManager.class);
+                               //Using LogSaverServiceManager since status check and logs are not available
+                               //for metrics.processor as well
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 InMemoryLogSaverServiceMananger.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS).to(InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(InMemoryReactorServiceManager.class);
                              }
                            });
   }
@@ -107,6 +147,20 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
 
+                               MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(
+                                 binder(), String.class, ReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.TRANSACTION).to(TransactionServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(
+                                 MetricsProcessorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(
+                                 InMemoryReactorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(
+                                 DatasetExecutorServiceManager.class);
+                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+                                 .to(ExploreServiceManager.class);
                              }
                            });
   }
@@ -136,17 +190,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(PingHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
-
-      MapBinder<String, ReactorServiceManager> mapBinder = MapBinder.newMapBinder(binder(), String.class,
-                                                                                  ReactorServiceManager.class);
-      mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManager.class);
-      mapBinder.addBinding(Constants.Service.TRANSACTION).to(TransactionServiceManager.class);
-      mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(MetricsProcessorServiceManager.class);
-      mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
-      mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(InMemoryReactorServiceManager.class);
-      mapBinder.addBinding(Constants.Service.STREAMS).to(StreamServiceManager.class);
-      mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(DatasetExecutorServiceManager.class);
-      mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE).to(ExploreServiceManager.class);
     }
 
     @Provides
