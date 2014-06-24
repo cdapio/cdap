@@ -37,7 +37,6 @@ public class StreamClientTest extends GatewayTestBase {
 
     // argument combinations that should return success
     String[][] goodArgsList = {
-        { "--help" }, // print help
         { "create", "--stream", "teststream", "--host", hostname, "--port", port, "--apikey", AUTH_KEY }
     };
 
