@@ -10,8 +10,6 @@ import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,43 +19,103 @@ import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 /**
  * Generate and grant access token to authorized users.
  */
-public class GrantAccessTokenHandler extends AbstractHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(GrantAccessTokenHandler.class);
+@Path("/")
+public class GrantAccessToken {
+  private static final Logger LOG = LoggerFactory.getLogger(GrantAccessToken.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
+  private final long tokenExpiration;
+  private final long extendedTokenExpiration;
 
+  /**
+   * Create a new GrantAccessToken object to generate tokens for authorized users.
+   * @param tokenManager
+   * @param tokenCodec
+   * @param cConfiguration
+   */
   @Inject
-  public GrantAccessTokenHandler(TokenManager tokenManager,
-                                 Codec<AccessToken> tokenCodec,
-                                 CConfiguration cConfiguration) {
+  public GrantAccessToken(TokenManager tokenManager,
+                          Codec<AccessToken> tokenCodec,
+                          CConfiguration cConfiguration) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
     this.cConf = cConfiguration;
+    this.tokenExpiration = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
+    this.extendedTokenExpiration = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
   }
 
-  @Override
-  protected void doStart() {
+  /**
+   * Initialize the TokenManager.
+   */
+  public void init() {
     tokenManager.start();
   }
 
-  @Override
-  protected void doStop() {
+  /**
+   * Stop the TokenManager.
+   */
+  public void destroy() {
     tokenManager.stop();
   }
 
-  @Override
-  public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+  /**
+   * Paths to get Access Tokens.
+   */
+  public static final class Paths {
+    public static final String GET_TOKEN = "token";
+    public static final String GET_EXTENDED_TOKEN = "extendedtoken";
+  }
+
+  /**
+   * Get an AccessToken.
+   * @param request
+   * @param response
+   * @return
+   * @throws IOException
+   * @throws ServletException
+   */
+  @Path(Paths.GET_TOKEN)
+  @GET
+  @Produces("application/json")
+  public Response token(@Context HttpServletRequest request, @Context HttpServletResponse response)
+      throws IOException, ServletException {
+    this.grantToken(request, response, tokenExpiration);
+    return Response.status(200).build();
+  }
+
+  /**
+   * Get a long lasting Access Token.
+   * @param request
+   * @param response
+   * @return
+   * @throws IOException
+   * @throws ServletException
+   */
+  @Path(Paths.GET_EXTENDED_TOKEN)
+  @GET
+  @Produces("application/json")
+  public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
+    throws IOException, ServletException {
+    this.grantToken(request, response, extendedTokenExpiration);
+    return Response.status(200).build();
+  }
+
+  private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
     throws IOException, ServletException {
 
     String username = request.getUserPrincipal().getName();
     List<String> userGroups = Collections.emptyList();
 
-    long tokenValidity = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
@@ -81,6 +139,5 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
-    ((Request) request).setHandled(true);
   }
 }

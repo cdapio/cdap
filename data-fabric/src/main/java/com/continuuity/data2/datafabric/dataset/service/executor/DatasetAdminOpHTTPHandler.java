@@ -36,17 +36,17 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new Gson();
 
-  private final RemoteDatasetFramework client;
+  private final RemoteDatasetFramework dsFramework;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework client) {
+  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework) {
     super(authenticator);
-    this.client = client;
+    this.dsFramework = dsFramework;
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/exists")
-  public void exists(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/exists")
+  public void exists(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(datasetAdmin.exists(), null));
@@ -60,8 +60,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/create")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("instance") String name)
+  @Path("/data/datasets/{name}/admin/create")
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("name") String name)
   throws Exception {
 
     String propsHeader = request.getHeader("instance-props");
@@ -74,7 +74,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -84,14 +84,14 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     }
 
     DatasetSpecification spec = def.configure(name, props);
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/drop")
-  public void drop(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName)
+  @Path("/data/datasets/{name}/admin/drop")
+  public void drop(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName)
     throws Exception {
 
     String specHeader = request.getHeader("instance-spec");
@@ -104,7 +104,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
     DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
 
-    DatasetDefinition def = client.getDatasetDefinition(typeMeta, null);
+    DatasetDefinition def = dsFramework.getDatasetDefinition(typeMeta, null);
 
     if (def == null) {
       String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -113,14 +113,14 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.drop();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/truncate")
-  public void truncate(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/truncate")
+  public void truncate(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.truncate();
@@ -135,8 +135,8 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/data/instances/{instance}/admin/upgrade")
-  public void upgrade(HttpRequest request, HttpResponder responder, @PathParam("instance") String instanceName) {
+  @Path("/data/datasets/{name}/admin/upgrade")
+  public void upgrade(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName) {
     try {
       DatasetAdmin datasetAdmin = getDatasetAdmin(instanceName);
       datasetAdmin.upgrade();
@@ -155,17 +155,11 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   }
 
   private DatasetAdmin getDatasetAdmin(String instanceName) throws IOException, DatasetManagementException {
-    DatasetAdmin admin = client.getAdmin(instanceName, getClassLoader(instanceName));
+    DatasetAdmin admin = dsFramework.getAdmin(instanceName, null);
     if (admin == null) {
       throw new HandlerException(HttpResponseStatus.NOT_FOUND,
                                  "Couldn't obtain DatasetAdmin for dataset instance " + instanceName);
     }
     return admin;
   }
-
-  private ClassLoader getClassLoader(String instanceName) {
-    // TODO
-    return null;
-  }
-
 }

@@ -52,7 +52,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param secondaryKey for the lookup.
    * @return List of Objects matching the secondaryKey.
    */
-  public List<T> readAllByIndex(byte[] secondaryKey) throws Exception {
+  public List<T> readAllByIndex(byte[] secondaryKey) {
     ImmutableList.Builder<T> resultList = ImmutableList.builder();
     //Lookup the secondaryKey and get all the keys in primary
     //Each row with secondaryKey as rowKey contains column named as the primary key
@@ -107,7 +107,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
    * @param object object to be stored.
    * @param secondaryKeys indices that can be used to lookup the object.
    */
-  public void write(byte[] key, T object, byte[][] secondaryKeys) throws Exception {
+  public void write(byte[] key, T object, byte[][] secondaryKeys) {
     writeToObjectStore(key, object);
 
     //Update the secondaryKeys
@@ -148,11 +148,11 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     }
   }
 
-  private void writeToObjectStore(byte[] key, T object) throws Exception {
+  private void writeToObjectStore(byte[] key, T object) {
     objectStore.write(key, object);
   }
 
-  public void write(byte[] key, T object) throws Exception {
+  public void write(byte[] key, T object) {
     Row row = index.get(getPrefixedPrimaryKey(key));
     if (!row.isEmpty()) {
       Set<byte[]> columnsToDelete = row.getColumns().keySet();

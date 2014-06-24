@@ -1,4 +1,4 @@
-Continuuity (tm) Reactor Development Kit - 2.2.0
+Continuuity (tm) Reactor Development Kit - ${project.version}
 
 Copyright 2014 Continuuity,Inc. All Rights Reserved.
 ================================================================================
@@ -23,7 +23,7 @@ Once you have installed the prerequisites, unzip the Developer Suite
 distribution to a suitable directory:
 
   %> cd <path to SDK>
-  %> unzip /tmp/continuuity-sdk-2.2.0.zip
+  %> unzip /tmp/continuuity-sdk-${project.version}.zip
 
 
 Starting Continuuity Reactor
@@ -32,12 +32,12 @@ Starting Continuuity Reactor
 You are now ready to start Reactor. Do so by running the 'reactor' 
 script in the $CONTINUUITY/bin folder:
 
-  %> cd ~/<path to SDK>/continuuity-sdk-2.2.0
+  %> cd ~/<path to SDK>/continuuity-sdk-${project.version}
   %> ./bin/reactor.sh start
   
 or on Windows:
   
-  > cd ~\<path to SDK>\continuuity-sdk-2.2.0
+  > cd ~\<path to SDK>\continuuity-sdk-${project.version}
   > bin\reactor.bat start
   
 

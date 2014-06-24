@@ -33,6 +33,9 @@ public final class StreamFileJanitor {
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws IOException {
+    if (!streamBaseLocation.exists()) {
+      return;
+    }
     for (Location streamLocation : streamBaseLocation.list()) {
       clean(streamAdmin.getConfig(streamLocation.getName()), System.currentTimeMillis());
     }

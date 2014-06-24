@@ -10,6 +10,7 @@ import com.continuuity.data2.datafabric.dataset.service.executor.DatasetOpExecut
 import com.continuuity.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
 import com.continuuity.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
+import com.continuuity.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import com.continuuity.data2.dataset2.DatasetDefinitionRegistryFactory;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -24,6 +25,7 @@ import com.google.common.collect.Maps;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
@@ -45,7 +47,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
-        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
@@ -54,6 +56,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
 
@@ -73,7 +76,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
-        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
@@ -82,6 +85,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
 
@@ -109,7 +113,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
 
-        bind(new TypeLiteral<Map<String, DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
@@ -118,6 +122,7 @@ public class DataSetServiceModules {
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
 

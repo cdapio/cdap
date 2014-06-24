@@ -1,9 +1,9 @@
 package com.continuuity.explore.service;
 
-import com.continuuity.api.data.batch.RowScannable;
+import com.continuuity.api.data.batch.RecordScannable;
+import com.continuuity.api.data.batch.RecordScanner;
 import com.continuuity.api.data.batch.Scannables;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.api.data.batch.SplitRowScanner;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetDefinition;
 import com.continuuity.api.dataset.DatasetProperties;
@@ -45,20 +45,20 @@ public class KeyStructValueTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("key-value-table"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("key-value-table"), classLoader);
   }
 
   @Override
-  public KeyStructValueTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"));
+  public KeyStructValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), classLoader);
     return new KeyStructValueTable(spec.getName(), table);
   }
 
   /**
    * KeyStructValueTable
    */
-  public static class KeyStructValueTable extends AbstractDataset implements RowScannable<KeyValue> {
+  public static class KeyStructValueTable extends AbstractDataset implements RecordScannable<KeyValue> {
     static final byte[] COL = new byte[] {'c', 'o', 'l', '1'};
 
     private final Table table;
@@ -77,7 +77,7 @@ public class KeyStructValueTableDefinition
     }
 
     @Override
-    public Type getRowType() {
+    public Type getRecordType() {
       return KeyValue.class;
     }
 
@@ -87,8 +87,8 @@ public class KeyStructValueTableDefinition
     }
 
     @Override
-    public SplitRowScanner<KeyValue> createSplitScanner(Split split) {
-      return Scannables.splitRowScanner(table.createSplitReader(split), KEY_VALUE_ROW_MAKER);
+    public RecordScanner<KeyValue> createSplitRecordScanner(Split split) {
+      return Scannables.splitRecordScanner(table.createSplitReader(split), KEY_VALUE_ROW_MAKER);
     }
   }
 
@@ -179,15 +179,15 @@ public class KeyStructValueTableDefinition
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
-      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyValueTable", table);
+      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyStructValueTable", table);
       registry.add(keyValueTable);
     }
   }
 
-  private static final Scannables.RowMaker<byte[], Row, KeyValue> KEY_VALUE_ROW_MAKER =
-    new Scannables.RowMaker<byte[], Row, KeyValue>() {
+  private static final Scannables.RecordMaker<byte[], Row, KeyValue> KEY_VALUE_ROW_MAKER =
+    new Scannables.RecordMaker<byte[], Row, KeyValue>() {
       @Override
-      public KeyValue makeRow(byte[] key, Row row) {
+      public KeyValue makeRecord(byte[] key, Row row) {
         return new KeyValue(Bytes.toString(key),
                             GSON.fromJson(Bytes.toString(row.get(KeyStructValueTable.COL)), KeyValue.Value.class));
       }

@@ -66,7 +66,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       appSpec.getMapReduce().values(),
       appSpec.getFlows().values(),
       appSpec.getProcedures().values(),
-      appSpec.getWorkflows().values()
+      appSpec.getWorkflows().values(),
+      appSpec.getServices().values()
     );
 
     // Generate webapp program if required
@@ -94,8 +95,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
             }
             Location output = programDir.append(String.format("%s.jar", spec.getName()));
             return ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(),
-                                        spec.getClassName(), type, appSpec);
-          }
+                                          spec.getClassName(), type, appSpec);
+            }
         });
         futures.add(future);
       }

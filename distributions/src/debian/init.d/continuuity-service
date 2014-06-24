@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # chkconfig: 2345 96 15
-# description: Starts and stops the @servicename@ service
+# description: Starts and stops the @service.name@ service
 # 
 ### BEGIN INIT INFO
-# Provides:          continuuity-@servicename@
-# Short-Description: Continuuity @servicename@
+# Provides:          continuuity-@service.name@
+# Short-Description: Continuuity @service.name@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -18,8 +18,8 @@
 # drop permissions to continuuity user and run service script
 
 if [[ $UID -eq 0 ]]; then
-    su continuuity -c "cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*"
+    su continuuity -c "cd /opt/continuuity/@package.name@/bin; exec ./svc-@service.name@ $*"
 else
-    cd /opt/continuuity/@packagename@/bin; exec ./svc-@servicename@ $*
+    cd /opt/continuuity/@package.name@/bin; exec ./svc-@service.name@ $*
 fi
 

@@ -134,27 +134,27 @@ public abstract class GatewayTestBase {
         new AppFabricTestModule(conf),
         new StreamServiceRuntimeModule().getSingleNodeModules()
       ).with(new AbstractModule() {
-                            @Override
-                            protected void configure() {
-                              // It's a bit hacky to add it here. Need to refactor these
-                              // bindings out as it overlaps with
-                              // AppFabricServiceModule
-                              bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-                              bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+        @Override
+        protected void configure() {
+          // It's a bit hacky to add it here. Need to refactor these
+          // bindings out as it overlaps with
+          // AppFabricServiceModule
+          bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-                              MockMetricsCollectionService metricsCollectionService = new
-                                MockMetricsCollectionService();
-                              bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-                              bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+          MockMetricsCollectionService metricsCollectionService = new
+            MockMetricsCollectionService();
+          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
 
-                              bind(StreamConsumerStateStoreFactory.class)
-                                .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-                              bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
-                              bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
-                              bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
-                            }
-                          }
-      ));
+          bind(StreamConsumerStateStoreFactory.class)
+            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
+          bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+        }
+      })
+    );
 
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();

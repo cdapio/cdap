@@ -68,12 +68,24 @@
             <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
             <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
           {{else}}
+            {{#unless C.isEnterprise}}
             <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" class="support-link"></a>
-            <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
+            {{/unless}}
+            <div class="pull-right user-link small-pad" style="position: relative; width: 140px;text-align: center;">
+              <div class="dropdown" data-toggle="dropdown">
+                <div class="text-span">  <img id="loading-time-select-img" src="/assets/img/start-all-load.gif" />My account</div>
+              </div>
+                <ul class="dropdown-menu top-dropdown-listholder" style="text-align: left; margin-top: -5px;">
+                {{#unless C.isEnterprise}}
+                  <li><a href="https://accounts.continuuity.com/profile" target="_blank">Go to Sandbox</a></li>
+                {{/unless}}
+                  <li><a href="/#/accesstoken">Access token</a></li>
+                </ul>
+            </div>
           {{/if}}
       {{/if}}
       <a href="#/services" class="topmenu-top-padding">Services</a>
-      <a href="#/analyze" class="metrics-link" id="header-metrics"></a>
+      <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
     </div>
     <div id="nav">
@@ -113,8 +125,10 @@
     <a href="http://www.continuuity.com/privacy" id="footer-terms" target="blank">Privacy</a>
     <span>&nbsp;·&nbsp;</span>
     <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
+    {{#unless C.isEnterprise}}
     <span>&nbsp;·&nbsp;</span>
     <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
+    {{/unless}}
     {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
@@ -164,7 +178,8 @@
             <th style="min-width: 100px;" class="status-col">Status
             </th>
             <th style="min-width: 100px;" class="logs-col">Logs</th>
-            <th style="min-width: 200px;" class="instance-col">Instance</th>
+            <th style="min-width: 200px;" class="instance-col">Instances Requested</th>
+            <th style="min-width: 200px;" class="instance-col">Provisioned</th>
           </thead>
           <tbody>
           {{#each services}}
@@ -191,16 +206,20 @@
               </td>
               <td style="max-width: 200px;" class="instance-col">
                 <div class="instance-wrapper">
-                  <div class="instance-num"><span>{{this.cur}}</span></div>
+                  <div class="instance-num"><span>{{this.requested}}</span></div>
                   <div>
-                    <a class="cursor-pointer" {{action decreaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action decreaseInstance this.name this.requested }}>
                       <img src="assets/img/minus.png" />
                     </a>
-                    <a class="cursor-pointer" {{action increaseInstance this.name this.cur }}>
+                    <a class="cursor-pointer" {{action increaseInstance this.name this.requested }}>
                       <img src="assets/img/plus.png" />
                     </a>
                   </div>
                 </div>
+              <td style="max-width: 350px;" class="instance-provisioned service-col">
+              <div class="instance-wrapper">
+                  <div class="instance-num"><span>{{this.provisioned}}</span></div>
+              </div>
               </td>
             </tr>
           {{/each}}
@@ -232,7 +251,6 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title"></div>Log into Reactor</div>
         <div class="panel-body">
           <div class="warning">{{warning}}</div>
           {{view C.Embed.Login}}
@@ -260,6 +278,93 @@
       </tr>
     </table>
     </form>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="AccessToken">
+    <div id="title">
+      <h1 class="pull-left">
+      {{#if token}}
+        Account&nbsp;<span>Access Token</span>
+        {{ else }}
+        Please login again to get your Access Token
+      {{/if}}
+      </h1>
+      {{#if token}}
+        <div class="pull-right">
+          <a class="btn btn-blue btn-default" href="/download-access-token/{{unbound token}}"><b>Download</b></a>
+        </div>
+      {{/if}}
+      <div style="clear: both"></div>
+    </div>
+    <div id="panels">
+      <div class="panel">
+        <div class="panel-body">
+          <div class="warning">{{warning}}</div>
+          {{#if token}}
+            <table class="table token-table" role="table">
+              <tr>
+                <td class="med-width bolder-font">Access Token</td>
+                <td class="lrg-width">{{token}}</td>
+              </tr>
+              <tr>
+                <td class="lrg-width bolder-font">Expires in</td>
+                <td class="lrg-width">{{token_expires}} sec</td>
+              </tr>
+            </table>
+            <br />
+            <br />
+            <h1>Usage</h1>
+            <br />
+            <div class="alert alert-info">
+              This is a long lasting Access Token that you can use to authenticate against Reactor. Access Tokens are used to identify and authenticate users.
+            </div>
+            <br />           
+            <table class="table" role="table">
+              <tr>
+                <td class="bolder-font">Step 1</td>
+                <td>
+                  Click blue Download button above.
+                </td>
+              </tr>
+              <tr>
+                <td class="bolder-font">Step 2</td>
+                <td>
+                  Save the downloaded file as ".continuuity.accesstoken" under your home directory (~/).
+                </td>
+              </tr>
+              <tr>
+                <td class="bolder-font">Step 3</td>
+                <td>
+                  Run reactor and use the provided tools with a secured Reactor.
+                </td>
+              </tr>
+            </table>
+            <br />
+            <br />
+            <br />
+          {{else}}
+            <form id="login-form">
+            <table>
+              <tr>
+                <td>Username</td>
+                <td>{{input type="text" value=username class="username" name="username" }}</td>
+              </tr>
+              <tr>
+                <td>Password</td>
+                <td>{{input type="password" value=password class="password" name="password" }}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                <button class="btn btn-blank btn-default" {{action 'submit' on="click"}}>Login</button>
+                </td>
+              </tr>
+            </table>
+            </form>
+          {{/if}}
+        </div>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Overview">

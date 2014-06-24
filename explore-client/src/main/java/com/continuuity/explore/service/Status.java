@@ -6,6 +6,9 @@ import com.google.common.base.Objects;
  * Represents the status of an operation submitted to {@link Explore}.
  */
 public class Status {
+
+  public static final Status NO_OP = new Status(OpStatus.FINISHED, false);
+
   private final OpStatus status;
   private final boolean hasResults;
 
