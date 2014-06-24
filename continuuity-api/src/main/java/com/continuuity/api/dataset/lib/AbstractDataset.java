@@ -21,9 +21,9 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   private final Collection<Dataset> underlying;
   private final TransactionAware txAwares;
 
-  public AbstractDataset(String instanceName, Dataset... underlying) {
+  public AbstractDataset(String instanceName, Dataset embedded, Dataset... otherEmbedded) {
     this.instanceName = instanceName;
-    this.underlying = Lists.newArrayList(underlying);
+    this.underlying = Lists.asList(embedded, otherEmbedded);
     ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
     for (Dataset dataset : underlying) {
       if (dataset instanceof TransactionAware) {

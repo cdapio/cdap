@@ -40,7 +40,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
     }
 
     DatasetSpecification spec = def.configure(instanceName, props);
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.create();
 
     return spec;
@@ -54,7 +54,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetAdmin admin = def.getAdmin(spec);
+    DatasetAdmin admin = def.getAdmin(spec, null);
     admin.drop();
   }
 

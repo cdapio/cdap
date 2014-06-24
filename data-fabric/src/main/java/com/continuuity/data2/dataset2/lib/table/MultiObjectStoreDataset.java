@@ -85,7 +85,7 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
   }
 
   @Override
-  public void write(String key, T object) throws Exception {
+  public void write(String key, T object) {
     table.put(Bytes.toBytes(key), DEFAULT_COLUMN, encode(object));
   }
 
@@ -178,7 +178,8 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
     return table.getSplits(numSplits, start, stop);
   }
 
-  @Override
+  // TODO: it should implement RecordScannable, but due to classloading issues it doesn't
+//  @Override
   public Type getRecordType() {
     return new TypeToken<KeyValue<byte[], Map<byte[], T>>>() { }.getType();
   }
@@ -188,7 +189,8 @@ public class MultiObjectStoreDataset<T> extends AbstractDataset implements Multi
     return table.getSplits();
   }
 
-  @Override
+  // TODO: it should implement RecordScannable, but due to classloading issues it doesn't
+//  @Override
   public RecordScanner<KeyValue<byte[], Map<byte[], T>>> createSplitRecordScanner(Split split) {
     return Scannables.splitRecordScanner(createSplitReader(split), new MultiObjectRecordMaker());
   }

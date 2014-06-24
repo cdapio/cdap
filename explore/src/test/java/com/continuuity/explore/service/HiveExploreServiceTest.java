@@ -1,6 +1,5 @@
 package com.continuuity.explore.service;
 
-import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -21,6 +20,7 @@ import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -31,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.util.List;
@@ -41,6 +42,7 @@ import static com.continuuity.explore.service.KeyStructValueTableDefinition.KeyV
 /**
  * Tests Hive13ExploreService.
  */
+@Category(SlowTests.class)
 public class HiveExploreServiceTest {
   private static InMemoryTransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
@@ -60,23 +62,18 @@ public class HiveExploreServiceTest {
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
 
-    exploreClient = injector.getInstance(AsyncExploreClient.class);
-    Assert.assertTrue(exploreClient.isAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table", null);
-    Assert.assertNotNull(admin);
-    admin.create();
-
-    Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table", null);
     Assert.assertNotNull(table);
+
+    Transaction tx1 = transactionManager.startShort(100);
     table.startTx(tx1);
 
     KeyValue.Value value1 = new KeyValue.Value("first", Lists.newArrayList(1, 2, 3, 4, 5));
@@ -96,15 +93,20 @@ public class HiveExploreServiceTest {
     table.startTx(tx2);
 
     Assert.assertEquals(value1, table.get("1"));
+
+    exploreClient = injector.getInstance(AsyncExploreClient.class);
+    Assert.assertTrue(exploreClient.isAvailable());
+
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteModule("keyStructValue");
 
     exploreExecutorService.stopAndWait();
+    datasetService.stopAndWait();
     transactionManager.stopAndWait();
-    datasetService.startAndWait();
   }
 
   @Test
@@ -114,9 +116,9 @@ public class HiveExploreServiceTest {
     datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
     datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
                                  DatasetProperties.EMPTY);
-    DatasetAdmin admin = datasetFramework.getAdmin("my_table_not_record_scannable", null);
-    Assert.assertNotNull(admin);
-    admin.create();
+
+    datasetFramework.deleteInstance("my_table_not_record_scannable");
+    datasetFramework.deleteModule("module2");
   }
 
   @Test
@@ -146,7 +148,7 @@ public class HiveExploreServiceTest {
         Lists.newArrayList(
           new Result(Lists.<Object>newArrayList("key", "string", "from deserializer")),
           new Result(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                             "from deserializer"))
+                                                "from deserializer"))
         )
     );
 
@@ -185,6 +187,46 @@ public class HiveExploreServiceTest {
                Lists.newArrayList(
                  new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
+  }
+
+  @Test
+  public void testJoin() throws Exception {
+
+    // Performing admin operations to create dataset instance
+    datasetFramework.addInstance("keyStructValueTable", "my_table_1", DatasetProperties.EMPTY);
+
+    Transaction tx1 = transactionManager.startShort(100);
+
+    // Accessing dataset instance to perform data operations
+    KeyStructValueTableDefinition.KeyStructValueTable table = datasetFramework.getDataset("my_table_1", null);
+    Assert.assertNotNull(table);
+    table.startTx(tx1);
+
+    KeyValue.Value value1 = new KeyValue.Value("two", Lists.newArrayList(10, 11, 12, 13, 14));
+    KeyValue.Value value2 = new KeyValue.Value("third", Lists.newArrayList(10, 11, 12, 13, 14));
+    table.put("2", value1);
+    table.put("3", value2);
+    Assert.assertEquals(value1, table.get("2"));
+
+    Assert.assertTrue(table.commitTx());
+
+    transactionManager.canCommit(tx1, table.getTxChanges());
+    transactionManager.commit(tx1);
+
+    table.postTxCommit();
+
+
+    runCommand("select continuuity_user_my_table.key, continuuity_user_my_table.value from continuuity_user_my_table " +
+               "join continuuity_user_my_table_1 on (continuuity_user_my_table.key=continuuity_user_my_table_1.key)",
+        true,
+        Lists.newArrayList(new ColumnDesc("continuuity_user_my_table.key", "STRING", 1, null),
+                           new ColumnDesc("continuuity_user_my_table.value",
+                                          "struct<name:string,ints:array<int>>", 2, null)),
+        Lists.newArrayList(
+            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+    );
+
+    datasetFramework.deleteInstance("my_table_1");
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.api;
@@ -31,7 +31,9 @@ import java.util.Map;
  * Implements the ApplicationSpecifications interface configure() method,
  * and invoke the ApplicationSpecification.Builder.with() method to create a Reactor application.
  *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.app.Application}
  */
+@Deprecated
 public interface ApplicationSpecification {
 
   /**

@@ -147,7 +147,7 @@ function(Components, Embeddables, HTTP, Util) {
 		/**
 		 * Sets up authentication on the global Ember application.
 		 */
-		setupAuth: function (routeHandler) {
+		setupAuth: function (routeHandler, callback) {
 			/**
 			 * Recieves response of type {token: <token>}
 			 */
@@ -159,6 +159,8 @@ function(Components, Embeddables, HTTP, Util) {
 				}
 				if (routeHandler !== undefined && !C.Env.get('auth_token') && 'routeName' in routeHandler) {
 					routeHandler.transitionTo('Login');
+				} else if (typeof callback === 'function') {
+				  callback();
 				}
 			});
 		},

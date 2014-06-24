@@ -45,14 +45,14 @@ public class MultiObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("multiobjects"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("multiobjects"), classLoader);
   }
 
   @Override
-  public MultiObjectStoreDataset<?> getDataset(DatasetSpecification spec) throws IOException {
+  public MultiObjectStoreDataset<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("multiobjects");
-    Table table = tableDef.getDataset(tableSpec);
+    Table table = tableDef.getDataset(tableSpec, classLoader);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);

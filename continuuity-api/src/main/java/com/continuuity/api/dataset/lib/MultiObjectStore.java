@@ -3,7 +3,6 @@ package com.continuuity.api.dataset.lib;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
-import com.continuuity.api.data.batch.RecordScannable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.dataset.Dataset;
 
@@ -26,8 +25,7 @@ import java.util.Map;
 @Beta
 public interface MultiObjectStore<T>
   extends Dataset, BatchReadable<byte[], Map<byte[], T>>,
-  BatchWritable<byte[], Map<byte[], T>>,
-  RecordScannable<KeyValue<byte[], Map<byte[], T>>> {
+  BatchWritable<byte[], Map<byte[], T>> {
 
   /**
    * Write an object with a given key. Writes the object to the default column 'c'
@@ -41,7 +39,7 @@ public interface MultiObjectStore<T>
    * @param key the key of the object
    * @param object the object to be stored
    */
-  void write(String key, T object) throws Exception;
+  void write(String key, T object);
 
   /**
    * Write an object with a given key and a column.

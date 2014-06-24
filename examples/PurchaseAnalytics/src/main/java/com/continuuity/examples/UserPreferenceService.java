@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -63,7 +66,7 @@ public class UserPreferenceService implements TwillApplication {
 
     private NettyHttpService setupUserLookupService(String host, int port) {
       List<HttpHandler> handlers = Lists.newArrayList();
-      handlers.add(new UserLookupHandler());
+      handlers.add(new UserInterestLookupHandler());
 
       return NettyHttpService.builder().setHost(host)
         .setPort(port)
@@ -111,7 +114,7 @@ public class UserPreferenceService implements TwillApplication {
    * Lookup Handler to handle users interest HTTP call.
    */
   @Path("/v1")
-  public static final class UserLookupHandler extends AbstractHttpHandler {
+  public static final class UserInterestLookupHandler extends AbstractHttpHandler {
 
     @Path("users/{user-id}/interest")
     @GET

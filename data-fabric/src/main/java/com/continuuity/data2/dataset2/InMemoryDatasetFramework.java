@@ -67,7 +67,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
-    def.getAdmin(spec).create();
+    def.getAdmin(spec, null).create();
     instances.put(datasetInstanceName, spec);
   }
 
@@ -82,10 +82,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean hasType(String typeName) throws DatasetManagementException {
+    return registry.get(typeName) != null;
+  }
+
+  @Override
   public void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
     DatasetDefinition def = registry.get(spec.getType());
-    def.getAdmin(spec).create();
+    def.getAdmin(spec, null).create();
   }
 
   @Override
@@ -97,11 +102,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       return null;
     }
     DatasetDefinition impl = registry.get(spec.getType());
-    return (T) impl.getAdmin(spec);
+    return (T) impl.getAdmin(spec, classLoader);
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader ignored)
+  public synchronized <T extends Dataset> T getDataset(String datasetInstanceName, ClassLoader classLoader)
     throws IOException {
 
     DatasetSpecification spec = instances.get(datasetInstanceName);
@@ -109,6 +114,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       return null;
     }
     DatasetDefinition impl = registry.get(spec.getType());
-    return (T) impl.getDataset(spec);
+    return (T) impl.getDataset(spec, classLoader);
   }
 }

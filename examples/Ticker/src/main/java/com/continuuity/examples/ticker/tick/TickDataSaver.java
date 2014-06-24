@@ -18,8 +18,7 @@ package com.continuuity.examples.ticker.tick;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
-import com.continuuity.api.data.dataset.TimeseriesTable;
+import com.continuuity.api.dataset.lib.TimeseriesTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.metrics.Metrics;
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public class TickDataSaver extends AbstractFlowlet {
   private static final Logger LOG = LoggerFactory.getLogger(TickDataSaver.class);
 
   @UseDataSet("tickTimeseries")
-  private SimpleTimeseriesTable tickTs;
+  private TimeseriesTable tickTs;
   private Metrics metrics;
 
   private static final byte[] MIN_TAG = Bytes.toBytes("min");

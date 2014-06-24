@@ -18,10 +18,10 @@ public final class Constants {
     public static final String STREAMS = "streams";
     public static final String REACTOR_SERVICES = "reactor.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
-    public static final String DATASET_MANAGER = "dataset.manager";
+    public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
-    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.http.user.service";
+    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
   }
 
   /**
@@ -384,6 +384,8 @@ public final class Constants {
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration.ms";
+    /** Long lasting Access token expiration time in milliseconds. */
+    public static final String EXTENDED_TOKEN_EXPIRATION = "security.server.extended.token.expiration.ms";
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
     /** Configuration for enabling the security. */
     public static final String CFG_SECURITY_ENABLED = "security.enabled";
@@ -432,6 +434,9 @@ public final class Constants {
 
     public static final String CFG_LOCAL_DATA_DIR = "hive.local.data.dir";
     public static final String CFG_EXPLORE_ENABLED = "reactor.explore.enabled";
+    //max-instances of explore HTTP service
+    public static final String MAX_INSTANCES = "explore.executor.max.instances";
+
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

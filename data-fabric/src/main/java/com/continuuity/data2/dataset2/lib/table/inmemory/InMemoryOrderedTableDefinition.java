@@ -25,14 +25,14 @@ public class InMemoryOrderedTableDefinition
   }
 
   @Override
-  public InMemoryOrderedTable getDataset(DatasetSpecification spec) throws IOException {
+  public InMemoryOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryOrderedTable(spec.getName(), conflictDetection);
   }
 
   @Override
-  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     // todo: or pass the full spec?
     return new InMemoryOrderedTableAdmin(spec.getName());
   }

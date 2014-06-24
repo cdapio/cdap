@@ -38,6 +38,16 @@ public final class ObjectStores {
   }
 
   /**
+   * Same as {@link #createObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
+   * properties.
+   */
+  public static void createObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
+    throws UnsupportedTypeException {
+
+    createObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
+  }
+
+  /**
    * Adds {@link MultiObjectStore} data set to be created at application deploy if not exists.
    * @param configurer application configurer
    * @param datasetName data set name
@@ -53,6 +63,16 @@ public final class ObjectStores {
   }
 
   /**
+   * Same as {@link #createMultiObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
+   * properties.
+   */
+  public static void createMultiObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
+    throws UnsupportedTypeException {
+
+    createMultiObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
+  }
+
+  /**
    * Adds {@link IndexedObjectStore} data set to be created at application deploy if not exists.
    * @param configurer application configurer
    * @param datasetName data set name
@@ -65,6 +85,16 @@ public final class ObjectStores {
     throws UnsupportedTypeException {
 
     configurer.createDataSet(datasetName, IndexedObjectStore.class, objectStoreProperties(type, props));
+  }
+
+  /**
+   * Same as {@link #createIndexedObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
+   * properties.
+   */
+  public static void createIndexedObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
+    throws UnsupportedTypeException {
+
+    createIndexedObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
   }
 
   /**

@@ -6,20 +6,16 @@ import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.metrics.FlowletMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.discovery.ZKDiscoveryService;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClients;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -39,15 +35,14 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private final MetricsCollector systemMetricsCollector;
-  private final ZKClientService zkClientService;
-  private final CConfiguration cConf;
 
   BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
                       Map<String, Closeable> datasets, Arguments runtimeArguments,
                       FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService,
-                      ZKClientService zkClientService, CConfiguration cConf) {
+                      ProgramServiceDiscovery serviceDiscovery) {
     super(program, runId, datasets);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
@@ -60,8 +55,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
     this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
                                                       metricsCollectionService, getMetricContext());
-    this.zkClientService = zkClientService;
-    this.cConf = cConf;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -99,10 +93,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   @Override
   public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
-    String zkNamespace = String.format("%s/service.%s.%s.%s", twillNamespace, accountId, appId, serviceId);
-    ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(ZKClients.namespace(zkClientService, zkNamespace));
-    return zkDiscoveryService.discover(serviceName);
+    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
   public MetricsCollector getSystemMetrics() {

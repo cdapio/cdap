@@ -26,6 +26,7 @@ import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscoveryModules;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -299,6 +300,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      new ProgramServiceDiscoveryModules().getDistributedModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

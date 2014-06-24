@@ -2,7 +2,6 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
@@ -90,7 +89,7 @@ public class DataSetTestBase {
     }
     // create an instantiator the resulting list of data set specs
     instantiator = new DataSetInstantiator(fabric, datasetFramework, null);
-    instantiator.setDataSets(specs, Collections.<DatasetInstanceCreationSpec>emptyList());
+    instantiator.setDataSets(specs, Collections.<DatasetCreationSpec>emptyList());
   }
 
   /**

@@ -11,6 +11,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -26,9 +27,13 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
+import com.continuuity.internal.app.ForwardingResourceSpecification;
+import com.continuuity.internal.app.ForwardingRuntimeSpecification;
+import com.continuuity.internal.app.ForwardingTwillSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
+import com.continuuity.internal.service.DefaultServiceSpecification;
 import com.continuuity.metadata.MetaDataEntry;
 import com.continuuity.metadata.MetaDataTable;
 import com.google.common.base.Preconditions;
@@ -43,6 +48,8 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -544,6 +551,91 @@ public class MDTBasedStore implements Store {
 
   }
 
+  @Override
+  public int getServiceRunnableInstances(Id.Program id, String runnable) throws OperationException {
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    ServiceSpecification serviceSpec = getServiceSpecSafely(id, appSpec);
+    RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
+    return runtimeSpec.getResourceSpecification().getInstances();
+  }
+
+  @Override
+  public void setServiceRunnableInstances(Id.Program id, String runnable, int count) throws OperationException {
+
+    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
+    long timestamp = System.currentTimeMillis();
+
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    ServiceSpecification serviceSpec = getServiceSpecSafely(id, appSpec);
+
+    RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
+    if (runtimeSpec == null) {
+      throw new IllegalArgumentException(String.format("Runnable not found, app: %s, service: %s, runnable %s",
+                                                       id.getApplication(), id.getId(), runnable));
+    }
+
+    ResourceSpecification resourceSpec = replaceInstanceCount(runtimeSpec.getResourceSpecification(), count);
+    RuntimeSpecification newRuntimeSpec = replaceResourceSpec(runtimeSpec, resourceSpec);
+
+    Preconditions.checkNotNull(newRuntimeSpec);
+
+    ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(),
+                                                             replaceRuntimeSpec(runnable, serviceSpec, newRuntimeSpec));
+    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
+
+    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, runnable: {}," +
+              " new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), runnable, count);
+
+  }
+
+  private ResourceSpecification replaceInstanceCount(final ResourceSpecification spec,
+                                                    final int instanceCount) {
+    return new ForwardingResourceSpecification(spec) {
+      @Override
+      public int getInstances() {
+        return instanceCount;
+      }
+    };
+  }
+
+  private RuntimeSpecification replaceResourceSpec(final RuntimeSpecification runtimeSpec,
+                                                   final ResourceSpecification resourceSpec) {
+    return new ForwardingRuntimeSpecification(runtimeSpec) {
+      @Override
+      public ResourceSpecification getResourceSpecification() {
+        return resourceSpec;
+      }
+    };
+  }
+
+  private ApplicationSpecification replaceServiceSpec(final ApplicationSpecification appSpec,
+                                                      final String serviceName,
+                                                      final ServiceSpecification serviceSpecification) {
+    return new ForwardingApplicationSpecification(appSpec) {
+      @Override
+      public Map<String, ServiceSpecification> getServices() {
+        Map<String, ServiceSpecification> services = Maps.newHashMap(super.getServices());
+        services.put(serviceName, serviceSpecification);
+        return services;
+      }
+    };
+  }
+
+  private ServiceSpecification replaceRuntimeSpec(final String runnable, final ServiceSpecification spec,
+                                                  final RuntimeSpecification runtimeSpec) {
+    return new DefaultServiceSpecification(spec.getName(),
+                                           new ForwardingTwillSpecification(spec) {
+                                             @Override
+                                             public Map<String, RuntimeSpecification> getRunnables() {
+                                               Map<String, RuntimeSpecification> specs = Maps.newHashMap(
+                                                                                          super.getRunnables());
+                                               specs.put(runnable, runtimeSpec);
+                                               return specs;
+                                             }
+                                           });
+  }
+
   private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
     Location programLocation;
     try {
@@ -597,6 +689,15 @@ public class MDTBasedStore implements Store {
     return flowSpec;
   }
 
+  private ServiceSpecification getServiceSpecSafely(Id.Program id, ApplicationSpecification appSpec) {
+    ServiceSpecification spec = appSpec.getServices().get(id.getId());
+    if (spec == null) {
+      throw new IllegalArgumentException("no such service @ account id: " + id.getAccountId() +
+                                           ", app id: " + id.getApplication() +
+                                           ", service id: " + id.getId());
+    }
+    return spec;
+  }
 
   private ProcedureSpecification getProcedureSpecSafely(Id.Program id, ApplicationSpecification appSpec) {
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
