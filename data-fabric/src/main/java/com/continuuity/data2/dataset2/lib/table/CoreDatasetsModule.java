@@ -14,8 +14,10 @@ import com.continuuity.api.dataset.lib.TimeseriesTable;
 import com.continuuity.api.dataset.lib.TimeseriesTableDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.api.dataset.table.MemoryTable;
 import com.continuuity.api.dataset.table.OrderedTable;
 import com.continuuity.api.dataset.table.Table;
+import com.continuuity.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
 
 /**
  * DatasetModule containing default datasets.
@@ -51,6 +53,11 @@ public class CoreDatasetsModule implements DatasetModule {
 
     registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
     registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
+
+    // in-memory table
+    InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable");
+    registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
+    registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
   }
 
 }
