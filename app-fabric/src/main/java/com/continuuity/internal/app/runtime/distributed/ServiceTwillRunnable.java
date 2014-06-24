@@ -70,7 +70,6 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.BasicTwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -197,21 +196,20 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      List<String> appArgList = new ArrayList<String>();
+      final List<String> appArgList = new ArrayList<String>();
       Arguments userargs = programOpts.getUserArguments();
       for (Map.Entry<String, String> kv : userargs) {
         appArgList.add(kv.getKey());
         appArgList.add(kv.getValue());
       }
 
-      TwillContext userContext = new BasicTwillContext(context.getRunId(), context.getApplicationRunId(),
-                                                       context.getHost(), context.getArguments(),
-                                                       appArgList.toArray(new String[appArgList.size()]),
-                                                       context.getSpecification(), context.getInstanceId(),
-                                                       dsService, dsClient,
-                                                       context.getInstanceCount(), context.getMaxMemoryMB(),
-                                                       context.getVirtualCores());
-      delegate.initialize(userContext);
+      delegate.initialize(new ForwardingTwillContext(context) {
+        @Override
+        public String[] getApplicationArguments() {
+          return appArgList.toArray(new String[appArgList.size()]);
+        }
+      });
+      
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
