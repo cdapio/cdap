@@ -117,7 +117,8 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                 </configuration>
@@ -302,11 +303,13 @@
             <version>2.4</version>
             <executions>
               <execution>
+                <!-- Override the one in parent as singlenode build zip, not tgz -->
+                <id>tgz-package</id>
                 <phase>package</phase>
                 <goals>
                   <goal>single</goal>
                 </goals>
-                <configuration>
+                <configuration combine.self="override">
                   <descriptors>
                     <descriptor>${project.basedir}/src/main/assembly/sdk.xml</descriptor>
                   </descriptors>
@@ -318,7 +321,7 @@
             </executions>
           </plugin>
 
-          <!-- Determine the distribution url based on if it's a snapshot or not -->
+          <!-- Extra deployment for reactor sdk -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>

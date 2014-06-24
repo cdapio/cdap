@@ -7,6 +7,15 @@ define([], function () {
   var Controller = Em.Controller.extend({
 
     load: function () {
+      // Hide everything for this route.
+      Em.run.next(function() {
+        $("#global").hide();
+        $("#nav").hide();
+        $("#content-body").css({"padding-left": 0});
+      });
+
+
+
       this.set('warning', '');
     },
 

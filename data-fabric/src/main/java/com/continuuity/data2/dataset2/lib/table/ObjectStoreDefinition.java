@@ -45,18 +45,18 @@ public class ObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("objects"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("objects"), classLoader);
   }
 
   @Override
-  public ObjectStoreDataset<?> getDataset(DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<?> getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec);
+    KeyValueTable table = tableDef.getDataset(kvTableSpec, classLoader);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
-    return new ObjectStoreDataset(spec.getName(), table, typeRep, schema);
+    return new ObjectStoreDataset(spec.getName(), table, typeRep, schema, classLoader);
   }
 
 }

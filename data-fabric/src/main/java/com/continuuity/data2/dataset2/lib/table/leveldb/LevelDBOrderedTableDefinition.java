@@ -30,14 +30,14 @@ public class LevelDBOrderedTableDefinition
   }
 
   @Override
-  public LevelDBOrderedTable getDataset(DatasetSpecification spec) throws IOException {
+  public LevelDBOrderedTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new LevelDBOrderedTable(spec.getName(), service, conflictDetection);
   }
 
   @Override
-  public LevelDBOrderedTableAdmin getAdmin(DatasetSpecification spec) throws IOException {
+  public LevelDBOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new LevelDBOrderedTableAdmin(spec, service);
   }
 }
