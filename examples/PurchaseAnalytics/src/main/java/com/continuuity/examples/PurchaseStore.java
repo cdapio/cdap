@@ -35,6 +35,7 @@ public class PurchaseStore extends AbstractFlowlet {
     serviceDiscovered = context.discover("PurchaseAnalyticsApp", "UserPreferenceService",
                                          "UserInterestsLookup");
   }
+
   @ProcessInput
   public void process(Purchase purchase) {
     Iterator<Discoverable> discoverables = serviceDiscovered.iterator();
