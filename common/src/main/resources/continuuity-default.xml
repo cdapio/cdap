@@ -858,6 +858,12 @@
         <name>hive.local.data.dir</name>
         <value>${local.data.dir}/hive</value>
     </property>
+    <property>
+        <name>explore.executor.max.instances</name>
+        <value>1</value>
+        <description>Maximum number of explore executor instances</description>
+    </property>
+
 
 
     <!--

@@ -117,7 +117,8 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,com.google.protobuf,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                 </configuration>

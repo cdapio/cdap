@@ -31,13 +31,13 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification(""));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification(""), classLoader);
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec) throws IOException {
-    OrderedTable table = tableDef.getDataset(spec.getSpecification(""));
+  public Table getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    OrderedTable table = tableDef.getDataset(spec.getSpecification(""), classLoader);
     return new TableDataset(spec.getName(), table);
   }
 }
