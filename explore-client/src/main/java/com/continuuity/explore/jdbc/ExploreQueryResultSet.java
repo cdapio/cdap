@@ -7,6 +7,7 @@ import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Result;
 
+import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +53,9 @@ public class ExploreQueryResultSet implements ResultSet {
   private ExploreResultSetMetaData metaData;
 
   private boolean wasNull = false;
-  private final Explore exploreClient;
-  private final ExploreStatement statement;
-  private final Handle stmtHandle;
+  private ExploreStatement statement;
+  private Handle stmtHandle;
+  private Explore exploreClient;
 
   public ExploreQueryResultSet(Explore exploreClient, ExploreStatement statement, Handle stmtHandle)
       throws SQLException {
@@ -85,18 +86,14 @@ public class ExploreQueryResultSet implements ResultSet {
       }
       List<Result> fetchedRows;
       fetchedRows = exploreClient.nextResults(stmtHandle, fetchSize);
-      if (fetchedRows.isEmpty()) {
+      rowsItr = fetchedRows.iterator();
+      if (!rowsItr.hasNext()) {
         hasMoreResults = false;
         currentRow = null;
         return false;
       }
-      rowsItr = fetchedRows.iterator();
-      if (rowsItr.hasNext()) {
-        currentRow = rowsItr.next();
-        return true;
-      }
-      // Should not go there - as the previous isEmpty should already catch this case
-      return false;
+      currentRow = rowsItr.next();
+      return true;
     } catch (HandleNotFoundException e) {
       LOG.error("Could not fetch results with handle {}", stmtHandle);
       throw new SQLException("Could not fetch results with handle " + stmtHandle, e);
@@ -112,11 +109,14 @@ public class ExploreQueryResultSet implements ResultSet {
       // No-op
       return;
     }
-    if (this.statement != null && (this.statement instanceof ExploreStatement)) {
-      ExploreStatement s = this.statement;
-      s.closeClientOperation();
+    try {
+      statement.closeClientOperation();
+    } finally {
+      exploreClient = null;
+      stmtHandle = null;
+      statement = null;
+      isClosed = true;
     }
-    isClosed = true;
   }
 
   @Override
@@ -265,7 +265,7 @@ public class ExploreQueryResultSet implements ResultSet {
       return null;
     }
     if (value instanceof byte[]) {
-      return new String((byte[]) value);
+      return new String((byte[]) value, Charsets.UTF_8);
     }
     return value.toString();
   }
@@ -284,7 +284,7 @@ public class ExploreQueryResultSet implements ResultSet {
       } else if (obj == null) {
         return 0;
       } else if (String.class.isInstance(obj)) {
-        return Integer.valueOf((String) obj);
+        return Integer.parseInt((String) obj);
       }
       throw new Exception("Illegal conversion");
     } catch (Exception e) {
@@ -508,758 +508,768 @@ public class ExploreQueryResultSet implements ResultSet {
 
   @Override
   public Time getTime(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getAsciiStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getUnicodeStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getBinaryStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Time getTime(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getAsciiStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getUnicodeStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public InputStream getBinaryStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getCursorName() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Reader getCharacterStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Reader getCharacterStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isBeforeFirst() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isAfterLast() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isFirst() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isLast() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void beforeFirst() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void afterLast() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean first() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean last() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getRow() throws SQLException {
     // As per the javadoc:
     // "Support for the getRow method is optional for ResultSets with a result set type of TYPE_FORWARD_ONLY"
-    throw new SQLFeatureNotSupportedException("");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean absolute(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean relative(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean previous() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setFetchDirection(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getFetchDirection() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean rowUpdated() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean rowInserted() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean rowDeleted() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNull(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBoolean(int i, boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateByte(int i, byte b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateShort(int i, short i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateInt(int i, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateLong(int i, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateFloat(int i, float v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateDouble(int i, double v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBigDecimal(int i, BigDecimal bigDecimal) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateString(int i, String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBytes(int i, byte[] bytes) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateDate(int i, Date date) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateTime(int i, Time time) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateTimestamp(int i, Timestamp timestamp) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(int i, InputStream inputStream, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateObject(int i, Object o, int i2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateObject(int i, Object o) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNull(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBoolean(String s, boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateByte(String s, byte b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateShort(String s, short i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateInt(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateLong(String s, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateFloat(String s, float v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateDouble(String s, double v) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBigDecimal(String s, BigDecimal bigDecimal) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateString(String s, String s2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBytes(String s, byte[] bytes) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateDate(String s, Date date) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateTime(String s, Time time) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateTimestamp(String s, Timestamp timestamp) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateObject(String s, Object o, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateObject(String s, Object o) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void insertRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void deleteRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void refreshRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void cancelRowUpdates() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void moveToInsertRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void moveToCurrentRow() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Statement getStatement() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Object getObject(int i, Map<String, Class<?>> stringClassMap) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Ref getRef(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Blob getBlob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Clob getClob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Array getArray(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Object getObject(String s, Map<String, Class<?>> stringClassMap) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Ref getRef(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Blob getBlob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Clob getClob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Array getArray(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Date getDate(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Date getDate(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Time getTime(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Time getTime(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Timestamp getTimestamp(int i, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Timestamp getTimestamp(String s, Calendar calendar) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public URL getURL(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public URL getURL(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateRef(int i, Ref ref) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateRef(String s, Ref ref) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(int i, Blob blob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(String s, Blob blob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(int i, Clob clob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(String s, Clob clob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateArray(int i, Array array) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateArray(String s, Array array) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public RowId getRowId(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public RowId getRowId(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateRowId(int i, RowId rowId) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateRowId(String s, RowId rowId) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNString(int i, String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNString(String s, String s2) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(int i, NClob nClob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(String s, NClob nClob) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public NClob getNClob(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public NClob getNClob(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public SQLXML getSQLXML(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public SQLXML getSQLXML(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateSQLXML(int i, SQLXML sqlxml) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateSQLXML(String s, SQLXML sqlxml) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getNString(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getNString(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Reader getNCharacterStream(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public Reader getNCharacterStream(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNCharacterStream(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNCharacterStream(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(int i, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(String s, InputStream inputStream, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(int i, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(String s, Reader reader, long l) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNCharacterStream(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNCharacterStream(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateAsciiStream(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBinaryStream(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateCharacterStream(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(int i, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateBlob(String s, InputStream inputStream) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateClob(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(int i, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void updateNClob(String s, Reader reader) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public <T> T getObject(String columnLabel, Class<T> type)  throws SQLException {
+    //JDK 1.7
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public <T> T getObject(int columnIndex, Class<T> type)  throws SQLException {
+    //JDK 1.7
+    throw new SQLFeatureNotSupportedException();
   }
 }

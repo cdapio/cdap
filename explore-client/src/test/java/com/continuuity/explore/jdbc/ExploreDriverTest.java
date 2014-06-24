@@ -1,5 +1,6 @@
 package com.continuuity.explore.jdbc;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.explore.service.ColumnDesc;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.Result;
@@ -16,7 +17,6 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.yammer.metrics.annotation.Timed;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -58,7 +58,7 @@ public class ExploreDriverTest {
     httpService.startAndWait();
 
     Class.forName("com.continuuity.explore.jdbc.ExploreDriver");
-    exploreServiceUrl = String.format("%s%s:%d", ExploreJDBCUtils.URL_PREFIX, "localhost", httpService.getPort());
+    exploreServiceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "localhost", httpService.getPort());
   }
 
   @AfterClass
@@ -75,7 +75,7 @@ public class ExploreDriverTest {
 
     // Correct format but wrong host
     try {
-      driver.connect(ExploreJDBCUtils.URL_PREFIX + "foo:10000", null);
+      driver.connect(Constants.Explore.Jdbc.URL_PREFIX + "foo:10000", null);
     } catch (SQLException e) {
       // Expected, host is not available (random host)
     }

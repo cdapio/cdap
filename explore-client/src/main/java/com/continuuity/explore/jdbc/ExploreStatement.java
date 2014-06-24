@@ -6,19 +6,16 @@ import com.continuuity.explore.service.ExploreException;
 import com.continuuity.explore.service.Handle;
 import com.continuuity.explore.service.HandleNotFoundException;
 import com.continuuity.explore.service.Status;
-
-import com.google.common.base.Throwables;
-import com.sun.org.apache.bcel.internal.classfile.Unknown;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Reactor JDBC Statement. At most one {@link ExploreQueryResultSet} object can be produced by instances
@@ -42,8 +39,8 @@ public class ExploreStatement implements Statement {
   private volatile Handle stmtHandle = null;
   private volatile boolean stmtCompleted;
 
-  private final Connection connection;
-  private final Explore exploreClient;
+  private Connection connection;
+  private Explore exploreClient;
 
   public ExploreStatement(Connection connection, Explore exploreClient) {
     this.connection = connection;
@@ -157,9 +154,16 @@ public class ExploreStatement implements Statement {
       }
       closeClientOperation();
     } finally {
+      connection = null;
+      exploreClient = null;
       resultSet = null;
       isClosed = true;
     }
+  }
+
+  @Override
+  public boolean isClosed() throws SQLException {
+    return isClosed;
   }
 
   @Override
@@ -192,172 +196,177 @@ public class ExploreStatement implements Statement {
   @Override
   public int executeUpdate(String sql) throws SQLException {
     // We don't support writes in explore yet
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxFieldSize() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setMaxFieldSize(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getMaxRows() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setMaxRows(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setEscapeProcessing(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getQueryTimeout() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setQueryTimeout(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void clearWarnings() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setCursorName(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getUpdateCount() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean getMoreResults() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setFetchDirection(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getFetchDirection() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getResultSetConcurrency() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getResultSetType() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void addBatch(String s) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void clearBatch() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int[] executeBatch() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean getMoreResults(int i) throws SQLException {
     // In case our client.execute returned more than one list of results, which is never the case
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public ResultSet getGeneratedKeys() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int executeUpdate(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int executeUpdate(String s, int[] ints) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int executeUpdate(String s, String[] strings) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean execute(String s, int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean execute(String s, int[] ints) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean execute(String s, String[] strings) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getResultSetHoldability() throws SQLException {
-    throw new SQLException("Method not supported");
-  }
-
-  @Override
-  public boolean isClosed() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public void setPoolable(boolean b) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isPoolable() throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public void closeOnCompletion() throws SQLException {
+    // JDK 1.7
+    throw new SQLFeatureNotSupportedException();
+  }
+
+  public boolean isCloseOnCompletion() throws SQLException {
+    // JDK 1.7
+    throw new SQLFeatureNotSupportedException();
   }
 }

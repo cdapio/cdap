@@ -34,8 +34,8 @@ import javax.annotation.Nullable;
 /**
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
-public abstract class AbstractAsyncExploreClient implements Explore, ExploreClient {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractAsyncExploreClient.class);
+public abstract class AbstractExploreClient implements Explore, ExploreClient {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreClient.class);
   private static final Gson GSON = new Gson();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
@@ -137,7 +137,7 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
     }
 
     String message = String.format("Cannot find key %s in server response: %s", key,
-        new String(response.getResponseBody(), Charsets.UTF_8));
+                                   new String(response.getResponseBody(), Charsets.UTF_8));
     LOG.error(message);
     throw new ExploreException(message);
   }
@@ -179,25 +179,25 @@ public abstract class AbstractAsyncExploreClient implements Explore, ExploreClie
       return HttpRequests.doRequest(requestMethod, url, headers, body, bodySrc);
     } catch (IOException e) {
       throw new ExploreException(
-          String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
-              resolvedUrl, requestMethod,
-              headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
-              body == null ? bodySrc : body), e);
+        String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
+                      resolvedUrl, requestMethod,
+                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      body == null ? bodySrc : body), e);
     }
   }
 
   private String getDetails(HttpResponse response) {
     return String.format("Response code: %s, message:'%s', body: '%s'",
-        response.getResponseCode(), response.getResponseMessage(),
-        response.getResponseBody() == null ?
-            "null" : new String(response.getResponseBody(), Charsets.UTF_8));
+                         response.getResponseCode(), response.getResponseMessage(),
+                         response.getResponseBody() == null ?
+                           "null" : new String(response.getResponseBody(), Charsets.UTF_8));
 
   }
 
   private String resolve(String resource) {
     InetSocketAddress addr = getExploreServiceAddress();
     String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
-        Constants.Gateway.GATEWAY_VERSION, resource);
+                               Constants.Gateway.GATEWAY_VERSION, resource);
     LOG.trace("Explore URL = {}", url);
     return url;
   }

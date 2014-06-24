@@ -14,12 +14,11 @@ import com.continuuity.data2.datafabric.dataset.service.DatasetService;
 import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.explore.client.DiscoveryExploreClient;
 import com.continuuity.explore.client.ExploreClient;
 import com.continuuity.explore.client.ExploreClientUtil;
-import com.continuuity.explore.client.InternalAsyncExploreClient;
 import com.continuuity.explore.executor.ExploreExecutorService;
 import com.continuuity.explore.guice.ExploreRuntimeModule;
-import com.continuuity.explore.jdbc.ExploreJDBCUtils;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.test.SlowTests;
@@ -103,7 +102,7 @@ public class HiveExploreServiceTest {
 
     Assert.assertEquals(value1, table.get("1"));
 
-    exploreClient = injector.getInstance(InternalAsyncExploreClient.class);
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
     Assert.assertTrue(exploreClient.isAvailable());
 
   }
@@ -150,9 +149,9 @@ public class HiveExploreServiceTest {
     runCommand("describe continuuity_user_my_table",
         true,
         Lists.newArrayList(
-            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-            new ColumnDesc("comment", "STRING", 3, "from deserializer")
+          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+          new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
           new Result(Lists.<Object>newArrayList("key", "string", "from deserializer")),
@@ -164,10 +163,10 @@ public class HiveExploreServiceTest {
     runCommand("select key, value from continuuity_user_my_table",
         true,
         Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
-            new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
+                           new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)),
         Lists.newArrayList(
-            new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-            new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+          new Result(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
+          new Result(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
     runCommand("select key, value from continuuity_user_my_table where key = '1'",
@@ -207,7 +206,7 @@ public class HiveExploreServiceTest {
     Discoverable discoverable = new RandomEndpointStrategy(
         discoveryServiceClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
     InetSocketAddress addr = discoverable.getSocketAddress();
-    String serviceUrl = String.format("%s%s:%d", ExploreJDBCUtils.URL_PREFIX, addr.getHostName(), addr.getPort());
+    String serviceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort());
 
     Connection connection = DriverManager.getConnection(serviceUrl);
     PreparedStatement stmt;

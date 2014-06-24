@@ -1,9 +1,11 @@
 package com.continuuity.explore.jdbc;
 
 import com.continuuity.explore.service.ColumnDesc;
+import com.google.common.base.Preconditions;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
 
 /**
@@ -14,13 +16,11 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
   private final List<ColumnDesc> columnDescs;
 
   public ExploreResultSetMetaData(List<ColumnDesc> columnDescs) {
+    Preconditions.checkNotNull(columnDescs, "Column metadata list cannot be null.");
     this.columnDescs = columnDescs;
   }
 
   int getColumnPosition(String name) throws SQLException {
-    if (columnDescs == null) {
-      throw new SQLException("Could not determine column meta data for ResultSet");
-    }
     // If several columns have the same name, we have to return the one with the smaller position
     // hence we have to iterate through all the columns
     Integer min = null;
@@ -108,71 +108,71 @@ public class ExploreResultSetMetaData implements ResultSetMetaData {
 
   @Override
   public boolean isSearchable(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isCurrency(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isSigned(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getColumnDisplaySize(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getSchemaName(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getPrecision(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public int getScale(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getTableName(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public String getCatalogName(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isReadOnly(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isWritable(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isDefinitelyWritable(int i) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public <T> T unwrap(Class<T> tClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 
   @Override
   public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-    throw new SQLException("Method not supported");
+    throw new SQLFeatureNotSupportedException();
   }
 }
