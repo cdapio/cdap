@@ -36,7 +36,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.TypeLiteral;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
@@ -77,7 +76,6 @@ public class ReactorServiceMain extends DaemonMain {
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
-  private static final TypeLiteral<Map<String, String>> mapOfString = new TypeLiteral<Map<String, String>>() { };
 
   public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;

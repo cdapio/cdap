@@ -154,7 +154,6 @@ public class ReactorTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
-
     int instances = instanceCountMap.get(Constants.Service.STREAMS);
 
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
