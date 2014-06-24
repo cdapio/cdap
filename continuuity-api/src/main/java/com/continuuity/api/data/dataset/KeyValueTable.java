@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
@@ -16,7 +20,10 @@ import javax.annotation.Nullable;
 /**
  * This class implements a key/value map on top of Table. Supported
  * operations are read, write, delete, and swap.
+ *
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.KeyValueTable}
  */
+@Deprecated
 public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]> {
 
   // the fixed single column to use for the key

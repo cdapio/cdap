@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.program;
 
 import com.continuuity.AllProgramsApp;
+import com.continuuity.AppWithServices;
 import com.continuuity.FlowMapReduceApp;
 import com.continuuity.NoProgramsApp;
 import com.continuuity.ToyApp;
@@ -14,6 +15,8 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.app.AbstractApplication;
+import com.continuuity.api.app.ApplicationContext;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -24,7 +27,9 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.mapreduce.AbstractMapReduce;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
+import com.continuuity.api.service.ServiceSpecification;
 import com.continuuity.app.ApplicationSpecification;
+import com.continuuity.app.DefaultAppConfigurer;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
@@ -39,6 +44,7 @@ import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -350,6 +356,33 @@ public class MDTBasedStoreTest {
     Assert.assertEquals(2, stored.getDataSets().size());
     Assert.assertEquals(FlowImpl.class.getName(),
                         stored.getFlows().get("flow2").getClassName());
+  }
+
+  @Test
+  public void testServiceRunnableInstances() throws Exception {
+    AbstractApplication app = new AppWithServices();
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    app.configure(appConfigurer, new ApplicationContext());
+
+    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
+    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
+    store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
+
+    Id.Program programId = Id.Program.from(appId, "NoOpService");
+    int count = store.getServiceRunnableInstances(programId, "DummyService");
+    Assert.assertEquals(1, count);
+
+    store.setServiceRunnableInstances(programId, "DummyService", 10);
+    count = store.getServiceRunnableInstances(programId, "DummyService");
+    Assert.assertEquals(10, count);
+
+    ApplicationSpecification newSpec = store.getApplication(appId);
+    Map<String, ServiceSpecification> services = newSpec.getServices();
+    Assert.assertEquals(1, services.size());
+
+    Map<String, RuntimeSpecification> runtimeSpecs = services.get("NoOpService").getRunnables();
+    Assert.assertEquals(1, runtimeSpecs.size());
+    Assert.assertEquals(10, runtimeSpecs.get("DummyService").getResourceSpecification().getInstances());
   }
 
   @Test

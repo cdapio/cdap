@@ -26,6 +26,8 @@ define([], function () {
             status: service.status,
             min: service.min,
             max: service.max,
+            isIncreaseEnabled: service.requested < service.max,
+            isDecreaseEnabled: service.requested > service.min,
             logs: service.logs,
             requested: service.requested,
             provisioned: service.provisioned,

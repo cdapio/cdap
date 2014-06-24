@@ -220,8 +220,24 @@ progress::-moz-progress-bar {
  	float: right;
 }
 
+.inline-display {
+	display: inline;
+}
+
+.inline-block-display {
+	display: inline-block;
+}
+
 .cursor-pointer {
   cursor: pointer;
+}
+
+.center-align {
+  text-align: center !important;
+}
+
+.auto-margin {
+	margin: 0px auto !important;
 }
 
 .none-text-decoration {
@@ -344,10 +360,6 @@ a, a:visited {
 
 #nav ul li {
   text-align: center;
-}
-
-.center-align {
-  text-align: center !important;
 }
 
 #nav ul li .nav-link {
@@ -477,7 +489,6 @@ a, a:visited {
 
 #header-logout {
 	padding-top: 3px;
-	border-right: 0 !important;
 }
 
 #global .topmenu-top-padding {
@@ -503,6 +514,37 @@ a, a:visited {
 	text-decoration: none;
 	padding-right: 12px;
 	border-right: 1px solid #ccc;
+}
+
+#global .general-link {
+	background-repeat: no-repeat;
+	padding-left: 45px;
+	padding-top: 3px;
+	white-space: nowrap;
+}
+
+#global .services-link {
+	background-image: url('/assets/img/v2/services_icon.png');
+}
+
+#global .login-link {
+	background-image: url('/assets/img/v2/signin_icon.png');
+}
+
+#global .logout-link {
+	background-image: url('/assets/img/v2/signout_icon.png');
+}
+
+#global .services-link:hover {
+	background-image: url('/assets/img/v2/services_active_icon.png');
+}
+
+#global .login-link:hover {
+	background-image: url('/assets/img/v2/signin_active_icon.png');
+}
+
+#global .logout-link:hover {
+	background-image: url('/assets/img/v2/signout_active_icon.png');
 }
 
 #global .metrics-link {
@@ -569,8 +611,8 @@ ul.top-dropdown-listholder li {
 	background-image: url('/assets/img/v2/support_active_icon.png');
 }
 
-#global a:first-child {
-	border: 0;
+#global a:first-of-type {
+	border: none;
 }
 .cloud-link {
 	border: 0;
@@ -2988,6 +3030,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	text-align: center;
 	line-height: 26px;
 	font-weight: 100;
+	padding-top: 5px;
 }
 
 .analyze-selected-metric-element {

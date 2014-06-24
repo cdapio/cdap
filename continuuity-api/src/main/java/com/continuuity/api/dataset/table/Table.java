@@ -1,6 +1,9 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.dataset.table;
 
-import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -10,33 +13,34 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- *
+ * An ordered, named table.
  */
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>, Dataset {
   /**
    * Reads values of all columns of the specified row.
-   * NOTE: Depending on the implementation of this interface and use-case, calling this method may be much less
-   *       efficient than calling the same method with columns as parameters because it may always require making a
-   *       round trip to the persistent store.
+   * <p>
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less
+   * efficient than calling the same method with columns as parameters because it can require making a
+   * round trip to the persistent store.
    *
    * @param row row to read from
-   * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
+   * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
   Row get(byte[] row);
 
   /**
-   * Reads the value of the specified column in the specified row.
-   *
+   * Reads the value of the specified column of the specified row.
    *
    * @param row row to read from
    * @param column column to read value for
-   * @return value of the column or {@code null} if value is absent
+   * @return value of the column or {@code null} if the value is absent
    */
   byte[] get(byte[] row, byte[] column);
 
   /**
-   * Reads the values of the specified columns in the specified row.
-   * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
+   * Reads the values of the specified columns of the specified row.
+   *
+   * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
   Row get(byte[] row, byte[][] columns);
 
@@ -47,19 +51,20 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param limit maximum number of columns to return
-   * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
+   * @return instance of {@link Row}; never {@code null}; returns an empty Row if nothing read
    */
   Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit);
 
   /**
-   * Reads values of columns as defined by {@link Get} param.
+   * Reads values of columns as defined by {@link Get} parameter.
+   *
    * @param get defines read selection
-   * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
+   * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
   Row get(Get get);
 
   /**
-   * Writes the specified value for the specified column for the specified row.
+   * Writes the specified value for the specified column of the specified row.
    *
    * @param row row to write to
    * @param column column to write to
@@ -69,9 +74,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Writes the specified values for the specified columns of the specified row.
-   *
-   * NOTE: Depending on the implementation, this may work faster than calling {@link #put(byte[], byte[], byte[])}
-   *       multiple times (espcially in transactions that change a lot of columns of one row).
+   * <p>
+   * NOTE: Depending on the implementation, this can work faster than calling {@link #put(byte[], byte[], byte[])}
+   * multiple times (espcially in transactions that alter many columns of one row).
    *
    * @param row row to write to
    * @param columns columns to write to
@@ -81,15 +86,17 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Writes values into a column of a row as defined by the {@link Put} parameter.
+   *
    * @param put defines values to write
    */
   void put(Put put);
 
   /**
    * Deletes all columns of the specified row.
-   * NOTE: Depending on the implementation of this interface and use-case, calling this method may be much less
-   *       efficient than calling same method with columns as parameters because it may require a round trip to
-   *       the persistent store.
+   * <p>
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less
+   * efficient than calling the same method with columns as parameters because it can require a round trip to
+   * the persistent store.
    *
    * @param row row to delete
    */
@@ -105,9 +112,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Deletes specified columns of the specified row.
-   *
-   * NOTE: Depending on the implementation, this may work faster than calling {@link #delete(byte[], byte[])}
-   *       multiple times (espcially in transactions that delete a lot of columns of the same row).
+   * <p>
+   * NOTE: Depending on the implementation, this can work faster than calling {@link #delete(byte[], byte[])}
+   * multiple times (especially in transactions that delete many columns of the same rows).
    *
    * @param row row to delete from
    * @param columns names of columns to delete
@@ -116,12 +123,13 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Deletes columns of a row as defined by the {@link Delete} parameter.
+   *
    * @param delete defines what to delete
    */
   void delete(Delete delete);
 
   /**
-   * Increments the specified column of a row by the specified amounts.
+   * Increments the specified column of the row by the specified amounts.
    *
    * @param row row which value to increment
    * @param column column to increment
@@ -132,14 +140,14 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   long increment(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments the specified columns of a row by the specified amounts.
+   * Increments the specified columns of the row by the specified amounts.
+   * <p>
+   * NOTE: Depending on the implementation, this can work faster than calling {@link #increment(byte[], byte[], long)}
+   * multiple times (especially in a transaction that increments multiple columns of the same rows)
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #increment(byte[], byte[], long)}
-   *       multiple times (esp. in transaction that increments a lot of columns of same rows)
-   *
-   * @param row row which values to increment
+   * @param row row whose values to increment
    * @param columns columns to increment
-   * @param amounts amounts to increment columns by (same order as columns)
+   * @param amounts amounts to increment columns by (in the same order as the columns)
    * @return {@link Row} with a subset of changed columns
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
@@ -157,30 +165,30 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Scans table.
    *
-   * @param startRow start row inclusive. {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @param startRow start row inclusive; {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
    * @return instance of {@link Scanner}
    */
   Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
 
   /**
    * Returns splits for a range of keys in the table.
+   * 
    * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less or equal to zero, any number of splits can be returned.
-   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
-   * @param stop If non-null, the returned splits will only cover keys that are less.
+   *                  If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or equal
+   * @param stop if non-null, the returned splits will only cover keys that are less
    * @return list of {@link Split}
    */
-  @Beta
   List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
 
 
   /**
-   * Compares-and-swaps (atomically) the value of the specified row and column
-   * by looking for the specified expected value and if found, replacing with
-   * the specified new value.
+   * Compares-and-swaps (atomically) the value of the specified row and column by looking for
+   * an expected value and, if found, replacing it with the new value.
    *
-   * @param key key to modify
+   * @param key row to modify
+   * @param keyColumn column to modify
    * @param oldValue expected value before change
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)

@@ -21,6 +21,7 @@ import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.ScheduleManager;
+import com.continuuity.test.ServiceManager;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.WorkflowManager;
 import com.google.common.base.Preconditions;
@@ -296,6 +297,41 @@ public class DefaultApplicationManager implements ApplicationManager {
           };
         }
 
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public ServiceManager startService(String serviceName) {
+    return startService(serviceName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
+    try {
+      final ProgramId serviceId = new ProgramId(applicationId, serviceName, "services");
+      Preconditions.checkState(runningProcessses.putIfAbsent(serviceName, serviceId) == null,
+                               "Service %s is already running", serviceName);
+      try {
+        AppFabricTestHelper.startProgram(httpHandler, applicationId, serviceName, "services", arguments);
+      } catch (Exception e) {
+        runningProcessses.remove(serviceName);
+        throw Throwables.propagate(e);
+      }
+
+      return new ServiceManager() {
+        @Override
+        public void stop() {
+          try {
+            if (runningProcessses.remove(serviceName, serviceId)) {
+              AppFabricTestHelper.stopProgram(httpHandler, applicationId, serviceName, "services");
+            }
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);
