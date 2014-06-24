@@ -12,6 +12,7 @@ import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscoveryModules;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
@@ -88,6 +89,9 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For binding DataSet transaction stuff
     install(new DataFabricFacadeModule());
+
+    //install discovery service modules
+    install(new ProgramServiceDiscoveryModules().getInMemoryModules());
 
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
