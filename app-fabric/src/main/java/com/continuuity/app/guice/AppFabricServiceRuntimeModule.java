@@ -142,7 +142,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
 
     return Modules.combine(new AppFabricServiceModule(),
-                           new ServiceStoreModules().getDistributedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
