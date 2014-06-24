@@ -30,7 +30,10 @@ import java.util.TreeMap;
  *   their own spec, which must be carried along with the spec for the
  *   indexed table.</li>
  * DataSetSpecification uses a builder pattern for construction.
+ *
+ * @deprecated use {@link com.continuuity.api.dataset.DatasetSpecification} instead
  */
+@Deprecated
 public final class DataSetSpecification implements PropertyProvider {
 
   // the name of the data set
