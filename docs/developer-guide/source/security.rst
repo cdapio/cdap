@@ -250,3 +250,223 @@ security components are working as expected:
 
 - Visiting the Reactor Dashboard should redirect you to a login page that prompts for credentials.
   Entering the credentials should let you work with the Reactor Dashboard as normally.
+
+
+
+==============================
+Developing with Secure Reactor
+==============================
+
+Client Authentication
+=====================
+Reactor provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
+by the Reactor authentication server.  The authentication server provides the integration point
+for all external authentication systems.  Clients authenticate with Auth Server as follows:
+
+.. image:: _images/auth_flow_simple.png
+
+  
+#. Client initiates authentication, supplying credentials
+
+   #. Authentication server validates supplied credentials against an external identity service,
+      according to configuration (LDAP, Active Directory, custom)
+
+      #. If validation succeeds, the authentication server returns an Access Token to the client
+         (see Access Tokens below).
+      #. If validation fails, the authentication server returns a failure message, at which point
+         the client can retry.
+
+#. The client stores the resulting Access Token and supplies it in subsequent requests.
+#. Reactor processes validate the supplied Access Token on each request.
+
+   #. If validation succeeds, processing continues to authorization.
+   #. If the submitted token is invalid, an InvalidToken error is returned.
+   #. If the submitted token is expired, an ExpiredToken error is returned.  In this case, the
+      client should restart authorization from step #1. 
+
+
+Obtaining an Access Token
+-------------------------
+Obtain a new access token by calling::
+
+   GET /token
+
+The required header and request parameters may vary according to the external authentication
+mechanism that has been configured.  For username and password based mechanisms, the
+``Authorization`` header may be used::
+
+   Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Authentication was successful and an access token will be returned
+   * - ``401 Unauthorized``
+     - Authentication failed
+
+Success Response Fields
+~~~~~~~~~~~~~~~~~~~~~~~
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Response Fields
+     - Description
+   * - ``access_token``
+     - The Access Token issued for the client.  The serialized token contents are base-64 encoded
+       for safe transport over HTTP.
+   * - ``token_type``
+     - In order to conform with the OAuth 2.0 Bearer Token Usage specification (RFC 6750), this
+       value must be "Bearer".
+   * - ``expires_in``
+     - Token validity lifetime in seconds.
+
+
+Example
+.......
+
+Sample request::
+
+   POST /token HTTP/1.1
+   Host: server.example.com
+   Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+
+
+Sample response::
+
+   HTTP/1.1 200 OK
+   Content-Type: application/json;charset=UTF-8
+   Cache-Control: no-store
+   Pragma: no-cache
+   
+   {
+     "access_token":"2YotnFZFEjr1zCsicMWpAA",
+     "token_type":"Bearer",
+     "expires_in":3600,
+   }
+
+
+Comments
+........
+- Only ``Bearer`` tokens (RFC6750_) are currently supported
+
+.. _RFC6750 http://tools.ietf.org/html/rfc6750
+
+.. rst2pdf: PageBreak
+
+
+Authentication with REST Endpoints
+----------------------------------
+When security is enabled on a Reactor cluster, only requests with a valid access token will be
+allowed by the Router.  Clients accessing REST endpoints will first need to obtain an access token
+from the authentication server, as described above, which will be passed to the Router daemon on
+subsequent HTTP requests.
+
+The following request and response descriptions apply to all Reactor REST endpoints::
+
+   GET /<resource> HTTP/1.1
+
+In order to authenticate, all client requests must supply the ``Authorization`` header::
+
+   Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
+
+For Reactor issued access tokens, the authentication scheme must always be ``Bearer``.
+
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Authentication was successful and an access token will be returned
+   * - ``401 Unauthorized``
+     - Authentication failed
+   * - ``403 Forbidden``
+     - Authentication succeeded, but access to the requested resource was denied
+
+Error Response Fields
+~~~~~~~~~~~~~~~~~~~~~
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Response Fields
+     - Description
+   * - ``error``
+     - An error code describing the type of failure (see table below).
+   * - ``error_description``
+     - A human readable description of the error that occurred.
+   * - ``auth_uri``
+     - List of URIs for running authentication servers.  If a client receives a ``401
+       Unauthorized`` response, it can use one of the values from this list to request a new
+       access token.
+
+``error`` values
+,,,,,,,,,,,,,,,,
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Response Fields
+     - Description
+   * - ``invalid_request``
+     - The request is missing a required parameter or is otherwise malformed.
+   * - ``invalid_token``
+     - The supplied access token is expired, malformed, or otherwise invalid.  The client may
+       request a new access token from the authorization server and try the call again.
+   * - ``insufficient_scope``
+     - The supplied access token was valid, but the authenticated identity failed authorization
+       for the requested resource.
+
+Example
+.......
+A sample request and responses for different error conditions are shown below.  Header values are
+wrapped for display purposes.
+
+Request::
+
+   GET /resource HTTP/1.1
+   Host: server.example.com
+   Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
+
+Missing token::
+
+   HTTP/1.1 401 Unauthorized
+   WWW-Authenticate: Bearer realm="example"
+
+   {
+     "auth_uri": ["https://server.example.com:10010/token"]
+   }
+
+Invalid or expired token::
+
+   HTTP/1.1 401 Unauthorized
+   WWW-Authenticate: Bearer realm="example",
+                       error="invalid_token",
+                       error_description="The access token expired"
+
+   {
+     "error": "invalid_token",
+     "error_description": "The access token expired",
+     "auth_uri": ["https://server.example.com:10010/token"]
+   }
+
+
+
+Comments
+........
+- The ``auth_uri`` value in the error responses indicates where the authentication server(s) are
+  running, allowing clients to discover instances from which they can obtain access tokens.
+
+.. rst2pdf: PageBreak
