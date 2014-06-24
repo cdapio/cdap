@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -411,4 +413,40 @@ public class TestFrameworkTest extends ReactorTestBase {
       applicationManager.stopAll();
     }
   }
+
+  @Test(timeout = 60000L)
+  public void testSQLQuery() throws Exception {
+
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+        appManager.getDataSet("myTable");
+    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+    kvTable.put("a", "1");
+    kvTable.put("b", "2");
+    kvTable.put("c", "1");
+    myTableManager.flush();
+
+    Connection connection = getQueryClient();
+    try {
+      // list the tables and make sure the table is there
+      ResultSet results = connection.prepareStatement("show tables").executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertTrue("continuuity_user_myTable".equalsIgnoreCase(results.getString(1)));
+
+      // run a query over the dataset
+      results = connection.prepareStatement("select first from continuuity_user_mytable where second = '1'")
+          .executeQuery();
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("a", results.getString(1));
+      Assert.assertTrue(results.next());
+      Assert.assertEquals("c", results.getString(1));
+      Assert.assertFalse(results.next());
+
+    } finally {
+      connection.close();
+      appManager.stopAll();
+    }
+  }
+
 }
