@@ -16,14 +16,15 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+
 
 
 /**
@@ -114,12 +115,12 @@ public class UserPreferenceService implements TwillApplication {
 
     @Path("users/{user-id}/interest")
     @GET
-    public void testGetTweet(HttpRequest request, HttpResponder responder, @PathParam("user-id") String id){
+    public void testGetTweet(HttpRequest request, HttpResponder responder, @PathParam("user-id") String id) {
       String interest = getMockUserInterest(id);
       responder.sendString(HttpResponseStatus.OK, interest);
     }
 
-    private String getMockUserInterest(String id){
+    private String getMockUserInterest(String id) {
       return "car";
     }
 
