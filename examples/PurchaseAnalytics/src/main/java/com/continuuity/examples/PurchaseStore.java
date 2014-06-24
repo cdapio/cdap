@@ -51,7 +51,7 @@ public class PurchaseStore extends AbstractFlowlet {
     store.put(Bytes.toBytes(purchase.getProduct()), Bytes.toBytes(userPreference), new byte[0]);
   }
 
-  private String getUserPreference(String host, int port, String userId){
+  private String getUserPreference(String host, int port, String userId) {
     try {
       DefaultHttpClient client = new DefaultHttpClient();
       HttpGet get = new HttpGet(String.format("http://%s:%d/v1/users/%s/interest", host, port, userId));
