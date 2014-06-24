@@ -702,7 +702,7 @@
     </property>
 
     <property>
-        <name>metrics.processor.bind.address</name>
+        <name>metrics.processor.status.bind.address</name>
         <value>127.0.0.1</value>
         <description>Default inet address for binding metrics processor http service.</description>
     </property>
@@ -764,7 +764,7 @@
     </property>
 
     <property>
-        <name>logsaver.bind.address</name>
+        <name>log.saver.status.bind.address</name>
         <value>127.0.0.1</value>
         <description>Default inet address for binding logsaver http service.</description>
     </property>
