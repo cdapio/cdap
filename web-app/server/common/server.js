@@ -703,8 +703,10 @@ WebAppServer.prototype.bindRoutes = function() {
   // Security endpoints.
   this.app.get('/getsession', function (req, res) {
     var headerOpts = {};
+    var token = '';
     if ('token' in req.cookies && req.cookies.token !== '') {
       headerOpts['Authorization'] = "Bearer " + req.cookies.token;
+      token = req.cookies.token;
     }
 
     var options = {
