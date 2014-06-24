@@ -61,10 +61,16 @@ import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.BasicTwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -72,6 +78,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,7 +124,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
   }
 
   @Override
-  public void initialize(TwillContext context) {
+  public void initialize(final TwillContext context) {
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
@@ -140,6 +148,21 @@ public class ServiceTwillRunnable implements TwillRunnable {
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+
+      DiscoveryService dsService = new DiscoveryService() {
+        @Override
+        public Cancellable register(Discoverable discoverable) {
+          return context.announce(discoverable.getName(), discoverable.getSocketAddress().getPort());
+        }
+      };
+
+      DiscoveryServiceClient dsClient = new DiscoveryServiceClient() {
+        @Override
+        public ServiceDiscovered discover(String s) {
+          return context.discover(s);
+        }
+      };
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -173,7 +196,22 @@ public class ServiceTwillRunnable implements TwillRunnable {
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
-      delegate.initialize(context);
+
+      List<String> appArgList = new ArrayList<String>();
+      Arguments userargs = programOpts.getUserArguments();
+      for (Map.Entry<String, String> kv : userargs) {
+        appArgList.add(kv.getKey());
+        appArgList.add(kv.getValue());
+      }
+
+      TwillContext userContext = new BasicTwillContext(context.getRunId(), context.getApplicationRunId(),
+                                                       context.getHost(), context.getArguments(),
+                                                       appArgList.toArray(new String[appArgList.size()]),
+                                                       context.getSpecification(), context.getInstanceId(),
+                                                       dsService, dsClient,
+                                                       context.getInstanceCount(), context.getMaxMemoryMB(),
+                                                       context.getVirtualCores());
+      delegate.initialize(userContext);
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
