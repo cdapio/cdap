@@ -28,7 +28,6 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -324,7 +323,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           });
 
           //install discovery service modules
-          bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
+          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );
