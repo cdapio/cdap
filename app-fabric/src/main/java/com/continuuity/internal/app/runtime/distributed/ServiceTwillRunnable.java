@@ -176,17 +176,18 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                                           program.getApplicationId(),
                                                                           program.getName(), runnableName)));
 
-      final List<String> appArgList = new ArrayList<String>();
+      List<String> appArgList = new ArrayList<String>();
       Arguments userargs = programOpts.getUserArguments();
       for (Map.Entry<String, String> kv : userargs) {
         appArgList.add(kv.getKey());
         appArgList.add(kv.getValue());
       }
 
+      final String[] argArray = appArgList.toArray(new String[appArgList.size()]);
       delegate.initialize(new ForwardingTwillContext(context) {
         @Override
         public String[] getApplicationArguments() {
-          return appArgList.toArray(new String[appArgList.size()]);
+          return argArray;
         }
       });
 
