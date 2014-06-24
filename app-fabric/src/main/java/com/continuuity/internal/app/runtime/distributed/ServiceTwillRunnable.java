@@ -118,7 +118,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
   }
 
   @Override
-  public void initialize(final TwillContext context) {
+  public void initialize(TwillContext context) {
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
