@@ -28,7 +28,7 @@ import java.io.Closeable;
  *   constructor from DataSetSpecification.</li>
  *
  * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.Dataset}
- *             or {@link com.continuuity.api.dataset.DatasetDefinition}
+ *             and {@link com.continuuity.api.dataset.DatasetDefinition}
  */
 @Deprecated
 public abstract class DataSet implements Closeable {
