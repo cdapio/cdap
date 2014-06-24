@@ -13,16 +13,16 @@ Ad-hoc Querying of Continuuity Reactor DataSets using SQL
 Introduction
 ------------
 
-Procedures are a programmatic way to access and query the data in your DataSets. Yet sometimes you may want to explore
-a DataSet in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your DataSet fulfills
+Procedures are a programmatic way to access and query the data in your Datasets. Yet sometimes you may want to explore
+a Dataset in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your Dataset fulfills
 two requirements:
 
 * it defines the schema for each record; and
 * it has a method to scan its data record by record.
 
-For Reactor DataSets, this is done by implementing the ``RecordScannable`` interface. Many Reactor built-in
-DataSets already implement this, including ``KeyValueTable`` and ``ObjectStore``. 
-[DOCNOTE: Can we list which ones do and/or which ones don't?]
+For Reactor Datasets, this is done by implementing the ``RecordScannable`` interface. 
+The Reactor built-in Dataset ``KeyValueTable`` already implements this and can be used for ad-hoc queries. 
+
 Let's take a closer look at the ``RecordScannable`` interface.
 
 Defining the Record Schema
@@ -40,7 +40,7 @@ For example, suppose you have a class ``Entry`` defined as::
 	  ...
 	} 
 
-You can implement a record-scannable DataSet that uses ``Entry`` as the record type::
+You can implement a record-scannable Dataset that uses ``Entry`` as the record type::
 
 	class MyDataset ... implements RecordScannable<Entry> {
 	  ...
@@ -136,10 +136,10 @@ Refer to the Hive language manual for more details on schema and data types.
 
 Scanning Records
 ----------------
-The second requirement for enabling SQL queries over a DataSet is to provide a means of scanning the DataSet record
-by record. Similar to how the ``BatchReadable`` interface makes DataSets readable by Map/Reduce jobs by iterating
+The second requirement for enabling SQL queries over a Dataset is to provide a means of scanning the Dataset record
+by record. Similar to how the ``BatchReadable`` interface makes Datasets readable by Map/Reduce jobs by iterating
 over pairs of key and value, ``RecordScannable`` iterates over records. You need to implement a method to partition the
-DataSet into splits, and an additional method to create a record scanner for each split::
+Dataset into splits, and an additional method to create a record scanner for each split::
 
       List<Split> getSplits();
       RecordScanner<RECORD> createSplitRecordScanner(Split split);
@@ -148,7 +148,7 @@ The ``RecordScanner`` is very similar to a ``SplitReader``; except that instead 
 ``getCurrentKey()``, and ``getCurrentValue()``, it implements ``nextRecord()`` and ``getCurrentRecord()``.
 
 Typically, you do not implement these methods from scratch but rely on the ``BatchReadable``
-implementation of the underlying Tables and DataSets. For example, if your DataSet is backed by a ``Table``::
+implementation of the underlying Tables and Datasets. For example, if your Dataset is backed by a ``Table``::
 
 	class MyDataset implements Dataset, RecordScannable<Entry> {
 	
@@ -156,7 +156,7 @@ implementation of the underlying Tables and DataSets. For example, if your DataS
 	  private static final byte[] VALUE_COLUMN = { 'c' };
 	
 	  // ..
-	  // All other DataSet methods
+	  // All other Dataset methods
 	  // ...
 	
 	  @Override
@@ -201,7 +201,7 @@ implementation of the underlying Tables and DataSets. For example, if your DataS
 	  }
 	}
 
-While this is straightforward, it is even easier if your DataSet already implements ``BatchReadable``.
+While this is straightforward, it is even easier if your Dataset already implements ``BatchReadable``.
 In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
 with a helper method [DOCNOTE: what's the import?]
 (``Scannables.splitRecordScanner``) already defined by Reactor. It takes a split reader and a ``RecordMaker``
@@ -240,9 +240,9 @@ When creating your queries, keep these limitations in mind:
 
 - The query syntax of the Reactor is a subset of the variant of SQL that was first defined by Apache Hive.
 - In contrast to HiveQL, Reactor queries only allow reading from data sets, not writing
-- These SQL commands are not allowed on Reactor DataSets: ``INSERT``, ``UPDATE``, ``DELETE``.
+- These SQL commands are not allowed on Reactor Datasets: ``INSERT``, ``UPDATE``, ``DELETE``.
 - When addressing your datasets in queries, you need to prefix the data set name with the Reactor
-  namespace. For example, if your DataSet is named ``ProductCatalog``, then the corresponding table
+  namespace. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
   name is ``continuuity_user_ProductCatalog``. [DOCNOTE: FIXME! verify this prefix is correct]
 
 
