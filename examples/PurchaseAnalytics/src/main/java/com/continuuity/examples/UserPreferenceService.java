@@ -1,3 +1,19 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.continuuity.examples;
 
 import com.continuuity.api.metrics.Metrics;
@@ -55,40 +71,27 @@ public class UserPreferenceService implements TwillApplication {
     private NettyHttpService service;
     private CountDownLatch runLatch;
 
-    private int getRandomPort() throws IOException {
-      ServerSocket socket = new ServerSocket(0);
-      try {
-        return socket.getLocalPort();
-      } finally {
-        socket.close();
-      }
-    }
 
-    private NettyHttpService setupUserLookupService(String host, int port) {
+    private NettyHttpService setupUserLookupService(String host) {
       List<HttpHandler> handlers = Lists.newArrayList();
       handlers.add(new UserInterestLookupHandler());
 
       return NettyHttpService.builder().setHost(host)
-        .setPort(port)
+        .setPort(0)
         .addHttpHandlers(handlers)
         .build();
     }
 
     @Override
     public void initialize (TwillContext context) {
-      try {
-        int port = getRandomPort();
-        // start service
-        service = setupUserLookupService(
-          context.getHost().getCanonicalHostName(), port);
-        service.startAndWait();
-        runLatch = new CountDownLatch(1);
-        context.announce("UserInterestsLookup", port);
-      } catch (IOException e) {
-        LOG.error("Error in initializing a random port");
-        throw Throwables.propagate(e);
-      }
-    }
+      // start service
+      service = setupUserLookupService(context.getHost().getCanonicalHostName());
+      service.startAndWait();
+
+      int port = service.getBindAddress().getPort();
+      runLatch = new CountDownLatch(1);
+      context.announce("UserInterestsLookup", port);
+   }
     @Override
     public void run() {
       try {
@@ -100,12 +103,11 @@ public class UserPreferenceService implements TwillApplication {
 
     @Override
     public void destroy() {
-      super.destroy();
+      service.stopAndWait();
     }
 
     @Override
     public void stop() {
-      service.stopAndWait();
       runLatch.countDown();
     }
   }
@@ -118,7 +120,7 @@ public class UserPreferenceService implements TwillApplication {
 
     @Path("users/{user-id}/interest")
     @GET
-    public void testGetTweet(HttpRequest request, HttpResponder responder, @PathParam("user-id") String id) {
+    public void userHandler(HttpRequest request, HttpResponder responder, @PathParam("user-id") String id) {
       String interest = getMockUserInterest(id);
       responder.sendString(HttpResponseStatus.OK, interest);
     }
