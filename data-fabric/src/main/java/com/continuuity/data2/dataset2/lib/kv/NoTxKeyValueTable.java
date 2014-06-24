@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 /**
  * Non-transactional key-value table
  */
-public interface KVTable extends Dataset {
+public interface NoTxKeyValueTable extends Dataset {
   void put(byte[] key, @Nullable byte[] value);
 
   @Nullable

@@ -7,6 +7,7 @@ import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -15,9 +16,9 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of in-memory non-tx {@link KVTable}.
+ * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
  */
-public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<KVTable, DatasetAdmin> {
+public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   private static final Map<String, Map<byte[], byte[]>> tables = Maps.newHashMap();
 
   public InMemoryKVTableDefinition(String name) {
@@ -37,7 +38,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<KVTable
   }
 
   @Override
-  public KVTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new InMemoryKVTable(spec.getName());
   }
 
@@ -79,30 +80,31 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<KVTable
     }
   }
 
-  private static final class InMemoryKVTable implements KVTable {
+  private static final class InMemoryKVTable implements NoTxKeyValueTable {
+    private final String tableName;
 
-    private final Map<byte[], byte[]> table;
+    private Map<byte[], byte[]> getTable() {
+      return tables.get(tableName);
+    }
 
     public InMemoryKVTable(String tableName) {
-      this.table = tables.get(tableName);
-      if (table == null) {
-        throw new IllegalStateException("Table does not exist: " + tableName);
-      }
+      Preconditions.checkArgument(tables.containsKey(tableName), "Table does not exist: " + tableName);
+      this.tableName = tableName;
     }
 
     @Override
     public void put(byte[] key, @Nullable byte[] value) {
       if (value == null) {
-        table.remove(key);
+        getTable().remove(key);
       } else {
-        table.put(key, value);
+        getTable().put(key, value);
       }
     }
 
     @Nullable
     @Override
     public byte[] get(byte[] key) {
-      return table.get(key);
+      return getTable().get(key);
     }
 
     @Override
@@ -112,12 +114,12 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<KVTable
   }
 
   /**
-   * Registers this type as implementation for {@link KVTable} using class name.
+   * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new InMemoryKVTableDefinition("noTxKVTable"));
+      registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 

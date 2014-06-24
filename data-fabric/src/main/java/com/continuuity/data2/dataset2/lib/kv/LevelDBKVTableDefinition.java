@@ -1,12 +1,15 @@
 package com.continuuity.data2.dataset2.lib.kv;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.DatasetAdmin;
 import com.continuuity.api.dataset.DatasetProperties;
 import com.continuuity.api.dataset.DatasetSpecification;
 import com.continuuity.api.dataset.lib.AbstractDatasetDefinition;
 import com.continuuity.api.dataset.module.DatasetDefinitionRegistry;
 import com.continuuity.api.dataset.module.DatasetModule;
+import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.iq80.leveldb.DB;
 
@@ -14,9 +17,9 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of in-memory non-tx {@link KVTable}.
+ * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
  */
-public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<KVTable, DatasetAdmin> {
+public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   @Inject
   private LevelDBOcTableService service;
 
@@ -37,7 +40,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<KVTable,
   }
 
   @Override
-  public KVTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(spec.getName(), service);
   }
 
@@ -87,45 +90,58 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<KVTable,
     }
   }
 
-  private static final class KVTableImpl implements KVTable {
-    private final DB table;
+  private static final class KVTableImpl implements NoTxKeyValueTable {
+    private static final byte[] DATA_COLFAM = Bytes.toBytes("d");
+    private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
+
+    private final String tableName;
+    private final LevelDBOcTableService service;
 
     public KVTableImpl(String tableName, LevelDBOcTableService service) throws IOException {
+      this.tableName = tableName;
+      this.service = service;
+    }
+
+    private DB getTable() {
       try {
-        table = service.getTable(tableName);
-      } catch (Exception e) {
-        throw new IllegalStateException("Table does NOT exist: " + tableName);
+        return service.getTable(tableName);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     }
 
     @Override
     public void put(byte[] key, @Nullable byte[] value) {
       if (value == null) {
-        table.delete(key);
+        getTable().delete(createKey(key));
       } else {
-        table.put(key, value);
+        getTable().put(createKey(key), value);
       }
     }
 
     @Nullable
     @Override
     public byte[] get(byte[] key) {
-      return table.get(key);
+      return getTable().get(createKey(key));
+    }
+
+    private static byte[] createKey(byte[] rowKey) {
+      return new KeyValue(rowKey, DATA_COLFAM, DEFAULT_COLUMN, 1, KeyValue.Type.Put).getKey();
     }
 
     @Override
     public void close() throws IOException {
-      table.close();
+      // no-op
     }
   }
 
   /**
-   * Registers this type as implementation for {@link KVTable} using class name.
+   * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new LevelDBKVTableDefinition("noTxKVTable"));
+      registry.add(new LevelDBKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 

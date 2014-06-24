@@ -24,9 +24,9 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of in-memory non-tx {@link KVTable}.
+ * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
  */
-public class HBaseKVTableDefinition extends AbstractDatasetDefinition<KVTable, DatasetAdmin> {
+public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   @Inject
@@ -51,7 +51,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<KVTable, D
   }
 
   @Override
-  public KVTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(spec.getName(), hConf);
   }
 
@@ -73,19 +73,20 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<KVTable, D
 
     @Override
     public void create() throws IOException {
-      final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
+      HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
       // todo: make stuff configurable
       // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-      final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+      HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
       tableDescriptor.addFamily(columnDescriptor);
       tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
     }
 
     @Override
     public void drop() throws IOException {
+      admin.disableTable(tableName);
       admin.deleteTable(tableName);
     }
 
@@ -109,7 +110,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<KVTable, D
     }
   }
 
-  private static final class KVTableImpl implements KVTable {
+  private static final class KVTableImpl implements NoTxKeyValueTable {
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final HTable table;
@@ -151,12 +152,12 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<KVTable, D
   }
 
   /**
-   * Registers this type as implementation for {@link KVTable} using class name.
+   * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new HBaseKVTableDefinition(KVTable.class.getName()));
+      registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 
