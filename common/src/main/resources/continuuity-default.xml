@@ -913,12 +913,6 @@
     </property>
 
     <property>
-        <name>security.server.extended.token.expiration.ms</name>
-        <description>AccessToken expiration time in milliseconds (defaults to 1 week)</description>
-        <value>604800000</value>
-    </property>
-
-    <property>
         <name>security.token.distributed.parent.znode</name>
         <value>/${reactor.namespace}/security/auth</value>
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode.</description>
