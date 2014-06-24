@@ -73,8 +73,6 @@ import java.util.regex.Pattern;
 
 import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerInfo;
 import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.FLOWLET;
-import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.PROCEDURE;
-import static com.continuuity.internal.app.runtime.distributed.Containers.ContainerType.SERVICE;
 
 /**
  *
