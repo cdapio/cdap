@@ -164,6 +164,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              }
                            });
   }
+
   /**
    * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */

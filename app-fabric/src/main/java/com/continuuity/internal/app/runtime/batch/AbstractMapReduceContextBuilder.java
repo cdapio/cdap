@@ -21,6 +21,7 @@ import com.continuuity.data2.dataset2.DatasetFramework;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.google.common.base.Preconditions;
@@ -130,13 +131,15 @@ public abstract class AbstractMapReduceContextBuilder {
     Map<String, Closeable> dataSets = DataSets.createDataSets(
       dataSetContext, Sets.union(programSpec.getDataSets().keySet(), programSpec.getDatasets().keySet()));
 
+    ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
                                 dataSetContext.getTransactionAware(), logicalStartTime,
-                                workflowBatch, metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     if (type == MapReduceMetrics.TaskType.Mapper) {
       dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemMapperMetrics());

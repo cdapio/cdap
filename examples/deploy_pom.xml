@@ -33,6 +33,7 @@
     <module>HelloWorld</module>
     <module>PageViewAnalytics</module>
     <module>Purchase</module>
+    <module>PurchaseAnalytics</module>
     <module>ResourceSpammer</module>
     <module>ResponseCodeAnalytics</module>
     <module>SimpleWriteAndRead</module>
@@ -116,6 +117,11 @@
       <artifactId>continuuity-api</artifactId>
       <version>${continuuity.reactor.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>http</artifactId>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

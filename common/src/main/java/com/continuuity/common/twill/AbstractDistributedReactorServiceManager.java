@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,34 +40,20 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
   }
 
   @Override
+  public int getInstances() {
+    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
+    int instances = 0;
+    if (twillControllerList != null) {
+      for (TwillController twillController : twillControllerList) {
+        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
+      }
+    }
+    return instances;
+  }
+
   public boolean isServiceEnabled() {
     // By default all the services are enabled. extending classes can override if the behavior should be different.
     return true;
-  }
-
-  @Override
-  public int getRequestedInstances() {
-    //todo this will be updated
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    int instances = 0;
-    if (twillControllerList != null) {
-      for (TwillController twillController : twillControllerList) {
-        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
-      }
-    }
-    return instances;
-  }
-
-  @Override
-  public int getProvisionedInstances() {
-    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.REACTOR_SERVICES);
-    int instances = 0;
-    if (twillControllerList != null) {
-      for (TwillController twillController : twillControllerList) {
-        instances = twillController.getResourceReport().getRunnableResources(serviceName).size();
-      }
-    }
-    return instances;
   }
 
   @Override
@@ -82,11 +67,8 @@ public abstract class AbstractDistributedReactorServiceManager implements Reacto
         }
       }
       return true;
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      return false;
-    } catch (ExecutionException e) {
-      e.printStackTrace();
+    } catch (Throwable t) {
+      LOG.error("Could not change service instance of {} : {}", serviceName, t.getMessage(), t);
       return false;
     }
   }

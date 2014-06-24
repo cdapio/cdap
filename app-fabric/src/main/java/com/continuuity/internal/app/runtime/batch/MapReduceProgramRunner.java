@@ -42,6 +42,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
+import com.continuuity.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.internal.lang.Reflections;
@@ -98,6 +99,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final ProgramServiceDiscovery serviceDiscovery;
 
   private Job jobConf;
   private MapReduceProgramController controller;
@@ -110,7 +112,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionExecutorFactory txExecutorFactory) {
+                                TransactionExecutorFactory txExecutorFactory,
+                                ProgramServiceDiscovery serviceDiscovery) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -120,6 +123,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
+    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Inject (optional = true)
@@ -170,8 +174,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
-                                workflowBatch,
-                                metricsCollectionService);
+                                workflowBatch, serviceDiscovery, metricsCollectionService);
 
     try {
       MapReduce job = program.<MapReduce>getMainClass().newInstance();
@@ -348,7 +351,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void beforeSubmit(final MapReduce job,
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -369,7 +372,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final BasicMapReduceContext context,
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
-    throws TransactionFailureException {
+    throws TransactionFailureException, InterruptedException {
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {

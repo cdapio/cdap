@@ -329,7 +329,7 @@ public class MapReduceProgramRunnerTest {
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
                                  DataSetInstantiator dataSetInstantiator,
                                  final TimeseriesTable table,
-                                 final boolean withBadData) throws TransactionFailureException {
+                                 final boolean withBadData) throws TransactionFailureException, InterruptedException {
     TransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override

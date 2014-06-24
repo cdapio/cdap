@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
+import com.continuuity.app.guice.ServiceStoreModules;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -298,7 +299,8 @@ public class SingleNodeMain {
       new RouterModules().getInMemoryModules(),
       new SecurityModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules()
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ServiceStoreModules().getInMemoryModule()
     );
   }
 
@@ -345,7 +347,8 @@ public class SingleNodeMain {
       new RouterModules().getSingleNodeModules(),
       new SecurityModules().getSingleNodeModules(),
       new StreamServiceRuntimeModule().getSingleNodeModules(),
-      new ExploreRuntimeModule().getSingleNodeModules()
+      new ExploreRuntimeModule().getSingleNodeModules(),
+      new ServiceStoreModules().getSingleNodeModule()
     );
   }
 }
