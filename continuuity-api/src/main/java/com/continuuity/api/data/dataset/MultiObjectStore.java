@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
@@ -34,9 +38,11 @@ import java.util.Map;
  * ObjectStore supports storing one or more objects for the same key. Multiple objects can be stored using different
  * column names for each object. If no column name is specified in read or write operations a default column 'c' will
  * be used.
+ *
  * @param <T> the type of objects in the store
+ * @deprecated As of Reactor 2.3.0, replaced by {@link com.continuuity.api.dataset.lib.MultiObjectStore}
  */
-@Beta
+@Deprecated
 public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[], Map<byte[], T>>,
                                                             BatchWritable<byte[], Map<byte[], T>> {
 

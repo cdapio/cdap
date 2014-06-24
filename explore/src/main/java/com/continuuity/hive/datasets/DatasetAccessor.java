@@ -25,6 +25,13 @@ public class DatasetAccessor {
   // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
+  /**
+   * Returns a RecordScannable. The returned object will have to be closed by the caller.
+   *
+   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @return RecordScannable.
+   * @throws IOException
+   */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
     RecordScannable recordScannable = instantiate(conf);
 
@@ -36,8 +43,20 @@ public class DatasetAccessor {
     return recordScannable;
   }
 
+  /**
+   * Returns record type of the RecordScannable.
+   *
+   * @param conf Configuration that contains RecordScannable name to load, Reactor and HBase configuration.
+   * @return Record type of RecordScannable.
+   * @throws IOException
+   */
   public static Type getRecordScannableType(Configuration conf) throws IOException {
-    return instantiate(conf).getRecordType();
+    RecordScannable<?> recordScannable = instantiate(conf);
+    try {
+      return recordScannable.getRecordType();
+    } finally {
+      recordScannable.close();
+    }
   }
 
   private static RecordScannable instantiate(Configuration conf) throws IOException {

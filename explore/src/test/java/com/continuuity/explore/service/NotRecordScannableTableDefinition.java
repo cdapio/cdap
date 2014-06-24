@@ -44,13 +44,13 @@ public class NotRecordScannableTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("kv"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("kv"), classLoader);
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"));
+  public KeyValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("kv"), classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 

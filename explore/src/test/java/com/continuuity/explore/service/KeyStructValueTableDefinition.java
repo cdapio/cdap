@@ -45,13 +45,13 @@ public class KeyStructValueTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("key-value-table"));
+  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(spec.getSpecification("key-value-table"), classLoader);
   }
 
   @Override
-  public KeyStructValueTable getDataset(DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"));
+  public KeyStructValueTable getDataset(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), classLoader);
     return new KeyStructValueTable(spec.getName(), table);
   }
 

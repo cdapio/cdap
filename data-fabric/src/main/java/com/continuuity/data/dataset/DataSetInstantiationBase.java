@@ -1,10 +1,13 @@
+/*
+ * Copyright 2014 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.DatasetInstanceCreationSpec;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -44,8 +47,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class implements the core logic of instantiating data set, including injection of the data fabric runtime and
- * built-in data sets.
+ * Implements the core logic of instantiating a dataset, including injection of the data fabric runtime and
+ * built-in datasets.
  */
 public class DataSetInstantiationBase {
 
@@ -55,7 +58,7 @@ public class DataSetInstantiationBase {
   private final ClassLoader classLoader;
   // the known data set specifications
   private final Map<String, DataSetSpecification> datasets = Maps.newHashMap();
-  private final Map<String, DatasetInstanceCreationSpec> datasetsV2 = Maps.newHashMap();
+  private final Map<String, DatasetCreationSpec> datasetsV2 = Maps.newHashMap();
 
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
@@ -78,11 +81,11 @@ public class DataSetInstantiationBase {
    * @param specs The list of DataSetSpecification's
    */
   public void setDataSets(Iterable<DataSetSpecification> specs,
-                          Iterable<DatasetInstanceCreationSpec> creationSpec) {
+                          Iterable<DatasetCreationSpec> creationSpec) {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
     }
-    for (DatasetInstanceCreationSpec spec : creationSpec) {
+    for (DatasetCreationSpec spec : creationSpec) {
       if (spec != null) {
         this.datasetsV2.put(spec.getInstanceName(), spec);
       }
@@ -149,7 +152,7 @@ public class DataSetInstantiationBase {
     throws DataSetInstantiationException {
     try {
       if (!datasetFramework.hasInstance(datasetName)) {
-        DatasetInstanceCreationSpec creationSpec = datasetsV2.get(datasetName);
+        DatasetCreationSpec creationSpec = datasetsV2.get(datasetName);
         if (creationSpec == null) {
           return null;
         }

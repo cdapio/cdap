@@ -11,6 +11,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Test MetricReporterHook.
  */
@@ -35,9 +37,9 @@ public class MetricsReporterHookTest extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // received and successful should have increased by one, clientError should be the same
-    Assert.assertEquals(received + 1, mockMetricsCollectionService.getMetrics(context, "request.received"));
-    Assert.assertEquals(successful + 1, mockMetricsCollectionService.getMetrics(context, "response.successful"));
-    Assert.assertEquals(clientError, mockMetricsCollectionService.getMetrics(context, "response.client-error"));
+    verifyMetrics(received + 1, context, "request.received");
+    verifyMetrics(successful + 1, context, "response.successful");
+    verifyMetrics(clientError, context, "response.client-error");
   }
 
   @Test
@@ -52,8 +54,25 @@ public class MetricsReporterHookTest extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     // received and clientError should have increased by one, successful should be the same
-    Assert.assertEquals(received + 1, mockMetricsCollectionService.getMetrics(context, "request.received"));
-    Assert.assertEquals(successful, mockMetricsCollectionService.getMetrics(context, "response.successful"));
-    Assert.assertEquals(clientError + 1, mockMetricsCollectionService.getMetrics(context, "response.client-error"));
+    verifyMetrics(received + 1, context, "request.received");
+    verifyMetrics(successful, context, "response.successful");
+    verifyMetrics(clientError + 1, context, "response.client-error");
+  }
+
+  /**
+   * Verify metrics. It tries couple times to avoid race condition.
+   * This is because metrics hook is updated asynchronously.
+   */
+  private void verifyMetrics(int expected, String context, String metricsName) throws InterruptedException {
+    int trial = 0;
+    int metrics = -1;
+    while (trial++ < 5) {
+      metrics = mockMetricsCollectionService.getMetrics(context, metricsName);
+      if (expected == metrics) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(expected, metrics);
   }
 }
