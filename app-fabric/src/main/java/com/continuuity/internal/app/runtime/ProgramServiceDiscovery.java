@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
+import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
