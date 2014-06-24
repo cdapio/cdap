@@ -105,6 +105,8 @@ set_classpath()
     HBASE_CP=`hbase classpath`
   fi
 
+  export HBASE_CP
+
   if [ -n "$HBASE_CP" ]; then
     CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   else
@@ -147,7 +149,7 @@ set_hive_classpath() {
     # hive-common for joins operations to work
     HIVE_EXEC=`ls $HIVE_HOME/lib/hive-exec-*`
     OTHER_HIVE_JARS=`ls $HIVE_HOME/lib/*.jar | tr '\n' ':'`
-    HIVE_CLASSPATH=$HIVE_CONF_DIR:$HIVE_EXEC:$OTHER_HIVE_JARS
+    HIVE_CLASSPATH=$HIVE_CONF_DIR:$HIVE_EXEC:$OTHER_HIVE_JARS:$HBASE_CP
     export HIVE_CLASSPATH
   fi
 }

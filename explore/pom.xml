@@ -56,6 +56,10 @@
       <artifactId>explore-client</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-common</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.continuuity</groupId>
