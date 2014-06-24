@@ -383,7 +383,7 @@ HTTP Responses
    * - ``200 OK``
      - The stream was successfully truncated
    * - ``404 Not Found``
-     - The Stream does not exist
+     - The Stream ``<stream-id>`` does not exist
 
 Example
 .......
@@ -398,7 +398,7 @@ Example
 
 .. rst2pdf: PageBreak
 
-Setting Time-To-Live Property for a Stream
+Setting Time-To-Live Property of a Stream
 ------------------------------------------
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
 it was written to the Stream.
@@ -482,7 +482,7 @@ DataSet HTTP API
 ================
 
 The DataSet API allows you to interact with `Continuuity Reactor DataSets <advanced.html#dataset-system>`_ through HTTP.
-You can list, create, delete, truncate, and upgrade DataSets.
+You can list, create, delete, and truncate DataSets.
 
 Listing all DataSets
 --------------------
@@ -491,7 +491,19 @@ You can list all DataSets in the Continuuity Reactor by issuing an HTTP GET requ
 
 	GET <base-url>/data/datasets
 
-The response body will contain a JSON-formatted list of the existing DataSets.
+The response body will contain a JSON-formatted list of the existing DataSets::
+
+	{
+	   "name":"continuuity.user.purchases",
+	   "type":"com.continuuity.api.dataset.lib.ObjectStore",
+	   "properties":{
+	   "schema":"...",
+	   "type":"..."
+	   },
+	   "datasetSpecs":{
+	   ...
+	   }
+	 }
 
 Creating a DataSet
 ------------------
@@ -524,7 +536,7 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Request instance was successfully created
+     - Requested instance was successfully created
    * - ``404 Not Found``
      - Requested DataSet type was not found
    * - ``409 Conflict``
@@ -537,7 +549,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Request
-     - ``POST <base-url>/data/datasets/mydataset``
+     - ``PUT <base-url>/data/datasets/mydataset``
    * - Header
      - ``X-Continuuity-Type-Name: myDataSetType``
    * - Description
@@ -550,7 +562,7 @@ Deleting a DataSet
 
 You can delete a DataSet by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/data/instance/<dataset-name>
+  DELETE <base-url>/data/datasets/<dataset-name>
 
 HTTP Responses
 ..............
@@ -564,6 +576,17 @@ HTTP Responses
      - DataSet was successfully deleted
    * - ``404 Not Found``
      - Instance with <dataset-name> could not be found
+
+Example
+.......
+.. list-table::
+   :widths: 25 75
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``DELETE <base-url>/data/datasets/mydataset``
+   * - Description
+     - Deletes the DataSet named "mydataset"
 
 Deleting all DataSets
 ---------------------
@@ -581,7 +604,7 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - DataSets were successfully deleted
+     - All DataSets were successfully deleted
 
 Truncating a DataSet
 --------------------
@@ -590,7 +613,7 @@ You can truncate a DataSet by issuing an HTTP POST request to the URL::
 
   POST <base-url>/data/datasets/<dataset-name>/admin/truncate
 
-This will clear the existing data for the DataSet. This cannot be undone.
+This will clear the existing data from the DataSet. This cannot be undone.
 
 HTTP Responses
 ..............
@@ -619,7 +642,50 @@ To list all modules, issue an HTTP GET request to the URL::
 
 	GET <base-url>/data/modules
 
-The response will be a JSON String representing a list of ``DatasetModuleMeta`` objects.
+The response will be a JSON String representing a list of ``DatasetModuleMeta`` objects::
+
+	[
+	   {
+	      "name":"core",
+	      "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
+	      "types":[
+	         "table",
+	         "com.continuuity.api.dataset.table.Table",
+	         "keyValueTable",
+	         "com.continuuity.api.dataset.lib.KeyValueTable",
+	         "objectStore",
+	         "com.continuuity.api.dataset.lib.ObjectStore",
+	         "indexedObjectStore",
+	         "com.continuuity.api.dataset.lib.IndexedObjectStore",
+	         "indexedTable",
+	         "com.continuuity.api.dataset.lib.IndexedTable",
+	         "multiObjectStore",
+	         "com.continuuity.api.dataset.lib.MultiObjectStore",
+	         "timeseriesTable",
+	         "com.continuuity.api.dataset.lib.TimeseriesTable"
+	      ],
+	      "usesModules":[
+	         "orderedTable-leveldb"
+	      ],
+	      "usedByModules":[
+	
+	      ]
+	   },
+	   {
+	      "name":"orderedTable-leveldb",
+	      "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
+	      "types":[
+	         "orderedTable",
+	         "com.continuuity.api.dataset.table.OrderedTable"
+	      ],
+	      "usesModules":[
+	
+	      ],
+	      "usedByModules":[
+	         "core"
+	      ]
+	   }
+	]
 
 Example
 .......
@@ -669,11 +735,11 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received and the Table was either created or already exists
+     - The event was successfully received and the module was either created or already exists
    * - ``400 Bad Request``
      - The DataSet module jar was not provided in the body of the request
    * - ``409 Conflict``
-     - A DataSet module with the same name already exists or one of the declared types by this module already exists
+     - Either a DataSet module with the same name or one of the types declared by this module, already exists
 
 Example
 .......
@@ -686,7 +752,7 @@ Example
    * - Headers
      - X-Continuuity-Class-Name: com.example.dataset.MyModule
    * - Body
-     - Contents a jar file containing ``MyModule`` along with other supporting class files
+     - Contents a jar file containing the class ``MyModule`` along with other supporting class files
    * - Description
      - Adds a DataSet module named *my-module*, with the class name 
        ``com.example.dataset.MyModule``
@@ -711,7 +777,8 @@ HTTP Responses
    * - ``200 OK``
      - Module was successfully deleted
    * - ``409 Conflict``
-     - Module with provided <module-name> cannot be deleted because there's another module that depends on it or there a DataSet exists of the type that is declared by this module.
+     - Module with provided <module-name> cannot be deleted because either there's another module that 
+       depends on it or there is an existing DataSet of the type that is declared by this module
    * - ``404 Not Found``
      - Module with provided <module-name> could not be found
 
@@ -733,7 +800,8 @@ HTTP Responses
    * - ``200 OK``
      - DataSet modules were successfully deleted
    * - ``409 Conflict``
-     - DataSet modules cannot be deleted because some of the existing DataSets use types declared by these modules
+     - DataSet modules cannot be deleted because there are existing DataSets that use the types declared
+       by these modules
 
 .. rst2pdf: PageBreak
 
@@ -742,7 +810,7 @@ DataSet Type HTTP API
 
 The DataSet Type API allows you to interact with 
 `Continuuity Reactor DataSet Types <advanced.html#dataset-system>`_ through HTTP.
-You can list all DataSet types and get information about each type. DataSet types are declared by the DataSet modules added to Continnuuity Reactor.
+You can list all DataSet types and get information about each type. DataSet types are declared by the DataSet modules added to Continuuity Reactor.
 To delete a DataSet type, you delete the DataSet module that contains the type as described under
 `Deleting a DataSet Module <#deleting-a-dataset-module>`_.
 
@@ -753,6 +821,9 @@ Listing all DataSet Types
 To list all types provided by the existing modules, issue an HTTP GET request to the URL::
 
   GET <base-url>/data/types
+
+The response will be a JSON array containing JSON objects representing the DataSet types in the format described
+below under `Getting a DataSet Type`_.
 
 Example
 .......
@@ -768,7 +839,7 @@ Example
 Getting a DataSet Type
 ----------------------
 
-To get more information about a single type, issue an HTTP GET request to the URL::
+To get detailed information about a single type, issue an HTTP GET request to the URL::
 
   GET <base-url>/data/types/<type-name>
 
@@ -783,7 +854,54 @@ To get more information about a single type, issue an HTTP GET request to the UR
 
 .. rst2pdf: PageBreak
 
-The response will be a JSON String representing a DataSet type metadata along with a list of DataSet modules it depends on.
+The response will be a JSON String representing a DataSet type metadata along with a list of DataSet modules it depends on::
+
+	{
+	   "name":"table",
+	   "modules":[
+	      {
+	         "name":"orderedTable-leveldb",
+	         "className":"com.continuuity.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule",
+	         "types":[
+	            "orderedTable",
+	            "com.continuuity.api.dataset.table.OrderedTable"
+	         ],
+	         "usesModules":[
+	
+	         ],
+	         "usedByModules":[
+	            "core"
+	         ]
+	      },
+	      {
+	         "name":"core",
+	         "className":"com.continuuity.data2.dataset2.lib.table.CoreDatasetsModule",
+	         "types":[
+	            "table",
+	            "com.continuuity.api.dataset.table.Table",
+	            "keyValueTable",
+	            "com.continuuity.api.dataset.lib.KeyValueTable",
+	            "objectStore",
+	            "com.continuuity.api.dataset.lib.ObjectStore",
+	            "indexedObjectStore",
+	            "com.continuuity.api.dataset.lib.IndexedObjectStore",
+	            "indexedTable",
+	            "com.continuuity.api.dataset.lib.IndexedTable",
+	            "multiObjectStore",
+	            "com.continuuity.api.dataset.lib.MultiObjectStore",
+	            "timeseriesTable",
+	            "com.continuuity.api.dataset.lib.TimeseriesTable"
+	         ],
+	         "usesModules":[
+	            "orderedTable-leveldb"
+	         ],
+	         "usedByModules":[
+	
+	         ]
+	      }
+	   ]
+	}
+
 
 Data HTTP API (Deprecated)
 ==========================
