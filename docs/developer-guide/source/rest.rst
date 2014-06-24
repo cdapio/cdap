@@ -576,7 +576,7 @@ HTTP Responses
    * - ``200 OK``
      - Dataset was successfully deleted
    * - ``404 Not Found``
-     - Instance with <dataset-name> could not be found
+     - Dataset named ``<dataset-name>`` could not be found
 
 Example
 .......
