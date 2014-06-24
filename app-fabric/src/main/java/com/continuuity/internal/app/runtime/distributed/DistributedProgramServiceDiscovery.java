@@ -25,7 +25,7 @@ public class DistributedProgramServiceDiscovery implements ProgramServiceDiscove
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
+    String twillNamespace = cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
     String zkNamespace = String.format("%s/service.%s.%s.%s", twillNamespace, accountId, appId, serviceId);
     ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(ZKClients.namespace(zkClientService, zkNamespace));
     return zkDiscoveryService.discover(serviceName);

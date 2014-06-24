@@ -1,3 +1,18 @@
+/**
+ * Copyright 2013-2014 Continuuity, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.continuuity.examples;
 
 import com.continuuity.api.annotation.ProcessInput;
@@ -6,16 +21,17 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.dataset.table.Table;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Store the incoming items and corresponding user interests, to get analytics on items purchased vs users interests.
@@ -38,11 +54,11 @@ public class PurchaseStore extends AbstractFlowlet {
 
   @ProcessInput
   public void process(Purchase purchase) {
-    Iterator<Discoverable> discoverables = serviceDiscovered.iterator();
     String userPreference = PREFERENCE_NA;
-    // Look up user preference by calling the HTTP service that is started by UserPreferenceService.
-    if (discoverables.hasNext()) {
-      Discoverable discoverable = discoverables.next();
+
+    Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
+    if (discoverable != null) {
+      // Look up user preference by calling the HTTP service that is started by UserPreferenceService.
       String hostName = discoverable.getSocketAddress().getHostName();
       int port = discoverable.getSocketAddress().getPort();
       userPreference = getUserPreference(hostName, port, purchase.getCustomer());
@@ -52,18 +68,33 @@ public class PurchaseStore extends AbstractFlowlet {
   }
 
   private String getUserPreference(String host, int port, String userId) {
+
     try {
-      DefaultHttpClient client = new DefaultHttpClient();
-      HttpGet get = new HttpGet(String.format("http://%s:%d/v1/users/%s/interest", host, port, userId));
+      URL url = new URL(String.format("http://%s:%d/v1/users/%s/interest", host, port, userId));
 
-      HttpResponse response = client.execute(get);
-      if (response.getStatusLine().getStatusCode() == 200) {
-        return EntityUtils.toString(response.getEntity());
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("GET");
+
+      conn.setDoInput(true);
+
+      conn.connect();
+      try {
+        byte[] responseBody = null;
+        if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
+          InputStream is = conn.getInputStream();
+          try {
+            responseBody = ByteStreams.toByteArray(is);
+            return new String(responseBody, Charsets.UTF_8);
+          } finally {
+            is.close();
+          }
+        }
+      } finally {
+        conn.disconnect();
       }
+      return PREFERENCE_NA;
     } catch (Throwable th) {
-      LOG.error("Caught exception in looking up user preference {}", th.getCause(), th);
+      return PREFERENCE_NA;
     }
-    return PREFERENCE_NA;
   }
-
 }
