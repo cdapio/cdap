@@ -29,7 +29,6 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -68,29 +67,15 @@ public class PurchaseStore extends AbstractFlowlet {
   }
 
   private String getUserPreference(String host, int port, String userId) {
-
     try {
       URL url = new URL(String.format("http://%s:%d/v1/users/%s/interest", host, port, userId));
-
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      conn.setRequestMethod("GET");
-
-      conn.setDoInput(true);
-
-      conn.connect();
-      try {
-        byte[] responseBody = null;
-        if (HttpURLConnection.HTTP_OK == conn.getResponseCode() && conn.getDoInput()) {
-          InputStream is = conn.getInputStream();
-          try {
-            responseBody = ByteStreams.toByteArray(is);
-            return new String(responseBody, Charsets.UTF_8);
-          } finally {
-            is.close();
-          }
+      if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+        try {
+          return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+        } finally {
+          conn.disconnect();
         }
-      } finally {
-        conn.disconnect();
       }
       return PREFERENCE_NA;
     } catch (Throwable th) {

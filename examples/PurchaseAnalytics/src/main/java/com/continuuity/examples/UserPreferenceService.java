@@ -21,7 +21,6 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillApplication;
@@ -32,8 +31,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import javax.ws.rs.GET;
@@ -86,7 +83,7 @@ public class UserPreferenceService implements TwillApplication {
       int port = service.getBindAddress().getPort();
       runLatch = new CountDownLatch(1);
       context.announce("UserInterestsLookup", port);
-   }
+    }
     @Override
     public void run() {
       try {
