@@ -63,13 +63,13 @@ public class ExploreDriver implements Driver {
   @Override
   public int getMajorVersion() {
     // TODO make it dynamic [REACTOR-319]
-    return 1;
+    return 2;
   }
 
   @Override
   public int getMinorVersion() {
     // TODO make it dynamic [REACTOR-319]
-    return 0;
+    return 3;
   }
 
   @Override

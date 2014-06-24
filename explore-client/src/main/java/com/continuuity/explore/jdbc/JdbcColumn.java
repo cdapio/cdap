@@ -69,6 +69,8 @@ public class JdbcColumn {
 
   public static int hiveTypeToSqlType(String type) throws SQLException {
     for (SqlTypes t : SqlTypes.values()) {
+      // We use startsWith instead of equals because of some types like:
+      // array<int>, array<...>, map<...>
       if (type.toLowerCase().startsWith(t.getTypeName())) {
         return t.getSqlType();
       }
@@ -79,6 +81,8 @@ public class JdbcColumn {
   static String getColumnTypeName(String type) throws SQLException {
     // we need to convert the Hive type to the SQL type name
     for (SqlTypes t : SqlTypes.values()) {
+      // We use startsWith instead of equals because of some types like:
+      // array<int>, array<...>, map<...>
       if (type.toLowerCase().startsWith(t.getTypeName())) {
         return t.getTypeName();
       }

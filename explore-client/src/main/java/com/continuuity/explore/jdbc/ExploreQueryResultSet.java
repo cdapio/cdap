@@ -265,7 +265,7 @@ public class ExploreQueryResultSet implements ResultSet {
       return null;
     }
     if (value instanceof byte[]) {
-      return new String((byte[]) value, Charsets.UTF_8);
+      return new String((byte[]) value);
     }
     return value.toString();
   }
